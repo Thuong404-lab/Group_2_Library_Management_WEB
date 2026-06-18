@@ -2,8 +2,6 @@ package com.lms.entity;
 
 import com.lms.enums.CopyStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(name = "BookCopies")

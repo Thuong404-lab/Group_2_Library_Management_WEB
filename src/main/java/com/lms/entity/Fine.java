@@ -1,10 +1,8 @@
 package com.lms.entity;
 
-import com.lms.enums.FineType;
 import com.lms.enums.FineStatus;
+import com.lms.enums.FineType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
