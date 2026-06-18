@@ -43,6 +43,9 @@
 | **UC-16.1**| View Librarian Profile | Librarian Profile | 🟢 Simple |
 | **UC-16.2**| Edit Librarian Profile | Librarian Profile | 🟡 Medium |
 | **UC-16.3**| Change Librarian Password | Librarian Profile | 🟡 Medium |
+| **UC-19.1** | Backup Data | System Management | 🔴 Complex |
+| **UC-19.2** | Restore Data | System Management | 🔴 Complex |
+| **UC-19.3** | View System Logs | System Management | 🟡 Medium |
 
 ---
 
@@ -139,9 +142,7 @@
 | **UC-20.5**| Change Account Status | Accounts Management | 🟡 Medium |
 | **UC-20.6**| Reset Password | Accounts Management | 🟢 Simple |
 | **UC-21.1**| Manage Borrowing/Return Policies| System Settings | 🔴 Complex |
-| **UC-21.2**| Set Fine Rates | System Settings | 🟡 Medium |
-| **UC-21.3**| Membership Tier Management | System Settings | 🟡 Medium |
-| **UC-21.4**| Configure Payment Settings | System Settings | 🔴 Complex |
+
 
 <br>
 
