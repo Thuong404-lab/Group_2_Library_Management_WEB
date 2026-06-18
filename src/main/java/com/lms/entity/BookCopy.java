@@ -7,8 +7,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "BookCopies")
-@Getter
-@Setter
+
 public class BookCopy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,4 +31,64 @@ public class BookCopy {
 
     @Column(name = "condition_pct")
     private Integer conditionPct = 100;
+
+    public BookCopy(Book book, Integer id, String barcode, StorageLocation storage, CopyStatus status, Integer conditionPct) {
+        this.book = book;
+        this.id = id;
+        this.barcode = barcode;
+        this.storage = storage;
+        this.status = status;
+        this.conditionPct = conditionPct;
+    }
+
+    public BookCopy() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Book getBook() {
+        return book;
+    }
+
+    public void setBook(Book book) {
+        this.book = book;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public StorageLocation getStorage() {
+        return storage;
+    }
+
+    public void setStorage(StorageLocation storage) {
+        this.storage = storage;
+    }
+
+    public CopyStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CopyStatus status) {
+        this.status = status;
+    }
+
+    public Integer getConditionPct() {
+        return conditionPct;
+    }
+
+    public void setConditionPct(Integer conditionPct) {
+        this.conditionPct = conditionPct;
+    }
 }

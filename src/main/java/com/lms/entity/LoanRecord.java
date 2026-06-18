@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Borrows")
-@Getter
-@Setter
+
 public class LoanRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,4 +49,100 @@ public class LoanRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "processed_by")
     private User processedBy;
+
+    public LoanRecord(Integer id, BookCopy copy, User member, LocalDateTime borrowDate, LocalDateTime dueDate, LocalDateTime returnDate, Integer renewalCount, BigDecimal borrowFee, LoanStatus status, User processedBy) {
+        this.id = id;
+        this.copy = copy;
+        this.member = member;
+        this.borrowDate = borrowDate;
+        this.dueDate = dueDate;
+        this.returnDate = returnDate;
+        this.renewalCount = renewalCount;
+        this.borrowFee = borrowFee;
+        this.status = status;
+        this.processedBy = processedBy;
+    }
+
+    public LoanRecord() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public User getMember() {
+        return member;
+    }
+
+    public void setMember(User member) {
+        this.member = member;
+    }
+
+    public BookCopy getCopy() {
+        return copy;
+    }
+
+    public void setCopy(BookCopy copy) {
+        this.copy = copy;
+    }
+
+    public LocalDateTime getBorrowDate() {
+        return borrowDate;
+    }
+
+    public void setBorrowDate(LocalDateTime borrowDate) {
+        this.borrowDate = borrowDate;
+    }
+
+    public LocalDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public LocalDateTime getReturnDate() {
+        return returnDate;
+    }
+
+    public void setReturnDate(LocalDateTime returnDate) {
+        this.returnDate = returnDate;
+    }
+
+    public Integer getRenewalCount() {
+        return renewalCount;
+    }
+
+    public void setRenewalCount(Integer renewalCount) {
+        this.renewalCount = renewalCount;
+    }
+
+    public BigDecimal getBorrowFee() {
+        return borrowFee;
+    }
+
+    public void setBorrowFee(BigDecimal borrowFee) {
+        this.borrowFee = borrowFee;
+    }
+
+    public LoanStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(LoanStatus status) {
+        this.status = status;
+    }
+
+    public User getProcessedBy() {
+        return processedBy;
+    }
+
+    public void setProcessedBy(User processedBy) {
+        this.processedBy = processedBy;
+    }
 }

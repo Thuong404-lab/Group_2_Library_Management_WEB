@@ -1,10 +1,6 @@
 package com.lms.enums;
 
-/**
- * Trang thai tai khoan nguoi dung.
- * BR-11: Khoa sau 3 lan vi pham qua han.
- * BR-12: Blocked mat quyen su dung dich vu.
- */
+
 public enum UserStatus {
     ACTIVE,
     DISABLED,

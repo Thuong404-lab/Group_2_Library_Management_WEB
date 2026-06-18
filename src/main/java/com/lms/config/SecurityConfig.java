@@ -19,10 +19,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // Tam thoi mo toan bo quyen de cac thanh vien de dang phat trien (Sprint 0)
-        // Se cau hinh lai chat che hon trong Sprint 1
+
         http
-            .csrf(csrf -> csrf.disable()) // Tam thoi disable CSRF cho API testing
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             )

@@ -12,8 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Fines")
-@Getter
-@Setter
+
 public class Fine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,4 +44,82 @@ public class Fine {
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
+
+    public Fine(Integer id, LoanRecord loanRecord, User member, FineType fineType, FineStatus status, BigDecimal amount, LocalDateTime createdAt, LocalDateTime paidAt) {
+        this.id = id;
+        this.loanRecord = loanRecord;
+        this.member = member;
+        this.fineType = fineType;
+        this.status = status;
+        this.amount = amount;
+        this.createdAt = createdAt;
+        this.paidAt = paidAt;
+    }
+
+    public Fine() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public LoanRecord getLoanRecord() {
+        return loanRecord;
+    }
+
+    public void setLoanRecord(LoanRecord loanRecord) {
+        this.loanRecord = loanRecord;
+    }
+
+    public User getMember() {
+        return member;
+    }
+
+    public void setMember(User member) {
+        this.member = member;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public FineType getFineType() {
+        return fineType;
+    }
+
+    public void setFineType(FineType fineType) {
+        this.fineType = fineType;
+    }
+
+    public FineStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(FineStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getPaidAt() {
+        return paidAt;
+    }
+
+    public void setPaidAt(LocalDateTime paidAt) {
+        this.paidAt = paidAt;
+    }
 }

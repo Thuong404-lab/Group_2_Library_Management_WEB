@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Reservations")
-@Getter
-@Setter
 public class Reservation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,4 +42,82 @@ public class Reservation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by")
     private User approvedBy;
+
+    public Reservation(Integer id, User member, Book book, LocalDateTime reserveDate, LocalDateTime expiryDate, BigDecimal depositAmount, ReservationStatus status, User approvedBy) {
+        this.id = id;
+        this.member = member;
+        this.book = book;
+        this.reserveDate = reserveDate;
+        this.expiryDate = expiryDate;
+        this.depositAmount = depositAmount;
+        this.status = status;
+        this.approvedBy = approvedBy;
+    }
+
+    public Reservation() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public User getMember() {
+        return member;
+    }
+
+    public void setMember(User member) {
+        this.member = member;
+    }
+
+    public Book getBook() {
+        return book;
+    }
+
+    public void setBook(Book book) {
+        this.book = book;
+    }
+
+    public LocalDateTime getReserveDate() {
+        return reserveDate;
+    }
+
+    public void setReserveDate(LocalDateTime reserveDate) {
+        this.reserveDate = reserveDate;
+    }
+
+    public LocalDateTime getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(LocalDateTime expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public BigDecimal getDepositAmount() {
+        return depositAmount;
+    }
+
+    public void setDepositAmount(BigDecimal depositAmount) {
+        this.depositAmount = depositAmount;
+    }
+
+    public ReservationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ReservationStatus status) {
+        this.status = status;
+    }
+
+    public User getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(User approvedBy) {
+        this.approvedBy = approvedBy;
+    }
 }

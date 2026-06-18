@@ -1,6 +1,6 @@
 package com.lms.enums;
 
-/** BR-5: Chi muon khi co ban sao 'Available'. BR-22: Thanh ly khi condition_pct < 40%. */
+
 public enum CopyStatus {
     AVAILABLE, BORROWED, RESERVED, LOST, DAMAGED;
 

@@ -8,8 +8,6 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "MembershipTiers")
-@Getter
-@Setter
 public class MembershipTier {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,4 +25,55 @@ public class MembershipTier {
 
     @Column(length = 500)
     private String description;
+
+    public MembershipTier(BigDecimal borrowFeeRate, Integer maxBorrowBooks, String name, Integer id, String description) {
+        this.borrowFeeRate = borrowFeeRate;
+        this.maxBorrowBooks = maxBorrowBooks;
+        this.name = name;
+        this.id = id;
+        this.description = description;
+    }
+
+    public MembershipTier() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getMaxBorrowBooks() {
+        return maxBorrowBooks;
+    }
+
+    public void setMaxBorrowBooks(Integer maxBorrowBooks) {
+        this.maxBorrowBooks = maxBorrowBooks;
+    }
+
+    public BigDecimal getBorrowFeeRate() {
+        return borrowFeeRate;
+    }
+
+    public void setBorrowFeeRate(BigDecimal borrowFeeRate) {
+        this.borrowFeeRate = borrowFeeRate;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

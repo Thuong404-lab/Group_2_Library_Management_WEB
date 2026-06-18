@@ -6,8 +6,6 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "Roles")
-@Getter
-@Setter
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,4 +14,28 @@ public class Role {
 
     @Column(name = "role_name", nullable = false, unique = true, length = 50)
     private String name;
+
+    public Role(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public Role() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 }
