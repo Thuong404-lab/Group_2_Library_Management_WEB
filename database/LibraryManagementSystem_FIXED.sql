@@ -1,12 +1,7 @@
--- =====================================================
--- Library Management System Database
--- Version FIXED: 4 Critical Bugs Fixed + BR-1 to BR-41
--- =====================================================
-
 USE master;
 GO
 
-IF EXISTS (SELECT * FROM sys.databases WHERE name = 'LibraryManagementSystem')
+IF DB_ID('LibraryManagementSystem') IS NOT NULL
 BEGIN
     ALTER DATABASE LibraryManagementSystem SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE LibraryManagementSystem;
@@ -15,480 +10,355 @@ GO
 
 CREATE DATABASE LibraryManagementSystem;
 GO
+
 USE LibraryManagementSystem;
 GO
 
--- =====================================================
--- ROLES
--- =====================================================
-CREATE TABLE Roles (
-    role_id   INT IDENTITY(1,1) PRIMARY KEY,
-    role_name VARCHAR(50) NOT NULL UNIQUE
+-- =========================================================================
+-- 1. SYSTEM SETTINGS (Cài đặt hệ thống theo UC-22)
+-- =========================================================================
+CREATE TABLE SystemSettings (
+    setting_id INT IDENTITY(1,1) PRIMARY KEY,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value NVARCHAR(MAX),
+    description NVARCHAR(255)
 );
-GO
 
--- =====================================================
--- MEMBERSHIP TIERS
--- BR-34: 2 hang: Standard Member va Loyal Member
--- BR-32: Loyal = 50% phi muon (borrow_fee_rate = 0.5)
--- =====================================================
-CREATE TABLE MembershipTiers (
-    tier_id          INT IDENTITY(1,1) PRIMARY KEY,
-    tier_name        NVARCHAR(50)  NOT NULL UNIQUE,
-    max_borrow_books INT           NOT NULL DEFAULT 5,
-    borrow_fee_rate  DECIMAL(5,2)  NOT NULL DEFAULT 1.0,
-    -- BR-32: Loyal Member phi muon = 50% tieu chuan (rate = 0.5)
-    description      NVARCHAR(500)
-);
-GO
-
--- =====================================================
--- USERS
--- BR-11: Khoa TK sau 3 lan vi pham qua han (overdue_violations)
--- BR-24: Chi Admin tao/chinh sua/tat tai khoan Thu Thu
--- =====================================================
+-- =========================================================================
+-- 2. USERS, ACCOUNTS & ROLES (Mô hình tách biệt theo ERD)
+-- =========================================================================
 CREATE TABLE Users (
-    user_id            INT IDENTITY(1,1) PRIMARY KEY,
-    username           VARCHAR(50)   NOT NULL UNIQUE,
-    password_hash      VARCHAR(255)  NOT NULL,
-    email              VARCHAR(100)  NOT NULL UNIQUE,
-    full_name          NVARCHAR(100) NOT NULL,
-    phone              VARCHAR(20),
-    role_id            INT           NOT NULL,
-    status             VARCHAR(30)   DEFAULT 'Active',
-    overdue_violations INT           DEFAULT 0,
-    -- BR-11: Dem so lan vi pham, khoa sau khi >= Max_Overdue_Violations
-    last_login         DATETIME      NULL,
-    created_at         DATETIME      DEFAULT GETDATE(),
-    CONSTRAINT FK_Users_Roles    FOREIGN KEY(role_id) REFERENCES Roles(role_id),
-    CONSTRAINT CHK_User_Status   CHECK(status IN ('Active','Disabled','Blocked'))
+    user_id INT IDENTITY(1,1) PRIMARY KEY,
+    full_name NVARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    status VARCHAR(50) DEFAULT 'Active'
 );
-GO
 
--- =====================================================
--- MEMBER DETAILS
--- BR-31: Nang hang khi total_spending >= 1,000,000 VND
--- BR-35: Ha hang Loyal -> Standard neu khong muon sach 6 thang
--- BR-37: Chi nap tien qua Thu Thu tai quay (khong online)
--- =====================================================
-CREATE TABLE MemberDetails (
-    member_id        INT           PRIMARY KEY,
-    tier_id          INT           NOT NULL,
-    balance          DECIMAL(12,2) DEFAULT 0,
-    total_spending   DECIMAL(12,2) DEFAULT 0,
-    -- BR-31: Tong chi tieu (chi tinh giao dich, khong tinh so du)
-    last_borrow_date DATE          NULL,
-    -- BR-35: Ngay muon sach gan nhat (kiem tra inactive 6 thang)
-    join_date        DATE          DEFAULT GETDATE(),
-    FOREIGN KEY(member_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY(tier_id)   REFERENCES MembershipTiers(tier_id)
+CREATE TABLE Accounts (
+    account_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT FOREIGN KEY REFERENCES Users(user_id) ON DELETE CASCADE,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    status VARCHAR(50) DEFAULT 'Active'
 );
-GO
 
--- =====================================================
--- CATEGORIES
--- BR-21: Sach phai phan loai theo the loai
--- =====================================================
+CREATE TABLE MembershipTiers (
+    tier_id INT IDENTITY(1,1) PRIMARY KEY,
+    tier_name NVARCHAR(100) NOT NULL,
+    discount_percent DECIMAL(5,2) DEFAULT 0,
+    borrow_limit INT DEFAULT 5,
+    condition DECIMAL(18,2) DEFAULT 0, -- Yêu cầu chi tiêu để đạt hạng
+    benefits NVARCHAR(MAX)
+);
+
+CREATE TABLE Members (
+    member_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT FOREIGN KEY REFERENCES Users(user_id) ON DELETE CASCADE,
+    tier_id INT FOREIGN KEY REFERENCES MembershipTiers(tier_id)
+);
+
+CREATE TABLE Staff (
+    staff_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT FOREIGN KEY REFERENCES Users(user_id) ON DELETE CASCADE,
+    staff_type VARCHAR(50) NOT NULL -- 'Admin', 'Librarian'
+);
+
+-- =========================================================================
+-- 3. FINANCIALS (Wallets & Transactions)
+-- =========================================================================
+CREATE TABLE Wallets (
+    wallet_id INT IDENTITY(1,1) PRIMARY KEY,
+    member_id INT FOREIGN KEY REFERENCES Members(member_id) ON DELETE CASCADE,
+    balance DECIMAL(18,2) DEFAULT 0
+);
+
+-- =========================================================================
+-- 4. BOOK CATALOG (Sách, Tác giả, Thể loại)
+-- =========================================================================
 CREATE TABLE Categories (
-    category_id   INT IDENTITY(1,1) PRIMARY KEY,
-    category_name NVARCHAR(100) NOT NULL UNIQUE,
-    description   NVARCHAR(255)
+    category_id INT IDENTITY(1,1) PRIMARY KEY,
+    category_name NVARCHAR(255) NOT NULL
 );
-GO
 
--- =====================================================
--- STORAGE LOCATIONS (UC-11)
--- =====================================================
-CREATE TABLE BookStorages (
-    storage_id    INT IDENTITY(1,1) PRIMARY KEY,
-    location_name NVARCHAR(100) NOT NULL UNIQUE,
-    description   NVARCHAR(255)
+CREATE TABLE Genres (
+    genre_id INT IDENTITY(1,1) PRIMARY KEY,
+    category_id INT FOREIGN KEY REFERENCES Categories(category_id),
+    genre_name NVARCHAR(255) NOT NULL
 );
-GO
 
--- =====================================================
--- BOOKS
--- FIX LOI 1: + cover_image_url (Cloudinary URL)
--- FIX LOI 4: + publisher, publication_year, page_count
--- BR-21, BR-29: + language (loc/tim kiem theo ngon ngu)
--- =====================================================
+CREATE TABLE Authors (
+    author_id INT IDENTITY(1,1) PRIMARY KEY,
+    author_name NVARCHAR(255) NOT NULL
+);
+
 CREATE TABLE Books (
-    book_id          INT IDENTITY(1,1) PRIMARY KEY,
-    title            NVARCHAR(255) NOT NULL,
-    author           NVARCHAR(255) NOT NULL,
-    isbn             VARCHAR(20)   UNIQUE NOT NULL,
-    publisher        NVARCHAR(255) NULL,         -- FIX LOI 4
-    publication_year INT           NULL,          -- FIX LOI 4
-    page_count       INT           NULL,          -- FIX LOI 4
-    language         NVARCHAR(50)  DEFAULT N'Tieng Viet', -- BR-21, BR-29
-    summary          NVARCHAR(MAX),
-    cover_image_url  NVARCHAR(500) NULL,          -- FIX LOI 1: Cloudinary
-    created_at       DATETIME      DEFAULT GETDATE()
+    book_id INT IDENTITY(1,1) PRIMARY KEY,
+    genre_id INT FOREIGN KEY REFERENCES Genres(genre_id),
+    title NVARCHAR(255) NOT NULL,
+    isbn VARCHAR(20) UNIQUE,
+    description NVARCHAR(MAX),
+    status VARCHAR(50) DEFAULT 'Active'
 );
-GO
 
--- =====================================================
--- BOOK CATEGORIES (Many-to-Many)
--- =====================================================
-CREATE TABLE BookCategories (
-    book_id     INT NOT NULL,
-    category_id INT NOT NULL,
-    PRIMARY KEY(book_id, category_id),
-    FOREIGN KEY(book_id)     REFERENCES Books(book_id)      ON DELETE CASCADE,
-    FOREIGN KEY(category_id) REFERENCES Categories(category_id) ON DELETE CASCADE
+CREATE TABLE BookAuthors (
+    book_id INT FOREIGN KEY REFERENCES Books(book_id) ON DELETE CASCADE,
+    author_id INT FOREIGN KEY REFERENCES Authors(author_id) ON DELETE CASCADE,
+    PRIMARY KEY (book_id, author_id)
 );
-GO
 
--- =====================================================
--- BOOK COPIES
--- BR-5:  Can co ban sao 'Available' moi cho muon
--- BR-22: Thanh ly sach khi condition_pct < 40%
--- =====================================================
-CREATE TABLE BookCopies (
-    copy_id       INT IDENTITY(1,1) PRIMARY KEY,
-    book_id       INT         NOT NULL,
-    barcode       VARCHAR(50) UNIQUE NOT NULL,
-    storage_id    INT,
-    status        VARCHAR(30) DEFAULT 'Available',
-    condition_pct INT         DEFAULT 100,
-    -- BR-22: Phan tram tinh trang, thanh ly khi < 40%
-    FOREIGN KEY(book_id)    REFERENCES Books(book_id) ON DELETE CASCADE,
-    FOREIGN KEY(storage_id) REFERENCES BookStorages(storage_id),
-    CONSTRAINT CHK_Copy_Status
-        CHECK(status IN ('Available','Borrowed','Reserved','Lost','Damaged'))
+CREATE TABLE Shelves (
+    shelf_id INT IDENTITY(1,1) PRIMARY KEY,
+    shelf_name NVARCHAR(100) NOT NULL,
+    location NVARCHAR(255)
 );
-GO
 
--- =====================================================
--- INVENTORY AUDITS
--- FIX VAN DE 7: + total_copies_checked, discrepancies_found, status
--- BR-22: Ghi nhan bien ban kiem ke
--- =====================================================
-CREATE TABLE InventoryAudits (
-    audit_id             INT IDENTITY(1,1) PRIMARY KEY,
-    librarian_id         INT,
-    audit_date           DATETIME    DEFAULT GETDATE(),
-    total_copies_checked INT         DEFAULT 0,
-    discrepancies_found  INT         DEFAULT 0,
-    status               VARCHAR(20) DEFAULT 'Completed',
-    notes                NVARCHAR(MAX),
-    FOREIGN KEY(librarian_id) REFERENCES Users(user_id)
+CREATE TABLE BookItems (
+    book_item_id INT IDENTITY(1,1) PRIMARY KEY,
+    book_id INT FOREIGN KEY REFERENCES Books(book_id) ON DELETE CASCADE,
+    shelf_id INT FOREIGN KEY REFERENCES Shelves(shelf_id),
+    barcode VARCHAR(50) UNIQUE NOT NULL,
+    status VARCHAR(50) DEFAULT 'Available' -- Available, Borrowed, Lost, Damaged, Disposed
 );
-GO
 
--- =====================================================
--- FAVORITES (UC-7.1, UC-4.4)
--- =====================================================
-CREATE TABLE Favorites (
-    member_id INT      NOT NULL,
-    book_id   INT      NOT NULL,
-    added_at  DATETIME DEFAULT GETDATE(),
-    PRIMARY KEY(member_id, book_id),
-    FOREIGN KEY(member_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY(book_id)   REFERENCES Books(book_id) ON DELETE CASCADE
-);
-GO
-
--- =====================================================
--- NOTIFICATIONS
--- BR-15: Thong bao khi sach dat truoc san sang
--- BR-27: Thong bao qua han, dat truoc, sach moi, sap het han
--- =====================================================
-CREATE TABLE Notifications (
-    notification_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id         INT           NOT NULL,
-    title           NVARCHAR(255) NOT NULL,
-    message         NVARCHAR(MAX) NOT NULL,
-    type            VARCHAR(50)   DEFAULT 'General',
-    -- Overdue / ReservationReady / TopUp / NewBook / System
-    is_read         BIT           DEFAULT 0,
-    created_at      DATETIME      DEFAULT GETDATE(),
-    FOREIGN KEY(user_id) REFERENCES Users(user_id)
-);
-GO
-
--- =====================================================
--- RESERVATIONS
--- BR-13: Dat truoc sach chua co san
--- BR-14: FIFO - xu ly theo thu tu danh sach cho
--- FIX LOI 3: + expiry_date (reserve_date + Reservation_Days)
--- BR-40: + approved_by (sach quy hiem / tham khao can thu thu duyet)
--- BR-41: + deposit_amount (50% gia tri sach)
--- Status: Pending -> Approved -> Ready -> Completed / Canceled / Expired
--- =====================================================
+-- =========================================================================
+-- 5. LIBRARY SERVICES (Mượn trả, Đặt trước)
+-- =========================================================================
 CREATE TABLE Reservations (
     reservation_id INT IDENTITY(1,1) PRIMARY KEY,
-    member_id      INT           NOT NULL,
-    book_id        INT           NOT NULL,
-    reserve_date   DATETIME      DEFAULT GETDATE(),
-    expiry_date    DATETIME      NULL,        -- FIX LOI 3
-    deposit_amount DECIMAL(12,2) DEFAULT 0,  -- BR-41
-    status         VARCHAR(25)   DEFAULT 'Pending',
-    approved_by    INT           NULL,        -- BR-40
-    FOREIGN KEY(member_id)   REFERENCES Users(user_id),
-    FOREIGN KEY(book_id)     REFERENCES Books(book_id),
-    FOREIGN KEY(approved_by) REFERENCES Users(user_id),
-    CONSTRAINT CHK_Reservation_Status
-        CHECK(status IN ('Pending','Approved','Ready','Completed','Canceled','Expired'))
-    -- Ready = sach ve, cho member den lay trong expiry_date
-    -- Expired = qua expiry_date khong den, tu dong huy
+    member_id INT FOREIGN KEY REFERENCES Members(member_id) ON DELETE CASCADE,
+    book_id INT FOREIGN KEY REFERENCES Books(book_id) ON DELETE CASCADE,
+    reservation_date DATETIME DEFAULT GETDATE(),
+    status VARCHAR(50) DEFAULT 'Pending' -- Pending, Ready, Completed, Canceled
 );
-GO
 
--- =====================================================
--- BORROW RECORDS
--- BR-3:  Chi member 'Active' moi muon duoc
--- BR-4:  Phai thanh toan phi muon truoc giao dich
--- BR-5:  Can co ban sao kha dung
--- FIX VAN DE 6: + renewal_count (kiem tra voi Max_Renewals)
--- =====================================================
 CREATE TABLE Borrows (
-    borrow_id     INT IDENTITY(1,1) PRIMARY KEY,
-    member_id     INT           NOT NULL,
-    copy_id       INT           NOT NULL,
-    borrow_date   DATETIME      DEFAULT GETDATE(),
-    due_date      DATETIME      NOT NULL,
-    return_date   DATETIME      NULL,
-    renewal_count INT           DEFAULT 0,   -- FIX VAN DE 6
-    borrow_fee    DECIMAL(12,2) DEFAULT 0,   -- BR-4, BR-32
-    status        VARCHAR(30)   DEFAULT 'Borrowed',
-    processed_by  INT           NULL,        -- Thu Thu xu ly phieu muon
-    FOREIGN KEY(member_id)    REFERENCES Users(user_id),
-    FOREIGN KEY(copy_id)      REFERENCES BookCopies(copy_id),
-    FOREIGN KEY(processed_by) REFERENCES Users(user_id),
-    CONSTRAINT CHK_Borrow_Status
-        CHECK(status IN ('Borrowed','Returned','Overdue','Lost'))
+    borrow_id INT IDENTITY(1,1) PRIMARY KEY,
+    member_id INT FOREIGN KEY REFERENCES Members(member_id),
+    staff_id INT NULL FOREIGN KEY REFERENCES Staff(staff_id),
+    borrow_date DATETIME DEFAULT GETDATE(),
+    status VARCHAR(50) DEFAULT 'Active' -- Active, Returned, Overdue
 );
-GO
 
--- =====================================================
--- BOOK REVIEWS
--- BR-16: Chi review sach sau khi da muon cuon sach do
--- BR-17: Chi cham diem 1 lan (UNIQUE member_id + book_id)
--- UC-15.3: Thu Thu kiem duyet review
--- =====================================================
-CREATE TABLE BookReviews (
-    review_id    INT IDENTITY(1,1) PRIMARY KEY,
-    member_id    INT           NOT NULL,
-    book_id      INT           NOT NULL,
-    borrow_id    INT           NOT NULL,   -- BR-16: phai tham chieu phieu muon
-    moderated_by INT           NULL,
-    moderated_at DATETIME      NULL,
-    rating       INT           CHECK(rating BETWEEN 1 AND 5),
-    review_text  NVARCHAR(MAX),
-    status       VARCHAR(20)   DEFAULT 'Pending',
-    -- Pending / Approved / Rejected
-    created_at   DATETIME      DEFAULT GETDATE(),
-    FOREIGN KEY(member_id)    REFERENCES Users(user_id),
-    FOREIGN KEY(book_id)      REFERENCES Books(book_id),
-    FOREIGN KEY(borrow_id)    REFERENCES Borrows(borrow_id),
-    FOREIGN KEY(moderated_by) REFERENCES Users(user_id),
-    CONSTRAINT UQ_Review_Member_Book UNIQUE(member_id, book_id) -- BR-17
+CREATE TABLE BorrowDetails (
+    borrow_detail_id INT IDENTITY(1,1) PRIMARY KEY,
+    borrow_id INT FOREIGN KEY REFERENCES Borrows(borrow_id) ON DELETE CASCADE,
+    book_id INT FOREIGN KEY REFERENCES Books(book_id),
+    book_item_id INT NULL FOREIGN KEY REFERENCES BookItems(book_item_id),
+    due_date DATETIME NOT NULL,
+    return_date DATETIME NULL,
+    renew_count INT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'Borrowed' -- Borrowed, Returned, Overdue, Lost
 );
-GO
 
--- =====================================================
--- LOAN RENEWALS
--- BR-6:  Chi gia han khi khong co Reservation dang Pending tren sach do
--- FIX LOI 2: + new_due_date (ngay tra moi sau khi gia han duoc duyet)
--- =====================================================
-CREATE TABLE LoanRenewals (
-    renewal_id    INT IDENTITY(1,1) PRIMARY KEY,
-    borrow_id     INT           NOT NULL,
-    request_date  DATETIME      DEFAULT GETDATE(),
-    new_due_date  DATETIME      NULL,         -- FIX LOI 2
-    approved_by   INT           NULL,
-    approved_at   DATETIME      NULL,
-    status        VARCHAR(20)   DEFAULT 'Pending',
-    reject_reason NVARCHAR(255) NULL,
-    -- BR-6: Ly do tu choi (VD: co nguoi dang dat truoc cuon sach nay)
-    FOREIGN KEY(borrow_id)   REFERENCES Borrows(borrow_id),
-    FOREIGN KEY(approved_by) REFERENCES Users(user_id),
-    CONSTRAINT CHK_Renewal_Status CHECK(status IN ('Pending','Approved','Rejected'))
+-- =========================================================================
+-- 6. TRANSACTIONS (Gắn với Borrow)
+-- =========================================================================
+CREATE TABLE Transactions (
+    transaction_id INT IDENTITY(1,1) PRIMARY KEY,
+    wallet_id INT FOREIGN KEY REFERENCES Wallets(wallet_id),
+    borrow_id INT NULL FOREIGN KEY REFERENCES Borrows(borrow_id),
+    transaction_type VARCHAR(50) NOT NULL, -- TOP_UP, BORROW_FEE, DEPOSIT, FINE, DAMAGE_FEE, REFUND
+    amount DECIMAL(18,2) NOT NULL,
+    transaction_date DATETIME DEFAULT GETDATE(),
+    status VARCHAR(50) DEFAULT 'Completed'
 );
-GO
 
--- =====================================================
--- VIOLATIONS
--- BR-9:  Boi thuong khi sach hu hong
--- BR-10: Phi boi thuong = 120,000 VND khi hu > 50%
--- BR-11: Vi pham qua han tang Users.overdue_violations
--- =====================================================
-CREATE TABLE Violations (
-    violation_id   INT IDENTITY(1,1) PRIMARY KEY,
-    member_id      INT           NOT NULL,
-    borrow_id      INT           NULL,
-    violation_type VARCHAR(50)   DEFAULT 'Overdue',
-    -- Overdue / Damaged / Lost
-    description    NVARCHAR(500) NOT NULL,
-    penalty_amount DECIMAL(12,2) DEFAULT 0,
-    violation_date DATETIME      DEFAULT GETDATE(),
-    recorded_by    INT           NULL,
-    FOREIGN KEY(member_id)   REFERENCES Users(user_id),
-    FOREIGN KEY(borrow_id)   REFERENCES Borrows(borrow_id),
-    FOREIGN KEY(recorded_by) REFERENCES Users(user_id)
+-- =========================================================================
+-- 7. NOTIFICATIONS & FEEDBACKS
+-- =========================================================================
+CREATE TABLE Notifications (
+    notification_id INT IDENTITY(1,1) PRIMARY KEY,
+    staff_id INT FOREIGN KEY REFERENCES Staff(staff_id),
+    title NVARCHAR(255) NOT NULL,
+    content NVARCHAR(MAX) NOT NULL,
+    created_date DATETIME DEFAULT GETDATE(),
+    status VARCHAR(50) DEFAULT 'Active'
 );
-GO
 
--- =====================================================
--- FINES
--- BR-8: Phat = overdue_days x Fine_Rate_Per_Day
--- =====================================================
-CREATE TABLE Fines (
-    fine_id    INT IDENTITY(1,1) PRIMARY KEY,
-    borrow_id  INT           NOT NULL,
-    member_id  INT           NOT NULL,
-    amount     DECIMAL(12,2) NOT NULL,
-    fine_type  VARCHAR(30)   DEFAULT 'Overdue',
-    -- Overdue / Damaged / Lost
-    status     VARCHAR(20)   DEFAULT 'Unpaid',
-    created_at DATETIME      DEFAULT GETDATE(),
-    paid_at    DATETIME      NULL,
-    FOREIGN KEY(borrow_id) REFERENCES Borrows(borrow_id),
-    FOREIGN KEY(member_id) REFERENCES Users(user_id),
-    CONSTRAINT CHK_Fine_Status CHECK(status IN ('Unpaid','Paid'))
+CREATE TABLE MemberNotifications (
+    member_id INT FOREIGN KEY REFERENCES Members(member_id) ON DELETE CASCADE,
+    notification_id INT FOREIGN KEY REFERENCES Notifications(notification_id) ON DELETE CASCADE,
+    is_read BIT DEFAULT 0,
+    read_date DATETIME NULL,
+    PRIMARY KEY (member_id, notification_id)
 );
-GO
 
--- =====================================================
--- FINANCIAL TRANSACTIONS
--- BR-37: Chi nap tien qua Thu Thu tai quay
--- BR-38: Thu Thu cap nhat thu cong so du
--- BR-39: So du dung de thanh toan dat coc, phat, phi dich vu
--- =====================================================
-CREATE TABLE FinancialTransactions (
-    transaction_id   INT IDENTITY(1,1) PRIMARY KEY,
-    member_id        INT           NOT NULL,
-    amount           DECIMAL(12,2) NOT NULL,
-    transaction_type VARCHAR(50)   NOT NULL,
-    payment_method   VARCHAR(50),
-    -- Cash / QR
-    reference_id     VARCHAR(100),
-    processed_by     INT           NULL,
-    -- Thu Thu thuc hien giao dich
-    status           VARCHAR(20)   DEFAULT 'Completed',
-    transaction_date DATETIME      DEFAULT GETDATE(),
-    note             NVARCHAR(255) NULL,
-    FOREIGN KEY(member_id)    REFERENCES Users(user_id),
-    FOREIGN KEY(processed_by) REFERENCES Users(user_id),
-    CONSTRAINT CHK_Transaction_Type
-        CHECK(transaction_type IN ('Top_Up','Pay_Fine','Deposit','Borrow_Fee','Refund'))
-    -- Refund: Hoan tra dat coc khi Reservation hoan thanh hoac huy
+CREATE TABLE Feedbacks (
+    feedback_id INT IDENTITY(1,1) PRIMARY KEY,
+    member_id INT FOREIGN KEY REFERENCES Members(member_id) ON DELETE CASCADE,
+    book_id INT FOREIGN KEY REFERENCES Books(book_id) ON DELETE CASCADE,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment NVARCHAR(MAX),
+    created_date DATETIME DEFAULT GETDATE()
 );
-GO
 
--- =====================================================
--- BOOK ACQUISITION REQUESTS
--- BR-18: Thanh vien de xuat mua sach moi
--- UC-15.2: Thu Thu phan hoi de xuat
--- =====================================================
-CREATE TABLE BookAcquisitionRequests (
-    request_id    INT IDENTITY(1,1) PRIMARY KEY,
-    member_id     INT           NOT NULL,
-    book_title    NVARCHAR(255) NOT NULL,
-    author        NVARCHAR(255),
-    isbn          VARCHAR(20)   NULL,
-    reason        NVARCHAR(500) NULL,
-    status        VARCHAR(20)   DEFAULT 'Pending',
-    processed_by  INT           NULL,
-    processed_at  DATETIME      NULL,
-    reject_reason NVARCHAR(255) NULL,
-    created_at    DATETIME      DEFAULT GETDATE(),
-    FOREIGN KEY(member_id)    REFERENCES Users(user_id),
-    FOREIGN KEY(processed_by) REFERENCES Users(user_id),
-    CONSTRAINT CHK_Acquisition_Status
-        CHECK(status IN ('Pending','Approved','Rejected'))
+-- =========================================================================
+-- 8. OTHERS (Thanh lý, Sách yêu thích)
+-- =========================================================================
+CREATE TABLE BookDisposals (
+    disposal_id INT IDENTITY(1,1) PRIMARY KEY,
+    book_item_id INT FOREIGN KEY REFERENCES BookItems(book_item_id),
+    staff_id INT FOREIGN KEY REFERENCES Staff(staff_id),
+    reason NVARCHAR(MAX),
+    disposal_date DATETIME DEFAULT GETDATE(),
+    status VARCHAR(50) DEFAULT 'Completed'
 );
-GO
 
--- =====================================================
--- REPORTS
--- BR-28: Bao cao hang thang
--- UC-22: Xuat PDF (file_url)
--- =====================================================
-CREATE TABLE Reports (
-    report_id    INT IDENTITY(1,1) PRIMARY KEY,
-    report_name  NVARCHAR(255) NOT NULL,
-    report_type  VARCHAR(50),
-    -- Monthly / Revenue / Inventory / Members
-    generated_by INT,
-    generated_at DATETIME      DEFAULT GETDATE(),
-    file_url     NVARCHAR(500) NULL,
-    -- URL file PDF (luu local hoac Cloudinary)
-    FOREIGN KEY(generated_by) REFERENCES Users(user_id)
+CREATE TABLE Favorites (
+    member_id INT FOREIGN KEY REFERENCES Members(member_id) ON DELETE CASCADE,
+    book_id INT FOREIGN KEY REFERENCES Books(book_id) ON DELETE CASCADE,
+    PRIMARY KEY (member_id, book_id)
 );
+
 GO
 
--- =====================================================
--- SYSTEM SETTINGS
--- Luu tat ca gia tri tham so Business Rules
--- =====================================================
-CREATE TABLE SystemSettings (
-    setting_id    INT IDENTITY(1,1) PRIMARY KEY,
-    setting_key   VARCHAR(100)  NOT NULL UNIQUE,
-    setting_value NVARCHAR(255) NOT NULL,
-    description   NVARCHAR(500)
-);
-GO
+-- =========================================================================
+-- =========================================================================
+-- SEED DATA (DỮ LIỆU MẪU)
+-- Password mặc định cho Account: Test@1234
+-- Hash: $2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2
+-- =========================================================================
+-- =========================================================================
 
--- =====================================================
--- SYSTEM LOGS
--- BR-26: Ghi lai moi hoat dong muon, tra, phat, cap nhat TK
--- =====================================================
-CREATE TABLE SystemLogs (
-    log_id      INT IDENTITY(1,1) PRIMARY KEY,
-    user_id     INT           NULL,
-    action_type VARCHAR(100)  NOT NULL,
-    description NVARCHAR(MAX) NOT NULL,
-    ip_address  VARCHAR(50)   NULL,
-    created_at  DATETIME      DEFAULT GETDATE(),
-    FOREIGN KEY(user_id) REFERENCES Users(user_id) ON DELETE SET NULL
-);
-GO
+-- 1. System Settings
+INSERT INTO SystemSettings (setting_key, setting_value, description) VALUES
+('Fine_Per_Day', '5000', N'Phí phạt trễ hạn tính theo ngày (VND)'),
+('Max_Borrow_Days', '14', N'Số ngày mượn sách tối đa tiêu chuẩn'),
+('Deposit_Amount', '50000', N'Tiền cọc đặt trước một quyển sách (VND)');
 
--- =====================================================
--- SEED DATA: ROLES
--- =====================================================
-INSERT INTO Roles(role_name) VALUES ('Admin'), ('Librarian'), ('Member');
-GO
+-- 2. Tiers
+INSERT INTO MembershipTiers (tier_name, discount_percent, borrow_limit, condition, benefits) VALUES
+(N'Regular', 0, 3, 0, N'Mượn tối đa 3 sách'),
+(N'Loyal', 50, 5, 1000000, N'Giảm 50% phí mượn, mượn tối đa 5 sách');
 
--- =====================================================
--- SEED DATA: MEMBERSHIP TIERS
--- BR-34: 2 hang thanh vien
--- BR-32: Loyal phi muon = 50% (borrow_fee_rate = 0.5)
--- =====================================================
-INSERT INTO MembershipTiers(tier_name, max_borrow_books, borrow_fee_rate, description)
-VALUES
-(N'Standard Member', 5,  1.0, N'Thanh vien thuong, phi muon tieu chuan'),
-(N'Loyal Member',    10, 0.5, N'Thanh vien than thiet, phi muon = 50% chuan (BR-32)');
-GO
+-- 3. Users
+INSERT INTO Users (full_name, email, phone, status) VALUES
+(N'Quản Trị Viên', 'admin@library.vn', '0901000001', 'Active'),
+(N'Nguyễn Thị Lan', 'lib01@library.vn', '0902000001', 'Active'),
+(N'Trần Văn Minh', 'lib02@library.vn', '0902000002', 'Active'),
+(N'Lê Thị Hoa', 'member01@gmail.com', '0903000001', 'Active'),
+(N'Phạm Minh Tuấn', 'member02@gmail.com', '0903000002', 'Active'),
+(N'Nguyễn Văn An', 'member03@gmail.com', '0903000003', 'Active'),
+(N'Trần Thị Mai', 'member04@gmail.com', '0903000004', 'Active');
 
--- =====================================================
--- SEED DATA: SYSTEM SETTINGS (tuong ung Business Rules)
--- =====================================================
-INSERT INTO SystemSettings(setting_key, setting_value, description)
-VALUES
--- BR-7: So ngay muon
-('Borrow_Days',              '14',       N'So ngay muon mac dinh (BR-7)'),
--- BR-8: Phi phat qua han
-('Fine_Rate_Per_Day',        '5000',     N'Tien phat moi ngay qua han - VND (BR-8)'),
--- BR-6: Gia han
-('Max_Renewals',             '2',        N'So lan gia han toi da moi phieu muon (BR-6)'),
-('Renewal_Days',             '7',        N'So ngay gia han them moi lan'),
--- BR-15: Giu sach dat truoc
-('Reservation_Days',         '3',        N'So ngay giu sach sau khi sach ve (BR-15)'),
--- BR-10: Phi hu hong
-('Damage_Fee_Threshold',     '50',       N'Nguong hu hong (%) de tinh boi thuong (BR-10)'),
-('Damage_Fee_Amount',        '120000',   N'Phi boi thuong khi sach hu > 50% - VND (BR-10)'),
--- BR-4: Phi muon sach
-('Borrow_Fee_Standard',      '5000',     N'Phi muon sach tieu chuan - VND (BR-4)'),
--- BR-31, BR-35: Nang/ha hang
-('Loyal_Spend_Threshold',    '1000000',  N'Nguong chi tieu nang hang Loyal Member - VND (BR-31)'),
-('Loyal_Inactive_Months',    '6',        N'So thang inactive de ha hang Loyal (BR-35)'),
--- BR-41: Dat coc dat truoc
-('Reservation_Deposit_Rate', '0.5',      N'Ti le dat coc = 50% gia tri sach (BR-41)'),
--- BR-11: Khoa TK
-('Max_Overdue_Violations',   '3',        N'So lan vi pham qua han de khoa tai khoan (BR-11)'),
--- General
-('Max_Balance',              '5000000',  N'So du toi da tai khoan member - VND');
+-- 4. Accounts (Pass: Test@1234 cho tất cả)
+INSERT INTO Accounts (user_id, username, password_hash, status) VALUES
+(1, 'admin', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active'),
+(2, 'librarian01', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active'),
+(3, 'librarian02', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active'),
+(4, 'member01', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active'),
+(5, 'member02', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active'),
+(6, 'member03', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active'),
+(7, 'member04', '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2', 'Active');
+
+-- 5. Staff & Members
+INSERT INTO Staff (user_id, staff_type) VALUES
+(1, 'Admin'),
+(2, 'Librarian'),
+(3, 'Librarian');
+
+INSERT INTO Members (user_id, tier_id) VALUES
+(4, 1), -- Regular
+(5, 1), -- Regular
+(6, 2), -- Loyal
+(7, 1); -- Regular
+
+-- 6. Wallets
+INSERT INTO Wallets (member_id, balance) VALUES
+(1, 150000), -- member01
+(2, 50000),  -- member02
+(3, 300000), -- member03
+(4, 0);      -- member04
+
+-- 7. Categories & Genres
+INSERT INTO Categories (category_name) VALUES
+(N'Văn học'), (N'Khoa học - Công nghệ'), (N'Lịch sử - Địa lý');
+
+INSERT INTO Genres (category_id, genre_name) VALUES
+(1, N'Tiểu thuyết'),
+(1, N'Truyện ngắn'),
+(2, N'Công nghệ thông tin'),
+(3, N'Lịch sử thế giới');
+
+-- 8. Authors
+INSERT INTO Authors (author_name) VALUES
+(N'Nam Cao'),
+(N'Robert C. Martin'),
+(N'Yuval Noah Harari'),
+(N'J.K. Rowling');
+
+-- 9. Books
+INSERT INTO Books (genre_id, title, isbn, description, status) VALUES
+(1, N'Chí Phèo', '9786040100003', N'Truyện ngắn nổi tiếng về nông dân Việt Nam', 'Active'),
+(3, N'Clean Code', '9786040100014', N'Sách gối đầu giường của lập trình viên', 'Active'),
+(4, N'Sapiens', '9786040100010', N'Lược sử loài người', 'Active'),
+(1, N'Harry Potter', '9786040100007', N'Tiểu thuyết phép thuật', 'Active');
+
+-- 10. BookAuthors
+INSERT INTO BookAuthors (book_id, author_id) VALUES
+(1, 1), (2, 2), (3, 3), (4, 4);
+
+-- 11. Shelves
+INSERT INTO Shelves (shelf_name, location) VALUES
+(N'Kệ A - Văn học', N'Tầng 1 - Khu A'),
+(N'Kệ B - IT', N'Tầng 2 - Khu B'),
+(N'Kho dự trữ', N'Tầng Trệt');
+
+-- 12. BookItems
+INSERT INTO BookItems (book_id, shelf_id, barcode, status) VALUES
+(1, 1, 'BC001-001', 'Available'),
+(1, 3, 'BC001-002', 'Borrowed'),
+(2, 2, 'BC002-001', 'Available'),
+(2, 2, 'BC002-002', 'Available'),
+(3, 1, 'BC003-001', 'Borrowed'),
+(4, 1, 'BC004-001', 'Available');
+
+-- 13. Reservations (Online Booking)
+INSERT INTO Reservations (member_id, book_id, reservation_date, status) VALUES
+(1, 2, DATEADD(DAY, -2, GETDATE()), 'Pending'),
+(2, 4, DATEADD(DAY, -1, GETDATE()), 'Ready');
+
+-- 14. Borrows & BorrowDetails (Mượn sách: member 1 mượn Chí Phèo, member 3 mượn Sapiens)
+INSERT INTO Borrows (member_id, staff_id, borrow_date, status) VALUES
+(1, 2, DATEADD(DAY, -10, GETDATE()), 'Active'),
+(3, 3, DATEADD(DAY, -20, GETDATE()), 'Overdue');
+
+INSERT INTO BorrowDetails (borrow_id, book_id, book_item_id, due_date, return_date, renew_count, status) VALUES
+(1, 1, 2, DATEADD(DAY, 4, GETDATE()), NULL, 0, 'Borrowed'),
+(2, 3, 5, DATEADD(DAY, -6, GETDATE()), NULL, 0, 'Overdue'); -- Trễ hạn 6 ngày
+
+-- 15. Transactions (Lịch sử giao dịch ví)
+INSERT INTO Transactions (wallet_id, borrow_id, transaction_type, amount, transaction_date, status) VALUES
+(1, NULL, 'TOP_UP', 200000, DATEADD(DAY, -15, GETDATE()), 'Completed'),
+(1, 1, 'BORROW_FEE', -5000, DATEADD(DAY, -10, GETDATE()), 'Completed'),
+(3, NULL, 'TOP_UP', 500000, DATEADD(DAY, -30, GETDATE()), 'Completed'),
+(3, 2, 'BORROW_FEE', -2500, DATEADD(DAY, -20, GETDATE()), 'Completed'), -- Loyal giảm 50%
+(3, 2, 'FINE', -30000, GETDATE(), 'Pending'); -- Phạt trễ hạn 6 ngày x 5000
+
+-- 16. Feedbacks
+INSERT INTO Feedbacks (member_id, book_id, rating, comment, created_date) VALUES
+(1, 1, 5, N'Tác phẩm kinh điển, rất ý nghĩa.', DATEADD(DAY, -5, GETDATE()));
+
+-- 17. Favorites
+INSERT INTO Favorites (member_id, book_id) VALUES
+(1, 2), (1, 4), (3, 3);
+
+-- 18. Notifications & MemberNotifications
+INSERT INTO Notifications (staff_id, title, content, created_date, status) VALUES
+(2, N'Hệ thống bảo trì', N'Thư viện sẽ bảo trì hệ thống vào Chủ Nhật tuần này.', DATEADD(DAY, -2, GETDATE()), 'Active'),
+(3, N'Sách trễ hạn', N'Bạn đang có sách mượn quá hạn, vui lòng hoàn trả và đóng phạt.', GETDATE(), 'Active');
+
+INSERT INTO MemberNotifications (member_id, notification_id, is_read, read_date) VALUES
+(1, 1, 1, DATEADD(DAY, -1, GETDATE())),
+(2, 1, 0, NULL),
+(3, 1, 0, NULL),
+(4, 1, 0, NULL),
+(3, 2, 0, NULL); -- Gửi riêng cho member 3 đang trễ hạn
+
+GO
+PRINT '============================================';
+PRINT 'NEW DATABASE REWRITTEN SUCCESSFULLY!';
+PRINT 'MATCHES PROVIDED ERD 100%.';
+PRINT '============================================';
 GO

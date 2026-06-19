@@ -1,63 +1,23 @@
 package com.lms.entity;
-
 import jakarta.persistence.*;
-
 @Entity
 @Table(name = "SystemSettings")
 public class SystemSetting {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "setting_id")
-    private Integer id;
-
-    @Column(name = "setting_key", nullable = false, unique = true, length = 100)
-    private String key;
-
-    @Column(name = "setting_value", nullable = false, length = 255)
-    private String value;
-
-    @Column(length = 500)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer settingId;
+    @Column(unique = true, nullable = false, length = 100)
+    private String settingKey;
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String settingValue;
+    @Column(length = 255)
     private String description;
-
-    public SystemSetting(Integer id, String key, String value, String description) {
-        this.id = id;
-        this.key = key;
-        this.value = value;
-        this.description = description;
-    }
-
-    public SystemSetting() {
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    
+    public Integer getSettingId() { return settingId; }
+    public void setSettingId(Integer settingId) { this.settingId = settingId; }
+    public String getSettingKey() { return settingKey; }
+    public void setSettingKey(String settingKey) { this.settingKey = settingKey; }
+    public String getSettingValue() { return settingValue; }
+    public void setSettingValue(String settingValue) { this.settingValue = settingValue; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

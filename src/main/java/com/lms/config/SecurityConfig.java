@@ -8,6 +8,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * SecurityConfig - Cấu hình Spring Security
+ * Người phụ trách: Nguyễn Tiến Thương (CE191329)
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -18,19 +22,26 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // TODO: Implement - Cấu hình phân quyền
+        // TODO: /admin/** → chỉ ROLE_ADMIN
+        // TODO: /librarian/** → chỉ ROLE_LIBRARIAN hoặc ROLE_ADMIN
+        // TODO: /member/** → chỉ ROLE_MEMBER
+        // TODO: /, /books/**, /login, /register → permitAll
 
         http
-            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                .requestMatchers("/", "/books/**", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                // TODO: Thêm các quy tắc phân quyền ở đây
+                .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
+                .defaultSuccessUrl("/", true)
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/")
+                .logoutSuccessUrl("/login?logout")
                 .permitAll()
             );
 

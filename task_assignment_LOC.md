@@ -16,12 +16,12 @@
 | Member | Họ và Tên | Roll No | Module Phụ Trách Chính | LOC Mục tiêu | Trạng thái |
 |:---:|:---|:---|:---|:---:|:---:|
 | 1 | **Nguyễn Tiến Thương** | CE191329 | 🔐 Auth, Profile, Security | **~2,010** | 🟢 Sẵn sàng |
-| 2 | **La Tấn Khanh** | CE191640 | 📦 Inventory, Storage, System Settings | **~2,050** | 🟢 Sẵn sàng |
+| 2 | **La Tấn Khanh** | CE191640 | 📦 Inventory, Storage, System Settings | **~2,120** | 🟢 Sẵn sàng |
 | 3 | **Huỳnh Gia Hưng** | CE190488 | 📚 Borrowing, Loan Mgmt, Membership | **~2,030** | 🟢 Sẵn sàng |
 | 4 | **Trần Nguyễn Quốc Anh** | CE191655 | 💬 Services, Interaction, Reports, Noti | **~2,010** | 🟢 Sẵn sàng |
 | 5 | **Phạm Kiến Quốc** | CE201286 | 💰 Financial, Fines, Member Transactions | **~2,080** | 🟢 Sẵn sàng |
 | 6 | **Trần Ngọc Linh Đang**| CE191088 | ⚙️ Admin Accounts, System Admin, Backup| **~2,040** | 🟢 Sẵn sàng |
-| **Σ** | **Tổng Dự Án** | | | **~12,220 lines**| |
+| **Σ** | **Tổng Dự Án** | | | **~12,290 lines**| |
 
 ---
 
@@ -49,13 +49,13 @@
 
 | Layer | Danh sách File tiêu biểu | Dự kiến LOC |
 |:---|:---|:---:|
-| 🗄️ **Entity** | `Book.java`, `BookCopy.java`, `Category.java`, `StorageLocation.java`, `SystemSetting.java` | ~400 |
+| 🗄️ **Entity** | `Book.java`, `BookCopy.java`, `Category.java`, `Genre.java`, `StorageLocation.java`, `SystemSetting.java` | ~455 |
 | 🏷️ **Enum** | `CopyStatus.java` | ~40 |
-| 🔗 **Repository** | Các Interface Repository tương ứng | ~200 |
-| ⚙️ **Service** | `BookService.java`, `BookCopyService.java`, `SystemSettingsService.java` | ~800 |
+| 🔗 **Repository** | `BookRepository`, `BookCopyRepository`, `CategoryRepository`, `GenreRepository`, `StorageRepository` | ~215 |
+| ⚙️ **Service** | `BookService.java`, `BookCopyService.java`, `GenreService.java`, `SystemSettingsService.java` | ~850 |
 | 🎮 **Controller**| `InventoryController.java`, `SystemSettingsController.java` | ~450 |
-| 📦 **DTO** | Record DTO cho Book, Storage, Setting | ~160 |
-| | **TỔNG CỘNG** | **~2,050** |
+| 📦 **DTO** | Record DTO cho Book, Genre, Storage, Setting | ~110 |
+| | **TỔNG CỘNG** | **~2,120** |
 
 ---
 

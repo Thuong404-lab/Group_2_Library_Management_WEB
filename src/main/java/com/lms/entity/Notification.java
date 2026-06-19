@@ -1,0 +1,32 @@
+package com.lms.entity;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+@Entity
+@Table(name = "Notifications")
+public class Notification {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer notificationId;
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private Staff staff;
+    @Column(nullable = false, length = 255)
+    private String title;
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
+    private String content;
+    private LocalDateTime createdDate;
+    @Column(length = 50)
+    private String status = "Active";
+    
+    public Integer getNotificationId() { return notificationId; }
+    public void setNotificationId(Integer notificationId) { this.notificationId = notificationId; }
+    public Staff getStaff() { return staff; }
+    public void setStaff(Staff staff) { this.staff = staff; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}

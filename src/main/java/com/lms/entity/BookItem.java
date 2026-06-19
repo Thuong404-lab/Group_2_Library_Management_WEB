@@ -1,0 +1,29 @@
+package com.lms.entity;
+import jakarta.persistence.*;
+@Entity
+@Table(name = "BookItems")
+public class BookItem {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer bookItemId;
+    @ManyToOne
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
+    @ManyToOne
+    @JoinColumn(name = "shelf_id")
+    private Shelf shelf;
+    @Column(unique = true, nullable = false, length = 50)
+    private String barcode;
+    @Column(length = 50)
+    private String status = "Available";
+    
+    public Integer getBookItemId() { return bookItemId; }
+    public void setBookItemId(Integer bookItemId) { this.bookItemId = bookItemId; }
+    public Book getBook() { return book; }
+    public void setBook(Book book) { this.book = book; }
+    public Shelf getShelf() { return shelf; }
+    public void setShelf(Shelf shelf) { this.shelf = shelf; }
+    public String getBarcode() { return barcode; }
+    public void setBarcode(String barcode) { this.barcode = barcode; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}

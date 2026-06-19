@@ -35,7 +35,7 @@ The Library Management System aims to:
 
 * View Book List
 * Search Books
-* Filter by Author, Category, Language
+* Filter by Author, Category, Genre, Language
 * View Book Details
 * Book Inventory Management
 
