@@ -20,4 +20,14 @@ public class AuthService {
         // TODO: Mã hóa password bằng BCryptPasswordEncoder
         // TODO: Gán MembershipTier mặc định (Bronze)
     }
+
+    // UC-9.1: Ghi log đăng nhập
+    public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
+        // TODO: Implement - Insert vào bảng SystemLogs với action_type = 'LOGIN_SUCCESS'
+    }
+
+    // UC-9.1: Ghi log đăng xuất
+    public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
+        // TODO: Implement - Insert vào bảng SystemLogs với action_type = 'LOGOUT'
+    }
 }

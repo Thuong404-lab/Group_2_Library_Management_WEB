@@ -58,7 +58,7 @@
 | 7 | **UC-4.2** | Update Profile Information | Sprint 2 | 13/07 | 15/07 | 🟡 Medium |
 | 8 | **UC-4.3** | Change Password | Sprint 2 | 16/07 | 18/07 | 🟡 Medium |
 | 9 | **UC-4.4** | View Favorites List | Sprint 3 | 20/07 | 22/07 | 🟢 Simple |
-| 10 | **UC-19.3** | View System Logs | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
+| 10 | **UC-9.1** | Manage Active Sessions & Session Logs | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
 | 11 | **UC-13.3** | Process Borrow Requests ⚡ | Sprint 3 | 26/07 | 28/07 | 🔴 Complex |
 | 12 | **UC-13.4** | Process Renewal Requests ⚡ | Sprint 3 | 29/07 | 31/07 | 🔴 Complex |
 
@@ -161,7 +161,8 @@
 | 7 | **UC-20.3** | Delete Account | Sprint 2 | 13/07 | 15/07 | 🟢 Simple |
 | 8 | **UC-19.1** | Backup Data | Sprint 2 | 16/07 | 18/07 | 🔴 Complex |
 | 9 | **UC-19.2** | Restore Data | Sprint 3 | 20/07 | 22/07 | 🔴 Complex |
-| 10 | **UC-21.1** | Manage Borrowing/Return Policies | Sprint 3 | 23/07 | 25/07 | 🔴 Complex |
+| 10 | **UC-19.3** | View System Logs (Admin) | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
+| 11 | **UC-21.1** | Manage Borrowing/Return Policies | Sprint 3 | 26/07 | 28/07 | 🔴 Complex |
 
 ---
 
@@ -169,12 +170,12 @@
 
 | Member | **Trước** (S/M/C) | Điểm | ➡️ | **Sau** (S/M/C) | Điểm | Thay đổi |
 |:---:|:---|:---:|:---:|:---|:---:|:---|
-| 1 - Thương | 6/6/**0** | 18 | ➡️ | 5/5/**2** | 21 | +2 Complex ✅ |
+| 1 - Thương | 6/6/**0** | 18 | ➡️ | 5/5/**2** | 21 | Thay UC-19.3 thành UC-9.1 ✅ |
 | 2 - Khanh | 1/5/**3** | 20 | ➡️ | 1/5/**3** | 20 | Không đổi |
 | 3 - Hưng | 2/2/**6** | 24 | ➡️ | 3/4/**4** | 23 | −2 Complex ✅ |
 | 4 - Quốc Anh | 2/7/**1** | 19 | ➡️ | 2/7/**2** | 22 | +1 Complex ✅ |
 | 5 - Kiến Quốc | 2/2/**5** | 21 | ➡️ | 3/3/**4** | 21 | −1 Complex ✅ |
-| 6 - Linh Đang | 3/5/**4** (13 UC) | 25 | ➡️ | 2/4/**4** (10 UC) | 22 | −3 UC ✅ |
+| 6 - Linh Đang | 3/5/**4** (13 UC) | 25 | ➡️ | 2/5/**4** (11 UC) | 24 | Lấy lại UC-19.3 ✅ |
 
 <br>
 

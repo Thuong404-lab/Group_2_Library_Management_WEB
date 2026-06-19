@@ -176,6 +176,16 @@ CREATE TABLE Notifications (
     status VARCHAR(50) DEFAULT 'Active'
 );
 
+CREATE TABLE SystemLogs (
+    log_id INT IDENTITY(1,1) PRIMARY KEY,
+    account_id INT NULL FOREIGN KEY REFERENCES Accounts(account_id) ON DELETE SET NULL,
+    action_type VARCHAR(100) NOT NULL, -- 'LOGIN_SUCCESS', 'LOGOUT', 'BACKUP_DATA', 'UPDATE_SETTINGS'
+    ip_address VARCHAR(50),
+    user_agent NVARCHAR(MAX),
+    description NVARCHAR(MAX),
+    created_at DATETIME DEFAULT GETDATE()
+);
+
 CREATE TABLE MemberNotifications (
     member_id INT FOREIGN KEY REFERENCES Members(member_id) ON DELETE CASCADE,
     notification_id INT FOREIGN KEY REFERENCES Notifications(notification_id) ON DELETE CASCADE,
@@ -355,6 +365,12 @@ INSERT INTO MemberNotifications (member_id, notification_id, is_read, read_date)
 (3, 1, 0, NULL),
 (4, 1, 0, NULL),
 (3, 2, 0, NULL); -- Gửi riêng cho member 3 đang trễ hạn
+
+-- 12. System Logs (Login History)
+INSERT INTO SystemLogs (account_id, action_type, ip_address, description) VALUES
+(1, 'LOGIN_SUCCESS', '192.168.1.10', N'Đăng nhập thành công từ thiết bị Window'),
+(4, 'LOGIN_SUCCESS', '14.161.22.11', N'Đăng nhập thành công từ điện thoại iPhone'),
+(4, 'LOGOUT', '14.161.22.11', N'Đăng xuất hệ thống');
 
 GO
 PRINT '============================================';
