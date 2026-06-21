@@ -1,5 +1,7 @@
 package com.lms.config;
 
+// import com.lms.service.CustomOAuth2UserService;
+// import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +19,9 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // @Autowired
+    // private CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -45,6 +50,15 @@ public class SecurityConfig {
                 .defaultSuccessUrl("/", true)
                 .permitAll()
             )
+            /*
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                )
+                .defaultSuccessUrl("/", true)
+            )
+            */
             .logout(logout -> logout
                 // TODO: Cấu hình LogoutSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLogoutAction)
                 .logoutSuccessUrl("/login?logout")

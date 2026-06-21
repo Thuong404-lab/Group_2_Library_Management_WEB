@@ -1,48 +1,57 @@
 package com.lms.config;
 
+import com.lms.entity.Account;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.Collection;
 
-/**
- * CustomUserDetails - Đối tượng chứa thông tin User cho Spring Security
- * Người phụ trách: Nguyễn Tiến Thương (CE191329)
- */
 public class CustomUserDetails implements UserDetails {
 
-    // TODO: Implement - Thêm các field: accountId, username, password, role
-    // TODO: Implement tất cả các method của UserDetails interface
+    private final Account account;
+    private final Collection<? extends GrantedAuthority> authorities;
+
+    public CustomUserDetails(Account account, Collection<? extends GrantedAuthority> authorities) {
+        this.account = account;
+        this.authorities = authorities;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // TODO: Implement - Trả về ROLE_ADMIN / ROLE_LIBRARIAN / ROLE_MEMBER
-        return null;
+        return authorities;
     }
 
     @Override
     public String getPassword() {
-        // TODO: Implement
-        return null;
+        return account.getPasswordHash();
     }
 
     @Override
     public String getUsername() {
-        // TODO: Implement
-        return null;
+        return account.getUsername();
     }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return "Active".equalsIgnoreCase(account.getStatus());
+    }
 
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
     @Override
     public boolean isEnabled() {
-        // TODO: Implement - Check account status == "Active"
-        return true;
+        return "Active".equalsIgnoreCase(account.getStatus());
     }
 }

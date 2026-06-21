@@ -1,6 +1,20 @@
 package com.lms.service;
 
+import com.lms.dto.request.RegisterRequest;
+import com.lms.entity.Account;
+import com.lms.entity.Member;
+import com.lms.entity.User;
+import com.lms.entity.Wallet;
+import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberRepository;
+import com.lms.repository.UserRepository;
+import com.lms.repository.WalletRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 /**
  * AuthService - Xử lý Logic Xác thực
@@ -9,25 +23,64 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    // UC-9: Xác thực đăng nhập
-    public void authenticate(String username, String password) {
-        // TODO: Implement - Spring Security sẽ xử lý qua UserDetailsService
-    }
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private WalletRepository walletRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // UC-2: Đăng ký thành viên mới
-    public void register(String username, String password, String fullName, String email, String phone) {
-        // TODO: Implement - Tạo Account + Member + Wallet
-        // TODO: Mã hóa password bằng BCryptPasswordEncoder
-        // TODO: Gán MembershipTier mặc định (Bronze)
+    @Transactional
+    public void register(RegisterRequest request) throws Exception {
+        if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new Exception("Tên đăng nhập đã tồn tại!");
+        }
+        
+        // 1. Tạo User
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setStatus("Active");
+        user = userRepository.save(user);
+
+        // 2. Tạo Account
+        Account account = new Account();
+        account.setUsername(request.getUsername());
+        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        account.setUser(user);
+        account.setStatus("Active");
+        accountRepository.save(account);
+
+        // 3. Tạo Member
+        Member member = new Member();
+        member.setUser(user);
+        // member.setTier(...) // Có thể set hạng Basic sau
+        memberRepository.save(member);
+
+        // 4. Tạo Wallet
+        Wallet wallet = new Wallet();
+        wallet.setMember(member);
+        wallet.setBalance(BigDecimal.ZERO);
+        walletRepository.save(wallet);
     }
 
     // UC-9.1: Ghi log đăng nhập
     public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        // TODO: Implement - Insert vào bảng SystemLogs với action_type = 'LOGIN_SUCCESS'
+        // TODO: Implement - Insert vào bảng SystemLogs
     }
 
     // UC-9.1: Ghi log đăng xuất
     public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        // TODO: Implement - Insert vào bảng SystemLogs với action_type = 'LOGOUT'
+        // TODO: Implement - Insert vào bảng SystemLogs
     }
 }

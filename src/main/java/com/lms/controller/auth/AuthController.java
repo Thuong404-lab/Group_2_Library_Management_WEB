@@ -1,8 +1,12 @@
 package com.lms.controller.auth;
 
+import com.lms.dto.request.RegisterRequest;
+import com.lms.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * AuthController - Xử lý Đăng nhập / Đăng xuất / Đăng ký
@@ -11,29 +15,34 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class AuthController {
 
+    @Autowired
+    private AuthService authService;
+
     // UC-9: Login - Hiển thị trang đăng nhập
     @GetMapping("/login")
     public String showLoginPage() {
-        // TODO: Implement - Trả về view login.html
         return "login";
     }
 
     // UC-2: Register - Hiển thị form đăng ký
     @GetMapping("/register")
     public String showRegisterPage(Model model) {
-        // TODO: Implement - Tạo DTO RegisterRequest, truyền vào model
-        return "auth/register";
+        model.addAttribute("registerRequest", new RegisterRequest());
+        return "register";
     }
 
     // UC-2: Register - Xử lý đăng ký thành viên mới
     @PostMapping("/register")
-    public String processRegister(Model model) {
-        // TODO: Implement - Validate input, gọi AuthService.register()
-        // TODO: Mã hóa password bằng BCryptPasswordEncoder
-        // TODO: Tạo Account + Member + Wallet
-        return "redirect:/login?registered";
+    public String processRegister(@ModelAttribute("registerRequest") RegisterRequest registerRequest, RedirectAttributes redirectAttributes) {
+        try {
+            authService.register(registerRequest);
+            redirectAttributes.addFlashAttribute("successMsg", "Đăng ký thành công! Vui lòng đăng nhập.");
+            return "redirect:/login";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+            return "redirect:/register";
+        }
     }
 
     // UC-10: Logout - Spring Security tự xử lý qua SecurityConfig
-    // Chỉ cần cấu hình trong SecurityConfig.java
 }
