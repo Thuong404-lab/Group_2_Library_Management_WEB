@@ -1,6 +1,6 @@
 # 📚 BẢN PHÂN CÔNG NHIỆM VỤ & PRODUCT BACKLOG (REFINED v2)
 **Dự án:** Library Management Web | **Mô hình:** Agile / Scrum | **Nhóm:** G2 (6 Thành viên)
-**Ngày bắt đầu:** 22/06/2026 | **Mỗi Task:** 3 ngày
+**Ngày bắt đầu:** 22/06/2026 | **Ngày kết thúc:** 10/07/2026 | **Mỗi Task:** 1-2 ngày
 
 > [!IMPORTANT]
 > **Các thay đổi so với bản v1 để CÂN BẰNG ĐỘ KHÓ:**
@@ -13,13 +13,33 @@
 
 ---
 
-## 📅 TỔNG QUAN SPRINT
+## 📅 TỔNG QUAN SPRINT (TĂNG TỐC)
 
 | Sprint | Thời gian | Số ngày | Mục tiêu chính |
 |:---:|:---|:---:|:---|
-| **Sprint 1** | 22/06/2026 – 05/07/2026 | 14 ngày | 🟢 Nền tảng: Auth, View cơ bản, Setup CRUD đơn giản |
-| **Sprint 2** | 06/07/2026 – 19/07/2026 | 14 ngày | 🟡 Tính năng cốt lõi: Mượn/Trả, Thanh toán, Quản lý sách |
-| **Sprint 3** | 20/07/2026 – 05/08/2026 | 17 ngày | 🔴 Nâng cao: Backup, Báo cáo, Loan Processing, Polish |
+| **Sprint 1** | 22/06/2026 – 27/06/2026 | 6 ngày | 🟢 Nền tảng: Auth, View cơ bản, Setup CRUD đơn giản |
+| **Sprint 2** | 28/06/2026 – 04/07/2026 | 7 ngày | 🟡 Tính năng cốt lõi: Mượn/Trả, Thanh toán, Quản lý sách |
+| **Sprint 3** | 05/07/2026 – 10/07/2026 | 6 ngày | 🔴 Nâng cao: Backup, Báo cáo, Loan Processing, Polish |
+
+---
+
+## 📈 ĐẢM BẢO YÊU CẦU LINES OF CODE (LOC)
+
+> [!IMPORTANT]
+> **Yêu cầu LOC:** Mỗi thành viên cần đạt khoảng **1900 - 2000 LOC (Lines of Code)** (Chỉ tính BackEnd, không tính HTML/CSS/JS).
+> 
+> **Đánh giá khả thi:** Hoàn toàn khả thi với Java Spring Boot. Trung bình mỗi Use Case (chỉ tính Backend) sẽ bao gồm:
+> *   **Controller:** ~50 - 150 LOC.
+> *   **Service (Interface & Implementation):** ~100 - 250 LOC (chứa logic nghiệp vụ lõi).
+> *   **DTOs (Request/Response), Exception, Repository:** ~100 - 150 LOC.
+> 
+> => **Tổng cộng 1 UC = ~250 - 550 LOC (Thuần Backend).** 
+> Mỗi thành viên được giao từ **9 đến 12 UCs**, tương đương khối lượng dao động từ **2,250 đến 6,600 LOC** (chỉ tính Java). 
+> 
+> Tuy nhiên, để đảm bảo vượt mức 2000 LOC một cách an toàn và chất lượng nhất (tránh việc code quá ngắn do dùng các hàm có sẵn), các thành viên **BẮT BUỘC** nên áp dụng:
+> 1. **Viết Unit Test (JUnit / Mockito):** Code test cũng là code Backend. Viết test đầy đủ cho Controller và Service sẽ nhân đôi số lượng LOC hợp lệ của bạn (1000 dòng code thực tế thường đi kèm 1000 - 1500 dòng code test).
+> 2. **Tách nhỏ hàm:** Tránh viết các hàm "God Method" dài hàng trăm dòng, hãy chia nhỏ logic ra các private methods trong Service.
+> 3. **Validation kỹ lưỡng:** Bổ sung các Custom Validator (Anotation) ở Backend thay vì chỉ tin tưởng Frontend.
 
 ---
 
