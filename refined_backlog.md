@@ -78,7 +78,7 @@
 | 7 | **UC-4.2** | Update Profile Information | Sprint 2 | 13/07 | 15/07 | 🟡 Medium |
 | 8 | **UC-4.3** | Change Password | Sprint 2 | 16/07 | 18/07 | 🟡 Medium |
 | 9 | **UC-4.4** | View Favorites List | Sprint 3 | 20/07 | 22/07 | 🟢 Simple |
-| 10 | **UC-9.1** | Manage Active Sessions & Session Logs | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
+| 10 | **UC-???** | (Ngoại lai - Không có trong sơ đồ UCD) | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
 | 11 | **UC-13.3** | Process Borrow Requests ⚡ | Sprint 3 | 26/07 | 28/07 | 🔴 Complex |
 | 12 | **UC-13.4** | Process Renewal Requests ⚡ | Sprint 3 | 29/07 | 31/07 | 🔴 Complex |
 
@@ -112,10 +112,10 @@
 |:---:|:---|:---|:---:|:---:|:---:|:---:|
 | 1 | **UC-5.1** | View Benefits & Privileges | Sprint 1 | 22/06 | 24/06 | 🟢 Simple |
 | 2 | **UC-5.2** | View Membership Tier | Sprint 1 | 25/06 | 27/06 | 🟢 Simple |
-| 3 | **UC-16.1** | View Librarian Profile ⚡ | Sprint 1 | 28/06 | 30/06 | 🟢 Simple |
+| 3 | **UC-16.1** | View Profile ⚡ | Sprint 1 | 28/06 | 30/06 | 🟢 Simple |
 | 4 | **UC-6.1** | View Borrowing History | Sprint 1 | 01/07 | 03/07 | 🟡 Medium |
-| 5 | **UC-16.2** | Edit Librarian Profile ⚡ | Sprint 2 | 07/07 | 09/07 | 🟡 Medium |
-| 6 | **UC-16.3** | Change Librarian Password ⚡ | Sprint 2 | 10/07 | 12/07 | 🟡 Medium |
+| 5 | **UC-16.2** | Update Profile Information ⚡ | Sprint 2 | 07/07 | 09/07 | 🟡 Medium |
+| 6 | **UC-16.3** | Change Password ⚡ | Sprint 2 | 10/07 | 12/07 | 🟡 Medium |
 | 7 | **UC-13.1** | View Loan Details | Sprint 2 | 13/07 | 15/07 | 🟡 Medium |
 | 8 | **UC-6.2** | Reserve Books | Sprint 2 | 16/07 | 18/07 | 🔴 Complex |
 | 9 | **UC-6.3** | Borrow Book | Sprint 3 | 20/07 | 22/07 | 🔴 Complex |
@@ -139,9 +139,9 @@
 | 6 | **UC-15.2** | Respond to Book Acquisition Requests | Sprint 2 | 10/07 | 12/07 | 🟡 Medium |
 | 7 | **UC-15.3** | Moderate Reviews & Comments | Sprint 2 | 13/07 | 15/07 | 🟡 Medium |
 | 8 | **UC-14.2** | Manage Fines & Violations ⚡ | Sprint 2 | 16/07 | 18/07 | 🔴 Complex |
-| 9 | **UC-17.1** | Generate Reports | Sprint 3 | 20/07 | 22/07 | 🟡 Medium |
-| 10 | **UC-22.1** | Generate Revenue Report | Sprint 3 | 23/07 | 25/07 | 🔴 Complex |
-| 11 | **UC-22.2** | Export Report | Sprint 3 | 26/07 | 28/07 | 🟡 Medium |
+| 9 | **UC-17** | Revenue report | Sprint 3 | 20/07 | 22/07 | 🟡 Medium |
+| 10 | **UC-23.1** | Admin console report | Sprint 3 | 23/07 | 25/07 | 🔴 Complex |
+| 11 | **UC-23.2** | Export Report | Sprint 3 | 26/07 | 28/07 | 🟡 Medium |
 
 ---
 
@@ -155,12 +155,12 @@
 | 1 | **UC-8.5** | View Top-up Notifications | Sprint 1 | 22/06 | 24/06 | 🟢 Simple |
 | 2 | **UC-8.4** | View Transaction History | Sprint 1 | 25/06 | 27/06 | 🟡 Medium |
 | 3 | **UC-14.1** | View Member List | Sprint 1 | 28/06 | 30/06 | 🟢 Simple |
-| 4 | **UC-20.6** | Reset Password ⚡ | Sprint 1 | 01/07 | 03/07 | 🟢 Simple |
+| 4 | **UC-21.2** | Reset Password ⚡ | Sprint 1 | 01/07 | 03/07 | 🟢 Simple |
 | 5 | **UC-14.3** | View Transaction History (Librarian) | Sprint 2 | 07/07 | 09/07 | 🟡 Medium |
-| 6 | **UC-20.5** | Change Account Status ⚡ | Sprint 2 | 10/07 | 12/07 | 🟡 Medium |
+| 6 | **UC-21.1** | Change Account Status ⚡ | Sprint 2 | 10/07 | 12/07 | 🟡 Medium |
 | 7 | **UC-8.2** | Pay Borrowing Fees | Sprint 2 | 13/07 | 15/07 | 🔴 Complex |
 | 8 | **UC-8.1** | Pay Overdue Fines | Sprint 2 | 16/07 | 18/07 | 🔴 Complex |
-| 9 | **UC-8.3** | Pay Reservation Deposit | Sprint 3 | 20/07 | 22/07 | 🔴 Complex |
+| 9 | **UC-8.3** | Deposit payment | Sprint 3 | 20/07 | 22/07 | 🔴 Complex |
 | 10 | **UC-14.4** | Top Up Member Account | Sprint 3 | 23/07 | 25/07 | 🔴 Complex |
 
 ---
@@ -172,17 +172,17 @@
 
 | # | Mã UC | Tên Use Case | Sprint | Bắt đầu | Kết thúc | Độ khó |
 |:---:|:---|:---|:---:|:---:|:---:|:---:|
-| 1 | **UC-18.1** | View Admin Dashboard | Sprint 1 | 22/06 | 24/06 | 🟡 Medium |
+| 1 | **UC-18.1** | Member Accounts Management | Sprint 1 | 22/06 | 24/06 | 🟡 Medium |
 | 2 | **UC-18.2** | View Librarian List | Sprint 1 | 25/06 | 27/06 | 🟢 Simple |
-| 3 | **UC-18.3** | View System Logs | Sprint 1 | 28/06 | 30/06 | 🟡 Medium |
+| 3 | **UC-???** | (Trùng lặp với UC-19.3) | Sprint 1 | 28/06 | 30/06 | 🟡 Medium |
 | 4 | **UC-20.4** | Search Accounts | Sprint 1 | 01/07 | 03/07 | 🟡 Medium |
 | 5 | **UC-20.1** | Create Account | Sprint 2 | 07/07 | 09/07 | 🔴 Complex |
 | 6 | **UC-20.2** | Update Account | Sprint 2 | 10/07 | 12/07 | 🟡 Medium |
 | 7 | **UC-20.3** | Delete Account | Sprint 2 | 13/07 | 15/07 | 🟢 Simple |
 | 8 | **UC-19.1** | Backup Data | Sprint 2 | 16/07 | 18/07 | 🔴 Complex |
 | 9 | **UC-19.2** | Restore Data | Sprint 3 | 20/07 | 22/07 | 🔴 Complex |
-| 10 | **UC-19.3** | View System Logs (Admin) | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
-| 11 | **UC-21.1** | Manage Borrowing/Return Policies | Sprint 3 | 26/07 | 28/07 | 🔴 Complex |
+| 10 | **UC-19.3** | View System Logs | Sprint 3 | 23/07 | 25/07 | 🟡 Medium |
+| 11 | **UC-22.1** | Manage Borrowing and Return Policies | Sprint 3 | 26/07 | 28/07 | 🔴 Complex |
 
 ---
 
@@ -202,3 +202,29 @@
 > [!TIP]
 > **Cách trình bày cho Giảng viên:**
 > Bạn có thể trực tiếp export file markdown này ra định dạng PDF hoặc copy dán vào Word. Các icon và cấu trúc màu sắc sẽ giúp báo cáo của nhóm trông cực kỳ chuyên nghiệp và thu hút.
+
+
+## 📂 HƯỚNG DẪN CẤU TRÚC THƯ MỤC DỰ ÁN (DIRECTORY STRUCTURE)
+
+Dưới đây là giải thích chi tiết về vai trò của từng thư mục hiện tại trong dự án, giúp các thành viên nhóm hiểu rõ cấu trúc và biết chính xác vị trí cần viết code:
+
+### 1. `src/main/java/com/lms/` (Mã nguồn Backend - Java)
+Đây là khu vực chứa toàn bộ logic xử lý của hệ thống.
+*   **`entity/`**: Chứa các lớp thực thể ánh xạ trực tiếp với các bảng trong cơ sở dữ liệu SQL Server (ví dụ: `Book`, `Member`). **Hạn chế sửa đổi** trừ khi có thay đổi Database.
+*   **`repository/`**: Chứa các giao diện (Interface) dùng để tương tác (Thêm, Sửa, Xóa, Tìm kiếm) với Database bằng Spring Data JPA.
+*   **`dto/` (Data Transfer Objects)**: Chứa các class chuyên dùng để bọc dữ liệu truyền qua lại giữa Web và Server (ví dụ: `LoginRequest`, `ApiResponse`). Giúp bảo mật thông tin, không làm lộ cấu trúc Database thật.
+*   **`exception/`**: Nơi chứa `GlobalExceptionHandler` và các class lỗi tùy chỉnh (vd: `ResourceNotFoundException`). Dùng để bắt lỗi tập trung trên toàn hệ thống và tự động trả về trang báo lỗi thân thiện.
+*   **`enums/`**: Chứa các tập hợp hằng số cố định (ví dụ: `Role`, `BookStatus`, `LoanStatus`). Giúp chuẩn hóa các trạng thái, tránh gõ sai chính tả so với việc dùng String thông thường.
+*   **`service/`**: Trái tim của ứng dụng. Đây là nơi bắt buộc phải chứa **toàn bộ logic nghiệp vụ (Business Logic)** như: tính toán tiền phạt, kiểm tra điều kiện mượn sách, xác thực tài khoản.
+*   **`controller/`**: Nơi tiếp nhận các Request từ đường dẫn URL trên trình duyệt. Nhiệm vụ của nó rất nhẹ: gọi Service để xử lý logic, sau đó quyết định trả về giao diện HTML nào. Đã được chia rõ theo role: `admin/`, `librarian/`, `member/`, `auth/`.
+*   **`config/`**: Chứa các file cấu hình hệ thống như `SecurityConfig` (Phân quyền đăng nhập).
+
+### 2. `src/main/resources/` (Tài nguyên và Giao diện - Frontend)
+Khu vực cấu hình hệ thống, chứa CSS/JS và các giao diện HTML.
+*   **`application-dev.properties`**: File thông số kết nối Database, cấu hình gửi Email, và cấu hình Cloudinary lưu ảnh.
+*   **`static/`**: Chứa các tài nguyên tĩnh như hình ảnh, file `.css` custom, và file `.js` tự viết.
+*   **`templates/`**: Chứa toàn bộ các file giao diện HTML (sử dụng Thymeleaf).
+    *   **`layout/base.html`**: Bộ khung giao diện gốc (Master Layout). Nó cấu hình sẵn thẻ `<head>`, bao bọc toàn bộ nội dung, tự động nạp Header, Sidebar, Footer.
+    *   **`fragments/`**: Chứa các mảnh ghép HTML dùng chung như `header.html` (Thanh điều hướng ngang), `sidebar.html` (Menu dọc bên trái), `footer.html`.
+    *   **`error/`**: Chứa các trang báo lỗi (400, 404, 500) đã được trang trí sẵn.
+    *   **`admin/`, `librarian/`, `member/`**: Nơi các thành viên sẽ viết giao diện cho từng tính năng cụ thể. Các trang này sẽ rất ngắn gọn vì chỉ cần tập trung viết nội dung chính, phần khung đã được `layout/base.html` tự động đắp vào.
