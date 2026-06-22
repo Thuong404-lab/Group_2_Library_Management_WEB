@@ -42,7 +42,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<GrantedAuthority> authorities = new ArrayList<>();
         
         // Xác định Role
-        Optional<Staff> staffOpt = staffRepository.findByUserUserId(account.getUser().getUserId());
+        Optional<Staff> staffOpt = staffRepository.findByUserId(account.getUser().getId());
         if (staffOpt.isPresent()) {
             String type = staffOpt.get().getStaffType().toUpperCase(); // ADMIN hoặc LIBRARIAN
             authorities.add(new SimpleGrantedAuthority("ROLE_" + type));
