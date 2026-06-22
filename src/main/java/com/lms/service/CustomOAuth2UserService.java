@@ -10,7 +10,6 @@ import com.lms.repository.AccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.UserRepository;
 import com.lms.repository.WalletRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -25,17 +24,21 @@ import java.util.Optional;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-    @Autowired
-    private WalletRepository walletRepository;
+    private final WalletRepository walletRepository;
+
+    public CustomOAuth2UserService(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository) {
+        this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
+        this.memberRepository = memberRepository;
+        this.walletRepository = walletRepository;
+    }
+
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
