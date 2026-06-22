@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.InventoryService;
 
+import com.lms.repository.BookItemRepository;
+import com.lms.repository.BookDisposalRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class InventoryServiceImpl implements InventoryService {
+    private final BookItemRepository bookItemRepository;
+    private final BookDisposalRepository bookDisposalRepository;
+
+    public InventoryServiceImpl(BookItemRepository bookItemRepository, BookDisposalRepository bookDisposalRepository) {
+        this.bookItemRepository = bookItemRepository;
+        this.bookDisposalRepository = bookDisposalRepository;
+    }
+
 
     // UC-12.1: Kiểm kê sách
     @Override

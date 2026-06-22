@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.StorageService;
 
+import com.lms.repository.ShelfRepository;
+import com.lms.repository.BookItemRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class StorageServiceImpl implements StorageService {
+    private final ShelfRepository shelfRepository;
+    private final BookItemRepository bookItemRepository;
+
+    public StorageServiceImpl(ShelfRepository shelfRepository, BookItemRepository bookItemRepository) {
+        this.shelfRepository = shelfRepository;
+        this.bookItemRepository = bookItemRepository;
+    }
+
 
     // UC-11.1: Cập nhật vị trí
     @Override

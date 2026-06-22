@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.LibraryInteractionService;
 
+import com.lms.repository.FeedbackRepository;
+import com.lms.repository.FavoriteRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LibraryInteractionServiceImpl implements LibraryInteractionService {
+    private final FeedbackRepository feedbackRepository;
+    private final FavoriteRepository favoriteRepository;
+
+    public LibraryInteractionServiceImpl(FeedbackRepository feedbackRepository, FavoriteRepository favoriteRepository) {
+        this.feedbackRepository = feedbackRepository;
+        this.favoriteRepository = favoriteRepository;
+    }
+
 
     // UC-7.1: Thêm yêu thích
     @Override
