@@ -1,2 +1,2 @@
 package com.lms.enums;
-public enum UserStatus { Active, Inactive, Blocked }
+public enum UserStatus { ACTIVE, INACTIVE, BLOCKED }
