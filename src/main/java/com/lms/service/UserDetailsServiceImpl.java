@@ -6,7 +6,6 @@ import com.lms.entity.Staff;
 import com.lms.repository.AccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.StaffRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,14 +24,18 @@ import java.util.Optional;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
     
-    @Autowired
-    private StaffRepository staffRepository;
+    private final StaffRepository staffRepository;
     
-    @Autowired
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
+
+    public UserDetailsServiceImpl(AccountRepository accountRepository, StaffRepository staffRepository, MemberRepository memberRepository) {
+        this.accountRepository = accountRepository;
+        this.staffRepository = staffRepository;
+        this.memberRepository = memberRepository;
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

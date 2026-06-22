@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.FinancialService;
 
+import com.lms.repository.TransactionRepository;
+import com.lms.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class FinancialServiceImpl implements FinancialService {
+    private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
+
+    public FinancialServiceImpl(TransactionRepository transactionRepository, WalletRepository walletRepository) {
+        this.transactionRepository = transactionRepository;
+        this.walletRepository = walletRepository;
+    }
+
 
     // UC-8.1: Thanh toán phí phạt quá hạn
     @Override

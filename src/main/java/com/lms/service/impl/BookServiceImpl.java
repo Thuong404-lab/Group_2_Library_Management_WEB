@@ -2,6 +2,10 @@ package com.lms.service.impl;
 
 import com.lms.service.BookService;
 
+import com.lms.repository.BookRepository;
+import com.lms.repository.CategoryRepository;
+import com.lms.repository.GenreRepository;
+import com.lms.repository.AuthorRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +14,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BookServiceImpl implements BookService {
+    private final BookRepository bookRepository;
+    private final CategoryRepository categoryRepository;
+    private final GenreRepository genreRepository;
+    private final AuthorRepository authorRepository;
+
+    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository, GenreRepository genreRepository, AuthorRepository authorRepository) {
+        this.bookRepository = bookRepository;
+        this.categoryRepository = categoryRepository;
+        this.genreRepository = genreRepository;
+        this.authorRepository = authorRepository;
+    }
+
 
     // UC-1: Tìm kiếm sách
     @Override
