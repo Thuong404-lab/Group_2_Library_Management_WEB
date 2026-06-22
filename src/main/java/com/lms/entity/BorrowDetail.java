@@ -22,6 +22,9 @@ public class BorrowDetail {
     @Column(length = 50)
     private String status = "Borrowed";
 
+    public BorrowDetail() {
+    }
+
     public BorrowDetail(Integer borrowDetailId, Borrow borrow, Book book, BookItem bookItem, LocalDateTime dueDate, LocalDateTime returnDate, Integer renewCount, String status) {
         this.borrowDetailId = borrowDetailId;
         this.borrow = borrow;

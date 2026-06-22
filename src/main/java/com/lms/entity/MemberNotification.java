@@ -21,6 +21,9 @@ public class MemberNotification {
     private Boolean isRead = false;
     private LocalDateTime readDate;
 
+    public MemberNotification() {
+    }
+
     public MemberNotification(MemberNotificationId id, Member member, Notification notification, Boolean isRead, LocalDateTime readDate) {
         this.id = id;
         this.member = member;

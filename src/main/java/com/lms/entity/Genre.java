@@ -11,6 +11,9 @@ public class Genre {
     @Column(nullable = false, length = 255)
     private String genreName;
 
+    public Genre() {
+    }
+
     public Genre(Integer genreId, Category category, String genreName) {
         this.genreId = genreId;
         this.category = category;

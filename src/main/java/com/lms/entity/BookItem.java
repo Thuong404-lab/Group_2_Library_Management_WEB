@@ -16,6 +16,9 @@ public class BookItem {
     @Column(length = 50)
     private String status = "Available";
 
+    public BookItem() {
+    }
+
     public BookItem(Integer bookItemId, Book book, Shelf shelf, String barcode, String status) {
         this.bookItemId = bookItemId;
         this.book = book;

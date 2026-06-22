@@ -12,6 +12,9 @@ public class Member {
     @JoinColumn(name = "tier_id")
     private MembershipTier tier;
 
+    public Member() {
+    }
+
     public Member(Integer memberId, User user, MembershipTier tier) {
         this.memberId = memberId;
         this.user = user;

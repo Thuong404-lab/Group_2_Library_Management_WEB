@@ -17,6 +17,9 @@ public class Favorite {
     @JoinColumn(name = "book_id")
     private Book book;
 
+    public Favorite() {
+    }
+
     public Favorite(FavoriteId id, Member member, Book book) {
         this.id = id;
         this.member = member;

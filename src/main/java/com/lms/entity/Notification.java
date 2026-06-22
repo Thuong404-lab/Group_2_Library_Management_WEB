@@ -17,6 +17,9 @@ public class Notification {
     @Column(length = 50)
     private String status = "Active";
 
+    public Notification() {
+    }
+
     public Notification(Integer notificationId, Staff staff, String title, String content, LocalDateTime createdDate, String status) {
         this.notificationId = notificationId;
         this.staff = staff;

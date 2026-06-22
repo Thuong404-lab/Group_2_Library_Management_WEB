@@ -11,6 +11,9 @@ public class Staff {
     @Column(nullable = false, length = 50)
     private String staffType;
 
+    public Staff() {
+    }
+
     public Staff(Integer staffId, User user, String staffType) {
         this.staffId = staffId;
         this.user = user;

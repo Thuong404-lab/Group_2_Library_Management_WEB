@@ -26,6 +26,9 @@ public class Book {
     )
     private Set<Author> authors;
 
+    public Book() {
+    }
+
     public Book(Integer bookId, Genre genre, String title, String isbn, String description, String status, Set<Author> authors) {
         this.bookId = bookId;
         this.genre = genre;

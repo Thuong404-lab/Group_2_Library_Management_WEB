@@ -16,6 +16,9 @@ public class MembershipTier {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;
 
+    public MembershipTier() {
+    }
+
     public MembershipTier(Integer tierId, String tierName, BigDecimal discountPercent, Integer borrowLimit, BigDecimal condition, String benefits) {
         this.tierId = tierId;
         this.tierName = tierName;
