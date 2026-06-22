@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/base}">
+
+<head>
+    <title>Trang Chủ</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
+            <div class="container-fluid py-5 text-center">
+                <h1 class="display-5 fw-bold text-primary mb-3">Chào mừng đến với Thư viện!</h1>
+                <p class="col-md-8 mx-auto fs-5 text-muted">
+                    Hệ thống quản lý thư viện hiện đại, dễ dàng tra cứu, mượn trả và thanh toán ví điện tử.
+                </p>
+                <div class="mt-4">
+                    <a th:href="@{/login}" th:if="${!#authorization.expression('isAuthenticated()')}"
+                        class="btn btn-primary btn-lg px-4 me-md-2 shadow-sm">Đăng nhập ngay</a>
+                    <a href="#" class="btn btn-outline-secondary btn-lg px-4 shadow-sm">Khám phá sách</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 py-3 row-cols-1 row-cols-lg-3">
+            <div class="col d-flex align-items-start">
+                <div
+                    class="icon-square text-bg-primary d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 p-3 rounded">
+                    <i class="bi bi-wallet2 text-white"></i>
+                </div>
+                <div>
+                    <h3 class="fs-4 text-body-emphasis">Ví Thành Viên</h3>
+                    <p>Nạp tiền vào ví và thanh toán các khoản phí mượn trả một cách tự động và cực kỳ nhanh chóng.</p>
+                </div>
+            </div>
+            <div class="col d-flex align-items-start">
+                <div
+                    class="icon-square text-bg-success d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 p-3 rounded">
+                    <i class="bi bi-phone text-white"></i>
+                </div>
+                <div>
+                    <h3 class="fs-4 text-body-emphasis">Quét Mã Vạch</h3>
+                    <p>Thủ thư chỉ cần quét mã vạch trên sách, hệ thống tự động xử lý phiếu mượn siêu tốc.</p>
+                </div>
+            </div>
+            <div class="col d-flex align-items-start">
+                <div
+                    class="icon-square text-bg-warning d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 p-3 rounded">
+                    <i class="bi bi-clock-history text-white"></i>
+                </div>
+                <div>
+                    <h3 class="fs-4 text-body-emphasis">Lịch Sử Mượn Trả</h3>
+                    <p>Theo dõi các quyển sách đã mượn, sắp đến hạn trả để tránh bị phạt phí quá hạn.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
