@@ -2,6 +2,9 @@ package com.lms.service.impl;
 
 import com.lms.service.BorrowService;
 
+import com.lms.repository.BorrowRepository;
+import com.lms.repository.BorrowDetailRepository;
+import com.lms.repository.BookItemRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +13,16 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BorrowServiceImpl implements BorrowService {
+    private final BorrowRepository borrowRepository;
+    private final BorrowDetailRepository borrowDetailRepository;
+    private final BookItemRepository bookItemRepository;
+
+    public BorrowServiceImpl(BorrowRepository borrowRepository, BorrowDetailRepository borrowDetailRepository, BookItemRepository bookItemRepository) {
+        this.borrowRepository = borrowRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
+        this.bookItemRepository = bookItemRepository;
+    }
+
 
     // UC-6.1: Lấy lịch sử mượn
     @Override

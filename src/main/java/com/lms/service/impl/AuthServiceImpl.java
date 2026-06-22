@@ -11,7 +11,6 @@ import com.lms.repository.AccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.UserRepository;
 import com.lms.repository.WalletRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,20 +24,24 @@ import java.math.BigDecimal;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-    @Autowired
-    private WalletRepository walletRepository;
+    private final WalletRepository walletRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
+        this.memberRepository = memberRepository;
+        this.walletRepository = walletRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
 
     // UC-2: Đăng ký thành viên mới
     @Override

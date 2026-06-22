@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.AccountService;
 
+import com.lms.repository.AccountRepository;
+import com.lms.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AccountServiceImpl implements AccountService {
+    private final AccountRepository accountRepository;
+    private final UserRepository userRepository;
+
+    public AccountServiceImpl(AccountRepository accountRepository, UserRepository userRepository) {
+        this.accountRepository = accountRepository;
+        this.userRepository = userRepository;
+    }
+
 
     // UC-20.1: Tạo tài khoản
     @Override
