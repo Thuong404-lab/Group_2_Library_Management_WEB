@@ -16,7 +16,16 @@ public class Notification {
     private LocalDateTime createdDate;
     @Column(length = 50)
     private String status = "Active";
-    
+
+    public Notification(Integer notificationId, Staff staff, String title, String content, LocalDateTime createdDate, String status) {
+        this.notificationId = notificationId;
+        this.staff = staff;
+        this.title = title;
+        this.content = content;
+        this.createdDate = createdDate;
+        this.status = status;
+    }
+
     public Integer getNotificationId() { return notificationId; }
     public void setNotificationId(Integer notificationId) { this.notificationId = notificationId; }
     public Staff getStaff() { return staff; }

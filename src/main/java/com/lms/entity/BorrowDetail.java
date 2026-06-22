@@ -21,7 +21,18 @@ public class BorrowDetail {
     private Integer renewCount = 0;
     @Column(length = 50)
     private String status = "Borrowed";
-    
+
+    public BorrowDetail(Integer borrowDetailId, Borrow borrow, Book book, BookItem bookItem, LocalDateTime dueDate, LocalDateTime returnDate, Integer renewCount, String status) {
+        this.borrowDetailId = borrowDetailId;
+        this.borrow = borrow;
+        this.book = book;
+        this.bookItem = bookItem;
+        this.dueDate = dueDate;
+        this.returnDate = returnDate;
+        this.renewCount = renewCount;
+        this.status = status;
+    }
+
     public Integer getBorrowDetailId() { return borrowDetailId; }
     public void setBorrowDetailId(Integer borrowDetailId) { this.borrowDetailId = borrowDetailId; }
     public Borrow getBorrow() { return borrow; }

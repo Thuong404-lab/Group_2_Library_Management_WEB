@@ -15,7 +15,16 @@ public class MembershipTier {
     private BigDecimal condition;
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;
-    
+
+    public MembershipTier(Integer tierId, String tierName, BigDecimal discountPercent, Integer borrowLimit, BigDecimal condition, String benefits) {
+        this.tierId = tierId;
+        this.tierName = tierName;
+        this.discountPercent = discountPercent;
+        this.borrowLimit = borrowLimit;
+        this.condition = condition;
+        this.benefits = benefits;
+    }
+
     public Integer getTierId() { return tierId; }
     public void setTierId(Integer tierId) { this.tierId = tierId; }
     public String getTierName() { return tierName; }

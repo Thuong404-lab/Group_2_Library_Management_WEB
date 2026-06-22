@@ -15,7 +15,15 @@ public class Reservation {
     private LocalDateTime reservationDate;
     @Column(length = 50)
     private String status = "Pending";
-    
+
+    public Reservation(Integer reservationId, Member member, Book book, LocalDateTime reservationDate, String status) {
+        this.reservationId = reservationId;
+        this.member = member;
+        this.book = book;
+        this.reservationDate = reservationDate;
+        this.status = status;
+    }
+
     public Integer getReservationId() { return reservationId; }
     public void setReservationId(Integer reservationId) { this.reservationId = reservationId; }
     public Member getMember() { return member; }

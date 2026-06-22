@@ -10,7 +10,13 @@ public class Staff {
     private User user;
     @Column(nullable = false, length = 50)
     private String staffType;
-    
+
+    public Staff(Integer staffId, User user, String staffType) {
+        this.staffId = staffId;
+        this.user = user;
+        this.staffType = staffType;
+    }
+
     public Integer getStaffId() { return staffId; }
     public void setStaffId(Integer staffId) { this.staffId = staffId; }
     public User getUser() { return user; }

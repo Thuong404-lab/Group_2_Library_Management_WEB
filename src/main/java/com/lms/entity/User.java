@@ -13,7 +13,18 @@ public class User {
     private String phone;
     @Column(length = 50)
     private String status = "Active";
-    
+
+    public User() {
+    }
+
+    public User(Integer userId, String fullName, String email, String phone, String status) {
+        this.userId = userId;
+        this.fullName = fullName;
+        this.email = email;
+        this.phone = phone;
+        this.status = status;
+    }
+
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
     public String getFullName() { return fullName; }

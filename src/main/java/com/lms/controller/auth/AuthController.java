@@ -15,8 +15,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class AuthController {
 
-    @Autowired
+
     private AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     // UC-9: Login - Hiển thị trang đăng nhập
     @GetMapping("/login")

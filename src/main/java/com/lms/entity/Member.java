@@ -11,7 +11,13 @@ public class Member {
     @ManyToOne
     @JoinColumn(name = "tier_id")
     private MembershipTier tier;
-    
+
+    public Member(Integer memberId, User user, MembershipTier tier) {
+        this.memberId = memberId;
+        this.user = user;
+        this.tier = tier;
+    }
+
     public Integer getMemberId() { return memberId; }
     public void setMemberId(Integer memberId) { this.memberId = memberId; }
     public User getUser() { return user; }

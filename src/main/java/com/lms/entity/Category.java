@@ -7,7 +7,12 @@ public class Category {
     private Integer categoryId;
     @Column(nullable = false, length = 255)
     private String categoryName;
-    
+
+    public Category(Integer categoryId, String categoryName) {
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+    }
+
     public Integer getCategoryId() { return categoryId; }
     public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
     public String getCategoryName() { return categoryName; }

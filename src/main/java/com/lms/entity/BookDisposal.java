@@ -17,7 +17,16 @@ public class BookDisposal {
     private LocalDateTime disposalDate;
     @Column(length = 50)
     private String status = "Completed";
-    
+
+    public BookDisposal(Integer disposalId, BookItem bookItem, Staff staff, String reason, LocalDateTime disposalDate, String status) {
+        this.disposalId = disposalId;
+        this.bookItem = bookItem;
+        this.staff = staff;
+        this.reason = reason;
+        this.disposalDate = disposalDate;
+        this.status = status;
+    }
+
     public Integer getDisposalId() { return disposalId; }
     public void setDisposalId(Integer disposalId) { this.disposalId = disposalId; }
     public BookItem getBookItem() { return bookItem; }

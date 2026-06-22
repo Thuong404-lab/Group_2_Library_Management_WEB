@@ -16,7 +16,16 @@ public class Feedback {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String comment;
     private LocalDateTime createdDate;
-    
+
+    public Feedback(Integer feedbackId, Member member, Book book, Integer rating, String comment, LocalDateTime createdDate) {
+        this.feedbackId = feedbackId;
+        this.member = member;
+        this.book = book;
+        this.rating = rating;
+        this.comment = comment;
+        this.createdDate = createdDate;
+    }
+
     public Integer getFeedbackId() { return feedbackId; }
     public void setFeedbackId(Integer feedbackId) { this.feedbackId = feedbackId; }
     public Member getMember() { return member; }

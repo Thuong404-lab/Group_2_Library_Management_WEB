@@ -11,7 +11,16 @@ public class Wallet {
     private Member member;
     @Column(precision = 18, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
-    
+
+    public Wallet() {
+    }
+
+    public Wallet(Integer walletId, Member member, BigDecimal balance) {
+        this.walletId = walletId;
+        this.member = member;
+        this.balance = balance;
+    }
+
     public Integer getWalletId() { return walletId; }
     public void setWalletId(Integer walletId) { this.walletId = walletId; }
     public Member getMember() { return member; }

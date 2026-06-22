@@ -20,7 +20,20 @@ public class Transaction {
     private LocalDateTime transactionDate;
     @Column(length = 50)
     private String status = "Completed";
-    
+
+    public Transaction() {
+    }
+
+    public Transaction(Integer transactionId, Wallet wallet, Borrow borrow, String transactionType, BigDecimal amount, LocalDateTime transactionDate, String status) {
+        this.transactionId = transactionId;
+        this.wallet = wallet;
+        this.borrow = borrow;
+        this.transactionType = transactionType;
+        this.amount = amount;
+        this.transactionDate = transactionDate;
+        this.status = status;
+    }
+
     public Integer getTransactionId() { return transactionId; }
     public void setTransactionId(Integer transactionId) { this.transactionId = transactionId; }
     public Wallet getWallet() { return wallet; }

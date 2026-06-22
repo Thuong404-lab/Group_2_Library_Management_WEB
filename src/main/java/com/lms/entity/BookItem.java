@@ -15,7 +15,15 @@ public class BookItem {
     private String barcode;
     @Column(length = 50)
     private String status = "Available";
-    
+
+    public BookItem(Integer bookItemId, Book book, Shelf shelf, String barcode, String status) {
+        this.bookItemId = bookItemId;
+        this.book = book;
+        this.shelf = shelf;
+        this.barcode = barcode;
+        this.status = status;
+    }
+
     public Integer getBookItemId() { return bookItemId; }
     public void setBookItemId(Integer bookItemId) { this.bookItemId = bookItemId; }
     public Book getBook() { return book; }

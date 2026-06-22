@@ -26,6 +26,16 @@ public class Book {
     )
     private Set<Author> authors;
 
+    public Book(Integer bookId, Genre genre, String title, String isbn, String description, String status, Set<Author> authors) {
+        this.bookId = bookId;
+        this.genre = genre;
+        this.title = title;
+        this.isbn = isbn;
+        this.description = description;
+        this.status = status;
+        this.authors = authors;
+    }
+
     public Integer getBookId() { return bookId; }
     public void setBookId(Integer bookId) { this.bookId = bookId; }
     public Genre getGenre() { return genre; }

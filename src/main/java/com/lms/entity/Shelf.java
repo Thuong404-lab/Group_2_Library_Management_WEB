@@ -9,7 +9,13 @@ public class Shelf {
     private String shelfName;
     @Column(length = 255)
     private String location;
-    
+
+    public Shelf(Integer shelfId, String shelfName, String location) {
+        this.shelfId = shelfId;
+        this.shelfName = shelfName;
+        this.location = location;
+    }
+
     public Integer getShelfId() { return shelfId; }
     public void setShelfId(Integer shelfId) { this.shelfId = shelfId; }
     public String getShelfName() { return shelfName; }

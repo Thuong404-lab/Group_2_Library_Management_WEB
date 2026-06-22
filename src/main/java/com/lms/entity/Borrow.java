@@ -15,7 +15,15 @@ public class Borrow {
     private LocalDateTime borrowDate;
     @Column(length = 50)
     private String status = "Active";
-    
+
+    public Borrow(Integer borrowId, Member member, Staff staff, LocalDateTime borrowDate, String status) {
+        this.borrowId = borrowId;
+        this.member = member;
+        this.staff = staff;
+        this.borrowDate = borrowDate;
+        this.status = status;
+    }
+
     public Integer getBorrowId() { return borrowId; }
     public void setBorrowId(Integer borrowId) { this.borrowId = borrowId; }
     public Member getMember() { return member; }
