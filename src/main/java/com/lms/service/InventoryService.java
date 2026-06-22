@@ -1,45 +1,29 @@
 package com.lms.service;
 
-import org.springframework.stereotype.Service;
-
 /**
  * InventoryService - Xử lý Logic Quản lý Kho Sách
  * Người phụ trách: La Tấn Khanh (CE191640)
  */
-@Service
-public class InventoryService {
+public interface InventoryService {
 
     // UC-12.1: Kiểm kê sách
-    public void performInventoryAudit() {
-        // TODO: Implement - So sánh số lượng thực tế vs hệ thống
-    }
+    void performInventoryAudit();
 
     // UC-12.2: Cập nhật trạng thái sách
-    public void updateBookStatus(Integer bookItemId, String status) {
-        // TODO: Implement
-    }
+    void updateBookStatus(Integer bookItemId, String status);
 
     // UC-12.3: Thêm sách mới
-    public void addNewBook(String title, String isbn, Integer categoryId, Integer quantity) {
-        // TODO: Implement - Tạo Book + BookItems
-    }
+    void addNewBook(String title, String isbn, Integer categoryId, Integer quantity);
 
     // UC-12.4: Cập nhật sách
-    public void updateBook(Integer bookId, String title, String isbn) {
-        // TODO: Implement
-    }
+    void updateBook(Integer bookId, String title, String isbn);
 
     // UC-12.5: Xóa sách
-    public void removeBook(Integer bookId) {
-        // TODO: Implement - Soft delete
-    }
+    void removeBook(Integer bookId);
 
     // UC-12.6: Quản lý danh mục
-    public void addCategory(String name) {
-        // TODO: Implement
-    }
+    void addCategory(String name);
 
-    public void addGenre(String name) {
-        // TODO: Implement
-    }
+    void addGenre(String name);
+
 }
