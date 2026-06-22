@@ -15,6 +15,9 @@ public class Account {
     @Column(length = 50)
     private String status = "Active";
 
+    public Account() {
+    }
+
     public Account(Integer accountId, User user, String username, String passwordHash, String status) {
         this.accountId = accountId;
         this.user = user;

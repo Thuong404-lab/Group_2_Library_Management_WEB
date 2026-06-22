@@ -17,6 +17,9 @@ public class Feedback {
     private String comment;
     private LocalDateTime createdDate;
 
+    public Feedback() {
+    }
+
     public Feedback(Integer feedbackId, Member member, Book book, Integer rating, String comment, LocalDateTime createdDate) {
         this.feedbackId = feedbackId;
         this.member = member;

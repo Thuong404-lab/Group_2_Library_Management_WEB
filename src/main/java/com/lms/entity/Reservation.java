@@ -16,6 +16,9 @@ public class Reservation {
     @Column(length = 50)
     private String status = "Pending";
 
+    public Reservation() {
+    }
+
     public Reservation(Integer reservationId, Member member, Book book, LocalDateTime reservationDate, String status) {
         this.reservationId = reservationId;
         this.member = member;

@@ -18,6 +18,9 @@ public class BookDisposal {
     @Column(length = 50)
     private String status = "Completed";
 
+    public BookDisposal() {
+    }
+
     public BookDisposal(Integer disposalId, BookItem bookItem, Staff staff, String reason, LocalDateTime disposalDate, String status) {
         this.disposalId = disposalId;
         this.bookItem = bookItem;

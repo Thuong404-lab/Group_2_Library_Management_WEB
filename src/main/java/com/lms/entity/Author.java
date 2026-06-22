@@ -1,6 +1,6 @@
 package com.lms.entity;
 import jakarta.persistence.*;
-import java.util.Set;
+
 @Entity
 @Table(name = "Authors")
 public class Author {
@@ -8,6 +8,11 @@ public class Author {
     private Integer authorId;
     @Column(nullable = false, length = 255)
     private String authorName;
+
+    
+
+    public Author() {
+    }
 
     public Author(Integer authorId, String authorName) {
         this.authorId = authorId;

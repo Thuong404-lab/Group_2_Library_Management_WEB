@@ -10,6 +10,9 @@ public class Shelf {
     @Column(length = 255)
     private String location;
 
+    public Shelf() {
+    }
+
     public Shelf(Integer shelfId, String shelfName, String location) {
         this.shelfId = shelfId;
         this.shelfName = shelfName;

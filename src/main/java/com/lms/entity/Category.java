@@ -8,6 +8,9 @@ public class Category {
     @Column(nullable = false, length = 255)
     private String categoryName;
 
+    public Category() {
+    }
+
     public Category(Integer categoryId, String categoryName) {
         this.categoryId = categoryId;
         this.categoryName = categoryName;

@@ -16,6 +16,9 @@ public class Borrow {
     @Column(length = 50)
     private String status = "Active";
 
+    public Borrow() {
+    }
+
     public Borrow(Integer borrowId, Member member, Staff staff, LocalDateTime borrowDate, String status) {
         this.borrowId = borrowId;
         this.member = member;
