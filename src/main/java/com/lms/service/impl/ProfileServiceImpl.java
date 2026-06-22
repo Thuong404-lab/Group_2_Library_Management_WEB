@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.ProfileService;
 
+import com.lms.repository.UserRepository;
+import com.lms.repository.AccountRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ProfileServiceImpl implements ProfileService {
+    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
+
+    public ProfileServiceImpl(UserRepository userRepository, AccountRepository accountRepository) {
+        this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
+    }
+
 
     // UC-4.1: Lấy thông tin Profile
     @Override

@@ -2,6 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.service.SystemService;
 
+import com.lms.repository.SystemSettingRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +11,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SystemServiceImpl implements SystemService {
+    private final SystemSettingRepository systemSettingRepository;
+
+    public SystemServiceImpl(SystemSettingRepository systemSettingRepository) {
+        this.systemSettingRepository = systemSettingRepository;
+    }
+
 
     // UC-19.1: Backup data
     @Override
