@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.ReportService;
 
+import com.lms.repository.BorrowRepository;
+import com.lms.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ReportServiceImpl implements ReportService {
+    private final BorrowRepository borrowRepository;
+    private final TransactionRepository transactionRepository;
+
+    public ReportServiceImpl(BorrowRepository borrowRepository, TransactionRepository transactionRepository) {
+        this.borrowRepository = borrowRepository;
+        this.transactionRepository = transactionRepository;
+    }
+
 
     // UC-17.1: Tạo báo cáo tổng hợp
     @Override

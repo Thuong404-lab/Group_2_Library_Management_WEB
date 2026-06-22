@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.LoanService;
 
+import com.lms.repository.BorrowRepository;
+import com.lms.repository.ReservationRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LoanServiceImpl implements LoanService {
+    private final BorrowRepository borrowRepository;
+    private final ReservationRepository reservationRepository;
+
+    public LoanServiceImpl(BorrowRepository borrowRepository, ReservationRepository reservationRepository) {
+        this.borrowRepository = borrowRepository;
+        this.reservationRepository = reservationRepository;
+    }
+
 
     // UC-13.1: Xem chi tiết phiếu mượn
     @Override

@@ -2,6 +2,8 @@ package com.lms.service.impl;
 
 import com.lms.service.MembershipService;
 
+import com.lms.repository.MemberRepository;
+import com.lms.repository.MembershipTierRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,6 +12,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class MembershipServiceImpl implements MembershipService {
+    private final MemberRepository memberRepository;
+    private final MembershipTierRepository membershipTierRepository;
+
+    public MembershipServiceImpl(MemberRepository memberRepository, MembershipTierRepository membershipTierRepository) {
+        this.memberRepository = memberRepository;
+        this.membershipTierRepository = membershipTierRepository;
+    }
+
 
     // UC-5.1: Lấy quyền lợi theo Tier
     @Override
