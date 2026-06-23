@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
-        user.setStatus(com.lms.enums.UserStatus.ACTIVE);
+        user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
         // 2. Tạo Account
