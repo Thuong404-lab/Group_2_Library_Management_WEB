@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Benefits & Privileges</title>
+    <style>
+        .container { width: 60%; margin: 50px auto; font-family: Arial, sans-serif; }
+        .card { border: 1px solid #ccc; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .header { background-color: #4CAF50; color: white; padding: 10px; border-radius: 4px; text-align: center; }
+        .info-group { margin: 15px 0; font-size: 16px; }
+        .label { font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h2>Membership Tier: <span th:text="${tierBenefits != null ? tierBenefits.tierName : 'No Tier Available'}">Gold</span></h2>
+        </div>
+
+        <div class="info-group">
+            <span class="label">Discount Percent: </span>
+            <span th:text="${tierBenefits != null ? tierBenefits.discountPercent : 0}">0</span>%
+        </div>
+
+        <div class="info-group">
+            <span class="label">Borrowing Limit: </span>
+            <span th:text="${tierBenefits != null ? tierBenefits.borrowLimit : 0}">0</span> books
+        </div>
+
+        <div class="info-group">
+            <span class="label">Detailed Privileges: </span>
+            <p th:text="${tierBenefits != null ? tierBenefits.benefits : 'No special privileges available.'}">Privilege descriptions go here...</p>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <a href="/member/membership/tier" style="color: #4CAF50; text-decoration: none; font-weight: bold;">← View Membership Tier Progress</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
