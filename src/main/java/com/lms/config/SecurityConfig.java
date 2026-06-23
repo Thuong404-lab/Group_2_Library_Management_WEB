@@ -47,6 +47,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
+                    
                 .defaultSuccessUrl("/", true)
                 .permitAll()
             )

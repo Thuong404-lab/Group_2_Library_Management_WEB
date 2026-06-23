@@ -1,5 +1,6 @@
 package com.lms.service.impl;
 
+import com.lms.repository.*;
 import com.lms.service.AuthService;
 
 import com.lms.dto.request.RegisterRequest;
@@ -7,10 +8,6 @@ import com.lms.entity.Account;
 import com.lms.entity.Member;
 import com.lms.entity.User;
 import com.lms.entity.Wallet;
-import com.lms.repository.AccountRepository;
-import com.lms.repository.MemberRepository;
-import com.lms.repository.UserRepository;
-import com.lms.repository.WalletRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,12 +31,15 @@ public class AuthServiceImpl implements AuthService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder) {
+    private final SystemLogRepository systemLogRepository;
+
+    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder, SystemLogRepository systemLogRepository) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
         this.passwordEncoder = passwordEncoder;
+        this.systemLogRepository = systemLogRepository;
     }
 
 
@@ -83,7 +83,8 @@ public class AuthServiceImpl implements AuthService {
     // UC-9.1: Ghi log đăng nhập
     @Override
     public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        // TODO: Implement - Insert vào bảng SystemLogs
+        
+
     }
 
     // UC-9.1: Ghi log đăng xuất
