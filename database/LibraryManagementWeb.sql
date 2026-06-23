@@ -330,43 +330,43 @@ VALUES
     (
         1,
         'admin',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     ),
     (
         2,
         'librarian01',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     ),
     (
         3,
         'librarian02',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     ),
     (
         4,
         'member01',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     ),
     (
         5,
         'member02',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     ),
     (
         6,
         'member03',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     ),
     (
         7,
         'member04',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KbdH2',
+        '$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu',
         'Active'
     );
 
