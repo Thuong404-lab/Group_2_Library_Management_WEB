@@ -1,7 +1,7 @@
 package com.lms.service.impl;
 
 // =================================================================
-// Huỳnh Gia Hưng bổ sung đoạn này: Import Entity cần thiết
+// Huỳnh Gia Hưng bổ sung đoạn này: Import Entity
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import java.util.Optional;
@@ -26,25 +26,23 @@ public class MembershipServiceImpl implements MembershipService {
         this.membershipTierRepository = membershipTierRepository;
     }
 
-
-    // UC-5.1: Lấy quyền lợi theo Tier
+    // UC-5.1: Lấy quyền lợi theo Tier (GIỮ NGUYÊN)
     @Override
-    // =================================================================
-    // Huỳnh Gia Hưng bổ sung đoạn này: Sửa void thành MembershipTier và triển khai logic
     public MembershipTier getBenefits(Integer memberId) {
-        // Tận dụng hàm findByUserId có sẵn trong MemberRepository của bạn
         Optional<Member> memberOpt = memberRepository.findByUserId(memberId);
-
         if (memberOpt.isPresent()) {
-            return memberOpt.get().getTier(); // Trả về đối tượng MembershipTier gắn với Member này
+            return memberOpt.get().getTier();
         }
         return null;
     }
-    // =================================================================
 
-    // UC-5.2: Lấy thông tin Tier hiện tại
+    // UC-5.2: Lấy thông tin Tier hiện tại (BỔ SUNG THÊM)
     @Override
-    public void getMembershipTier(Integer memberId) {
-        // TODO: Implement - Trả về Tier hiện tại + điểm tích lũy
+    // =================================================================
+    // Huỳnh Gia Hưng bổ sung đoạn này: Logic lấy thông tin Member cho UC-5.2
+    public Member getMembershipTier(Integer memberId) {
+        Optional<Member> memberOpt = memberRepository.findByUserId(memberId);
+        return memberOpt.orElse(null);
     }
+    // =================================================================
 }

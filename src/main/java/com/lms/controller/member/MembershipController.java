@@ -1,15 +1,18 @@
 package com.lms.controller.member;
 
 // =================================================================
-// Huỳnh Gia Hưng bổ sung đoạn này: Import thêm các class cần thiết
+// Huỳnh Gia Hưng bổ sung đoạn này: Import các class cần thiết cho cả 2 UC
 import com.lms.entity.MembershipTier;
+import com.lms.entity.Member;
 import com.lms.service.MembershipService;
-// =================================================================
-
+import com.lms.repository.MembershipTierRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.List;
+// =================================================================
 
 /**
  * MembershipController - Quản lý Hạng Thành viên
@@ -19,43 +22,61 @@ import java.security.Principal;
 @RequestMapping("/member/membership")
 public class MembershipController {
 
-    // =================================================================
-    // Huỳnh Gia Hưng bổ sung đoạn này: Khai báo Service và tạo Constructor Injection
     private final MembershipService membershipService;
+    private final MembershipTierRepository membershipTierRepository;
 
-    public MembershipController(MembershipService membershipService) {
+    public MembershipController(MembershipService membershipService, MembershipTierRepository membershipTierRepository) {
         this.membershipService = membershipService;
+        this.membershipTierRepository = membershipTierRepository;
     }
-    // =================================================================
 
-    // UC-5.1: View Benefits & Privileges
+    // UC-5.1: View Benefits & Privileges (GIỮ NGUYÊN)
     @GetMapping("/benefits")
     public String viewBenefits(Principal principal, Model model) {
-        // TODO: Implement - Lấy MembershipTier của Member hiện tại
-        // TODO: Hiển thị quyền lợi theo Tier (Bronze, Silver, Gold, Platinum)
-
-        // =================================================================
-        // Huỳnh Gia Hưng bổ sung đoạn này: Gọi service lấy dữ liệu và nạp vào Model
         if (principal != null) {
-            // Do logic cơ bản, tạm thời truyền một id giả lập (ví dụ: id = 1)
-            // Bạn có thể đổi số 1 này thành cách lấy ID thực tế từ hệ thống Security của nhóm bạn (nếu có)
             Integer currentMemberId = 1;
-
             MembershipTier tierBenefits = membershipService.getBenefits(currentMemberId);
-
-            // Đẩy dữ liệu sang file HTML template (View)
             model.addAttribute("tierBenefits", tierBenefits);
         }
-        // =================================================================
-
         return "member/benefits";
     }
 
-    // UC-5.2: View Membership Tier
+    // UC-5.2: View Membership Tier (BỔ SUNG CODE XỬ LÝ)
     @GetMapping("/tier")
     public String viewMembershipTier(Principal principal, Model model) {
-        // TODO: Implement - Hiển thị Tier hiện tại + điểm tích lũy
-        // TODO: Hiển thị tiến trình lên hạng tiếp theo
+        // =================================================================
+        // Huỳnh Gia Hưng bổ sung đoạn này: Tính toán tiến trình thăng hạng cho UC-5.2
+        if (principal != null) {
+            Integer currentMemberId = 1;
+
+            Member member = membershipService.getMembershipTier(currentMemberId);
+            List<MembershipTier> allTiers = membershipTierRepository.findAll();
+
+            BigDecimal currentSpent = new BigDecimal("150.00"); // Giả lập số tiền test
+            MembershipTier nextTier = null;
+            BigDecimal amountNeeded = BigDecimal.ZERO;
+
+            if (member != null && member.getTier() != null) {
+                for (MembershipTier tier : allTiers) {
+                    if (tier.getCondition().compareTo(member.getTier().getCondition()) > 0) {
+                        nextTier = tier;
+                        amountNeeded = tier.getCondition().subtract(currentSpent);
+                        if (amountNeeded.compareTo(BigDecimal.ZERO) < 0) {
+                            amountNeeded = BigDecimal.ZERO;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            model.addAttribute("member", member);
+            model.addAttribute("allTiers", allTiers);
+            model.addAttribute("currentSpent", currentSpent);
+            model.addAttribute("nextTier", nextTier);
+            model.addAttribute("amountNeeded", amountNeeded);
+        }
+        // =================================================================
+
         return "member/membership-tier";
     }
 }
