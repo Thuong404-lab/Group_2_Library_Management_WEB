@@ -7,4 +7,6 @@ import java.util.Optional;
 @Repository
 public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
     Optional<BookItem> findByBarcode(String barcode);
+
+    long countByStatusIgnoreCase(String status);
 }
