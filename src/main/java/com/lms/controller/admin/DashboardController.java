@@ -7,6 +7,11 @@ import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
+import com.lms.entity.Staff;
+import com.lms.repository.StaffRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DashboardCoontroller
+ * DashboardController
  * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
  */
 
@@ -38,19 +43,22 @@ public class DashboardController {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookItemRepository bookItemRepository;
+    private final StaffRepository staffRepository;
 
     public DashboardController(BorrowRepository borrowRepository,
             BorrowDetailRepository borrowDetailRepository,
             ReservationRepository reservationRepository,
             MemberRepository memberRepository,
             BookRepository bookRepository,
-            BookItemRepository bookItemRepository) {
+            BookItemRepository bookItemRepository,
+            StaffRepository staffRepository) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.reservationRepository = reservationRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.bookItemRepository = bookItemRepository;
+        this.staffRepository = staffRepository;
     }
 
     @GetMapping("/dashboard")
@@ -136,7 +144,20 @@ public class DashboardController {
     }
 
     @GetMapping("/librarians")
-    public String viewLibrarianList(Model model) {
+    public String viewLibrarianList(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String keyword,
+            Model model) {
+        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("staffId").ascending());
+        Page<Staff> librarians;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            librarians = staffRepository.searchByStaffTypeAndKeyword("Librarian", keyword.trim(), pageRequest);
+        } else {
+            librarians = staffRepository.findByStaffTypeIgnoreCase("Librarian", pageRequest);
+        }
+
+        model.addAttribute("librarians", librarians);
+        model.addAttribute("keyword", keyword);
         return "admin/librarian-list";
     }
 

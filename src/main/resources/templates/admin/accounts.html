@@ -1,14 +1,265 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Accounts', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Member Accounts Management</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            padding: 22px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .card-box {
+            background: #fff;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        .table-app {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .table-app th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-status {
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #047857;
+        }
+
+        .status-inactive {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .status-blocked {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+    </style>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Accounts</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+<div class="page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="title">Quản lý tài khoản thành viên</h1>
+            <div class="subtitle">UC-18.1: Member Accounts Management</div>
+        </div>
+
+        <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/dashboard}">
+            ← Về Dashboard
+        </a>
+    </div>
+
+    <div class="alert alert-success" th:if="${param.statusChanged != null}">
+        Cập nhật trạng thái tài khoản thành công.
+    </div>
+
+    <div class="alert alert-success" th:if="${param.passwordReset != null}">
+        Reset mật khẩu thành công. Mật khẩu mặc định: Test@1234
+    </div>
+
+    <div class="alert alert-success" th:if="${param.deleted != null}">
+        Đã khóa tài khoản.
+    </div>
+
+    <div class="alert alert-warning" th:if="${param.notFound != null}">
+        Không tìm thấy tài khoản.
+    </div>
+
+    <div class="card-box mb-3">
+        <form class="row g-2" method="get" th:action="@{/admin/accounts}">
+            <div class="col-md-5">
+                <input class="form-control"
+                       type="text"
+                       name="keyword"
+                       th:value="${keyword}"
+                       placeholder="Tìm username, họ tên, email hoặc role">
+            </div>
+
+            <div class="col-md-auto">
+                <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+            </div>
+
+            <div class="col-md-auto">
+                <a class="btn btn-light border" th:href="@{/admin/accounts}">Tải lại</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-box">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle table-app">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Thông tin người dùng</th>
+                    <th>Role</th>
+                    <th>Trạng thái</th>
+                    <th>Đổi trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="account : ${accounts.content}">
+                    <td th:text="${account.accountId}">1</td>
+
+                    <td>
+                        <b th:text="${account.username}">username</b>
+                    </td>
+
+                    <td>
+                        <div th:if="${account.user != null}">
+                            <div>
+                                <b th:text="${account.user.fullName}">Họ tên</b>
+                            </div>
+                            <div>Email: <span th:text="${account.user.email}">email</span></div>
+                            <div>SĐT: <span th:text="${account.user.phone}">phone</span></div>
+                        </div>
+
+                        <div th:unless="${account.user != null}">
+                            Không có thông tin user
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="badge text-bg-primary me-1"
+                              th:each="role : ${account.roles}"
+                              th:text="${role.name}">
+                            MEMBER
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge-status"
+                              th:classappend="${account.status == 'Active' ? ' status-active' : account.status == 'Blocked' ? ' status-blocked' : ' status-inactive'}"
+                              th:text="${account.status}">
+                            Active
+                        </span>
+                    </td>
+
+                    <td>
+                        <form method="post"
+                              th:action="@{'/admin/accounts/status/' + ${account.accountId}}"
+                              class="d-flex gap-2">
+
+                            <input type="hidden"
+                                   th:if="${_csrf != null}"
+                                   th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}">
+
+                            <select class="form-select form-select-sm" name="status" style="width: 120px;">
+                                <option value="Active" th:selected="${account.status == 'Active'}">Active</option>
+                                <option value="Inactive" th:selected="${account.status == 'Inactive'}">Inactive</option>
+                                <option value="Blocked" th:selected="${account.status == 'Blocked'}">Blocked</option>
+                            </select>
+
+                            <button class="btn btn-sm btn-outline-primary" type="submit">
+                                Lưu
+                            </button>
+                        </form>
+                    </td>
+
+                    <td>
+                        <div class="d-flex gap-2">
+                            <form method="post"
+                                  th:action="@{'/admin/accounts/reset-password/' + ${account.accountId}}">
+
+                                <input type="hidden"
+                                       th:if="${_csrf != null}"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}">
+
+                                <button class="btn btn-sm btn-outline-warning" type="submit">
+                                    Reset
+                                </button>
+                            </form>
+
+                            <form method="post"
+                                  th:action="@{'/admin/accounts/delete/' + ${account.accountId}}"
+                                  onsubmit="return confirm('Bạn có chắc muốn khóa tài khoản này?')">
+
+                                <input type="hidden"
+                                       th:if="${_csrf != null}"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}">
+
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    Khóa
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(accounts.content)}">
+                    <td colspan="7" class="text-center text-muted py-4">
+                        Không có tài khoản nào.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted small">
+                Trang <span th:text="${accounts.number + 1}">1</span> /
+                <span th:text="${accounts.totalPages == 0 ? 1 : accounts.totalPages}">1</span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-light border"
+                   th:if="${accounts.hasPrevious()}"
+                   th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword})}">
+                    Trước
+                </a>
+
+                <a class="btn btn-sm btn-light border"
+                   th:if="${accounts.hasNext()}"
+                   th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword})}">
+                    Sau
+                </a>
             </div>
         </div>
     </div>
+</div>
+
+<script th:src="@{/js/bootstrap.bundle.js}"></script>
 </body>
 </html>
