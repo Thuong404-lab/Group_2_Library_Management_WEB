@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "Authors")
 public class Author {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer authorId;
     @Column(nullable = false, length = 255)
     private String authorName;

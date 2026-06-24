@@ -73,7 +73,7 @@
 | 2 | **UC-10** | Logout | Sprint 1 | 23/06 | 24/06 | 🟢 Simple |
 | 3 | **UC-2** | Register | Sprint 1 | 24/06 | 26/06 | 🟡 Medium |
 | 4 | **UC-1** | Search Books | Sprint 1 | 25/06 | 26/06 | 🟢 Simple |
-| 5 | **UC-3** | View Book List | Sprint 2 | 28/06 | 29/06 | 🟢 Simple |
+| 5 | **UC-3** | View Books List | Sprint 2 | 28/06 | 29/06 | 🟢 Simple |
 | 6 | **UC-4.1** | View Profile | Sprint 2 | 29/06 | 30/06 | 🟢 Simple |
 | 7 | **UC-4.2** | Update Profile Information | Sprint 2 | 30/06 | 02/07 | 🟡 Medium |
 | 8 | **UC-4.3** | Change Password | Sprint 2 | 01/07 | 03/07 | 🟡 Medium |
@@ -95,10 +95,10 @@
 | 2 | **UC-11.2** | Add Storage Location | Sprint 1 | 23/06 | 25/06 | 🟡 Medium |
 | 3 | **UC-11.1** | Update Storage Location | Sprint 1 | 24/06 | 26/06 | 🟡 Medium |
 | 4 | **UC-11.3** | Remove Storage Location | Sprint 1 | 25/06 | 26/06 | 🟢 Simple |
-| 5 | **UC-12.2** | Update Book Status | Sprint 2 | 28/06 | 30/06 | 🟡 Medium |
+| 5 | **UC-12.2** | Update Books Status | Sprint 2 | 28/06 | 30/06 | 🟡 Medium |
 | 6 | **UC-12.5** | Remove Books | Sprint 2 | 29/06 | 01/07 | 🟡 Medium |
 | 7 | **UC-12.3** | Add New Books | Sprint 2 | 30/06 | 02/07 | 🔴 Complex |
-| 8 | **UC-12.4** | Update Book | Sprint 2 | 01/07 | 03/07 | 🔴 Complex |
+| 8 | **UC-12.4** | Update Books | Sprint 2 | 01/07 | 03/07 | 🔴 Complex |
 | 9 | **UC-12.1** | Perform Periodic Inventory Audit | Sprint 3 | 05/07 | 07/07 | 🔴 Complex |
 | 10 | **UC-22.5** | Manage Categories | Sprint 3 | 06/07 | 07/07 | 🟢 Simple |
 
@@ -119,7 +119,7 @@
 | 6 | **UC-16.3** | Change Password ⚡ | Sprint 2 | 29/06 | 01/07 | 🟡 Medium |
 | 7 | **UC-13.1** | View Loan Details | Sprint 2 | 30/06 | 02/07 | 🟡 Medium |
 | 8 | **UC-6.2** | Reserve Books | Sprint 2 | 01/07 | 03/07 | 🔴 Complex |
-| 9 | **UC-6.3** | Borrow Book | Sprint 3 | 05/07 | 07/07 | 🔴 Complex |
+| 9 | **UC-6.3** | Borrow Books | Sprint 3 | 05/07 | 07/07 | 🔴 Complex |
 | 10 | **UC-6.4** | Return Books | Sprint 3 | 06/07 | 08/07 | 🔴 Complex |
 | 11 | **UC-13.2** | Confirm Book Returns | Sprint 3 | 07/07 | 09/07 | 🔴 Complex |
 
@@ -158,7 +158,7 @@
 | 2 | **UC-8.4** | View Transaction History | Sprint 1 | 23/06 | 25/06 | 🟡 Medium |
 | 3 | **UC-14.1** | View Member List | Sprint 1 | 24/06 | 25/06 | 🟢 Simple |
 | 4 | **UC-21.2** | Reset Password ⚡ | Sprint 1 | 25/06 | 26/06 | 🟢 Simple |
-| 5 | **UC-14.3** | View Transaction History (Librarian) | Sprint 2 | 28/06 | 30/06 | 🟡 Medium |
+| 5 | **UC-14.3** | View Transaction History | Sprint 2 | 28/06 | 30/06 | 🟡 Medium |
 | 6 | **UC-21.1** | Change Account Status ⚡ | Sprint 2 | 29/06 | 01/07 | 🟡 Medium |
 | 7 | **UC-8.2** | Pay Borrowing Fees | Sprint 2 | 30/06 | 02/07 | 🔴 Complex |
 | 8 | **UC-8.1** | Pay Overdue Fines | Sprint 2 | 01/07 | 03/07 | 🔴 Complex |

@@ -8,35 +8,41 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "SystemLogs")
 public class SystemLog {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
     private Integer logId;
-    @Column(name = "account_id")
-    private Integer accountId;
-    @Column(name = "action_type", length = 100, nullable = false)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Account account;
+
+    @Column(name = "action_type", nullable = false, length = 100)
     private String actionType;
+
     @Column(name = "ip_address", length = 50)
     private String ipAddress;
+
     @Column(name = "user_agent", columnDefinition = "NVARCHAR(MAX)")
     private String userAgent;
+
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     public SystemLog() {
     }
 
-    public SystemLog(Integer logId, Integer accountId, String actionType, String ipAddress, String userAgent, String description, LocalDateTime created_at) {
-        this.logId = logId;
-        this.accountId = accountId;
+    public SystemLog(Account account, String actionType, String ipAddress, String userAgent, String description) {
+        this.account = account;
         this.actionType = actionType;
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
         this.description = description;
-        this.created_at = created_at;
     }
 
     public Integer getLogId() {
@@ -47,12 +53,12 @@ public class SystemLog {
         this.logId = logId;
     }
 
-    public Integer getAccountId() {
-        return accountId;
+    public Account getAccount() {
+        return account;
     }
 
-    public void setAccountId(Integer accountId) {
-        this.accountId = accountId;
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     public String getActionType() {
@@ -87,11 +93,11 @@ public class SystemLog {
         this.description = description;
     }
 
-    public LocalDateTime getCreated_at() {
-        return created_at;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreated_at(LocalDateTime created_at) {
-        this.created_at = created_at;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
