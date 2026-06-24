@@ -6,7 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "SystemLogs")
+@Table(name = "system_logs")
 public class SystemLog {
 
     @Id

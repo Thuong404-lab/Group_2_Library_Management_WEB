@@ -5,5 +5,6 @@ public enum ActionType {
     LOGOUT,
     CREATE_BOOK,
     UPDATE_BOOK,
-    DELETE_BOOK
+    DELETE_BOOK,
+    GOOGLE
 }
