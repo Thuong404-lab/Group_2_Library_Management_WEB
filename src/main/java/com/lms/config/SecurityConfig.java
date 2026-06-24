@@ -36,41 +36,49 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**", "/member/membership/benefits", "/member/membership/tier").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
-                .requestMatchers("/member/**").hasRole("MEMBER")
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
-                .defaultSuccessUrl("/", true)
-                .permitAll()
-            )
-            /*
-            .oauth2Login(oauth2 -> oauth2
-                .loginPage("/login")
-                .userInfoEndpoint(userInfo -> userInfo
-                    .userService(customOAuth2UserService)
+                .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token
+                .authorizeHttpRequests(auth -> auth
+                        // 1. Các URL công khai ai cũng được vào (Đã bỏ /librarian/profile ra khỏi đây)
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**", "/member/membership/benefits", "/member/membership/tier").permitAll()
+
+                        // 2. Phân quyền nghiêm ngặt theo vai trò (Role-based Authorization)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/librarian/**").hasRole("LIBRARIAN") // Chỉ LIBRARIAN mới được vào hệ sinh thái này
+                        .requestMatchers("/member/**").hasRole("MEMBER")
+
+                        .anyRequest().authenticated()
                 )
-                .defaultSuccessUrl("/", true)
-            )
-            */
-            .logout(logout -> logout
-                // TODO: Cấu hình LogoutSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLogoutAction)
-                .logoutSuccessUrl("/login?logout")
-                .permitAll()
-            )
-            .sessionManagement(session -> session
-                // TODO: Cấu hình SessionManagement: tối đa 1 phiên/user, nếu đăng nhập nơi khác thì kick ra (hoặc chặn)
-                .maximumSessions(1)
-                .expiredUrl("/login?expired")
-                // TODO: Cấu hình SessionRegistryBean để có thể lấy danh sách thiết bị đang đăng nhập
-            );
-            
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
+                        .defaultSuccessUrl("/", true)
+                        .permitAll()
+                )
+                /*
+                .oauth2Login(oauth2 -> oauth2
+                    .loginPage("/login")
+                    .userInfoEndpoint(userInfo -> userInfo
+                        .userService(customOAuth2UserService)
+                    )
+                    .defaultSuccessUrl("/", true)
+                )
+                */
+                .logout(logout -> logout
+                        // TODO: Cấu hình LogoutSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLogoutAction)
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll()
+                )
+                .sessionManagement(session -> session
+                                // TODO: Cấu hình SessionManagement: tối đa 1 phiên/user, nếu đăng nhập nơi khác thì kick ra (hoặc chặn)
+                                .maximumSessions(1)
+                                .expiredUrl("/login?expired")
+                        // TODO: Cấu hình SessionRegistryBean để có thể lấy danh sách thiết bị đang đăng nhập
+                )
+                // 3. XỬ LÝ NGOẠI LỆ: Khi sai quyền (ví dụ Admin truy cập /librarian/profile), tự động đá về trang /403
+                .exceptionHandling(exception -> exception
+                        .accessDeniedPage("/403")
+                );
+
         return http.build();
     }
 }
