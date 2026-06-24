@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="container mt-4">
+        <h2>Kiểm duyệt đánh giá của Độc giả</h2>
+        <hr>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <table class="table table-striped table-hover mt-3">
+            <thead class="table-dark">
+            <tr>
+                <th>Sách</th>
+                <th>Người gửi</th>
+                <th>Đánh giá</th>
+                <th>Nội dung</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="review : ${reviews}">
+                <td th:text="${review.bookTitle}">Tên sách</td>
+                <td th:text="${review.memberName}">Tên độc giả</td>
+                <td>
+                    <span th:text="${review.rating} + ' sao'"></span>
+                </td>
+                <td th:text="${review.comment}">Nội dung bình luận...</td>
+                <td>
+                    <span class="badge bg-warning" th:text="${review.status}">PENDING</span>
+                </td>
+                <td>
+                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/moderate'}"
+                          method="post"
+                          style="display:inline;">
+                        <input type="hidden" name="action" value="APPROVE">
+                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                    </form>
+
+                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/moderate'}"
+                          method="post"
+                          style="display:inline;">
+                        <input type="hidden" name="action" value="REJECT">
+                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
+                    </form>
+                </td>
+            </tr>
+
+            <tr th:if="${reviews == null || reviews.totalElements == 0}">
+                <td colspan="6" class="text-center">Hiện không có đánh giá nào chờ duyệt.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

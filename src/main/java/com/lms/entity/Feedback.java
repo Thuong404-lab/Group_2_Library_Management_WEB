@@ -9,24 +9,34 @@ public class Feedback {
     @ManyToOne
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
+
+    @Column(nullable = false)
     private Integer rating;
+
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String comment;
+
+    @Column(name = "created_date")
     private LocalDateTime createdDate;
+
+    @Column(nullable = false)
+    private String status = "PENDING";
 
     public Feedback() {
     }
 
-    public Feedback(Integer feedbackId, Member member, Book book, Integer rating, String comment, LocalDateTime createdDate) {
+    public Feedback(Integer feedbackId, Member member, Book book, Integer rating, String comment, LocalDateTime createdDate, String status) {
         this.feedbackId = feedbackId;
         this.member = member;
         this.book = book;
         this.rating = rating;
         this.comment = comment;
         this.createdDate = createdDate;
+        this.status = status;
     }
 
     public Integer getFeedbackId() { return feedbackId; }
@@ -41,4 +51,6 @@ public class Feedback {
     public void setComment(String comment) { this.comment = comment; }
     public LocalDateTime getCreatedDate() { return createdDate; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    public String getStatus() {return status;}
+    public void setStatus(String status) {this.status = status;}
 }

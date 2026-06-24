@@ -3,16 +3,22 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "Accounts")
 public class Account {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "account_id")
     private Integer accountId;
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    @Column(unique = true, nullable = false, length = 100)
+
+    @Column(name = "username", unique = true, nullable = false, length = 100)
     private String username;
-    @Column(nullable = false, length = 255)
+
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
-    @Column(length = 50)
+
+    @Column(name = "status", length = 50)
     private String status = "Active";
 
     public Account() {

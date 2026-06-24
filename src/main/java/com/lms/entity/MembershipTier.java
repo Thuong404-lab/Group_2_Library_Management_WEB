@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 @Table(name = "MembershipTiers")
 public class MembershipTier {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "tier_id")
     private Integer tierId;
     @Column(nullable = false, length = 100)
     private String tierName;
