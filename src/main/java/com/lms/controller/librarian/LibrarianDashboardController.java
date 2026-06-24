@@ -1,4 +1,3 @@
-```java
 package com.lms.controller.librarian;
 
 import com.lms.config.CustomUserDetails;
@@ -68,4 +67,4 @@ public class LibrarianDashboardController {
 
         return "librarian/dashboard";
     }
-}```
+}

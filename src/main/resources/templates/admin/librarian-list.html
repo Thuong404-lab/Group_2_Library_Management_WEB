@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>View Librarian List</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            padding: 22px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .card-box {
+            background: #fff;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        .table-app {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .table-app th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-type {
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-status {
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #047857;
+        }
+
+        .status-inactive {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .status-blocked {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="title">Danh sách thủ thư</h1>
+            </div>
+
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/dashboard}">
+                ← Về Dashboard
+            </a>
+        </div>
+
+        <div class="card-box mb-3">
+            <form class="row g-2" method="get" th:action="@{/admin/librarians}">
+                <div class="col-md-5">
+                    <input class="form-control" type="text" name="keyword" th:value="${keyword}"
+                        placeholder="Tìm họ tên, email hoặc số điện thoại thủ thư">
+                </div>
+
+                <div class="col-md-auto">
+                    <button class="btn btn-primary" type="submit">
+                        Tìm kiếm
+                    </button>
+                </div>
+
+                <div class="col-md-auto">
+                    <a class="btn btn-light border" th:href="@{/admin/librarians}">
+                        Tải lại
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-box">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle table-app">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã thủ thư</th>
+                            <th>Thông tin thủ thư</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Loại nhân viên</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr th:each="staff, iterStat : ${librarians.content}">
+                            <td th:text="${librarians.number * librarians.size + iterStat.index + 1}">
+                                1
+                            </td>
+
+                            <td th:text="${'LB' + staff.staffId}">
+                                LB1
+                            </td>
+
+                            <td>
+                                <div th:if="${staff.user != null}">
+                                    <b th:text="${staff.user.fullName}">
+                                        Tên thủ thư
+                                    </b>
+                                    <div class="text-muted small">
+                                        User ID:
+                                        <span th:text="${staff.user.id}">1</span>
+                                    </div>
+                                </div>
+
+                                <div th:unless="${staff.user != null}">
+                                    Không có thông tin user
+                                </div>
+                            </td>
+
+                            <td th:text="${staff.user != null ? staff.user.email : 'N/A'}">
+                                email
+                            </td>
+
+                            <td th:text="${staff.user != null ? staff.user.phone : 'N/A'}">
+                                phone
+                            </td>
+
+                            <td>
+                                <span class="badge-type" th:text="${staff.staffType}">
+                                    Librarian
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge-status" th:if="${staff.user != null && staff.user.status != null}"
+                                    th:classappend="${staff.user.status.name() == 'Active' ? ' status-active' : staff.user.status.name() == 'Blocked' ? ' status-blocked' : ' status-inactive'}"
+                                    th:text="${staff.user.status}">
+                                    Active
+                                </span>
+
+                                <span class="badge-status status-inactive"
+                                    th:if="${staff.user == null || staff.user.status == null}">
+                                    N/A
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(librarians.content)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Không có thủ thư nào.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    Trang <span th:text="${librarians.number + 1}">1</span> /
+                    <span th:text="${librarians.totalPages == 0 ? 1 : librarians.totalPages}">1</span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-light border" th:if="${librarians.hasPrevious()}"
+                        th:href="@{/admin/librarians(page=${librarians.number - 1}, keyword=${keyword})}">
+                        Trước
+                    </a>
+
+                    <a class="btn btn-sm btn-light border" th:if="${librarians.hasNext()}"
+                        th:href="@{/admin/librarians(page=${librarians.number + 1}, keyword=${keyword})}">
+                        Sau
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/bootstrap.bundle.js}"></script>
+</body>
+
+</html>
