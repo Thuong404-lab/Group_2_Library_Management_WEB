@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Bạn đọc tại chỗ</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .table-box {
+            background: white;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        table {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        th {
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+
+        .badge-status {
+            border-radius: 20px;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: #dcfce7;
+            color: #047857;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="text-muted mb-2">Trang chủ › Quản lý mượn, trả › <b>Bạn đọc tại chỗ</b></div>
+
+        <div class="title">Bạn đọc tại chỗ</div>
+
+        <div class="table-box">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th>STT</th>
+                        <th>Thông tin bạn đọc</th>
+                        <th>Đối tượng</th>
+                        <th>Mã phiếu</th>
+                        <th>Ngày đăng ký</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="row, iter : ${borrowRows}">
+                        <td><input type="checkbox"></td>
+                        <td th:text="${iter.index + 1}">1</td>
+
+                        <td>
+                            <div th:if="${row.borrow.member != null && row.borrow.member.user != null}">
+                                <div>Mã thẻ: <span th:text="${'TV' + row.borrow.member.memberId}">TV1</span></div>
+                                <div>Họ tên: <b th:text="${row.borrow.member.user.fullName}">Bạn đọc</b></div>
+                                <div>SĐT: <span th:text="${row.borrow.member.user.phone}">090...</span></div>
+                            </div>
+                        </td>
+
+                        <td>Thành viên</td>
+                        <td th:text="${'BDTC' + row.borrow.borrowId}">BDTC1</td>
+                        <td
+                            th:text="${row.borrow.borrowDate != null ? #temporals.format(row.borrow.borrowDate, 'dd/MM/yyyy HH:mm') : '-'}">
+                            -</td>
+
+                        <td>
+                            <span class="badge-status" th:text="${row.borrow.status}">Active</span>
+                        </td>
+
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary">Xem</button>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(borrowRows)}">
+                        <td colspan="8" class="text-center text-muted py-4">Chưa có dữ liệu bạn đọc tại chỗ</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

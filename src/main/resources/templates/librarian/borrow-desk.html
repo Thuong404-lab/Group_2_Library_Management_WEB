@@ -1,14 +1,102 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Borrow Desk', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mượn sách</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid #d7dee8;
+            margin-bottom: 14px;
+        }
+
+        .tab {
+            padding: 10px 0;
+            font-weight: 700;
+            color: #0f172a;
+            text-decoration: none;
+        }
+
+        .tab.active {
+            color: #0b5ed7;
+            border-bottom: 3px solid #0b5ed7;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .table-box {
+            background: white;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        table {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        th {
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+
+        .badge-status {
+            border-radius: 20px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #047857;
+        }
+
+        .status-overdue {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+
+        .status-returned {
+            background: #e5e7eb;
+            color: #374151;
+        }
+    </style>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Borrow Desk</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
-            </div>
+    <div class="page">
+        <div class="text-muted mb-2">Trang chủ › Thư viện số › Quản lý mượn, trả › <b>Mượn sách</b></div>
+
+        <div class="title">Mượn sách</div>
+
+        <div class="tabs">
+            <a class="tab active" th:href="@{/librarian/loan/borrow-desk}">Danh sách phiếu mượn</a>
+            <a class="tab" th:href="@{/librarian/loan/borrow-schedule}">Quản lý lịch mượn trả</a>
         </div>
-    </div>
-</body>
-</html>
+
+        <div class="toolbar">
