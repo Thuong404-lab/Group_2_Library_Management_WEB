@@ -1,13 +1,11 @@
 package com.lms.service.impl;
 
+import com.lms.entity.*;
+import com.lms.enums.ActionType;
 import com.lms.repository.*;
 import com.lms.service.AuthService;
 
 import com.lms.dto.request.RegisterRequest;
-import com.lms.entity.Account;
-import com.lms.entity.Member;
-import com.lms.entity.User;
-import com.lms.entity.Wallet;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
         if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new Exception("Tên đăng nhập đã tồn tại!");
         }
-        
+
         // 1. Tạo User
         User user = new User();
         user.setFullName(request.getFullName());
@@ -80,16 +78,25 @@ public class AuthServiceImpl implements AuthService {
         walletRepository.save(wallet);
     }
 
-    // UC-9.1: Ghi log đăng nhập
+    private void createAndSaveLog(Integer accountId, String actionType, String ipAddres, String userAgent, String description) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account != null) {
+            SystemLog log = new SystemLog(account, actionType, ipAddres, userAgent, description);
+            systemLogRepository.save(log);
+        }
+    }
+
+
     @Override
     public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        
+        String description = "Đăng nhập thành công. Session ID: " + sessionId;
+        createAndSaveLog(accountId, ActionType.LOGIN.name(), ipAddress, userAgent, description);
 
     }
 
-    // UC-9.1: Ghi log đăng xuất
     @Override
     public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        // TODO: Implement - Insert vào bảng SystemLogs
+        String description = "Đăng xuất thành công. Session ID: " + sessionId;
+        createAndSaveLog(accountId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
     }
 }
