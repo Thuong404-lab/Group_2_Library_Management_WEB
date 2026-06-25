@@ -2,6 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.entity.*;
 import com.lms.enums.ActionType;
+import com.lms.exception.AuthException;
 import com.lms.repository.*;
 import com.lms.service.AuthService;
 
@@ -31,7 +32,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final SystemLogRepository systemLogRepository;
 
-    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder, SystemLogRepository systemLogRepository) {
+    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository,
+            MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder,
+            SystemLogRepository systemLogRepository) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.memberRepository = memberRepository;
@@ -40,52 +43,44 @@ public class AuthServiceImpl implements AuthService {
         this.systemLogRepository = systemLogRepository;
     }
 
-
     // UC-2: Đăng ký thành viên mới
     @Override
     @Transactional
-    public void register(RegisterRequest request) throws Exception {
-        if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new Exception("Tên đăng nhập đã tồn tại!");
+    public void register(RegisterRequest request) throws AuthException {
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new AuthException("Tên đăng nhập không được để trống!");
         }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new AuthException("Mật khẩu phải có ít nhất 6 ký tự!");
+        }
+        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
+            throw new AuthException("Họ và tên không được để trống!");
+        }
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            throw new AuthException("Email không hợp lệ (phải chứa ký tự @)!");
+        }
+        if (request.getPhone() == null || request.getPhone().length() < 10) {
+            throw new AuthException("Số điện thoại phải có ít nhất 10 số!");
+        }
+        if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new AuthException("Tên đăng nhập đã tồn tại!");
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AuthException("Email đã được sử dụng!");
+        }
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        createCoreAccount(request.getUsername(), request.getFullName(), encodedPassword, request.getEmail(), request.getPhone());
 
-        // 1. Tạo User
-        User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setStatus(com.lms.enums.UserStatus.Active);
-        user = userRepository.save(user);
-
-        // 2. Tạo Account
-        Account account = new Account();
-        account.setUsername(request.getUsername());
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        account.setUser(user);
-        account.setStatus("Active");
-        accountRepository.save(account);
-
-        // 3. Tạo Member
-        Member member = new Member();
-        member.setUser(user);
-        // member.setTier(...) // Có thể set hạng Basic sau
-        memberRepository.save(member);
-
-        // 4. Tạo Wallet
-        Wallet wallet = new Wallet();
-        wallet.setMember(member);
-        wallet.setBalance(BigDecimal.ZERO);
-        walletRepository.save(wallet);
     }
 
-    private void createAndSaveLog(Integer accountId, String actionType, String ipAddres, String userAgent, String description) {
+    private void createAndSaveLog(Integer accountId, String actionType, String ipAddres, String userAgent,
+            String description) {
         Account account = accountRepository.findById(accountId).orElse(null);
         if (account != null) {
             SystemLog log = new SystemLog(account, actionType, ipAddres, userAgent, description);
             systemLogRepository.save(log);
         }
     }
-
 
     @Override
     public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
@@ -98,5 +93,32 @@ public class AuthServiceImpl implements AuthService {
     public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
         String description = "Đăng xuất thành công. Session ID: " + sessionId;
         createAndSaveLog(accountId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
+    }
+
+    @Override
+    public Account createCoreAccount(String userName, String fullName, String pass, String email, String phone) {
+        User user = new User();
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setStatus(com.lms.enums.UserStatus.Active);
+        user = userRepository.save(user);
+
+        Account account = new Account();
+        account.setUsername(userName);
+        account.setPasswordHash(pass);
+        account.setUser(user);
+        account.setStatus("Active");
+        accountRepository.save(account);
+
+        Member member = new Member();
+        member.setUser(user);
+        memberRepository.save(member);
+
+        Wallet wallet = new Wallet();
+        wallet.setMember(member);
+        wallet.setBalance(BigDecimal.ZERO);
+        walletRepository.save(wallet);
+        return account;
     }
 }

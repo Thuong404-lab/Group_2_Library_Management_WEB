@@ -18,16 +18,12 @@ import java.math.BigDecimal;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final AccountRepository accountRepository;
-    private final UserRepository userRepository;
-    private final MemberRepository memberRepository;
-    private final WalletRepository walletRepository;
+    private final AuthService authService;
 
 
-    public CustomOAuth2UserService(AccountRepository accountRepository, UserRepository userRepository, MemberRepository memberRepository, WalletRepository walletRepository, SystemLogRepository systemLogRepository) {
+    public CustomOAuth2UserService(AccountRepository accountRepository, UserRepository userRepository, MemberRepository memberRepository, WalletRepository walletRepository, SystemLogRepository systemLogRepository, AuthService authService) {
         this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
-        this.memberRepository = memberRepository;
-        this.walletRepository = walletRepository;
+        this.authService = authService;
     }
 
     @Override
@@ -37,29 +33,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
-        Account account = accountRepository.findByUsername(email).orElse(null);
+        Account account = accountRepository.findByUser_Email(email).orElse(null);
         if (account == null) {
-            User user = new User();
-            user.setFullName(name);
-            user.setEmail(email);
-            user.setPhone("");
-            user.setStatus(UserStatus.Active);
-            user = userRepository.save(user);
-
-            account = new Account();
-            account.setUsername(name);
-            account.setPasswordHash("");
-            account.setUser(user);
-            account = accountRepository.save(account);
-
-            Member member = new Member();
-            member.setUser(user);
-            member = memberRepository.save(member);
-
-            Wallet wallet = new Wallet();
-            wallet.setMember(member);
-            wallet.setBalance(BigDecimal.ZERO);
-            wallet = walletRepository.save(wallet);
+            //  String userName, String fullName, String pass, String email, String phone);
+            account = authService.createCoreAccount(email, name, "", email, "");
 
         }
         return new CustomUserDetails(account, oAuth2User.getAuthorities(), oAuth2User.getAttributes());
