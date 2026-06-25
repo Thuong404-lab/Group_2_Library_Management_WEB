@@ -1,14 +1,52 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-</head>
-<body>
-    <header th:fragment="header">
-        <!-- TODO: Implement Header (Logo, Navbar, User Profile menu) -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">LMS</a>
-            <!-- Thêm menu bên phải -->
-        </nav>
-    </header>
-</body>
-</html>
+<nav th:fragment="header" class="navbar navbar-expand-lg top-header">
+    <div class="container-fluid px-4">
+        <!-- Nút toggle cho mobile sidebar -->
+        <button class="btn d-md-none me-2" type="button" id="sidebarToggle">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+        
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <i class="bi bi-book-half me-2 fs-3"></i>
+            Thư Viện <span class="text-dark ms-1">Số</span>
+        </a>
+        
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="topNavbar">
+            <form class="d-flex mx-auto w-50 position-relative d-none d-lg-flex">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input class="form-control rounded-pill ps-5 bg-light border-0 shadow-sm" type="search" placeholder="Tìm kiếm sách, tác giả...">
+            </form>
+            
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- Notifications -->
+                <li class="nav-item me-3 position-relative">
+                    <a class="nav-link text-dark fs-5" href="#">
+                        <i class="bi bi-bell"></i>
+                        <span class="position-absolute top-25 start-75 translate-middle p-1 bg-danger border border-light rounded-circle">
+                            <span class="visually-hidden">New alerts</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <!-- Profile Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&rounded=true" alt="User" width="36" height="36" class="rounded-circle me-2 border">
+                        <span class="fw-semibold d-none d-sm-inline">Tài khoản</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2 rounded-3">
+                        <!-- Sec tag để lấy thông tin (Nếu cài thymeleaf-extras-springsecurity) -->
+                        <li><h6 class="dropdown-header">Xin chào!</h6></li>
+                        <li><a class="dropdown-item" href="/member/profile"><i class="bi bi-person me-2"></i> Hồ sơ của tôi</a></li>
+                        <li><a class="dropdown-item" href="/member/wallet"><i class="bi bi-wallet2 me-2"></i> Ví điện tử</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -1,8 +1,13 @@
 package com.lms.controller.guest;
 
+import com.lms.entity.Book;
+import com.lms.service.BookService;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * GuestController - Trang công khai cho Khách (Guest)
@@ -11,10 +16,17 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class GuestController {
 
+    private final BookService bookService;
+
+    public GuestController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
     // Trang chủ
     @GetMapping("/")
     public String homePage(Model model) {
         // TODO: Implement - Lấy danh sách sách mới nhất, truyền vào model
+
         return "index";
     }
 
@@ -23,9 +35,18 @@ public class GuestController {
     public String searchBooks(@RequestParam(required = false) String keyword,
                               @RequestParam(required = false) Integer categoryId,
                               @RequestParam(required = false) Integer genreId,
+                              @RequestParam(defaultValue = "0") int page,
                               Model model) {
-        // TODO: Implement - Gọi BookService.search(keyword, categoryId, genreId)
-        // TODO: Hỗ trợ phân trang (Pageable)
+
+        if (keyword != null && keyword.trim().isEmpty()) {
+            keyword = null;
+        }
+        Page<Book> bookPage = bookService.searchBooks(keyword, categoryId, genreId, page);
+
+        model.addAttribute("bookPage", bookPage);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("genreId", genreId);
         return "guest/search";
     }
 

@@ -3,26 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Management System</title>
-    <!-- TODO: Thêm link CSS chung (ví dụ Bootstrap, Tailwind) -->
+    <title layout:title-pattern="$CONTENT_TITLE - Thư Viện Số Premium">Thư Viện Số</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom Premium CSS -->
+    <style>
+        :root {
+            --primary: #4F46E5; /* Indigo */
+            --primary-hover: #4338CA;
+            --secondary: #10B981; /* Emerald */
+            --dark: #1E293B; /* Slate 800 */
+            --light-bg: #F8FAFC; /* Slate 50 */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-bg);
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,0.03) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.03) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.03) 0, transparent 50%);
+            background-attachment: fixed;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6, .brand-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Top Header (Glassmorphism) */
+        .top-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1040;
+            height: 70px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--primary) !important;
+            letter-spacing: -0.5px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 70px;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 20px 0;
+            box-shadow: 1px 0 15px rgba(0, 0, 0, 0.03);
+            background-color: #ffffff;
+            width: 250px;
+            transition: var(--transition);
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link i {
+            font-size: 1.2rem;
+            margin-right: 12px;
+            transition: var(--transition);
+        }
+
+        .sidebar-link:hover {
+            color: var(--primary);
+            background-color: #EEF2FF;
+        }
+
+        .sidebar-link.active {
+            color: var(--primary);
+            background-color: #EEF2FF;
+            border-left: 3px solid var(--primary);
+            font-weight: 600;
+        }
+
+        .sidebar-link.active i {
+            color: var(--primary);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            min-height: calc(100vh - 70px);
+            transition: var(--transition);
+        }
+
+        /* Premium Cards */
+        .premium-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-header-premium {
+            background: transparent;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            padding: 20px 24px;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            padding: 24px;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .stat-icon.primary { background: #EEF2FF; color: var(--primary); }
+        .stat-icon.success { background: #D1FAE5; color: var(--secondary); }
+        .stat-icon.warning { background: #FEF3C7; color: #F59E0B; }
+        .stat-icon.danger { background: #FEE2E2; color: #EF4444; }
+
+        .stat-details h3 {
+            font-size: 1.8rem;
+            margin: 0;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-details p {
+            margin: 0;
+            color: #64748B;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Custom Buttons */
+        .btn-premium {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            border: none;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+        
+        .btn-premium:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            color: white;
+        }
+
+        /* Badges */
+        .badge-premium {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.75rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .badge-soft-success { background-color: #D1FAE5; color: #065F46; }
+        .badge-soft-warning { background-color: #FEF3C7; color: #92400E; }
+        .badge-soft-danger { background-color: #FEE2E2; color: #991B1B; }
+        .badge-soft-primary { background-color: #EEF2FF; color: #3730A3; }
+
+        /* Tables */
+        .table-premium th {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            color: #64748B;
+            font-weight: 600;
+            background-color: #F8FAFC;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 16px;
+        }
+        
+        .table-premium td {
+            padding: 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #F1F5F9;
+            color: #334155;
+            font-weight: 500;
+        }
+        
+        .table-premium tr:hover td {
+            background-color: #F8FAFC;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
+
+    <!-- Header (Dùng chung) -->
     <header th:replace="~{fragments/header :: header}"></header>
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav th:replace="~{fragments/sidebar :: sidebar}"></nav>
-            
-            <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div layout:fragment="content"></div>
-            </main>
-        </div>
+    <div class="container-fluid p-0">
+        <!-- Sidebar (Thay đổi theo Role, mặc định lấy chung) -->
+        <nav th:replace="~{fragments/sidebar :: sidebar}"></nav>
+        
+        <!-- Main Content (Phần ruột sẽ thay đổi tùy trang) -->
+        <main class="main-content" id="main-content">
+            <!-- Toast Notifications Container -->
+            <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMsg}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${errorMsg}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- Nơi nhúng nội dung con -->
+            <div layout:fragment="content">
+                <!-- Content goes here -->
+            </div>
+        </main>
     </div>
 
-    <footer th:replace="~{fragments/footer :: footer}"></footer>
-
-    <!-- TODO: Thêm các script JS chung -->
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script cho Sidebar Toggle trên Mobile -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+        });
+    </script>
+    
+    <!-- Script cho Layout con -->
+    <th:block layout:fragment="scripts"></th:block>
 </body>
 </html>

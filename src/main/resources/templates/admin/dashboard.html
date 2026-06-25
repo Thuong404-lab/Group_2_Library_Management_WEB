@@ -1,12 +1,119 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Dashboard', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head>
+    <title>Admin Dashboard</title>
+</head>
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Dashboard</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">Tổng quan Hệ thống</h2>
+                <p class="text-muted mb-0">Theo dõi hiệu suất thư viện trong tháng này.</p>
+            </div>
+            <button class="btn btn-premium"><i class="bi bi-download me-2"></i> Xuất Báo Cáo</button>
+        </div>
+
+        <!-- 4 Stat Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="stat-details">
+                        <p>Tổng Bạn Đọc</p>
+                        <h3>1,245</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <div class="stat-details">
+                        <p>Sách Đang Mượn</p>
+                        <h3>342</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div class="stat-details">
+                        <p>Sách Quá Hạn</p>
+                        <h3>28</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon danger">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div class="stat-details">
+                        <p>Tiền Phạt (Tháng)</p>
+                        <h3>1.2M ₫</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Tables Area -->
+        <div class="row g-4">
+            <!-- Main Chart Area -->
+            <div class="col-lg-8">
+                <div class="premium-card">
+                    <div class="card-header-premium d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Thống Kê Mượn Trả Sách</h5>
+                        <select class="form-select form-select-sm w-auto border-0 bg-light">
+                            <option>Tuần này</option>
+                            <option>Tháng này</option>
+                        </select>
+                    </div>
+                    <div class="p-4 text-center">
+                        <!-- Giả lập biểu đồ -->
+                        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="height: 300px; border: 1px dashed #ccc;">
+                            <span class="text-muted"><i class="bi bi-bar-chart-fill me-2"></i> [Khu vực Chart.js / ApexCharts]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Side List -->
+            <div class="col-lg-4">
+                <div class="premium-card">
+                    <div class="card-header-premium">
+                        <h5 class="mb-0">Sách Hot Nhất</h5>
+                    </div>
+                    <div class="p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-start p-3 border-0 border-bottom">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">Clean Code</div>
+                                    <small class="text-muted">Lập trình</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">14 Lượt</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-start p-3 border-0 border-bottom">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">Head First Java</div>
+                                    <small class="text-muted">Lập trình</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">12 Lượt</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-start p-3 border-0">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">Nhà Giả Kim</div>
+                                    <small class="text-muted">Văn học</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">9 Lượt</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

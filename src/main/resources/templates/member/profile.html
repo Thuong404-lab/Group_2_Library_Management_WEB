@@ -1,12 +1,133 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Profile', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head>
+    <title>Hồ Sơ Của Tôi</title>
+    <style>
+        .library-card {
+            background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
+            border-radius: 20px;
+            color: white;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 30px -10px rgba(79, 70, 229, 0.4);
+        }
+        .library-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .library-card::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+    </style>
+</head>
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Profile</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+    <div layout:fragment="content">
+        <div class="row g-4 mb-4">
+            <!-- Digital Library Card -->
+            <div class="col-lg-5">
+                <div class="library-card h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-5">
+                        <div>
+                            <p class="text-white-50 mb-0" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px;">Thẻ Thư Viện Số</p>
+                            <h4 class="fw-bold mt-1">LIBRARY PASS</h4>
+                        </div>
+                        <i class="bi bi-qr-code fs-1 opacity-75"></i>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h3 class="fw-bold mb-1">Nguyễn Tiến Thương</h3>
+                        <p class="text-white-50 mb-0 font-monospace">ID: MEM-2026-9981</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4 pt-4 border-top border-light border-opacity-25">
+                        <div>
+                            <small class="text-white-50 d-block">Hạng thẻ</small>
+                            <span class="fw-bold">Sinh viên (Standard)</span>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-white-50 d-block">Trạng thái</small>
+                            <span class="fw-bold text-success"><i class="bi bi-check-circle-fill me-1"></i> Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Info Form -->
+            <div class="col-lg-7">
+                <div class="premium-card">
+                    <div class="card-header-premium d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Thông Tin Cá Nhân</h5>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3">Chỉnh sửa</button>
+                    </div>
+                    <div class="p-4">
+                        <form>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Họ và tên</label>
+                                    <input type="text" class="form-control bg-light border-0" value="Nguyễn Tiến Thương" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Email</label>
+                                    <input type="email" class="form-control bg-light border-0" value="thuong@gmail.com" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Số điện thoại</label>
+                                    <input type="text" class="form-control bg-light border-0" value="0123456789" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Ngày tham gia</label>
+                                    <input type="text" class="form-control bg-light border-0" value="25/06/2026" readonly>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <h4 class="mb-3 mt-5 font-outfit fw-bold">Hoạt Động Của Bạn</h4>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-icon primary"><i class="bi bi-book"></i></div>
+                    <div class="stat-details">
+                        <p>Đang mượn</p>
+                        <h3>2 cuốn</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-icon warning"><i class="bi bi-clock-history"></i></div>
+                    <div class="stat-details">
+                        <p>Quá hạn</p>
+                        <h3>0 cuốn</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-icon success"><i class="bi bi-wallet2"></i></div>
+                    <div class="stat-details">
+                        <p>Số dư ví</p>
+                        <h3>50.000 ₫</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
