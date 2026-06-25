@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
@@ -37,6 +36,39 @@
         .admin-shell {
             min-height: 100vh;
             padding-left: 220px;
+            transition: padding-left .2s ease;
+        }
+
+        body.sidebar-collapsed .admin-shell {
+            padding-left: 64px;
+        }
+
+        body.sidebar-collapsed .sidebar {
+            width: 64px;
+        }
+
+        body.sidebar-collapsed .brand-name,
+        body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
+        body.sidebar-collapsed .sidebar-user div {
+            display: none;
+        }
+
+        body.sidebar-collapsed .nav-link-app {
+            justify-content: center;
+            padding: 13px 0;
+        }
+
+        body.sidebar-collapsed .nav-icon {
+            margin: 0;
+        }
+
+        body.sidebar-collapsed .sidebar-user {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        body.sidebar-collapsed .collapse-mark {
+            margin-left: 0;
         }
 
         .sidebar {
@@ -478,39 +510,150 @@
                 padding: 0 10px;
             }
         }
+
+        .brand-link,
+        .brand-link:link,
+        .brand-link:visited,
+        .brand-link:hover,
+        .brand-link:focus,
+        .brand-link:active {
+            align-items: center;
+            color: #ffffff;
+            display: flex;
+            gap: 10px;
+            height: 100%;
+            text-decoration: none !important;
+        }
+
+        .brand-link:hover .brand-name,
+        .brand-link:focus .brand-name,
+        .brand-link:active .brand-name {
+            color: #ffffff;
+            text-decoration: none !important;
+        }
+
+        .brand-name {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+            text-decoration: none !important;
+        }
+
+        .collapse-mark {
+            align-items: center;
+            background: transparent;
+            border: none;
+            color: #9db0ca;
+            cursor: pointer;
+            display: inline-flex;
+            height: 28px;
+            justify-content: center;
+            margin-left: auto;
+            padding: 0;
+            width: 24px;
+        }
+
+        .nav-icon {
+            align-items: center;
+            color: #c8d4e6;
+            display: inline-flex;
+            font-size: 16px;
+            height: 24px;
+            justify-content: center;
+            line-height: 1;
+            text-align: center;
+            width: 24px;
+        }
+
+        .nav-link-app,
+        .nav-link-app:link,
+        .nav-link-app:visited,
+        .nav-link-app:hover,
+        .nav-link-app:focus,
+        .nav-link-app:active {
+            text-decoration: none !important;
+        }
+
+        body.sidebar-collapsed .brand {
+            gap: 6px;
+            justify-content: center;
+            padding: 0 8px;
+        }
+
+        body.sidebar-collapsed .brand-link {
+            gap: 0;
+        }
+
+        body.sidebar-collapsed .brand-name,
+        body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
+        body.sidebar-collapsed .sidebar-user div {
+            display: none;
+        }
+
+        body.sidebar-collapsed .nav-link-app {
+            justify-content: center;
+            padding: 13px 0;
+        }
+
+        body.sidebar-collapsed .nav-icon {
+            margin: 0;
+        }
+
+        body.sidebar-collapsed .submenu {
+            display: none;
+        }
+
+        body.sidebar-collapsed .sidebar-user {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        body.sidebar-collapsed .collapse-mark {
+            margin-left: 0;
+        }
     </style>
 </head>
 
 <body>
     <div class="sidebar">
         <div class="brand">
-            <span class="brand-icon">▱</span>
-            <span class="brand-name">LibraryMS</span>
-            <span class="collapse-mark">≡</span>
+            <a class="brand-link" th:href="@{/admin/dashboard}">
+                <span class="brand-icon">▱</span>
+                <span class="brand-name">LMS</span>
+            </a>
+            <button class="collapse-mark" type="button" onclick="toggleSidebar()">
+                ≡
+            </button>
         </div>
 
         <nav class="nav-area">
-            <a class="nav-link-app active" href="javascript:void(0)" onclick="showAdminSection('overview', this)">
+            <a class="nav-link-app active" data-section="overview" href="javascript:void(0)"
+                onclick="showAdminSection('overview', this)">
                 <span class="nav-icon">▦</span>
                 <span>Tổng quan</span>
             </a>
 
-            <a class="nav-link-app" href="javascript:void(0)" onclick="showAdminSection('books', this)">
+            <a class="nav-link-app" data-section="books" href="javascript:void(0)"
+                onclick="showAdminSection('books', this)">
                 <span class="nav-icon">▣</span>
                 <span>Quản lý sách</span>
             </a>
 
-            <a class="nav-link-app" href="javascript:void(0)" onclick="showAdminSection('accounts', this)">
+            <a class="nav-link-app" data-section="accounts" href="javascript:void(0)"
+                onclick="showAdminSection('accounts', this)">
                 <span class="nav-icon">♙</span>
                 <span>Quản lý người dùng</span>
             </a>
 
-            <a class="nav-link-app" href="javascript:void(0)" onclick="showAdminSection('reports', this)">
+            <a class="nav-link-app" data-section="reports" href="javascript:void(0)"
+                onclick="showAdminSection('reports', this)">
                 <span class="nav-icon">⌁</span>
                 <span>Thống kê</span>
             </a>
 
-            <a class="nav-link-app" href="javascript:void(0)" onclick="showAdminSection('calendar', this)">
+            <a class="nav-link-app" data-section="calendar" href="javascript:void(0)"
+                onclick="showAdminSection('calendar', this)">
                 <span class="nav-icon">□</span>
                 <span>Lịch thư viện</span>
             </a>
@@ -531,14 +674,14 @@
 
     <div class="admin-shell">
         <header class="topbar">
-            <div class="page-label">Admin</div>
+            <div class="page-label">Library Management System</div>
             <div class="top-actions">
                 <div class="bell">♧<span class="bell-dot"></span></div>
                 <div class="top-user">
                     <span class="user-avatar">♙</span>
                     <div>
                         <div class="user-name text-dark"
-                             th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                            th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
                             Quản trị viên
                         </div>
                         <div class="role-text">Thư viện tư nhân</div>
@@ -600,9 +743,8 @@
 
                         <div class="chart" aria-label="Thống kê mượn trả 6 tháng gần nhất">
                             <div class="bar-item" th:each="stat : ${monthStats}">
-                                <div class="bar"
-                                     th:style="|height: ${stat.height}px;|"
-                                     th:title="${stat.count + ' phiếu mượn'}"></div>
+                                <div class="bar" th:style="|height: ${stat.height}px;|"
+                                    th:title="${stat.count + ' phiếu mượn'}"></div>
                                 <div class="bar-label" th:text="${stat.label}">...</div>
                             </div>
                         </div>
@@ -614,18 +756,19 @@
                         <div class="activity-list">
                             <div class="activity" th:each="borrow, iterStat : ${recentBorrows}">
                                 <span class="activity-badge"
-                                      th:classappend="${iterStat.index % 5 == 0 ? ' blue' : iterStat.index % 5 == 1 ? ' green' : iterStat.index % 5 == 2 ? ' purple' : iterStat.index % 5 == 3 ? ' red' : ' yellow'}"
-                                      th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
+                                    th:classappend="${iterStat.index % 5 == 0 ? ' blue' : iterStat.index % 5 == 1 ? ' green' : iterStat.index % 5 == 2 ? ' purple' : iterStat.index % 5 == 3 ? ' red' : ' yellow'}"
+                                    th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
                                     N
                                 </span>
                                 <div>
                                     <div class="activity-name"
-                                         th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Không rõ'}">
+                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Không rõ'}">
                                         Người dùng
                                     </div>
                                     <div class="activity-desc">
                                         Mượn sách ·
-                                        <span th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                        <span
+                                            th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
                                             N/A
                                         </span>
                                     </div>
@@ -690,13 +833,14 @@
                     <div class="quick-card">
                         <div class="quick-card-title">Danh sách sách</div>
                         <div class="quick-card-desc">Xem và quản lý thông tin sách trong thư viện.</div>
-                        <a class="btn btn-primary btn-sm" th:href="@{/librarian/inventory}">Mở trang</a>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory}">Mở trang</a>
                     </div>
 
                     <div class="quick-card">
                         <div class="quick-card-title">Danh mục / thể loại</div>
                         <div class="quick-card-desc">Quản lý category, genre và phân loại sách.</div>
-                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory/categories}">Mở trang</a>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory/categories}">Mở
+                            trang</a>
                     </div>
 
                     <div class="quick-card">
@@ -751,9 +895,16 @@
 
                 <div class="quick-card-grid">
                     <div class="quick-card">
-                        <div class="quick-card-title">Danh sách tài khoản</div>
-                        <div class="quick-card-desc">Xem, tìm kiếm, cập nhật trạng thái và reset mật khẩu tài khoản.</div>
-                        <a class="btn btn-primary btn-sm" th:href="@{/admin/accounts}">Mở trang</a>
+                        <div class="quick-card-title">Danh sách thành viên</div>
+                        <div class="quick-card-desc">Xem, tìm kiếm, cập nhật trạng thái và reset mật khẩu tài khoản.
+                        </div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/accounts}">Mở trang</a>
+                    </div>
+
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách quản trị viên</div>
+                        <div class="quick-card-desc">Theo dõi danh sách nhân viên thư viện trong hệ thống.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/librarians}">Mở trang</a>
                     </div>
 
                     <div class="quick-card">
@@ -762,11 +913,6 @@
                         <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/accounts/create}">Mở trang</a>
                     </div>
 
-                    <div class="quick-card">
-                        <div class="quick-card-title">Danh sách thủ thư</div>
-                        <div class="quick-card-desc">Theo dõi danh sách nhân viên thư viện trong hệ thống.</div>
-                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/librarians}">Mở trang</a>
-                    </div>
                 </div>
             </section>
 
@@ -781,9 +927,8 @@
 
                         <div class="chart">
                             <div class="bar-item" th:each="stat : ${monthStats}">
-                                <div class="bar"
-                                     th:style="|height: ${stat.height}px;|"
-                                     th:title="${stat.count + ' phiếu mượn'}"></div>
+                                <div class="bar" th:style="|height: ${stat.height}px;|"
+                                    th:title="${stat.count + ' phiếu mượn'}"></div>
                                 <div class="bar-label" th:text="${stat.label}">...</div>
                             </div>
                         </div>
@@ -793,26 +938,26 @@
                         <div class="panel-title">Tổng hợp nhanh</div>
                         <table class="table table-bordered info-table mt-3">
                             <tbody>
-                            <tr>
-                                <th>Đang mượn</th>
-                                <td th:text="${activeBorrows}">0</td>
-                            </tr>
-                            <tr>
-                                <th>Chờ duyệt</th>
-                                <td th:text="${pendingBorrows}">0</td>
-                            </tr>
-                            <tr>
-                                <th>Quá hạn</th>
-                                <td th:text="${overdueBorrows}">0</td>
-                            </tr>
-                            <tr>
-                                <th>Bạn đọc</th>
-                                <td th:text="${totalMembers}">0</td>
-                            </tr>
-                            <tr>
-                                <th>Sách sẵn có</th>
-                                <td th:text="${availableItems}">0</td>
-                            </tr>
+                                <tr>
+                                    <th>Đang mượn</th>
+                                    <td th:text="${activeBorrows}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Chờ duyệt</th>
+                                    <td th:text="${pendingBorrows}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Quá hạn</th>
+                                    <td th:text="${overdueBorrows}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Bạn đọc</th>
+                                    <td th:text="${totalMembers}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Sách sẵn có</th>
+                                    <td th:text="${availableItems}">0</td>
+                                </tr>
                             </tbody>
                         </table>
                     </aside>
@@ -822,7 +967,7 @@
                     <div class="quick-card">
                         <div class="quick-card-title">Báo cáo tổng hợp</div>
                         <div class="quick-card-desc">Xem báo cáo tổng quan theo tháng của thư viện.</div>
-                        <a class="btn btn-primary btn-sm" th:href="@{/librarian/reports}">Mở trang</a>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/reports}">Mở trang</a>
                     </div>
 
                     <div class="quick-card">
@@ -849,28 +994,28 @@
 
                     <table class="table table-bordered info-table mt-3">
                         <thead>
-                        <tr>
-                            <th>Nội dung</th>
-                            <th>Dữ liệu hiện tại</th>
-                            <th>Ghi chú</th>
-                        </tr>
+                            <tr>
+                                <th>Nội dung</th>
+                                <th>Dữ liệu hiện tại</th>
+                                <th>Ghi chú</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr>
-                            <td>Phiếu đang mượn</td>
-                            <td th:text="${activeBorrows}">0</td>
-                            <td>Theo dõi lịch trả sách</td>
-                        </tr>
-                        <tr>
-                            <td>Sách quá hạn</td>
-                            <td th:text="${overdueBorrows}">0</td>
-                            <td>Cần nhắc nhở thành viên</td>
-                        </tr>
-                        <tr>
-                            <td>Sách sắp tới hạn</td>
-                            <td>Đang chờ module lịch mượn trả</td>
-                            <td>Sẽ liên kết sau khi thành viên phụ trách hoàn thiện</td>
-                        </tr>
+                            <tr>
+                                <td>Phiếu đang mượn</td>
+                                <td th:text="${activeBorrows}">0</td>
+                                <td>Theo dõi lịch trả sách</td>
+                            </tr>
+                            <tr>
+                                <td>Sách quá hạn</td>
+                                <td th:text="${overdueBorrows}">0</td>
+                                <td>Cần nhắc nhở thành viên</td>
+                            </tr>
+                            <tr>
+                                <td>Sách sắp tới hạn</td>
+                                <td>Đang chờ module lịch mượn trả</td>
+                                <td>Sẽ liên kết sau khi thành viên phụ trách hoàn thiện</td>
+                            </tr>
                         </tbody>
                     </table>
 
@@ -902,12 +1047,36 @@
                 link.classList.remove("active");
             });
 
-            clickedLink.classList.add("active");
+            if (clickedLink != null) {
+                clickedLink.classList.add("active");
+            }
+
+            const newUrl = sectionName === "overview"
+                ? "/admin/dashboard"
+                : "/admin/dashboard?section=" + sectionName;
+
+            window.history.replaceState(null, "", newUrl);
         }
+
+        function openSectionFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const sectionName = params.get("section") || "overview";
+
+            const menuLink = document.querySelector("[data-section='" + sectionName + "']");
+
+            if (menuLink != null) {
+                showAdminSection(sectionName, menuLink);
+            }
+        }
+
+        function toggleSidebar() {
+            document.body.classList.toggle("sidebar-collapsed");
+        }
+
+        document.addEventListener("DOMContentLoaded", openSectionFromUrl);
     </script>
 
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
 </body>
 
 </html>
-```
