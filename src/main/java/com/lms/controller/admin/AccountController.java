@@ -1,8 +1,10 @@
 package com.lms.controller.admin;
 
 import com.lms.entity.Account;
+import com.lms.entity.Member;
 import com.lms.enums.UserStatus;
 import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -10,6 +12,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * AccountController - Quản lý tài khoản thành viên
@@ -22,15 +27,17 @@ public class AccountController {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
 
     public AccountController(AccountRepository accountRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            MemberRepository memberRepository) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.memberRepository = memberRepository;
     }
 
     /**
-     * // UC-18.1: Member Accounts Management
      * 
      * @GetMapping
      *             public String listAccounts(@RequestParam(defaultValue = "0") int
@@ -61,18 +68,27 @@ public class AccountController {
     public String listAccounts(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
             Model model) {
-        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("accountId").descending());
-
+        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("accountId").ascending());
         Page<Account> accounts;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            accounts = accountRepository.searchAccounts(keyword.trim(), pageRequest);
+            accounts = accountRepository.searchMemberAccounts(keyword.trim(), pageRequest);
         } else {
-            accounts = accountRepository.findAll(pageRequest);
+            accounts = accountRepository.findMemberAccounts(pageRequest);
+        }
+
+        Map<Integer, Member> memberByUserId = new HashMap<>();
+
+        for (Account account : accounts.getContent()) {
+            if (account.getUser() != null && account.getUser().getId() != null) {
+                memberRepository.findByUserId(account.getUser().getId())
+                        .ifPresent(member -> memberByUserId.put(account.getUser().getId(), member));
+            }
         }
 
         model.addAttribute("accounts", accounts);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("memberByUserId", memberByUserId);
 
         return "admin/accounts";
     }

@@ -18,11 +18,22 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     @Query("""
             SELECT DISTINCT a
             FROM Account a
-            LEFT JOIN a.roles r
-            WHERE LOWER(a.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(a.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(a.user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            JOIN a.roles r
+            WHERE LOWER(r.name) = LOWER('MEMBER')
             """)
-    Page<Account> searchAccounts(@Param("keyword") String keyword, Pageable pageable);
+
+    Page<Account> findMemberAccounts(Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT a
+            FROM Account a
+            JOIN a.roles r
+            WHERE LOWER(r.name) = LOWER('MEMBER')
+              AND (
+                    LOWER(a.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                 OR LOWER(a.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                 OR LOWER(a.user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              )
+            """)
+    Page<Account> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
 }
