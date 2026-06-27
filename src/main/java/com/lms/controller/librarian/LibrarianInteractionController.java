@@ -9,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.lms.dto.request.LibrarianNotificationSendRequest;
+import org.springframework.validation.BindingResult;
 
 @Controller
 @RequestMapping("/librarian/interaction")
@@ -40,16 +42,49 @@ public class LibrarianInteractionController {
             @Valid @ModelAttribute LibrarianReviewModerateRequest request,
             RedirectAttributes flash) {
 
-        Integer currentStaffId = 2; // Giả lập Staff ID đang đăng nhập
-
         try {
-            librarianInteractionService.moderateReview(feedbackId, request, currentStaffId);
+            // ======= ĐÃ SỬA =======
+            // Bỏ lấy Authentication và username
+            librarianInteractionService.moderateReview(feedbackId, request);
+
             String actionMsg = "APPROVE".equalsIgnoreCase(request.getAction()) ? "duyệt" : "từ chối";
-            flash.addFlashAttribute("success", "Đã " + actionMsg + " đánh giá thành công. Thông báo đã được gửi đến độc giả.");
+            flash.addFlashAttribute("success", "Đã " + actionMsg + " đánh giá thành công.");
         } catch (Exception e) {
             flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
         return "redirect:/librarian/interaction/reviews";
+    }
+
+    @GetMapping("/notifications/new")
+    public String notificationForm(Model model) {
+
+        model.addAttribute(
+                "notificationRequest",
+                new LibrarianNotificationSendRequest());
+
+        model.addAttribute("members", librarianInteractionService.getAllMembers());
+
+        return "librarian/send-notification";
+    }
+
+    @PostMapping("/notifications")
+    public String sendNotificationToMembers(
+            @ModelAttribute("notificationRequest") LibrarianNotificationSendRequest request,
+            Model model,
+            RedirectAttributes flash) {
+
+        try {
+            librarianInteractionService.sendNotificationToMembers(request);
+            flash.addFlashAttribute("success", "Đã gửi thông báo thành công.");
+            return "redirect:/librarian/interaction/notifications/new";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Lỗi: " + e.getMessage());
+            model.addAttribute("members", librarianInteractionService.getAllMembers());
+
+            // Giữ lại dữ liệu đã nhập vì request vẫn nằm trong model
+            return "librarian/send-notification";
+        }
     }
 }

@@ -11,6 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.lms.dto.request.LibrarianNotificationSendRequest;
+import com.lms.exception.ValidationException;
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -22,20 +25,17 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     private final BookRepository bookRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
-    private final StaffRepository staffRepository;
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
                                            BookRepository bookRepository,
                                            NotificationRepository notificationRepository,
-                                           MemberNotificationRepository memberNotificationRepository,
-                                           StaffRepository staffRepository) {
+                                           MemberNotificationRepository memberNotificationRepository) {
         this.feedbackRepository = feedbackRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
-        this.staffRepository = staffRepository;
     }
 
     @Override
@@ -59,7 +59,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional
-    public void moderateReview(Integer feedbackId, LibrarianReviewModerateRequest request, Integer staffId) {
+    public void moderateReview(Integer feedbackId,
+                               LibrarianReviewModerateRequest request) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
 
@@ -69,17 +70,18 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
         if ("APPROVE".equalsIgnoreCase(action)) {
             feedback.setStatus("APPROVED");
-            notifMessage = "Đánh giá của bạn cho sách '" + bookTitle + "' đã được duyệt và đang hiển thị công khai.";
+            notifMessage = "Đánh giá của bạn cho sách '" + bookTitle + "' đã được duyệt.";
         } else if ("REJECT".equalsIgnoreCase(action)) {
             feedback.setStatus("REJECTED");
-            notifMessage = "Đánh giá của bạn cho sách '" + bookTitle + "' đã bị từ chối do vi phạm tiêu chuẩn.";
+            notifMessage = "Đánh giá của bạn cho sách '" + bookTitle + "' đã bị từ chối.";
         } else {
             throw new IllegalArgumentException("Hành động không hợp lệ");
         }
 
         feedbackRepository.save(feedback);
 
-        sendPersonalNotification(feedback.getMember(), staffId, "Kết quả kiểm duyệt đánh giá", notifMessage);
+        // Gọi hàm gửi thông báo cho member
+        sendPersonalNotification(feedback.getMember(), "Kết quả kiểm duyệt đánh giá", notifMessage);
     }
 
     @Override
@@ -106,37 +108,108 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         feedbackRepository.save(feedback);
     }
 
-    private void sendPersonalNotification(Member member, Integer staffId, String title, String content) {
-        Staff staff = staffRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Thủ thư"));
-
+    private void sendPersonalNotification(Member member, String title, String content) {
         // 1. Tạo Notification
         Notification notif = new Notification();
-        notif.setStaff(staff);
         notif.setTitle(title);
         notif.setContent(content);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus("Active");
         Notification savedNotif = notificationRepository.save(notif);
 
-
-        // BƯỚC 1: Tạo đối tượng MemberNotification
+        // Các bước tạo MemberNotification giữ nguyên
         MemberNotification mn = new MemberNotification();
-
-        // BƯỚC 2: Khởi tạo khóa chính phức hợp
         MemberNotificationId id = new MemberNotificationId(
                 member.getMemberId(),
                 savedNotif.getNotificationId()
         );
 
-        // BƯỚC 3: Gán ID và các thực thể liên quan
         mn.setId(id);
         mn.setMember(member);
         mn.setNotification(savedNotif);
         mn.setIsRead(false);
         mn.setReadDate(null);
 
-        // BƯỚC 4: Save
         memberNotificationRepository.save(mn);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Member> getAllMembers() {
+        return memberRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public void sendNotificationToMembers(LibrarianNotificationSendRequest request) {
+        if (request.getRecipientType() == null) {
+            throw new ValidationException("Vui lòng chọn đối tượng nhận thông báo.");
+        }
+
+        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+            throw new ValidationException("Tiêu đề không được để trống");
+        }
+
+        if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+            throw new ValidationException("Nội dung không được để trống");
+        }
+
+        List<Member> members;
+
+        switch (request.getRecipientType()) {
+
+            case ALL:
+
+                members = memberRepository.findAll();
+
+                break;
+
+            case SELECTED:
+
+                if (request.getMemberIds() == null
+                        || request.getMemberIds().isEmpty()) {
+
+                    throw new ValidationException(
+                            "Vui lòng chọn ít nhất một độc giả.");
+                }
+
+                members = memberRepository.findAllById(request.getMemberIds());
+
+                if (members.size() != request.getMemberIds().size()) {
+                    throw new ResourceNotFoundException(
+                            "Có độc giả không tồn tại.");
+                }
+
+                break;
+
+            default:
+
+                throw new ValidationException(
+                        "Loại người nhận không hợp lệ.");
+        }
+
+        Notification notification = new Notification();
+
+        notification.setTitle(request.getTitle().trim());
+        notification.setContent(request.getContent().trim());
+        notification.setStatus("Active");
+        notification.setCreatedDate(LocalDateTime.now());
+
+        Notification saved = notificationRepository.save(notification);
+
+        for (Member member : members) {
+
+            MemberNotification mn = new MemberNotification();
+
+            mn.setId(new MemberNotificationId(
+                    member.getMemberId(),
+                    saved.getNotificationId()));
+
+            mn.setMember(member);
+            mn.setNotification(saved);
+            mn.setIsRead(false);
+
+            memberNotificationRepository.save(mn);
+        }
     }
 }
