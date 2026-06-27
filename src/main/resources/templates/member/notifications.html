@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+
+    <div class="container mt-4">
+        <h2>Thông báo của tôi</h2>
+        <hr>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <p>
+            Số thông báo chưa đọc:
+            <strong th:text="${unreadCount}">0</strong>
+        </p>
+
+        <table class="table table-striped table-hover mt-3">
+            <thead class="table-dark">
+            <tr>
+                <th>Tiêu đề</th>
+                <th>Nội dung</th>
+                <th>Ngày gửi</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="notification : ${notifications}">
+                <td th:text="${notification.title}">Tiêu đề</td>
+
+                <td th:text="${notification.content}">
+                    Nội dung
+                </td>
+
+                <td th:text="${#temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm')}">
+                    Ngày gửi
+                </td>
+            </tr>
+
+            <tr th:if="${notifications == null || notifications.isEmpty()}">
+                <td colspan="3" class="text-center">
+                    Bạn chưa có thông báo nào.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <a th:href="@{/}" class="btn btn-secondary">
+            Quay lại
+        </a>
+    </div>
+
+</main>
+</body>
+</html>
