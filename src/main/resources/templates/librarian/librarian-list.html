@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách thủ thư</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+
+    <style>
+        :root {
+            --sidebar: #172742;
+            --sidebar-active: #243a63;
+            --line: #d7dee8;
+            --page: #f2f5f9;
+            --text-light: #ffffff;
+            --muted-light: #93a4bd;
+        }
+
+        body {
+            background: var(--page);
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-navbar {
+            align-items: center;
+            background: var(--sidebar);
+            color: var(--text-light);
+            display: flex;
+            height: 52px;
+            justify-content: space-between;
+            padding: 0 22px;
+        }
+
+        .brand-link {
+            align-items: center;
+            color: #fff;
+            display: flex;
+            gap: 10px;
+            height: 100%;
+            text-decoration: none !important;
+        }
+
+        .brand-icon {
+            align-items: center;
+            background: #4bc3ff;
+            border-radius: 4px;
+            color: #0d3760;
+            display: inline-flex;
+            height: 24px;
+            justify-content: center;
+            width: 24px;
+        }
+
+        .brand-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .nav-right {
+            color: var(--muted-light);
+            font-size: 12px;
+        }
+
+        .page {
+            flex: 1;
+            padding: 22px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .toolbar-content {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .search-form {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .search-form .form-control {
+            margin-right: 12px;
+            width: 520px;
+            max-width: 100%;
+        }
+
+        .search-form .btn {
+            margin-right: 10px;
+        }
+
+        .card-box {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        .table-app {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .table-app th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-type {
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-status {
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #047857;
+        }
+
+        .status-inactive {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .status-blocked {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+
+        .btn-primary {
+            background: var(--sidebar-active);
+            border-color: var(--sidebar-active);
+        }
+
+        .page-footer {
+            align-items: center;
+            background: var(--sidebar);
+            color: var(--muted-light);
+            display: flex;
+            font-size: 12px;
+            height: 44px;
+            justify-content: space-between;
+            padding: 0 22px;
+        }
+
+        .page-footer b {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="page-navbar">
+        <a class="brand-link" th:href="@{/librarian/dashboard}">
+            <span class="brand-icon">▱</span>
+            <span class="brand-name">LMS</span>
+        </a>
+
+        <div class="nav-right">
+            Library Management System
+        </div>
+    </header>
+
+    <div class="page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="title">Danh sách thủ thư</h1>
+            </div>
+
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/librarian/dashboard(section='users')}">
+                ← Về quản lý người dùng
+            </a>
+        </div>
+
+        <div class="toolbar-content mb-3">
+            <form class="search-form" method="get" th:action="@{/librarian/librarians}">
+                <input class="form-control" type="text" name="keyword" th:value="${keyword}"
+                    placeholder="Tìm họ tên, email hoặc số điện thoại">
+
+                <button class="btn btn-primary" type="submit">
+                    Tìm kiếm
+                </button>
+
+                <a class="btn btn-light border" th:href="@{/librarian/librarians}">
+                    Tải lại
+                </a>
+            </form>
+        </div>
+
+        <div class="card-box">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle table-app">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã thủ thư</th>
+                            <th>Thông tin thủ thư</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Loại nhân viên</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr th:each="staff, iterStat : ${staffPage.content}">
+                            <td th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">
+                                1
+                            </td>
+                            <td th:text="${'ST' + staff.staffId}">
+                                ST1
+                            </td>
+                            <td>
+                                <div th:if="${staff.user != null}">
+                                    <b th:text="${staff.user.fullName}">
+                                        Tên thủ thư
+                                    </b>
+                                    <div class="text-muted small">
+                                        User ID:
+                                        <span th:text="${staff.user.id}">1</span>
+                                    </div>
+                                </div>
+                                <div th:unless="${staff.user != null}">
+                                    Không có thông tin user
+                                </div>
+                            </td>
+                            <td th:text="${staff.user != null ? staff.user.email : 'N/A'}">
+                                email
+                            </td>
+                            <td th:text="${staff.user != null ? staff.user.phone : 'N/A'}">
+                                phone
+                            </td>
+                            <td>
+                                <span class="badge-type" th:text="${staff.staffType}">
+                                    Librarian
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-status" th:if="${staff.user != null && staff.user.status != null}"
+                                    th:classappend="${staff.user.status.name() == 'Active' ? ' status-active' : staff.user.status.name() == 'Blocked' ? ' status-blocked' : ' status-inactive'}"
+                                    th:text="${staff.user.status}">
+                                    Active
+                                </span>
+                                <span class="badge-status status-inactive"
+                                    th:if="${staff.user == null || staff.user.status == null}">
+                                    N/A
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(staffPage.content)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Không có thủ thư nào.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${!staffPage.hasPrevious()} ? 'disabled'">
+                        <a class="page-link" th:if="${staffPage.hasPrevious()}"
+                            th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword})}">&laquo;</a>
+
+                        <a class="page-link" th:unless="${staffPage.hasPrevious()}" href="#">&laquo;</a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, staffPage.totalPages == 0 ? 0 : staffPage.totalPages - 1)}"
+                        th:classappend="${i == staffPage.number} ? 'active'">
+                        <a class="page-link" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}"
+                            th:text="${i + 1}">1</a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${!staffPage.hasNext()} ? 'disabled'">
+                        <a class="page-link" th:if="${staffPage.hasNext()}"
+                            th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword})}">&raquo;</a>
+
+                        <a class="page-link" th:unless="${staffPage.hasNext()}" href="#">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <div>
+            <b>LMS</b> · Library Management System
+        </div>
+        <div>
+            Librarian Management
+        </div>
+    </footer>
+
+    <script th:src="@{/js/bootstrap.bundle.js}"></script>
+</body>
+
+</html>
