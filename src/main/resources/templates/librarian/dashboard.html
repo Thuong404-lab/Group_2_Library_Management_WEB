@@ -1,0 +1,593 @@
+```html
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        :root {
+            --sidebar: #172742;
+            --sidebar-active: #243a63;
+            --line: #d7dee8;
+            --page: #f2f5f9;
+            --text: #0f172a;
+            --muted: #64748b;
+            --blue: #1f66ff;
+            --orange: #ff9800;
+            --red: #ff3045;
+            --green: #069b69;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--page);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            padding-left: 220px;
+        }
+
+        .sidebar {
+            background: var(--sidebar);
+            bottom: 0;
+            color: #d8e2f1;
+            display: flex;
+            flex-direction: column;
+            left: 0;
+            position: fixed;
+            top: 0;
+            width: 220px;
+            z-index: 10;
+        }
+
+        .brand {
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            gap: 10px;
+            height: 46px;
+            padding: 0 14px;
+        }
+
+        .brand-icon,
+        .stat-icon,
+        .user-avatar {
+            align-items: center;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .brand-icon {
+            background: #4bc3ff;
+            border-radius: 4px;
+            color: #0d3760;
+            height: 24px;
+            width: 24px;
+        }
+
+        .brand-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .collapse-mark {
+            color: #9db0ca;
+            margin-left: auto;
+        }
+
+        .nav-area {
+            flex: 1;
+            padding: 12px 0;
+        }
+
+        .nav-link-app,
+        .submenu-link {
+            align-items: center;
+            color: #cbd7ea;
+            display: flex;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-link-app {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 11px 16px;
+        }
+
+        .nav-link-app.active,
+        .nav-link-app:hover {
+            background: var(--sidebar-active);
+            color: #fff;
+        }
+
+        .nav-icon {
+            color: #c8d4e6;
+            text-align: center;
+            width: 18px;
+        }
+
+        .submenu {
+            gap: 6px;
+            padding: 4px 0 12px 48px;
+        }
+
+        .submenu.show {
+            display: grid;
+        }
+
+        .submenu:not(.show) {
+            display: none;
+        }
+
+        .submenu-link {
+            font-size: 12px;
+            padding: 3px 0;
+        }
+
+        .submenu-link:hover {
+            color: #fff;
+        }
+
+        .sidebar-user {
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+        }
+
+        .user-avatar {
+            background: #22385e;
+            border-radius: 50%;
+            color: #fff;
+            height: 26px;
+            width: 26px;
+        }
+
+        .user-name {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .user-email,
+        .role-text {
+            color: #93a4bd;
+            font-size: 11px;
+        }
+
+        .topbar {
+            align-items: center;
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            height: 46px;
+            justify-content: space-between;
+            padding: 0 18px;
+        }
+
+        .page-label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .top-user {
+            align-items: center;
+            display: flex;
+            gap: 9px;
+        }
+
+        .top-user .user-avatar {
+            background: #1262be;
+        }
+
+        .content {
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 21px;
+            font-weight: 800;
+            margin: 0 0 2px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .stat-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 18px;
+        }
+
+        .stat-card,
+        .panel {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+        }
+
+        .stat-card {
+            align-items: center;
+            display: flex;
+            gap: 14px;
+            min-height: 84px;
+            padding: 14px;
+        }
+
+        .stat-icon {
+            border-radius: 6px;
+            color: #fff;
+            flex: 0 0 36px;
+            height: 36px;
+            width: 36px;
+        }
+
+        .blue {
+            background: var(--blue);
+        }
+
+        .orange {
+            background: var(--orange);
+        }
+
+        .red {
+            background: var(--red);
+        }
+
+        .green {
+            background: var(--green);
+        }
+
+        .stat-label {
+            color: #667085;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.05;
+        }
+
+        .stat-note {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+        }
+
+        .panel {
+            min-height: 255px;
+            padding: 16px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .table-app {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .table-app th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .activity-list {
+            display: grid;
+            gap: 13px;
+        }
+
+        .activity {
+            align-items: flex-start;
+            display: flex;
+            gap: 9px;
+        }
+
+        .activity-badge {
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 6px;
+        }
+
+        .activity-badge.info {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .activity-name {
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .activity-desc {
+            color: #536179;
+            font-size: 12px;
+        }
+
+        @media (max-width: 1100px) {
+
+            .stat-grid,
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .app-shell {
+                padding-left: 0;
+            }
+
+            .sidebar {
+                position: static;
+                width: 100%;
+            }
+
+            .stat-grid,
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="brand">
+            <span class="brand-icon">□</span>
+            <span class="brand-name">LibraryMS</span>
+            <span class="collapse-mark">≡</span>
+        </div>
+
+        <nav class="nav-area">
+            <a class="nav-link-app active" th:href="@{/librarian/dashboard}">
+                <span class="nav-icon">▦</span>
+                <span>Tổng quan</span>
+            </a>
+
+            <a class="nav-link-app" href="javascript:void(0)" onclick="toggleLoanMenu()">
+                <span class="nav-icon">▰</span>
+                <span>Quản lý mượn, trả</span>
+                <span class="ms-auto" id="loanArrow">⌄</span>
+            </a>
+
+            <div class="submenu show" id="loanMenu">
+                <a class="submenu-link" th:href="@{/librarian/loan/borrow-desk}">Mượn sách</a>
+                <a class="submenu-link" th:href="@{/librarian/loan/renewals}">Gia hạn sách</a>
+                <a class="submenu-link" th:href="@{/librarian/loan/on-site-readers}">Bạn đọc tại chỗ</a>
+                <a class="submenu-link" th:href="@{/librarian/members/fines}">Phạt vi phạm</a>
+            </div>
+
+            <a class="nav-link-app" th:href="@{/librarian/inventory}">
+                <span class="nav-icon">▣</span>
+                <span>Quản lý sách</span>
+            </a>
+
+            <a class="nav-link-app" th:href="@{/librarian/members}">
+                <span class="nav-icon">♙</span>
+                <span>Bạn đọc</span>
+            </a>
+
+            <a class="nav-link-app" th:href="@{/librarian/reports}">
+                <span class="nav-icon">⌁</span>
+                <span>Thống kê</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-user">
+            <span class="user-avatar">♙</span>
+            <div>
+                <div class="user-name" th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
+                    Thủ thư
+                </div>
+                <div class="user-email" th:text="${currentUser != null ? currentUser.email : ''}">
+                    librarian@thuvien.vn
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="page-label">Librarian</div>
+
+            <div class="top-user">
+                <span class="user-avatar">♙</span>
+                <div>
+                    <div class="user-name text-dark"
+                        th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
+                        Thủ thư
+                    </div>
+                    <div class="role-text">Quầy lưu thông</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content">
+            <h1 class="title">Tổng quan thủ thư</h1>
+
+            <div class="subtitle">
+                Cập nhật:
+                <span th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">
+                    24/06/2026
+                </span>
+            </div>
+
+            <section class="stat-grid">
+                <article class="stat-card">
+                    <div class="stat-icon blue">▰</div>
+                    <div>
+                        <div class="stat-label">Đang mượn</div>
+                        <div class="stat-value" th:text="${activeBorrows}">0</div>
+                        <div class="stat-note">Phiếu mượn đang mở</div>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon orange">↻</div>
+                    <div>
+                        <div class="stat-label">Chờ duyệt</div>
+                        <div class="stat-value" th:text="${pendingReservations}">0</div>
+                        <div class="stat-note">Cần xử lý ngay</div>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon red">ⓘ</div>
+                    <div>
+                        <div class="stat-label">Quá hạn</div>
+                        <div class="stat-value" th:text="${overdueDetails}">0</div>
+                        <div class="stat-note">Cần nhắc trả sách</div>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon green">□</div>
+                    <div>
+                        <div class="stat-label">Sách sẵn có</div>
+                        <div class="stat-value" th:text="${availableItems}">0</div>
+                        <div class="stat-note">Bản sách Available</div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-title">Phiếu mượn gần đây</div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-app">
+                            <thead>
+                                <tr>
+                                    <th>Mã phiếu</th>
+                                    <th>Bạn đọc</th>
+                                    <th>Ngày mượn</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr th:each="borrow : ${recentBorrows}">
+                                    <td th:text="${'PM' + borrow.borrowId}">PM1</td>
+
+                                    <td
+                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'N/A'}">
+                                        Bạn đọc
+                                    </td>
+
+                                    <td
+                                        th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                        N/A
+                                    </td>
+
+                                    <td>
+                                        <span class="badge text-bg-warning" th:text="${borrow.status}">
+                                            Active
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <tr th:if="${#lists.isEmpty(recentBorrows)}">
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        Chưa có phiếu mượn nào
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <aside class="panel">
+                    <div class="panel-title">Sách sắp tới hạn</div>
+
+                    <div class="activity-list">
+                        <div class="activity" th:each="detail : ${dueSoonDetails}">
+                            <span class="activity-badge info" th:text="${detail.book != null ? 'Sách' : 'LMS'}">
+                                Sách
+                            </span>
+
+                            <div>
+                                <div class="activity-name"
+                                    th:text="${detail.book != null ? detail.book.title : 'Không rõ'}">
+                                    Tên sách
+                                </div>
+
+                                <div class="activity-desc">
+                                    Hạn trả:
+                                    <span
+                                        th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                        N/A
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="activity" th:if="${#lists.isEmpty(dueSoonDetails)}">
+                            <span class="activity-badge info">LMS</span>
+                            <div>
+                                <div class="activity-name">Chưa có dữ liệu</div>
+                                <div class="activity-desc">
+                                    Các sách sắp đến hạn sẽ hiển thị tại đây
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function toggleLoanMenu() {
+            const loanMenu = document.getElementById("loanMenu");
+            const loanArrow = document.getElementById("loanArrow");
+
+            loanMenu.classList.toggle("show");
+
+            if (loanMenu.classList.contains("show")) {
+                loanArrow.textContent = "⌄";
+            } else {
+                loanArrow.textContent = "›";
+            }
+        }
+    </script>
+
+    <script th:src="@{/js/bootstrap.bundle.js}"></script>
+</body>
+
+</html>
+```
