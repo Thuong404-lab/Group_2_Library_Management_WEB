@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách thành viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2 class="mb-3">Danh sách thành viên</h2>
+
+    <form method="get" th:action="@{/librarian/members}" class="row g-2 mb-3">
+        <div class="col-md-6">
+            <input type="text"
+                   name="search"
+                   class="form-control"
+                   placeholder="Tìm theo tên, email hoặc số điện thoại"
+                   th:value="${search}">
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                Tìm kiếm
+            </button>
+        </div>
+
+        <div class="col-md-2">
+            <a th:href="@{/librarian/members}" class="btn btn-secondary w-100">
+                Làm mới
+            </a>
+        </div>
+    </form>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Mã member</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Hạng thành viên</th>
+                    <th>Trạng thái</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:if="${#lists.isEmpty(members)}">
+                    <td colspan="6" class="text-center text-muted">
+                        Không tìm thấy thành viên nào
+                    </td>
+                </tr>
+
+                <tr th:each="member : ${members}">
+                    <td th:text="${member.memberId}"></td>
+                    <td th:text="${member.user.fullName}"></td>
+                    <td th:text="${member.user.email}"></td>
+                    <td th:text="${member.user.phone}"></td>
+                    <td th:text="${member.tier != null ? member.tier.tierName : 'Chưa có'}"></td>
+                    <td>
+                        <span class="badge bg-success"
+                              th:text="${member.user.status}">
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <nav th:if="${memberPage.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${memberPage.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/librarian/members(page=${currentPage - 1}, search=${search})}">
+                            Trước
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, memberPage.totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:text="${i + 1}"
+                           th:href="@{/librarian/members(page=${i}, search=${search})}">
+                        </a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${memberPage.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/librarian/members(page=${currentPage + 1}, search=${search})}">
+                            Sau
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

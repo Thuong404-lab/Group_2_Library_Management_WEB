@@ -1,14 +1,95 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Wallet', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử giao dịch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Wallet</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
-            </div>
+<div class="container mt-4">
+    <h2 class="mb-3">Lịch sử giao dịch</h2>
+
+    <form method="get" th:action="@{/member/financial/transactions}" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <select name="type" class="form-select">
+                <option value="">Tất cả loại giao dịch</option>
+                <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
+                <option value="FINE" th:selected="${selectedType == 'FINE'}">Thanh toán phạt</option>
+                <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn sách</option>
+                <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}">Tiền cọc đặt trước</option>
+                <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        </div>
+    </form>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Mã giao dịch</th>
+                    <th>Loại giao dịch</th>
+                    <th>Số tiền</th>
+                    <th>Ngày giao dịch</th>
+                    <th>Trạng thái</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:if="${#lists.isEmpty(transactions)}">
+                    <td colspan="5" class="text-center text-muted">
+                        Chưa có giao dịch nào
+                    </td>
+                </tr>
+
+                <tr th:each="transaction : ${transactions}">
+                    <td th:text="${transaction.transactionId}"></td>
+                    <td th:text="${transaction.transactionType}"></td>
+                    <td th:text="${#numbers.formatDecimal(transaction.amount, 0, 'COMMA', 2, 'POINT')} + ' VND'"></td>
+                    <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"></td>
+                    <td>
+                        <span class="badge bg-success" th:text="${transaction.status}"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <nav th:if="${transactionPage != null && transactionPage.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/member/financial/transactions(page=${currentPage - 1}, type=${selectedType})}">
+                            Trước
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, transactionPage.totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:text="${i + 1}"
+                           th:href="@{/member/financial/transactions(page=${i}, type=${selectedType})}">
+                        </a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/member/financial/transactions(page=${currentPage + 1}, type=${selectedType})}">
+                            Sau
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
+
+    <a th:href="@{/member/financial/topup-notifications}" class="btn btn-outline-info mt-3">
+        Xem thông báo nạp tiền
+    </a>
+</div>
 </body>
 </html>
