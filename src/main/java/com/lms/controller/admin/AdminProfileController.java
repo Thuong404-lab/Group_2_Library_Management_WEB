@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.security.Principal;
 
 /**
- * AdminProfileController - Quản lý Hồ sơ Admin
+ * AdminProfileController - Chỉ dành riêng cho vai trò ADMIN
  */
 @Controller
 @RequestMapping("/admin/profile")
@@ -26,6 +26,6 @@ public class AdminProfileController {
         String username = principal.getName();
         User admin = profileService.getProfile(username);
         model.addAttribute("admin", admin);
-        return "admin/profile"; // Trả về cấu trúc templates/admin/profile.html
+        return "admin/profile";
     }
 }

@@ -21,4 +21,7 @@ public interface MembershipService {
     Member getMembershipTier(Integer memberId);
     // =================================================================
 
+    // Lấy Member bằng username từ account đang đăng nhập
+    Member getMemberByUsername(String username);
+
 }

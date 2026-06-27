@@ -30,30 +30,42 @@ public class MembershipController {
     // UC-5.1: View Benefits & Privileges
     @GetMapping("/benefits")
     public String viewBenefits(Principal principal, Model model) {
-        if (principal != null) {
-            Integer currentMemberId = 1;
-            MembershipTier tierBenefits = membershipService.getBenefits(currentMemberId);
-            model.addAttribute("tierBenefits", tierBenefits);
+        if (principal == null) {
+            return "redirect:/login";
         }
+        
+        try {
+            String username = principal.getName();
+            Member member = membershipService.getMemberByUsername(username);
+            
+            if (member != null && member.getTier() != null) {
+                model.addAttribute("tierBenefits", member.getTier());
+            } else {
+                model.addAttribute("tierBenefits", null);
+            }
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể tải quyền lợi thành viên: " + e.getMessage());
+        }
+        
         return "member/benefits";
     }
 
     // UC-5.2: View Membership Tier
     @GetMapping("/tier")
     public String viewMembershipTier(Principal principal, Model model) {
-        // =================================================================
-        // Huỳnh Gia Hưng cập nhật: Đảm bảo code chống lỗi NullPointerException 500
-        if (principal != null) {
-            Integer currentMemberId = 1;
+        if (principal == null) {
+            return "redirect:/login";
+        }
 
-            Member member = membershipService.getMembershipTier(currentMemberId);
+        try {
+            String username = principal.getName();
+            Member member = membershipService.getMemberByUsername(username);
             List<MembershipTier> allTiers = membershipTierRepository.findAll();
 
             BigDecimal currentSpent = new BigDecimal("150.00");
             MembershipTier nextTier = null;
             BigDecimal amountNeeded = BigDecimal.ZERO;
 
-            // Chỉ tính toán tiến trình nếu tìm thấy thông tin Member và Tier trong DB
             if (member != null && member.getTier() != null && allTiers != null) {
                 for (MembershipTier tier : allTiers) {
                     if (tier.getCondition() != null && member.getTier().getCondition() != null) {
@@ -74,8 +86,9 @@ public class MembershipController {
             model.addAttribute("currentSpent", currentSpent);
             model.addAttribute("nextTier", nextTier);
             model.addAttribute("amountNeeded", amountNeeded);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể tải thông tin hạng thành viên: " + e.getMessage());
         }
-        // =================================================================
 
         return "member/membership-tier";
     }

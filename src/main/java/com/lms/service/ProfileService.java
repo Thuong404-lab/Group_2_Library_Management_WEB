@@ -4,7 +4,7 @@ import com.lms.entity.User;
 
 /**
  * ProfileService - Xử lý Logic Hồ sơ (Member + Librarian)
- * Người phụ trách: Huỳnh Gia Hưng (CE190488)
+ * Người phụ trách: Nguyễn Tiến Thương (CE191329)
  */
 public interface ProfileService {
 
