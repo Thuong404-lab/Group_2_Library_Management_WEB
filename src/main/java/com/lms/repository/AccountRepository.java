@@ -15,13 +15,18 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     Optional<Account> findByUsername(String username);
 
+    Optional<Account> findByUserId(Integer userId);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByUsernameAndAccountIdNot(String username, Integer accountId);
+
     @Query("""
             SELECT DISTINCT a
             FROM Account a
             JOIN a.roles r
             WHERE LOWER(r.name) = LOWER('MEMBER')
             """)
-
     Page<Account> findMemberAccounts(Pageable pageable);
 
     @Query("""

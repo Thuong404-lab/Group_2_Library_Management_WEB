@@ -1,13 +1,15 @@
 package com.lms.controller.admin;
 
 import com.lms.config.CustomUserDetails;
+import com.lms.entity.Account;
+import com.lms.entity.Staff;
+import com.lms.repository.AccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
-import com.lms.entity.Staff;
 import com.lms.repository.StaffRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +47,7 @@ public class DashboardController {
     private final BookRepository bookRepository;
     private final BookItemRepository bookItemRepository;
     private final StaffRepository staffRepository;
+    private final AccountRepository accountRepository;
 
     public DashboardController(BorrowRepository borrowRepository,
             BorrowDetailRepository borrowDetailRepository,
@@ -51,7 +55,8 @@ public class DashboardController {
             MemberRepository memberRepository,
             BookRepository bookRepository,
             BookItemRepository bookItemRepository,
-            StaffRepository staffRepository) {
+            StaffRepository staffRepository,
+            AccountRepository accountRepository) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.reservationRepository = reservationRepository;
@@ -59,13 +64,13 @@ public class DashboardController {
         this.bookRepository = bookRepository;
         this.bookItemRepository = bookItemRepository;
         this.staffRepository = staffRepository;
+        this.accountRepository = accountRepository;
     }
 
     @GetMapping("/dashboard")
     public String viewDashboard(Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // Thống kê tổng quan
         long activeBorrows = borrowRepository.countByStatusIgnoreCase("Active");
         long pendingReservations = reservationRepository.countByStatusIgnoreCase("Pending");
         long overdueDetails = borrowDetailRepository.countByStatusIgnoreCase("Overdue");
@@ -80,12 +85,10 @@ public class DashboardController {
         model.addAttribute("totalBooks", totalBooks);
         model.addAttribute("availableItems", availableItems);
 
-        // Dữ liệu hiển thị bên dưới dashboard
         model.addAttribute("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
         model.addAttribute("monthStats", getLastSixMonthStats());
         model.addAttribute("currentDate", LocalDate.now());
 
-        // Thông tin admin đang đăng nhập
         if (userDetails != null && userDetails.getAccount() != null) {
             model.addAttribute("currentUser", userDetails.getAccount().getUser());
         }
@@ -100,7 +103,6 @@ public class DashboardController {
         YearMonth currentMonth = YearMonth.now();
         long maxCount = 0;
 
-        // Lấy số lượng phiếu mượn trong 6 tháng gần nhất
         for (int i = 5; i >= 0; i--) {
             YearMonth month = currentMonth.minusMonths(i);
 
@@ -117,7 +119,6 @@ public class DashboardController {
             }
         }
 
-        // Chuyển dữ liệu sang dạng phù hợp để vẽ chart bằng HTML/CSS
         for (int i = 0; i < borrowCounts.size(); i++) {
             YearMonth month = currentMonth.minusMonths(5L - i);
             long count = borrowCounts.get(i);
@@ -143,22 +144,33 @@ public class DashboardController {
         return (int) Math.max(8, count * 120 / maxCount);
     }
 
-    @GetMapping("/librarians")
-    public String viewLibrarianList(@RequestParam(defaultValue = "0") int page,
+    @GetMapping("/staff")
+    public String viewStaffList(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             Model model) {
         PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("staffId").ascending());
-        Page<Staff> librarians;
+        Page<Staff> staffPage;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            librarians = staffRepository.searchByStaffTypeAndKeyword("Librarian", keyword.trim(), pageRequest);
+            staffPage = staffRepository.searchStaffByKeyword(keyword.trim(), pageRequest);
         } else {
-            librarians = staffRepository.findByStaffTypeIgnoreCase("Librarian", pageRequest);
+            staffPage = staffRepository.findAll(pageRequest);
         }
 
-        model.addAttribute("librarians", librarians);
+        Map<Integer, Account> accountByUserId = new HashMap<>();
+
+        for (Staff staff : staffPage.getContent()) {
+            if (staff.getUser() != null && staff.getUser().getId() != null) {
+                accountRepository.findByUserId(staff.getUser().getId())
+                        .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
+            }
+        }
+
+        model.addAttribute("staffPage", staffPage);
         model.addAttribute("keyword", keyword);
-        return "admin/librarian-list";
+        model.addAttribute("accountByUserId", accountByUserId);
+
+        return "admin/staff-list";
     }
 
     @GetMapping("/logs")
