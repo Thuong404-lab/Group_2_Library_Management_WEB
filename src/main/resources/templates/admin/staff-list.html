@@ -257,15 +257,12 @@
                 ← Về quản lý người dùng
             </a>
         </div>
-
         <div class="alert alert-warning" th:if="${param.notFound != null}">
             Không tìm thấy tài khoản.
         </div>
-
         <div class="alert alert-danger" th:if="${error != null}" th:text="${error}">
             Lỗi
         </div>
-
         <div class="alert alert-success" th:if="${success != null}" th:text="${success}">
             Thao tác thành công.
         </div>
@@ -313,7 +310,6 @@
                             <td th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">
                                 1
                             </td>
-
                             <td th:text="${'ST' + staff.staffId}">
                                 ST1
                             </td>
@@ -323,13 +319,11 @@
                                     <b th:text="${staff.user.fullName}">
                                         Tên nhân viên
                                     </b>
-
                                     <div class="text-muted small">
                                         User ID:
                                         <span th:text="${staff.user.id}">1</span>
                                     </div>
                                 </div>
-
                                 <div th:unless="${staff.user != null}">
                                     Không có thông tin user
                                 </div>
@@ -338,11 +332,9 @@
                             <td th:text="${staff.user != null ? staff.user.email : 'N/A'}">
                                 email
                             </td>
-
                             <td th:text="${staff.user != null ? staff.user.phone : 'N/A'}">
                                 phone
                             </td>
-
                             <td>
                                 <span class="badge-type" th:text="${staff.staffType}">
                                     Librarian
@@ -355,7 +347,6 @@
                                     th:text="${staff.user.status}">
                                     Active
                                 </span>
-
                                 <span class="badge-status status-inactive"
                                     th:if="${staff.user == null || staff.user.status == null}">
                                     N/A
@@ -368,7 +359,6 @@
                                         th:onclick="|openModal('updateStaffModal${account.accountId}')|">
                                         Cập nhật
                                     </button>
-
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                         th:onclick="|openModal('deleteStaffModal${account.accountId}')|">
                                         Xóa
@@ -380,8 +370,7 @@
                                 </span>
 
                                 <div class="modal fade" th:if="${account != null}"
-                                    th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
-                                    aria-hidden="true">
+                                    th:id="${'updateStaffModal' + account.accountId}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered modal-lg">
                                         <div class="modal-content">
                                             <form method="post"
@@ -407,26 +396,22 @@
                                                                 th:value="${staff.user != null ? staff.user.fullName : ''}"
                                                                 required>
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Email</label>
                                                             <input class="form-control" name="email" type="email"
                                                                 th:value="${staff.user != null ? staff.user.email : ''}"
                                                                 required>
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Số điện thoại</label>
                                                             <input class="form-control" name="phone"
                                                                 th:value="${staff.user != null ? staff.user.phone : ''}">
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Username</label>
                                                             <input class="form-control" name="username"
                                                                 th:value="${account.username}" required>
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Loại nhân viên</label>
                                                             <select class="form-select form-control" name="staffType"
@@ -478,8 +463,7 @@
                                 </div>
 
                                 <div class="modal fade" th:if="${account != null}"
-                                    th:id="${'deleteStaffModal' + account.accountId}" tabindex="-1"
-                                    aria-hidden="true">
+                                    th:id="${'deleteStaffModal' + account.accountId}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <form method="post"
@@ -487,7 +471,6 @@
                                                 <input type="hidden" th:if="${_csrf != null}"
                                                     th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                 <input type="hidden" name="source" value="staff">
-
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Xác nhận xóa tài khoản</h5>
                                                     <button type="button" class="close"
@@ -506,7 +489,6 @@
                                                         <b th:text="${account.username}">username</b>
                                                     </p>
                                                 </div>
-
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         th:onclick="|closeModal('deleteStaffModal${account.accountId}')|">
@@ -581,11 +563,9 @@
     <script>
         function openModal(id) {
             const modal = document.getElementById(id);
-
             if (modal == null) {
                 return;
             }
-
             modal.style.display = "block";
             modal.classList.add("show");
             modal.removeAttribute("aria-hidden");
@@ -599,7 +579,6 @@
             if (modal == null) {
                 return;
             }
-
             modal.style.display = "none";
             modal.classList.remove("show");
             modal.setAttribute("aria-hidden", "true");
@@ -610,7 +589,6 @@
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape") {
                 const openedModal = document.querySelector(".modal.show");
-
                 if (openedModal != null) {
                     closeModal(openedModal.id);
                 }

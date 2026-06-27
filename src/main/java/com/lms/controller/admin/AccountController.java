@@ -59,7 +59,7 @@ public class AccountController {
         this.staffRepository = staffRepository;
     }
 
-    // UC-20.4: Search Accounts
+    // Search Accounts
     @GetMapping
     public String listAccounts(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
@@ -97,7 +97,7 @@ public class AccountController {
         return listAccounts(page, keyword, model);
     }
 
-    // UC-20.1: Create Account
+    // Create Account
     @GetMapping("/create")
     public String showCreateForm(@RequestParam(required = false, defaultValue = "members") String source,
             Model model) {
@@ -197,7 +197,7 @@ public class AccountController {
         return redirectBySource(source);
     }
 
-    // UC-20.2: Update Account bằng Modal
+    // Update Account bằng Modal
     @PostMapping("/edit/{id}")
     @Transactional
     public String updateAccount(@PathVariable Integer id,
@@ -277,7 +277,7 @@ public class AccountController {
         return redirectBySource(source);
     }
 
-    // UC-20.3: Delete Account bằng Modal
+    // Delete Account bằng Modal
     @PostMapping("/delete/{id}")
     public String deleteAccount(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "members") String source,

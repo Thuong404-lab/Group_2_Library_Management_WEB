@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+
     <style>
         :root {
             --sidebar: #172742;
@@ -49,7 +50,7 @@
 
         body.sidebar-collapsed .brand-name,
         body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
-        body.sidebar-collapsed .sidebar-user div {
+        body.sidebar-collapsed .sidebar-user .sidebar-user-info {
             display: none;
         }
 
@@ -168,9 +169,15 @@
         .sidebar-user {
             align-items: center;
             border-top: 1px solid rgba(255, 255, 255, .08);
+            cursor: pointer;
             display: flex;
             gap: 10px;
             padding: 12px 16px;
+            position: relative;
+        }
+
+        .sidebar-user:hover {
+            background: #1d3154;
         }
 
         .sidebar-user .user-avatar {
@@ -190,6 +197,136 @@
         .role-text {
             color: #93a4bd;
             font-size: 11px;
+        }
+
+        .sidebar-user-menu {
+            background: #ffffff;
+            border: 1px solid #d7dee8;
+            border-radius: 6px;
+            bottom: 58px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, .25);
+            display: none;
+            left: 12px;
+            min-width: 210px;
+            padding: 10px;
+            position: absolute;
+            z-index: 60;
+        }
+
+        .sidebar-user-menu.show {
+            display: block;
+        }
+
+        body.sidebar-collapsed .sidebar-user-menu {
+            left: 70px;
+            bottom: 8px;
+        }
+
+        .sidebar-user-menu .profile-name {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .sidebar-user-menu .profile-email {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-user-menu .menu-btn,
+        .sidebar-user-menu .logout-btn {
+            background: transparent;
+            border: 0;
+            border-radius: 4px;
+            color: #334155;
+            display: block;
+            font-size: 13px;
+            padding: 8px 10px;
+            text-align: left;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .sidebar-user-menu .menu-btn:hover,
+        .sidebar-user-menu .logout-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .sidebar-user-menu .logout-btn {
+            color: #dc2626;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .profile-modal-backdrop {
+            background: rgba(0, 0, 0, .45);
+            bottom: 0;
+            display: none;
+            left: 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .profile-modal-backdrop.show {
+            display: block;
+        }
+
+        .profile-modal-box {
+            background: #ffffff;
+            border-radius: 6px;
+            left: 50%;
+            max-width: 460px;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 92%;
+        }
+
+        .profile-modal-header {
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+        }
+
+        .profile-modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .profile-modal-body {
+            padding: 16px;
+        }
+
+        .profile-row {
+            margin-bottom: 12px;
+        }
+
+        .profile-label {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .profile-value {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .profile-modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 14px 16px;
+            text-align: right;
         }
 
         .topbar {
@@ -587,7 +724,7 @@
 
         body.sidebar-collapsed .brand-name,
         body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
-        body.sidebar-collapsed .sidebar-user div {
+        body.sidebar-collapsed .sidebar-user .sidebar-user-info {
             display: none;
         }
 
@@ -659,15 +796,40 @@
             </a>
         </nav>
 
-        <div class="sidebar-user">
+        <div class="sidebar-user" onclick="toggleSidebarUserMenu(event)">
             <span class="user-avatar">♙</span>
-            <div>
+
+            <div class="sidebar-user-info">
                 <div class="user-name" th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
                     Quản trị viên
                 </div>
+
                 <div class="user-email" th:text="${currentUser != null ? currentUser.email : ''}">
                     admin@thuvien.vn
                 </div>
+            </div>
+
+            <div class="sidebar-user-menu" id="sidebarUserMenu" onclick="event.stopPropagation()">
+                <div class="profile-name" th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                    Quản trị viên
+                </div>
+
+                <div class="profile-email" th:text="${currentUser != null ? currentUser.email : ''}">
+                    admin@thuvien.vn
+                </div>
+
+                <button type="button" class="menu-btn" onclick="openAdminProfileModal()">
+                    Hồ sơ cá nhân
+                </button>
+
+                <form class="logout-form" method="post" th:action="@{/logout}">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}">
+
+                    <button class="logout-btn" type="submit">
+                        Đăng xuất
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -1019,6 +1181,54 @@
         </main>
     </div>
 
+    <div class="profile-modal-backdrop" id="adminProfileModal">
+        <div class="profile-modal-box">
+            <div class="profile-modal-header">
+                <h5 class="profile-modal-title">Hồ sơ quản trị viên</h5>
+
+                <button type="button" class="btn btn-light border btn-sm" onclick="closeAdminProfileModal()">
+                    ×
+                </button>
+            </div>
+
+            <div class="profile-modal-body">
+                <div class="profile-row">
+                    <div class="profile-label">Họ tên</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                        Quản trị viên
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Email</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.email : 'admin@thuvien.vn'}">
+                        admin@thuvien.vn
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Số điện thoại</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.phone : 'N/A'}">
+                        N/A
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Trạng thái</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.status : 'Active'}">
+                        Active
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAdminProfileModal()">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function showAdminSection(sectionName, clickedLink) {
             const sections = document.querySelectorAll(".admin-section");
@@ -1065,7 +1275,58 @@
             document.body.classList.toggle("sidebar-collapsed");
         }
 
+        function toggleSidebarUserMenu(event) {
+            event.stopPropagation();
+
+            const menu = document.getElementById("sidebarUserMenu");
+
+            if (menu != null) {
+                menu.classList.toggle("show");
+            }
+        }
+
+        function openAdminProfileModal() {
+            const menu = document.getElementById("sidebarUserMenu");
+            const modal = document.getElementById("adminProfileModal");
+
+            if (menu != null) {
+                menu.classList.remove("show");
+            }
+
+            if (modal != null) {
+                modal.classList.add("show");
+            }
+        }
+
+        function closeAdminProfileModal() {
+            const modal = document.getElementById("adminProfileModal");
+
+            if (modal != null) {
+                modal.classList.remove("show");
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", openSectionFromUrl);
+
+        document.addEventListener("click", function () {
+            const menu = document.getElementById("sidebarUserMenu");
+
+            if (menu != null) {
+                menu.classList.remove("show");
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeAdminProfileModal();
+
+                const menu = document.getElementById("sidebarUserMenu");
+
+                if (menu != null) {
+                    menu.classList.remove("show");
+                }
+            }
+        });
     </script>
 
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
