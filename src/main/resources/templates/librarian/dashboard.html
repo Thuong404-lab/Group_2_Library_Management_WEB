@@ -597,7 +597,7 @@
                 <span id="loanArrow">⌄</span>
             </a>
             <div class="submenu show" id="loanMenu">
-                <a class="submenu-link" th:href="@{/librarian/borrows}">Mượn sách</a>
+                <a class="submenu-link" th:href="@{/librarian/borrow/create}">Mượn sách</a>
                 <a class="submenu-link" th:href="@{/librarian/renewals}">Gia hạn sách</a>
                 <a class="submenu-link" th:href="@{/librarian/in-library-reading}">Bạn đọc tại chỗ</a>
                 <a class="submenu-link" th:href="@{/librarian/violations}">Phạt vi phạm</a>
@@ -665,9 +665,9 @@
                 <div class="profile-email" th:text="${currentUser != null ? currentUser.email : ''}">
                     librarian@library.vn
                 </div>
-                <button type="button" class="menu-btn" onclick="openLibrarianProfileModal()">
+                <a th:href="@{/librarian/profile}" class="menu-btn d-block" style="text-decoration: none; display: block;">
                     Hồ sơ cá nhân
-                </button>
+                </a>
                 <form class="logout-form" method="post" th:action="@{/logout}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
