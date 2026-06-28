@@ -23,10 +23,6 @@ public class SecurityConfig {
     // @Autowired
     // private CustomOAuth2UserService customOAuth2UserService;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SessionRegistry sessionRegistry() {
