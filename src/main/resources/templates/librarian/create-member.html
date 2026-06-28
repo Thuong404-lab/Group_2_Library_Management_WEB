@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
+<!-- Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
 <head>
     <meta charset="UTF-8">
-    <title>Tạo tài khoản</title>
+    <title>Tạo tài khoản thành viên</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
 
     <style>
@@ -111,10 +113,11 @@
 
 <body>
     <header class="page-navbar">
-        <a class="brand-link" th:href="@{/admin/dashboard}">
+        <a class="brand-link" th:href="@{/librarian/dashboard}">
             <span class="brand-icon">▱</span>
-            <span class="brand-name">LMS</span>
+            <span class="brand-name">LibraryMS</span>
         </a>
+
         <div class="nav-right">
             Library Management System
         </div>
@@ -122,8 +125,9 @@
 
     <div class="page">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="title">Tạo tài khoản</h1>
-            <a class="btn btn-outline-secondary btn-sm" th:href="${backUrl}" th:text="${backText}">
+            <h1 class="title">Tạo tài khoản thành viên</h1>
+
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/librarian/members}">
                 ← Về danh sách thành viên
             </a>
         </div>
@@ -133,45 +137,39 @@
         </div>
 
         <div class="card-box">
-            <form method="post" th:action="@{/admin/accounts/create}">
+            <form method="post" th:action="@{/librarian/members/create}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                     th:value="${_csrf.token}">
-                <input type="hidden" name="source" th:value="${source}">
 
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Họ tên</label>
                         <input class="form-control" name="fullName" required>
                     </div>
+
                     <div class="col-md-6">
                         <label class="form-label">Email</label>
                         <input class="form-control" name="email" type="email" required>
                     </div>
+
                     <div class="col-md-6">
                         <label class="form-label">Số điện thoại</label>
                         <input class="form-control" name="phone">
                     </div>
+
                     <div class="col-md-6">
                         <label class="form-label">Username</label>
                         <input class="form-control" name="username" required>
                     </div>
+
                     <div class="col-md-6">
                         <label class="form-label">Mật khẩu</label>
                         <input class="form-control" name="password" type="password" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Loại tài khoản</label>
-                        <select class="form-select" name="accountType" id="accountType" onchange="toggleTierBox()">
-                            <option value="MEMBER">Member</option>
-                            <option value="LIBRARIAN">Librarian</option>
-                            <option value="ADMIN">Admin</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6" id="tierBox">
                         <label class="form-label">Hạng thành viên</label>
-                        <select class="form-select" name="tierId">
+                        <select class="form-select form-control" name="tierId" required>
                             <option th:each="tier : ${tiers}" th:value="${tier.tierId}" th:text="${tier.tierName}">
                                 Standard Member
                             </option>
@@ -180,7 +178,7 @@
 
                     <div class="col-md-6">
                         <label class="form-label">Trạng thái</label>
-                        <select class="form-select" name="status">
+                        <select class="form-select form-control" name="status">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                             <option value="Blocked">Blocked</option>
@@ -192,7 +190,8 @@
                     <button class="btn btn-primary" type="submit">
                         Tạo tài khoản
                     </button>
-                    <a class="btn btn-light border" th:href="${backUrl}">
+
+                    <a class="btn btn-light border" th:href="@{/librarian/members}">
                         Hủy
                     </a>
                 </div>
@@ -205,22 +204,9 @@
             <b>LMS</b> · Library Management System
         </div>
         <div>
-            Admin Management
+            Librarian Management
         </div>
     </footer>
-
-    <script>
-        function toggleTierBox() {
-            const accountType = document.getElementById("accountType").value;
-            const tierBox = document.getElementById("tierBox");
-            if (accountType === "MEMBER") {
-                tierBox.style.display = "block";
-            } else {
-                tierBox.style.display = "none";
-            }
-        }
-        document.addEventListener("DOMContentLoaded", toggleTierBox);
-    </script>
 
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
 </body>

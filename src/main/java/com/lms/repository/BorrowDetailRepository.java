@@ -9,9 +9,7 @@ import java.util.List;
 
 @Repository
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
-
     long countByStatusIgnoreCase(String status);
-
     List<BorrowDetail> findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
             String status,
             LocalDateTime startDate,
