@@ -2,7 +2,7 @@ package com.lms.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 @Entity
-@Table(name = "BorrowDetails")
+@Table(name = "`BorrowDetails`")
 public class BorrowDetail {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer borrowDetailId;
