@@ -57,18 +57,6 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/", true)
                 )
                 .logout(logout -> logout
-                        // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
-                        .defaultSuccessUrl("/", true)
-                        .permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .defaultSuccessUrl("/", true)
-                )
-                .logout(logout -> logout
                         // TODO: Cấu hình LogoutSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLogoutAction)
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
