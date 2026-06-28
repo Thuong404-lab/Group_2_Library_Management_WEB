@@ -70,7 +70,6 @@ public class DashboardController {
     @GetMapping("/dashboard")
     public String viewDashboard(Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
         long activeBorrows = borrowRepository.countByStatusIgnoreCase("Active");
         long pendingReservations = reservationRepository.countByStatusIgnoreCase("Pending");
         long overdueDetails = borrowDetailRepository.countByStatusIgnoreCase("Overdue");
@@ -84,36 +83,29 @@ public class DashboardController {
         model.addAttribute("totalMembers", totalMembers);
         model.addAttribute("totalBooks", totalBooks);
         model.addAttribute("availableItems", availableItems);
-
         model.addAttribute("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
         model.addAttribute("monthStats", getLastSixMonthStats());
         model.addAttribute("currentDate", LocalDate.now());
-
         if (userDetails != null && userDetails.getAccount() != null) {
             model.addAttribute("currentUser", userDetails.getAccount().getUser());
         }
-
         return "admin/dashboard";
     }
 
     private List<Map<String, Object>> getLastSixMonthStats() {
         List<Map<String, Object>> monthStats = new ArrayList<>();
         List<Long> borrowCounts = new ArrayList<>();
-
         YearMonth currentMonth = YearMonth.now();
         long maxCount = 0;
 
         for (int i = 5; i >= 0; i--) {
             YearMonth month = currentMonth.minusMonths(i);
-
             LocalDateTime startDate = month.atDay(1).atStartOfDay();
             LocalDateTime endDate = month.plusMonths(1).atDay(1).atStartOfDay();
 
             long count = borrowRepository
                     .countByBorrowDateGreaterThanEqualAndBorrowDateLessThan(startDate, endDate);
-
             borrowCounts.add(count);
-
             if (count > maxCount) {
                 maxCount = count;
             }
@@ -122,9 +114,7 @@ public class DashboardController {
         for (int i = 0; i < borrowCounts.size(); i++) {
             YearMonth month = currentMonth.minusMonths(5L - i);
             long count = borrowCounts.get(i);
-
             int height = calculateBarHeight(count, maxCount);
-
             Map<String, Object> stat = new LinkedHashMap<>();
             stat.put("label", month.format(DateTimeFormatter.ofPattern("MM/yyyy")));
             stat.put("count", count);
@@ -132,7 +122,6 @@ public class DashboardController {
 
             monthStats.add(stat);
         }
-
         return monthStats;
     }
 
@@ -140,7 +129,6 @@ public class DashboardController {
         if (maxCount == 0) {
             return 8;
         }
-
         return (int) Math.max(8, count * 120 / maxCount);
     }
 
@@ -150,13 +138,11 @@ public class DashboardController {
             Model model) {
         PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("staffId").ascending());
         Page<Staff> staffPage;
-
         if (keyword != null && !keyword.trim().isEmpty()) {
             staffPage = staffRepository.searchStaffByKeyword(keyword.trim(), pageRequest);
         } else {
             staffPage = staffRepository.findAll(pageRequest);
         }
-
         Map<Integer, Account> accountByUserId = new HashMap<>();
 
         for (Staff staff : staffPage.getContent()) {
@@ -165,11 +151,9 @@ public class DashboardController {
                         .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
             }
         }
-
         model.addAttribute("staffPage", staffPage);
         model.addAttribute("keyword", keyword);
         model.addAttribute("accountByUserId", accountByUserId);
-
         return "admin/staff-list";
     }
 

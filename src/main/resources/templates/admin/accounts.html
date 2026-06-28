@@ -233,7 +233,6 @@
                 <span class="brand-name">LMS</span>
             </a>
         </div>
-
         <div class="nav-right">
             Library Management System
         </div>
@@ -244,20 +243,16 @@
             <div>
                 <h1 class="title">Quản lý tài khoản thành viên</h1>
             </div>
-
             <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/dashboard(section='accounts')}">
                 ← Về quản lý người dùng
             </a>
         </div>
-
         <div class="alert alert-warning" th:if="${param.notFound != null}">
             Không tìm thấy tài khoản.
         </div>
-
         <div class="alert alert-danger" th:if="${error != null}" th:text="${error}">
             Lỗi
         </div>
-
         <div class="alert alert-success" th:if="${success != null}" th:text="${success}">
             Thao tác thành công.
         </div>
@@ -267,16 +262,13 @@
                 <form class="search-form" method="get" th:action="@{/admin/accounts}">
                     <input class="form-control" type="text" name="keyword" th:value="${keyword}"
                         placeholder="Tìm username, họ tên hoặc email">
-
                     <button class="btn btn-primary" type="submit">
                         Tìm kiếm
                     </button>
-
                     <a class="btn btn-light border" th:href="@{/admin/accounts}">
                         Tải lại
                     </a>
                 </form>
-
                 <a class="btn btn-primary" th:href="@{/admin/accounts/create(source='members')}">
                     + Tạo tài khoản
                 </a>
@@ -301,9 +293,7 @@
                     <tbody>
                         <tr th:each="account, iterStat : ${accounts.content}">
                             <td th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
-
                             <td th:text="${account.accountId}">1</td>
-
                             <td>
                                 <b th:text="${account.username}">username</b>
                             </td>
@@ -322,7 +312,6 @@
                                         <span th:text="${account.user.phone}">phone</span>
                                     </div>
                                 </div>
-
                                 <div th:unless="${account.user != null}">
                                     Không có thông tin user
                                 </div>
@@ -333,12 +322,10 @@
                                     th:text="${member.tier.tierName}">
                                     Standard
                                 </span>
-
                                 <span class="badge text-bg-secondary" th:if="${member == null || member.tier == null}">
                                     N/A
                                 </span>
                             </td>
-
                             <td>
                                 <span class="badge-status"
                                     th:classappend="${account.status == 'Active' ? ' status-active' : account.status == 'Blocked' ? ' status-blocked' : ' status-inactive'}"
@@ -353,7 +340,6 @@
                                         th:onclick="|openModal('updateMemberModal${account.accountId}')|">
                                         Cập nhật
                                     </button>
-
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                         th:onclick="|openModal('deleteMemberModal${account.accountId}')|">
                                         Xóa
@@ -387,30 +373,28 @@
                                                                 th:value="${account.user != null ? account.user.fullName : ''}"
                                                                 required>
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Email</label>
                                                             <input class="form-control" name="email" type="email"
                                                                 th:value="${account.user != null ? account.user.email : ''}"
                                                                 required>
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Số điện thoại</label>
                                                             <input class="form-control" name="phone"
                                                                 th:value="${account.user != null ? account.user.phone : ''}">
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Username</label>
                                                             <input class="form-control" name="username"
                                                                 th:value="${account.username}" required>
                                                         </div>
-
                                                         <div class="col-md-6">
                                                             <label class="form-label">Hạng thành viên</label>
-                                                            <select class="form-select form-control" name="tierId" required>
-                                                                <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
+                                                            <select class="form-select form-control" name="tierId"
+                                                                required>
+                                                                <option th:each="tier : ${tiers}"
+                                                                    th:value="${tier.tierId}"
                                                                     th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
                                                                     th:text="${tier.tierName}">
                                                                     Standard Member
@@ -420,7 +404,8 @@
 
                                                         <div class="col-md-6">
                                                             <label class="form-label">Trạng thái</label>
-                                                            <select class="form-select form-control" name="status" required>
+                                                            <select class="form-select form-control" name="status"
+                                                                required>
                                                                 <option value="Active"
                                                                     th:selected="${account.status == 'Active'}">
                                                                     Active
@@ -559,7 +544,6 @@
             if (modal == null) {
                 return;
             }
-
             modal.style.display = "block";
             modal.classList.add("show");
             modal.removeAttribute("aria-hidden");
@@ -573,7 +557,6 @@
             if (modal == null) {
                 return;
             }
-
             modal.style.display = "none";
             modal.classList.remove("show");
             modal.setAttribute("aria-hidden", "true");
