@@ -27,6 +27,3 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
     );
 }
 
-    // Hàm tìm kiếm theo Email người dùng
-    Optional<Member> findByUserEmail(String email);
-}

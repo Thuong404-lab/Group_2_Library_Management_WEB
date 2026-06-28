@@ -17,7 +17,6 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     Optional<Account> findByUsername(String username);
 
     // Tìm kiếm tài khoản dựa trên Email người dùng (Phục vụ Login OAuth2/Google)
-    Optional<Account> findByUser_Email(String email);
 
     Optional<Account> findByUserId(Integer userId);
 
