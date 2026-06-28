@@ -1,38 +1,67 @@
 package com.lms.controller.librarian;
 
+import com.lms.entity.User;
+import com.lms.service.ProfileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.security.Principal;
 
 /**
- * LibrarianProfileController - Quản lý Hồ sơ Thủ thư
+ * LibrarianProfileController - Chỉ dành riêng cho vai trò LIBRARIAN
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
  */
 @Controller
 @RequestMapping("/librarian/profile")
 public class LibrarianProfileController {
 
-    // UC-16.1: View Librarian Profile
+    private final ProfileService profileService;
+
+    public LibrarianProfileController(ProfileService profileService) {
+        this.profileService = profileService;
+    }
+
     @GetMapping
     public String viewProfile(Principal principal, Model model) {
-        // TODO: Implement - Lấy thông tin Staff từ Account đang đăng nhập
+        // Spring Security đã lọc quyền trước đó, ở đây chỉ việc lấy đúng thông tin cá nhân
+        String username = principal.getName();
+        User librarian = profileService.getProfile(username);
+        model.addAttribute("librarian", librarian);
         return "librarian/profile";
     }
 
-    // UC-16.2: Edit Librarian Profile
     @PostMapping("/update")
-    public String updateProfile(Principal principal, Model model) {
-        // TODO: Implement - Cập nhật fullName, email, phone của Staff
-        return "redirect:/librarian/profile?updated";
+    public String updateProfile(@RequestParam String fullName,
+                                @RequestParam String email,
+                                @RequestParam String phone,
+                                Principal principal,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            String currentUsername = principal.getName();
+            profileService.updateProfile(currentUsername, fullName, email, phone);
+            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());
+        }
+        return "redirect:/librarian/profile";
     }
 
-    // UC-16.3: Change Librarian Password
     @PostMapping("/change-password")
     public String changePassword(@RequestParam String oldPassword,
-                                  @RequestParam String newPassword,
-                                  Principal principal, Model model) {
-        // TODO: Implement - Tương tự UC-4.3 nhưng cho Librarian
-        return "redirect:/librarian/profile?passwordChanged";
+                                 @RequestParam String newPassword,
+                                 Principal principal,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            String username = principal.getName();
+            profileService.changePassword(username, oldPassword, newPassword);
+            redirectAttributes.addFlashAttribute("passwordSuccess", "Password changed successfully!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("passwordError", "System error, please try again.");
+        }
+        return "redirect:/librarian/profile";
     }
 }
