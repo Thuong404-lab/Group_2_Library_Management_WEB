@@ -11,10 +11,13 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 // Người phụ trách: Trần Ngọc Linh Đang (CE191088)
-
 public interface AccountRepository extends JpaRepository<Account, Integer> {
 
+    // Tìm kiếm tài khoản hệ thống dựa trên Username đăng nhập
     Optional<Account> findByUsername(String username);
+
+    // Tìm kiếm tài khoản dựa trên Email người dùng (Phục vụ Login OAuth2/Google)
+    Optional<Account> findByUser_Email(String email);
 
     Optional<Account> findByUserId(Integer userId);
 
@@ -46,4 +49,5 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
               )
             """)
     Page<Account> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
+
 }

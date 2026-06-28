@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Yêu Cầu Mượn Sách</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-dark: #172742;
+            --page-bg: #f2f5f9;
+            --line-color: #d7dee8;
+            --text-main: #0f172a;
+            --muted-color: #64748b;
+            --blue-action: #1f66ff;
+            --green-success: #069b69;
+            --red-danger: #ff3045;
+        }
+
+        /* Đồng bộ duy nhất một font chữ cho toàn bộ trang */
+        body, input, button, select, textarea, .modal-title, .btn {
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
+        }
+
+        body {
+            background-color: var(--page-bg);
+            color: var(--text-main);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .management-header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--line-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-back-dashboard {
+            background: transparent;
+            border: 1px solid var(--line-color);
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none !important;
+            transition: all 0.2s;
+        }
+
+        .btn-back-dashboard:hover {
+            background: #f1f5f9;
+            color: var(--blue-action);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .workspace-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar-request-list {
+            width: 380px;
+            background: #ffffff;
+            border-right: 1px solid var(--line-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .list-search-box {
+            padding: 12px;
+            border-bottom: 1px solid var(--line-color);
+            background: #fafbfc;
+        }
+
+        .request-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--line-color);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .request-item:hover {
+            background: #f8fafc;
+        }
+
+        .request-item.active {
+            background: #edf4ff;
+            border-left: 4px solid var(--blue-action);
+        }
+
+        .req-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--muted-color);
+            margin-bottom: 4px;
+        }
+
+        .req-member-name {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .req-book-title {
+            font-size: 13px;
+            color: #334155;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .main-detail-view {
+            flex: 1;
+            background: var(--page-bg);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .detail-card {
+            background: #ffffff;
+            border: 1px solid var(--line-color);
+            border-radius: 6px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--line-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-card-body {
+            padding: 24px;
+            flex: 1;
+        }
+
+        .detail-card-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--line-color);
+            background: #fafbfc;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .info-group-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted-color);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--muted-color);
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted-color);
+            text-align: center;
+            height: 100%;
+        }
+
+        .modal-custom-header {
+            background-color: #1f66ff;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<header class="management-header">
+    <div class="header-left">
+        <a th:href="@{/librarian/dashboard}" class="btn-back-dashboard">
+            ← Quay lại Bảng điều khiển
+        </a>
+        <h1 class="header-title">Xem xét các yêu cầu mượn sách</h1>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#quickBorrowModal">
+            + Tạo phiếu mượn trực tiếp
+        </button>
+    </div>
+</header>
+
+<div class="workspace-container">
+
+    <aside class="sidebar-request-list">
+        <div class="list-search-box">
+            <input type="text" class="form-control form-control-sm" placeholder="Tìm kiếm thành viên, mã sách...">
+        </div>
+
+        <div class="request-items-wrapper">
+            <div th:each="req : ${pendingRequests}"
+                 class="request-item"
+                 th:classappend="${selectedReqId == req.id} ? 'active'"
+                 onclick="loadRequestDetail(this)"
+                 th:data-id="${req.id}">
+                <div class="req-meta">
+                    <span th:text="${req.requestDate}">28/06/2026 14:20</span>
+                    <span class="badge bg-warning text-dark">Đang chờ</span>
+                </div>
+                <div class="req-member-name" th:text="${req.memberFullName}">Nguyễn Văn A</div>
+                <div class="req-book-title">
+                    📚 <span th:text="${req.bookTitle}">Lập trình Java Spring Boot Nâng cao</span>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(pendingRequests)}" class="p-4 text-center text-muted fs-7">
+                Không tìm thấy yêu cầu mượn sách nào đang chờ duyệt.
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-detail-view">
+
+        <div id="emptyView" class="empty-state" th:style="${selectedRequest != null} ? 'display:none' : 'display:flex'">
+            <div style="font-size: 48px;">📑</div>
+            <h5 class="mt-2 fw-bold">Chưa chọn yêu cầu nào</h5>
+            <p class="small text-muted mb-0">Vui lòng chọn một tài khoản thành viên từ cột bên trái để xác thực điều kiện tài khoản và cấp quyền mượn.</p>
+        </div>
+
+        <div id="detailCard" class="detail-card" th:style="${selectedRequest == null} ? 'display:none' : 'display:block'">
+            <div class="detail-card-header">
+                <div>
+                    <h4 class="fw-bold mb-0" id="detailMemberName">Nguyễn Văn A</h4>
+                    <span class="text-muted small" id="detailMemberEmail">member01@library.com</span>
+                </div>
+                <span class="badge bg-secondary p-2">Mã yêu cầu: #<span id="detailReqId">1024</span></span>
+            </div>
+
+            <div class="detail-card-body">
+                <div class="info-group-title">Thông tin tài khoản độc giả</div>
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Hạng thành viên:</div>
+                        <div class="info-value text-primary" id="detailMemberTier">Thành viên Vàng</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Số sách đang mượn hiện tại:</div>
+                        <div class="info-value" id="detailCurrentBorrowed">2 / 5 Cuốn đang mượn</div>
+                    </div>
+                </div>
+
+                <div class="info-group-title">Thông tin sách đăng ký mượn</div>
+                <div class="info-card p-3 bg-light border rounded mb-4">
+                    <div class="fw-bold fs-5 text-dark" id="detailBookTitle">Lập trình Java Spring Boot Nâng cao</div>
+                    <div class="text-muted small mt-1">Mã ISBN: <span id="detailBookIsbn">978-604-default</span></div>
+                    <div class="text-muted small">Vị trí kệ sách: <span id="detailBookLocation">Khu vực B3 - Tầng 2</span></div>
+                </div>
+
+                <div class="info-group-title">Thời gian dự kiến mượn sách</div>
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Ngày dự kiến đến lấy:</div>
+                        <div class="info-value" id="detailPickupDate">28/06/2026</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Hạn trả sách tính toán:</div>
+                        <div class="info-value" id="detailDueDate">12/07/2026 (Thời gian mượn 14 ngày)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-card-footer">
+                <form id="rejectForm" method="post" th:action="@{/librarian/borrow/reject}" class="m-0">
+                    <input type="hidden" name="requestId" id="rejectReqId">
+                    <button type="submit" class="btn btn-outline-danger btn-sm px-3 fw-bold">
+                        ✕ Từ chối yêu cầu
+                    </button>
+                </form>
+
+                <form id="approveForm" method="post" th:action="@{/librarian/borrow/approve}" class="m-0">
+                    <input type="hidden" name="requestId" id="approveReqId">
+                    <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">
+                        ✓ Phê duyệt & Cấp phiếu
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<div class="modal fade" id="quickBorrowModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="quickBorrowModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-custom-header py-3">
+                <h5 class="modal-title fw-bold" id="quickBorrowModalLabel">Hệ thống Quản lý Thư viện - Tạo phiếu mượn mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <form method="post" th:action="@{/librarian/borrow/create/submit}">
+                <div class="modal-body p-4">
+
+                    <div class="mb-4">
+                        <label for="memberEmail" class="form-label fw-bold text-dark mb-1">Địa chỉ Email Thành viên:</label>
+                        <input type="email" id="memberEmail" name="memberEmail" class="form-control form-control-lg" placeholder="Ví dụ: member01@gmail.com" required>
+                        <div class="form-text text-muted small mt-1">Hệ thống sẽ tự động xác thực trạng thái tài khoản độc giả và kiểm tra các ràng buộc liên quan.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bookBarcodes" class="form-label fw-bold text-dark mb-1">Danh sách Mã vạch (Barcode) của sách:</label>
+                        <input type="text" id="bookBarcodes" name="bookBarcodes" class="form-control form-control-lg" placeholder="BC001-001, BC002-001" required>
+                        <div class="form-text text-muted small mt-1">Nhập nhiều mã vạch cách nhau bằng dấu phẩy nếu độc giả muốn mượn đồng thời nhiều cuốn sách.</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer bg-light border-top-0 px-4 py-3 d-flex flex-column gap-2">
+                    <button type="submit" class="btn btn-success btn-lg w-100 fw-bold py-2">Xác nhận tạo phiếu</button>
+                    <button type="button" class="btn btn-secondary w-100 py-2" data-bs-dismiss="modal">Hủy bỏ & Quay lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function loadRequestDetail(element) {
+        document.querySelectorAll('.request-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+
+        document.getElementById('emptyView').style.display = 'none';
+        document.getElementById('detailCard').style.display = 'flex';
+
+        const id = element.getAttribute('data-id');
+        document.getElementById('detailReqId').innerText = id;
+        document.getElementById('rejectReqId').value = id;
+        document.getElementById('approveReqId').value = id;
+    }
+</script>
+</body>
+</html>
