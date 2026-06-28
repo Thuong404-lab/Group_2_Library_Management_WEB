@@ -36,6 +36,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // String userName, String fullName, String pass, String email, String phone);
             account = authService.createCoreAccount(email, name, "", email, "");
         }
-        return new CustomUserDetails(account, oAuth2User.getAuthorities(), oAuth2User.getAttributes());
+        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>(oAuth2User.getAuthorities());
+        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_MEMBER"));
+        
+        return new CustomUserDetails(account, authorities, oAuth2User.getAttributes());
     }
 }

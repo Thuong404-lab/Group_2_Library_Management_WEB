@@ -36,8 +36,8 @@ public class BookServiceImpl implements BookService {
 
     // UC-3: Xem danh sách sách
     @Override
-    public void findAllBooks(int page) {
-        // TODO: Implement - Lấy tất cả sách (phân trang)
+    public org.springframework.data.domain.Page<com.lms.entity.Book> findAllBooks(org.springframework.data.domain.Pageable pageable) {
+        return bookRepository.findAll(pageable);
     }
 
     // Lấy sách mới nhất cho trang chủ
