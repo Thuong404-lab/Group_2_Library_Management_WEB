@@ -141,7 +141,6 @@ public class FinancialController {
                     memberNotification
             );
         }
-
         List<MemberNotification> notifications = new ArrayList<>(notificationMap.values());
 
         model.addAttribute("notifications", notifications);

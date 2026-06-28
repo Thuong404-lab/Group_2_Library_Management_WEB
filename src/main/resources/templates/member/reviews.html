@@ -1,14 +1,81 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Reviews', ~{::content})}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Reviews</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+<main layout:fragment="content">
+
+    <div class="container mt-4">
+        <h2>Đánh giá sách</h2>
+        <hr>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <form th:action="@{/member/interaction/reviews}"
+              th:object="${reviewRequest}"
+              method="post">
+
+            <div class="mb-3">
+                <label class="form-label">Chọn sách</label>
+
+                <select class="form-select" th:field="*{bookId}">
+                    <option value="">-- Chọn sách --</option>
+                    <option th:each="book : ${books}"
+                            th:value="${book.bookId}"
+                            th:text="${book.title}">
+                    </option>
+                </select>
+
+                <div class="text-danger"
+                     th:if="${#fields.hasErrors('bookId')}"
+                     th:errors="*{bookId}">
+                </div>
             </div>
-        </div>
+
+            <div class="mb-3">
+                <label class="form-label">Số sao</label>
+
+                <select class="form-select" th:field="*{rating}">
+                    <option value="">-- Chọn số sao --</option>
+                    <option value="1">1 sao</option>
+                    <option value="2">2 sao</option>
+                    <option value="3">3 sao</option>
+                    <option value="4">4 sao</option>
+                    <option value="5">5 sao</option>
+                </select>
+
+                <div class="text-danger"
+                     th:if="${#fields.hasErrors('rating')}"
+                     th:errors="*{rating}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Bình luận</label>
+
+                <textarea class="form-control"
+                          rows="5"
+                          th:field="*{comment}"
+                          placeholder="Nhập nội dung đánh giá"></textarea>
+
+                <div class="text-danger"
+                     th:if="${#fields.hasErrors('comment')}"
+                     th:errors="*{comment}">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Gửi đánh giá
+            </button>
+
+            <a th:href="@{/}" class="btn btn-secondary">
+                Quay lại
+            </a>
+
+        </form>
     </div>
+
+</main>
 </body>
 </html>

@@ -1,0 +1,13 @@
+package com.lms.service;
+
+import com.lms.dto.response.MemberNotificationResponse;
+
+import java.util.List;
+
+public interface MemberNotificationService {
+
+    List<MemberNotificationResponse> getMyNotifications(String username);
+
+    // ======= THÊM MỚI =======
+    List<MemberNotificationResponse> getLatestNotifications(String username);
+}
