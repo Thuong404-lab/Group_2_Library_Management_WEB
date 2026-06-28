@@ -1,14 +1,102 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Wallet', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+    <title>Ví & Phí Phạt</title>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Wallet</h2>
-        <div class="card">
+    <div layout:fragment="content" class="container mt-4 mb-5">
+        <h2 class="fw-bold mb-4">Ví & Phí Phạt</h2>
+
+        <div class="row g-4 mb-4">
+            <!-- Digital Wallet -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <h5 class="opacity-75 mb-1">Số dư hiện tại</h5>
+                                <h1 class="display-5 fw-bold mb-0">150.000 <span class="fs-4">VNĐ</span></h1>
+                            </div>
+                            <i class="bi bi-wallet2 display-6 opacity-50"></i>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light fw-bold px-4 rounded-pill"><i class="bi bi-plus-circle me-1"></i> Nạp Tiền</button>
+                            <button class="btn btn-outline-light rounded-pill px-4">Lịch sử nạp</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fines Alert -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-3 h-100 bg-white">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Phí phạt chưa thanh toán</h5>
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3 border-start border-danger border-4">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Quá hạn trả sách: Đất Rừng Phương Nam</h6>
+                                <small class="text-muted">Phát sinh ngày: 15/11/2026 (Quá hạn 5 ngày)</small>
+                            </div>
+                            <h5 class="text-danger fw-bold mb-0">15.000 VNĐ</h5>
+                        </div>
+                        <button class="btn btn-danger w-100 fw-bold rounded-pill">Thanh Toán Tất Cả (15.000 VNĐ)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="card border-0 shadow-sm rounded-3 mt-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">Lịch sử giao dịch gần đây</h5>
+            </div>
             <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã GD</th>
+                                <th>Ngày giờ</th>
+                                <th>Loại giao dịch</th>
+                                <th>Số tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="text-primary fw-bold">#TXN-8932</span></td>
+                                <td>20/10/2026 14:30</td>
+                                <td>Nạp tiền vào ví</td>
+                                <td class="text-success fw-bold">+ 100.000 đ</td>
+                                <td><span class="badge bg-success">Thành công</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="text-primary fw-bold">#TXN-8711</span></td>
+                                <td>15/09/2026 09:15</td>
+                                <td>Thanh toán phí phạt (Quá hạn)</td>
+                                <td class="text-danger fw-bold">- 10.000 đ</td>
+                                <td><span class="badge bg-success">Thành công</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="text-primary fw-bold">#TXN-8500</span></td>
+                                <td>01/08/2026 10:00</td>
+                                <td>Nạp tiền vào ví</td>
+                                <td class="text-success fw-bold">+ 50.000 đ</td>
+                                <td><span class="badge bg-success">Thành công</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
+    <a th:href="@{/member/financial/topup-notifications}" class="btn btn-outline-info mt-3">
+        Xem thông báo nạp tiền
+    </a>
+</div>
 </body>
 </html>
