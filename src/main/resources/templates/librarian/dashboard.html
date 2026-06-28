@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
@@ -6,9 +5,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Librarian Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+
     <style>
         :root {
             --sidebar: #172742;
@@ -37,6 +36,11 @@
         .app-shell {
             min-height: 100vh;
             padding-left: 220px;
+            transition: padding-left .2s ease;
+        }
+
+        body.sidebar-collapsed .app-shell {
+            padding-left: 64px;
         }
 
         .sidebar {
@@ -52,39 +56,49 @@
             z-index: 10;
         }
 
+        body.sidebar-collapsed .sidebar {
+            width: 64px;
+        }
+
         .brand {
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, .08);
             display: flex;
             gap: 10px;
-            height: 46px;
+            height: 52px;
             padding: 0 14px;
         }
 
-        .brand-icon,
-        .stat-icon,
-        .user-avatar {
+        .brand-link {
             align-items: center;
-            display: inline-flex;
-            justify-content: center;
+            color: #ffffff;
+            display: flex;
+            gap: 10px;
+            text-decoration: none !important;
         }
 
         .brand-icon {
+            align-items: center;
             background: #4bc3ff;
             border-radius: 4px;
             color: #0d3760;
+            display: inline-flex;
             height: 24px;
+            justify-content: center;
             width: 24px;
         }
 
         .brand-name {
-            color: #fff;
+            color: #ffffff;
             font-size: 14px;
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .collapse-mark {
+            background: transparent;
+            border: none;
             color: #9db0ca;
+            cursor: pointer;
             margin-left: auto;
         }
 
@@ -99,69 +113,72 @@
             color: #cbd7ea;
             display: flex;
             gap: 10px;
-            text-decoration: none;
+            text-decoration: none !important;
         }
 
         .nav-link-app {
             font-size: 14px;
-            font-weight: 600;
-            padding: 11px 16px;
+            font-weight: 700;
+            padding: 12px 16px;
         }
 
         .nav-link-app.active,
         .nav-link-app:hover {
             background: var(--sidebar-active);
-            color: #fff;
+            color: #ffffff;
         }
 
         .nav-icon {
-            color: #c8d4e6;
-            text-align: center;
-            width: 18px;
+            align-items: center;
+            display: inline-flex;
+            justify-content: center;
+            width: 20px;
         }
 
         .submenu {
-            gap: 6px;
-            padding: 4px 0 12px 48px;
+            display: none;
+            gap: 8px;
+            padding: 6px 0 12px 50px;
         }
 
         .submenu.show {
             display: grid;
         }
 
-        .submenu:not(.show) {
-            display: none;
-        }
-
         .submenu-link {
-            font-size: 12px;
-            padding: 3px 0;
-        }
-
-        .submenu-link:hover {
-            color: #fff;
+            font-size: 13px;
+            padding: 4px 0;
         }
 
         .sidebar-user {
             align-items: center;
             border-top: 1px solid rgba(255, 255, 255, .08);
+            cursor: pointer;
             display: flex;
             gap: 10px;
             padding: 12px 16px;
+            position: relative;
+        }
+
+        .sidebar-user:hover {
+            background: #1d3154;
         }
 
         .user-avatar {
+            align-items: center;
             background: #22385e;
             border-radius: 50%;
-            color: #fff;
-            height: 26px;
-            width: 26px;
+            color: #ffffff;
+            display: inline-flex;
+            height: 28px;
+            justify-content: center;
+            width: 28px;
         }
 
         .user-name {
-            color: #fff;
+            color: #ffffff;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .user-email,
@@ -170,19 +187,42 @@
             font-size: 11px;
         }
 
+        body.sidebar-collapsed .brand-name,
+        body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
+        body.sidebar-collapsed .sidebar-user-info,
+        body.sidebar-collapsed .submenu {
+            display: none;
+        }
+
+        body.sidebar-collapsed .nav-link-app {
+            justify-content: center;
+            padding: 13px 0;
+        }
+
+        body.sidebar-collapsed .sidebar-user {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
         .topbar {
             align-items: center;
             background: #fff;
             border-bottom: 1px solid var(--line);
             display: flex;
-            height: 46px;
+            height: 52px;
             justify-content: space-between;
             padding: 0 18px;
         }
 
         .page-label {
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 800;
+        }
+
+        .top-actions {
+            align-items: center;
+            display: flex;
+            gap: 12px;
         }
 
         .top-user {
@@ -196,19 +236,27 @@
         }
 
         .content {
-            padding: 18px;
+            padding: 22px;
         }
 
         .title {
-            font-size: 21px;
+            font-size: 22px;
             font-weight: 800;
-            margin: 0 0 2px;
+            margin: 0 0 4px;
         }
 
         .subtitle {
             color: var(--muted);
             font-size: 13px;
             margin-bottom: 18px;
+        }
+
+        .lib-section {
+            display: none;
+        }
+
+        .lib-section.active {
+            display: block;
         }
 
         .stat-grid {
@@ -219,8 +267,9 @@
         }
 
         .stat-card,
-        .panel {
-            background: #fff;
+        .panel,
+        .quick-card {
+            background: #ffffff;
             border: 1px solid var(--line);
             border-radius: 4px;
         }
@@ -234,26 +283,30 @@
         }
 
         .stat-icon {
+            align-items: center;
             border-radius: 6px;
             color: #fff;
+            display: inline-flex;
             flex: 0 0 36px;
+            font-size: 18px;
             height: 36px;
+            justify-content: center;
             width: 36px;
         }
 
-        .blue {
+        .stat-icon.blue {
             background: var(--blue);
         }
 
-        .orange {
+        .stat-icon.orange {
             background: var(--orange);
         }
 
-        .red {
+        .stat-icon.red {
             background: var(--red);
         }
 
-        .green {
+        .stat-icon.green {
             background: var(--green);
         }
 
@@ -261,11 +314,11 @@
             color: #667085;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: .02em;
             text-transform: uppercase;
         }
 
         .stat-value {
+            color: #0b1220;
             font-size: 22px;
             font-weight: 800;
             line-height: 1.05;
@@ -280,7 +333,7 @@
         .dashboard-grid {
             display: grid;
             gap: 14px;
-            grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+            grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
         }
 
         .panel {
@@ -289,26 +342,43 @@
         }
 
         .panel-title {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 800;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
         }
 
-        .table-app {
-            font-size: 13px;
-            margin: 0;
-        }
-
-        .table-app th {
-            background: #f8fafc;
-            color: #475569;
+        .panel-subtitle {
+            color: var(--muted);
             font-size: 12px;
-            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .quick-card-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .quick-card {
+            padding: 18px;
+        }
+
+        .quick-card-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .quick-card-desc {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 14px;
         }
 
         .activity-list {
             display: grid;
             gap: 13px;
+            margin-top: 16px;
         }
 
         .activity {
@@ -324,9 +394,29 @@
             padding: 3px 6px;
         }
 
-        .activity-badge.info {
+        .activity-badge.blue {
             background: #dbeafe;
             color: #1d4ed8;
+        }
+
+        .activity-badge.green {
+            background: #dcfce7;
+            color: #047857;
+        }
+
+        .activity-badge.purple {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .activity-badge.red {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+
+        .activity-badge.yellow {
+            background: #fef3c7;
+            color: #b45309;
         }
 
         .activity-name {
@@ -339,28 +429,145 @@
             font-size: 12px;
         }
 
-        @media (max-width: 1100px) {
-
-            .stat-grid,
-            .dashboard-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+        .info-table {
+            font-size: 13px;
         }
 
-        @media (max-width: 760px) {
-            .app-shell {
-                padding-left: 0;
-            }
+        .info-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
 
-            .sidebar {
-                position: static;
-                width: 100%;
-            }
+        .sidebar-user-menu {
+            background: #ffffff;
+            border: 1px solid #d7dee8;
+            border-radius: 6px;
+            bottom: 58px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, .25);
+            display: none;
+            left: 12px;
+            min-width: 210px;
+            padding: 10px;
+            position: absolute;
+            z-index: 60;
+        }
 
-            .stat-grid,
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
+        .sidebar-user-menu.show {
+            display: block;
+        }
+
+        body.sidebar-collapsed .sidebar-user-menu {
+            bottom: 8px;
+            left: 70px;
+        }
+
+        .sidebar-user-menu .profile-name {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .sidebar-user-menu .profile-email {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-user-menu .menu-btn,
+        .sidebar-user-menu .logout-btn {
+            background: transparent;
+            border: 0;
+            border-radius: 4px;
+            color: #334155;
+            display: block;
+            font-size: 13px;
+            padding: 8px 10px;
+            text-align: left;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .sidebar-user-menu .menu-btn:hover,
+        .sidebar-user-menu .logout-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .sidebar-user-menu .logout-btn {
+            color: #dc2626;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .profile-modal-backdrop {
+            background: rgba(0, 0, 0, .45);
+            bottom: 0;
+            display: none;
+            left: 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .profile-modal-backdrop.show {
+            display: block;
+        }
+
+        .profile-modal-box {
+            background: #ffffff;
+            border-radius: 6px;
+            left: 50%;
+            max-width: 460px;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 92%;
+        }
+
+        .profile-modal-header {
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+        }
+
+        .profile-modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .profile-modal-body {
+            padding: 16px;
+        }
+
+        .profile-row {
+            margin-bottom: 12px;
+        }
+
+        .profile-label {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .profile-value {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .profile-modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 14px 16px;
+            text-align: right;
         }
     </style>
 </head>
@@ -368,13 +575,18 @@
 <body>
     <div class="sidebar">
         <div class="brand">
-            <span class="brand-icon">□</span>
-            <span class="brand-name">LibraryMS</span>
-            <span class="collapse-mark">≡</span>
+            <a class="brand-link" th:href="@{/librarian/dashboard}">
+                <span class="brand-icon">▱</span>
+                <span class="brand-name">LibraryMS</span>
+            </a>
+            <button class="collapse-mark" type="button" onclick="toggleSidebar()">
+                ≡
+            </button>
         </div>
 
         <nav class="nav-area">
-            <a class="nav-link-app active" th:href="@{/librarian/dashboard}">
+            <a class="nav-link-app active" data-section="overview" href="javascript:void(0)"
+                onclick="showLibSection('overview', this)">
                 <span class="nav-icon">▦</span>
                 <span>Tổng quan</span>
             </a>
@@ -382,200 +594,403 @@
             <a class="nav-link-app" href="javascript:void(0)" onclick="toggleLoanMenu()">
                 <span class="nav-icon">▰</span>
                 <span>Quản lý mượn, trả</span>
-                <span class="ms-auto" id="loanArrow">⌄</span>
+                <span id="loanArrow">⌄</span>
             </a>
-
             <div class="submenu show" id="loanMenu">
-                <a class="submenu-link" th:href="@{/librarian/loan/borrow-desk}">Mượn sách</a>
-                <a class="submenu-link" th:href="@{/librarian/loan/renewals}">Gia hạn sách</a>
-                <a class="submenu-link" th:href="@{/librarian/loan/on-site-readers}">Bạn đọc tại chỗ</a>
-                <a class="submenu-link" th:href="@{/librarian/members/fines}">Phạt vi phạm</a>
+                <a class="submenu-link" th:href="@{/librarian/borrows}">Mượn sách</a>
+                <a class="submenu-link" th:href="@{/librarian/renewals}">Gia hạn sách</a>
+                <a class="submenu-link" th:href="@{/librarian/in-library-reading}">Bạn đọc tại chỗ</a>
+                <a class="submenu-link" th:href="@{/librarian/violations}">Phạt vi phạm</a>
             </div>
 
-            <a class="nav-link-app" th:href="@{/librarian/inventory}">
+            <a class="nav-link-app" data-section="books" href="javascript:void(0)"
+                onclick="showLibSection('books', this)">
                 <span class="nav-icon">▣</span>
                 <span>Quản lý sách</span>
             </a>
-
-            <a class="nav-link-app" th:href="@{/librarian/members}">
+            <a class="nav-link-app" data-section="users" href="javascript:void(0)"
+                onclick="showLibSection('users', this)">
                 <span class="nav-icon">♙</span>
-                <span>Bạn đọc</span>
+                <span>Quản lý người dùng</span>
             </a>
-
-            <a class="nav-link-app" th:href="@{/librarian/reports}">
+            <a class="nav-link-app" data-section="reports" href="javascript:void(0)"
+                onclick="showLibSection('reports', this)">
                 <span class="nav-icon">⌁</span>
                 <span>Thống kê</span>
             </a>
         </nav>
 
-        <div class="sidebar-user">
+        <div class="sidebar-user" onclick="toggleSidebarUserMenu(event)">
             <span class="user-avatar">♙</span>
-            <div>
+
+            <div class="sidebar-user-info">
                 <div class="user-name" th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
                     Thủ thư
                 </div>
                 <div class="user-email" th:text="${currentUser != null ? currentUser.email : ''}">
-                    librarian@thuvien.vn
+                    librarian@library.vn
                 </div>
+            </div>
+
+            <div class="sidebar-user-menu" id="sidebarUserMenu" onclick="event.stopPropagation()">
+                <div class="profile-name" th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
+                    Thủ thư
+                </div>
+                <div class="profile-email" th:text="${currentUser != null ? currentUser.email : ''}">
+                    librarian@library.vn
+                </div>
+                <button type="button" class="menu-btn" onclick="openLibrarianProfileModal()">
+                    Hồ sơ cá nhân
+                </button>
+                <form class="logout-form" method="post" th:action="@{/logout}">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}">
+                    <button class="logout-btn" type="submit">
+                        Đăng xuất
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
     <div class="app-shell">
         <header class="topbar">
-            <div class="page-label">Librarian</div>
+            <div class="page-label">Library Management System</div>
 
-            <div class="top-user">
-                <span class="user-avatar">♙</span>
-                <div>
-                    <div class="user-name text-dark"
-                        th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
-                        Thủ thư
+            <div class="top-actions">
+                <div class="top-user">
+                    <span class="user-avatar">♙</span>
+                    <div>
+                        <div class="user-name text-dark"
+                            th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
+                            Thủ thư
+                        </div>
+                        <div class="role-text">Librarian</div>
                     </div>
-                    <div class="role-text">Quầy lưu thông</div>
                 </div>
             </div>
         </header>
 
         <main class="content">
-            <h1 class="title">Tổng quan thủ thư</h1>
+            <section id="section-overview" class="lib-section active">
+                <h1 class="title">Tổng quan thủ thư</h1>
+                <div class="subtitle">
+                    Cập nhật:
+                    <span th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>
+                </div>
 
-            <div class="subtitle">
-                Cập nhật:
-                <span th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">
-                    24/06/2026
-                </span>
-            </div>
+                <section class="stat-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon blue">▰</div>
+                        <div>
+                            <div class="stat-label">Đang mượn</div>
+                            <div class="stat-value" th:text="${activeBorrows}">0</div>
+                            <div class="stat-note">Phiếu mượn đang mở</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon orange">↻</div>
+                        <div>
+                            <div class="stat-label">Chờ đặt trước</div>
+                            <div class="stat-value" th:text="${pendingReservations}">0</div>
+                            <div class="stat-note">Reservation Pending</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon red">ⓘ</div>
+                        <div>
+                            <div class="stat-label">Quá hạn</div>
+                            <div class="stat-value" th:text="${overdueDetails}">0</div>
+                            <div class="stat-note">Cần nhắc nhở</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon green">□</div>
+                        <div>
+                            <div class="stat-label">Sách sẵn có</div>
+                            <div class="stat-value" th:text="${availableItems}">0</div>
+                            <div class="stat-note">BookItem Available</div>
+                        </div>
+                    </article>
+                </section>
 
-            <section class="stat-grid">
-                <article class="stat-card">
-                    <div class="stat-icon blue">▰</div>
-                    <div>
-                        <div class="stat-label">Đang mượn</div>
-                        <div class="stat-value" th:text="${activeBorrows}">0</div>
-                        <div class="stat-note">Phiếu mượn đang mở</div>
-                    </div>
-                </article>
+                <section class="dashboard-grid">
+                    <div class="panel">
+                        <div class="panel-title">Sắp đến hạn trả</div>
+                        <div class="panel-subtitle">Các sách cần theo dõi trong 7 ngày tới</div>
 
-                <article class="stat-card">
-                    <div class="stat-icon orange">↻</div>
-                    <div>
-                        <div class="stat-label">Chờ duyệt</div>
-                        <div class="stat-value" th:text="${pendingReservations}">0</div>
-                        <div class="stat-note">Cần xử lý ngay</div>
-                    </div>
-                </article>
-
-                <article class="stat-card">
-                    <div class="stat-icon red">ⓘ</div>
-                    <div>
-                        <div class="stat-label">Quá hạn</div>
-                        <div class="stat-value" th:text="${overdueDetails}">0</div>
-                        <div class="stat-note">Cần nhắc trả sách</div>
-                    </div>
-                </article>
-
-                <article class="stat-card">
-                    <div class="stat-icon green">□</div>
-                    <div>
-                        <div class="stat-label">Sách sẵn có</div>
-                        <div class="stat-value" th:text="${availableItems}">0</div>
-                        <div class="stat-note">Bản sách Available</div>
-                    </div>
-                </article>
-            </section>
-
-            <section class="dashboard-grid">
-                <div class="panel">
-                    <div class="panel-title">Phiếu mượn gần đây</div>
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-app">
+                        <table class="table table-bordered info-table">
                             <thead>
                                 <tr>
-                                    <th>Mã phiếu</th>
-                                    <th>Bạn đọc</th>
-                                    <th>Ngày mượn</th>
+                                    <th>STT</th>
+                                    <th>Thông tin</th>
+                                    <th>Ngày đến hạn</th>
                                     <th>Trạng thái</th>
                                 </tr>
                             </thead>
 
                             <tbody>
-                                <tr th:each="borrow : ${recentBorrows}">
-                                    <td th:text="${'PM' + borrow.borrowId}">PM1</td>
-
+                                <tr th:each="detail, iterStat : ${dueSoonDetails}">
+                                    <td th:text="${iterStat.index + 1}">1</td>
+                                    <td>Sách đang mượn</td>
                                     <td
-                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'N/A'}">
-                                        Bạn đọc
-                                    </td>
-
-                                    <td
-                                        th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                        th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'N/A'}">
                                         N/A
                                     </td>
-
-                                    <td>
-                                        <span class="badge text-bg-warning" th:text="${borrow.status}">
-                                            Active
-                                        </span>
-                                    </td>
+                                    <td th:text="${detail.status}">Borrowed</td>
                                 </tr>
-
-                                <tr th:if="${#lists.isEmpty(recentBorrows)}">
-                                    <td colspan="4" class="text-center text-muted py-4">
-                                        Chưa có phiếu mượn nào
+                                <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
+                                    <td colspan="4" class="text-center text-muted">
+                                        Không có sách sắp đến hạn.
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                </div>
 
-                <aside class="panel">
-                    <div class="panel-title">Sách sắp tới hạn</div>
+                    <aside class="panel">
+                        <div class="panel-title">Hoạt động gần đây</div>
 
-                    <div class="activity-list">
-                        <div class="activity" th:each="detail : ${dueSoonDetails}">
-                            <span class="activity-badge info" th:text="${detail.book != null ? 'Sách' : 'LMS'}">
-                                Sách
-                            </span>
-
-                            <div>
-                                <div class="activity-name"
-                                    th:text="${detail.book != null ? detail.book.title : 'Không rõ'}">
-                                    Tên sách
+                        <div class="activity-list">
+                            <div class="activity" th:each="borrow, iterStat : ${recentBorrows}">
+                                <span class="activity-badge"
+                                    th:classappend="${iterStat.index % 5 == 0 ? ' blue' : iterStat.index % 5 == 1 ? ' green' : iterStat.index % 5 == 2 ? ' purple' : iterStat.index % 5 == 3 ? ' red' : ' yellow'}"
+                                    th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
+                                    N
+                                </span>
+                                <div>
+                                    <div class="activity-name"
+                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Không rõ'}">
+                                        Người dùng
+                                    </div>
+                                    <div class="activity-desc">
+                                        Mượn sách ·
+                                        <span
+                                            th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                            N/A
+                                        </span>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div class="activity-desc">
-                                    Hạn trả:
-                                    <span
-                                        th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
-                                        N/A
-                                    </span>
+                            <div class="activity" th:if="${#lists.isEmpty(recentBorrows)}">
+                                <span class="activity-badge blue">LMS</span>
+                                <div>
+                                    <div class="activity-name">Chưa có hoạt động</div>
+                                    <div class="activity-desc">Phiếu mượn mới sẽ hiển thị tại đây</div>
                                 </div>
                             </div>
                         </div>
+                    </aside>
+                </section>
+            </section>
 
-                        <div class="activity" th:if="${#lists.isEmpty(dueSoonDetails)}">
-                            <span class="activity-badge info">LMS</span>
-                            <div>
-                                <div class="activity-name">Chưa có dữ liệu</div>
-                                <div class="activity-desc">
-                                    Các sách sắp đến hạn sẽ hiển thị tại đây
-                                </div>
-                            </div>
-                        </div>
+            <section id="section-books" class="lib-section">
+                <h1 class="title">Quản lý sách</h1>
+                <div class="subtitle">Theo dõi sách, kho sách và danh mục sách</div>
+                <div class="quick-card-grid">
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách sách</div>
+                        <div class="quick-card-desc">Xem và quản lý thông tin sách trong thư viện.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory}">
+                            Mở trang
+                        </a>
                     </div>
-                </aside>
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh mục / thể loại</div>
+                        <div class="quick-card-desc">Quản lý category, genre và phân loại sách.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory/categories}">
+                            Mở trang
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-users" class="lib-section">
+                <h1 class="title">Quản lý người dùng</h1>
+                <div class="subtitle">Librarian quản lý tài khoản thành viên và xem danh sách thủ thư</div>
+
+                <section class="stat-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon green">♙</div>
+                        <div>
+                            <div class="stat-label">Tổng thành viên</div>
+                            <div class="stat-value" th:text="${totalMembers}">0</div>
+                            <div class="stat-note">Member trong hệ thống</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon blue">▦</div>
+                        <div>
+                            <div class="stat-label">Tổng thủ thư</div>
+                            <div class="stat-value" th:text="${totalLibrarians}">0</div>
+                            <div class="stat-note">Librarian trong hệ thống</div>
+                        </div>
+                    </article>
+                </section>
+
+                <div class="quick-card-grid">
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách thành viên</div>
+                        <div class="quick-card-desc">Tạo, cập nhật và xóa tài khoản thành viên.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/members}">
+                            Mở trang
+                        </a>
+                    </div>
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách thủ thư</div>
+                        <div class="quick-card-desc">Xem danh sách thủ thư đang làm việc trong hệ thống.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/librarians}">
+                            Mở trang
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-reports" class="lib-section">
+                <h1 class="title">Thống kê</h1>
+                <div class="subtitle">Báo cáo hoạt động thư viện dành cho thủ thư</div>
+
+                <section class="stat-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon blue">▰</div>
+                        <div>
+                            <div class="stat-label">Đang mượn</div>
+                            <div class="stat-value" th:text="${activeBorrows}">0</div>
+                            <div class="stat-note">Phiếu đang mở</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon orange">↻</div>
+                        <div>
+                            <div class="stat-label">Chờ đặt trước</div>
+                            <div class="stat-value" th:text="${pendingReservations}">0</div>
+                            <div class="stat-note">Reservation Pending</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon red">ⓘ</div>
+                        <div>
+                            <div class="stat-label">Quá hạn</div>
+                            <div class="stat-value" th:text="${overdueDetails}">0</div>
+                            <div class="stat-note">Cần xử lý</div>
+                        </div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-icon green">♙</div>
+                        <div>
+                            <div class="stat-label">Thành viên</div>
+                            <div class="stat-value" th:text="${totalMembers}">0</div>
+                            <div class="stat-note">Member</div>
+                        </div>
+                    </article>
+                </section>
+                <div class="quick-card-grid">
+                    <div class="quick-card">
+                        <div class="quick-card-title">Báo cáo thư viện</div>
+                        <div class="quick-card-desc">Xem báo cáo tổng quan hoạt động thư viện.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/reports}">
+                            Mở trang
+                        </a>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
 
+    <div class="profile-modal-backdrop" id="librarianProfileModal">
+        <div class="profile-modal-box">
+            <div class="profile-modal-header">
+                <h5 class="profile-modal-title">Hồ sơ thủ thư</h5>
+                <button type="button" class="btn btn-light border btn-sm" onclick="closeLibrarianProfileModal()">
+                    ×
+                </button>
+            </div>
+
+            <div class="profile-modal-body">
+                <div class="profile-row">
+                    <div class="profile-label">Họ tên</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.fullName : 'Thủ thư'}">
+                        Thủ thư
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Email</div>
+                    <div class="profile-value"
+                        th:text="${currentUser != null ? currentUser.email : 'librarian@library.vn'}">
+                        librarian@library.vn
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Số điện thoại</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.phone : 'N/A'}">
+                        N/A
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Trạng thái</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.status : 'Active'}">
+                        Active
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-label">Vai trò</div>
+                    <div class="profile-value">
+                        Librarian
+                    </div>
+                </div>
+            </div>
+            <div class="profile-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeLibrarianProfileModal()">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function showLibSection(sectionName, clickedLink) {
+            const sections = document.querySelectorAll(".lib-section");
+
+            sections.forEach(function (section) {
+                section.classList.remove("active");
+            });
+
+            const selectedSection = document.getElementById("section-" + sectionName);
+
+            if (selectedSection != null) {
+                selectedSection.classList.add("active");
+            }
+
+            const menuLinks = document.querySelectorAll(".nav-link-app[data-section]");
+
+            menuLinks.forEach(function (link) {
+                link.classList.remove("active");
+            });
+
+            if (clickedLink != null && clickedLink.dataset.section != null) {
+                clickedLink.classList.add("active");
+            }
+            const newUrl = sectionName === "overview"
+                ? "/librarian/dashboard"
+                : "/librarian/dashboard?section=" + sectionName;
+
+            window.history.replaceState(null, "", newUrl);
+        }
+
+        function openSectionFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const sectionName = params.get("section") || "overview";
+            const menuLink = document.querySelector("[data-section='" + sectionName + "']");
+
+            if (menuLink != null) {
+                showLibSection(sectionName, menuLink);
+            }
+        }
+
         function toggleLoanMenu() {
             const loanMenu = document.getElementById("loanMenu");
             const loanArrow = document.getElementById("loanArrow");
-
             loanMenu.classList.toggle("show");
 
             if (loanMenu.classList.contains("show")) {
@@ -584,10 +999,59 @@
                 loanArrow.textContent = "›";
             }
         }
+
+        function toggleSidebar() {
+            document.body.classList.toggle("sidebar-collapsed");
+        }
+
+        function toggleSidebarUserMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById("sidebarUserMenu");
+            if (menu != null) {
+                menu.classList.toggle("show");
+            }
+        }
+
+        function openLibrarianProfileModal() {
+            const menu = document.getElementById("sidebarUserMenu");
+            const modal = document.getElementById("librarianProfileModal");
+
+            if (menu != null) {
+                menu.classList.remove("show");
+            }
+            if (modal != null) {
+                modal.classList.add("show");
+            }
+        }
+
+        function closeLibrarianProfileModal() {
+            const modal = document.getElementById("librarianProfileModal");
+            if (modal != null) {
+                modal.classList.remove("show");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", openSectionFromUrl);
+
+        document.addEventListener("click", function () {
+            const menu = document.getElementById("sidebarUserMenu");
+            if (menu != null) {
+                menu.classList.remove("show");
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeLibrarianProfileModal();
+                const menu = document.getElementById("sidebarUserMenu");
+                if (menu != null) {
+                    menu.classList.remove("show");
+                }
+            }
+        });
     </script>
 
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
 </body>
 
 </html>
-```

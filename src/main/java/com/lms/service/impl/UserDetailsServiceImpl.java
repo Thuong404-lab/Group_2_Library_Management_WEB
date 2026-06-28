@@ -1,4 +1,4 @@
-package com.lms.service;
+package com.lms.service.impl;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.Account;
@@ -53,7 +53,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             // Nếu không phải Staff thì là Member
             authorities.add(new SimpleGrantedAuthority("ROLE_MEMBER"));
         }
-        
+
         return new CustomUserDetails(account, authorities);
     }
 }

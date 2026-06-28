@@ -1,6 +1,7 @@
 package com.lms.controller.auth;
 
 import com.lms.dto.request.RegisterRequest;
+import com.lms.exception.AuthException;
 import com.lms.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -42,8 +43,13 @@ public class AuthController {
             authService.register(registerRequest);
             redirectAttributes.addFlashAttribute("successMsg", "Đăng ký thành công! Vui lòng đăng nhập.");
             return "redirect:/login";
-        } catch (Exception e) {
+        } catch (AuthException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+            return "redirect:/register";
+
+        } catch (Exception e) {
+            System.out.println("Lỗi Server: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMsg", "Hệ thống đang bảo trì, vui lòng thử lại sau!");
             return "redirect:/register";
         }
     }

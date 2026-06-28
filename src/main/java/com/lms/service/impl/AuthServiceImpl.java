@@ -1,16 +1,12 @@
 package com.lms.service.impl;
 
+import com.lms.entity.*;
+import com.lms.enums.ActionType;
+import com.lms.exception.AuthException;
+import com.lms.repository.*;
 import com.lms.service.AuthService;
 
 import com.lms.dto.request.RegisterRequest;
-import com.lms.entity.Account;
-import com.lms.entity.Member;
-import com.lms.entity.User;
-import com.lms.entity.Wallet;
-import com.lms.repository.AccountRepository;
-import com.lms.repository.MemberRepository;
-import com.lms.repository.UserRepository;
-import com.lms.repository.WalletRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,61 +30,95 @@ public class AuthServiceImpl implements AuthService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder) {
+    private final SystemLogRepository systemLogRepository;
+
+    public AuthServiceImpl(UserRepository userRepository, AccountRepository accountRepository,
+            MemberRepository memberRepository, WalletRepository walletRepository, PasswordEncoder passwordEncoder,
+            SystemLogRepository systemLogRepository) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
         this.passwordEncoder = passwordEncoder;
+        this.systemLogRepository = systemLogRepository;
     }
-
 
     // UC-2: Đăng ký thành viên mới
     @Override
     @Transactional
-    public void register(RegisterRequest request) throws Exception {
-        if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new Exception("Tên đăng nhập đã tồn tại!");
+    public void register(RegisterRequest request) throws AuthException {
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new AuthException("Tên đăng nhập không được để trống!");
         }
-        
-        // 1. Tạo User
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new AuthException("Mật khẩu phải có ít nhất 6 ký tự!");
+        }
+        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
+            throw new AuthException("Họ và tên không được để trống!");
+        }
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            throw new AuthException("Email không hợp lệ (phải chứa ký tự @)!");
+        }
+        if (request.getPhone() == null || request.getPhone().length() < 10) {
+            throw new AuthException("Số điện thoại phải có ít nhất 10 số!");
+        }
+        if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new AuthException("Tên đăng nhập đã tồn tại!");
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AuthException("Email đã được sử dụng!");
+        }
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        createCoreAccount(request.getUsername(), request.getFullName(), encodedPassword, request.getEmail(), request.getPhone());
+
+    }
+
+    private void createAndSaveLog(Integer accountId, String actionType, String ipAddres, String userAgent,
+            String description) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account != null) {
+            SystemLog log = new SystemLog(account, actionType, ipAddres, userAgent, description);
+            systemLogRepository.save(log);
+        }
+    }
+
+    @Override
+    public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
+        String description = "Đăng nhập thành công. Session ID: " + sessionId;
+        createAndSaveLog(accountId, ActionType.LOGIN.name(), ipAddress, userAgent, description);
+
+    }
+
+    @Override
+    public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
+        String description = "Đăng xuất thành công. Session ID: " + sessionId;
+        createAndSaveLog(accountId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
+    }
+
+    @Override
+    public Account createCoreAccount(String userName, String fullName, String pass, String email, String phone) {
         User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPhone(phone);
         user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
-        // 2. Tạo Account
         Account account = new Account();
-        account.setUsername(request.getUsername());
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        account.setUsername(userName);
+        account.setPasswordHash(pass);
         account.setUser(user);
         account.setStatus("Active");
         accountRepository.save(account);
 
-        // 3. Tạo Member
         Member member = new Member();
         member.setUser(user);
-        // member.setTier(...) // Có thể set hạng Basic sau
         memberRepository.save(member);
 
-        // 4. Tạo Wallet
         Wallet wallet = new Wallet();
         wallet.setMember(member);
         wallet.setBalance(BigDecimal.ZERO);
         walletRepository.save(wallet);
-    }
-
-    // UC-9.1: Ghi log đăng nhập
-    @Override
-    public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        // TODO: Implement - Insert vào bảng SystemLogs
-    }
-
-    // UC-9.1: Ghi log đăng xuất
-    @Override
-    public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
-        // TODO: Implement - Insert vào bảng SystemLogs
+        return account;
     }
 }
