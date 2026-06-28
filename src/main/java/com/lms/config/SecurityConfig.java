@@ -34,7 +34,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token nên xóa khi hoàn thành dự án .disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**").permitAll()
+                .requestMatchers(
+                    "/", "/login", "/register",
+                    "/forgot-password", "/reset-password",
+                    "/css/**", "/js/**", "/books/**"
+                ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
                 .requestMatchers("/member/**").hasRole("MEMBER")

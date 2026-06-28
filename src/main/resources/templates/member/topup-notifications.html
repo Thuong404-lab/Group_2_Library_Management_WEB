@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo nạp tiền</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2 class="mb-3">Thông báo nạp tiền</h2>
+
+    <div class="alert alert-info">
+        Danh sách các thông báo liên quan đến giao dịch nạp tiền vào ví của bạn.
+    </div>
+
+    <div th:if="${#lists.isEmpty(notifications)}" class="card">
+        <div class="card-body text-center text-muted">
+            Hiện chưa có thông báo nạp tiền nào.
+        </div>
+    </div>
+
+    <div class="list-group" th:if="${!#lists.isEmpty(notifications)}">
+        <div class="list-group-item list-group-item-action mb-2"
+             th:each="memberNotification : ${notifications}">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1" th:text="${memberNotification.notification.title}"></h5>
+                <small th:text="${memberNotification.notification.createdDate != null ? #temporals.format(memberNotification.notification.createdDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"></small>
+            </div>
+
+            <p class="mb-1" th:text="${memberNotification.notification.content}"></p>
+
+            <small>
+                Trạng thái đọc:
+                <span class="badge"
+                      th:classappend="${memberNotification.isRead} ? 'bg-success' : 'bg-warning text-dark'"
+                      th:text="${memberNotification.isRead} ? 'Đã đọc' : 'Chưa đọc'">
+                </span>
+            </small>
+        </div>
+    </div>
+
+    <a th:href="@{/member/financial/transactions}" class="btn btn-secondary mt-3">
+        Quay lại lịch sử giao dịch
+    </a>
+</div>
+</body>
+</html>
