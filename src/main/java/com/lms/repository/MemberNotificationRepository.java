@@ -10,6 +10,11 @@ import java.util.List;
 @Repository
 public interface MemberNotificationRepository extends JpaRepository<MemberNotification, MemberNotificationId> {
 
+    List<MemberNotification> findByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
+
+    // ======= THÊM MỚI: lấy 5 thông báo mới nhất cho chuông =======
+    List<MemberNotification> findTop5ByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
+}
     List<MemberNotification> findByMemberMemberIdAndNotificationTitleContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
             Integer memberId,
             String title

@@ -2,13 +2,149 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
 </head>
+
 <body>
-    <header th:fragment="header">
-        <!-- TODO: Implement Header (Logo, Navbar, User Profile menu) -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">LMS</a>
-            <!-- Thêm menu bên phải -->
-        </nav>
-    </header>
+
+<header th:fragment="header">
+
+    <!-- ========================================================= -->
+    <!-- COMMON HEADER (Shared by all actors)                      -->
+    <!-- ========================================================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+
+        <!-- Common Logo -->
+        <a class="navbar-brand" th:href="@{/}">
+            LMS
+        </a>
+
+        <!-- ========================================================= -->
+        <!-- MEMBER MODULE - UC-7.4 View Notification                  -->
+        <!-- Description:                                              -->
+        <!-- - Display notification bell for MEMBER only               -->
+        <!-- - Show latest notifications in dropdown                   -->
+        <!-- - Redirect to notification page when clicking             -->
+        <!--   "View all notifications"                                -->
+        <!-- - Notification data is provided by                        -->
+        <!--   MemberNotificationModelAdvice                           -->
+        <!-- ========================================================= -->
+
+        <div class="ms-auto position-relative"
+             th:if="${showNotificationBell}"
+             style="display:inline-block; position:relative; margin-left:auto;">
+
+            <!-- Notification Bell -->
+            <button type="button"
+                    class="btn btn-dark"
+                    onclick="toggleNotificationDropdown()">
+                🔔
+            </button>
+
+            <!-- Notification Dropdown -->
+            <div id="notificationDropdown"
+                 style="
+                    display:none;
+                    position:absolute;
+                    left:0;
+                    top:35px;
+                    width:350px;
+                    background:#fff;
+                    border:1px solid #ddd;
+                    border-radius:8px;
+                    box-shadow:0 4px 10px rgba(0,0,0,.2);
+                    z-index:9999;">
+
+                <div style="padding:12px;border-bottom:1px solid #eee;">
+                    <strong>Thông báo</strong>
+                </div>
+
+                <div style="max-height:350px;overflow-y:auto;">
+
+                    <div th:if="${latestNotifications == null || latestNotifications.isEmpty()}"
+                         style="padding:15px;text-align:center;color:gray;">
+                        Bạn chưa có thông báo nào.
+                    </div>
+
+                    <div th:each="notification : ${latestNotifications}"
+                         style="padding:10px;border-bottom:1px solid #f0f0f0;">
+
+                        <div style="font-weight:bold;"
+                             th:text="${notification.title}">
+                            Tiêu đề
+                        </div>
+
+                        <div style="font-size:14px;"
+                             th:text="${notification.content}">
+                            Nội dung
+                        </div>
+
+                        <small style="color:gray;"
+                               th:text="${#temporals.format(notification.sentDate,'dd/MM/yyyy HH:mm')}">
+                            Ngày gửi
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <div style="padding:10px;text-align:center;">
+
+                    <a th:href="@{/member/interaction/notifications}">
+                        Xem tất cả thông báo
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- END MEMBER MODULE                                         -->
+        <!-- ========================================================= -->
+
+    </nav>
+
+    <!-- ========================================================= -->
+    <!-- MEMBER MODULE SCRIPT                                       -->
+    <!-- ========================================================= -->
+    <script>
+
+        function toggleNotificationDropdown() {
+
+            const dropdown =
+                document.getElementById("notificationDropdown");
+
+            if (dropdown.style.display === "block") {
+                dropdown.style.display = "none";
+            } else {
+                dropdown.style.display = "block";
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function (event) {
+
+            const dropdown =
+                document.getElementById("notificationDropdown");
+
+            const button =
+                event.target.closest("button");
+
+            if (!button &&
+                !dropdown.contains(event.target)) {
+
+                dropdown.style.display = "none";
+            }
+
+        });
+
+    </script>
+    <!-- ========================================================= -->
+    <!-- END MEMBER MODULE SCRIPT                                  -->
+    <!-- ========================================================= -->
+
+</header>
+
 </body>
 </html>
+
