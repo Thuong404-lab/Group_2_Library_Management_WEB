@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ShelfRepository extends JpaRepository<Shelf, Integer> {
+    boolean existsByShelfNameIgnoreCase(String shelfName);
 }
+
