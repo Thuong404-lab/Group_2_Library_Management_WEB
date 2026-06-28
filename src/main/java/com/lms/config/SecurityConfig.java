@@ -6,14 +6,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 
 /**
- * SecurityConfig - Cấu hình Spring Security
+ * SecurityConfig - Spring Security Configuration
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
  */
 @Configuration
@@ -34,11 +32,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token nên xóa khi hoàn thành dự án .disable())
+                .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token sau khi hoàn thành dự án
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**").permitAll()
+                        // 1. Các URL công khai ai cũng được vào (Gộp đầy đủ cả 2 nhánh)
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**",
+                                "/member/membership/benefits", "/member/membership/tier", "/librarian/borrow/create").permitAll()
+
+                        // 2. Phân quyền nghiêm ngặt theo vai trò (Role-based Authorization)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
+                        .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN") // Cho cả ADMIN và LIBRARIAN truy cập hệ sinh thái này
                         .requestMatchers("/member/**").hasRole("MEMBER")
                         .anyRequest().authenticated()
                 )
@@ -55,12 +57,31 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/", true)
                 )
                 .logout(logout -> logout
+                        // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
+                        .defaultSuccessUrl("/", true)
+                        .permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .defaultSuccessUrl("/", true)
+                )
+                .logout(logout -> logout
+                        // TODO: Cấu hình LogoutSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLogoutAction)
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
                 .sessionManagement(session -> session
+                        // TODO: Cấu hình SessionManagement: tối đa 1 phiên/user, nếu đăng nhập nơi khác thì kick ra (hoặc chặn)
                         .maximumSessions(1)
                         .expiredUrl("/login?expired")
+                        .sessionRegistry(sessionRegistry())
+                )
+                // 3. XỬ LÝ NGOẠI LỆ: Khi sai quyền, tự động đá về trang /403
+                .exceptionHandling(exception -> exception
+                        .accessDeniedPage("/403")
                 );
 
         return http.build();

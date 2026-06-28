@@ -13,46 +13,41 @@ import java.security.Principal;
 @RequestMapping("/member/borrow")
 public class BorrowController {
 
+    // UC-6.0: Hiển thị form tạo yêu cầu mượn sách
+    @GetMapping("/create")
+    public String showCreateRequestForm(Model model, Principal principal) {
+        // Lấy thông tin user đăng nhập
+        model.addAttribute("currentMemberName", (principal != null) ? principal.getName() : "Khách");
+        // Ở đây bạn sẽ thêm model.addAttribute("availableBooks", bookService.findAll());
+        return "member/borrow-create"; // Đảm bảo bạn có file templates/member/borrow-create.html
+    }
+
+    // UC-6.0: Xử lý submit yêu cầu mượn
+    @PostMapping("/request/submit")
+    public String submitBorrowRequest(@RequestParam String requestDate,
+                                      @RequestParam String returnDueDate,
+                                      @RequestParam(required = false) String notes,
+                                      Principal principal) {
+        // TODO: Gọi Service lưu vào DB với status = PENDING
+        return "redirect:/member/borrow/history?success=true";
+    }
+
     // UC-6.1: View Borrowing History
     @GetMapping("/history")
-    public String viewBorrowingHistory(Principal principal,
-                                        @RequestParam(defaultValue = "0") int page,
-                                        Model model) {
-        // TODO: Implement - Lấy danh sách phiếu mượn của Member
-        // TODO: Hỗ trợ phân trang, lọc theo trạng thái (Borrowed, Returned, Overdue)
+    public String viewBorrowingHistory(Principal principal, Model model) {
         return "member/borrow-history";
     }
 
-    // UC-6.2: Reserve Books - Đặt trước sách
+    // UC-6.2: Reserve Books
     @PostMapping("/reserve/{bookId}")
-    public String reserveBook(@PathVariable Integer bookId,
-                               Principal principal, Model model) {
-        // TODO: Implement - Kiểm tra sách còn available không
-        // TODO: Kiểm tra Member đã đặt trước quá giới hạn chưa
-        // TODO: Tạo Reservation mới, trừ tiền cọc từ Wallet
+    public String reserveBook(@PathVariable Integer bookId) {
         return "redirect:/books/" + bookId + "?reserved";
     }
 
-    // UC-6.2: View Reservations
-    @GetMapping("/reservations")
-    public String viewReservations(Principal principal, Model model) {
-        // TODO: Implement - Lấy danh sách Reservation của Member
-        return "member/reservations";
-    }
-
-    // UC-6.3: Borrow Book (Member xem trạng thái mượn)
+    // UC-6.3 & 6.4: Các view còn lại
     @GetMapping("/current")
-    public String viewCurrentBorrows(Principal principal, Model model) {
-        // TODO: Implement - Lấy các sách đang mượn chưa trả
-        // TODO: Hiển thị ngày hết hạn, cảnh báo sắp quá hạn
-        return "member/current-borrows";
-    }
+    public String viewCurrentBorrows() { return "member/current-borrows"; }
 
-    // UC-6.4: Return Books (Member xem sách cần trả)
     @GetMapping("/returns")
-    public String viewPendingReturns(Principal principal, Model model) {
-        // TODO: Implement - Lấy danh sách sách cần trả
-        // TODO: Tính toán phí phạt nếu quá hạn
-        return "member/pending-returns";
-    }
+    public String viewPendingReturns() { return "member/pending-returns"; }
 }
