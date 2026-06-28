@@ -3,7 +3,8 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "Accounts")
 public class Account {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer accountId;
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -14,6 +15,14 @@ public class Account {
     private String passwordHash;
     @Column(length = 50)
     private String status = "Active";
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "Account_Roles",
+        joinColumns = @JoinColumn(name = "account_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private java.util.Set<Role> roles = new java.util.HashSet<>();
 
     public Account() {
     }
@@ -64,5 +73,13 @@ public class Account {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public java.util.Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(java.util.Set<Role> roles) {
+        this.roles = roles;
     }
 }

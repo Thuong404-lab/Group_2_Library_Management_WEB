@@ -1,13 +1,198 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Books', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head>
+    <title>Danh sách Sách - Thư Viện Số</title>
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Tái sử dụng CSS Book Card từ trang Search */
+        .book-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+            border-color: rgba(79, 70, 229, 0.2);
+        }
+
+        .book-cover {
+            height: 240px;
+            background-color: #f1f5f9;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4F46E5;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .book-info {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .book-author {
+            color: #64748B;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Books</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+    <div layout:fragment="content">
+        
+        <!-- Header Section -->
+        <div class="page-header">
+            <div>
+                <h2 class="font-outfit fw-bold text-dark mb-1">Tất cả Sách</h2>
+                <p class="text-muted mb-0">Khám phá kho tàng tri thức với hàng ngàn đầu sách hấp dẫn.</p>
             </div>
+            <div>
+                <a href="/books/search" class="btn btn-outline-primary rounded-pill px-4">
+                    <i class="bi bi-search me-2"></i>Tìm kiếm chi tiết
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content: Book Grid -->
+        <div>
+            <!-- Status Bar -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <div>
+                    <span class="text-muted">Tổng cộng <strong class="text-dark" th:text="${bookPage != null ? bookPage.totalElements : 0}">0</strong> cuốn sách</span>
+                </div>
+                <div>
+                    <select class="form-select form-select-sm border-0 bg-light fw-medium">
+                        <option>Sắp xếp: Mới nhất</option>
+                        <option>Sắp xếp: A - Z</option>
+                        <option>Xem nhiều nhất</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Lưới hiển thị Sách (4 cột) -->
+            <div class="row g-4" th:if="${bookPage != null && !bookPage.isEmpty()}">
+                
+                <!-- Lặp qua từng cuốn sách trong Page -->
+                <div class="col-lg-3 col-md-4 col-sm-6" th:each="book : ${bookPage.content}">
+                    <div class="book-card">
+                        <div class="book-cover">
+                            <!-- Giả lập ảnh bìa -->
+                            <i class="bi bi-book text-muted opacity-25" style="font-size: 5rem;"></i>
+                            
+                            <span class="book-badge" th:if="${book.status == 'Active'}"><i class="bi bi-check-circle-fill me-1"></i>Sẵn sàng</span>
+                            <span class="book-badge text-warning" th:if="${book.status != 'Active'}"><i class="bi bi-exclamation-circle-fill me-1"></i>Bảo trì</span>
+                        </div>
+                        <div class="book-info">
+                            <!-- Thể loại -->
+                            <span class="badge bg-light text-primary mb-2 w-auto align-self-start" style="font-weight: 500;" 
+                                  th:text="${book.genre != null ? book.genre.genreName : 'Chưa phân loại'}">Thể loại</span>
+                            
+                            <h3 class="book-title" th:text="${book.title}">Tên cuốn sách</h3>
+                            
+                            <!-- Tác giả -->
+                            <p class="book-author">
+                                <i class="bi bi-pen me-1"></i>
+                                <span th:if="${book.authors != null && !book.authors.isEmpty()}" 
+                                      th:text="${book.authors.iterator().next().authorName}">Tên tác giả</span>
+                                <span th:unless="${book.authors != null && !book.authors.isEmpty()}">Nhiều tác giả</span>
+                            </p>
+                            
+                            <!-- Mã ISBN và Nút -->
+                            <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                                <small class="text-muted font-monospace" th:text="${'ISBN: ' + book.isbn}">ISBN: 000</small>
+                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Phân trang (Pagination) -->
+            <nav class="mt-5" th:if="${bookPage != null && bookPage.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <!-- Nút Trang trước -->
+                    <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
+                        <a class="page-link border-0 shadow-sm rounded-circle mx-1 px-3 py-2" 
+                           th:href="@{/books(page=${bookPage.number - 1})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    
+                    <!-- Danh sách các trang -->
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, bookPage.totalPages - 1)}">
+                        <a class="page-link border-0 shadow-sm rounded-circle mx-1 px-3 py-2" 
+                           th:classappend="${pageNum == bookPage.number ? 'bg-primary text-white' : 'text-dark'}"
+                           th:href="@{/books(page=${pageNum})}" 
+                           th:text="${pageNum + 1}">1</a>
+                    </li>
+                    
+                    <!-- Nút Trang sau -->
+                    <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
+                        <a class="page-link border-0 shadow-sm rounded-circle mx-1 px-3 py-2" 
+                           th:href="@{/books(page=${bookPage.number + 1})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
         </div>
     </div>
 </body>

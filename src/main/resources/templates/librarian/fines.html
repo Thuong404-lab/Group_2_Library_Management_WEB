@@ -1,14 +1,128 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Fines', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Phạt vi phạm</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .table-box {
+            background: white;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        table {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        th {
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Fines</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
-            </div>
+    <div class="page">
+        <div class="text-muted mb-2">Trang chủ › Quản lý mượn, trả › <b>Phạt vi phạm</b></div>
+
+        <div class="title">Phạt vi phạm</div>
+
+        <div class="toolbar">
+            <input class="form-control" style="max-width: 180px;" placeholder="Ngày vi phạm">
+            <select class="form-select" style="max-width: 220px;">
+                <option>-- Chọn hình thức phạt --</option>
+                <option>Trễ hạn</option>
+                <option>Làm mất sách</option>
+                <option>Làm rách sách</option>
+            </select>
+            <input class="form-control" style="max-width: 280px;" placeholder="Mã vi phạm, bạn đọc, mã thẻ">
+            <button class="btn btn-primary">Tìm kiếm</button>
+            <button class="btn btn-primary ms-auto">+ Thêm mới</button>
+        </div>
+
+        <div class="table-box">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th>STT</th>
+                        <th>Mã vi phạm</th>
+                        <th>Bạn đọc</th>
+                        <th>Ngày vi phạm</th>
+                        <th>Lý do phạt</th>
+                        <th>Hình thức phạt</th>
+                        <th>Cán bộ phạt</th>
+                        <th>Ghi chú</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="detail, iter : ${overdueDetails}">
+                        <td><input type="checkbox"></td>
+                        <td th:text="${iter.index + 1}">1</td>
+                        <td th:text="${'VP' + detail.borrowDetailId}">VP1</td>
+
+                        <td>
+                            <div
+                                th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
+                                <b th:text="${detail.borrow.member.user.fullName}">Bạn đọc</b>
+                                <div>Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
+                            </div>
+                        </td>
+
+                        <td th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : '-'}">
+                            -</td>
+                        <td>Trả sách quá hạn</td>
+                        <td>Phạt trễ hạn</td>
+
+                        <td
+                            th:text="${detail.borrow != null && detail.borrow.staff != null && detail.borrow.staff.user != null ? detail.borrow.staff.user.fullName : 'Thủ thư'}">
+                            Thủ thư
+                        </td>
+
+                        <td th:text="${detail.book != null ? 'Sách: ' + detail.book.title : ''}">Ghi chú</td>
+
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">Sửa</button>
+                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(overdueDetails)}">
+                        <td colspan="10" class="text-center text-muted py-4">Chưa có vi phạm quá hạn</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>
+
 </html>
