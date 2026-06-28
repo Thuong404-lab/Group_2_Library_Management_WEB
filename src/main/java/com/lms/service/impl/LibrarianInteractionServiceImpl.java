@@ -1,21 +1,20 @@
 package com.lms.service.impl;
 
-import com.lms.dto.request.LibrarianReviewModerateRequest;
-import com.lms.dto.request.MemberReviewSubmitRequest;
+import com.lms.dto.request.LibrarianNotificationSendRequest;
+import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.dto.response.LibrarianReviewResponse;
 import com.lms.entity.*;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.lms.dto.request.LibrarianNotificationSendRequest;
-import com.lms.exception.ValidationException;
-import java.util.List;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class LibrarianInteractionServiceImpl implements LibrarianInteractionService {
@@ -25,24 +24,26 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     private final BookRepository bookRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
                                            BookRepository bookRepository,
                                            NotificationRepository notificationRepository,
-                                           MemberNotificationRepository memberNotificationRepository) {
+                                           MemberNotificationRepository memberNotificationRepository,
+                                           BookAcquisitionRequestRepository bookAcquisitionRequestRepository) {
         this.feedbackRepository = feedbackRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<LibrarianReviewResponse> getReviewsForModeration(String status, Pageable pageable) {
-        String searchStatus = (status == null || status.isBlank()) ? "PENDING" : status;
-        Page<Feedback> feedbacks = feedbackRepository.findByStatus(searchStatus, pageable);
+        Page<Feedback> feedbacks = feedbackRepository.findAll(pageable);
 
         return feedbacks.map(fb -> {
             LibrarianReviewResponse res = new LibrarianReviewResponse();
@@ -53,71 +54,52 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             res.setComment(fb.getComment());
             res.setStatus(fb.getStatus());
             res.setCreatedDate(fb.getCreatedDate());
+            res.setLibrarianResponse(fb.getLibrarianResponse());
+            res.setResponseDate(fb.getResponseDate());
             return res;
         });
     }
 
     @Override
     @Transactional
-    public void moderateReview(Integer feedbackId,
-                               LibrarianReviewModerateRequest request) {
+    public void replyReview(Integer feedbackId, LibrarianReviewReplyRequest request) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
 
-        String action = request.getAction();
-        String bookTitle = feedback.getBook().getTitle();
-        String notifMessage = "";
-
-        if ("APPROVE".equalsIgnoreCase(action)) {
-            feedback.setStatus("APPROVED");
-            notifMessage = "Đánh giá của bạn cho sách '" + bookTitle + "' đã được duyệt.";
-        } else if ("REJECT".equalsIgnoreCase(action)) {
-            feedback.setStatus("REJECTED");
-            notifMessage = "Đánh giá của bạn cho sách '" + bookTitle + "' đã bị từ chối.";
-        } else {
-            throw new IllegalArgumentException("Hành động không hợp lệ");
+        if (request.getResponse() == null || request.getResponse().trim().isEmpty()) {
+            throw new ValidationException("Nội dung phản hồi không được để trống");
         }
+
+        feedback.setLibrarianResponse(request.getResponse().trim());
+        feedback.setResponseDate(LocalDateTime.now());
 
         feedbackRepository.save(feedback);
 
-        // Gọi hàm gửi thông báo cho member
-        sendPersonalNotification(feedback.getMember(), "Kết quả kiểm duyệt đánh giá", notifMessage);
+        sendPersonalNotification(
+                feedback.getMember(),
+                "Phản hồi đánh giá",
+                "Thủ thư đã phản hồi đánh giá của bạn cho sách '" + feedback.getBook().getTitle() + "'."
+        );
     }
 
     @Override
     @Transactional
-    public void submitReview(Integer memberId, MemberReviewSubmitRequest request) {
-        // 1. Tìm Member (findById trả về Optional, phải get() hoặc orElseThrow())
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Độc giả với ID: " + memberId));
+    public void deleteReview(Integer feedbackId) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
 
-        // 2. Tìm Book (findById trả về Optional)
-        Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Sách với ID: " + request.getBookId()));
-
-        // 3. Khởi tạo Feedback và set các thuộc tính
-        Feedback feedback = new Feedback();
-        feedback.setMember(member);
-        feedback.setBook(book);
-        feedback.setRating(request.getRating());
-        feedback.setComment(request.getComment());
-        feedback.setCreatedDate(LocalDateTime.now());
-        feedback.setStatus("PENDING"); // Pre-moderation
-
-        // 4. Lưu
-        feedbackRepository.save(feedback);
+        feedbackRepository.delete(feedback);
     }
 
     private void sendPersonalNotification(Member member, String title, String content) {
-        // 1. Tạo Notification
         Notification notif = new Notification();
         notif.setTitle(title);
         notif.setContent(content);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus("Active");
+
         Notification savedNotif = notificationRepository.save(notif);
 
-        // Các bước tạo MemberNotification giữ nguyên
         MemberNotification mn = new MemberNotification();
         MemberNotificationId id = new MemberNotificationId(
                 member.getMemberId(),
@@ -157,39 +139,27 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         List<Member> members;
 
         switch (request.getRecipientType()) {
-
             case ALL:
-
                 members = memberRepository.findAll();
-
                 break;
 
             case SELECTED:
-
-                if (request.getMemberIds() == null
-                        || request.getMemberIds().isEmpty()) {
-
-                    throw new ValidationException(
-                            "Vui lòng chọn ít nhất một độc giả.");
+                if (request.getMemberIds() == null || request.getMemberIds().isEmpty()) {
+                    throw new ValidationException("Vui lòng chọn ít nhất một độc giả.");
                 }
 
                 members = memberRepository.findAllById(request.getMemberIds());
 
                 if (members.size() != request.getMemberIds().size()) {
-                    throw new ResourceNotFoundException(
-                            "Có độc giả không tồn tại.");
+                    throw new ResourceNotFoundException("Có độc giả không tồn tại.");
                 }
-
                 break;
 
             default:
-
-                throw new ValidationException(
-                        "Loại người nhận không hợp lệ.");
+                throw new ValidationException("Loại người nhận không hợp lệ.");
         }
 
         Notification notification = new Notification();
-
         notification.setTitle(request.getTitle().trim());
         notification.setContent(request.getContent().trim());
         notification.setStatus("Active");
@@ -198,12 +168,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         Notification saved = notificationRepository.save(notification);
 
         for (Member member : members) {
-
             MemberNotification mn = new MemberNotification();
 
             mn.setId(new MemberNotificationId(
                     member.getMemberId(),
-                    saved.getNotificationId()));
+                    saved.getNotificationId()
+            ));
 
             mn.setMember(member);
             mn.setNotification(saved);
@@ -211,5 +181,11 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
             memberNotificationRepository.save(mn);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable) {
+        return bookAcquisitionRequestRepository.findAll(pageable);
     }
 }

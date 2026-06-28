@@ -603,6 +603,32 @@
                 <a class="submenu-link" th:href="@{/librarian/violations}">Phạt vi phạm</a>
             </div>
 
+            <!-- Quốc Anh (CE191655) - Send noti - View review - View book suggestion -->
+            <a class="nav-link-app"
+               data-section="notifications"
+               href="javascript:void(0)"
+               onclick="showLibSection('notifications', this)">
+                <span class="nav-icon">🔔</span>
+                <span>Gửi thông báo</span>
+            </a>
+
+            <a class="nav-link-app"
+               data-section="reviews"
+               href="javascript:void(0)"
+               onclick="showLibSection('reviews', this)">
+                <span class="nav-icon">★</span>
+                <span>Đánh giá sách</span>
+            </a>
+
+            <a class="nav-link-app"
+               data-section="acquisition"
+               href="javascript:void(0)"
+               onclick="showLibSection('acquisition', this)">
+                <span class="nav-icon">＋</span>
+                <span>Đề xuất mua sách</span>
+            </a>
+            <!-- Quốc Anh (CE191655) - Sending noti - View review - View book suggestion -->
+
             <a class="nav-link-app" data-section="books" href="javascript:void(0)"
                 onclick="showLibSection('books', this)">
                 <span class="nav-icon">▣</span>
@@ -847,6 +873,216 @@
                 </div>
             </section>
 
+            <!-- Quốc Anh (CE191655) - Dashboard sections for Sending noti - View review - View book suggestion -->
+            <section id="section-notifications" class="lib-section">
+                <h1 class="title">Gửi thông báo</h1>
+                <div class="subtitle">Thủ thư gửi thông báo đến độc giả</div>
+
+                <div class="panel">
+                    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                    <form th:action="@{/librarian/interaction/notifications}"
+                          th:object="${notificationRequest}"
+                          method="post">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Đối tượng nhận</label>
+
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       th:field="*{recipientType}"
+                                       value="ALL"
+                                       id="recipientAll">
+                                <label class="form-check-label" for="recipientAll">
+                                    Gửi cho tất cả Member
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       th:field="*{recipientType}"
+                                       value="SELECTED"
+                                       id="recipientSelected">
+                                <label class="form-check-label" for="recipientSelected">
+                                    Gửi cho Member được chọn
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="memberListBox">
+                            <label class="form-label fw-bold">Chọn Member</label>
+
+                            <input type="text"
+                                   id="memberSearchInput"
+                                   class="form-control mb-2"
+                                   placeholder="Nhập tên Member để tìm...">
+
+                            <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
+                                <div th:each="member : ${members}"
+                                     class="form-check member-item"
+                                     th:attr="data-member-name=${#strings.toLowerCase(member.user.fullName)}">
+
+                                    <input class="form-check-input member-checkbox"
+                                           type="checkbox"
+                                           name="memberIds"
+                                           th:value="${member.memberId}">
+
+                                    <label class="form-check-label"
+                                           th:text="${member.user.fullName + ' - ID: ' + member.memberId}">
+                                        Member name
+                                    </label>
+                                </div>
+
+                                <div th:if="${members == null || members.isEmpty()}" class="text-muted">
+                                    Chưa có member nào trong hệ thống.
+                                </div>
+                            </div>
+
+                            <small class="text-muted">
+                                Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tiêu đề</label>
+                            <input type="text"
+                                   class="form-control"
+                                   th:field="*{title}"
+                                   placeholder="Nhập tiêu đề thông báo">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nội dung</label>
+                            <textarea class="form-control"
+                                      rows="5"
+                                      th:field="*{content}"
+                                      placeholder="Nhập nội dung thông báo"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Gửi thông báo
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="section-reviews" class="lib-section">
+                <h1 class="title">Đánh giá sách</h1>
+                <div class="subtitle">Xem, phản hồi và xoá đánh giá của độc giả</div>
+
+                <div class="panel">
+                    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                    <table class="table table-striped table-hover info-table">
+                        <thead>
+                        <tr>
+                            <th>Sách</th>
+                            <th>Người gửi</th>
+                            <th>Đánh giá</th>
+                            <th>Nội dung</th>
+                            <th>Phản hồi của thủ thư</th>
+                            <th>Thao tác</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="review : ${reviews.content}">
+                            <td th:text="${review.bookTitle}">Tên sách</td>
+                            <td th:text="${review.memberName}">Người gửi</td>
+                            <td th:text="${review.rating + ' sao'}">5 sao</td>
+                            <td th:text="${review.comment}">Nội dung</td>
+
+                            <td>
+                                <div th:if="${review.librarianResponse != null}">
+                                    <div th:text="${review.librarianResponse}">Phản hồi</div>
+                                    <small class="text-muted"
+                                           th:if="${review.responseDate != null}"
+                                           th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
+                                    </small>
+                                </div>
+
+                                <span th:if="${review.librarianResponse == null}"
+                                      class="text-muted">
+                        Chưa phản hồi
+                    </span>
+                            </td>
+
+                            <td>
+                                <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                                      method="post"
+                                      class="mb-2">
+                        <textarea name="response"
+                                  class="form-control form-control-sm mb-2"
+                                  rows="2"
+                                  placeholder="Nhập phản hồi..."></textarea>
+
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        Phản hồi
+                                    </button>
+                                </form>
+
+                                <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                      method="post"
+                                      onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        Xoá
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${reviews == null || reviews.totalElements == 0}">
+                            <td colspan="6" class="text-center text-muted">
+                                Hiện chưa có đánh giá nào.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="section-acquisition" class="lib-section">
+                <h1 class="title">Đề xuất mua sách</h1>
+                <div class="subtitle">Xem danh sách sách do độc giả đề xuất</div>
+
+                <div class="panel">
+                    <table class="table table-striped table-hover info-table">
+                        <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>Người đề xuất</th>
+                            <th>Ngày đề xuất</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="request : ${requests.content}">
+                            <td th:text="${request.requestId}">1</td>
+                            <td th:text="${request.title}">Tên sách</td>
+                            <td th:text="${request.author}">Tác giả</td>
+                            <td th:text="${request.member.user.fullName}">Người đề xuất</td>
+                            <td th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}">
+                                Ngày đề xuất
+                            </td>
+                        </tr>
+
+                        <tr th:if="${requests == null || requests.totalElements == 0}">
+                            <td colspan="5" class="text-center text-muted">
+                                Chưa có đề xuất mua sách nào.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- Quốc Anh (CE191655) - Dashboard sections for Sending noti - View review - View book suggestion -->
+
             <section id="section-reports" class="lib-section">
                 <h1 class="title">Thống kê</h1>
                 <div class="subtitle">Báo cáo hoạt động thư viện dành cho thủ thư</div>
@@ -1031,8 +1267,6 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", openSectionFromUrl);
-
         document.addEventListener("click", function () {
             const menu = document.getElementById("sidebarUserMenu");
             if (menu != null) {
@@ -1048,6 +1282,66 @@
                     menu.classList.remove("show");
                 }
             }
+        });
+
+        function toggleMemberList() {
+            const selected = document.getElementById("recipientSelected");
+            const memberListBox = document.getElementById("memberListBox");
+            const checkboxes = document.querySelectorAll(".member-checkbox");
+
+            if (selected != null && selected.checked) {
+                memberListBox.style.display = "block";
+                checkboxes.forEach(function (checkbox) {
+                    checkbox.disabled = false;
+                });
+            } else {
+                memberListBox.style.display = "none";
+                checkboxes.forEach(function (checkbox) {
+                    checkbox.checked = false;
+                    checkbox.disabled = true;
+                });
+            }
+        }
+        function filterMembers() {
+            const searchInput = document.getElementById("memberSearchInput");
+            const memberItems = document.querySelectorAll(".member-item");
+
+            if (searchInput == null) {
+                return;
+            }
+
+            const keyword = searchInput.value.toLowerCase().trim();
+
+            memberItems.forEach(function (item) {
+                const memberName = item.getAttribute("data-member-name");
+
+                if (memberName != null && memberName.includes(keyword)) {
+                    item.style.display = "block";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            openSectionFromUrl();
+
+            const recipientAll = document.getElementById("recipientAll");
+            const recipientSelected = document.getElementById("recipientSelected");
+
+            if (recipientAll != null && recipientSelected != null) {
+                recipientAll.addEventListener("change", toggleMemberList);
+                recipientSelected.addEventListener("change", toggleMemberList);
+                toggleMemberList();
+            }
+
+            const memberSearchInput = document.getElementById("memberSearchInput");
+
+            if (memberSearchInput != null) {
+                memberSearchInput.addEventListener("input", filterMembers);
+            }
+
         });
     </script>
 

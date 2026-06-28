@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
-    Page<Feedback> findByStatus(String status, Pageable pageable);
+    Page<Feedback> findAll(Pageable pageable);
 
     boolean existsByMember_MemberIdAndBook_BookId(Integer memberId, Integer bookId);
 }

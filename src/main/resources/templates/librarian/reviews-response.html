@@ -18,7 +18,7 @@
                 <th>Người gửi</th>
                 <th>Đánh giá</th>
                 <th>Nội dung</th>
-                <th>Trạng thái</th>
+                <th>Phản hồi của thủ thư</th>
                 <th>Thao tác</th>
             </tr>
             </thead>
@@ -31,28 +31,46 @@
                     <span th:text="${review.rating} + ' sao'"></span>
                 </td>
                 <td th:text="${review.comment}">Nội dung bình luận...</td>
+
                 <td>
-                    <span class="badge bg-warning" th:text="${review.status}">PENDING</span>
+                    <div th:if="${review.librarianResponse != null}">
+                        <p th:text="${review.librarianResponse}"></p>
+                        <small class="text-muted"
+                               th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
+                            Ngày phản hồi
+                        </small>
+                    </div>
+
+                    <div th:if="${review.librarianResponse == null}">
+                        <span class="text-muted">Chưa phản hồi</span>
+                    </div>
                 </td>
+
                 <td>
-                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/moderate'}"
+                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                           method="post"
-                          style="display:inline;">
-                        <input type="hidden" name="action" value="APPROVE">
-                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                          class="mb-2">
+                <textarea name="response"
+                          class="form-control form-control-sm mb-1"
+                          rows="2"
+                          placeholder="Nhập phản hồi..."></textarea>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            Phản hồi
+                        </button>
                     </form>
 
-                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/moderate'}"
+                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                           method="post"
-                          style="display:inline;">
-                        <input type="hidden" name="action" value="REJECT">
-                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
+                          onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            Xoá
+                        </button>
                     </form>
                 </td>
             </tr>
 
             <tr th:if="${reviews == null || reviews.totalElements == 0}">
-                <td colspan="6" class="text-center">Hiện không có đánh giá nào chờ duyệt.</td>
+                <td colspan="6" class="text-center">Hiện chưa có đánh giá nào.</td>
             </tr>
             </tbody>
         </table>

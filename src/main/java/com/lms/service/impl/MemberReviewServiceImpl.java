@@ -57,7 +57,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         feedback.setRating(request.getRating());
         feedback.setComment(request.getComment().trim());
         feedback.setCreatedDate(LocalDateTime.now());
-        feedback.setStatus("PENDING");
+        feedback.setStatus("APPROVED");
 
         feedbackRepository.save(feedback);
     }

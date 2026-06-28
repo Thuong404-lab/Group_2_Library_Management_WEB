@@ -17,6 +17,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.lms.dto.request.LibrarianNotificationSendRequest;
+import com.lms.service.LibrarianInteractionService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,19 +35,23 @@ public class LibrarianDashboardController {
     private final BookItemRepository bookItemRepository;
     private final MemberRepository memberRepository;
     private final StaffRepository staffRepository;
+    private final LibrarianInteractionService librarianInteractionService;
 
     public LibrarianDashboardController(BorrowRepository borrowRepository,
-            BorrowDetailRepository borrowDetailRepository,
-            ReservationRepository reservationRepository,
-            BookItemRepository bookItemRepository,
-            MemberRepository memberRepository,
-            StaffRepository staffRepository) {
+                                        BorrowDetailRepository borrowDetailRepository,
+                                        ReservationRepository reservationRepository,
+                                        BookItemRepository bookItemRepository,
+                                        MemberRepository memberRepository,
+                                        StaffRepository staffRepository,
+                                        LibrarianInteractionService librarianInteractionService) {
+
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.reservationRepository = reservationRepository;
         this.bookItemRepository = bookItemRepository;
         this.memberRepository = memberRepository;
         this.staffRepository = staffRepository;
+        this.librarianInteractionService = librarianInteractionService;
     }
 
     @GetMapping("/dashboard")
@@ -68,7 +74,12 @@ public class LibrarianDashboardController {
                         "Borrowed",
                         now,
                         now.plusDays(7)));
-
+        model.addAttribute("reviews", librarianInteractionService.getReviewsForModeration(null, PageRequest.of(0, 20,
+                                Sort.by("createdDate").descending())));
+        model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+        model.addAttribute("members", librarianInteractionService.getAllMembers());
+        model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(PageRequest.of(0, 20,
+                                Sort.by("createdDate").descending())));
         addCurrentUser(model, userDetails);
 
         return "librarian/dashboard";

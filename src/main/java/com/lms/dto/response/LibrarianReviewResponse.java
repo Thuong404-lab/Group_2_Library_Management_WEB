@@ -9,6 +9,8 @@ public class LibrarianReviewResponse {
     private String comment;
     private String status;
     private LocalDateTime createdDate;
+    private String librarianResponse;
+    private LocalDateTime responseDate;
 
     public LibrarianReviewResponse() {
     }
@@ -67,5 +69,21 @@ public class LibrarianReviewResponse {
 
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public String getLibrarianResponse() {
+        return librarianResponse;
+    }
+
+    public void setLibrarianResponse(String librarianResponse) {
+        this.librarianResponse = librarianResponse;
+    }
+
+    public LocalDateTime getResponseDate() {
+        return responseDate;
+    }
+
+    public void setResponseDate(LocalDateTime responseDate) {
+        this.responseDate = responseDate;
     }
 }

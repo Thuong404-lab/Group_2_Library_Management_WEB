@@ -26,6 +26,12 @@ public class Feedback {
     @Column(nullable = false)
     private String status = "PENDING";
 
+    @Column(name = "librarian_response", columnDefinition = "NVARCHAR(MAX)")
+    private String librarianResponse;
+
+    @Column(name = "response_date")
+    private LocalDateTime responseDate;
+
     public Feedback() {
     }
 
@@ -53,4 +59,8 @@ public class Feedback {
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
     public String getStatus() {return status;}
     public void setStatus(String status) {this.status = status;}
+    public String getLibrarianResponse() {return librarianResponse;}
+    public void setLibrarianResponse(String librarianResponse) {this.librarianResponse = librarianResponse;}
+    public LocalDateTime getResponseDate() {return responseDate;}
+    public void setResponseDate(LocalDateTime responseDate) {this.responseDate = responseDate;}
 }
