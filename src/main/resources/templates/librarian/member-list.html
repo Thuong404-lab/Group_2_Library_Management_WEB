@@ -228,9 +228,9 @@
 <body>
     <header class="page-navbar">
         <div class="navbar-brand-box">
-            <a class="brand-link" th:href="@{/admin/dashboard}">
+            <a class="brand-link" th:href="@{/librarian/dashboard}">
                 <span class="brand-icon">▱</span>
-                <span class="brand-name">LMS</span>
+                <span class="brand-name">LibraryMS</span>
             </a>
         </div>
         <div class="nav-right">
@@ -243,10 +243,12 @@
             <div>
                 <h1 class="title">Quản lý tài khoản thành viên</h1>
             </div>
-            <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/dashboard(section='accounts')}">
+
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/librarian/dashboard(section='users')}">
                 ← Về quản lý người dùng
             </a>
         </div>
+
         <div class="alert alert-warning" th:if="${param.notFound != null}">
             Không tìm thấy tài khoản.
         </div>
@@ -259,17 +261,18 @@
 
         <div class="toolbar-row mb-3">
             <div class="toolbar-content">
-                <form class="search-form" method="get" th:action="@{/admin/accounts}">
+                <form class="search-form" method="get" th:action="@{/librarian/members}">
                     <input class="form-control" type="text" name="keyword" th:value="${keyword}"
                         placeholder="Tìm username, họ tên hoặc email">
+
                     <button class="btn btn-primary" type="submit">
                         Tìm kiếm
                     </button>
-                    <a class="btn btn-light border" th:href="@{/admin/accounts}">
+                    <a class="btn btn-light border" th:href="@{/librarian/members}">
                         Tải lại
                     </a>
                 </form>
-                <a class="btn btn-primary" th:href="@{/admin/accounts/create(source='members')}">
+                <a class="btn btn-primary" th:href="@{/librarian/members/create}">
                     + Tạo tài khoản
                 </a>
             </div>
@@ -292,12 +295,13 @@
 
                     <tbody>
                         <tr th:each="account, iterStat : ${accounts.content}">
-                            <td th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
+                            <td th:text="${accounts.number * accounts.size + iterStat.index + 1}">
+                                1
+                            </td>
                             <td th:text="${account.accountId}">1</td>
                             <td>
-                                <b th:text="${account.username}">username</b>
+                                <b th:text="${account.username}">Username</b>
                             </td>
-
                             <td>
                                 <div th:if="${account.user != null}">
                                     <div>
@@ -351,11 +355,9 @@
                                     <div class="modal-dialog modal-dialog-centered modal-lg">
                                         <div class="modal-content">
                                             <form method="post"
-                                                th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
+                                                th:action="@{/librarian/members/edit/{id}(id=${account.accountId})}">
                                                 <input type="hidden" th:if="${_csrf != null}"
                                                     th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                <input type="hidden" name="source" value="members">
-
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Cập nhật tài khoản thành viên</h5>
                                                     <button type="button" class="close"
@@ -364,7 +366,6 @@
                                                         <span aria-hidden="true">&times;</span>
                                                     </button>
                                                 </div>
-
                                                 <div class="modal-body">
                                                     <div class="row g-3">
                                                         <div class="col-md-6">
@@ -442,11 +443,9 @@
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <form method="post"
-                                                th:action="@{/admin/accounts/delete/{id}(id=${account.accountId})}">
+                                                th:action="@{/librarian/members/delete/{id}(id=${account.accountId})}">
                                                 <input type="hidden" th:if="${_csrf != null}"
                                                     th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                <input type="hidden" name="source" value="members">
-
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Xác nhận xóa tài khoản</h5>
                                                     <button type="button" class="close"
@@ -495,10 +494,11 @@
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item" th:classappend="${!accounts.hasPrevious()} ? 'disabled'">
                         <a class="page-link" th:if="${accounts.hasPrevious()}"
-                            th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword})}"
+                            th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}"
                             aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
+
                         <a class="page-link" th:unless="${accounts.hasPrevious()}" href="#" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
@@ -507,7 +507,7 @@
                     <li class="page-item"
                         th:each="i : ${#numbers.sequence(0, accounts.totalPages == 0 ? 0 : accounts.totalPages - 1)}"
                         th:classappend="${i == accounts.number} ? 'active'">
-                        <a class="page-link" th:href="@{/admin/accounts(page=${i}, keyword=${keyword})}"
+                        <a class="page-link" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}"
                             th:text="${i + 1}">
                             1
                         </a>
@@ -515,10 +515,11 @@
 
                     <li class="page-item" th:classappend="${!accounts.hasNext()} ? 'disabled'">
                         <a class="page-link" th:if="${accounts.hasNext()}"
-                            th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword})}"
+                            th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}"
                             aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
+
                         <a class="page-link" th:unless="${accounts.hasNext()}" href="#" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
@@ -533,7 +534,7 @@
             <b>LMS</b> · Library Management System
         </div>
         <div>
-            Admin Management
+            Librarian Management
         </div>
     </footer>
 
@@ -544,6 +545,7 @@
             if (modal == null) {
                 return;
             }
+
             modal.style.display = "block";
             modal.classList.add("show");
             modal.removeAttribute("aria-hidden");
@@ -557,6 +559,7 @@
             if (modal == null) {
                 return;
             }
+
             modal.style.display = "none";
             modal.classList.remove("show");
             modal.setAttribute("aria-hidden", "true");
@@ -574,7 +577,6 @@
             }
         });
     </script>
-
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
 </body>
 

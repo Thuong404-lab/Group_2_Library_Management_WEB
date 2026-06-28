@@ -28,6 +28,7 @@ public class User {
     }
 
     public User(Integer id, String fullName, String email, String phone, UserStatus status) {
+
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -68,10 +69,11 @@ public class User {
     }
 
     public UserStatus getStatus() {
+
         return status;
     }
 
-    public void setStatus(UserStatus status) {
+    public void setStatus(UserStatus  status) {
         this.status = status;
     }
 }

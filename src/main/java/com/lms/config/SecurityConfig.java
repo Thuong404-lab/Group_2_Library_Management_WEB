@@ -23,10 +23,6 @@ public class SecurityConfig {
     // @Autowired
     // private CustomOAuth2UserService customOAuth2UserService;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SessionRegistry sessionRegistry() {
@@ -36,7 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token
+            .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token nên xóa khi hoàn thành dự án .disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")

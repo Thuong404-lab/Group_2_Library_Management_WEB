@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gia hạn sách</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .table-box {
+            background: white;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        table {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        th {
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+
+        .badge-status {
+            border-radius: 20px;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: #fef3c7;
+            color: #b45309;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="text-muted mb-2">Trang chủ › Quản lý mượn, trả › <b>Gia hạn sách</b></div>
+
+        <div class="title">Gia hạn sách</div>
+
+        <div class="table-box">
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th>STT</th>
+                        <th>Thông tin bạn đọc</th>
+                        <th>Đối tượng</th>
+                        <th>Mã phiếu gia hạn</th>
+                        <th>Sách</th>
+                        <th>Số lần gia hạn</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="detail, iter : ${renewalDetails}">
+                        <td><input type="checkbox"></td>
+                        <td th:text="${iter.index + 1}">1</td>
+
+                        <td>
+                            <div
+                                th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
+                                <div>Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
+                                <div>Họ tên: <b th:text="${detail.borrow.member.user.fullName}">Bạn đọc</b></div>
+                                <div>SĐT: <span th:text="${detail.borrow.member.user.phone}">090...</span></div>
+                            </div>
+                        </td>
+
+                        <td>Thành viên</td>
+                        <td th:text="${'PGH' + detail.borrowDetailId}">PGH1</td>
+                        <td th:text="${detail.book != null ? detail.book.title : 'Không rõ'}">Tên sách</td>
+                        <td th:text="${detail.renewCount}">0</td>
+
+                        <td>
+                            <span class="badge-status" th:text="${detail.status}">Chờ duyệt</span>
+                        </td>
+
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary">Xem</button>
+                            <button class="btn btn-sm btn-outline-primary">Duyệt</button>
+                            <button class="btn btn-sm btn-outline-danger">Từ chối</button>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(renewalDetails)}">
+                        <td colspan="9" class="text-center text-muted py-4">Chưa có dữ liệu gia hạn</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

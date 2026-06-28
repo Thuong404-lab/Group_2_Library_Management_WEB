@@ -1,14 +1,1335 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Dashboard', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+
+    <style>
+        :root {
+            --sidebar: #172742;
+            --sidebar-active: #243a63;
+            --line: #d7dee8;
+            --page: #f2f5f9;
+            --text: #0f172a;
+            --muted: #64748b;
+            --blue: #1f66ff;
+            --orange: #ff9800;
+            --red: #ff3045;
+            --green: #069b69;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--page);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        .admin-shell {
+            min-height: 100vh;
+            padding-left: 220px;
+            transition: padding-left .2s ease;
+        }
+
+        body.sidebar-collapsed .admin-shell {
+            padding-left: 64px;
+        }
+
+        body.sidebar-collapsed .sidebar {
+            width: 64px;
+        }
+
+        body.sidebar-collapsed .brand-name,
+        body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
+        body.sidebar-collapsed .sidebar-user .sidebar-user-info {
+            display: none;
+        }
+
+        body.sidebar-collapsed .nav-link-app {
+            justify-content: center;
+            padding: 13px 0;
+        }
+
+        body.sidebar-collapsed .nav-icon {
+            margin: 0;
+        }
+
+        body.sidebar-collapsed .sidebar-user {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        body.sidebar-collapsed .collapse-mark {
+            margin-left: 0;
+        }
+
+        .sidebar {
+            background: var(--sidebar);
+            bottom: 0;
+            color: #d8e2f1;
+            display: flex;
+            flex-direction: column;
+            left: 0;
+            position: fixed;
+            top: 0;
+            width: 220px;
+            z-index: 10;
+        }
+
+        .brand {
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            gap: 10px;
+            height: 46px;
+            padding: 0 14px;
+        }
+
+        .brand-icon,
+        .stat-icon,
+        .user-avatar {
+            align-items: center;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .brand-icon {
+            background: #4bc3ff;
+            border-radius: 4px;
+            color: #0d3760;
+            font-size: 17px;
+            height: 24px;
+            width: 24px;
+        }
+
+        .brand-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .collapse-mark {
+            color: #9db0ca;
+            margin-left: auto;
+        }
+
+        .nav-area {
+            flex: 1;
+            padding: 12px 0;
+        }
+
+        .nav-link-app,
+        .submenu-link {
+            align-items: center;
+            color: #cbd7ea;
+            display: flex;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-link-app {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 11px 16px;
+        }
+
+        .nav-link-app.active,
+        .nav-link-app:hover {
+            background: var(--sidebar-active);
+            color: #fff;
+        }
+
+        .nav-icon {
+            color: #c8d4e6;
+            font-size: 16px;
+            text-align: center;
+            width: 18px;
+        }
+
+        .submenu {
+            display: grid;
+            gap: 6px;
+            padding: 4px 0 12px 48px;
+        }
+
+        .submenu-link {
+            font-size: 12px;
+            padding: 3px 0;
+        }
+
+        .sidebar-user {
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, .08);
+            cursor: pointer;
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            position: relative;
+        }
+
+        .sidebar-user:hover {
+            background: #1d3154;
+        }
+
+        .sidebar-user .user-avatar {
+            background: #22385e;
+            border-radius: 50%;
+            height: 24px;
+            width: 24px;
+        }
+
+        .user-name {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .user-email,
+        .role-text {
+            color: #93a4bd;
+            font-size: 11px;
+        }
+
+        .sidebar-user-menu {
+            background: #ffffff;
+            border: 1px solid #d7dee8;
+            border-radius: 6px;
+            bottom: 58px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, .25);
+            display: none;
+            left: 12px;
+            min-width: 210px;
+            padding: 10px;
+            position: absolute;
+            z-index: 60;
+        }
+
+        .sidebar-user-menu.show {
+            display: block;
+        }
+
+        body.sidebar-collapsed .sidebar-user-menu {
+            left: 70px;
+            bottom: 8px;
+        }
+
+        .sidebar-user-menu .profile-name {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .sidebar-user-menu .profile-email {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-user-menu .menu-btn,
+        .sidebar-user-menu .logout-btn {
+            background: transparent;
+            border: 0;
+            border-radius: 4px;
+            color: #334155;
+            display: block;
+            font-size: 13px;
+            padding: 8px 10px;
+            text-align: left;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .sidebar-user-menu .menu-btn:hover,
+        .sidebar-user-menu .logout-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .sidebar-user-menu .logout-btn {
+            color: #dc2626;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .profile-modal-backdrop {
+            background: rgba(0, 0, 0, .45);
+            bottom: 0;
+            display: none;
+            left: 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .profile-modal-backdrop.show {
+            display: block;
+        }
+
+        .profile-modal-box {
+            background: #ffffff;
+            border-radius: 6px;
+            left: 50%;
+            max-width: 460px;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 92%;
+        }
+
+        .profile-modal-header {
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+        }
+
+        .profile-modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .profile-modal-body {
+            padding: 16px;
+        }
+
+        .profile-row {
+            margin-bottom: 12px;
+        }
+
+        .profile-label {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .profile-value {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .profile-modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 14px 16px;
+            text-align: right;
+        }
+
+        .topbar {
+            align-items: center;
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            height: 46px;
+            justify-content: space-between;
+            padding: 0 18px;
+        }
+
+        .page-label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .top-actions {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+        }
+
+        .bell {
+            border-right: 1px solid var(--line);
+            color: #475569;
+            padding-right: 12px;
+            position: relative;
+        }
+
+        .bell-dot {
+            background: #ff3045;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            height: 8px;
+            position: absolute;
+            right: 9px;
+            top: -1px;
+            width: 8px;
+        }
+
+        .top-user {
+            align-items: center;
+            display: flex;
+            gap: 9px;
+        }
+
+        .top-user .user-avatar {
+            background: #1262be;
+            border-radius: 50%;
+            color: #fff;
+            height: 28px;
+            width: 28px;
+        }
+
+        .content {
+            padding: 18px;
+        }
+
+        .title {
+            font-size: 21px;
+            font-weight: 800;
+            margin: 0 0 2px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .admin-section {
+            display: none;
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .stat-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 18px;
+        }
+
+        .stat-card,
+        .panel,
+        .quick-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+        }
+
+        .stat-card {
+            align-items: center;
+            display: flex;
+            gap: 14px;
+            min-height: 84px;
+            padding: 14px;
+        }
+
+        .stat-icon {
+            border-radius: 6px;
+            color: #fff;
+            flex: 0 0 36px;
+            font-size: 19px;
+            height: 36px;
+            width: 36px;
+        }
+
+        .stat-icon.blue {
+            background: var(--blue);
+        }
+
+        .stat-icon.orange {
+            background: var(--orange);
+        }
+
+        .stat-icon.red {
+            background: var(--red);
+        }
+
+        .stat-icon.green {
+            background: var(--green);
+        }
+
+        .stat-label {
+            color: #667085;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            color: #0b1220;
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.05;
+        }
+
+        .stat-note {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+        }
+
+        .panel {
+            min-height: 255px;
+            padding: 16px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 0;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 14px;
+        }
+
+        .chart {
+            align-items: end;
+            background:
+                repeating-linear-gradient(to top, transparent 0, transparent 33px, #dce3ed 34px, transparent 35px);
+            border-left: 1px solid transparent;
+            display: grid;
+            gap: 38px;
+            grid-template-columns: repeat(6, 1fr);
+            height: 166px;
+            padding: 0 28px;
+        }
+
+        .bar-item {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: end;
+        }
+
+        .bar {
+            background: #55bff2;
+            border-radius: 3px 3px 0 0;
+            width: 14px;
+        }
+
+        .bar-label {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .activity-list {
+            display: grid;
+            gap: 13px;
+            margin-top: 16px;
+        }
+
+        .activity {
+            align-items: flex-start;
+            display: flex;
+            gap: 9px;
+        }
+
+        .activity-badge {
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 6px;
+        }
+
+        .activity-badge.blue {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .activity-badge.green {
+            background: #dcfce7;
+            color: #047857;
+        }
+
+        .activity-badge.purple {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .activity-badge.red {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+
+        .activity-badge.yellow {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .activity-name {
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .activity-desc {
+            color: #536179;
+            font-size: 12px;
+        }
+
+        .quick-card-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .quick-card {
+            padding: 16px;
+        }
+
+        .quick-card-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .quick-card-desc {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .info-table {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .info-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 1100px) {
+
+            .stat-grid,
+            .dashboard-grid,
+            .quick-card-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .admin-shell {
+                padding-left: 0;
+            }
+
+            .sidebar {
+                position: static;
+                width: 100%;
+            }
+
+            .stat-grid,
+            .dashboard-grid,
+            .quick-card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart {
+                gap: 16px;
+                padding: 0 10px;
+            }
+        }
+
+        .brand-link,
+        .brand-link:link,
+        .brand-link:visited,
+        .brand-link:hover,
+        .brand-link:focus,
+        .brand-link:active {
+            align-items: center;
+            color: #ffffff;
+            display: flex;
+            gap: 10px;
+            height: 100%;
+            text-decoration: none !important;
+        }
+
+        .brand-link:hover .brand-name,
+        .brand-link:focus .brand-name,
+        .brand-link:active .brand-name {
+            color: #ffffff;
+            text-decoration: none !important;
+        }
+
+        .brand-name {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+            text-decoration: none !important;
+        }
+
+        .collapse-mark {
+            align-items: center;
+            background: transparent;
+            border: none;
+            color: #9db0ca;
+            cursor: pointer;
+            display: inline-flex;
+            height: 28px;
+            justify-content: center;
+            margin-left: auto;
+            padding: 0;
+            width: 24px;
+        }
+
+        .nav-icon {
+            align-items: center;
+            color: #c8d4e6;
+            display: inline-flex;
+            font-size: 16px;
+            height: 24px;
+            justify-content: center;
+            line-height: 1;
+            text-align: center;
+            width: 24px;
+        }
+
+        .nav-link-app,
+        .nav-link-app:link,
+        .nav-link-app:visited,
+        .nav-link-app:hover,
+        .nav-link-app:focus,
+        .nav-link-app:active {
+            text-decoration: none !important;
+        }
+
+        body.sidebar-collapsed .brand {
+            gap: 6px;
+            justify-content: center;
+            padding: 0 8px;
+        }
+
+        body.sidebar-collapsed .brand-link {
+            gap: 0;
+        }
+
+        body.sidebar-collapsed .brand-name,
+        body.sidebar-collapsed .nav-link-app span:not(.nav-icon),
+        body.sidebar-collapsed .sidebar-user .sidebar-user-info {
+            display: none;
+        }
+
+        body.sidebar-collapsed .nav-link-app {
+            justify-content: center;
+            padding: 13px 0;
+        }
+
+        body.sidebar-collapsed .nav-icon {
+            margin: 0;
+        }
+
+        body.sidebar-collapsed .submenu {
+            display: none;
+        }
+
+        body.sidebar-collapsed .sidebar-user {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        body.sidebar-collapsed .collapse-mark {
+            margin-left: 0;
+        }
+    </style>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Dashboard</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+    <div class="sidebar">
+        <div class="brand">
+            <a class="brand-link" th:href="@{/admin/dashboard}">
+                <span class="brand-icon">▱</span>
+                <span class="brand-name">LMS</span>
+            </a>
+            <button class="collapse-mark" type="button" onclick="toggleSidebar()">
+                ≡
+            </button>
+        </div>
+
+        <nav class="nav-area">
+            <a class="nav-link-app active" data-section="overview" href="javascript:void(0)"
+                onclick="showAdminSection('overview', this)">
+                <span class="nav-icon">▦</span>
+                <span>Tổng quan</span>
+            </a>
+
+            <a class="nav-link-app" data-section="books" href="javascript:void(0)"
+                onclick="showAdminSection('books', this)">
+                <span class="nav-icon">▣</span>
+                <span>Quản lý sách</span>
+            </a>
+
+            <a class="nav-link-app" data-section="accounts" href="javascript:void(0)"
+                onclick="showAdminSection('accounts', this)">
+                <span class="nav-icon">♙</span>
+                <span>Quản lý người dùng</span>
+            </a>
+
+            <a class="nav-link-app" data-section="reports" href="javascript:void(0)"
+                onclick="showAdminSection('reports', this)">
+                <span class="nav-icon">⌁</span>
+                <span>Thống kê</span>
+            </a>
+
+            <a class="nav-link-app" data-section="calendar" href="javascript:void(0)"
+                onclick="showAdminSection('calendar', this)">
+                <span class="nav-icon">□</span>
+                <span>Lịch thư viện</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-user" onclick="toggleSidebarUserMenu(event)">
+            <span class="user-avatar">♙</span>
+
+            <div class="sidebar-user-info">
+                <div class="user-name" th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                    Quản trị viên
+                </div>
+
+                <div class="user-email" th:text="${currentUser != null ? currentUser.email : ''}">
+                    admin@thuvien.vn
+                </div>
+            </div>
+
+            <div class="sidebar-user-menu" id="sidebarUserMenu" onclick="event.stopPropagation()">
+                <div class="profile-name" th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                    Quản trị viên
+                </div>
+
+                <div class="profile-email" th:text="${currentUser != null ? currentUser.email : ''}">
+                    admin@thuvien.vn
+                </div>
+
+                <button type="button" class="menu-btn" onclick="openAdminProfileModal()">
+                    Hồ sơ cá nhân
+                </button>
+
+                <form class="logout-form" method="post" th:action="@{/logout}">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}">
+
+                    <button class="logout-btn" type="submit">
+                        Đăng xuất
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+
+    <div class="admin-shell">
+        <header class="topbar">
+            <div class="page-label">Library Management System</div>
+            <div class="top-actions">
+                <div class="bell">♧<span class="bell-dot"></span></div>
+                <div class="top-user">
+                    <span class="user-avatar">♙</span>
+                    <div>
+                        <div class="user-name text-dark"
+                            th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                            Quản trị viên
+                        </div>
+                        <div class="role-text">Thư viện tư nhân</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content">
+            <section id="section-overview" class="admin-section active">
+                <h1 class="title">Tổng quan thư viện</h1>
+                <div class="subtitle">
+                    Cập nhật:
+                    <span th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>
+                </div>
+
+                <section class="stat-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon blue">▰</div>
+                        <div>
+                            <div class="stat-label">Đang mượn</div>
+                            <div class="stat-value" th:text="${activeBorrows}">0</div>
+                            <div class="stat-note">Phiếu mượn đang mở</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon orange">↻</div>
+                        <div>
+                            <div class="stat-label">Chờ duyệt</div>
+                            <div class="stat-value" th:text="${pendingBorrows}">0</div>
+                            <div class="stat-note">Cần xử lý hôm nay</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon red">ⓘ</div>
+                        <div>
+                            <div class="stat-label">Quá hạn</div>
+                            <div class="stat-value" th:text="${overdueBorrows}">0</div>
+                            <div class="stat-note">Cần nhắc nhở ngay</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon green">♙</div>
+                        <div>
+                            <div class="stat-label">Bạn đọc</div>
+                            <div class="stat-value" th:text="${totalMembers}">0</div>
+                            <div class="stat-note">Đang hoạt động</div>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <div class="panel">
+                        <div class="panel-title">Thống kê mượn/trả</div>
+                        <div class="panel-subtitle">6 tháng gần nhất</div>
+
+                        <div class="chart" aria-label="Thống kê mượn trả 6 tháng gần nhất">
+                            <div class="bar-item" th:each="stat : ${monthStats}">
+                                <div class="bar" th:style="|height: ${stat.height}px;|"
+                                    th:title="${stat.count + ' phiếu mượn'}"></div>
+                                <div class="bar-label" th:text="${stat.label}">...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="panel">
+                        <div class="panel-title">Hoạt động gần đây</div>
+
+                        <div class="activity-list">
+                            <div class="activity" th:each="borrow, iterStat : ${recentBorrows}">
+                                <span class="activity-badge"
+                                    th:classappend="${iterStat.index % 5 == 0 ? ' blue' : iterStat.index % 5 == 1 ? ' green' : iterStat.index % 5 == 2 ? ' purple' : iterStat.index % 5 == 3 ? ' red' : ' yellow'}"
+                                    th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
+                                    N
+                                </span>
+                                <div>
+                                    <div class="activity-name"
+                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Không rõ'}">
+                                        Người dùng
+                                    </div>
+                                    <div class="activity-desc">
+                                        Mượn sách ·
+                                        <span
+                                            th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                            N/A
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="activity" th:if="${#lists.isEmpty(recentBorrows)}">
+                                <span class="activity-badge blue">LMS</span>
+                                <div>
+                                    <div class="activity-name">Chưa có hoạt động</div>
+                                    <div class="activity-desc">Các phiếu mượn mới sẽ hiển thị tại đây</div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </section>
+            </section>
+
+            <section id="section-books" class="admin-section">
+                <h1 class="title">Quản lý sách</h1>
+                <div class="subtitle">Các chức năng liên quan đến sách và kho sách</div>
+
+                <section class="stat-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon blue">▣</div>
+                        <div>
+                            <div class="stat-label">Tổng đầu sách</div>
+                            <div class="stat-value" th:text="${totalBooks}">0</div>
+                            <div class="stat-note">Sách đang hoạt động</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon green">□</div>
+                        <div>
+                            <div class="stat-label">Bản sách sẵn có</div>
+                            <div class="stat-value" th:text="${availableItems}">0</div>
+                            <div class="stat-note">BookItem Available</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon orange">↻</div>
+                        <div>
+                            <div class="stat-label">Đang được mượn</div>
+                            <div class="stat-value" th:text="${activeBorrows}">0</div>
+                            <div class="stat-note">Phiếu mượn đang mở</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon red">ⓘ</div>
+                        <div>
+                            <div class="stat-label">Quá hạn</div>
+                            <div class="stat-value" th:text="${overdueBorrows}">0</div>
+                            <div class="stat-note">Cần kiểm tra</div>
+                        </div>
+                    </article>
+                </section>
+
+                <div class="quick-card-grid">
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách sách</div>
+                        <div class="quick-card-desc">Xem và quản lý thông tin sách trong thư viện.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory}">Mở trang</a>
+                    </div>
+
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh mục / thể loại</div>
+                        <div class="quick-card-desc">Quản lý category, genre và phân loại sách.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory/categories}">Mở
+                            trang</a>
+                    </div>
+
+                    <div class="quick-card">
+                        <div class="quick-card-title">Kiểm kê kho sách</div>
+                        <div class="quick-card-desc">Theo dõi tình trạng bản sách, sách hư hỏng và sách sẵn có.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory}">Mở trang</a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-accounts" class="admin-section">
+                <h1 class="title">Quản lý người dùng</h1>
+                <div class="subtitle">Quản lý tài khoản, phân quyền và trạng thái người dùng</div>
+
+                <section class="stat-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon green">♙</div>
+                        <div>
+                            <div class="stat-label">Tổng bạn đọc</div>
+                            <div class="stat-value" th:text="${totalMembers}">0</div>
+                            <div class="stat-note">Member trong hệ thống</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon blue">▦</div>
+                        <div>
+                            <div class="stat-label">Tài khoản</div>
+                            <div class="stat-value">Account</div>
+                            <div class="stat-note">Quản lý bởi Admin</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon orange">↻</div>
+                        <div>
+                            <div class="stat-label">Chờ xử lý</div>
+                            <div class="stat-value" th:text="${pendingBorrows}">0</div>
+                            <div class="stat-note">Yêu cầu cần duyệt</div>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon red">ⓘ</div>
+                        <div>
+                            <div class="stat-label">Vi phạm</div>
+                            <div class="stat-value" th:text="${overdueBorrows}">0</div>
+                            <div class="stat-note">Liên quan quá hạn</div>
+                        </div>
+                    </article>
+                </section>
+
+                <div class="quick-card-grid">
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách thành viên</div>
+                        <div class="quick-card-desc">Theo dõi danh sách thành viên trong hệ thống.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/accounts}">Mở trang</a>
+                    </div>
+
+                    <div class="quick-card">
+                        <div class="quick-card-title">Danh sách nhân viên</div>
+                        <div class="quick-card-desc">Theo dõi danh sách quản trị viên và thủ thư trong hệ thống.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/staff}">Mở trang</a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-reports" class="admin-section">
+                <h1 class="title">Thống kê</h1>
+                <div class="subtitle">Báo cáo hoạt động thư viện và dữ liệu hệ thống</div>
+
+                <div class="dashboard-grid">
+                    <div class="panel">
+                        <div class="panel-title">Thống kê mượn/trả</div>
+                        <div class="panel-subtitle">6 tháng gần nhất</div>
+
+                        <div class="chart">
+                            <div class="bar-item" th:each="stat : ${monthStats}">
+                                <div class="bar" th:style="|height: ${stat.height}px;|"
+                                    th:title="${stat.count + ' phiếu mượn'}"></div>
+                                <div class="bar-label" th:text="${stat.label}">...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="panel">
+                        <div class="panel-title">Tổng hợp nhanh</div>
+                        <table class="table table-bordered info-table mt-3">
+                            <tbody>
+                                <tr>
+                                    <th>Đang mượn</th>
+                                    <td th:text="${activeBorrows}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Chờ duyệt</th>
+                                    <td th:text="${pendingBorrows}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Quá hạn</th>
+                                    <td th:text="${overdueBorrows}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Bạn đọc</th>
+                                    <td th:text="${totalMembers}">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Sách sẵn có</th>
+                                    <td th:text="${availableItems}">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </aside>
+                </div>
+
+                <div class="quick-card-grid mt-3">
+                    <div class="quick-card">
+                        <div class="quick-card-title">Báo cáo tổng hợp</div>
+                        <div class="quick-card-desc">Xem báo cáo tổng quan theo tháng của thư viện.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/reports}">Mở trang</a>
+                    </div>
+
+                    <div class="quick-card">
+                        <div class="quick-card-title">Nhật ký hệ thống</div>
+                        <div class="quick-card-desc">Xem lịch sử hoạt động của tài khoản trong hệ thống.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/logs}">Mở trang</a>
+                    </div>
+
+                    <div class="quick-card">
+                        <div class="quick-card-title">Cài đặt hệ thống</div>
+                        <div class="quick-card-desc">Cập nhật chính sách mượn sách, phí phạt và cấu hình hệ thống.</div>
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/settings}">Mở trang</a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-calendar" class="admin-section">
+                <h1 class="title">Lịch thư viện</h1>
+                <div class="subtitle">Theo dõi lịch mượn trả và lịch hoạt động thư viện</div>
+
+                <div class="panel">
+                    <div class="panel-title">Lịch thư viện</div>
+                    <div class="panel-subtitle">Khu vực này đang hiển thị tạm trong Admin Dashboard</div>
+
+                    <table class="table table-bordered info-table mt-3">
+                        <thead>
+                            <tr>
+                                <th>Nội dung</th>
+                                <th>Dữ liệu hiện tại</th>
+                                <th>Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Phiếu đang mượn</td>
+                                <td th:text="${activeBorrows}">0</td>
+                                <td>Theo dõi lịch trả sách</td>
+                            </tr>
+                            <tr>
+                                <td>Sách quá hạn</td>
+                                <td th:text="${overdueBorrows}">0</td>
+                                <td>Cần nhắc nhở thành viên</td>
+                            </tr>
+                            <tr>
+                                <td>Sách sắp tới hạn</td>
+                                <td>Đang chờ module lịch mượn trả</td>
+                                <td>Sẽ liên kết sau khi thành viên phụ trách hoàn thiện</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="text-muted mb-0">
+                        Sau khi có Controller riêng cho lịch thư viện, chỉ cần đổi nội dung hoặc nút điều hướng tại đây.
+                    </p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="profile-modal-backdrop" id="adminProfileModal">
+        <div class="profile-modal-box">
+            <div class="profile-modal-header">
+                <h5 class="profile-modal-title">Hồ sơ quản trị viên</h5>
+
+                <button type="button" class="btn btn-light border btn-sm" onclick="closeAdminProfileModal()">
+                    ×
+                </button>
+            </div>
+
+            <div class="profile-modal-body">
+                <div class="profile-row">
+                    <div class="profile-label">Họ tên</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.fullName : 'Quản trị viên'}">
+                        Quản trị viên
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Email</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.email : 'admin@thuvien.vn'}">
+                        admin@thuvien.vn
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Số điện thoại</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.phone : 'N/A'}">
+                        N/A
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Trạng thái</div>
+                    <div class="profile-value" th:text="${currentUser != null ? currentUser.status : 'Active'}">
+                        Active
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAdminProfileModal()">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showAdminSection(sectionName, clickedLink) {
+            const sections = document.querySelectorAll(".admin-section");
+
+            sections.forEach(function (section) {
+                section.classList.remove("active");
+            });
+
+            const selectedSection = document.getElementById("section-" + sectionName);
+
+            if (selectedSection != null) {
+                selectedSection.classList.add("active");
+            }
+
+            const menuLinks = document.querySelectorAll(".nav-link-app");
+
+            menuLinks.forEach(function (link) {
+                link.classList.remove("active");
+            });
+
+            if (clickedLink != null) {
+                clickedLink.classList.add("active");
+            }
+
+            const newUrl = sectionName === "overview"
+                ? "/admin/dashboard"
+                : "/admin/dashboard?section=" + sectionName;
+
+            window.history.replaceState(null, "", newUrl);
+        }
+
+        function openSectionFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const sectionName = params.get("section") || "overview";
+
+            const menuLink = document.querySelector("[data-section='" + sectionName + "']");
+
+            if (menuLink != null) {
+                showAdminSection(sectionName, menuLink);
+            }
+        }
+
+        function toggleSidebar() {
+            document.body.classList.toggle("sidebar-collapsed");
+        }
+
+        function toggleSidebarUserMenu(event) {
+            event.stopPropagation();
+
+            const menu = document.getElementById("sidebarUserMenu");
+
+            if (menu != null) {
+                menu.classList.toggle("show");
+            }
+        }
+
+        function openAdminProfileModal() {
+            const menu = document.getElementById("sidebarUserMenu");
+            const modal = document.getElementById("adminProfileModal");
+
+            if (menu != null) {
+                menu.classList.remove("show");
+            }
+
+            if (modal != null) {
+                modal.classList.add("show");
+            }
+        }
+
+        function closeAdminProfileModal() {
+            const modal = document.getElementById("adminProfileModal");
+
+            if (modal != null) {
+                modal.classList.remove("show");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", openSectionFromUrl);
+
+        document.addEventListener("click", function () {
+            const menu = document.getElementById("sidebarUserMenu");
+
+            if (menu != null) {
+                menu.classList.remove("show");
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeAdminProfileModal();
+
+                const menu = document.getElementById("sidebarUserMenu");
+
+                if (menu != null) {
+                    menu.classList.remove("show");
+                }
+            }
+        });
+    </script>
+
+    <script th:src="@{/js/bootstrap.bundle.js}"></script>
 </body>
+
 </html>

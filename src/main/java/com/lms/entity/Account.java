@@ -5,21 +5,24 @@ import jakarta.persistence.*;
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "account_id")
     private Integer accountId;
-
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(name = "username", unique = true, nullable = false, length = 100)
+    @Column(unique = true, nullable = false, length = 100)
     private String username;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String passwordHash;
-
-    @Column(name = "status", length = 50)
+    @Column(length = 50)
     private String status = "Active";
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "Account_Roles",
+        joinColumns = @JoinColumn(name = "account_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private java.util.Set<Role> roles = new java.util.HashSet<>();
 
     public Account() {
     }
@@ -70,5 +73,13 @@ public class Account {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public java.util.Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(java.util.Set<Role> roles) {
+        this.roles = roles;
     }
 }

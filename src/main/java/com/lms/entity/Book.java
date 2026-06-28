@@ -4,7 +4,8 @@ import java.util.Set;
 @Entity
 @Table(name = "Books")
 public class Book {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer bookId;
     @ManyToOne
     @JoinColumn(name = "genre_id")
@@ -20,7 +21,7 @@ public class Book {
     
     @ManyToMany
     @JoinTable(
-        name = "BookAuthors",
+        name = "`BookAuthors`",
         joinColumns = @JoinColumn(name = "book_id"),
         inverseJoinColumns = @JoinColumn(name = "author_id")
     )
