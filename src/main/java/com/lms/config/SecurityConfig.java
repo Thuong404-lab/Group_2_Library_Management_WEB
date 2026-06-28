@@ -47,20 +47,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
-                .successHandler((request, response, authentication) -> {
-                    boolean isAdmin = authentication.getAuthorities().stream()
-                            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
-                    boolean isLibrarian = authentication.getAuthorities().stream()
-                            .anyMatch(authority -> "ROLE_LIBRARIAN".equals(authority.getAuthority()));
-
-                    if (isAdmin) {
-                        response.sendRedirect("/admin/dashboard");
-                    } else if (isLibrarian) {
-                        response.sendRedirect("/librarian/dashboard");
-                    } else {
-                        response.sendRedirect("/");
-                    }
-                })
+                .defaultSuccessUrl("/", true)
                 .permitAll()
             )
             /*

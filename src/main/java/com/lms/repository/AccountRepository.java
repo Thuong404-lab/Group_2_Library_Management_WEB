@@ -15,6 +15,10 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     Optional<Account> findByUsername(String username);
 
+<<<<<<< HEAD
+    Optional<Account>findByUser_Email(String email);
+}
+=======
     Optional<Account> findByUserId(Integer userId);
 
     boolean existsByUsername(String username);
@@ -42,3 +46,4 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
             """)
     Page<Account> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
 }
+>>>>>>> 6d3c78b6792dfd9160778a90e85d05cb6dca4c8f

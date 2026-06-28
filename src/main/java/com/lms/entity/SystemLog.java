@@ -1,10 +1,12 @@
 package com.lms.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "SystemLogs")
+@Table(name = "system_logs")
 public class SystemLog {
 
     @Id
@@ -25,10 +27,11 @@ public class SystemLog {
     @Column(name = "user_agent", columnDefinition = "NVARCHAR(MAX)")
     private String userAgent;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public SystemLog() {
