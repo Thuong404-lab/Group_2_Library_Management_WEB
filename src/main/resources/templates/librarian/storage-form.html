@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${shelf != null} ? 'Chỉnh sửa vị trí' : 'Thêm vị trí lưu trữ'"></title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <style>
+        body {
+            background: #f2f5f9;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .page-navbar {
+            align-items: center;
+            background: #172742;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            color: #fff;
+            display: flex;
+            height: 52px;
+            justify-content: space-between;
+            padding: 0 22px;
+        }
+
+        .btn-primary {
+            background: #243a63;
+            border-color: #243a63;
+        }
+
+        .page {
+            padding: 22px;
+        }
+
+        .card-box {
+            background: #fff;
+            border: 1px solid #d7dee8;
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="page-navbar">
+        <a class="brand-link" th:href="@{/librarian/storage}">
+            <span class="brand-name">LMS</span>
+        </a>
+        <div>Quản lý vị trí lưu trữ</div>
+    </header>
+
+    <div class="page">
+        <div class="card-box">
+            <h2 th:text="${shelf != null} ? 'Chỉnh sửa vị trí' : 'Thêm vị trí mới'"></h2>
+            <form th:action="${shelf != null} ? @{/librarian/storage/update/{id}(id=${shelf.shelfId})} : @{/librarian/storage/add}" method="post">
+                <div th:if="${_csrf != null}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                </div>
+                <div class="form-group">
+                    <label for="shelfName">Tên vị trí</label>
+                    <input id="shelfName" name="shelfName" type="text" class="form-control"
+                           th:value="${shelf != null} ? ${shelf.shelfName} : ''" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">Vị trí</label>
+                    <input id="location" name="location" type="text" class="form-control"
+                           th:value="${shelf != null} ? ${shelf.location} : ''">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" th:text="${shelf != null} ? 'Cập nhật' : 'Thêm'"></button>
+                    <a class="btn btn-outline-secondary" th:href="@{/librarian/storage}">Hủy</a>
+                </div>
+            </form>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        </div>
+    </div>
+</body>
+
+</html>
