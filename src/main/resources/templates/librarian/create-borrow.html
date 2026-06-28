@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo Phiếu Mượn Sách</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h3>Hệ thống Quản lý Thư viện - Lập phiếu mượn mới</h3>
+    </div>
+    <div class="card-body">
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/librarian/borrow/create}" th:object="${borrowRequest}" method="POST">
+
+            <div class="mb-3">
+                <label class="form-label font-weight-bold">Email Thành Viên Mượn Sách:</label>
+                <input type="email" th:field="*{memberEmail}" class="form-row form-control" placeholder="Ví dụ: member01@gmail.com" required>
+                <div class="form-text">Hệ thống sẽ tự check tài khoản và hạng thành viên.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label font-weight-bold">Danh sách mã vạch (Barcodes) của các cuốn sách:</label>
+                <input type="text" name="rawBarcodes" class="form-control" placeholder="BC001-001, BC002-001" required>
+                <div class="form-text">Nhập các mã vạch (Barcode) phân tách nhau bởi dấu phẩy nếu mượn nhiều cuốn cùng lúc.</div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success">Xác nhận mượn sách</button>
+                <a href="/member/profile" class="btn btn-secondary">Quay lại trang cá nhân</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
