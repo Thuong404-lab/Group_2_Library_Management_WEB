@@ -1,6 +1,7 @@
 package com.lms.config;
 
 import com.lms.service.CustomOAuth2UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,14 +18,11 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private CustomOAuth2UserService customOAuth2UserService;
 
-    // Inject CustomOAuth2UserService qua Constructor để cấu hình Login bằng Google
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService) {
         this.customOAuth2UserService = customOAuth2UserService;
     }
-
-    // ĐÃ XÓA BEAN passwordEncoder TẠI ĐÂY VÌ ĐÃ ĐƯỢC ĐỊNH NGHĨA TRONG AppConfig.class
 
     @Bean
     public SessionRegistry sessionRegistry() {
@@ -48,6 +46,17 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
+                        .permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .defaultSuccessUrl("/", true)
+                )
+                .logout(logout -> logout
                         // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
                         .defaultSuccessUrl("/", true)
                         .permitAll()

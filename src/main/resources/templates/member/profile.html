@@ -1,71 +1,100 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Member Profile - LMS</title>
-    <style>
-        .container { width: 60%; margin: 40px auto; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .card { border: 1px solid #e0e0e0; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #ffffff; }
-        .profile-header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #009688; color: #009688; margin-bottom: 25px; }
-        .avatar-box { width: 80px; height: 80px; background: #e0f2f1; color: #009688; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px auto; font-weight: bold; }
-        .badge { background-color: #009688; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        .section-title { margin-top: 30px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 18px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-primary { background-color: #009688; color: white; }
-        .btn-primary:hover { background-color: #00796b; }
-        .btn-danger { background-color: #ff5722; color: white; }
-        .btn-danger:hover { background-color: #e64a19; }
-        .btn-home { text-decoration: none; color: #666; border: 1px solid #ccc; padding: 9px 20px; background: #f9f9f9; display: inline-block; border-radius: 5px; }
-        .alert { padding: 12px; margin-bottom: 15px; border-radius: 5px; font-weight: bold; }
-        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    </style>
+    <title>Hồ Sơ Cá Nhân</title>
 </head>
+
 <body>
+    <div layout:fragment="content" class="container mt-4 mb-5">
+        <h2 class="fw-bold mb-4">Hồ Sơ Cá Nhân</h2>
 
-<div class="container">
-    <div class="card">
+        <div class="row g-4">
+            <!-- Profile Card -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-3 mb-4">
+                    <div class="card-body text-center p-4">
+                        <div class="position-relative d-inline-block mb-3">
+                            <img src="https://ui-avatars.com/api/?name=Nguyễn+Lan+Anh&background=0D8ABC&color=fff&size=120" alt="Avatar" class="rounded-circle border border-3 border-white shadow-sm">
+                            <button class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle" style="width: 32px; height: 32px;"><i class="bi bi-camera-fill"></i></button>
+                        </div>
+                        <h4 class="fw-bold mb-1">Nguyễn Thị Lan Anh</h4>
+                        <p class="text-muted mb-3">lananh.nguyen@example.com</p>
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <span class="badge bg-primary px-3 py-2">Thành viên</span>
+                            <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-star-fill"></i> LOYAL</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between text-start small mt-3">
+                            <span class="text-muted">Ngày tham gia:</span>
+                            <span class="fw-bold">12/05/2023</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-start small mt-2">
+                            <span class="text-muted">Tổng sách đã mượn:</span>
+                            <span class="fw-bold text-primary">45 cuốn</span>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="profile-header">
-            <div class="avatar-box">MB</div>
-            <h2>Member Profile Dashboard</h2>
-            <span class="badge">LIBRARY MEMBER</span>
-        </div>
-
-        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        <div th:if="${passwordSuccess}" class="alert alert-success" th:text="${passwordSuccess}"></div>
-        <div th:if="${passwordError}" class="alert alert-danger" th:text="${passwordError}"></div>
-
-        <h3 class="section-title">Personal Details</h3>
-        <form th:action="@{/member/profile/update}" method="post">
-            <div class="form-group">
-                <label>Full Name:</label>
-                <input type="text" name="fullName" class="form-control" th:value="${member?.fullName}" required>
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill text-secondary me-2"></i>Bảo mật tài khoản</h6>
+                        <button class="btn btn-outline-primary w-100 mb-2">Đổi mật khẩu</button>
+                        <button class="btn btn-outline-danger w-100">Yêu cầu xóa tài khoản</button>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Email Address:</label>
-                <input type="email" name="email" class="form-control" th:value="${member?.email}" required>
-            </div>
-            <div class="form-group">
-                <label>Phone Number:</label>
-                <input type="text" name="phone" class="form-control" th:value="${member?.phone}">
-            </div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-        </form>
 
-        <h3 class="section-title">Security Settings</h3>
-        <form th:action="@{/member/profile/change-password}" method="post">
-            <div class="form-group">
-                <label>Current Password:</label>
-                <input type="password" name="oldPassword" class="form-control" placeholder="Enter current password" required>
-            </div>
-            <div class="form-group">
-                <label>New Password:</label>
-                <input type="password" name="newPassword" class="form-control" placeholder="Enter new secure password" required>
+            <!-- Profile Form -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0">
+                        <h5 class="fw-bold mb-0">Thông tin chi tiết</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Họ và Tên</label>
+                                    <input type="text" class="form-control" value="Nguyễn Thị Lan Anh">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Tên đăng nhập (Username)</label>
+                                    <input type="text" class="form-control bg-light" value="lananh123" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Email</label>
+                                    <input type="email" class="form-control" value="lananh.nguyen@example.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Số điện thoại</label>
+                                    <input type="tel" class="form-control" value="0987654321">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-muted small">Địa chỉ</label>
+                                    <input type="text" class="form-control" value="Số 1, Đại Cồ Việt, Hai Bà Trưng, Hà Nội">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Ngày sinh</label>
+                                    <input type="date" class="form-control" value="1998-05-15">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Giới tính</label>
+                                    <select class="form-select">
+                                        <option value="male">Nam</option>
+                                        <option value="female" selected>Nữ</option>
+                                        <option value="other">Khác</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold">Cập nhật thông tin</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
             <button type="submit" class="btn btn-danger">Change Password</button>
         </form>
