@@ -4,6 +4,8 @@ import com.lms.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -11,7 +13,8 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Integer> {
 
-    Optional<Member> findByUserId(Integer userId);
+    @Query("SELECT m FROM Member m WHERE m.user.id = :userId")
+    Optional<Member> findByUserId(@Param("userId") Integer userId);
 
     Optional<Member> findByUserEmail(String email);
 

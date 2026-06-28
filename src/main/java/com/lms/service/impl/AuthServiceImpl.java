@@ -172,12 +172,14 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userOptional.get();
 
-        passwordResetTokenRepository.deleteByUser(user);
-
         String token = UUID.randomUUID().toString();
         LocalDateTime expiryDate = LocalDateTime.now().plusHours(24);
 
-        PasswordResetToken resetToken = new PasswordResetToken(token, user, expiryDate);
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByUser(user)
+                .orElseGet(PasswordResetToken::new);
+        resetToken.setToken(token);
+        resetToken.setUser(user);
+        resetToken.setExpiryDate(expiryDate);
         passwordResetTokenRepository.save(resetToken);
 
         String resetLink = applicationBaseUrl + "/reset-password?token=" + token;

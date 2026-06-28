@@ -25,32 +25,38 @@ import java.util.Optional;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final AccountRepository accountRepository;
-    
+
     private final StaffRepository staffRepository;
-    
+
     private final MemberRepository memberRepository;
 
-    public UserDetailsServiceImpl(AccountRepository accountRepository, StaffRepository staffRepository, MemberRepository memberRepository) {
+    public UserDetailsServiceImpl(AccountRepository accountRepository, StaffRepository staffRepository,
+            MemberRepository memberRepository) {
         this.accountRepository = accountRepository;
         this.staffRepository = staffRepository;
         this.memberRepository = memberRepository;
     }
 
-
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản: " + username));
-        
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        Account account;
+        if (usernameOrEmail.contains("@")) {
+            account = accountRepository.findByUser_Email(usernameOrEmail)
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                            "Không tìm thấy tài khoản với email: " + usernameOrEmail));
+        } else {
+            account = accountRepository.findByUsername(usernameOrEmail)
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                            "Không tìm thấy tài khoản với username: " + usernameOrEmail));
+        }
+
         List<GrantedAuthority> authorities = new ArrayList<>();
-        
-        // Xác định Role
+
         Optional<Staff> staffOpt = staffRepository.findByUserId(account.getUser().getId());
         if (staffOpt.isPresent()) {
-            String type = staffOpt.get().getStaffType().toUpperCase(); // ADMIN hoặc LIBRARIAN
+            String type = staffOpt.get().getStaffType().toUpperCase();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + type));
         } else {
-            // Nếu không phải Staff thì là Member
             authorities.add(new SimpleGrantedAuthority("ROLE_MEMBER"));
         }
 

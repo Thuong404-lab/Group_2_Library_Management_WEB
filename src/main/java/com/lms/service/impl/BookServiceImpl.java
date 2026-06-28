@@ -40,9 +40,18 @@ public class BookServiceImpl implements BookService {
         // TODO: Implement - Lấy tất cả sách (phân trang)
     }
 
+    // Lấy sách mới nhất cho trang chủ
+    @Override
+    public java.util.List<com.lms.entity.Book> getRecentBooks(int limit) {
+        org.springframework.data.domain.Pageable pageable = 
+            org.springframework.data.domain.PageRequest.of(0, limit, 
+            org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "bookId"));
+        return bookRepository.findAll(pageable).getContent();
+    }
+
     // UC-3: Xem chi tiết sách
     @Override
-    public void findBookById(Integer id) {
-        // TODO: Implement - Lấy sách theo ID kèm Author, Genre, Feedback
+    public com.lms.entity.Book findBookById(Integer id) {
+        return bookRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy sách với ID: " + id));
     }
 }

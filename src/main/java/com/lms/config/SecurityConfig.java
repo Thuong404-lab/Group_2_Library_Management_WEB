@@ -19,13 +19,9 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
 
-    // Inject CustomOAuth2UserService qua Constructor để cấu hình Login bằng Google
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService) {
         this.customOAuth2UserService = customOAuth2UserService;
     }
-
-    // ĐÃ XÓA BEAN passwordEncoder TẠI ĐÂY VÌ ĐÃ ĐƯỢC ĐỊNH NGHĨA TRONG
-    // AppConfig.class
 
     @Bean
     public SessionRegistry sessionRegistry() {
@@ -35,44 +31,51 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token sau khi hoàn thành dự án
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Các URL công khai ai cũng được vào (Gộp đầy đủ cả 2 nhánh)
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**",
-                                "/member/membership/benefits", "/member/membership/tier", "/librarian/borrow/create")
-                        .permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/login",
+                                "/register",
+                                "/forgot-password",
+                                "/reset-password",
+                                "/css/**",
+                                "/js/**",
+                                "/books/**",
+                                "/member/membership/benefits",
+                                "/member/membership/tier",
+                                "/librarian/borrow/create"
+                        ).permitAll()
 
-                        // 2. Phân quyền nghiêm ngặt theo vai trò (Role-based Authorization)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN") // Cho cả ADMIN và LIBRARIAN
-                                                                                           // truy cập hệ sinh thái này
+                        .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
                         .requestMatchers("/member/**").hasRole("MEMBER")
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs
-                        // (AuthService.logLoginAction)
                         .defaultSuccessUrl("/", true)
-                        .permitAll())
+                        .permitAll()
+                )
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService))
-                        .defaultSuccessUrl("/", true))
+                                .userService(customOAuth2UserService)
+                        )
+                        .defaultSuccessUrl("/", true)
+                )
                 .logout(logout -> logout
-                        // TODO: Cấu hình LogoutSuccessHandler để ghi log vào bảng SystemLogs
-                        // (AuthService.logLogoutAction)
                         .logoutSuccessUrl("/login?logout")
-                        .permitAll())
+                        .permitAll()
+                )
                 .sessionManagement(session -> session
-                        // TODO: Cấu hình SessionManagement: tối đa 1 phiên/user, nếu đăng nhập nơi khác
-                        // thì kick ra (hoặc chặn)
                         .maximumSessions(1)
                         .expiredUrl("/login?expired")
-                        .sessionRegistry(sessionRegistry()))
-                // 3. XỬ LÝ NGOẠI LỆ: Khi sai quyền, tự động đá về trang /403
+                        .sessionRegistry(sessionRegistry())
+                )
                 .exceptionHandling(exception -> exception
-                        .accessDeniedPage("/403"));
+                        .accessDeniedPage("/403")
+                );
 
         return http.build();
     }
