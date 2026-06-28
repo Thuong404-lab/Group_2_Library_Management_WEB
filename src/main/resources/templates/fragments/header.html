@@ -1,14 +1,172 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
 </head>
+
 <body>
-    <header th:fragment="header">
-        <!-- TODO: Implement Header (Logo, Navbar, User Profile menu) -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">LMS</a>
-            <!-- Thêm menu bên phải -->
+    <header th:fragment="header" class="sticky-top shadow-sm w-100"
+        style="z-index: 1040; border-bottom: 3px solid #8b5a2b;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-classic py-3 px-4">
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler border-0 mr-2 d-md-none" type="button" data-toggle="collapse"
+                data-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Brand Logo -->
+            <a class="navbar-brand d-flex align-items-center font-weight-bold" th:href="@{/}" style="color: #4a3b32;">
+                <div class="rounded p-2 mr-2"
+                    style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background-color: #8b5a2b; color: #fdfbf7;">
+                    <i class="bi bi-book-half fs-4"></i>
+                </div>
+                <h4 class="mb-0 font-weight-bold d-none d-md-block"
+                    style="font-family: 'Playfair Display', serif; letter-spacing: 1px;">Thư Viện LMW</h4>
+            </a>
+
+            <!-- Main Navigation Links -->
+            <ul class="navbar-nav mr-auto ml-4 d-none d-md-flex font-weight-bold"
+                style="font-size: 1.05rem; font-family: 'Playfair Display', serif;">
+                <li class="nav-item mr-3">
+                    <a class="nav-link" th:href="@{/}" style="color: #4a3b32;">
+                        <i class="bi bi-house-door mr-1" style="color: #8b5a2b;"></i> Sảnh chính
+                    </a>
+                </li>
+                <li class="nav-item mr-3">
+                    <a class="nav-link" th:href="@{/books}" style="color: #4a3b32;">
+                        <i class="bi bi-collection mr-1" style="color: #8b5a2b;"></i> Khám phá
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/about}" style="color: #4a3b32;">
+                        <i class="bi bi-feather mr-1" style="color: #8b5a2b;"></i> Giới thiệu
+                    </a>
+                </li>
+            </ul>
+
+            <div class="ml-auto d-flex align-items-center">
+
+                <!-- Notifications (chỉ khi đã đăng nhập) -->
+                <div class="dropdown mr-4" sec:authorize="isAuthenticated()">
+                    <a class="position-relative text-decoration-none" href="#" role="button" data-toggle="dropdown"
+                        aria-expanded="false" style="color: #4a3b32;">
+                        <i class="bi bi-bell-fill" style="font-size: 1.25rem;"></i>
+                        <span class="badge badge-danger position-absolute"
+                            style="top: -5px; right: -8px; font-size: 0.65rem;">3</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow border-0 mt-2 bg-classic"
+                        style="width: 300px; border: 1px solid #8b5a2b !important;">
+                        <h6 class="dropdown-header font-weight-bold border-bottom pb-2"
+                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">Thông báo từ Thư viện</h6>
+                        <a class="dropdown-item py-2 text-wrap" href="#" style="font-family: 'Lora', serif;">
+                            <small class="d-block" style="color: #8b5a2b;"><i class="bi bi-clock"></i> Hôm nay</small>
+                            Bổ sung 50 cuốn sách kinh điển mới. Xem ngay!
+                        </a>
+                        <div class="dropdown-divider" style="border-color: rgba(139,90,43,0.2);"></div>
+                        <a class="dropdown-item text-center small font-weight-bold" href="#" style="color: #8b5a2b;">Xem tất cả</a>
+                    </div>
+                </div>
+
+                <!-- GUEST: Chưa đăng nhập -->
+                <div sec:authorize="!isAuthenticated()" class="d-flex">
+                    <a th:href="@{/login}"
+                        class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold mr-2"
+                        style="font-family: 'Playfair Display', serif;">Đăng nhập</a>
+                    <a th:href="@{/register}" class="btn btn-classic btn-sm rounded-pill px-4 font-weight-bold"
+                        style="font-family: 'Playfair Display', serif;">Đăng ký</a>
+                </div>
+
+                <!-- MEMBER / ADMIN / LIBRARIAN: User Menu Dropdown -->
+                <div sec:authorize="isAuthenticated()">
+                    <div class="dropdown">
+                        <!-- Trigger Button -->
+                        <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#"
+                            role="button" data-toggle="dropdown" aria-expanded="false" style="color: #4a3b32;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mr-2 font-weight-bold text-white"
+                                style="width: 36px; height: 36px; background-color: #8b5a2b; font-size: 0.95rem;"
+                                th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}">U</div>
+                            <span class="d-none d-md-block font-weight-bold"
+                                style="color: #4a3b32;"
+                                th:text="${#authentication.principal.name}">User Name</span>
+                        </a>
+
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu dropdown-menu-right shadow border-0 mt-2 p-0"
+                             style="min-width: 240px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(139,90,43,0.2) !important;">
+
+                            <!-- Header nâu ấm -->
+                            <div class="px-4 py-3 text-center"
+                                 style="background: linear-gradient(135deg, #4a3b32 0%, #8b5a2b 100%);">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 font-weight-bold text-white"
+                                     style="width:50px;height:50px;background:rgba(255,255,255,0.2);font-size:1.4rem;"
+                                     th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}">U</div>
+                                <h6 class="text-white font-weight-bold mb-1"
+                                    th:text="${#authentication.principal.name}">User Name</h6>
+                                <span class="badge border border-warning text-warning px-2 py-1 small" sec:authorize="hasRole('ADMIN')">
+                                    <i class="bi bi-shield-check mr-1"></i>Quản trị viên
+                                </span>
+                                <span class="badge border border-info text-info px-2 py-1 small" sec:authorize="hasRole('LIBRARIAN')">
+                                    <i class="bi bi-journal-album mr-1"></i>Thủ thư
+                                </span>
+                                <span class="badge border border-warning text-warning px-2 py-1 small" sec:authorize="hasRole('MEMBER')">
+                                    <i class="bi bi-star-fill mr-1"></i>Thành viên
+                                </span>
+                            </div>
+
+                            <!-- Menu items -->
+                            <div class="px-2 py-2" style="background: #fdfbf7;">
+                                <!-- Admin -->
+                                <a sec:authorize="hasRole('ADMIN')"
+                                   class="dropdown-item py-2 rounded font-weight-bold"
+                                   th:href="@{/admin/dashboard}" style="color: #4a3b32;">
+                                    <i class="bi bi-shield-lock mr-2" style="color:#8b5a2b;"></i>Bảng điều khiển Admin
+                                </a>
+
+                                <!-- Librarian -->
+                                <a sec:authorize="hasRole('LIBRARIAN')"
+                                   class="dropdown-item py-2 rounded font-weight-bold"
+                                   th:href="@{/librarian/dashboard}" style="color: #4a3b32;">
+                                    <i class="bi bi-journal-album mr-2" style="color:#8b5a2b;"></i>Bảng điều khiển Thủ thư
+                                </a>
+
+                                <!-- Member -->
+                                <div sec:authorize="hasRole('MEMBER')">
+                                    <a class="dropdown-item py-2 rounded" th:href="@{/member/dashboard}" style="color: #4a3b32;">
+                                        <i class="bi bi-speedometer2 mr-2" style="color:#8b5a2b;"></i>Bảng điều khiển
+                                    </a>
+                                    <a class="dropdown-item py-2 rounded" th:href="@{/member/profile}" style="color: #4a3b32;">
+                                        <i class="bi bi-person mr-2" style="color:#8b5a2b;"></i>Tài khoản của tôi
+                                    </a>
+                                    <a class="dropdown-item py-2 rounded" th:href="@{/member/wallet}" style="color: #4a3b32;">
+                                        <i class="bi bi-wallet2 mr-2" style="color:#198754;"></i>Số dư ví
+                                    </a>
+                                    <a class="dropdown-item py-2 rounded" th:href="@{/member/borrow}" style="color: #4a3b32;">
+                                        <i class="bi bi-journal-check mr-2" style="color:#0d6efd;"></i>Sách đã mượn
+                                    </a>
+                                    <a class="dropdown-item py-2 rounded" th:href="@{/member/favorites}" style="color: #4a3b32;">
+                                        <i class="bi bi-heart mr-2" style="color:#dc3545;"></i>Sách yêu thích
+                                    </a>
+                                    <a class="dropdown-item py-2 rounded" th:href="@{/member/reviews}" style="color: #4a3b32;">
+                                        <i class="bi bi-star mr-2" style="color:#ffc107;"></i>Đánh giá của tôi
+                                    </a>
+                                </div>
+
+                                <div class="dropdown-divider" style="border-color: rgba(139,90,43,0.15);"></div>
+
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item py-2 rounded font-weight-bold text-danger">
+                                        <i class="bi bi-box-arrow-right mr-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </nav>
     </header>
 </body>
+
 </html>

@@ -1,14 +1,179 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Reviews', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+    <title>Đánh giá sách của tôi</title>
+    <style>
+        .review-card { border-left: 3px solid #8b5a2b; transition: box-shadow 0.2s; }
+        .review-card:hover { box-shadow: 0 4px 16px rgba(139,90,43,0.12) !important; }
+        .edit-star { font-size: 1.6rem; cursor: pointer; color: #ccc; transition: color 0.1s; }
+    </style>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Reviews</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+<div layout:fragment="content" class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
+                <i class="bi bi-star-fill me-2" style="color:#8b5a2b;"></i>Đánh giá của tôi
+            </h2>
+            <div class="text-muted">3 đánh giá bạn đã viết</div>
+        </div>
+    </div>
+
+    <!-- Review 1 -->
+    <div class="bg-white rounded shadow-sm p-4 mb-4 review-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded d-flex align-items-center justify-content-center"
+                     style="width:54px;height:54px;background:#fdf5ec;border:1px solid #e8d5b7;">
+                    <i class="bi bi-book-fill" style="color:#8b5a2b;font-size:1.5rem;"></i>
+                </div>
+                <div>
+                    <div class="fw-bold fs-5">Đắc Nhân Tâm</div>
+                    <div class="small text-muted">Dale Carnegie</div>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="text-warning fs-5 mb-1">★★★★★ <span class="text-muted small">5/5</span></div>
+                <div class="small text-muted">Đánh giá ngày 15/06/2026</div>
+            </div>
+        </div>
+        <div class="p-3 rounded mb-3 lh-lg" style="background:#fdfbf7;border-left:3px solid #8b5a2b;">
+            Cuốn sách cực kỳ hay và bổ ích! Tôi đã đọc nhiều lần và mỗi lần đều rút ra được những bài học mới.
+            Nguyên tắc của Dale Carnegie áp dụng được trong cả công việc lẫn cuộc sống hàng ngày.
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="/books/1" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Xem sách
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-classic" data-bs-toggle="modal" data-bs-target="#editModal1">
+                    <i class="bi bi-pencil-square me-1"></i> Sửa
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Bạn có chắc muốn xóa đánh giá này không?')">
+                    <i class="bi bi-trash me-1"></i> Xóa
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Review 2 -->
+    <div class="bg-white rounded shadow-sm p-4 mb-4 review-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded d-flex align-items-center justify-content-center"
+                     style="width:54px;height:54px;background:#fdf5ec;border:1px solid #e8d5b7;">
+                    <i class="bi bi-book-fill" style="color:#8b5a2b;font-size:1.5rem;"></i>
+                </div>
+                <div>
+                    <div class="fw-bold fs-5">Nhà Giả Kim</div>
+                    <div class="small text-muted">Paulo Coelho</div>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="text-warning fs-5 mb-1">★★★★<span style="color:#ccc;">★</span> <span class="text-muted small">4/5</span></div>
+                <div class="small text-muted">Đánh giá ngày 20/04/2026</div>
+            </div>
+        </div>
+        <div class="p-3 rounded mb-3 lh-lg" style="background:#fdfbf7;border-left:3px solid #8b5a2b;">
+            Một tác phẩm triết học nhẹ nhàng nhưng đầy ý nghĩa. Câu chuyện về Santiago đi tìm kho báu thực ra là
+            hành trình tìm kiếm bản thân. Rất đáng đọc, văn phong đẹp và sâu sắc.
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="/books/2" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Xem sách
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-classic" data-bs-toggle="modal" data-bs-target="#editModal2">
+                    <i class="bi bi-pencil-square me-1"></i> Sửa
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Bạn có chắc muốn xóa đánh giá này không?')">
+                    <i class="bi bi-trash me-1"></i> Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review 3 -->
+    <div class="bg-white rounded shadow-sm p-4 mb-4 review-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded d-flex align-items-center justify-content-center"
+                     style="width:54px;height:54px;background:#fdf5ec;border:1px solid #e8d5b7;">
+                    <i class="bi bi-book-fill" style="color:#8b5a2b;font-size:1.5rem;"></i>
+                </div>
+                <div>
+                    <div class="fw-bold fs-5">Tư Duy Nhanh Và Chậm</div>
+                    <div class="small text-muted">Daniel Kahneman</div>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="text-warning fs-5 mb-1">★★★★★ <span class="text-muted small">5/5</span></div>
+                <div class="small text-muted">Đánh giá ngày 10/03/2026</div>
+            </div>
+        </div>
+        <div class="p-3 rounded mb-3 lh-lg" style="background:#fdfbf7;border-left:3px solid #8b5a2b;">
+            Một trong những cuốn sách hay nhất tôi từng đọc về tâm lý học và kinh tế học hành vi.
+            Kahneman giải thích rất dễ hiểu về cách não bộ hoạt động. Cực kỳ recommend!
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="/books/3" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Xem sách
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-classic" data-bs-toggle="modal" data-bs-target="#editModal3">
+                    <i class="bi bi-pencil-square me-1"></i> Sửa
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Bạn có chắc muốn xóa đánh giá này không?')">
+                    <i class="bi bi-trash me-1"></i> Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal 1 -->
+    <div class="modal fade" id="editModal1" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header" style="background:#fdfbf7;border-bottom:1px solid rgba(139,90,43,0.2);">
+                    <h5 class="modal-title fw-bold" style="color:#4a3b32;font-family:'Playfair Display',serif;">
+                        <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Sửa đánh giá
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Điểm đánh giá</label>
+                        <div class="d-flex align-items-center gap-1 mt-1">
+                            <span class="edit-star" style="color:#ffc107;">★</span>
+                            <span class="edit-star" style="color:#ffc107;">★</span>
+                            <span class="edit-star" style="color:#ffc107;">★</span>
+                            <span class="edit-star" style="color:#ffc107;">★</span>
+                            <span class="edit-star" style="color:#ffc107;">★</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Nội dung</label>
+                        <textarea class="form-control" rows="4" maxlength="1000">Cuốn sách cực kỳ hay và bổ ích! Tôi đã đọc nhiều lần và mỗi lần đều rút ra được những bài học mới.</textarea>
+                        <div class="text-end text-muted small mt-1">Tối đa 1000 ký tự</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn text-white" style="background:#8b5a2b;" data-bs-dismiss="modal">
+                        <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 </body>
 </html>

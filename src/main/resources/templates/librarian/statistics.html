@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Thống kê</title>
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='statistics'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Thống kê</h2>
+            <div class="text-muted">Báo cáo tổng hợp hoạt động mượn trả và thư viện</div>
+        </div>
+        <div>
+            <button class="btn btn-outline-classic">
+                <i class="bi bi-download me-1"></i> Xuất báo cáo
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Period -->
+    <div class="card-classic shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form class="d-flex align-items-center gap-3 flex-wrap" method="get">
+                <label class="fw-bold text-muted small text-uppercase">Kỳ báo cáo:</label>
+                <select class="form-select form-select-sm" style="width: auto;" name="period">
+                    <option value="week">Tuần này</option>
+                    <option value="month" selected>Tháng này</option>
+                    <option value="quarter">Quý này</option>
+                    <option value="year">Năm nay</option>
+                </select>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" class="form-control form-control-sm" name="fromDate" th:value="${fromDate}">
+                    <span class="text-muted">—</span>
+                    <input type="date" class="form-control form-control-sm" name="toDate" th:value="${toDate}">
+                </div>
+                <button class="btn btn-classic btn-sm px-3" type="submit"><i class="bi bi-bar-chart me-1"></i>Xem báo cáo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card-classic p-4 shadow-sm border-0" style="border-left: 4px solid #8b5a2b !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Tổng lượt mượn</div>
+                <h3 class="fw-bold mb-1 text-classic" th:text="${totalBorrows ?: 0}">0</h3>
+                <div class="small text-success"><i class="bi bi-arrow-up-short"></i> <span th:text="${borrowGrowth ?: '0%'}">+0%</span> so với kỳ trước</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 shadow-sm border-0" style="border-left: 4px solid #198754 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Đã trả đúng hạn</div>
+                <h3 class="fw-bold mb-1 text-success" th:text="${onTimeReturns ?: 0}">0</h3>
+                <div class="small text-muted">Tỷ lệ: <span class="fw-bold" th:text="${onTimeRate ?: '0%'}">0%</span></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 shadow-sm border-0" style="border-left: 4px solid #dc3545 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Trả trễ hạn</div>
+                <h3 class="fw-bold mb-1 text-danger" th:text="${lateReturns ?: 0}">0</h3>
+                <div class="small text-muted">Tỷ lệ: <span class="fw-bold" th:text="${lateRate ?: '0%'}">0%</span></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 shadow-sm border-0" style="border-left: 4px solid #ffc107 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Tổng tiền phạt</div>
+                <h3 class="fw-bold mb-1" style="color:#ffc107;" th:text="${totalFines != null ? #numbers.formatDecimal(totalFines, 0, 'COMMA', 0, 'POINT') + ' đ' : '0 đ'}">0 đ</h3>
+                <div class="small text-muted">Đã thu: <span class="fw-bold text-success" th:text="${collectedFines != null ? #numbers.formatDecimal(collectedFines, 0, 'COMMA', 0, 'POINT') + ' đ' : '0 đ'}">0 đ</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Books & Members -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-trophy-fill me-2 text-classic"></i>Top sách được mượn nhiều nhất
+                    </h5>
+                    <div th:if="${topBooks != null}">
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" th:each="book, stat : ${topBooks}">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fw-bold text-classic" style="min-width: 24px;" th:text="${stat.index + 1}">1</span>
+                                <div>
+                                    <div class="fw-bold" th:text="${book.title}">Tên sách</div>
+                                    <div class="small text-muted" th:text="${book.author}">Tác giả</div>
+                                </div>
+                            </div>
+                            <span class="badge bg-classic px-3 py-2" style="background: #8b5a2b;" th:text="${book.borrowCount + ' lượt'}">0 lượt</span>
+                        </div>
+                    </div>
+                    <div class="text-center text-muted py-4" th:if="${topBooks == null || #lists.isEmpty(topBooks)}">
+                        <i class="bi bi-graph-up opacity-50 fs-3 d-block mb-2"></i>
+                        Chưa có dữ liệu
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-people-fill me-2 text-classic"></i>Thành viên mượn nhiều nhất
+                    </h5>
+                    <div th:if="${topMembers != null}">
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" th:each="member, stat : ${topMembers}">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fw-bold text-classic" style="min-width: 24px;" th:text="${stat.index + 1}">1</span>
+                                <div>
+                                    <div class="fw-bold" th:text="${member.fullName}">Họ tên</div>
+                                    <div class="small text-muted" th:text="${member.email}">Email</div>
+                                </div>
+                            </div>
+                            <span class="badge bg-info text-dark px-3 py-2" th:text="${member.borrowCount + ' cuốn'}">0 cuốn</span>
+                        </div>
+                    </div>
+                    <div class="text-center text-muted py-4" th:if="${topMembers == null || #lists.isEmpty(topMembers)}">
+                        <i class="bi bi-person-lines-fill opacity-50 fs-3 d-block mb-2"></i>
+                        Chưa có dữ liệu
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

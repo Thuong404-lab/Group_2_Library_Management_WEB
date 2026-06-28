@@ -1,583 +1,217 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-
-<!-- Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Member Accounts Management</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
-
-    <style>
-        :root {
-            --sidebar: #172742;
-            --sidebar-active: #243a63;
-            --line: #d7dee8;
-            --page: #f2f5f9;
-            --text-light: #ffffff;
-            --muted-light: #93a4bd;
-        }
-
-        body {
-            background: var(--page);
-            font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .page-navbar {
-            align-items: center;
-            background: var(--sidebar);
-            border-bottom: 1px solid rgba(255, 255, 255, .08);
-            color: var(--text-light);
-            display: flex;
-            height: 52px;
-            justify-content: space-between;
-            padding: 0 22px;
-        }
-
-        .navbar-brand-box {
-            align-items: center;
-            display: flex;
-            height: 100%;
-        }
-
-        .brand-link,
-        .brand-link:link,
-        .brand-link:visited,
-        .brand-link:hover,
-        .brand-link:focus,
-        .brand-link:active {
-            align-items: center;
-            color: #ffffff;
-            display: flex;
-            gap: 10px;
-            height: 100%;
-            text-decoration: none !important;
-        }
-
-        .brand-icon {
-            align-items: center;
-            background: #4bc3ff;
-            border-radius: 4px;
-            color: #0d3760;
-            display: inline-flex;
-            height: 24px;
-            justify-content: center;
-            width: 24px;
-        }
-
-        .brand-name {
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 800;
-            line-height: 1;
-            text-decoration: none !important;
-        }
-
-        .nav-right {
-            color: var(--muted-light);
-            font-size: 12px;
-        }
-
-        .page {
-            flex: 1;
-            padding: 22px;
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 4px;
-        }
-
-        .toolbar-row {
-            background: transparent;
-            border: none;
-            padding: 0;
-        }
-
-        .toolbar-content {
-            align-items: center;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-
-        .search-form {
-            align-items: center;
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .search-form .form-control {
-            margin-right: 12px;
-            width: 520px;
-            max-width: 100%;
-        }
-
-        .search-form .btn {
-            margin-right: 10px;
-        }
-
-        .card-box {
-            background: #fff;
-            border: 1px solid #d7dee8;
-            border-radius: 4px;
-            padding: 16px;
-        }
-
-        .table-app {
-            font-size: 13px;
-            margin: 0;
-        }
-
-        .table-app th {
-            background: #f8fafc;
-            color: #475569;
-            font-size: 12px;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
-        .badge-status {
-            border-radius: 20px;
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-
-        .status-active {
-            background: #dcfce7;
-            color: #047857;
-        }
-
-        .status-inactive {
-            background: #e5e7eb;
-            color: #374151;
-        }
-
-        .status-blocked {
-            background: #fee2e2;
-            color: #e11d48;
-        }
-
-        .btn-primary {
-            background: var(--sidebar-active);
-            border-color: var(--sidebar-active);
-        }
-
-        .btn-primary:hover {
-            background: #1d3154;
-            border-color: #1d3154;
-        }
-
-        .action-buttons {
-            align-items: center;
-            display: flex;
-            flex-wrap: nowrap;
-        }
-
-        .action-buttons .btn {
-            margin-right: 8px;
-        }
-
-        .action-buttons .btn:last-child {
-            margin-right: 0;
-        }
-
-        .modal {
-            background: rgba(0, 0, 0, .45);
-        }
-
-        .modal.show {
-            display: block;
-        }
-
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        .close {
-            background: transparent;
-            border: 0;
-            font-size: 28px;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .page-footer {
-            align-items: center;
-            background: var(--sidebar);
-            border-top: 1px solid rgba(255, 255, 255, .08);
-            color: var(--muted-light);
-            display: flex;
-            font-size: 12px;
-            height: 44px;
-            justify-content: space-between;
-            padding: 0 22px;
-        }
-
-        .page-footer b {
-            color: #fff;
-        }
-    </style>
+    <title>Quản lý Thành viên</title>
 </head>
 
 <body>
-    <header class="page-navbar">
-        <div class="navbar-brand-box">
-            <a class="brand-link" th:href="@{/librarian/dashboard}">
-                <span class="brand-icon">▱</span>
-                <span class="brand-name">LibraryMS</span>
-            </a>
+<div layout:fragment="content" th:with="activeMenu='members'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Thành viên</h2>
+            <div class="text-muted">Danh sách và thông tin tài khoản thành viên trong hệ thống</div>
         </div>
-        <div class="nav-right">
-            Library Management System
-        </div>
-    </header>
+        <a th:href="@{/librarian/members/create}" class="btn btn-classic shadow-sm">
+            <i class="bi bi-person-plus-fill me-2"></i>Thêm thành viên
+        </a>
+    </div>
 
-    <div class="page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h1 class="title">Quản lý tài khoản thành viên</h1>
+    <!-- Alert Messages -->
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" th:if="${param.notFound != null}">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>Không tìm thấy tài khoản.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${error != null}">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}">Lỗi</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${success != null}">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}">Thành công</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/members}">
+            <div class="col-md-8 col-lg-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" th:value="${keyword}" placeholder="Tìm username, họ tên hoặc email...">
+                </div>
             </div>
-
-            <a class="btn btn-outline-secondary btn-sm" th:href="@{/librarian/dashboard(section='users')}">
-                ← Về quản lý người dùng
-            </a>
-        </div>
-
-        <div class="alert alert-warning" th:if="${param.notFound != null}">
-            Không tìm thấy tài khoản.
-        </div>
-        <div class="alert alert-danger" th:if="${error != null}" th:text="${error}">
-            Lỗi
-        </div>
-        <div class="alert alert-success" th:if="${success != null}" th:text="${success}">
-            Thao tác thành công.
-        </div>
-
-        <div class="toolbar-row mb-3">
-            <div class="toolbar-content">
-                <form class="search-form" method="get" th:action="@{/librarian/members}">
-                    <input class="form-control" type="text" name="keyword" th:value="${keyword}"
-                        placeholder="Tìm username, họ tên hoặc email">
-
-                    <button class="btn btn-primary" type="submit">
-                        Tìm kiếm
-                    </button>
-                    <a class="btn btn-light border" th:href="@{/librarian/members}">
-                        Tải lại
-                    </a>
-                </form>
-                <a class="btn btn-primary" th:href="@{/librarian/members/create}">
-                    + Tạo tài khoản
-                </a>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
+                <a th:href="@{/librarian/members}" class="btn btn-light border ms-2">Làm mới</a>
             </div>
-        </div>
+        </form>
+    </div>
 
-        <div class="card-box">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle table-app">
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Thông tin người dùng</th>
-                            <th>Hạng thành viên</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <tr th:each="account, iterStat : ${accounts.content}">
-                            <td th:text="${accounts.number * accounts.size + iterStat.index + 1}">
-                                1
-                            </td>
-                            <td th:text="${account.accountId}">1</td>
-                            <td>
-                                <b th:text="${account.username}">Username</b>
-                            </td>
-                            <td>
-                                <div th:if="${account.user != null}">
-                                    <div>
-                                        <b th:text="${account.user.fullName}">Họ tên</b>
-                                    </div>
-                                    <div>
-                                        Email:
-                                        <span th:text="${account.user.email}">email</span>
-                                    </div>
-                                    <div>
-                                        SĐT:
-                                        <span th:text="${account.user.phone}">phone</span>
-                                    </div>
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>Tài khoản</th>
+                        <th>Thông tin liên hệ</th>
+                        <th>Hạng</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="account, iterStat : ${accounts.content}">
+                        <td class="ps-4 fw-bold text-muted" th:text="${account.accountId}">1</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white me-3" 
+                                     style="width: 40px; height: 40px; font-weight: bold; background-color: #8b5a2b;"
+                                     th:text="${#strings.substring(account.username, 0, 1).toUpperCase()}">
+                                    U
                                 </div>
-                                <div th:unless="${account.user != null}">
-                                    Không có thông tin user
+                                <div>
+                                    <div class="fw-bold" style="color: #4a3b32;" th:text="${account.username}">Username</div>
+                                    <div class="small text-muted" th:text="${account.user != null ? account.user.fullName : 'Chưa có TT'}">Họ tên</div>
                                 </div>
-                            </td>
+                            </div>
+                        </td>
+                        <td>
+                            <div th:if="${account.user != null}">
+                                <div class="small"><i class="bi bi-envelope text-classic me-2"></i><span th:text="${account.user.email}">email</span></div>
+                                <div class="small"><i class="bi bi-telephone text-classic me-2"></i><span th:text="${account.user.phone}">phone</span></div>
+                            </div>
+                            <div th:unless="${account.user != null}" class="text-muted small fst-italic">Không có</div>
+                        </td>
+                        <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                            <span class="badge" style="background-color: #dcb38a; color: #4a3b32;" th:if="${member != null && member.tier != null}" th:text="${member.tier.tierName}">Standard</span>
+                            <span class="badge bg-secondary" th:if="${member == null || member.tier == null}">N/A</span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-2"
+                                  th:classappend="${account.status == 'Active' ? 'bg-success bg-opacity-10 text-success border border-success' : account.status == 'Blocked' ? 'bg-danger bg-opacity-10 text-danger border border-danger' : 'bg-secondary bg-opacity-10 text-secondary border border-secondary'}"
+                                  th:text="${account.status}">
+                                Active
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" th:data-bs-target="${'#updateMemberModal' + account.accountId}" title="Cập nhật">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="${'#deleteMemberModal' + account.accountId}" title="Khóa/Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
 
-                            <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                <span class="badge text-bg-info" th:if="${member != null && member.tier != null}"
-                                    th:text="${member.tier.tierName}">
-                                    Standard
-                                </span>
-                                <span class="badge text-bg-secondary" th:if="${member == null || member.tier == null}">
-                                    N/A
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge-status"
-                                    th:classappend="${account.status == 'Active' ? ' status-active' : account.status == 'Blocked' ? ' status-blocked' : ' status-inactive'}"
-                                    th:text="${account.status}">
-                                    Active
-                                </span>
-                            </td>
-
-                            <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                <div class="action-buttons">
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
-                                        th:onclick="|openModal('updateMemberModal${account.accountId}')|">
-                                        Cập nhật
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                        th:onclick="|openModal('deleteMemberModal${account.accountId}')|">
-                                        Xóa
-                                    </button>
-                                </div>
-
-                                <div class="modal fade" th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
-                                    aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                                        <div class="modal-content">
-                                            <form method="post"
-                                                th:action="@{/librarian/members/edit/{id}(id=${account.accountId})}">
-                                                <input type="hidden" th:if="${_csrf != null}"
-                                                    th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Cập nhật tài khoản thành viên</h5>
-                                                    <button type="button" class="close"
-                                                        th:onclick="|closeModal('updateMemberModal${account.accountId}')|"
-                                                        aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="row g-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Họ tên</label>
-                                                            <input class="form-control" name="fullName"
-                                                                th:value="${account.user != null ? account.user.fullName : ''}"
-                                                                required>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Email</label>
-                                                            <input class="form-control" name="email" type="email"
-                                                                th:value="${account.user != null ? account.user.email : ''}"
-                                                                required>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Số điện thoại</label>
-                                                            <input class="form-control" name="phone"
-                                                                th:value="${account.user != null ? account.user.phone : ''}">
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Username</label>
-                                                            <input class="form-control" name="username"
-                                                                th:value="${account.username}" required>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Hạng thành viên</label>
-                                                            <select class="form-select form-control" name="tierId"
-                                                                required>
-                                                                <option th:each="tier : ${tiers}"
-                                                                    th:value="${tier.tierId}"
-                                                                    th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
-                                                                    th:text="${tier.tierName}">
-                                                                    Standard Member
-                                                                </option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Trạng thái</label>
-                                                            <select class="form-select form-control" name="status"
-                                                                required>
-                                                                <option value="Active"
-                                                                    th:selected="${account.status == 'Active'}">
-                                                                    Active
-                                                                </option>
-                                                                <option value="Inactive"
-                                                                    th:selected="${account.status == 'Inactive'}">
-                                                                    Inactive
-                                                                </option>
-                                                                <option value="Blocked"
-                                                                    th:selected="${account.status == 'Blocked'}">
-                                                                    Blocked
-                                                                </option>
-                                                            </select>
-                                                        </div>
+                            <!-- Update Modal -->
+                            <div class="modal fade text-start" th:id="${'updateMemberModal' + account.accountId}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-light border-bottom-0">
+                                            <h5 class="modal-title fw-bold" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Cập nhật thông tin</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form method="post" th:action="@{/librarian/members/edit/{id}(id=${account.accountId})}">
+                                            <div class="modal-body p-4">
+                                                <div class="row g-4">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold text-muted small">Họ tên</label>
+                                                        <input type="text" class="form-control bg-light border-0" name="fullName" th:value="${account.user != null ? account.user.fullName : ''}" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold text-muted small">Email</label>
+                                                        <input type="email" class="form-control bg-light border-0" name="email" th:value="${account.user != null ? account.user.email : ''}" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold text-muted small">Số điện thoại</label>
+                                                        <input type="text" class="form-control bg-light border-0" name="phone" th:value="${account.user != null ? account.user.phone : ''}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold text-muted small">Tên tài khoản (Username)</label>
+                                                        <input type="text" class="form-control bg-light border-0" name="username" th:value="${account.username}" required>
+                                                    </div>
+                                                    <div class="col-md-6" th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                                        <label class="form-label fw-bold text-muted small">Hạng thành viên</label>
+                                                        <select class="form-select bg-light border-0" name="tierId" required>
+                                                            <option th:each="tier : ${tiers}" th:value="${tier.tierId}" th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}" th:text="${tier.tierName}">Standard Member</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold text-muted small">Trạng thái</label>
+                                                        <select class="form-select bg-light border-0" name="status" required>
+                                                            <option value="Active" th:selected="${account.status == 'Active'}">Active (Hoạt động)</option>
+                                                            <option value="Inactive" th:selected="${account.status == 'Inactive'}">Inactive (Chưa kích hoạt)</option>
+                                                            <option value="Blocked" th:selected="${account.status == 'Blocked'}">Blocked (Bị khóa)</option>
+                                                        </select>
                                                     </div>
                                                 </div>
-
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        th:onclick="|closeModal('updateMemberModal${account.accountId}')|">
-                                                        Đóng
-                                                    </button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        Lưu thay đổi
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                            </div>
+                                            <div class="modal-footer border-top-0 bg-light">
+                                                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="submit" class="btn btn-classic px-4">Lưu cập nhật</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="modal fade" th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
-                                    aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <form method="post"
-                                                th:action="@{/librarian/members/delete/{id}(id=${account.accountId})}">
-                                                <input type="hidden" th:if="${_csrf != null}"
-                                                    th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Xác nhận xóa tài khoản</h5>
-                                                    <button type="button" class="close"
-                                                        th:onclick="|closeModal('deleteMemberModal${account.accountId}')|"
-                                                        aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-
-                                                <div class="modal-body">
-                                                    <p class="mb-1">
-                                                        Bạn có chắc muốn xóa tài khoản thành viên này không?
-                                                    </p>
-                                                    <p class="mb-0">
-                                                        Tài khoản:
-                                                        <b th:text="${account.username}">username</b>
-                                                    </p>
-                                                </div>
-
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        th:onclick="|closeModal('deleteMemberModal${account.accountId}')|">
-                                                        Hủy
-                                                    </button>
-                                                    <button type="submit" class="btn btn-danger">
-                                                        Xóa
-                                                    </button>
-                                                </div>
-                                            </form>
+                            <!-- Delete Modal -->
+                            <div class="modal fade text-start" th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-danger text-white border-bottom-0">
+                                            <h5 class="modal-title fw-bold" style="font-family: 'Playfair Display', serif;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận vô hiệu hóa</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
+                                        <form method="post" th:action="@{/librarian/members/delete/{id}(id=${account.accountId})}">
+                                            <div class="modal-body p-4 text-center">
+                                                <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                                                <h5 class="mt-3">Khóa tài khoản <strong th:text="${account.username}">Username</strong>?</h5>
+                                                <p class="text-muted mb-0">Hành động này sẽ ngăn người dùng truy cập hệ thống. Dữ liệu mượn trả vẫn được giữ lại.</p>
+                                            </div>
+                                            <div class="modal-footer border-top-0 justify-content-center bg-light">
+                                                <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                                                <button type="submit" class="btn btn-danger px-4">Đồng ý</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
-                            </td>
-                        </tr>
-
-                        <tr th:if="${#lists.isEmpty(accounts.content)}">
-                            <td colspan="7" class="text-center text-muted py-4">
-                                Không có tài khoản nào.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <nav aria-label="Page navigation" class="mt-3">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item" th:classappend="${!accounts.hasPrevious()} ? 'disabled'">
-                        <a class="page-link" th:if="${accounts.hasPrevious()}"
-                            th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}"
-                            aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-
-                        <a class="page-link" th:unless="${accounts.hasPrevious()}" href="#" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <tr th:if="${accounts.empty}">
+                        <td colspan="6" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-people fs-1 d-block mb-3"></i>
+                                Không có tài khoản thành viên nào.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-top p-3 d-flex justify-content-center" th:if="${accounts.totalPages > 1}">
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
                     </li>
-
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, accounts.totalPages == 0 ? 0 : accounts.totalPages - 1)}"
-                        th:classappend="${i == accounts.number} ? 'active'">
-                        <a class="page-link" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}"
-                            th:text="${i + 1}">
-                            1
-                        </a>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, accounts.totalPages - 1)}" th:classappend="${i == accounts.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                           th:style="${i == accounts.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
                     </li>
-
-                    <li class="page-item" th:classappend="${!accounts.hasNext()} ? 'disabled'">
-                        <a class="page-link" th:if="${accounts.hasNext()}"
-                            th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}"
-                            aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-
-                        <a class="page-link" th:unless="${accounts.hasNext()}" href="#" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
+                    <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-right"></i></a>
                     </li>
                 </ul>
             </nav>
         </div>
     </div>
-
-    <footer class="page-footer">
-        <div>
-            <b>LMS</b> · Library Management System
-        </div>
-        <div>
-            Librarian Management
-        </div>
-    </footer>
-
-    <script>
-        function openModal(id) {
-            const modal = document.getElementById(id);
-
-            if (modal == null) {
-                return;
-            }
-
-            modal.style.display = "block";
-            modal.classList.add("show");
-            modal.removeAttribute("aria-hidden");
-            modal.setAttribute("aria-modal", "true");
-            document.body.classList.add("modal-open");
-        }
-
-        function closeModal(id) {
-            const modal = document.getElementById(id);
-
-            if (modal == null) {
-                return;
-            }
-
-            modal.style.display = "none";
-            modal.classList.remove("show");
-            modal.setAttribute("aria-hidden", "true");
-            modal.removeAttribute("aria-modal");
-            document.body.classList.remove("modal-open");
-        }
-
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") {
-                const openedModal = document.querySelector(".modal.show");
-
-                if (openedModal != null) {
-                    closeModal(openedModal.id);
-                }
-            }
-        });
-    </script>
-    <script th:src="@{/js/bootstrap.bundle.js}"></script>
+</div>
 </body>
-
 </html>

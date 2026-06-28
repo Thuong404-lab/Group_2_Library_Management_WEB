@@ -1,375 +1,213 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Quản Lý Yêu Cầu Mượn Sách</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --sidebar-dark: #172742;
-            --page-bg: #f2f5f9;
-            --line-color: #d7dee8;
-            --text-main: #0f172a;
-            --muted-color: #64748b;
-            --blue-action: #1f66ff;
-            --green-success: #069b69;
-            --red-danger: #ff3045;
-        }
-
-        /* Đồng bộ duy nhất một font chữ cho toàn bộ trang */
-        body, input, button, select, textarea, .modal-title, .btn {
-            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
-        }
-
-        body {
-            background-color: var(--page-bg);
-            color: var(--text-main);
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .management-header {
-            background: #ffffff;
-            border-bottom: 1px solid var(--line-color);
-            padding: 12px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .btn-back-dashboard {
-            background: transparent;
-            border: 1px solid var(--line-color);
-            color: var(--text-main);
-            font-weight: 700;
-            font-size: 13px;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none !important;
-            transition: all 0.2s;
-        }
-
-        .btn-back-dashboard:hover {
-            background: #f1f5f9;
-            color: var(--blue-action);
-        }
-
-        .header-title {
-            font-size: 18px;
-            font-weight: 800;
-            margin: 0;
-        }
-
-        .workspace-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .sidebar-request-list {
-            width: 380px;
-            background: #ffffff;
-            border-right: 1px solid var(--line-color);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .list-search-box {
-            padding: 12px;
-            border-bottom: 1px solid var(--line-color);
-            background: #fafbfc;
-        }
-
-        .request-item {
-            padding: 16px;
-            border-bottom: 1px solid var(--line-color);
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-
-        .request-item:hover {
-            background: #f8fafc;
-        }
-
-        .request-item.active {
-            background: #edf4ff;
-            border-left: 4px solid var(--blue-action);
-        }
-
-        .req-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: var(--muted-color);
-            margin-bottom: 4px;
-        }
-
-        .req-member-name {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 2px;
-        }
-
-        .req-book-title {
-            font-size: 13px;
-            color: #334155;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .main-detail-view {
-            flex: 1;
-            background: var(--page-bg);
-            padding: 24px;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-        }
-
-        .detail-card {
-            background: #ffffff;
-            border: 1px solid var(--line-color);
-            border-radius: 6px;
-            width: 100%;
-            max-width: 800px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .detail-card-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--line-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .detail-card-body {
-            padding: 24px;
-            flex: 1;
-        }
-
-        .detail-card-footer {
-            padding: 16px 20px;
-            border-top: 1px solid var(--line-color);
-            background: #fafbfc;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .info-group-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--muted-color);
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .info-label {
-            font-size: 12px;
-            color: var(--muted-color);
-        }
-
-        .info-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted-color);
-            text-align: center;
-            height: 100%;
-        }
-
-        .modal-custom-header {
-            background-color: #1f66ff;
-            color: #ffffff;
-        }
-    </style>
+    <title>Yêu Cầu Mượn Sách</title>
 </head>
-<body>
 
-<header class="management-header">
-    <div class="header-left">
-        <a th:href="@{/librarian/dashboard}" class="btn-back-dashboard">
-            ← Quay lại Bảng điều khiển
-        </a>
-        <h1 class="header-title">Xem xét các yêu cầu mượn sách</h1>
-    </div>
-    <div>
-        <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#quickBorrowModal">
-            + Tạo phiếu mượn trực tiếp
+<body>
+<div layout:fragment="content" th:with="activeMenu='borrow-create'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản Lý Yêu Cầu Mượn Sách</h2>
+            <div class="text-muted">Phê duyệt yêu cầu từ độc giả hoặc tạo phiếu mượn trực tiếp</div>
+        </div>
+        <button type="button" class="btn btn-classic shadow-sm" data-bs-toggle="modal" data-bs-target="#quickBorrowModal">
+            <i class="bi bi-plus-circle me-2"></i>Tạo phiếu mượn trực tiếp
         </button>
     </div>
-</header>
 
-<div class="workspace-container">
-
-    <aside class="sidebar-request-list">
-        <div class="list-search-box">
-            <input type="text" class="form-control form-control-sm" placeholder="Tìm kiếm thành viên, mã sách...">
-        </div>
-
-        <div class="request-items-wrapper">
-            <div th:each="req : ${pendingRequests}"
-                 class="request-item"
-                 th:classappend="${selectedReqId == req.id} ? 'active'"
-                 onclick="loadRequestDetail(this)"
-                 th:data-id="${req.id}">
-                <div class="req-meta">
-                    <span th:text="${req.requestDate}">28/06/2026 14:20</span>
-                    <span class="badge bg-warning text-dark">Đang chờ</span>
-                </div>
-                <div class="req-member-name" th:text="${req.memberFullName}">Nguyễn Văn A</div>
-                <div class="req-book-title">
-                    📚 <span th:text="${req.bookTitle}">Lập trình Java Spring Boot Nâng cao</span>
-                </div>
-            </div>
-
-            <div th:if="${#lists.isEmpty(pendingRequests)}" class="p-4 text-center text-muted fs-7">
-                Không tìm thấy yêu cầu mượn sách nào đang chờ duyệt.
-            </div>
-        </div>
-    </aside>
-
-    <main class="main-detail-view">
-
-        <div id="emptyView" class="empty-state" th:style="${selectedRequest != null} ? 'display:none' : 'display:flex'">
-            <div style="font-size: 48px;">📑</div>
-            <h5 class="mt-2 fw-bold">Chưa chọn yêu cầu nào</h5>
-            <p class="small text-muted mb-0">Vui lòng chọn một tài khoản thành viên từ cột bên trái để xác thực điều kiện tài khoản và cấp quyền mượn.</p>
-        </div>
-
-        <div id="detailCard" class="detail-card" th:style="${selectedRequest == null} ? 'display:none' : 'display:block'">
-            <div class="detail-card-header">
-                <div>
-                    <h4 class="fw-bold mb-0" id="detailMemberName">Nguyễn Văn A</h4>
-                    <span class="text-muted small" id="detailMemberEmail">member01@library.com</span>
-                </div>
-                <span class="badge bg-secondary p-2">Mã yêu cầu: #<span id="detailReqId">1024</span></span>
-            </div>
-
-            <div class="detail-card-body">
-                <div class="info-group-title">Thông tin tài khoản độc giả</div>
-                <div class="info-grid">
-                    <div>
-                        <div class="info-label">Hạng thành viên:</div>
-                        <div class="info-value text-primary" id="detailMemberTier">Thành viên Vàng</div>
-                    </div>
-                    <div>
-                        <div class="info-label">Số sách đang mượn hiện tại:</div>
-                        <div class="info-value" id="detailCurrentBorrowed">2 / 5 Cuốn đang mượn</div>
+    <div class="row g-4" style="min-height: calc(100vh - 200px);">
+        <!-- Sidebar Danh sách Yêu cầu -->
+        <div class="col-lg-4 col-xl-3 d-flex flex-column h-100">
+            <div class="card-classic border-0 shadow-sm h-100 d-flex flex-column">
+                <div class="p-3 border-bottom" style="border-color: rgba(139, 90, 43, 0.1) !important;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-classic border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control border-start-0 bg-light" placeholder="Tìm kiếm yêu cầu...">
                     </div>
                 </div>
 
-                <div class="info-group-title">Thông tin sách đăng ký mượn</div>
-                <div class="info-card p-3 bg-light border rounded mb-4">
-                    <div class="fw-bold fs-5 text-dark" id="detailBookTitle">Lập trình Java Spring Boot Nâng cao</div>
-                    <div class="text-muted small mt-1">Mã ISBN: <span id="detailBookIsbn">978-604-default</span></div>
-                    <div class="text-muted small">Vị trí kệ sách: <span id="detailBookLocation">Khu vực B3 - Tầng 2</span></div>
-                </div>
-
-                <div class="info-group-title">Thời gian dự kiến mượn sách</div>
-                <div class="info-grid">
-                    <div>
-                        <div class="info-label">Ngày dự kiến đến lấy:</div>
-                        <div class="info-value" id="detailPickupDate">28/06/2026</div>
+                <div class="flex-grow-1 overflow-auto" style="max-height: 600px;">
+                    <div class="list-group list-group-flush">
+                        <button th:each="req : ${pendingRequests}"
+                                class="list-group-item list-group-item-action p-3 request-item border-bottom"
+                                th:classappend="${selectedReqId == req.id} ? 'bg-light'"
+                                style="border-color: rgba(139, 90, 43, 0.1) !important; cursor: pointer;"
+                                onclick="loadRequestDetail(this)"
+                                th:data-id="${req.id}">
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-warning text-dark border border-warning" style="font-size: 0.7rem;">Đang chờ duyệt</span>
+                                <small class="text-muted" th:text="${req.requestDate}">28/06/2026 14:20</small>
+                            </div>
+                            
+                            <div class="fw-bold mb-1" style="color: #4a3b32;" th:text="${req.memberFullName}">Nguyễn Văn A</div>
+                            <div class="small text-muted text-truncate">
+                                <i class="bi bi-book text-classic me-1"></i> 
+                                <span th:text="${req.bookTitle}">Lập trình Java Spring Boot</span>
+                            </div>
+                        </button>
                     </div>
-                    <div>
-                        <div class="info-label">Hạn trả sách tính toán:</div>
-                        <div class="info-value" id="detailDueDate">12/07/2026 (Thời gian mượn 14 ngày)</div>
+
+                    <div th:if="${#lists.isEmpty(pendingRequests)}" class="p-5 text-center text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                        <small>Không có yêu cầu mượn sách mới.</small>
                     </div>
                 </div>
-            </div>
-
-            <div class="detail-card-footer">
-                <form id="rejectForm" method="post" th:action="@{/librarian/borrow/reject}" class="m-0">
-                    <input type="hidden" name="requestId" id="rejectReqId">
-                    <button type="submit" class="btn btn-outline-danger btn-sm px-3 fw-bold">
-                        ✕ Từ chối yêu cầu
-                    </button>
-                </form>
-
-                <form id="approveForm" method="post" th:action="@{/librarian/borrow/approve}" class="m-0">
-                    <input type="hidden" name="requestId" id="approveReqId">
-                    <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">
-                        ✓ Phê duyệt & Cấp phiếu
-                    </button>
-                </form>
             </div>
         </div>
 
-    </main>
+        <!-- Vùng Chi Tiết -->
+        <div class="col-lg-8 col-xl-9">
+            <!-- Empty State -->
+            <div id="emptyView" class="card-classic border-0 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center p-5 text-center" 
+                 th:style="${selectedRequest != null} ? 'display:none !important' : 'display:flex !important'">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b;">
+                    <i class="bi bi-card-checklist fs-1"></i>
+                </div>
+                <h4 class="fw-bold" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Chưa chọn yêu cầu nào</h4>
+                <p class="text-muted max-w-md mx-auto">Vui lòng chọn một yêu cầu từ danh sách bên trái để xem chi tiết thông tin độc giả, cuốn sách cần mượn và tiến hành phê duyệt.</p>
+            </div>
+
+            <!-- Detail Card -->
+            <div id="detailCard" class="card-classic border-0 shadow-sm h-100" 
+                 th:style="${selectedRequest == null} ? 'display:none' : 'display:block'">
+                
+                <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(139, 90, 43, 0.1) !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white me-3" 
+                             style="width: 50px; height: 50px; font-weight: bold; background-color: #8b5a2b; font-size: 1.2rem;">
+                            N
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0" style="color: #4a3b32;" id="detailMemberName">Nguyễn Văn A</h4>
+                            <div class="text-muted small"><i class="bi bi-envelope me-1"></i><span id="detailMemberEmail">member01@library.com</span></div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted mb-1">Mã Yêu Cầu</div>
+                        <span class="badge bg-light text-dark border fs-6">#<span id="detailReqId">1024</span></span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase mb-3" style="color: #8b5a2b; font-size: 0.85rem; letter-spacing: 0.5px;">Thông tin độc giả</h6>
+                    <div class="row g-4 mb-5">
+                        <div class="col-sm-6">
+                            <div class="p-3 bg-light rounded h-100">
+                                <div class="small text-muted mb-1">Hạng thành viên</div>
+                                <div class="fw-bold text-dark" id="detailMemberTier"><i class="bi bi-star-fill text-warning me-2"></i>Thành viên Vàng</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="p-3 bg-light rounded h-100 border-start border-3" style="border-color: #0d6efd !important;">
+                                <div class="small text-muted mb-1">Sách đang mượn hiện tại</div>
+                                <div class="fw-bold text-dark" id="detailCurrentBorrowed">2 / 5 Cuốn đang mượn</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-uppercase mb-3" style="color: #8b5a2b; font-size: 0.85rem; letter-spacing: 0.5px;">Sách đăng ký mượn</h6>
+                    <div class="d-flex p-3 border rounded mb-5" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+                        <div class="rounded bg-light d-flex align-items-center justify-content-center me-4" style="width: 60px; height: 80px; color: #8b5a2b;">
+                            <i class="bi bi-book fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-2" style="color: #4a3b32;" id="detailBookTitle">Lập trình Java Spring Boot Nâng cao</h5>
+                            <div class="row g-3">
+                                <div class="col-auto">
+                                    <span class="small text-muted"><i class="bi bi-upc-scan me-1"></i>ISBN:</span>
+                                    <span class="small fw-bold ms-1" id="detailBookIsbn">978-604-default</span>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="small text-muted"><i class="bi bi-geo-alt me-1"></i>Kệ sách:</span>
+                                    <span class="small fw-bold ms-1" id="detailBookLocation">Khu vực B3 - Tầng 2</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-uppercase mb-3" style="color: #8b5a2b; font-size: 0.85rem; letter-spacing: 0.5px;">Thời gian dự kiến</h6>
+                    <div class="row g-4">
+                        <div class="col-sm-6">
+                            <div class="small text-muted mb-1">Ngày đến nhận sách:</div>
+                            <div class="fw-bold fs-6"><i class="bi bi-calendar-check text-success me-2"></i><span id="detailPickupDate">28/06/2026</span></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="small text-muted mb-1">Hạn trả (dự kiến):</div>
+                            <div class="fw-bold fs-6 text-danger"><i class="bi bi-calendar-x me-2"></i><span id="detailDueDate">12/07/2026</span></div>
+                            <div class="small text-muted mt-1 fst-italic">(Thời hạn: 14 ngày)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light p-4 border-top d-flex justify-content-end gap-3" style="border-color: rgba(139, 90, 43, 0.1) !important;">
+                    <form id="rejectForm" method="post" th:action="@{/librarian/borrow/reject}" class="m-0">
+                        <input type="hidden" name="requestId" id="rejectReqId">
+                        <button type="submit" class="btn btn-outline-danger px-4">
+                            <i class="bi bi-x-circle me-2"></i>Từ chối
+                        </button>
+                    </form>
+
+                    <form id="approveForm" method="post" th:action="@{/librarian/borrow/approve}" class="m-0">
+                        <input type="hidden" name="requestId" id="approveReqId">
+                        <button type="submit" class="btn btn-classic px-4">
+                            <i class="bi bi-check-circle me-2"></i>Phê duyệt & Cấp phiếu
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="modal fade" id="quickBorrowModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="quickBorrowModalLabel" aria-hidden="true">
+<!-- Modal Tạo phiếu mượn trực tiếp -->
+<div class="modal fade" id="quickBorrowModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="quickBorrowModalLabel" aria-hidden="true" layout:fragment="modals">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header modal-custom-header py-3">
-                <h5 class="modal-title fw-bold" id="quickBorrowModalLabel">Hệ thống Quản lý Thư viện - Tạo phiếu mượn mới</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header p-4 border-bottom-0" style="background-color: #8b5a2b; color: white;">
+                <h5 class="modal-title fw-bold" id="quickBorrowModalLabel" style="font-family: 'Playfair Display', serif;">
+                    <i class="bi bi-journal-plus me-2"></i>Tạo Phiếu Mượn Trực Tiếp
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <form method="post" th:action="@{/librarian/borrow/create/submit}">
-                <div class="modal-body p-4">
-
-                    <div class="mb-4">
-                        <label for="memberEmail" class="form-label fw-bold text-dark mb-1">Địa chỉ Email Thành viên:</label>
-                        <input type="email" id="memberEmail" name="memberEmail" class="form-control form-control-lg" placeholder="Ví dụ: member01@gmail.com" required>
-                        <div class="form-text text-muted small mt-1">Hệ thống sẽ tự động xác thực trạng thái tài khoản độc giả và kiểm tra các ràng buộc liên quan.</div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="card border-0 shadow-sm mb-4 p-4">
+                        <h6 class="fw-bold text-uppercase mb-3" style="color: #8b5a2b; font-size: 0.85rem;"><i class="bi bi-person me-2"></i>Thông tin Độc giả</h6>
+                        <label for="memberEmail" class="form-label fw-bold small text-muted">Địa chỉ Email Thành viên <span class="text-danger">*</span></label>
+                        <input type="email" id="memberEmail" name="memberEmail" class="form-control form-control-lg bg-light border-0" placeholder="ví dụ: member01@gmail.com" required>
+                        <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>Hệ thống sẽ tự động xác thực trạng thái tài khoản.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="bookBarcodes" class="form-label fw-bold text-dark mb-1">Danh sách Mã vạch (Barcode) của sách:</label>
-                        <input type="text" id="bookBarcodes" name="bookBarcodes" class="form-control form-control-lg" placeholder="BC001-001, BC002-001" required>
-                        <div class="form-text text-muted small mt-1">Nhập nhiều mã vạch cách nhau bằng dấu phẩy nếu độc giả muốn mượn đồng thời nhiều cuốn sách.</div>
+                    <div class="card border-0 shadow-sm p-4">
+                        <h6 class="fw-bold text-uppercase mb-3" style="color: #8b5a2b; font-size: 0.85rem;"><i class="bi bi-book me-2"></i>Thông tin Sách Mượn</h6>
+                        <label for="bookBarcodes" class="form-label fw-bold small text-muted">Mã vạch (Barcode) của sách <span class="text-danger">*</span></label>
+                        <input type="text" id="bookBarcodes" name="bookBarcodes" class="form-control form-control-lg bg-light border-0" placeholder="ví dụ: BC001-001, BC002-001" required>
+                        <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>Nhập nhiều mã vạch cách nhau bằng dấu phẩy (,).</div>
                     </div>
-
                 </div>
 
-                <div class="modal-footer bg-light border-top-0 px-4 py-3 d-flex flex-column gap-2">
-                    <button type="submit" class="btn btn-success btn-lg w-100 fw-bold py-2">Xác nhận tạo phiếu</button>
-                    <button type="button" class="btn btn-secondary w-100 py-2" data-bs-dismiss="modal">Hủy bỏ & Quay lại</button>
+                <div class="modal-footer border-top-0 px-4 py-3 bg-white d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-classic px-5">Xác nhận tạo phiếu</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script layout:fragment="scripts">
     function loadRequestDetail(element) {
-        document.querySelectorAll('.request-item').forEach(item => item.classList.remove('active'));
-        element.classList.add('active');
+        document.querySelectorAll('.request-item').forEach(item => item.classList.remove('bg-light'));
+        element.classList.add('bg-light');
 
+        document.getElementById('emptyView').classList.remove('d-flex');
         document.getElementById('emptyView').style.display = 'none';
-        document.getElementById('detailCard').style.display = 'flex';
+        
+        document.getElementById('detailCard').style.display = 'block';
 
         const id = element.getAttribute('data-id');
         document.getElementById('detailReqId').innerText = id;
