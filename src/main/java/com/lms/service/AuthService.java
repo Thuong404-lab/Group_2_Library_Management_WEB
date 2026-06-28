@@ -24,5 +24,23 @@ public interface AuthService {
      */
     void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId);
 
+    /**
+     * Tạo user, account, member, wallet cơ bản
+     */
     Account createCoreAccount(String userName, String fullName, String pass, String email, String phone);
+
+    /**
+     * Yêu cầu đặt lại mật khẩu
+     */
+    void requestPasswordReset(String email) throws Exception;
+
+    /**
+     * Xác thực token đặt lại mật khẩu
+     */
+    void validatePasswordResetToken(String token) throws Exception;
+
+    /**
+     * Đặt lại mật khẩu cho người dùng
+     */
+    void resetPassword(String token, String newPassword) throws Exception;
 }

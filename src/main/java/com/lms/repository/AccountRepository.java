@@ -1,6 +1,7 @@
 package com.lms.repository;
 
 import com.lms.entity.Account;
+import com.lms.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,10 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     Optional<Account> findByUser_Email(String email);
 
     Optional<Account> findByUserId(Integer userId);
+
+    Optional<Account> findByUser(User user);
+
+    Optional<Account> findByUser_Email(String email);
 
     boolean existsByUsername(String username);
 
