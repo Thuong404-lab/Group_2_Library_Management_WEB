@@ -23,10 +23,6 @@ public class SecurityConfig {
     // @Autowired
     // private CustomOAuth2UserService customOAuth2UserService;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SessionRegistry sessionRegistry() {
@@ -36,6 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+<<<<<<< HEAD
                 .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token
                 .authorizeHttpRequests(auth -> auth
                         // 1. Các URL công khai ai cũng được vào (Đã bỏ /librarian/profile ra khỏi đây)
@@ -47,6 +44,27 @@ public class SecurityConfig {
                         .requestMatchers("/member/**").hasRole("MEMBER")
 
                         .anyRequest().authenticated()
+=======
+            .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token nên xóa khi hoàn thành dự án .disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
+                .requestMatchers("/member/**").hasRole("MEMBER")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                // TODO: Cấu hình AuthenticationSuccessHandler để ghi log vào bảng SystemLogs (AuthService.logLoginAction)
+                .defaultSuccessUrl("/", true)
+                .permitAll()
+            )
+            /*
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+>>>>>>> 397a84201207f9edbcf0a90deefeee0d71932a23
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

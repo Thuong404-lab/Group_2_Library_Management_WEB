@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
 </head>
 <body>
-    <nav th:fragment="sidebar" class="bg-light sidebar">
-        <!-- TODO: Implement Sidebar Links (Dashboard, Books, Users, etc.) -->
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="#">Dashboard</a>
+    <nav th:fragment="sidebar">
+        <ul class="nav flex-column bg-light sidebar"
+            sec:authorize="hasAnyRole('ADMIN','LIBRARIAN')">
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link active" th:href="@{/admin/dashboard}">Dashboard</a>
             </li>
-            <!-- Thêm các chức năng khác -->
+            <li class="nav-item" sec:authorize="hasRole('LIBRARIAN')">
+                <a class="nav-link active" th:href="@{/librarian/dashboard}">Dashboard</a>
+            </li>
         </ul>
     </nav>
 </body>
