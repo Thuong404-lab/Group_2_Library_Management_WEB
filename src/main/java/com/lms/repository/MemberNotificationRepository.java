@@ -15,6 +15,8 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
     // Lấy 5 thông báo mới nhất cho chuông thông báo.
     List<MemberNotification> findTop5ByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
 
+    long countByMember_MemberIdAndIsReadFalse(Integer memberId);
+
     List<MemberNotification> findByMemberMemberIdAndNotificationTitleContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
             Integer memberId,
             String title);

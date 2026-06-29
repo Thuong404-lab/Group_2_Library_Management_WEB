@@ -75,6 +75,7 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         response.setSentDate(
                 memberNotification.getNotification().getCreatedDate()
         );
+        response.setRead(Boolean.TRUE.equals(memberNotification.getIsRead()));
 
         return response;
     }
@@ -92,5 +93,12 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         return memberNotifications.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countUnreadNotifications(String username) {
+        Member member = getMemberByUsername(username);
+        return memberNotificationRepository.countByMember_MemberIdAndIsReadFalse(member.getMemberId());
     }
 }

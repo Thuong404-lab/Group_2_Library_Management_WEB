@@ -27,67 +27,76 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Dữ liệu mẫu (Dummy data) -->
-                            <tr>
-                                <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://picsum.photos/seed/10/100/150" class="rounded me-4 shadow-sm" alt="Book" style="width: 50px; height: 70px; object-fit: cover;">
-                                        <div>
-                                            <h6 class="mb-2 fw-bold text-dark">Đất Rừng Phương Nam</h6>
-                                            <span class="badge bg-secondary">Văn học Việt Nam</span>
-                                        </div>
+                        <tr th:each="favorite : ${favorites}">
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="@{'https://picsum.photos/seed/' + ${favorite.book.bookId} + '/100/150'}"
+                                         class="rounded me-4 shadow-sm"
+                                         alt="Book"
+                                         style="width: 50px; height: 70px; object-fit: cover;">
+
+                                    <div>
+                                        <h6 class="mb-2 fw-bold text-dark"
+                                            th:text="${favorite.book.title}">
+                                            Tên sách
+                                        </h6>
+
+                                        <span class="badge bg-secondary"
+                                              th:text="${favorite.book.genre != null ? favorite.book.genre.genreName : 'Chưa phân loại'}">
+                    Thể loại
+                </span>
                                     </div>
-                                </td>
-                                <td>Đoàn Giỏi</td>
-                                <td class="text-muted">20/10/2026</td>
-                                <td><span class="badge bg-success">Sẵn sàng</span></td>
-                                <td class="text-end pe-4">
-                                    <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
-                                        <button class="btn btn-sm btn-outline-primary fw-bold" style="width: 110px;" onclick="showToast('Chức năng mượn sách đang được phát triển!')"><i class="bi bi-cart-plus"></i> Mượn</button>
-                                        <button class="btn btn-sm btn-outline-danger" style="width: 110px;" onclick="showToast('Đã xóa khỏi danh sách yêu thích!')"><i class="bi bi-trash"></i> Bỏ thích</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://picsum.photos/seed/15/100/150" class="rounded me-4 shadow-sm" alt="Book" style="width: 50px; height: 70px; object-fit: cover;">
-                                        <div>
-                                            <h6 class="mb-2 fw-bold text-dark">Nhà Giả Kim</h6>
-                                            <span class="badge bg-secondary">Tiểu thuyết</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Paulo Coelho</td>
-                                <td class="text-muted">18/10/2026</td>
-                                <td><span class="badge bg-warning text-dark">Đang mượn</span></td>
-                                <td class="text-end pe-4">
-                                    <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
-                                        <button class="btn btn-sm btn-outline-primary fw-bold" style="width: 110px;" onclick="showToast('Chức năng đặt trước đang được phát triển!')"><i class="bi bi-bookmark-plus"></i> Đặt trước</button>
-                                        <button class="btn btn-sm btn-outline-danger" style="width: 110px;" onclick="showToast('Đã xóa khỏi danh sách yêu thích!')"><i class="bi bi-trash"></i> Bỏ thích</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://picsum.photos/seed/32/100/150" class="rounded me-4 shadow-sm" alt="Book" style="width: 50px; height: 70px; object-fit: cover;">
-                                        <div>
-                                            <h6 class="mb-2 fw-bold text-dark">Tâm Lý Học Tội Phạm</h6>
-                                            <span class="badge bg-secondary">Tâm lý học</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>T Stanton Samenow</td>
-                                <td class="text-muted">15/10/2026</td>
-                                <td><span class="badge bg-success">Sẵn sàng</span></td>
-                                <td class="text-end pe-4">
-                                    <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
-                                        <button class="btn btn-sm btn-outline-primary fw-bold" style="width: 110px;" onclick="showToast('Chức năng mượn sách đang được phát triển!')"><i class="bi bi-cart-plus"></i> Mượn</button>
-                                        <button class="btn btn-sm btn-outline-danger" style="width: 110px;" onclick="showToast('Đã xóa khỏi danh sách yêu thích!')"><i class="bi bi-trash"></i> Bỏ thích</button>
-                                    </div>
-                                </td>
-                            </tr>
+                                </div>
+                            </td>
+
+                            <td>
+        <span th:if="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}"
+              th:text="${favorite.book.authors.iterator().next().authorName}">
+            Tác giả
+        </span>
+
+                                <span th:unless="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}">
+            Chưa rõ
+        </span>
+                            </td>
+
+                            <td class="text-muted">
+                                -
+                            </td>
+
+                            <td>
+        <span class="badge"
+              th:classappend="${favorite.book.status == 'Active'} ? ' bg-success' : ' bg-warning text-dark'"
+              th:text="${favorite.book.status == 'Active' ? 'Sẵn sàng' : 'Không có sẵn'}">
+            Sẵn sàng
+        </span>
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold"
+                                            style="width: 110px;"
+                                            onclick="showToast('Chức năng mượn sách đang được phát triển!')">
+                                        <i class="bi bi-cart-plus"></i> Mượn
+                                    </button>
+
+                                    <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
+                                          method="post">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                style="width: 110px;">
+                                            <i class="bi bi-trash"></i> Bỏ thích
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${favorites == null || favorites.isEmpty()}">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Bạn chưa có sách yêu thích nào.
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
