@@ -1,102 +1,74 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-
-<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Mượn sách</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
-    <style>
-        body {
-            background: #f2f5f9;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .page {
-            padding: 18px;
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 20px;
-            border-bottom: 1px solid #d7dee8;
-            margin-bottom: 14px;
-        }
-
-        .tab {
-            padding: 10px 0;
-            font-weight: 700;
-            color: #0f172a;
-            text-decoration: none;
-        }
-
-        .tab.active {
-            color: #0b5ed7;
-            border-bottom: 3px solid #0b5ed7;
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .table-box {
-            background: white;
-            border: 1px solid #d7dee8;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        table {
-            font-size: 13px;
-            margin: 0;
-        }
-
-        th {
-            background: #f8fafc;
-            white-space: nowrap;
-        }
-
-        .badge-status {
-            border-radius: 20px;
-            padding: 6px 10px;
-            font-size: 12px;
-        }
-
-        .status-active {
-            background: #dcfce7;
-            color: #047857;
-        }
-
-        .status-overdue {
-            background: #fee2e2;
-            color: #e11d48;
-        }
-
-        .status-returned {
-            background: #e5e7eb;
-            color: #374151;
-        }
-    </style>
+    <title>Quản lý Mượn/Trả sách</title>
 </head>
 
 <body>
-    <div class="page">
-        <div class="text-muted mb-2">Trang chủ › Thư viện số › Quản lý mượn, trả › <b>Mượn sách</b></div>
-
-        <div class="title">Mượn sách</div>
-
-        <div class="tabs">
-            <a class="tab active" th:href="@{/librarian/loan/borrow-desk}">Danh sách phiếu mượn</a>
-            <a class="tab" th:href="@{/librarian/loan/borrow-schedule}">Quản lý lịch mượn trả</a>
+<div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Mượn/Trả</h2>
+            <div class="text-muted">Theo dõi và xử lý các phiếu mượn sách của độc giả</div>
         </div>
+        <a th:href="@{/librarian/borrow/create}" class="btn btn-classic shadow-sm">
+            <i class="bi bi-journal-plus me-2"></i>Tạo phiếu mượn mới
+        </a>
+    </div>
 
-        <div class="toolbar">
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/borrow-desk}">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" placeholder="Mã phiếu, tên độc giả...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select text-muted" name="status">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Borrowed">Đang mượn (Borrowed)</option>
+                    <option value="Overdue">Quá hạn (Overdue)</option>
+                    <option value="Returned">Đã trả (Returned)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-classic w-100">Lọc kết quả</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã Phiếu</th>
+                        <th>Độc giả</th>
+                        <th>Thông tin Sách</th>
+                        <th>Ngày mượn</th>
+                        <th>Hạn trả</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Placeholder data if empty -->
+                    <tr th:if="${borrows == null || borrows.empty}">
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                Chưa có dữ liệu phiếu mượn nào.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

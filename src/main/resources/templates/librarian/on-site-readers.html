@@ -1,111 +1,108 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-
-<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <meta charset="UTF-8">
     <title>Bạn đọc tại chỗ</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
-    <style>
-        body {
-            background: #f2f5f9;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .page {
-            padding: 18px;
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        .table-box {
-            background: white;
-            border: 1px solid #d7dee8;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        table {
-            font-size: 13px;
-            margin: 0;
-        }
-
-        th {
-            background: #f8fafc;
-            white-space: nowrap;
-        }
-
-        .badge-status {
-            border-radius: 20px;
-            padding: 6px 10px;
-            font-size: 12px;
-            background: #dcfce7;
-            color: #047857;
-        }
-    </style>
 </head>
 
 <body>
-    <div class="page">
-        <div class="text-muted mb-2">Trang chủ › Quản lý mượn, trả › <b>Bạn đọc tại chỗ</b></div>
+<div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bạn Đọc Tại Chỗ</h2>
+            <div class="text-muted">Quản lý và theo dõi lượt độc giả đang đọc sách trực tiếp tại thư viện</div>
+        </div>
+        <button class="btn btn-classic shadow-sm">
+            <i class="bi bi-person-plus-fill me-2"></i>Đăng ký đọc tại chỗ
+        </button>
+    </div>
 
-        <div class="title">Bạn đọc tại chỗ</div>
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/on-site-readers}">
+            <div class="col-md-3">
+                <input type="date" class="form-control text-muted" name="date" title="Ngày đăng ký">
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" placeholder="Mã thẻ, tên độc giả...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
 
-        <div class="table-box">
-            <table class="table table-bordered table-hover align-middle">
-                <thead>
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th><input type="checkbox"></th>
-                        <th>STT</th>
-                        <th>Thông tin bạn đọc</th>
-                        <th>Đối tượng</th>
-                        <th>Mã phiếu</th>
-                        <th>Ngày đăng ký</th>
+                        <th class="ps-4">Mã Phiếu</th>
+                        <th>Thông tin Độc giả</th>
+                        <th>Loại Thẻ</th>
+                        <th>Thời gian Đăng ký</th>
                         <th>Trạng thái</th>
-                        <th>Hành động</th>
+                        <th class="text-end pe-4">Thao tác</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <tr th:each="row, iter : ${borrowRows}">
-                        <td><input type="checkbox"></td>
-                        <td th:text="${iter.index + 1}">1</td>
+                        <td class="ps-4 fw-bold" style="color: #4a3b32;" th:text="${'BDTC' + row.borrow.borrowId}">BDTC1</td>
 
                         <td>
-                            <div th:if="${row.borrow.member != null && row.borrow.member.user != null}">
-                                <div>Mã thẻ: <span th:text="${'TV' + row.borrow.member.memberId}">TV1</span></div>
-                                <div>Họ tên: <b th:text="${row.borrow.member.user.fullName}">Bạn đọc</b></div>
-                                <div>SĐT: <span th:text="${row.borrow.member.user.phone}">090...</span></div>
+                            <div class="d-flex align-items-center" th:if="${row.borrow.member != null && row.borrow.member.user != null}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white me-3 shadow-sm" 
+                                     style="width: 40px; height: 40px; font-weight: bold; background-color: #6c757d;"
+                                     th:text="${#strings.substring(row.borrow.member.user.fullName, 0, 1).toUpperCase()}">
+                                    A
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark" th:text="${row.borrow.member.user.fullName}">Bạn đọc</div>
+                                    <div class="small text-muted">Mã thẻ: <span th:text="${'TV' + row.borrow.member.memberId}">TV1</span></div>
+                                    <div class="small text-muted"><i class="bi bi-telephone text-classic me-1"></i> <span th:text="${row.borrow.member.user.phone}">090...</span></div>
+                                </div>
                             </div>
                         </td>
 
-                        <td>Thành viên</td>
-                        <td th:text="${'BDTC' + row.borrow.borrowId}">BDTC1</td>
-                        <td
-                            th:text="${row.borrow.borrowDate != null ? #temporals.format(row.borrow.borrowDate, 'dd/MM/yyyy HH:mm') : '-'}">
-                            -</td>
-
                         <td>
-                            <span class="badge-status" th:text="${row.borrow.status}">Active</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-1">Thành viên</span>
+                        </td>
+                        
+                        <td>
+                            <div class="fw-bold" th:text="${row.borrow.borrowDate != null ? #temporals.format(row.borrow.borrowDate, 'dd/MM/yyyy') : '-'}">-</div>
+                            <div class="small text-muted mt-1" th:text="${row.borrow.borrowDate != null ? #temporals.format(row.borrow.borrowDate, 'HH:mm') : ''}"></div>
                         </td>
 
                         <td>
-                            <button class="btn btn-sm btn-outline-secondary">Xem</button>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2" th:text="${row.borrow.status}">
+                                Đang đọc
+                            </span>
+                        </td>
+
+                        <td class="text-end pe-4">
+                            <button type="button" class="btn btn-sm btn-outline-classic" title="Xem chi tiết">
+                                <i class="bi bi-eye"></i> Xem
+                            </button>
                         </td>
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(borrowRows)}">
-                        <td colspan="8" class="text-center text-muted py-4">Chưa có dữ liệu bạn đọc tại chỗ</td>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-journal-text fs-1 d-block mb-3 opacity-50"></i>
+                                Không có độc giả nào đang đọc tại chỗ.
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 </body>
-
 </html>

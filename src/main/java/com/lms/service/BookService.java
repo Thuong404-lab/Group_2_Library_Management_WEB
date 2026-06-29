@@ -10,7 +10,7 @@ public interface BookService {
     void searchBooks(String keyword, Integer categoryId, Integer genreId, int page);
 
     // UC-3: Xem danh sách sách
-    void findAllBooks(int page);
+    org.springframework.data.domain.Page<com.lms.entity.Book> findAllBooks(org.springframework.data.domain.Pageable pageable);
 
     // Lấy sách mới nhất cho trang chủ
     java.util.List<com.lms.entity.Book> getRecentBooks(int limit);

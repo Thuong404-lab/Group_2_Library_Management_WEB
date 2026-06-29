@@ -1,14 +1,123 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Suggestions', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Đề xuất mua sách</title>
+</head>
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Suggestions</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+<div layout:fragment="content" class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="font-weight-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
+                <i class="bi bi-plus-square-fill mr-2" style="color:#8b5a2b;"></i>Đề xuất Mua Sách
+            </h2>
+            <div class="text-muted">Gửi đề xuất để thư viện bổ sung sách mới</div>
+        </div>
+        <button class="btn font-weight-bold" style="background:#8b5a2b;color:white;border-radius:8px;"
+                data-toggle="modal" data-target="#newSuggestionModal">
+            <i class="bi bi-plus-circle mr-1"></i>Gửi đề xuất mới
+        </button>
+    </div>
+
+    <!-- My suggestions list -->
+    <h5 class="font-weight-bold mb-3" style="color:#4a3b32;">Đề xuất của tôi</h5>
+
+    <!-- Suggestion 1 - Đã duyệt -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #198754 !important;">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="font-weight-bold mb-1" style="color:#4a3b32;font-size:1.05rem;">Deep Work - Cal Newport</div>
+                    <div class="text-muted small mb-2">Lý do: Sách về kỹ năng tập trung cao độ rất phù hợp cho sinh viên</div>
+                    <div class="text-muted small">Gửi ngày: <strong>10/06/2026</strong></div>
+                </div>
+                <span class="badge px-3 py-2" style="background:#d4edda;color:#155724;font-size:0.85rem;border-radius:20px;white-space:nowrap;">
+                    <i class="bi bi-check-circle mr-1"></i>Đã duyệt
+                </span>
+            </div>
+            <div class="alert alert-success mt-3 py-2 mb-0 small">
+                <i class="bi bi-info-circle mr-1"></i>
+                Thư viện đã tiếp nhận đề xuất. Sách dự kiến có trong <strong>tháng 7/2026</strong>.
             </div>
         </div>
     </div>
+
+    <!-- Suggestion 2 - Chờ xét duyệt -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #ffc107 !important;">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="font-weight-bold mb-1" style="color:#4a3b32;font-size:1.05rem;">The Psychology of Money - Morgan Housel</div>
+                    <div class="text-muted small mb-2">Lý do: Sách hay về tài chính cá nhân, nhiều bạn đọc muốn đọc</div>
+                    <div class="text-muted small">Gửi ngày: <strong>25/06/2026</strong></div>
+                </div>
+                <span class="badge px-3 py-2" style="background:#fff3cd;color:#856404;font-size:0.85rem;border-radius:20px;white-space:nowrap;">
+                    <i class="bi bi-hourglass-split mr-1"></i>Chờ duyệt
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggestion 3 - Từ chối -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #dc3545 !important;opacity:0.8;">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="font-weight-bold mb-1" style="color:#4a3b32;font-size:1.05rem;">Harry Potter (bộ 7 cuốn)</div>
+                    <div class="text-muted small mb-2">Lý do: Muốn đọc bộ truyện nổi tiếng này</div>
+                    <div class="text-muted small">Gửi ngày: <strong>01/03/2026</strong></div>
+                </div>
+                <span class="badge px-3 py-2" style="background:#f8d7da;color:#721c24;font-size:0.85rem;border-radius:20px;white-space:nowrap;">
+                    <i class="bi bi-x-circle mr-1"></i>Không khả dụng
+                </span>
+            </div>
+            <div class="alert alert-secondary mt-3 py-2 mb-0 small">
+                <i class="bi bi-chat-left-text mr-1"></i>
+                Thủ thư: Bộ sách này đã có trong kho, vui lòng tìm kiếm tại mục "Khám phá".
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gửi đề xuất mới -->
+    <div class="modal fade" id="newSuggestionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header" style="background:#fdfbf7;border-bottom:1px solid rgba(139,90,43,0.2);">
+                    <h5 class="modal-title font-weight-bold" style="color:#4a3b32;font-family:'Playfair Display',serif;">
+                        <i class="bi bi-plus-square mr-2" style="color:#8b5a2b;"></i>Gửi đề xuất mới
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label class="font-weight-bold small text-muted text-uppercase">Tên sách <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control mt-1" placeholder="Nhập tên sách bạn muốn đề xuất...">
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold small text-muted text-uppercase">Tác giả</label>
+                        <input type="text" class="form-control mt-1" placeholder="Tên tác giả (nếu biết)">
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold small text-muted text-uppercase">ISBN / NXB</label>
+                        <input type="text" class="form-control mt-1" placeholder="ISBN hoặc nhà xuất bản (nếu có)">
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold small text-muted text-uppercase">Lý do đề xuất <span class="text-danger">*</span></label>
+                        <textarea class="form-control mt-1" rows="3" maxlength="500"
+                                  placeholder="Tại sao bạn nghĩ thư viện nên có cuốn sách này?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background:#f8f9fa;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn text-white font-weight-bold" style="background:#8b5a2b;" data-dismiss="modal">
+                        <i class="bi bi-send mr-1"></i>Gửi đề xuất
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

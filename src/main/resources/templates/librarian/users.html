@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Quản lý người dùng</title>
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='users'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Người dùng</h2>
+            <div class="text-muted">Xem và quản lý thông tin tài khoản thành viên</div>
+        </div>
+        <div>
+            <a th:href="@{/librarian/members/create}" class="btn btn-classic">
+                <i class="bi bi-person-plus me-1"></i> Tạo thành viên mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="card-classic shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form class="row g-3" method="get">
+                <div class="col-md-6">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;"><i class="bi bi-search"></i></span>
+                        <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tên, email, SĐT...">
+                        <button class="btn btn-classic" type="submit">Tìm kiếm</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Active">Hoạt động</option>
+                        <option value="Inactive">Tạm khóa</option>
+                        <option value="Blocked">Đã khóa</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <a class="btn btn-light border" href="?"><i class="bi bi-arrow-clockwise me-1"></i>Tải lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card-classic shadow-sm">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th class="ps-3">STT</th>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Hạng thành viên</th>
+                            <th>Đang mượn</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-3">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="member, iterStat : ${members}" th:if="${members != null}">
+                            <td class="ps-3 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                            <td>
+                                <div class="fw-bold" th:text="${member.fullName}">Họ tên</div>
+                                <div class="small text-muted" th:text="${member.username}">username</div>
+                            </td>
+                            <td>
+                                <div class="small" th:text="${member.email}">email</div>
+                            </td>
+                            <td class="small text-muted" th:text="${member.phone}">SĐT</td>
+                            <td>
+                                <span class="badge bg-info text-dark" th:text="${member.tierName}">Standard</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold" th:text="${member.activeBorrows ?: 0}">0</span>
+                                <span class="text-muted small"> cuốn</span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill"
+                                      th:classappend="${member.status == 'Active' ? 'bg-success' : member.status == 'Blocked' ? 'bg-danger' : 'bg-secondary'}"
+                                      th:text="${member.status}">Active</span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="#" class="btn btn-sm btn-outline-classic me-1"><i class="bi bi-eye"></i> Xem</a>
+                                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil-square"></i></button>
+                            </td>
+                        </tr>
+                        <tr th:if="${members == null || #lists.isEmpty(members)}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-2 d-block mb-2 opacity-50"></i>
+                                Không có người dùng nào.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-4" th:if="${totalPages != null && totalPages > 1}">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/users(page=${currentPage - 1}, keyword=${keyword})}">&laquo;</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/librarian/users(page=${i}, keyword=${keyword})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/users(page=${currentPage + 1}, keyword=${keyword})}">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>
