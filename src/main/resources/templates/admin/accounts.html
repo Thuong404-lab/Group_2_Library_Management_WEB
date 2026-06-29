@@ -46,7 +46,8 @@
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
                                 th:value="${keyword}" placeholder="Tìm username, họ tên hoặc email...">
-                            <button class="btn btn-classic" type="submit">Tìm kiếm</button>
+                                
+                            <button class="btn btn-classic ms-2 rounded" type="submit">Tìm kiếm</button>
                         </div>
                     </div>
                     <div class="col-md-4 col-lg-6 text-md-end">
@@ -68,6 +69,7 @@
                                 <th class="text-end pe-3">Hành động</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             <tr th:each="account, iterStat : ${accounts.content}">
                                 <td class="ps-3 fw-bold"
@@ -79,28 +81,49 @@
                                 <td>
                                     <div th:if="${account.user != null}">
                                         <div class="fw-bold" th:text="${account.user.fullName}">Họ tên</div>
-                                        <div class="small text-muted"><i class="bi bi-envelope me-1"></i><span
-                                                th:text="${account.user.email}">email</span></div>
-                                        <div class="small text-muted" th:if="${account.user.phone}"><i
-                                                class="bi bi-telephone me-1"></i><span
-                                                th:text="${account.user.phone}">phone</span></div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-envelope me-1"> </i>
+                                            <span th:text="${account.user.email}">email</span>
+                                        </div>
+                                        <div class="small text-muted" th:if="${account.user.phone}">
+                                            <i class="bi bi-telephone me-1"> </i>
+                                            <span th:text="${account.user.phone}">phone</span>
+                                        </div>
                                     </div>
                                     <div th:unless="${account.user != null}" class="fst-italic text-muted small">
                                         Chưa cập nhật thông tin
                                     </div>
                                 </td>
+
                                 <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                    <span class="badge bg-info text-dark"
+                                    <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
-                                        th:text="${member.tier.tierName}">Standard</span>
-                                    <span class="badge bg-secondary"
-                                        th:if="${member == null || member.tier == null}">N/A</span>
+                                        th:text="${member.tier.tierName}" th:style="${
+              member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
+              member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
+              member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
+              member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
+              'background-color: #8b5a2b;'
+          }">
+                                        Standard
+                                    </span>
+
+                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                        th:if="${member == null || member.tier == null}">
+                                        N/A
+                                    </span>
                                 </td>
+
                                 <td>
-                                    <span class="badge rounded-pill"
-                                        th:classappend="${account.status == 'Active' ? 'bg-success' : account.status == 'Blocked' ? 'bg-danger' : 'bg-secondary'}"
-                                        th:text="${account.status}">Active</span>
+                                    <span class="badge rounded-pill px-3 py-2 text-white" th:classappend="${
+              account.status == 'Active' ? 'bg-success' :
+              account.status == 'Blocked' ? 'bg-danger' :
+              'bg-secondary'
+          }" th:text="${account.status}">
+                                        Active
+                                    </span>
                                 </td>
+
                                 <td class="text-end pe-3"
                                     th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
                                     <button type="button" class="btn btn-sm btn-outline-classic" data-bs-toggle="modal"
@@ -129,8 +152,8 @@
                                                         style="background-color: #fdfbf7;">
                                                         <h5 class="modal-title fw-bold"
                                                             style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                                            <i class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
-                                                            nhật tài khoản
+                                                            <i class="bi bi-person-lines-fill me-2 text-classic"></i>
+                                                            Cập nhật tài khoản
                                                         </h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Close"></button>
@@ -140,12 +163,32 @@
                                                         <div class="row g-3">
                                                             <div class="col-md-6">
                                                                 <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Họ
-                                                                    tên</label>
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Họ tên
+                                                                </label>
                                                                 <input class="form-control" name="fullName"
                                                                     th:value="${account.user != null ? account.user.fullName : ''}"
                                                                     required>
                                                             </div>
+
+                                                             <div class="col-md-6">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Username
+                                                                </label>
+                                                                <input class="form-control" name="username"
+                                                                    th:value="${account.username}" required>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Số điện thoại
+                                                                </label>
+                                                                <input class="form-control" name="phone"
+                                                                    th:value="${account.user != null ? account.user.phone : ''}">
+                                                            </div>
+
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">Email</label>
@@ -153,47 +196,41 @@
                                                                     th:value="${account.user != null ? account.user.email : ''}"
                                                                     required>
                                                             </div>
+
                                                             <div class="col-md-6">
-                                                                <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Số
-                                                                    điện thoại</label>
-                                                                <input class="form-control" name="phone"
-                                                                    th:value="${account.user != null ? account.user.phone : ''}">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Username</label>
-                                                                <input class="form-control" name="username"
-                                                                    th:value="${account.username}" required>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Hạng
-                                                                    thành viên</label>
+                                                                <label class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Hạng thành viên
+                                                                </label>
                                                                 <select class="form-select form-control" name="tierId"
                                                                     required>
                                                                     <option th:each="tier : ${tiers}"
                                                                         th:value="${tier.tierId}"
                                                                         th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
-                                                                        th:text="${tier.tierName}">Standard Member
+                                                                        th:text="${tier.tierName}">
+                                                                        Standard Member
                                                                     </option>
                                                                 </select>
                                                             </div>
+                                                            
+
                                                             <div class="col-md-6">
-                                                                <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Trạng
-                                                                    thái</label>
-                                                                <select class="form-select form-control" name="status"
-                                                                    required>
+                                                                <label class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Trạng thái
+                                                                </label>
+                                                                <select class="form-select form-control"
+                                                                    name="status" required>
                                                                     <option value="Active"
                                                                         th:selected="${account.status == 'Active'}">
-                                                                        Active</option>
+                                                                        Active
+                                                                    </option>
                                                                     <option value="Inactive"
                                                                         th:selected="${account.status == 'Inactive'}">
-                                                                        Inactive</option>
+                                                                        Inactive
+                                                                    </option>
                                                                     <option value="Blocked"
                                                                         th:selected="${account.status == 'Blocked'}">
-                                                                        Blocked</option>
+                                                                        Blocked
+                                                                    </option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -202,8 +239,9 @@
                                                     <div class="modal-footer border-top bg-light">
                                                         <button type="button" class="btn btn-secondary"
                                                             data-bs-dismiss="modal">Hủy bỏ</button>
-                                                        <button type="submit" class="btn btn-classic">Lưu thay
-                                                            đổi</button>
+                                                        <button type="submit" class="btn btn-classic">
+                                                            Lưu thay đổi
+                                                        </button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -223,22 +261,88 @@
                                                     <input type="hidden" name="source" value="members">
 
                                                     <div class="modal-header border-bottom-0">
-                                                        <h5 class="modal-title fw-bold text-danger"><i
-                                                                class="bi bi-exclamation-triangle-fill me-2"></i>Xác
-                                                            nhận xóa tài khoản</h5>
+                                                        <h5 class="modal-title fw-bold text-danger">
+                                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                            Xác nhận xóa tài khoản
+                                                        </h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Close"></button>
                                                     </div>
 
                                                     <div class="modal-body pb-0">
-                                                        <p class="mb-3">Bạn có chắc chắn muốn xóa tài khoản này không?
+                                                        <p class="mb-3">
+                                                            Bạn có chắc chắn muốn xóa tài khoản này không?
                                                             Thao tác này không thể hoàn tác.</p>
                                                         <div class="p-3 bg-light rounded border">
-                                                            <div class="fw-bold mb-1" th:text="${account.username}">
-                                                                username</div>
-                                                            <div class="small text-muted"
-                                                                th:text="${account.user != null ? account.user.email : 'Không có email'}">
-                                                                email</div>
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Username: </div>
+                                                                    <div class="fw-bold mb-1"
+                                                                        th:text="${account.username}">
+                                                                        username
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Account ID: </div>
+                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                        id
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Họ tên: </div>
+                                                                    <div class="fw-bold"
+                                                                        th:text="${account.user != null ? account.user.fullName : 'Không có họ tên'}">
+                                                                        họ và tên
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Email: </div>
+                                                                    <div>
+                                                                        <i class="bi bi-envelope me-1 text-classic"></i>
+                                                                        <span
+                                                                            th:text="${account.user != null ? account.user.email : 'Không có email'}">
+                                                                            email
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Số điện thoại: </div>
+                                                                    <div>
+                                                                        <i
+                                                                            class="bi bi-telephone me-1 text-classic"></i>
+                                                                        <span
+                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : 'Không có SĐT'}">
+                                                                            phone
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Hạng thành viên</div>
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 text-white"
+                                                                        th:if="${member != null && member.tier != null}"
+                                                                        th:text="${member.tier.tierName}" th:style="${
+                                          member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
+                                          member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
+                                          member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
+                                          member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
+                                          'background-color: #8b5a2b;'}">
+                                                                        Standard
+                                                                    </span>
+
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                                        th:if="${member == null || member.tier == null}">
+                                                                        N/A
+                                                                    </span>
+                                                                </div>
+
+                                                            </div>
                                                         </div>
                                                     </div>
 

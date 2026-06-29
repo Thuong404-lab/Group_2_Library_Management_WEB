@@ -57,12 +57,15 @@ public class SecurityConfig {
 
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
+
                         .requestMatchers("/member/**").hasRole("MEMBER")
                         .anyRequest().authenticated()
                 )
+
+                //Quoc Anh đã sửa chỗ này ( Dùng method successHandler thay vì defaultSuccessUrl)
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(customSuccessHandler())
                         .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2

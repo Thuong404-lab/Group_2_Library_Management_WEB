@@ -62,7 +62,7 @@
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
                                 <th class="ps-3">STT</th>
-                                <th>Mã nhân viên</th>
+                                <th>Usename</th>
                                 <th>Thông tin nhân viên</th>
                                 <th>Loại nhân viên</th>
                                 <th>Trạng thái</th>
@@ -75,35 +75,58 @@
                                 <td class="ps-3 fw-bold"
                                     th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">1</td>
                                 <td>
-                                    <span class="badge bg-light text-dark border fw-bold px-2 py-1"
-                                        th:text="${'ST' + staff.staffId}">ST1</span>
-                                </td>
+    <span class="fw-bold text-classic"
+          th:text="${account != null ? account.username : 'Không có tài khoản'}">
+        username
+    </span>
+    <div class="small text-muted"
+         th:text="${account != null ? 'ID: ' + account.accountId : 'ID: N/A'}">
+        ID: 1
+    </div>
+</td>
+
                                 <td>
                                     <div th:if="${staff.user != null}">
                                         <div class="fw-bold" th:text="${staff.user.fullName}">Tên nhân viên</div>
-                                        <div class="small text-muted"><i class="bi bi-envelope me-1"></i><span
-                                                th:text="${staff.user.email}">email</span></div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-envelope me-1"></i> <span
+                                                th:text="${staff.user.email}">email</span>
+                                        </div>
                                         <div class="small text-muted" th:if="${staff.user.phone}"><i
-                                                class="bi bi-telephone me-1"></i><span
-                                                th:text="${staff.user.phone}">phone</span></div>
+                                                class="bi bi-telephone me-1"></i> <span
+                                                th:text="${staff.user.phone}">phone</span>
+                                        </div>
                                     </div>
                                     <div th:unless="${staff.user != null}" class="fst-italic text-muted small">
                                         Không có thông tin user
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge"
-                                        th:classappend="${staff.staffType == 'Admin' ? 'bg-primary' : 'bg-info text-dark'}"
-                                        th:text="${staff.staffType}">Librarian</span>
+                                    <span class="badge rounded-pill px-3 py-2 text-white" th:text="${staff.staffType}"
+                                        th:style="${
+          staff.staffType == 'Admin' ? 'background-color: #0d6efd;' :
+          staff.staffType == 'Librarian' ? 'background-color: #5bc0de;' :
+          'background-color: #6c757d;'
+      }">
+                                        Librarian
+                                    </span>
                                 </td>
+
                                 <td>
-                                    <span class="badge rounded-pill"
-                                        th:if="${staff.user != null && staff.user.status != null}"
-                                        th:classappend="${staff.user.status.name() == 'Active' ? 'bg-success' : staff.user.status.name() == 'Blocked' ? 'bg-danger' : 'bg-secondary'}"
-                                        th:text="${staff.user.status}">Active</span>
-                                    <span class="badge rounded-pill bg-secondary"
-                                        th:if="${staff.user == null || staff.user.status == null}">N/A</span>
+                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                        th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
+          staff.user.status.name() == 'Active' ? 'bg-success' :
+          staff.user.status.name() == 'Blocked' ? 'bg-danger' :
+          'bg-secondary'
+      }" th:text="${staff.user.status}">
+                                        Active
+                                    </span>
+                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                        th:if="${staff.user == null || staff.user.status == null}">
+                                        N/A
+                                    </span>
                                 </td>
+
                                 <td class="text-end pe-3">
                                     <div th:if="${account != null}">
                                         <button type="button" class="btn btn-sm btn-outline-classic"

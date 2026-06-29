@@ -1,124 +1,132 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/admin_base}">
 
 <head>
     <title>Tạo tài khoản</title>
 </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu=${source == 'staff' ? 'staff' : 'accounts'}">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
-        <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Tạo Tài Khoản Mới</h2>
-            <div class="text-muted">
-                Thêm một tài khoản thành viên hoặc nhân viên mới vào hệ thống
-            </div>
-        </div>
-        <div>
-            <a class="btn btn-outline-secondary" th:href="${backUrl}">
-                <i class="bi bi-arrow-left me-1"></i> <span th:text="${backText}">Về danh sách</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Alerts -->
-    <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
-        <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
-    </div>
-
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card-classic shadow-sm mb-4">
-                <div class="card-header bg-white border-bottom border-color p-4">
-                    <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-person-plus-fill me-2 text-classic"></i>Thông tin tài khoản
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <form method="post" th:action="@{/admin/accounts/create}">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <input type="hidden" name="source" th:value="${source}">
-
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Họ tên <span class="text-danger">*</span></label>
-                                <input class="form-control" name="fullName" required placeholder="Nguyễn Văn A">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Email <span class="text-danger">*</span></label>
-                                <input class="form-control" name="email" type="email" required placeholder="email@example.com">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Số điện thoại</label>
-                                <input class="form-control" name="phone" placeholder="0912345678">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Username <span class="text-danger">*</span></label>
-                                <input class="form-control" name="username" required placeholder="Nhập tên đăng nhập">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Mật khẩu <span class="text-danger">*</span></label>
-                                <input class="form-control" name="password" type="password" required placeholder="Nhập mật khẩu">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Loại tài khoản <span class="text-danger">*</span></label>
-                                <select class="form-select" name="accountType" id="accountType" onchange="toggleTierBox()">
-                                    <option value="MEMBER">Thành viên (Member)</option>
-                                    <option value="LIBRARIAN">Thủ thư (Librarian)</option>
-                                    <option value="ADMIN">Quản trị viên (Admin)</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6" id="tierBox">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Hạng thành viên <span class="text-danger">*</span></label>
-                                <select class="form-select" name="tierId">
-                                    <option th:each="tier : ${tiers}" th:value="${tier.tierId}" th:text="${tier.tierName}">
-                                        Standard Member
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Trạng thái <span class="text-danger">*</span></label>
-                                <select class="form-select" name="status">
-                                    <option value="Active">Hoạt động (Active)</option>
-                                    <option value="Inactive">Tạm khóa (Inactive)</option>
-                                    <option value="Blocked">Khóa vĩnh viễn (Blocked)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
-
-                        <div class="d-flex justify-content-end gap-2">
-                            <a class="btn btn-light border shadow-sm" th:href="${backUrl}">
-                                Hủy bỏ
-                            </a>
-                            <button class="btn btn-classic px-4" type="submit">
-                                <i class="bi bi-check-circle me-1"></i> Tạo tài khoản
-                            </button>
-                        </div>
-                    </form>
+    <div layout:fragment="content" th:with="activeMenu=${source == 'staff' ? 'staff' : 'accounts'}">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Tạo Tài Khoản
+                    Mới</h2>
+                <div class="text-muted">
+                    Thêm một tài khoản thành viên hoặc nhân viên mới vào hệ thống
                 </div>
             </div>
+            <div>
+                <a class="btn btn-outline-secondary" th:href="${backUrl}">
+                    </i> <span th:text="${backText}">Về danh sách</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
+            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card-classic shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom border-color p-4">
+                        <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Thông tin tài khoản
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" th:action="@{/admin/accounts/create}" autocomplete="off">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                                th:value="${_csrf.token}">
+                            <input type="hidden" name="source" th:value="${source}">
+                            <input type="hidden" name="accountType" value="MEMBER" th:if="${source == 'members'}">
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Họ tên <span
+                                            class="text-danger">*</span></label>
+                                    <input class="form-control" name="fullName" required placeholder="Nguyễn Văn A">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Email <span
+                                            class="text-danger">*</span></label>
+                                    <input class="form-control" name="email" type="email" required
+                                        placeholder="email@example.com"  autocomplete="off">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Số điện
+                                        thoại</label>
+                                    <input class="form-control" name="phone" placeholder="0912345678">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Username <span
+                                            class="text-danger">*</span></label>
+                                    <input class="form-control" name="username" required
+                                        placeholder="Nhập tên đăng nhập" autocomplete="new-password">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">
+                                        Mật khẩu <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control" name="password" type="password" required
+                                        placeholder="Nhập mật khẩu" autocomplete="new-password">
+                                </div>
+
+                                <div class="col-md-6" id="tierBox" th:if="${source == 'members'}">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">
+                                        Hạng thành viên <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-control" name="tierId">
+                                        <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
+                                            th:text="${tier.tierName}">
+                                            Standard Member
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6" th:if="${source != 'members'}">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">
+                                        Loại tài khoản <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-control" name="accountType" id="accountType">
+                                        <option value="LIBRARIAN">Thủ thư (Librarian)</option>
+                                        <option value="ADMIN">Quản trị viên (Admin)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">
+                                        Trạng thái <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-control" name="status">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Blocked">Blocked</option>
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
+                            <div class="d-flex justify-content-end" style="gap: 12px;">
+                                <a class="btn btn-light border shadow-sm" th:href="${backUrl}">
+                                    Hủy bỏ
+                                </a>
+                                <button class="btn btn-classic px-2" type="submit">
+                                    <i class="bi bi-check-circle me-1"></i> Tạo tài khoản
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div layout:fragment="scripts">
-    <script>
-        function toggleTierBox() {
-            const accountType = document.getElementById("accountType").value;
-            const tierBox = document.getElementById("tierBox");
-            if (accountType === "MEMBER") {
-                tierBox.style.display = "block";
-            } else {
-                tierBox.style.display = "none";
-            }
-        }
-        document.addEventListener("DOMContentLoaded", toggleTierBox);
-    </script>
-</div>
+    
 </body>
+
 </html>
