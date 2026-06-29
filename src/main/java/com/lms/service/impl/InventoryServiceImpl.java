@@ -1,10 +1,21 @@
 package com.lms.service.impl;
 
-import com.lms.service.InventoryService;
-
+import com.lms.entity.Book;
+import com.lms.entity.BookItem;
+import com.lms.entity.Category;
+import com.lms.entity.Genre;
 import com.lms.repository.BookItemRepository;
+import com.lms.repository.BookRepository;
 import com.lms.repository.BookDisposalRepository;
+import com.lms.repository.CategoryRepository;
+import com.lms.repository.GenreRepository;
+import com.lms.service.InventoryService;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * InventoryService - Xử lý Logic Quản lý Kho Sách
@@ -12,53 +23,167 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class InventoryServiceImpl implements InventoryService {
+    private final BookRepository bookRepository;
+    private final CategoryRepository categoryRepository;
+    private final GenreRepository genreRepository;
     private final BookItemRepository bookItemRepository;
     private final BookDisposalRepository bookDisposalRepository;
 
-    public InventoryServiceImpl(BookItemRepository bookItemRepository, BookDisposalRepository bookDisposalRepository) {
+    public InventoryServiceImpl(BookRepository bookRepository,
+                                CategoryRepository categoryRepository,
+                                GenreRepository genreRepository,
+                                BookItemRepository bookItemRepository,
+                                BookDisposalRepository bookDisposalRepository) {
+        this.bookRepository = bookRepository;
+        this.categoryRepository = categoryRepository;
+        this.genreRepository = genreRepository;
         this.bookItemRepository = bookItemRepository;
         this.bookDisposalRepository = bookDisposalRepository;
     }
 
-
-    // UC-12.1: Kiểm kê sách
     @Override
-    public void performInventoryAudit() {
-        // TODO: Implement - So sánh số lượng thực tế vs hệ thống
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
     }
 
-    // UC-12.2: Cập nhật trạng thái sách
     @Override
-    public void updateBookStatus(Integer bookItemId, String status) {
-        // TODO: Implement
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
     }
 
-    // UC-12.3: Thêm sách mới
     @Override
-    public void addNewBook(String title, String isbn, Integer categoryId, Integer quantity) {
-        // TODO: Implement - Tạo Book + BookItems
+    public List<Genre> getAllGenres() {
+        return genreRepository.findAll();
     }
 
-    // UC-12.4: Cập nhật sách
     @Override
-    public void updateBook(Integer bookId, String title, String isbn) {
-        // TODO: Implement
+    public long countBooks() {
+        return bookRepository.count();
     }
 
-    // UC-12.5: Xóa sách
+    @Override
+    public long countCategories() {
+        return categoryRepository.count();
+    }
+
+    @Override
+    public long countGenres() {
+        return genreRepository.count();
+    }
+
+    @Override
+    public Map<String, Long> getInventoryStatusCounts() {
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
+        counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
+        counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
+        counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
+        counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));
+        return counts;
+    }
+
+    @Override
+    public Map<String, Long> performInventoryAudit() {
+        return getInventoryStatusCounts();
+    }
+
+    @Override
+    public Book findBookById(Integer bookId) {
+        return bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sách với ID: " + bookId));
+    }
+
+    @Override
+    public void addNewBook(String title, String isbn, Integer genreId, Integer quantity) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên sách không được để trống.");
+        }
+        if (isbn == null || isbn.trim().isEmpty()) {
+            throw new IllegalArgumentException("ISBN không được để trống.");
+        }
+        Genre genre = genreRepository.findById(genreId)
+                .orElseThrow(() -> new IllegalArgumentException("Chọn thể loại hợp lệ."));
+
+        Book book = new Book();
+        book.setTitle(title.trim());
+        book.setIsbn(isbn.trim());
+        book.setGenre(genre);
+        book.setStatus("Active");
+        bookRepository.save(book);
+
+        int copies = quantity != null && quantity > 0 ? quantity : 1;
+        for (int i = 0; i < copies; i++) {
+            BookItem item = new BookItem();
+            item.setBook(book);
+            item.setShelf(null);
+            item.setBarcode(UUID.randomUUID().toString());
+            item.setStatus("Available");
+            bookItemRepository.save(item);
+        }
+    }
+
+    @Override
+    public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status) {
+        Book book = findBookById(bookId);
+        if (title != null && !title.trim().isEmpty()) {
+            book.setTitle(title.trim());
+        }
+        if (isbn != null && !isbn.trim().isEmpty()) {
+            book.setIsbn(isbn.trim());
+        }
+        if (genreId != null) {
+            Genre genre = genreRepository.findById(genreId)
+                    .orElseThrow(() -> new IllegalArgumentException("Chọn thể loại hợp lệ."));
+            book.setGenre(genre);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            book.setStatus(status.trim());
+        }
+        bookRepository.save(book);
+    }
+
+    @Override
+    public void updateBookStatus(Integer bookId, String status) {
+        if (status == null || status.trim().isEmpty()) {
+            throw new IllegalArgumentException("Chọn trạng thái sách.");
+        }
+        Book book = findBookById(bookId);
+        book.setStatus(status.trim());
+        bookRepository.save(book);
+    }
+
     @Override
     public void removeBook(Integer bookId) {
-        // TODO: Implement - Soft delete
+        Book book = findBookById(bookId);
+        book.setStatus("Disposed");
+        bookRepository.save(book);
+        List<BookItem> copies = bookItemRepository.findByBook_BookId(bookId);
+        for (BookItem item : copies) {
+            item.setStatus("Disposed");
+        }
+        bookItemRepository.saveAll(copies);
     }
 
-    // UC-12.6: Quản lý danh mục
     @Override
     public void addCategory(String name) {
-        // TODO: Implement
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên danh mục không được để trống.");
+        }
+        Category category = new Category();
+        category.setCategoryName(name.trim());
+        categoryRepository.save(category);
     }
 
     @Override
-    public void addGenre(String name) {
-        // TODO: Implement
+    public void addGenre(Integer categoryId, String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên thể loại không được để trống.");
+        }
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Chọn danh mục hợp lệ."));
+        Genre genre = new Genre();
+        genre.setCategory(category);
+        genre.setGenreName(name.trim());
+        genreRepository.save(genre);
     }
 }
