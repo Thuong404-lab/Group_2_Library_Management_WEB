@@ -1,41 +1,51 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
 <head>
-    <meta charset="UTF-8">
-    <title>Administrator Profile - LMS</title>
-    <style>
-        .container { width: 45%; margin: 60px auto; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .card { border: 1px solid #e0e0e0; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: #fff; }
-        .header { background-color: #111; color: white; padding: 15px; border-radius: 6px; font-size: 18px; font-weight: bold; text-align: center; letter-spacing: 1px; }
-        .info-group { margin: 25px 0; font-size: 15px; border-bottom: 1px dashed #eee; padding-bottom: 10px; }
-        .info-group strong { color: #555; width: 160px; display: inline-block; }
-        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; }
-        .btn-home { text-decoration: none; color: #111; border: 1px solid #111; padding: 10px 20px; background: transparent; display: block; text-align: center; border-radius: 6px; margin-top: 25px; font-weight: bold; transition: 0.2s; }
-        .btn-home:hover { background: #111; color: #fff; }
-    </style>
+    <title>Hồ sơ cá nhân</title>
 </head>
 <body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Hồ sơ Quản trị viên</h2>
+            <div class="text-muted">
+                Xem và cập nhật thông tin cá nhân của bạn
+            </div>
+        </div>
+    </div>
 
-<div class="container">
-    <div class="card">
-        <div class="header">ADMINISTRATOR PERSONAL PROFILE</div>
-
-        <div class="info-group">
-            <strong>System Full Name:</strong> <span th:text="${admin.fullName}">Admin Tổng</span>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; background-color: var(--sidebar-active); color: white; font-size: 2rem;">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" th:text="${admin.fullName}">Admin Tổng</h4>
+                    <p class="text-muted mb-4"><i class="bi bi-shield-lock-fill me-1"></i> Quản trị viên hệ thống</p>
+                    
+                    <ul class="list-group list-group-flush text-start mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-color">
+                            <span class="text-muted fw-bold small text-uppercase">Email</span>
+                            <span class="fw-bold" th:text="${admin.email}">admin@library.vn</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-color">
+                            <span class="text-muted fw-bold small text-uppercase">Số điện thoại</span>
+                            <span class="fw-bold" th:text="${admin.phone}">0901000001</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-color">
+                            <span class="text-muted fw-bold small text-uppercase">Trạng thái</span>
+                            <span class="badge bg-success rounded-pill" th:text="${admin.status}">Active</span>
+                        </li>
+                    </ul>
+                    
+                    <a th:href="@{/admin/dashboard}" class="btn btn-outline-classic w-100">
+                        <i class="bi bi-arrow-left me-1"></i> Về trang chủ
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="info-group">
-            <strong>Admin Email:</strong> <span th:text="${admin.email}">admin@library.vn</span>
-        </div>
-        <div class="info-group">
-            <strong>Phone Number:</strong> <span th:text="${admin.phone}">0901000001</span>
-        </div>
-        <div class="info-group">
-            <strong>Account Status:</strong> <span class="status-badge" th:text="${admin.status}">Active</span>
-        </div>
-
-        <a href="/" class="btn-home">🏠 Back to Control Dashboard</a>
     </div>
 </div>
-
 </body>
 </html>

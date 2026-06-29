@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Quản lý sách</title>
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='books'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Sách</h2>
+            <div class="text-muted">Quản lý kho sách, thêm và cập nhật thông tin ấn phẩm</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-classic" href="#">
+                <i class="bi bi-upload me-1"></i> Nhập Excel
+            </a>
+            <a class="btn btn-classic" href="#">
+                <i class="bi bi-plus-lg me-1"></i> Thêm sách mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #8b5a2b !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:46px;height:46px;background:rgba(139,90,43,0.1);color:#8b5a2b;">
+                        <i class="bi bi-book-half fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold">Tổng đầu sách</div>
+                        <h4 class="fw-bold mb-0 text-classic" th:text="${totalBooks ?: 0}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #198754 !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:46px;height:46px;background:rgba(25,135,84,0.1);color:#198754;">
+                        <i class="bi bi-stack fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold">Còn trong kho</div>
+                        <h4 class="fw-bold mb-0 text-success" th:text="${availableBooks ?: 0}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #0d6efd !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:46px;height:46px;background:rgba(13,110,253,0.1);color:#0d6efd;">
+                        <i class="bi bi-arrow-left-right fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold">Đang được mượn</div>
+                        <h4 class="fw-bold mb-0" style="color:#0d6efd;" th:text="${borrowedBooks ?: 0}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #dc3545 !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:46px;height:46px;background:rgba(220,53,69,0.1);color:#dc3545;">
+                        <i class="bi bi-exclamation-triangle fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold">Hết sách</div>
+                        <h4 class="fw-bold mb-0 text-danger" th:text="${outOfStockBooks ?: 0}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Table -->
+    <div class="card-classic shadow-sm">
+        <div class="card-body p-4">
+            <form class="row g-3 mb-4" method="get">
+                <div class="col-md-5">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;"><i class="bi bi-search"></i></span>
+                        <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tiêu đề, tác giả, ISBN...">
+                        <button class="btn btn-classic" type="submit">Tìm</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="category">
+                        <option value="">Tất cả danh mục</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Danh mục</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="availability">
+                        <option value="">Tất cả</option>
+                        <option value="available">Còn sách</option>
+                        <option value="borrowed">Đang mượn</option>
+                        <option value="out">Hết sách</option>
+                    </select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a class="btn btn-light border w-100" href="?"><i class="bi bi-arrow-clockwise me-1"></i>Tải lại</a>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th class="ps-3">STT</th>
+                            <th>Sách</th>
+                            <th>ISBN</th>
+                            <th>Danh mục</th>
+                            <th>Số lượng</th>
+                            <th>Còn lại</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-3">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="book, iterStat : ${books}" th:if="${books != null}">
+                            <td class="ps-3 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                            <td>
+                                <div class="fw-bold text-classic" th:text="${book.title}">Tên sách</div>
+                                <div class="small text-muted" th:text="${book.author}">Tác giả</div>
+                            </td>
+                            <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${book.category}">Thể loại</span>
+                            </td>
+                            <td th:text="${book.totalQuantity}">10</td>
+                            <td>
+                                <span class="fw-bold text-success" th:if="${book.availableQuantity > 0}" th:text="${book.availableQuantity}">5</span>
+                                <span class="fw-bold text-danger" th:if="${book.availableQuantity == 0}">Hết</span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill bg-success" th:if="${book.availableQuantity > 0}">Có sẵn</span>
+                                <span class="badge rounded-pill bg-danger" th:if="${book.availableQuantity == 0}">Hết sách</span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="#" class="btn btn-sm btn-outline-classic me-1"><i class="bi bi-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-pencil-square"></i></a>
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr th:if="${books == null || #lists.isEmpty(books)}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-book fs-2 d-block mb-2 opacity-50"></i>
+                                Không có sách nào.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

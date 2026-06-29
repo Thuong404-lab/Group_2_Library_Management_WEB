@@ -1,114 +1,109 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-
-<!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Gia hạn sách</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
-    <style>
-        body {
-            background: #f2f5f9;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .page {
-            padding: 18px;
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        .table-box {
-            background: white;
-            border: 1px solid #d7dee8;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        table {
-            font-size: 13px;
-            margin: 0;
-        }
-
-        th {
-            background: #f8fafc;
-            white-space: nowrap;
-        }
-
-        .badge-status {
-            border-radius: 20px;
-            padding: 6px 10px;
-            font-size: 12px;
-            background: #fef3c7;
-            color: #b45309;
-        }
-    </style>
+    <title>Quản lý Gia hạn sách</title>
 </head>
 
 <body>
-    <div class="page">
-        <div class="text-muted mb-2">Trang chủ › Quản lý mượn, trả › <b>Gia hạn sách</b></div>
+<div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Gia hạn Sách</h2>
+            <div class="text-muted">Phê duyệt hoặc từ chối các yêu cầu gia hạn mượn sách từ độc giả</div>
+        </div>
+    </div>
 
-        <div class="title">Gia hạn sách</div>
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/renewals}">
+            <div class="col-md-3">
+                <select class="form-select text-muted" name="status">
+                    <option value="">-- Trạng thái gia hạn --</option>
+                    <option value="Pending">Chờ duyệt (Pending)</option>
+                    <option value="Approved">Đã duyệt (Approved)</option>
+                    <option value="Rejected">Từ chối (Rejected)</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" placeholder="Mã phiếu, mã sách, tên bạn đọc...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
 
-        <div class="table-box">
-            <table class="table table-bordered table-hover align-middle">
-                <thead>
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th><input type="checkbox"></th>
-                        <th>STT</th>
-                        <th>Thông tin bạn đọc</th>
-                        <th>Đối tượng</th>
-                        <th>Mã phiếu gia hạn</th>
-                        <th>Sách</th>
-                        <th>Số lần gia hạn</th>
+                        <th class="ps-4">Mã PGH</th>
+                        <th>Thông tin Độc giả</th>
+                        <th>Thông tin Sách</th>
+                        <th>Số lần GH</th>
                         <th>Trạng thái</th>
-                        <th>Hành động</th>
+                        <th class="text-end pe-4">Thao tác</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <tr th:each="detail, iter : ${renewalDetails}">
-                        <td><input type="checkbox"></td>
-                        <td th:text="${iter.index + 1}">1</td>
+                        <td class="ps-4 fw-bold" style="color: #4a3b32;" th:text="${'PGH' + detail.borrowDetailId}">PGH1</td>
 
                         <td>
-                            <div
-                                th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
-                                <div>Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
-                                <div>Họ tên: <b th:text="${detail.borrow.member.user.fullName}">Bạn đọc</b></div>
-                                <div>SĐT: <span th:text="${detail.borrow.member.user.phone}">090...</span></div>
+                            <div th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
+                                <div class="fw-bold text-dark" th:text="${detail.borrow.member.user.fullName}">Bạn đọc</div>
+                                <div class="small text-muted">Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
+                                <div class="small text-muted"><i class="bi bi-telephone text-classic me-1"></i> <span th:text="${detail.borrow.member.user.phone}">090...</span></div>
                             </div>
                         </td>
 
-                        <td>Thành viên</td>
-                        <td th:text="${'PGH' + detail.borrowDetailId}">PGH1</td>
-                        <td th:text="${detail.book != null ? detail.book.title : 'Không rõ'}">Tên sách</td>
-                        <td th:text="${detail.renewCount}">0</td>
-
                         <td>
-                            <span class="badge-status" th:text="${detail.status}">Chờ duyệt</span>
+                            <div class="fw-bold text-wrap" style="max-width: 200px;" th:text="${detail.book != null ? detail.book.title : 'Không rõ'}">Tên sách</div>
+                        </td>
+                        
+                        <td>
+                            <span class="badge bg-light text-dark border px-3" th:text="${detail.renewCount + ' lần'}">0 lần</span>
                         </td>
 
                         <td>
-                            <button class="btn btn-sm btn-outline-secondary">Xem</button>
-                            <button class="btn btn-sm btn-outline-primary">Duyệt</button>
-                            <button class="btn btn-sm btn-outline-danger">Từ chối</button>
+                            <span class="badge rounded-pill px-3 py-2"
+                                  th:classappend="${detail.status == 'Pending' ? 'bg-warning bg-opacity-10 text-dark border border-warning' : detail.status == 'Approved' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-danger bg-opacity-10 text-danger border border-danger'}"
+                                  th:text="${detail.status}">
+                                Chờ duyệt
+                            </span>
+                        </td>
+
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-success" title="Duyệt gia hạn">
+                                    <i class="bi bi-check-lg"></i> Duyệt
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Từ chối">
+                                    <i class="bi bi-x-lg"></i> Từ chối
+                                </button>
+                            </div>
                         </td>
                     </tr>
 
                     <tr th:if="${#lists.isEmpty(renewalDetails)}">
-                        <td colspan="9" class="text-center text-muted py-4">Chưa có dữ liệu gia hạn</td>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-calendar-check fs-1 d-block mb-3 text-success opacity-50"></i>
+                                Không có yêu cầu gia hạn nào.
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 </body>
-
 </html>

@@ -1,87 +1,98 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Librarian Profile - LMS</title>
-    <style>
-        .container { width: 60%; margin: 40px auto; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .card { border: 1px solid #e0e0e0; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #ffffff; }
-        .profile-header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #673AB7; color: #673AB7; margin-bottom: 25px; }
-        .avatar-box { width: 80px; height: 80px; background: #e1bee7; color: #673AB7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px auto; font-weight: bold; }
-        .badge { background-color: #673AB7; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-
-        .section-title { margin-top: 30px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 18px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-primary { background-color: #673AB7; color: white; }
-        .btn-primary:hover { background-color: #512da8; }
-        .btn-danger { background-color: #f44336; color: white; }
-        .btn-danger:hover { background-color: #d32f2f; }
-        .btn-home { text-decoration: none; color: #666; border: 1px solid #ccc; padding: 9px 20px; background: #f9f9f9; display: inline-block; border-radius: 5px; }
-        .btn-home:hover { background: #eee; }
-
-        .alert { padding: 12px; margin-bottom: 15px; border-radius: 5px; font-weight: bold; }
-        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    </style>
+    <title>Hồ sơ cá nhân - Thủ thư</title>
 </head>
+
 <body>
-
-<div class="container">
-    <div class="card">
-
-        <div class="profile-header">
-            <div class="avatar-box">LB</div>
-            <h2>Librarian Profile Dashboard</h2>
-            <span class="badge">OFFICIAL STAFF</span>
+<div layout:fragment="content" th:with="activeMenu='profile'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Hồ sơ Cá nhân</h2>
+            <div class="text-muted">Quản lý thông tin tài khoản và bảo mật hệ thống</div>
         </div>
+    </div>
 
-        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        <div th:if="${passwordSuccess}" class="alert alert-success" th:text="${passwordSuccess}"></div>
-        <div th:if="${passwordError}" class="alert alert-danger" th:text="${passwordError}"></div>
+    <!-- Alerts -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${passwordSuccess}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${passwordError}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
-        <h3 class="section-title">Account Information</h3>
-        <form th:action="@{/librarian/profile/update}" method="post">
-            <div class="form-group">
-                <label>Full Name:</label>
-                <input type="text" name="fullName" class="form-control" th:value="${librarian?.fullName}" required>
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <!-- Profile Card -->
+            <div class="card-classic border-0 shadow-sm mb-4">
+                <div class="card-header bg-white p-4 border-bottom text-center" style="border-color: rgba(139, 90, 43, 0.1) !important;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 text-white shadow-sm" 
+                         style="width: 80px; height: 80px; background-color: #8b5a2b; font-size: 2rem; font-family: 'Playfair Display', serif;"
+                         th:text="${librarian != null ? #strings.substring(librarian.fullName, 0, 1).toUpperCase() : 'L'}">
+                        L
+                    </div>
+                    <h4 class="fw-bold mb-1" style="color: #4a3b32;" th:text="${librarian?.fullName}">Thủ thư</h4>
+                    <span class="badge bg-secondary text-uppercase px-3 py-1 mt-2 shadow-sm"><i class="bi bi-person-badge me-1"></i>Official Staff</span>
+                </div>
+                
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase mb-4" style="color: #8b5a2b; font-size: 0.85rem;"><i class="bi bi-person-lines-fill me-2"></i>Thông tin tài khoản</h6>
+                    <form th:action="@{/librarian/profile/update}" method="post">
+                        <div class="row g-4 mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Họ và Tên</label>
+                                <input type="text" name="fullName" class="form-control bg-light border-0" th:value="${librarian?.fullName}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Địa chỉ Email</label>
+                                <input type="email" name="email" class="form-control bg-light border-0" th:value="${librarian?.email}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Số Điện thoại</label>
+                                <input type="text" name="phone" class="form-control bg-light border-0" th:value="${librarian?.phone}">
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-classic px-4">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Email Address:</label>
-                <input type="email" name="email" class="form-control" th:value="${librarian?.email}" required>
-            </div>
-            <div class="form-group">
-                <label>Contact Phone Number:</label>
-                <input type="text" name="phone" class="form-control" th:value="${librarian?.phone}">
-            </div>
-            <button type="submit" class="btn btn-primary">Save Profile Changes</button>
-        </form>
 
-        <h3 class="section-title">Security & Credentials</h3>
-        <form th:action="@{/librarian/profile/change-password}" method="post">
-            <div class="form-group">
-                <label>Current Password:</label>
-                <input type="password" name="oldPassword" class="form-control" placeholder="Enter your current password" required>
+            <!-- Security Card -->
+            <div class="card-classic border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase mb-4 text-danger" style="font-size: 0.85rem;"><i class="bi bi-shield-lock-fill me-2"></i>Bảo mật hệ thống</h6>
+                    <form th:action="@{/librarian/profile/change-password}" method="post">
+                        <div class="row g-4 mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>
+                                <input type="password" name="oldPassword" class="form-control bg-light border-0" placeholder="Nhập mật khẩu hiện tại" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu mới</label>
+                                <input type="password" name="newPassword" class="form-control bg-light border-0" placeholder="Nhập mật khẩu mới an toàn" required>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-outline-danger px-4">Đổi mật khẩu</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label>New Password:</label>
-                <input type="password" name="newPassword" class="form-control" placeholder="Enter a secure new password" required>
-            </div>
-            <button type="submit" class="btn btn-danger">Update System Password</button>
-        </form>
-
-        <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;">
-
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="/librarian/dashboard" class="btn-home">🏠 Back to Dashboard Home</a>
         </div>
-
     </div>
 </div>
-
 </body>
 </html>

@@ -44,9 +44,16 @@ public class GuestController {
     @GetMapping("/books")
     public String viewBookList(@RequestParam(defaultValue = "0") int page,
                                Model model) {
-        // TODO: Implement - Gọi BookService.findAll(Pageable)
-        // TODO: Truyền danh sách sách + thông tin phân trang vào model
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, 12, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "bookId"));
+        org.springframework.data.domain.Page<Book> bookPage = bookService.findAllBooks(pageable);
+        model.addAttribute("bookPage", bookPage);
         return "guest/books";
+    }
+
+    // Giới thiệu thư viện
+    @GetMapping("/about")
+    public String aboutPage() {
+        return "guest/about";
     }
 
     // UC-3: View Book Detail - Xem chi tiết một quyển sách

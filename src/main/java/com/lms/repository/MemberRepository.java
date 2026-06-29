@@ -14,10 +14,11 @@ import java.util.Optional;
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Integer> {
     Optional<Member> findByUserId(Integer userId);
-    Optional<Member> findByUserPhone(String phone);
     List<Member> findAll();
 
     Optional<Member> findByUserEmail(String email);
+
+    Optional<Member> findByUserPhone(String phone);
 
     Page<Member> findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(
             String fullName,

@@ -121,116 +121,245 @@
 </head>
 
 <body>
-    <!-- HERO SECTION -->
-    <div class="position-relative" style="background: linear-gradient(rgba(26, 54, 93, 0.8), rgba(26, 54, 93, 0.9)), url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000&auto=format&fit=crop') center/cover; padding: 100px 0;">
-        <div class="container text-center text-white position-relative" style="z-index: 1;">
-            <h1 class="display-4 fw-bold mb-3" style="font-family: 'Playfair Display', serif;">Chào mừng đến với Thư Viện LMW</h1>
-            <p class="lead mb-5 opacity-75">Khám phá kho tàng hơn 10,000+ cuốn sách, tài liệu nghiên cứu và văn học kinh điển.</p>
-            
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <!-- Search Bar in Hero -->
-                    <div class="input-group input-group-lg shadow-lg" style="border-radius: 50px; overflow: hidden;">
-                        <span class="input-group-text bg-white border-0 ps-4 text-primary"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control border-0 py-3 px-3" placeholder="Tìm tên sách, tác giả, nhà xuất bản..." style="box-shadow: none;">
-                        <button class="btn btn-warning px-5 fw-bold" type="button" style="background-color: #f6d365; border: none; color: #1a365d;">TÌM KIẾM</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Login/Register Buttons for Guest -->
-            <div class="mt-4" th:if="${!#authorization.expression('isAuthenticated()')}">
-                <a th:href="@{/login}" class="btn btn-outline-light rounded-pill px-4 me-2 border-2 fw-bold">Đăng nhập</a>
-                <a th:href="@{/register}" class="btn btn-warning rounded-pill px-4 fw-bold" style="background-color: #f6d365; border: none; color: #1a365d;">Đăng ký ngay</a>
-            </div>
-        </div>
-    </div>
-
-    <div layout:fragment="content" class="container py-5">
-        
-        <!-- FEATURED CATEGORIES -->
-        <div class="mb-5">
-            <h4 class="fw-bold mb-4" style="color: #1a365d;">Danh mục nổi bật</h4>
-            <div class="row g-3 text-center">
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="p-3 border rounded-3 bg-white shadow-sm category-hover cursor-pointer" style="cursor: pointer; transition: 0.2s;">
-                        <i class="bi bi-journal-text fs-2 text-primary mb-2"></i>
-                        <h6 class="mb-0 fw-bold">Văn học VN</h6>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="p-3 border rounded-3 bg-white shadow-sm category-hover cursor-pointer" style="cursor: pointer; transition: 0.2s;">
-                        <i class="bi bi-globe-americas fs-2 text-success mb-2"></i>
-                        <h6 class="mb-0 fw-bold">Nước ngoài</h6>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="p-3 border rounded-3 bg-white shadow-sm category-hover cursor-pointer" style="cursor: pointer; transition: 0.2s;">
-                        <i class="bi bi-cpu fs-2 text-secondary mb-2"></i>
-                        <h6 class="mb-0 fw-bold">Công nghệ</h6>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="p-3 border rounded-3 bg-white shadow-sm category-hover cursor-pointer" style="cursor: pointer; transition: 0.2s;">
-                        <i class="bi bi-heart-pulse fs-2 text-danger mb-2"></i>
-                        <h6 class="mb-0 fw-bold">Tâm lý</h6>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="p-3 border rounded-3 bg-white shadow-sm category-hover cursor-pointer" style="cursor: pointer; transition: 0.2s;">
-                        <i class="bi bi-briefcase fs-2 text-warning mb-2"></i>
-                        <h6 class="mb-0 fw-bold">Kinh tế</h6>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="p-3 border rounded-3 bg-white shadow-sm category-hover cursor-pointer" style="cursor: pointer; transition: 0.2s;">
-                        <i class="bi bi-three-dots fs-2 text-dark mb-2"></i>
-                        <h6 class="mb-0 fw-bold">Khám phá</h6>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- RECENT BOOKS GRID -->
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <div>
-                <h4 class="fw-bold mb-1" style="color: #1a365d;">Sách mới cập nhật</h4>
-                <p class="text-muted small mb-0">
-                    <span th:text="${books != null ? books.size() : 0}"></span> sách tìm thấy
-                </p>
-            </div>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    Sắp xếp: Mới nhất
-                </button>
-            </div>
-        </div>
-
-        <!-- Book Grid -->
-        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-4 mb-5" th:if="${books != null and !books.isEmpty()}">
-            
-            <div class="col" th:each="book : ${books}">
-                <a th:href="@{/books/{id}(id=${book.bookId})}" class="text-decoration-none text-dark">
-                    <div class="card book-card h-100">
-                        <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop" class="book-img" alt="Book cover">
-                        <div class="card-body p-3">
-                            <div class="book-category" th:text="${book.genre != null ? book.genre.genreName : 'KHÔNG CÓ DM'}">VĂN HỌC VN</div>
-                            <h6 class="book-title fs-6 text-truncate" th:text="${book.title}" th:title="${book.title}">Đất Rừng Phương Nam</h6>
-                            <p class="book-author text-truncate mb-2">
-                                <span th:each="author, iterStat : ${book.authors}">
-                                    <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
-                                </span>
-                                <span th:if="${book.authors == null or book.authors.isEmpty()}">Chưa rõ tác giả</span>
-                            </p>
-                            <div class="book-footer mt-0">
-                                <span class="book-rating small"><i class="bi bi-star-fill text-warning"></i> 4.5</span>
-                                <span class="book-stock text-muted small fw-bold" th:text="${book.status}">Available</span>
+    <div layout:fragment="content" class="container-fluid p-0">
+        <!-- HERO SECTION -->
+        <div class="position-relative" style="background: linear-gradient(rgba(26, 54, 93, 0.8), rgba(26, 54, 93, 0.9)), url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000&auto=format&fit=crop') center/cover; padding: 100px 0;">
+            <div class="container text-center text-white position-relative" style="z-index: 1;">
+                <h1 class="display-4 fw-bold mb-3" style="font-family: 'Playfair Display', serif;">Chào mừng đến với Thư Viện LMW</h1>
+                <p class="lead mb-5 opacity-75">Khám phá kho tàng hơn 10,000+ cuốn sách, tài liệu nghiên cứu và văn học kinh điển.</p>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <!-- Search Bar in Hero -->
+                        <div class="input-group input-group-lg shadow-lg" style="border-radius: 50px; overflow: hidden;">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white border-0 px-4 text-primary"><i class="bi bi-search"></i></span>
+                            </div>
+                            <input type="text" class="form-control border-0 py-3" placeholder="Tìm tên sách, tác giả, nhà xuất bản..." style="box-shadow: none;">
+                            <div class="input-group-append">
+                                <button class="btn btn-warning px-5 font-weight-bold" type="button" style="background-color: #f6d365; border: none; color: #1a365d;">TÌM KIẾM</button>
                             </div>
                         </div>
                     </div>
-                </a>
+                </div>
+
+                <!-- Login/Register Buttons for Guest -->
+                <div class="mt-4" th:if="${!#authorization.expression('isAuthenticated()')}">
+                    <a th:href="@{/login}" class="btn btn-outline-light rounded-pill px-4 mr-2 border-2 font-weight-bold">Đăng nhập</a>
+                    <a th:href="@{/register}" class="btn btn-warning rounded-pill px-4 font-weight-bold" style="background-color: #f6d365; border: none; color: #1a365d;">Đăng ký ngay</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container py-5">
+        
+        <!-- FEATURED CATEGORIES (CLASSIC UI) -->
+        <div class="mb-5 pb-3">
+            <h3 class="fw-bold mb-4 text-center" style="color: #4a3b32; font-family: 'Playfair Display', serif;"><i class="bi bi-bookmark-heart text-danger me-2"></i>Chủ đề Nổi bật</h3>
+            <div class="row g-4 justify-content-center text-center">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="/books?category=van-hoc" class="text-decoration-none">
+                        <div class="p-3 bg-transparent category-classic-card" style="border: 2px solid #8b5a2b; border-radius: 8px; transition: 0.3s; cursor: pointer;">
+                            <i class="bi bi-feather fs-1 mb-2 d-block" style="color: #8b5a2b;"></i>
+                            <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; letter-spacing: 0.5px;">Văn học VN</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="/books?category=ngoai-ngu" class="text-decoration-none">
+                        <div class="p-3 bg-transparent category-classic-card" style="border: 2px solid #8b5a2b; border-radius: 8px; transition: 0.3s; cursor: pointer;">
+                            <i class="bi bi-globe-americas fs-1 mb-2 d-block" style="color: #8b5a2b;"></i>
+                            <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; letter-spacing: 0.5px;">Nước ngoài</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="/books?category=cong-nghe" class="text-decoration-none">
+                        <div class="p-3 bg-transparent category-classic-card" style="border: 2px solid #8b5a2b; border-radius: 8px; transition: 0.3s; cursor: pointer;">
+                            <i class="bi bi-pc-display-horizontal fs-1 mb-2 d-block" style="color: #8b5a2b;"></i>
+                            <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; letter-spacing: 0.5px;">Công nghệ</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="/books?category=tam-ly" class="text-decoration-none">
+                        <div class="p-3 bg-transparent category-classic-card" style="border: 2px solid #8b5a2b; border-radius: 8px; transition: 0.3s; cursor: pointer;">
+                            <i class="bi bi-yin-yang fs-1 mb-2 d-block" style="color: #8b5a2b;"></i>
+                            <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; letter-spacing: 0.5px;">Tâm lý</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="/books?category=kinh-te" class="text-decoration-none">
+                        <div class="p-3 bg-transparent category-classic-card" style="border: 2px solid #8b5a2b; border-radius: 8px; transition: 0.3s; cursor: pointer;">
+                            <i class="bi bi-briefcase fs-1 mb-2 d-block" style="color: #8b5a2b;"></i>
+                            <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; letter-spacing: 0.5px;">Kinh tế</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="/books" class="text-decoration-none">
+                        <div class="p-3 bg-transparent category-classic-card" style="border: 2px solid #8b5a2b; border-radius: 8px; transition: 0.3s; cursor: pointer; background-color: rgba(139, 90, 43, 0.05) !important;">
+                            <i class="bi bi-collection-play fs-1 mb-2 d-block" style="color: #8b5a2b;"></i>
+                            <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; letter-spacing: 0.5px;">Khám phá</h6>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <style>
+                .category-classic-card:hover {
+                    background-color: #8b5a2b !important;
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 20px rgba(139, 90, 43, 0.2);
+                }
+                .category-classic-card:hover i, 
+                .category-classic-card:hover h6 {
+                    color: #fff !important;
+                }
+            </style>
+        </div>
+
+        <!-- RECENT BOOKS HORIZONTAL SLIDER (CLASSIC UI) -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-dark pb-2">
+                <div>
+                    <h3 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;"><i class="bi bi-stars text-warning me-2"></i>Sách mới cập nhật</h3>
+                </div>
+                <a href="/books" class="btn btn-outline-dark btn-sm rounded-0 border-2 fw-bold" style="font-family: 'Playfair Display', serif;">Xem tất cả <i class="bi bi-arrow-right"></i></a>
             </div>
 
+            <!-- Horizontal Scrollable Container (Slider 1) -->
+            <div class="d-flex overflow-x-auto pb-4 pt-2 px-1 book-slider-container w-100" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;" th:if="${books != null and !books.isEmpty()}">
+                <div class="flex-shrink-0 mr-4" style="width: 160px; scroll-snap-align: start;" th:each="book : ${books}">
+                    <a href="#" data-toggle="modal" th:data-target="'#bookModal' + ${book.bookId}" class="text-decoration-none text-dark">
+                        <div class="card h-100 border-0 bg-transparent classic-book-card">
+                            <div class="position-relative shadow-sm mb-2 rounded-1" style="height: 240px; border-left: 4px solid #8b5a2b; overflow: hidden; transition: 0.3s;">
+                                <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
+                                <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 10%, rgba(255,255,255,0) 90%, rgba(0,0,0,0.1) 100%);"></div>
+                            </div>
+                            <div class="text-center">
+                                <h6 class="book-title fw-bold text-truncate mb-1" th:text="${book.title}" th:title="${book.title}" style="color: #2c1e16; font-size: 0.95rem;">Đất Rừng Phương Nam</h6>
+                                <p class="text-muted mb-0 fst-italic text-truncate" style="font-family: Georgia, serif; font-size: 0.8rem;">
+                                    <span th:each="author, iterStat : ${book.authors}"><span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span></span>
+                                    <span th:if="${book.authors == null or book.authors.isEmpty()}">Khuyết danh</span>
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOT TRENDING BOOKS HORIZONTAL SLIDER -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-dark pb-2">
+                <div>
+                    <h3 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;"><i class="bi bi-fire text-danger mr-2"></i>Sách Thịnh Hành / Đọc nhiều nhất</h3>
+                </div>
+                <a href="/books" class="btn btn-outline-dark btn-sm rounded-0 border-2 fw-bold" style="font-family: 'Playfair Display', serif;">Xem bảng xếp hạng <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            <!-- Horizontal Scrollable Container (Slider 2) -->
+            <div class="d-flex overflow-x-auto pb-4 pt-2 px-1 book-slider-container w-100" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;" th:if="${books != null and !books.isEmpty()}">
+                <div class="flex-shrink-0 mr-4" style="width: 160px; scroll-snap-align: start;" th:each="book : ${books}">
+                    <a href="#" data-toggle="modal" th:data-target="'#bookModal' + ${book.bookId}" class="text-decoration-none text-dark">
+                        <div class="card h-100 border-0 bg-transparent classic-book-card">
+                            <div class="position-relative shadow-sm mb-2 rounded-1" style="height: 240px; border-left: 4px solid #8b5a2b; overflow: hidden; transition: 0.3s;">
+                                <!-- Dùng ảnh động theo ID sách -->
+                                <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
+                                <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 10%, rgba(255,255,255,0) 90%, rgba(0,0,0,0.1) 100%);"></div>
+                                <span class="position-absolute top-0 end-0 m-1 badge badge-danger fw-bold shadow-sm">🔥 HOT</span>
+                            </div>
+                            <div class="text-center">
+                                <h6 class="book-title fw-bold text-truncate mb-1" th:text="${book.title}" th:title="${book.title}" style="color: #2c1e16; font-size: 0.95rem;">Đất Rừng Phương Nam</h6>
+                                <p class="text-muted mb-0 fst-italic text-truncate" style="font-family: Georgia, serif; font-size: 0.8rem;">
+                                    <span th:each="author, iterStat : ${book.authors}"><span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span></span>
+                                    <span th:if="${book.authors == null or book.authors.isEmpty()}">Khuyết danh</span>
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals for both sliders (reused) -->
+        <div th:if="${books != null and !books.isEmpty()}">
+            <div class="modal fade" th:each="book : ${books}" th:id="'bookModal' + ${book.bookId}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="background-color: #fdfbf7;">
+                        <div class="modal-header border-bottom border-secondary-subtle">
+                            <h4 class="modal-title font-playfair fw-bold" style="color: #4a3b32;"><i class="bi bi-book-half me-2"></i>Chi tiết Tác phẩm</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body p-4 pt-4">
+                            <div class="row">
+                                <div class="col-md-4 mb-4 mb-md-0">
+                                    <div class="shadow-lg rounded-1" style="border-left: 6px solid #8b5a2b; overflow: hidden;">
+                                        <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}" class="img-fluid w-100" alt="Book cover">
+                                    </div>
+                                </div>
+                                <div class="col-md-8 text-start">
+                                    <h2 class="fw-bold mb-2" style="font-family: 'Playfair Display', serif; color: #2c1e16;" th:text="${book.title}">Tên Sách</h2>
+                                    <h5 class="text-muted mb-3 fst-italic" style="font-family: 'Lora', serif;">Chấp bút: 
+                                        <span th:each="author, iterStat : ${book.authors}"><span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span></span>
+                                    </h5>
+                                    <p class="text-dark mb-4" style="line-height: 1.6; text-align: justify; font-size: 0.95rem;" th:text="${book.description != null ? book.description : 'Một tác phẩm kinh điển đáng để đọc và suy ngẫm, đưa bạn đến với những chân trời tri thức mới.'}"></p>
+                                    <div class="p-3 mb-4 rounded-2" style="background-color: rgba(139, 90, 43, 0.05); border: 1px dashed #8b5a2b;">
+                                        <div class="row">
+                                            <div class="col-sm-6 mb-2">
+                                                <strong style="color: #4a3b32;">Ký hiệu (ISBN):</strong> <span th:text="${book.isbn}"></span>
+                                            </div>
+                                            <div class="col-sm-6 mb-2">
+                                                <strong style="color: #4a3b32;">Thể loại:</strong> <span class="badge bg-dark text-light rounded-0 px-2" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</span>
+                                            </div>
+                                            <div class="col-sm-6 mb-2">
+                                                <strong style="color: #4a3b32;">Tình trạng:</strong> <span class="text-success fw-bold" th:text="${book.status == 'Active' ? 'Sẵn sàng' : 'Không có sẵn'}">Sẵn có</span>
+                                            </div>
+                                            <div class="col-sm-6 mb-2">
+                                                <strong style="color: #4a3b32;">Số lượng hiện có:</strong> <span class="fw-bold" style="color: #8b5a2b;">5 cuốn</span>
+                                            </div>
+                                            <div class="col-sm-6 mb-2">
+                                                <strong style="color: #4a3b32;">Vị trí sách:</strong> <span>Kho mượn đọc</span>
+                                            </div>
+                                            <div class="col-sm-6 mb-2">
+                                                <strong style="color: #4a3b32;">Tủ kệ sách:</strong> <span>Kệ A - Ngăn 3</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 d-flex">
+                                        <button sec:authorize="isAuthenticated()" class="btn rounded-0 px-4 fw-bold mr-3" style="background-color: #8b5a2b; color: #fdfbf7; border: none;" onclick="showToast('Tính năng yêu cầu mượn đang được phát triển!')"><i class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
+                                        <button sec:authorize="!isAuthenticated()" class="btn rounded-0 px-4 fw-bold mr-3" style="background-color: #8b5a2b; color: #fdfbf7; border: none;" onclick="window.location.href='/login'"><i class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
+                                        <button sec:authorize="isAuthenticated()" class="btn btn-outline-danger rounded-0 px-4 fw-bold" onclick="showToast('Đã thêm vào danh sách yêu thích!')"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
+                                        <button sec:authorize="!isAuthenticated()" class="btn btn-outline-danger rounded-0 px-4 fw-bold" onclick="window.location.href='/login'"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            
+            <style>
+                .book-slider-container::-webkit-scrollbar {
+                    height: 8px;
+                }
+                .book-slider-container::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 4px;
+                }
+                .book-slider-container::-webkit-scrollbar-thumb {
+                    background: #8b5a2b;
+                    border-radius: 4px;
+                }
+                .classic-book-card:hover div.shadow-lg {
+                    transform: translateY(-10px);
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important;
+                }
+            </style>
         </div>
         
         <div class="alert alert-info" th:if="${books == null or books.isEmpty()}">

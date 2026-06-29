@@ -8,6 +8,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.core.authority.AuthorityUtils;
+
+import java.util.Set;
 
 /**
  * SecurityConfig - Spring Security Configuration
@@ -29,23 +33,27 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationSuccessHandler customSuccessHandler() {
+        return (request, response, authentication) -> {
+            Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
+            if (roles.contains("ROLE_ADMIN")) {
+                response.sendRedirect("/admin/dashboard");
+            } else if (roles.contains("ROLE_LIBRARIAN")) {
+                response.sendRedirect("/librarian/dashboard");
+            } else {
+                response.sendRedirect("/");
+            }
+        };
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/login",
-                                "/register",
-                                "/forgot-password",
-                                "/reset-password",
-                                "/css/**",
-                                "/js/**",
-                                "/books/**",
-                                "/member/membership/benefits",
-                                "/member/membership/tier",
-                                "/librarian/borrow/create"
-                        ).permitAll()
+                        // 1. Các URL công khai ai cũng được vào (Gộp đầy đủ cả 2 nhánh)
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**", "/about",
+                                "/member/membership/benefits", "/member/membership/tier", "/librarian/borrow/create").permitAll()
 
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")

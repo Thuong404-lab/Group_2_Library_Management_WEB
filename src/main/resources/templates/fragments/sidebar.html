@@ -4,7 +4,7 @@
 <head>
 </head>
 <body>
-    <nav th:fragment="sidebar" class="bg-custom-dark sidebar-container p-3" style="background-color: #1a365d; min-height: 100vh; color: #fff;">
+    <nav th:fragment="sidebar" class="col-md-3 col-lg-2 d-md-block bg-custom-dark sidebar-container p-3" style="background-color: #1a365d; min-height: 100vh; color: #fff;">
         <!-- Brand -->
         <div class="d-flex align-items-center mb-4 mt-2">
             <div class="bg-warning text-dark rounded p-2 me-3" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
@@ -16,47 +16,15 @@
             </div>
         </div>
         <hr class="border-secondary mb-4">
-
-        <!-- Member Info Card (Only for MEMBER) -->
-        <div sec:authorize="hasRole('MEMBER')" class="member-info-card p-3 mb-4 rounded border border-secondary" style="background-color: #23416b;">
-            <h6 class="text-white fw-bold mb-1" th:text="${#authentication.principal.name}">Nguyễn Thị Lan Anh</h6>
-            <p class="text-light small mb-2">Thành viên</p>
-            <span class="badge border border-warning text-warning p-2">LOYAL MEMBER <i class="bi bi-star-fill"></i></span>
-        </div>
-
         <!-- Navigation Links -->
         <ul class="nav flex-column gap-2">
             
             <!-- FOR MEMBER -->
             <div sec:authorize="hasRole('MEMBER')">
-                <li class="nav-item">
-                    <a class="nav-link text-light fs-5 py-2" th:href="@{/member/dashboard}">
-                        <i class="bi bi-house-door me-3"></i> Tổng quan
-                    </a>
-                </li>
+                <!-- All member account links have been moved to the top header profile dropdown -->
                 <li class="nav-item">
                     <a class="nav-link text-white fs-5 py-2 active rounded" th:href="@{/}" style="background-color: #3b5c8c;">
-                        <i class="bi bi-search me-3"></i> Tìm sách
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light fs-5 py-2" th:href="@{/member/borrow}">
-                        <i class="bi bi-journal-bookmark me-3"></i> Mượn / Trả
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light fs-5 py-2" th:href="@{/member/wallet}">
-                        <i class="bi bi-credit-card me-3"></i> Ví & Phí phạt
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light fs-5 py-2" th:href="@{/member/notifications}">
-                        <i class="bi bi-bell me-3"></i> Thông báo
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light fs-5 py-2" th:href="@{/member/profile}">
-                        <i class="bi bi-person me-3"></i> Hồ sơ
+                        <i class="bi bi-search me-3"></i> Trang chủ (Tìm sách)
                     </a>
                 </li>
             </div>
