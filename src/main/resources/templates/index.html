@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
     layout:decorate="~{layout/base}">
 
 <head>
@@ -332,7 +333,17 @@
                                     <div class="mt-2 d-flex">
                                         <button sec:authorize="isAuthenticated()" class="btn rounded-0 px-4 fw-bold mr-3" style="background-color: #8b5a2b; color: #fdfbf7; border: none;" onclick="showToast('Tính năng yêu cầu mượn đang được phát triển!')"><i class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
                                         <button sec:authorize="!isAuthenticated()" class="btn rounded-0 px-4 fw-bold mr-3" style="background-color: #8b5a2b; color: #fdfbf7; border: none;" onclick="window.location.href='/login'"><i class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
-                                        <button sec:authorize="isAuthenticated()" class="btn btn-outline-danger rounded-0 px-4 fw-bold" onclick="showToast('Đã thêm vào danh sách yêu thích!')"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
+                                        <form sec:authorize="isAuthenticated()"
+                                              th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
+                                              method="post"
+                                              class="d-inline favorite-form"
+                                              th:data-book-id="${book.bookId}">
+                                            <button type="submit"
+                                                    th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger rounded-0 px-4 fw-bold js-favorite-button active' : 'btn btn-outline-danger rounded-0 px-4 fw-bold js-favorite-button'}">
+                                                <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill mr-2' : 'bi bi-heart mr-2'}"></i>
+                                                <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                                            </button>
+                                        </form>
                                         <button sec:authorize="!isAuthenticated()" class="btn btn-outline-danger rounded-0 px-4 fw-bold" onclick="window.location.href='/login'"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
                                     </div>
                                 </div>

@@ -8,6 +8,7 @@ public class MemberNotificationResponse {
     private String title;
     private String content;
     private LocalDateTime sentDate;
+    private Boolean read;
 
     public MemberNotificationResponse() {
     }
@@ -42,5 +43,13 @@ public class MemberNotificationResponse {
 
     public void setSentDate(LocalDateTime sentDate) {
         this.sentDate = sentDate;
+    }
+
+    public Boolean getRead() {
+        return read;
+    }
+
+    public void setRead(Boolean read) {
+        this.read = read;
     }
 }

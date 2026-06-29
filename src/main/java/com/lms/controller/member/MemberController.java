@@ -29,7 +29,7 @@ public class MemberController {
 
     @GetMapping("/notifications")
     public String notifications() {
-        return "member/notifications";
+        return "redirect:/member/interaction/notifications";
     }
 
     // Đã xóa @GetMapping("/profile") vì bị trùng với ProfileController có sẵn trong hệ thống

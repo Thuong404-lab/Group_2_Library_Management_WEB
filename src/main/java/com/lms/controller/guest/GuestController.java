@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.lms.service.BookService;
 import com.lms.repository.GenreRepository;
+import com.lms.service.MemberFavoriteService;
+
+import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 import com.lms.entity.Book;
 
@@ -18,17 +22,20 @@ public class GuestController {
 
     private final BookService bookService;
     private final GenreRepository genreRepository;
+    private final MemberFavoriteService memberFavoriteService;
 
-    public GuestController(BookService bookService, GenreRepository genreRepository) {
+    public GuestController(BookService bookService, GenreRepository genreRepository, MemberFavoriteService memberFavoriteService) {
         this.bookService = bookService;
         this.genreRepository = genreRepository;
+        this.memberFavoriteService = memberFavoriteService;
     }
 
     // Trang chủ
     @GetMapping("/")
-    public String homePage(Model model) {
+    public String homePage(Model model, Principal principal) {
         List<Book> books = bookService.getRecentBooks(6);
         model.addAttribute("books", books);
+        addFavoriteBookIds(model, principal);
         return "index";
     }
 
@@ -74,9 +81,23 @@ public class GuestController {
 
     // UC-3: View Book Detail - Xem chi tiết một quyển sách
     @GetMapping("/books/{id}")
-    public String viewBookDetail(@PathVariable Integer id, Model model) {
+    public String viewBookDetail(@PathVariable Integer id, Model model, Principal principal) {
         Book book = bookService.findBookById(id);
         model.addAttribute("book", book);
+        addFavoriteBookIds(model, principal);
         return "guest/book-detail";
+    }
+
+    private void addFavoriteBookIds(Model model, Principal principal) {
+        if (principal == null) {
+            model.addAttribute("favoriteBookIds", Collections.emptySet());
+            return;
+        }
+
+        try {
+            model.addAttribute("favoriteBookIds", memberFavoriteService.getMyFavoriteBookIds(principal.getName()));
+        } catch (RuntimeException e) {
+            model.addAttribute("favoriteBookIds", Collections.emptySet());
+        }
     }
 }

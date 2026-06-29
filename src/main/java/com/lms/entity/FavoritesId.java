@@ -1,14 +1,19 @@
 package com.lms.entity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
 public class FavoritesId implements Serializable {
+    @Column(name = "member_id")
     private Integer memberId;
+
+    @Column(name = "book_id")
     private Integer bookId;
 
     public FavoritesId() {}
+
     public FavoritesId(Integer memberId, Integer bookId) {
         this.memberId = memberId;
         this.bookId = bookId;
