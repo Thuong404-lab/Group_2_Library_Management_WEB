@@ -1,29 +1,44 @@
 package com.lms.service;
 
+import com.lms.entity.Book;
+import com.lms.entity.Category;
+import com.lms.entity.Genre;
+import java.util.List;
+import java.util.Map;
+
 /**
  * InventoryService - Xử lý Logic Quản lý Kho Sách
  * Người phụ trách: La Tấn Khanh (CE191640)
  */
 public interface InventoryService {
 
-    // UC-12.1: Kiểm kê sách
-    void performInventoryAudit();
+    List<Book> getAllBooks();
 
-    // UC-12.2: Cập nhật trạng thái sách
-    void updateBookStatus(Integer bookItemId, String status);
+    List<Category> getAllCategories();
 
-    // UC-12.3: Thêm sách mới
-    void addNewBook(String title, String isbn, Integer categoryId, Integer quantity);
+    List<Genre> getAllGenres();
 
-    // UC-12.4: Cập nhật sách
-    void updateBook(Integer bookId, String title, String isbn);
+    long countBooks();
 
-    // UC-12.5: Xóa sách
+    long countCategories();
+
+    long countGenres();
+
+    Map<String, Long> getInventoryStatusCounts();
+
+    Map<String, Long> performInventoryAudit();
+
+    Book findBookById(Integer bookId);
+
+    void addNewBook(String title, String isbn, Integer genreId, Integer quantity);
+
+    void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status);
+
+    void updateBookStatus(Integer bookId, String status);
+
     void removeBook(Integer bookId);
 
-    // UC-12.6: Quản lý danh mục
     void addCategory(String name);
 
-    void addGenre(String name);
-
+    void addGenre(Integer categoryId, String name);
 }

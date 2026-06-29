@@ -10,6 +10,7 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import java.util.Set;
 
@@ -33,6 +34,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+    @Bean
     public AuthenticationSuccessHandler customSuccessHandler() {
         return (request, response, authentication) -> {
             Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
@@ -51,13 +57,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Các URL công khai ai cũng được vào (Gộp đầy đủ cả 2 nhánh)
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**", "/about",
-                                "/member/membership/benefits", "/member/membership/tier", "/librarian/borrow/create").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**", "/about"
+                                ).permitAll()
 
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
-
                         .requestMatchers("/member/**").hasRole("MEMBER")
                         .anyRequest().authenticated()
                 )
@@ -73,7 +77,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(customSuccessHandler())
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
@@ -81,7 +85,8 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session
                         .maximumSessions(1)
-                        .expiredUrl("/login?expired")
+                        .maxSessionsPreventsLogin(false)
+                        .expiredUrl("/login?expired=true")
                         .sessionRegistry(sessionRegistry())
                 )
                 .exceptionHandling(exception -> exception
