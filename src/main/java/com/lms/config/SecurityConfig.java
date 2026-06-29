@@ -58,13 +58,15 @@ public class SecurityConfig {
 
                         // 2. Phân quyền nghiêm ngặt theo vai trò (Role-based Authorization)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN") // Cho cả ADMIN và LIBRARIAN truy cập hệ sinh thái này
+                        .requestMatchers("/librarian/**").hasAnyRole("LIBRARIAN") // Cho cả ADMIN và LIBRARIAN truy cập hệ sinh thái này
                         .requestMatchers("/member/**").hasRole("MEMBER")
                         .anyRequest().authenticated()
                 )
+
+                //Quoc Anh đã sửa chỗ này ( Dùng method successHandler thay vì defaultSuccessUrl)
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(customSuccessHandler())
                         .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2

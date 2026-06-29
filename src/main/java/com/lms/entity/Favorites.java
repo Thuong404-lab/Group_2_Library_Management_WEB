@@ -3,9 +3,9 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "Favorites")
-public class Favorite {
+public class Favorites {
     @EmbeddedId
-    private FavoriteId id;
+    private FavoritesId id;
 
     @ManyToOne
     @MapsId("memberId")
@@ -17,17 +17,17 @@ public class Favorite {
     @JoinColumn(name = "book_id")
     private Book book;
 
-    public Favorite() {
+    public Favorites() {
     }
 
-    public Favorite(FavoriteId id, Member member, Book book) {
+    public Favorites(FavoritesId id, Member member, Book book) {
         this.id = id;
         this.member = member;
         this.book = book;
     }
 
-    public FavoriteId getId() { return id; }
-    public void setId(FavoriteId id) { this.id = id; }
+    public FavoritesId getId() { return id; }
+    public void setId(FavoritesId id) { this.id = id; }
     public Member getMember() { return member; }
     public void setMember(Member member) { this.member = member; }
     public Book getBook() { return book; }

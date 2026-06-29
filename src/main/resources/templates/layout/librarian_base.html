@@ -70,8 +70,11 @@
             gap: 10px;
         }
 
-        .sidebar-brand:hover {
+        .sidebar-brand,
+        .sidebar-brand:hover,
+        .sidebar-brand:focus {
             color: #fdfbf7;
+            text-decoration: none;
         }
 
         .sidebar-menu {
@@ -97,6 +100,13 @@
             white-space: nowrap;
         }
 
+        .menu-link,
+        .menu-link:hover,
+        .menu-link:focus,
+        .menu-link:active {
+            text-decoration: none;
+        }
+
         .menu-link:hover {
             background-color: var(--sidebar-hover);
             color: #fdfbf7;
@@ -107,6 +117,21 @@
             color: #ffffff;
             font-weight: 600;
             border-left: 4px solid #dcb38a;
+        }
+
+        #borrowMenu .menu-link {
+            color: #e6dfd7 !important;
+            font-weight: 400;
+        }
+
+        #borrowMenu .menu-link:hover {
+            color: #fdfbf7 !important;
+            background-color: var(--sidebar-hover);
+        }
+
+        #borrowMenu .menu-link.active-submenu {
+            color: #ffffff !important;
+            font-weight: 600;
         }
 
         .menu-icon {
@@ -227,7 +252,7 @@
     <div class="sidebar-header">
         <a th:href="@{/librarian/dashboard}" class="sidebar-brand">
             <i class="bi bi-book-half" style="color: #dcb38a;"></i>
-            <span class="menu-text">LMW Admin</span>
+            <span class="menu-text">LMW Librarian</span>
         </a>
     </div>
     <ul class="sidebar-menu">
@@ -248,22 +273,22 @@
             </a>
             <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'text-white fw-bold' : 'text-muted'" style="background: transparent; border-left: none; min-height: auto;">
+                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
                         <span class="menu-text" style="font-size: 0.95rem;">Mượn sách</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/renewals}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-extend'} ? 'text-white fw-bold' : 'text-muted'" style="background: transparent; border-left: none; min-height: auto;">
+                    <a th:href="@{/librarian/renewals}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
                         <span class="menu-text" style="font-size: 0.95rem;">Gia hạn sách</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/in-library-reading}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-onsite'} ? 'text-white fw-bold' : 'text-muted'" style="background: transparent; border-left: none; min-height: auto;">
+                    <a th:href="@{/librarian/in-library-reading}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-onsite'} ? 'text-white fw-bold' : 'text-white'" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
                         <span class="menu-text" style="font-size: 0.95rem;">Bạn đọc tại chỗ</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/violations}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-fines'} ? 'text-white fw-bold' : 'text-muted'" style="background: transparent; border-left: none; min-height: auto;">
+                    <a th:href="@{/librarian/violations}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-fines'} ? 'text-white fw-bold' : 'text-white'" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
                         <span class="menu-text" style="font-size: 0.95rem;">Phạt vi phạm</span>
                     </a>
                 </li>
@@ -272,7 +297,7 @@
 
         <li class="menu-item">
             <a th:href="@{/librarian/dashboard(section='notifications')}" class="menu-link" th:classappend="${activeMenu == 'notifications'} ? 'active'">
-                <i class="bi bi-bell-fill menu-icon" style="color: #ffc107;"></i>
+                <i class="bi bi-bell-fill menu-icon text-white"></i>
                 <span class="menu-text">Gửi thông báo</span>
             </a>
         </li>
