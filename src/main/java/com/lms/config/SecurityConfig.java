@@ -66,6 +66,8 @@ public class SecurityConfig {
                         .requestMatchers("/member/**").hasRole("MEMBER")
                         .anyRequest().authenticated()
                 )
+
+                //Quoc Anh đã sửa chỗ này ( Dùng method successHandler thay vì defaultSuccessUrl)
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler(customSuccessHandler())
