@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class MemberReviewServiceImpl implements MemberReviewService {
@@ -60,5 +61,17 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         feedback.setStatus("APPROVED");
 
         feedbackRepository.save(feedback);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Feedback> getMyReviews(String username) {
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n: " + username));
+
+        Member member = memberRepository.findByUserId(account.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘á»™c giáº£ vá»›i tÃ i khoáº£n: " + username));
+
+        return feedbackRepository.findByMember_MemberIdOrderByCreatedDateDesc(member.getMemberId());
     }
 }

@@ -1,6 +1,7 @@
 package com.lms.controller.member;
 
 import com.lms.entity.User;
+import com.lms.service.MemberFavoriteService;
 import com.lms.service.ProfileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,10 +19,13 @@ import java.security.Principal;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final MemberFavoriteService memberFavoriteService;
 
     // Inject ProfileService xử lý logic cốt lõi giống như bên Thủ thư
-    public ProfileController(ProfileService profileService) {
+    public ProfileController(ProfileService profileService,
+                             MemberFavoriteService memberFavoriteService) {
         this.profileService = profileService;
+        this.memberFavoriteService = memberFavoriteService;
     }
 
     // UC-4.1: View Profile
@@ -102,10 +106,13 @@ public class ProfileController {
             return "redirect:/login";
         }
 
-        // TODO: Đợi nhóm bạn hoàn thiện xong FavoriteService/Repository để gọi:
-        // String username = principal.getName();
-        // model.addAttribute("favorites", favoriteService.getFavoritesByUsername(username));
+        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(principal.getName()));
 
         return "member/favorites";
+    }
+
+    @GetMapping("/reviews")
+    public String redirectToReviews() {
+        return "redirect:/member/interaction/reviews";
     }
 }

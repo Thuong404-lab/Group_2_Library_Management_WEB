@@ -25,6 +25,7 @@ public class MemberNotificationModelAdvice {
 
         model.addAttribute("latestNotifications", null);
         model.addAttribute("showNotificationBell", false);
+        model.addAttribute("unreadNotificationCount", 0L);
 
         if (principal == null || authentication == null) {
             return;
@@ -43,6 +44,10 @@ public class MemberNotificationModelAdvice {
         model.addAttribute(
                 "latestNotifications",
                 memberNotificationService.getLatestNotifications(principal.getName())
+        );
+        model.addAttribute(
+                "unreadNotificationCount",
+                memberNotificationService.countUnreadNotifications(principal.getName())
         );
     }
 }

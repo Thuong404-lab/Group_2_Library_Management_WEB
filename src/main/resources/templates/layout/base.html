@@ -69,6 +69,76 @@
                 toast.style.transform = "translateY(20px)";
             }, 3000);
         }
+
+        document.addEventListener("submit", function(event) {
+            var form = event.target;
+            if (!form.matches(".favorite-form")) {
+                return;
+            }
+
+            event.preventDefault();
+            var button = form.querySelector(".js-favorite-button");
+            if (button) {
+                button.disabled = true;
+            }
+
+            fetch(form.action, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(function(response) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = "/login";
+                        return null;
+                    }
+                    if (!response.ok) {
+                        throw new Error("Không thể thêm vào yêu thích.");
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (!data) {
+                        return;
+                    }
+
+                    var bookId = form.dataset.bookId;
+                    document.querySelectorAll('.favorite-form[data-book-id="' + bookId + '"] .js-favorite-button')
+                        .forEach(function(favoriteButton) {
+                            setFavoriteButtonActive(favoriteButton);
+                        });
+
+                    showToast(data.message || "Đã thêm vào danh sách yêu thích!");
+                })
+                .catch(function(error) {
+                    showToast(error.message || "Có lỗi xảy ra khi thêm yêu thích.");
+                })
+                .finally(function() {
+                    if (button) {
+                        button.disabled = false;
+                    }
+                });
+        });
+
+        function setFavoriteButtonActive(button) {
+            button.classList.remove("btn-outline-danger");
+            button.classList.add("btn-danger", "active");
+
+            var icon = button.querySelector("i");
+            if (icon) {
+                icon.className = icon.className.indexOf("me-1") >= 0
+                    ? "bi bi-heart-fill me-1"
+                    : "bi bi-heart-fill mr-2";
+            }
+
+            var label = button.querySelector("span");
+            if (label) {
+                label.innerText = "Đã yêu thích";
+            }
+        }
     </script>
 
     <!-- TODO: Thêm các script JS chung -->

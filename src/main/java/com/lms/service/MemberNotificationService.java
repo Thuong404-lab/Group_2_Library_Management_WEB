@@ -10,4 +10,6 @@ public interface MemberNotificationService {
 
     // ======= THÊM MỚI =======
     List<MemberNotificationResponse> getLatestNotifications(String username);
+
+    long countUnreadNotifications(String username);
 }

@@ -90,13 +90,23 @@
                 <hr style="border-color: rgba(139,90,43,0.2);">
 
                 <!-- Action Buttons -->
+                <!-- Mới chỉ sửa cho Yêu thích -->
                 <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <button class="btn btn-outline-danger flex-grow-1 py-2">
-                        <i class="bi bi-heart me-1"></i> Yêu thích
-                    </button>
+                    <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
+                          method="post"
+                          class="flex-grow-1 favorite-form"
+                          th:data-book-id="${book.bookId}">
+                        <button type="submit"
+                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger w-100 py-2 js-favorite-button active' : 'btn btn-outline-danger w-100 py-2 js-favorite-button'}">
+                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
+                            <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                        </button>
+                    </form>
+
                     <button class="btn btn-outline-primary flex-grow-1 py-2">
                         <i class="bi bi-bookmark me-1"></i> Đặt trước
                     </button>
+
                     <button class="btn btn-primary flex-grow-1 py-2">
                         <i class="bi bi-book me-1"></i> Yêu cầu mượn
                     </button>
@@ -117,7 +127,8 @@
                 <h5 class="fw-bold mb-4" style="color:#4a3b32;">
                     <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Viết đánh giá của bạn
                 </h5>
-                <form id="reviewForm" action="/member/reviews/submit" method="post">
+                <form id="reviewForm" th:action="@{/member/interaction/reviews}" method="post">
+                    <input type="hidden" name="bookId" th:value="${book.bookId}">
                     <!-- Star Rating -->
                     <div class="mb-4">
                         <label class="form-label fw-bold small text-muted text-uppercase">Điểm đánh giá <span class="text-danger">*</span></label>
@@ -134,7 +145,7 @@
                     <!-- Comment -->
                     <div class="mb-4">
                         <label class="form-label fw-bold small text-muted text-uppercase">Nhận xét <span class="text-danger">*</span></label>
-                        <textarea class="form-control mt-1" name="content" rows="4"
+                        <textarea class="form-control mt-1" name="comment" rows="4"
                                   placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..." maxlength="1000"></textarea>
                         <div class="text-end text-muted small mt-1">Tối đa 1000 ký tự</div>
                     </div>
