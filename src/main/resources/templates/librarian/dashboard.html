@@ -475,48 +475,438 @@
 
     <!-- Books -->
     <section id="section-books" class="lib-section">
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card-classic h-100 shadow-sm p-4">
-                    <div class="d-flex align-items-start">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                             style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
-                            <i class="bi bi-archive fs-4"></i>
+        <div class="card-classic shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom p-4 border-color">
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-primary" onclick="showBookSubSection('inventory')">Quản lý kho sách</button>
+                    <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-outline-primary" onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div id="bookInventoryPanel">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #8b5a2b !important;">
+                                <div class="text-muted small text-uppercase fw-bold mb-1">Tổng đầu sách</div>
+                                <h4 class="fw-bold mb-0 text-classic" th:text="${totalBookCount}">0</h4>
+                            </div>
                         </div>
-                        <div>
-                            <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                Quản lý lưu trữ sách
-                            </h5>
-                            <p class="text-muted mb-3">Xem và quản lý vị trí lưu trữ sách trong kho.</p>
-                            <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/storage}">
-                                Mở trang <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                    <div class="col-md-3">
+                        <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #198754 !important;">
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Danh mục</div>
+                            <h4 class="fw-bold mb-0 text-success" th:text="${totalCategories}">0</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #0d6efd !important;">
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Thể loại</div>
+                            <h4 class="fw-bold mb-0" style="color: #0d6efd;" th:text="${totalGenres}">0</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #fd7e14 !important;">
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Sẵn sàng</div>
+                            <h4 class="fw-bold mb-0 text-warning" th:text="${inventoryStatusCounts['Available']} ?: 0">0</h4>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-6">
-                <div class="card-classic h-100 shadow-sm p-4">
-                    <div class="d-flex align-items-start">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                             style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
-                            <i class="bi bi-tags fs-4"></i>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                        <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryGenreModal">
+                        <i class="bi bi-tags me-1"></i>Quản lý danh mục
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#auditModal">
+                        <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th>STT</th>
+                            <th>Sách</th>
+                            <th>ISBN</th>
+                            <th>Danh mục / Thể loại</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="book, iterStat : ${books}">
+                            <td class="ps-3 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                            <td>
+                                <div class="fw-bold text-classic" th:text="${book.title}">Tên sách</div>
+                                <div class="small text-muted" th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">Thể loại</div>
+                            </td>
+                            <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                            <td>
+                                <div class="small text-muted" th:text="${book.genre != null && book.genre.category != null ? book.genre.category.categoryName : 'Chưa có danh mục'}">Danh mục</div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill"
+                                      th:classappend="${book.status == 'Disposed'} ? ' bg-danger' : ' bg-success'"
+                                      th:text="${book.status}">Active</span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" th:data-bs-target="${'#editBookModal' + book.bookId}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="${'#deleteBookModal' + book.bookId}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr th:if="${books == null || #lists.isEmpty(books)}">
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-book fs-2 d-block mb-2"></i>
+                                Chưa có sách trong kho.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Book Modal -->
+        <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addBookModalLabel">Thêm sách mới</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/librarian/inventory/add}" method="post">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tiêu đề sách</label>
+                                    <input type="text" name="title" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">ISBN</label>
+                                    <input type="text" name="isbn" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Thể loại</label>
+                                    <select name="genreId" class="form-select" required>
+                                        <option value="" disabled selected>Chọn thể loại</option>
+                                        <option th:each="genre : ${genres}" th:value="${genre.genreId}" th:text="${genre.genreName}">Thể loại</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Số lượng bản</label>
+                                    <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                Danh mục / thể loại
-                            </h5>
-                            <p class="text-muted mb-3">Quản lý category, genre và phân loại sách.</p>
-                            <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/inventory/categories}">
-                                Mở trang <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category/Genre Modal -->
+        <div class="modal fade" id="categoryGenreModal" tabindex="-1" aria-labelledby="categoryGenreModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="categoryGenreModalLabel">Quản lý danh mục và thể loại</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card-classic p-4 shadow-sm">
+                                    <h6 class="fw-bold mb-3">Thêm danh mục</h6>
+                                    <form th:action="@{/librarian/inventory/categories/add}" method="post">
+                                        <input type="hidden" name="type" value="category" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Tên danh mục</label>
+                                            <input type="text" name="name" class="form-control" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-classic btn-sm">Lưu danh mục</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-classic p-4 shadow-sm">
+                                    <h6 class="fw-bold mb-3">Thêm thể loại</h6>
+                                    <form th:action="@{/librarian/inventory/categories/add}" method="post">
+                                        <input type="hidden" name="type" value="genre" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Thuộc danh mục</label>
+                                            <select name="categoryId" class="form-select" required>
+                                                <option value="" disabled selected>Chọn danh mục</option>
+                                                <option th:each="category : ${categories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Danh mục</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Tên thể loại</label>
+                                            <input type="text" name="name" class="form-control" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-classic btn-sm">Lưu thể loại</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Audit Modal -->
+        <div class="modal fade" id="auditModal" tabindex="-1" aria-labelledby="auditModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="auditModalLabel">Kiểm kê kho sách</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/librarian/inventory/audit}" method="post">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold">Available</span>
+                                        <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold">Borrowed</span>
+                                        <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold">Lost</span>
+                                        <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold">Damaged</span>
+                                        <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-semibold">Disposed</span>
+                                        <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Thực hiện kiểm kê</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div th:each="book : ${books}">
+            <!-- Edit Book Modal -->
+            <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1" th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" th:id="${'editBookModalLabel' + book.bookId}">Chỉnh sửa sách</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form th:action="@{/librarian/inventory/edit/{id}(id=${book.bookId})}" method="post">
+                            <div class="modal-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tiêu đề sách</label>
+                                        <input type="text" name="title" class="form-control" th:value="${book.title}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">ISBN</label>
+                                        <input type="text" name="isbn" class="form-control" th:value="${book.isbn}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Thể loại</label>
+                                        <select name="genreId" class="form-select" required>
+                                            <option value="" disabled>Chọn thể loại</option>
+                                            <option th:each="genre : ${genres}"
+                                                    th:value="${genre.genreId}"
+                                                    th:selected="${book.genre != null && genre.genreId == book.genre.genreId}"
+                                                    th:text="${genre.genreName}">Thể loại</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Trạng thái</label>
+                                        <select name="status" class="form-select" required>
+                                            <option th:selected="${book.status == 'Active'}" value="Active">Active</option>
+                                            <option th:selected="${book.status == 'Disposed'}" value="Disposed">Disposed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Book Modal -->
+            <div class="modal fade" th:id="${'deleteBookModal' + book.bookId}" tabindex="-1" th:aria-labelledby="${'deleteBookModalLabel' + book.bookId}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" th:id="${'deleteBookModalLabel' + book.bookId}">Xác nhận xóa</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form th:action="@{/librarian/inventory/delete/{id}(id=${book.bookId})}" method="post">
+                            <div class="modal-body">
+                                <p>Bạn có chắc muốn xóa sách <strong th:text="${book.title}">Tên sách</strong> không?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-danger">Xóa</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div id="bookShelfPanel" style="display: none;">
+                <div class="card-classic shadow-sm">
+                    <div class="card-header bg-white border-bottom p-4 border-color">
+                        <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
+                        </h5>
+                        <div class="text-muted small">Xem và quản lý vị trí lưu trữ sách trong kho mà không rời dashboard.</div>
+                    </div>
+                    <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-uppercase small text-muted">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên vị trí</th>
+                                <th>Vị trí</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="shelf, iterStat : ${shelves}">
+                                <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                                <td th:text="${shelf.shelfName}">Tên vị trí</td>
+                                <td th:text="${shelf.location}">Vị trí</td>
+                                <td class="table-fixed-action">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" th:data-bs-target="${'#editStorageModal' + shelf.shelfId}" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}" title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${shelves == null || #lists.isEmpty(shelves)}">
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Hiện chưa có vị trí lưu trữ nào.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
+                    <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1" th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" th:id="${'editStorageModalLabel' + shelf.shelfId}">Cập nhật vị trí lưu trữ</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form th:action="@{/librarian/storage/update/{id}(id=${shelf.shelfId})}" method="post">
+                                    <div class="modal-body">
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Tên vị trí</label>
+                                            <input type="text" class="form-control" name="shelfName" th:value="${shelf.shelfName}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Vị trí</label>
+                                            <input type="text" class="form-control" name="location" th:value="${shelf.location}">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                        <button type="submit" class="btn btn-primary">Lưu</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" th:id="${'deleteStorageModal' + shelf.shelfId}" tabindex="-1" th:aria-labelledby="${'deleteStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" th:id="${'deleteStorageModalLabel' + shelf.shelfId}">Xác nhận xoá</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form th:action="@{/librarian/storage/delete/{id}(id=${shelf.shelfId})}" method="post">
+                                    <div class="modal-body">
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <p>Bạn có chắc muốn xoá vị trí lưu trữ <strong th:text="${shelf.shelfName}">Tên vị trí</strong> không?</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                        <button type="submit" class="btn btn-danger">Xóa</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top p-4 border-color text-end">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStorageModal">
+                        Thêm vị trí mới
+                    </button>
+                </div>
+            </div>
+
+            <!-- Storage Modals -->
+            <div class="modal fade" id="addStorageModal" tabindex="-1" aria-labelledby="addStorageModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addStorageModalLabel">Thêm vị trí lưu trữ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form th:action="@{/librarian/storage/add}" method="post">
+                            <div class="modal-body">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <div class="mb-3">
+                                    <label class="form-label">Tên vị trí</label>
+                                    <input type="text" class="form-control" name="shelfName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Vị trí</label>
+                                    <input type="text" class="form-control" name="location">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </section>
+
+    <!-- Users -->
 
     <!-- Users -->
     <section id="section-users" class="lib-section">
@@ -657,6 +1047,38 @@
 
             if (menuLink != null) {
                 showLibSection(sectionName, menuLink);
+            } else {
+                showLibSection(sectionName, null);
+            }
+            if (sectionName === 'books') {
+                showBookSubSection('inventory');
+            }
+        }
+
+        function showBookSubSection(subSection) {
+            const inventoryPanel = document.getElementById('bookInventoryPanel');
+            const shelfPanel = document.getElementById('bookShelfPanel');
+            const inventoryButton = document.getElementById('bookSubInventoryBtn');
+            const storageButton = document.getElementById('bookSubStorageBtn');
+
+            if (!inventoryPanel || !shelfPanel || !inventoryButton || !storageButton) {
+                return;
+            }
+
+            if (subSection === 'storage') {
+                inventoryPanel.style.display = 'none';
+                shelfPanel.style.display = 'block';
+                inventoryButton.classList.remove('btn-primary');
+                inventoryButton.classList.add('btn-outline-primary');
+                storageButton.classList.remove('btn-outline-primary');
+                storageButton.classList.add('btn-primary');
+            } else {
+                inventoryPanel.style.display = 'block';
+                shelfPanel.style.display = 'none';
+                inventoryButton.classList.remove('btn-outline-primary');
+                inventoryButton.classList.add('btn-primary');
+                storageButton.classList.remove('btn-primary');
+                storageButton.classList.add('btn-outline-primary');
             }
         }
 

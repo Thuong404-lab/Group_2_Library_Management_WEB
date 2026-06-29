@@ -8,6 +8,8 @@ import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.StaffRepository;
+import com.lms.service.InventoryService;
+import com.lms.service.StorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -35,6 +37,8 @@ public class LibrarianDashboardController {
     private final BookItemRepository bookItemRepository;
     private final MemberRepository memberRepository;
     private final StaffRepository staffRepository;
+    private final StorageService storageService;
+    private final InventoryService inventoryService;
     private final LibrarianInteractionService librarianInteractionService;
 
     public LibrarianDashboardController(BorrowRepository borrowRepository,
@@ -43,6 +47,8 @@ public class LibrarianDashboardController {
                                         BookItemRepository bookItemRepository,
                                         MemberRepository memberRepository,
                                         StaffRepository staffRepository,
+                                        StorageService storageService,
+                                        InventoryService inventoryService,
                                         LibrarianInteractionService librarianInteractionService) {
 
         this.borrowRepository = borrowRepository;
@@ -51,6 +57,8 @@ public class LibrarianDashboardController {
         this.bookItemRepository = bookItemRepository;
         this.memberRepository = memberRepository;
         this.staffRepository = staffRepository;
+        this.storageService = storageService;
+        this.inventoryService = inventoryService;
         this.librarianInteractionService = librarianInteractionService;
     }
 
@@ -80,6 +88,14 @@ public class LibrarianDashboardController {
         model.addAttribute("members", librarianInteractionService.getAllMembers());
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(PageRequest.of(0, 20,
                                 Sort.by("createdDate").descending())));
+        model.addAttribute("shelves", storageService.getAllStorageLocations());
+        model.addAttribute("books", inventoryService.getAllBooks());
+        model.addAttribute("categories", inventoryService.getAllCategories());
+        model.addAttribute("genres", inventoryService.getAllGenres());
+        model.addAttribute("totalBookCount", inventoryService.countBooks());
+        model.addAttribute("totalCategories", inventoryService.countCategories());
+        model.addAttribute("totalGenres", inventoryService.countGenres());
+        model.addAttribute("inventoryStatusCounts", inventoryService.getInventoryStatusCounts());
         addCurrentUser(model, userDetails);
 
         return "librarian/dashboard";
