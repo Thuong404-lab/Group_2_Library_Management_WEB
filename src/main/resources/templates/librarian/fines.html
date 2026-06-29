@@ -1,14 +1,109 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Fines', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
+<head>
+    <title>Quản lý Phạt Vi Phạm</title>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Fines</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+<div layout:fragment="content" th:with="activeMenu='fines'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Phạt Vi Phạm</h2>
+            <div class="text-muted">Theo dõi và xử lý các khoản phạt trễ hạn, hỏng sách của độc giả</div>
+        </div>
+        <button class="btn btn-classic shadow-sm">
+            <i class="bi bi-plus-circle me-2"></i>Thêm biên bản phạt
+        </button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/fines}">
+            <div class="col-md-2">
+                <input type="date" class="form-control text-muted" name="fineDate" title="Ngày vi phạm">
             </div>
+            <div class="col-md-3">
+                <select class="form-select text-muted" name="fineType">
+                    <option value="">-- Hình thức phạt --</option>
+                    <option value="late">Trễ hạn trả sách</option>
+                    <option value="lost">Làm mất sách</option>
+                    <option value="damaged">Làm rách/hỏng sách</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" placeholder="Mã vi phạm, tên bạn đọc, mã thẻ...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã VP</th>
+                        <th>Thông tin Độc giả</th>
+                        <th>Ngày vi phạm</th>
+                        <th>Hình thức / Lý do phạt</th>
+                        <th>Ghi chú sách</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="detail, iter : ${overdueDetails}">
+                        <td class="ps-4 fw-bold" style="color: #4a3b32;" th:text="${'VP' + detail.borrowDetailId}">VP1</td>
+
+                        <td>
+                            <div th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
+                                <div class="fw-bold text-dark" th:text="${detail.borrow.member.user.fullName}">Bạn đọc</div>
+                                <div class="small text-muted">Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="fw-bold" th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : '-'}">-</div>
+                        </td>
+                        
+                        <td>
+                            <div><span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">Phạt trễ hạn</span></div>
+                            <div class="small text-muted mt-1">Trả sách quá hạn</div>
+                        </td>
+
+                        <td th:text="${detail.book != null ? 'Sách: ' + detail.book.title : ''}" class="fst-italic text-muted">Ghi chú</td>
+
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(overdueDetails)}">
+                        <td colspan="6" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-check-circle fs-1 d-block mb-3 text-success opacity-50"></i>
+                                Không có vi phạm nào trong hệ thống.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 </body>
 </html>

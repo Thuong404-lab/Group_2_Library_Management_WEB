@@ -1,14 +1,408 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Accounts', ~{::content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/admin_base}">
+
+<head>
+    <title>Quản lý tài khoản thành viên</title>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Accounts</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+    <div layout:fragment="content" th:with="activeMenu='accounts'">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý tài
+                    khoản thành viên</h2>
+                <div class="text-muted">
+                    Danh sách và thông tin tài khoản người dùng thư viện
+                </div>
+            </div>
+            <div>
+                <a class="btn btn-classic" th:href="@{/admin/accounts/create(source='members')}">
+                    <i class="bi bi-person-plus me-1"></i> Tạo tài khoản mới
+                </a>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
+            <i class="bi bi-exclamation-circle me-2"></i>Không tìm thấy tài khoản.
+        </div>
+        <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
+            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
+        </div>
+        <div class="alert alert-success shadow-sm border-0" th:if="${success != null}">
+            <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Thao tác thành công.</span>
+        </div>
+
+        <div class="card-classic shadow-sm mb-4">
+            <div class="card-body p-4">
+                <!-- Search & Filter -->
+                <form class="row g-3 mb-4" method="get" th:action="@{/admin/accounts}">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                                th:value="${keyword}" placeholder="Tìm username, họ tên hoặc email...">
+                                
+                            <button class="btn btn-classic ms-2 rounded" type="submit">Tìm kiếm</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-6 text-md-end">
+                        <a class="btn btn-light border shadow-sm" th:href="@{/admin/accounts}">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
+                        </a>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light text-uppercase small text-muted">
+                            <tr>
+                                <th class="ps-3">STT</th>
+                                <th>Username</th>
+                                <th>Thông tin người dùng</th>
+                                <th>Hạng thành viên</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end pe-3">Hành động</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="account, iterStat : ${accounts.content}">
+                                <td class="ps-3 fw-bold"
+                                    th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
+                                <td>
+                                    <span class="fw-bold text-classic" th:text="${account.username}">username</span>
+                                    <div class="small text-muted" th:text="'ID: ' + ${account.accountId}">ID: 1</div>
+                                </td>
+                                <td>
+                                    <div th:if="${account.user != null}">
+                                        <div class="fw-bold" th:text="${account.user.fullName}">Họ tên</div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-envelope me-1"> </i>
+                                            <span th:text="${account.user.email}">email</span>
+                                        </div>
+                                        <div class="small text-muted" th:if="${account.user.phone}">
+                                            <i class="bi bi-telephone me-1"> </i>
+                                            <span th:text="${account.user.phone}">phone</span>
+                                        </div>
+                                    </div>
+                                    <div th:unless="${account.user != null}" class="fst-italic text-muted small">
+                                        Chưa cập nhật thông tin
+                                    </div>
+                                </td>
+
+                                <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                        th:if="${member != null && member.tier != null}"
+                                        th:text="${member.tier.tierName}" th:style="${
+              member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
+              member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
+              member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
+              member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
+              'background-color: #8b5a2b;'
+          }">
+                                        Standard
+                                    </span>
+
+                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                        th:if="${member == null || member.tier == null}">
+                                        N/A
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-2 text-white" th:classappend="${
+              account.status == 'Active' ? 'bg-success' :
+              account.status == 'Blocked' ? 'bg-danger' :
+              'bg-secondary'
+          }" th:text="${account.status}">
+                                        Active
+                                    </span>
+                                </td>
+
+                                <td class="text-end pe-3"
+                                    th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                    <button type="button" class="btn btn-sm btn-outline-classic" data-bs-toggle="modal"
+                                        th:data-bs-target="${'#updateMemberModal' + account.accountId}">
+                                        <i class="bi bi-pencil-square"></i> Cập nhật
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                    <!-- Update Modal -->
+                                    <div class="modal fade text-start"
+                                        th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-content border-0 shadow">
+                                                <form method="post"
+                                                    th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <input type="hidden" name="source" value="members">
+
+                                                    <div class="modal-header border-bottom border-color"
+                                                        style="background-color: #fdfbf7;">
+                                                        <h5 class="modal-title fw-bold"
+                                                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                                            <i class="bi bi-person-lines-fill me-2 text-classic"></i>
+                                                            Cập nhật tài khoản
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                    </div>
+
+                                                    <div class="modal-body p-4">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Họ tên
+                                                                </label>
+                                                                <input class="form-control" name="fullName"
+                                                                    th:value="${account.user != null ? account.user.fullName : ''}"
+                                                                    required>
+                                                            </div>
+
+                                                             <div class="col-md-6">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Username
+                                                                </label>
+                                                                <input class="form-control" name="username"
+                                                                    th:value="${account.username}" required>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Số điện thoại
+                                                                </label>
+                                                                <input class="form-control" name="phone"
+                                                                    th:value="${account.user != null ? account.user.phone : ''}">
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">Email</label>
+                                                                <input class="form-control" name="email" type="email"
+                                                                    th:value="${account.user != null ? account.user.email : ''}"
+                                                                    required>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Hạng thành viên
+                                                                </label>
+                                                                <select class="form-select form-control" name="tierId"
+                                                                    required>
+                                                                    <option th:each="tier : ${tiers}"
+                                                                        th:value="${tier.tierId}"
+                                                                        th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
+                                                                        th:text="${tier.tierName}">
+                                                                        Standard Member
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                            
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Trạng thái
+                                                                </label>
+                                                                <select class="form-select form-control"
+                                                                    name="status" required>
+                                                                    <option value="Active"
+                                                                        th:selected="${account.status == 'Active'}">
+                                                                        Active
+                                                                    </option>
+                                                                    <option value="Inactive"
+                                                                        th:selected="${account.status == 'Inactive'}">
+                                                                        Inactive
+                                                                    </option>
+                                                                    <option value="Blocked"
+                                                                        th:selected="${account.status == 'Blocked'}">
+                                                                        Blocked
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer border-top bg-light">
+                                                        <button type="button" class="btn btn-secondary"
+                                                            data-bs-dismiss="modal">Hủy bỏ</button>
+                                                        <button type="submit" class="btn btn-classic">
+                                                            Lưu thay đổi
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade text-start"
+                                        th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow">
+                                                <form method="post"
+                                                    th:action="@{/admin/accounts/delete/{id}(id=${account.accountId})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <input type="hidden" name="source" value="members">
+
+                                                    <div class="modal-header border-bottom-0">
+                                                        <h5 class="modal-title fw-bold text-danger">
+                                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                            Xác nhận xóa tài khoản
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                    </div>
+
+                                                    <div class="modal-body pb-0">
+                                                        <p class="mb-3">
+                                                            Bạn có chắc chắn muốn xóa tài khoản này không?
+                                                            Thao tác này không thể hoàn tác.</p>
+                                                        <div class="p-3 bg-light rounded border">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Username: </div>
+                                                                    <div class="fw-bold mb-1"
+                                                                        th:text="${account.username}">
+                                                                        username
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Account ID: </div>
+                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                        id
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Họ tên: </div>
+                                                                    <div class="fw-bold"
+                                                                        th:text="${account.user != null ? account.user.fullName : 'Không có họ tên'}">
+                                                                        họ và tên
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Email: </div>
+                                                                    <div>
+                                                                        <i class="bi bi-envelope me-1 text-classic"></i>
+                                                                        <span
+                                                                            th:text="${account.user != null ? account.user.email : 'Không có email'}">
+                                                                            email
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Số điện thoại: </div>
+                                                                    <div>
+                                                                        <i
+                                                                            class="bi bi-telephone me-1 text-classic"></i>
+                                                                        <span
+                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : 'Không có SĐT'}">
+                                                                            phone
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Hạng thành viên</div>
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 text-white"
+                                                                        th:if="${member != null && member.tier != null}"
+                                                                        th:text="${member.tier.tierName}" th:style="${
+                                          member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
+                                          member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
+                                          member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
+                                          member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
+                                          'background-color: #8b5a2b;'}">
+                                                                        Standard
+                                                                    </span>
+
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                                        th:if="${member == null || member.tier == null}">
+                                                                        N/A
+                                                                    </span>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer border-top-0 pt-4">
+                                                        <button type="button" class="btn btn-light"
+                                                            data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger">Đồng ý xóa</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(accounts.content)}">
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Không có tài khoản nào.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
+                    th:if="${accounts.totalPages > 1}">
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, accounts.totalPages - 1)}"
+                                th:classappend="${i == accounts.number ? 'active' : ''}">
+                                <a class="page-link" th:href="@{/admin/accounts(page=${i}, keyword=${keyword})}"
+                                    th:text="${i + 1}"
+                                    th:style="${i == accounts.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
+                                    1
+                                </a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
 </body>
+
 </html>

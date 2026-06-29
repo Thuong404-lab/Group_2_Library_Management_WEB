@@ -2,13 +2,13 @@ package com.lms.controller.auth;
 
 import com.lms.dto.request.ForgotPasswordRequest;
 import com.lms.dto.request.RegisterRequest;
-import com.lms.dto.request.ResetPasswordRequest; // Import mới
+import com.lms.dto.request.ResetPasswordRequest;
+import com.lms.exception.AuthException;
 import com.lms.service.AuthService;
-import jakarta.validation.Valid; // Import mới
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult; // Import mới
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -19,8 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class AuthController {
 
-
-    private AuthService authService;
+    private final AuthService authService;
 
     public AuthController(AuthService authService) {
         this.authService = authService;
@@ -41,13 +40,18 @@ public class AuthController {
 
     // UC-2: Register - Xử lý đăng ký thành viên mới
     @PostMapping("/register")
-    public String processRegister(@ModelAttribute("registerRequest") RegisterRequest registerRequest, RedirectAttributes redirectAttributes) {
+    public String processRegister(@ModelAttribute("registerRequest") RegisterRequest registerRequest,
+            RedirectAttributes redirectAttributes) {
         try {
             authService.register(registerRequest);
             redirectAttributes.addFlashAttribute("successMsg", "Đăng ký thành công! Vui lòng đăng nhập.");
             return "redirect:/login";
-        } catch (Exception e) {
+        } catch (AuthException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+            return "redirect:/register";
+        } catch (Exception e) {
+            System.out.println("Lỗi Server: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMsg", "Hệ thống đang bảo trì, vui lòng thử lại sau!");
             return "redirect:/register";
         }
     }
@@ -61,11 +65,18 @@ public class AuthController {
 
     // UC-21.2: Reset Password - Xử lý yêu cầu quên mật khẩu
     @PostMapping("/forgot-password")
-    public String processForgotPassword(@ModelAttribute("forgotPasswordRequest") ForgotPasswordRequest forgotPasswordRequest,
-                                        RedirectAttributes redirectAttributes) {
+    public String processForgotPassword(
+            @Valid @ModelAttribute("forgotPasswordRequest") ForgotPasswordRequest forgotPasswordRequest,
+            BindingResult result,
+            RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            return "forgot-password";
+        }
+
         try {
             authService.requestPasswordReset(forgotPasswordRequest.getEmail());
-            redirectAttributes.addFlashAttribute("successMsg", "Nếu email của bạn tồn tại trong hệ thống, một liên kết đặt lại mật khẩu đã được gửi đến email của bạn.");
+            redirectAttributes.addFlashAttribute("successMsg",
+                    "Nếu email của bạn tồn tại trong hệ thống, một liên kết đặt lại mật khẩu đã được gửi đến email của bạn.");
             return "redirect:/forgot-password";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
@@ -75,44 +86,48 @@ public class AuthController {
 
     // UC-21.2: Reset Password - Hiển thị trang đặt lại mật khẩu
     @GetMapping("/reset-password")
-    public String showResetPasswordPage(@RequestParam("token") String token, Model model, RedirectAttributes redirectAttributes) {
+    public String showResetPasswordPage(@RequestParam("token") String token,
+            Model model,
+            RedirectAttributes redirectAttributes) {
         try {
-            // Kiểm tra token có hợp lệ không trước khi hiển thị form
             authService.validatePasswordResetToken(token);
-            model.addAttribute("resetPasswordRequest", new ResetPasswordRequest());
-            model.addAttribute("token", token); // Truyền token vào form để gửi lại
+            ResetPasswordRequest request = new ResetPasswordRequest();
+            request.setToken(token);
+            model.addAttribute("resetPasswordRequest", request);
             return "reset-password";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
-            return "redirect:/login"; // Hoặc trang lỗi khác
+            return "redirect:/login";
         }
     }
 
     // UC-21.2: Reset Password - Xử lý đặt lại mật khẩu
     @PostMapping("/reset-password")
-    public String processResetPassword(@Valid @ModelAttribute("resetPasswordRequest") ResetPasswordRequest resetPasswordRequest,
-                                       BindingResult result,
-                                       RedirectAttributes redirectAttributes) {
+    public String processResetPassword(
+            @Valid @ModelAttribute("resetPasswordRequest") ResetPasswordRequest resetPasswordRequest,
+            BindingResult result,
+            RedirectAttributes redirectAttributes) {
+
         if (result.hasErrors()) {
-            // Nếu có lỗi validation, quay lại trang reset-password với thông báo lỗi
-            redirectAttributes.addFlashAttribute("errorMsg", "Vui lòng kiểm tra lại thông tin nhập.");
-            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.resetPasswordRequest", result);
-            redirectAttributes.addFlashAttribute("resetPasswordRequest", resetPasswordRequest);
-            return "redirect:/reset-password?token=" + resetPasswordRequest.getToken();
+            return "reset-password";
         }
 
         if (!resetPasswordRequest.getNewPassword().equals(resetPasswordRequest.getConfirmPassword())) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Mật khẩu mới và xác nhận mật khẩu không khớp.");
-            return "redirect:/reset-password?token=" + resetPasswordRequest.getToken();
+            result.rejectValue(
+                    "confirmPassword",
+                    "password.mismatch",
+                    "Mật khẩu mới và xác nhận mật khẩu không khớp.");
+            return "reset-password";
         }
 
         try {
             authService.resetPassword(resetPasswordRequest.getToken(), resetPasswordRequest.getNewPassword());
-            redirectAttributes.addFlashAttribute("successMsg", "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập.");
+            redirectAttributes.addFlashAttribute("successMsg",
+                    "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập.");
             return "redirect:/login";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
-            return "redirect:/reset-password?token=" + resetPasswordRequest.getToken();
+            return "redirect:/login";
         }
     }
 

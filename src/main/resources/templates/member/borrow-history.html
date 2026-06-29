@@ -1,14 +1,187 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Borrow History', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Lịch sử mượn sách</title>
+    <style>
+        .status-badge-returned { background-color: #d4edda; color: #155724; }
+        .status-badge-borrowing { background-color: #d1ecf1; color: #0c5460; }
+        .status-badge-overdue { background-color: #f8d7da; color: #721c24; }
+        .timeline-dot { width: 12px; height: 12px; border-radius: 50%; background: #8b5a2b; display: inline-block; }
+    </style>
+</head>
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Borrow History</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+<div layout:fragment="content" class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="font-weight-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
+                <i class="bi bi-journal-check mr-2" style="color:#8b5a2b;"></i>Lịch sử Mượn Sách
+            </h2>
+            <div class="text-muted">Tất cả giao dịch mượn - trả của bạn</div>
+        </div>
+        <div>
+            <span class="badge badge-pill px-3 py-2" style="background:#fdf5ec;color:#8b5a2b;border:1px solid #8b5a2b;">
+                Tổng: <strong>5</strong> lần mượn
+            </span>
+        </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <ul class="nav nav-pills mb-4" style="border-bottom: 2px solid rgba(139,90,43,0.15);">
+        <li class="nav-item">
+            <a class="nav-link active font-weight-bold" href="#" style="background-color:#8b5a2b;color:white;">Tất cả</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" style="color:#8b5a2b;">Đang mượn</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" style="color:#8b5a2b;">Đã trả</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-danger" href="#">Quá hạn</a>
+        </li>
+    </ul>
+
+    <!-- Borrow 1 - Đang mượn -->
+    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #0d6efd !important; border-radius: 10px;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
+                             style="width:52px;height:52px;background:#e8f4fd;flex-shrink:0;">
+                            <i class="bi bi-book-fill" style="color:#0d6efd;font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Đắc Nhân Tâm</div>
+                            <div class="text-muted small">Dale Carnegie</div>
+                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0042</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-md-center mt-2 mt-md-0">
+                    <div class="small text-muted">Ngày mượn</div>
+                    <div class="font-weight-bold">15/06/2026</div>
+                    <div class="small text-muted mt-1">Hạn trả</div>
+                    <div class="font-weight-bold text-warning">15/07/2026</div>
+                </div>
+                <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                    <span class="badge px-3 py-2 status-badge-borrowing" style="font-size:0.85rem;border-radius:20px;">
+                        <i class="bi bi-arrow-left-right mr-1"></i>Đang mượn
+                    </span>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-primary">Gia hạn</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Borrow 2 - Quá hạn -->
+    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
+                             style="width:52px;height:52px;background:#fdecea;flex-shrink:0;">
+                            <i class="bi bi-book-fill" style="color:#dc3545;font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Nhà Giả Kim</div>
+                            <div class="text-muted small">Paulo Coelho</div>
+                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0031</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-md-center mt-2 mt-md-0">
+                    <div class="small text-muted">Ngày mượn</div>
+                    <div class="font-weight-bold">01/05/2026</div>
+                    <div class="small text-muted mt-1">Hạn trả</div>
+                    <div class="font-weight-bold text-danger">01/06/2026</div>
+                </div>
+                <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                    <span class="badge px-3 py-2 status-badge-overdue" style="font-size:0.85rem;border-radius:20px;">
+                        <i class="bi bi-exclamation-triangle mr-1"></i>Quá hạn 27 ngày
+                    </span>
+                    <div class="mt-2 small text-danger font-weight-bold">Phí phạt: 27.000đ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Borrow 3 - Đã trả + có review -->
+    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #198754 !important; border-radius: 10px;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
+                             style="width:52px;height:52px;background:#d4edda;flex-shrink:0;">
+                            <i class="bi bi-book-fill" style="color:#198754;font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Tư Duy Nhanh Và Chậm</div>
+                            <div class="text-muted small">Daniel Kahneman</div>
+                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0019</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-md-center mt-2 mt-md-0">
+                    <div class="small text-muted">Ngày mượn</div>
+                    <div class="font-weight-bold">10/03/2026</div>
+                    <div class="small text-muted mt-1">Ngày trả</div>
+                    <div class="font-weight-bold text-success">05/04/2026</div>
+                </div>
+                <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                    <span class="badge px-3 py-2 status-badge-returned" style="font-size:0.85rem;border-radius:20px;">
+                        <i class="bi bi-check-circle mr-1"></i>Đã trả đúng hạn
+                    </span>
+                    <div class="mt-2">
+                        <span class="text-warning small">★★★★★</span>
+                        <span class="text-muted small">Đã đánh giá</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Borrow 4 - Đã trả, chưa review -->
+    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #198754 !important; border-radius: 10px;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
+                             style="width:52px;height:52px;background:#d4edda;flex-shrink:0;">
+                            <i class="bi bi-book-fill" style="color:#198754;font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Sapiens: Lược Sử Loài Người</div>
+                            <div class="text-muted small">Yuval Noah Harari</div>
+                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0008</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-md-center mt-2 mt-md-0">
+                    <div class="small text-muted">Ngày mượn</div>
+                    <div class="font-weight-bold">05/01/2026</div>
+                    <div class="small text-muted mt-1">Ngày trả</div>
+                    <div class="font-weight-bold text-success">20/01/2026</div>
+                </div>
+                <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                    <span class="badge px-3 py-2 status-badge-returned" style="font-size:0.85rem;border-radius:20px;">
+                        <i class="bi bi-check-circle mr-1"></i>Đã trả đúng hạn
+                    </span>
+                    <div class="mt-2">
+                        <a href="/books/4" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-star mr-1"></i>Viết đánh giá
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

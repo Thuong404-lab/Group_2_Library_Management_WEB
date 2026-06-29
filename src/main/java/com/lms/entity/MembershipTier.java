@@ -2,16 +2,17 @@ package com.lms.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 @Entity
-@Table(name = "MembershipTiers")
+@Table(name = "`MembershipTiers`")
 public class MembershipTier {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "tier_id")
     private Integer tierId;
     @Column(nullable = false, length = 100)
     private String tierName;
     @Column(precision = 5, scale = 2)
     private BigDecimal discountPercent;
     private Integer borrowLimit;
-    @Column(precision = 18, scale = 2, name = "[condition]")
+    @Column(precision = 18, scale = 2, name = "condition")
     private BigDecimal condition;
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;

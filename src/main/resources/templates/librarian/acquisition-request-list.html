@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="container mt-4">
+        <h2>Danh sách đề xuất mua sách</h2>
+        <hr>
+
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+            <tr>
+                <th>Mã</th>
+                <th>Tên sách</th>
+                <th>Người đề xuất</th>
+                <th>Ngày đề xuất</th>
+                <th>Tác giả</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="request : ${requests.content}">
+                <td th:text="${request.requestId}">1</td>
+                <td th:text="${request.title}">Tên sách</td>
+                <td th:text="${request.member.user.fullName}">Người đề xuất</td>
+                <td th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}">
+                <td th:text="${request.author}">Tác giả</td>
+                    Ngày đề xuất
+                </td>
+            </tr>
+
+            <tr th:if="${requests == null || requests.totalElements == 0}">
+                <td colspan="5" class="text-center">Chưa có đề xuất mua sách nào.</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <nav th:if="${requests != null && requests.totalPages > 1}">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number - 1})}">
+                        Trước
+                    </a>
+                </li>
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Trang <span th:text="${requests.number + 1}">1</span>
+                        /
+                        <span th:text="${requests.totalPages}">1</span>
+                    </span>
+                </li>
+
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number + 1})}">
+                        Sau
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+</body>
+</html>

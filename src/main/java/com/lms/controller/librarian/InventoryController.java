@@ -1,8 +1,9 @@
 package com.lms.controller.librarian;
 
+import com.lms.service.InventoryService;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * InventoryController - Quản lý Kho Sách & Danh mục
@@ -12,84 +13,120 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/librarian/inventory")
 public class InventoryController {
 
-    // UC-12: Hiển thị danh sách sách trong kho
+    private final InventoryService inventoryService;
+
+    public InventoryController(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
+
     @GetMapping
-    public String listBooks(@RequestParam(defaultValue = "0") int page, Model model) {
-        // TODO: Implement - Gọi BookRepository.findAll(Pageable)
-        // TODO: Hỗ trợ tìm kiếm và lọc theo Category, Genre
-        return "admin/books";
+    public String listBooks() {
+        return "redirect:/librarian/dashboard?section=books";
     }
 
-    // UC-12.3: Add New Books - Hiển thị form thêm sách
     @GetMapping("/add")
-    public String showAddBookForm(Model model) {
-        // TODO: Implement - Truyền danh sách Category, Genre, Author vào model
-        return "librarian/add-book";
+    public String showAddBookForm() {
+        return "redirect:/librarian/dashboard?section=books";
     }
 
-    // UC-12.3: Add New Books - Xử lý thêm sách mới
     @PostMapping("/add")
-    public String addNewBook(Model model) {
-        // TODO: Implement - Validate input
-        // TODO: Tạo Book + BookItem (bản vật lý)
-        // TODO: Upload ảnh bìa sách (nếu có) lên Cloudinary
-        return "redirect:/librarian/inventory?added";
-    }
-
-    // UC-12.4: Update Book
-    @GetMapping("/edit/{id}")
-    public String showEditBookForm(@PathVariable Integer id, Model model) {
-        // TODO: Implement - Lấy Book theo ID, truyền vào form
-        return "librarian/edit-book";
+    public String addNewBook(@RequestParam String title,
+                             @RequestParam String isbn,
+                             @RequestParam Integer genreId,
+                             @RequestParam(defaultValue = "1") Integer quantity,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.addNewBook(title, isbn, genreId, quantity);
+            redirectAttributes.addFlashAttribute("success", "Thêm sách mới thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books";
     }
 
     @PostMapping("/edit/{id}")
-    public String updateBook(@PathVariable Integer id, Model model) {
-        // TODO: Implement - Validate và cập nhật Book
-        return "redirect:/librarian/inventory?updated";
+    public String updateBook(@PathVariable Integer id,
+                             @RequestParam String title,
+                             @RequestParam String isbn,
+                             @RequestParam Integer genreId,
+                             @RequestParam String status,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateBook(id, title, isbn, genreId, status);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật sách thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books";
     }
 
-    // UC-12.5: Remove Books
     @PostMapping("/delete/{id}")
-    public String removeBook(@PathVariable Integer id, Model model) {
-        // TODO: Implement - Soft delete hoặc chuyển trạng thái sang "Disposed"
-        // TODO: Kiểm tra sách có đang được mượn không
-        return "redirect:/librarian/inventory?deleted";
+    public String removeBook(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.removeBook(id);
+            redirectAttributes.addFlashAttribute("success", "Xóa sách thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books";
     }
 
-    // UC-12.2: Update Book Status
     @PostMapping("/status/{id}")
     public String updateBookStatus(@PathVariable Integer id,
-                                    @RequestParam String status, Model model) {
-        // TODO: Implement - Cập nhật trạng thái BookItem (Available, Damaged, Lost)
-        return "redirect:/librarian/inventory?statusUpdated";
+                                   @RequestParam String status,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateBookStatus(id, status);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sách thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books";
     }
 
-    // UC-12.6: Manage Categories & Genres
     @GetMapping("/categories")
-    public String manageCategories(Model model) {
-        // TODO: Implement - Hiển thị danh sách Category và Genre
-        return "admin/categories";
+    public String manageCategories() {
+        return "redirect:/librarian/dashboard?section=books";
     }
 
     @PostMapping("/categories/add")
-    public String addCategory(Model model) {
-        // TODO: Implement - Thêm Category hoặc Genre mới
-        return "redirect:/librarian/inventory/categories?added";
+    public String addCategory(@RequestParam String type,
+                              @RequestParam(required = false) Integer categoryId,
+                              @RequestParam String name,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            if ("genre".equals(type)) {
+                inventoryService.addGenre(categoryId, name);
+                redirectAttributes.addFlashAttribute("success", "Thêm thể loại thành công.");
+            } else {
+                inventoryService.addCategory(name);
+                redirectAttributes.addFlashAttribute("success", "Thêm danh mục thành công.");
+            }
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books";
     }
 
-    // UC-12.1: Perform Periodic Inventory Audit
     @GetMapping("/audit")
-    public String showInventoryAudit(Model model) {
-        // TODO: Implement - Hiển thị form kiểm kê
-        // TODO: So sánh số lượng sách thực tế vs hệ thống
-        return "librarian/inventory-audit";
+    public String showInventoryAudit() {
+        return "redirect:/librarian/dashboard?section=books";
     }
 
     @PostMapping("/audit")
-    public String processInventoryAudit(Model model) {
-        // TODO: Implement - Ghi nhận kết quả kiểm kê
-        // TODO: Cập nhật trạng thái sách bị thiếu/hư hỏng
-        return "redirect:/librarian/inventory/audit?completed";
+    public String processInventoryAudit(RedirectAttributes redirectAttributes) {
+        try {
+            var summary = inventoryService.performInventoryAudit();
+            redirectAttributes.addFlashAttribute("success",
+                    String.format("Kiểm kê hoàn tất: Available=%d, Borrowed=%d, Lost=%d, Damaged=%d, Disposed=%d.",
+                            summary.getOrDefault("Available", 0L),
+                            summary.getOrDefault("Borrowed", 0L),
+                            summary.getOrDefault("Lost", 0L),
+                            summary.getOrDefault("Damaged", 0L),
+                            summary.getOrDefault("Disposed", 0L)));
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books";
     }
 }

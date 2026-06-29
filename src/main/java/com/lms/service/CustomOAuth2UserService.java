@@ -1,82 +1,44 @@
-/* 
 package com.lms.service;
 
 import com.lms.config.CustomUserDetails;
-import com.lms.entity.Account;
-import com.lms.entity.Member;
-import com.lms.entity.User;
-import com.lms.entity.Wallet;
-import com.lms.repository.AccountRepository;
-import com.lms.repository.MemberRepository;
-import com.lms.repository.UserRepository;
-import com.lms.repository.WalletRepository;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import com.lms.entity.*;
+import com.lms.enums.ActionType;
+import com.lms.enums.UserStatus;
+import com.lms.repository.*;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Optional;
 
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final UserRepository userRepository;
-
     private final AccountRepository accountRepository;
+    private final AuthService authService;
 
-    private final MemberRepository memberRepository;
-
-    private final WalletRepository walletRepository;
-
-    public CustomOAuth2UserService(UserRepository userRepository, AccountRepository accountRepository, MemberRepository memberRepository, WalletRepository walletRepository) {
-        this.userRepository = userRepository;
+    public CustomOAuth2UserService(AccountRepository accountRepository, AuthService authService) {
         this.accountRepository = accountRepository;
-        this.memberRepository = memberRepository;
-        this.walletRepository = walletRepository;
+        this.authService = authService;
     }
-
 
     @Override
+    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oauth2User = super.loadUser(userRequest);
-        
-        String email = oauth2User.getAttribute("email");
-        String name = oauth2User.getAttribute("name");
+        OAuth2User oAuth2User = super.loadUser(userRequest);  // Gọi super.loadUser để tránh bị StackOverflow
+        String email = oAuth2User.getAttribute("email");
+        String name = oAuth2User.getAttribute("name");
 
-        Optional<Account> accountOpt = accountRepository.findByUsername(email);
-        Account account;
-        
-        if (accountOpt.isPresent()) {
-            account = accountOpt.get();
-        } else {
-            User user = new User();
-            user.setFullName(name);
-            user.setEmail(email);
-            user.setStatus("Active");
-            user = userRepository.save(user);
-
-            account = new Account();
-            account.setUsername(email);
-            account.setPasswordHash("");
-            account.setUser(user);
-            account.setStatus("Active");
-            accountRepository.save(account);
-
-            Member member = new Member();
-            member.setUser(user);
-            memberRepository.save(member);
-
-            Wallet wallet = new Wallet();
-            wallet.setMember(member);
-            wallet.setBalance(BigDecimal.ZERO);
-            walletRepository.save(wallet);
+        Account account = accountRepository.findByUser_Email(email).orElse(null);
+        if (account == null) {
+            // String userName, String fullName, String pass, String email, String phone);
+            account = authService.createCoreAccount(email, name, "", email, "");
         }
-
-        return new CustomUserDetails(account, Collections.singletonList(new SimpleGrantedAuthority("ROLE_MEMBER")));
+        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>(oAuth2User.getAuthorities());
+        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_MEMBER"));
+        
+        return new CustomUserDetails(account, authorities, oAuth2User.getAttributes());
     }
 }
-*/

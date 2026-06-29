@@ -8,14 +8,15 @@ import java.time.LocalDateTime;
  * Người phụ trách: Phạm Kiến Quốc (CE201286)
  */
 @Entity
-@Table(name = "password_reset_tokens")
+@Table(name = "PasswordResetTokens")
 public class PasswordResetToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "reset_token_id")
     private Integer id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 36)
     private String token;
 
     @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)

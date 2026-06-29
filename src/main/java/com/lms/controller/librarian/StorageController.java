@@ -1,8 +1,11 @@
 package com.lms.controller.librarian;
 
+import com.lms.entity.Shelf;
+import com.lms.service.StorageService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * StorageController - Quản lý Kho & Vị trí Lưu trữ Sách
@@ -12,33 +15,67 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/librarian/storage")
 public class StorageController {
 
-    // UC-11: Hiển thị danh sách vị trí lưu trữ (Shelves)
+    private final StorageService storageService;
+
+    public StorageController(StorageService storageService) {
+        this.storageService = storageService;
+    }
+
     @GetMapping
-    public String listStorageLocations(Model model) {
-        // TODO: Implement - Gọi ShelfRepository.findAll()
-        return "librarian/storage";
+    public String listStorageLocations() {
+        return "redirect:/librarian/dashboard?section=storage";
     }
 
-    // UC-11.2: Add Storage Location
+    @GetMapping("/add")
+    public String showAddStorageLocation() {
+        return "redirect:/librarian/dashboard?section=storage";
+    }
+
     @PostMapping("/add")
-    public String addStorageLocation(Model model) {
-        // TODO: Implement - Validate và lưu Shelf mới
-        // TODO: Kiểm tra trùng lặp shelfCode
-        return "redirect:/librarian/storage?added";
+    public String addStorageLocation(@RequestParam String shelfName,
+                                     @RequestParam(required = false) String location,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            storageService.addStorageLocation(shelfName, location);
+            redirectAttributes.addFlashAttribute("success", "Thêm vị trí lưu trữ thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=storage";
     }
 
-    // UC-11.1: Update Storage Location
+    @GetMapping("/edit/{id}")
+    public String showEditStorageLocation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        return storageService.getStorageLocationById(id)
+                .map(shelf -> "redirect:/librarian/dashboard?section=storage")
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("error", "Không tìm thấy vị trí lưu trữ.");
+                    return "redirect:/librarian/dashboard?section=storage";
+                });
+    }
+
     @PostMapping("/update/{id}")
-    public String updateStorageLocation(@PathVariable Integer id, Model model) {
-        // TODO: Implement - Tìm Shelf theo ID, cập nhật thông tin
-        return "redirect:/librarian/storage?updated";
+    public String updateStorageLocation(@PathVariable Integer id,
+                                        @RequestParam String shelfName,
+                                        @RequestParam(required = false) String location,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            storageService.updateStorageLocation(id, shelfName, location);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật vị trí lưu trữ thành công.");
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=storage";
     }
 
-    // UC-11.3: Remove Storage Location
     @PostMapping("/delete/{id}")
-    public String removeStorageLocation(@PathVariable Integer id, Model model) {
-        // TODO: Implement - Kiểm tra Shelf có chứa sách không trước khi xóa
-        // TODO: Nếu còn sách → báo lỗi, không cho xóa
-        return "redirect:/librarian/storage?deleted";
+    public String removeStorageLocation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            storageService.removeStorageLocation(id);
+            redirectAttributes.addFlashAttribute("success", "Xóa vị trí lưu trữ thành công.");
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=storage";
     }
 }

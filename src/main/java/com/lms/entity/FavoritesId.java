@@ -1,15 +1,20 @@
 package com.lms.entity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
-public class FavoriteId implements Serializable {
+public class FavoritesId implements Serializable {
+    @Column(name = "member_id")
     private Integer memberId;
+
+    @Column(name = "book_id")
     private Integer bookId;
 
-    public FavoriteId() {}
-    public FavoriteId(Integer memberId, Integer bookId) {
+    public FavoritesId() {}
+
+    public FavoritesId(Integer memberId, Integer bookId) {
         this.memberId = memberId;
         this.bookId = bookId;
     }
@@ -23,7 +28,7 @@ public class FavoriteId implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        FavoriteId that = (FavoriteId) o;
+        FavoritesId that = (FavoritesId) o;
         return Objects.equals(memberId, that.memberId) && Objects.equals(bookId, that.bookId);
     }
     @Override

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<head>
+    <title>Hồ sơ cá nhân</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Hồ sơ Quản trị viên</h2>
+            <div class="text-muted">
+                Xem và cập nhật thông tin cá nhân của bạn
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${passwordSuccess}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${passwordError}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <!-- Profile Card -->
+            <div class="card-classic border-0 shadow-sm mb-4">
+                <div class="card-header bg-white p-4 border-bottom text-center" style="border-color: rgba(139, 90, 43, 0.1) !important;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 text-white shadow-sm" 
+                         style="width: 80px; height: 80px; background-color: var(--sidebar-active); font-size: 2rem; font-family: 'Playfair Display', serif;"
+                         th:text="${admin != null ? #strings.substring(admin.fullName, 0, 1).toUpperCase() : 'A'}">
+                        A
+                    </div>
+                    <h4 class="fw-bold mb-1" style="color: #4a3b32;" th:text="${admin?.fullName}">Admin Tổng</h4>
+                    <span class="badge bg-success text-uppercase px-3 py-1 mt-2 shadow-sm"><i class="bi bi-shield-lock-fill me-1"></i>System Administrator</span>
+                </div>
+                
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase mb-4" style="color: #8b5a2b; font-size: 0.85rem;"><i class="bi bi-person-lines-fill me-2"></i>Thông tin tài khoản</h6>
+                    <form th:action="@{/admin/profile/update}" method="post">
+                        <div class="row g-4 mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Họ và Tên</label>
+                                <input type="text" name="fullName" class="form-control bg-light border-0" th:value="${admin?.fullName}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Địa chỉ Email</label>
+                                <input type="email" name="email" class="form-control bg-light border-0" th:value="${admin?.email}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Số Điện thoại</label>
+                                <input type="text" name="phone" class="form-control bg-light border-0" th:value="${admin?.phone}">
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-classic px-4">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Card -->
+            <div class="card-classic border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase mb-4 text-danger" style="font-size: 0.85rem;"><i class="bi bi-shield-lock-fill me-2"></i>Bảo mật hệ thống</h6>
+                    <form th:action="@{/admin/profile/change-password}" method="post">
+                        <div class="row g-4 mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>
+                                <input type="password" name="oldPassword" class="form-control bg-light border-0" placeholder="Nhập mật khẩu hiện tại" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu mới</label>
+                                <input type="password" name="newPassword" class="form-control bg-light border-0" placeholder="Nhập mật khẩu mới an toàn" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-muted small">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="confirmPassword" class="form-control bg-light border-0" placeholder="Xác nhận lại mật khẩu mới" required>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-outline-danger px-4">Đổi mật khẩu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

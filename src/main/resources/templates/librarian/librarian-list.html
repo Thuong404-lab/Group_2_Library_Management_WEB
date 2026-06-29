@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
+<head>
+    <title>Danh sách Thủ thư</title>
+</head>
+
+<body>
+<div layout:fragment="content" th:with="activeMenu='librarians'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Danh sách Thủ thư</h2>
+            <div class="text-muted">Quản lý nhân viên thư viện và tài khoản thủ thư</div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/librarians}">
+            <div class="col-md-8 col-lg-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" th:value="${keyword}" placeholder="Tìm họ tên, mã nhân viên...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
+                <a th:href="@{/librarian/librarians}" class="btn btn-light border ms-2">Làm mới</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã NV</th>
+                        <th>Thông tin thủ thư</th>
+                        <th>Liên hệ</th>
+                        <th>Vị trí</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="staff, iterStat : ${staffPage.content}">
+                        <td class="ps-4 fw-bold" style="color: #4a3b32;" th:text="${'ST' + staff.staffId}">ST1</td>
+                        <td>
+                            <div class="d-flex align-items-center" th:if="${staff.user != null}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white me-3 shadow-sm"
+                                     style="width: 40px; height: 40px; font-weight: bold; background-color: #8b5a2b;"
+                                     th:text="${#strings.substring(staff.user.fullName, 0, 1).toUpperCase()}">
+                                    L
+                                </div>
+                                <div>
+                                    <div class="fw-bold" style="color: #4a3b32;" th:text="${staff.user.fullName}">Tên thủ thư</div>
+                                    <span class="badge" style="background-color: #dcb38a !important; color: #4a3b32 !important; font-weight: 700;" th:text="${staff.staffType}">Librarian</span>
+                                </div>
+                            </div>
+                            <div th:unless="${staff.user != null}" class="text-muted fst-italic">Không có thông tin user</div>
+                        </td>
+                        <td>
+                            <div th:if="${staff.user != null}">
+                                <div class="small"><i class="bi bi-envelope text-classic me-2"></i><span th:text="${staff.user.email}">email</span></div>
+                                <div class="small"><i class="bi bi-telephone text-classic me-2"></i><span th:text="${staff.user.phone}">phone</span></div>
+                            </div>
+                            <div th:unless="${staff.user != null}" class="text-muted small fst-italic">N/A</div>
+                        </td>
+                        <td>
+                            <span class="badge" style="background-color: #dcb38a !important; color: #4a3b32 !important; font-weight: 700;" th:text="${staff.staffType != null ? staff.staffType : 'Librarian'}">Librarian</span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-2"
+                                  th:if="${staff.user != null && staff.user.status != null}"
+                                  th:classappend="${staff.user.status.name() == 'Active' ? 'bg-success text-white' : staff.user.status.name() == 'Blocked' ? 'bg-danger text-white' : 'bg-secondary text-white'}"
+                                  th:text="${staff.user.status}">Active
+                            </span>
+                            <span class="badge bg-secondary" th:if="${staff.user == null || staff.user.status == null}">N/A</span>
+                        </td>
+                    </tr>
+                    
+                    <tr th:if="${#lists.isEmpty(staffPage.content)}">
+                        <td colspan="5" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-person-badge fs-1 d-block mb-3"></i>
+                                Không tìm thấy thủ thư nào.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-top p-3 d-flex justify-content-center" th:if="${staffPage.totalPages > 1}">
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword})}" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, staffPage.totalPages == 0 ? 0 : staffPage.totalPages - 1)}" th:classappend="${i == staffPage.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}" th:text="${i + 1}"
+                           th:style="${i == staffPage.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword})}" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -2,16 +2,9 @@ package com.lms.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
 
-/**
- * ResetPasswordRequest - DTO cho yêu cầu đặt lại mật khẩu
- * Người phụ trách: Phạm Kiến Quốc (CE201286)
- */
-@Getter
-@Setter
 public class ResetPasswordRequest {
+
     @NotBlank(message = "Token không được để trống")
     private String token;
 
@@ -21,4 +14,37 @@ public class ResetPasswordRequest {
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")
     private String confirmPassword;
+
+    public ResetPasswordRequest() {
+    }
+
+    public ResetPasswordRequest(String token, String newPassword, String confirmPassword) {
+        this.token = token;
+        this.newPassword = newPassword;
+        this.confirmPassword = confirmPassword;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
 }

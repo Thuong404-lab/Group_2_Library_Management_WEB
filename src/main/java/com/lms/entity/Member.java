@@ -1,9 +1,12 @@
 package com.lms.entity;
+
 import jakarta.persistence.*;
+
 @Entity
 @Table(name = "Members")
 public class Member {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer memberId;
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)

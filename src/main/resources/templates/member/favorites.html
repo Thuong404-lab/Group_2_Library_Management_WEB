@@ -1,12 +1,105 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('Favorites', ~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+    <title>Sách Yêu Thích</title>
+</head>
+
 <body>
-    <div th:fragment="content">
-        <h2 class="mt-4">Favorites</h2>
-        <div class="card">
-            <div class="card-body">
-                <p class="text-muted">TODO: Triển khai giao diện chức năng tại đây.</p>
+    <div layout:fragment="content" class="container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0" style="color: #4a3b32;"><i class="bi bi-heart-fill text-danger me-2"></i>Sách Yêu Thích</h2>
+            <a th:href="@{/books}" class="btn btn-primary" style="background-color: #8b5a2b; border: none;"><i class="bi bi-search"></i> Khám phá thêm</a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4 py-3" style="width: 35%;">Tên Sách</th>
+                                <th class="py-3" style="width: 20%;">Tác giả</th>
+                                <th class="py-3" style="width: 15%;">Ngày thêm</th>
+                                <th class="py-3" style="width: 15%;">Tình trạng</th>
+                                <th class="text-end pe-4 py-3" style="width: 15%;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="favorite : ${favorites}">
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="@{'https://picsum.photos/seed/' + ${favorite.book.bookId} + '/100/150'}"
+                                         class="rounded me-4 shadow-sm"
+                                         alt="Book"
+                                         style="width: 50px; height: 70px; object-fit: cover;">
+
+                                    <div>
+                                        <h6 class="mb-2 fw-bold text-dark"
+                                            th:text="${favorite.book.title}">
+                                            Tên sách
+                                        </h6>
+
+                                        <span class="badge bg-secondary"
+                                              th:text="${favorite.book.genre != null ? favorite.book.genre.genreName : 'Chưa phân loại'}">
+                    Thể loại
+                </span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+        <span th:if="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}"
+              th:text="${favorite.book.authors.iterator().next().authorName}">
+            Tác giả
+        </span>
+
+                                <span th:unless="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}">
+            Chưa rõ
+        </span>
+                            </td>
+
+                            <td class="text-muted">
+                                -
+                            </td>
+
+                            <td>
+        <span class="badge"
+              th:classappend="${favorite.book.status == 'Active'} ? ' bg-success' : ' bg-warning text-dark'"
+              th:text="${favorite.book.status == 'Active' ? 'Sẵn sàng' : 'Không có sẵn'}">
+            Sẵn sàng
+        </span>
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold"
+                                            style="width: 110px;"
+                                            onclick="showToast('Chức năng mượn sách đang được phát triển!')">
+                                        <i class="bi bi-cart-plus"></i> Mượn
+                                    </button>
+
+                                    <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
+                                          method="post">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                style="width: 110px;">
+                                            <i class="bi bi-trash"></i> Bỏ thích
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${favorites == null || favorites.isEmpty()}">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Bạn chưa có sách yêu thích nào.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

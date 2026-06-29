@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
+<head>
+    <title>Quản lý lịch mượn trả</title>
+</head>
+
+<body>
+<div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Lịch Mượn/Trả</h2>
+            <div class="text-muted">Chi tiết các cuốn sách đang được mượn và trạng thái hoàn trả</div>
+        </div>
+        <a th:href="@{/librarian/borrow/create}" class="btn btn-classic shadow-sm">
+            <i class="bi bi-journal-plus me-2"></i>Tạo phiếu mượn mới
+        </a>
+    </div>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs mb-4 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <li class="nav-item">
+            <a class="nav-link text-muted border-0" th:href="@{/librarian/borrow-desk}">Danh sách phiếu mượn</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active fw-bold border-0 border-bottom border-3 bg-transparent" 
+               style="color: #8b5a2b; border-color: #8b5a2b !important;" th:href="@{/librarian/loan/borrow-schedule}">Lịch mượn trả chi tiết</a>
+        </li>
+    </ul>
+
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/loan/borrow-schedule}">
+            <div class="col-md-2">
+                <input type="date" class="form-control text-muted" name="borrowDate" title="Ngày giao">
+            </div>
+            <div class="col-md-2">
+                <input type="date" class="form-control text-muted" name="returnDate" title="Ngày trả">
+            </div>
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" placeholder="Số phiếu mượn, nhan đề sách...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
+                <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-light border ms-2">Làm mới</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                        </th>
+                        <th>Phiếu Mượn</th>
+                        <th>Thông tin Độc giả</th>
+                        <th>Thông tin Sách</th>
+                        <th>Ngày hẹn / Ngày giao</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="detail, iter : ${details}">
+                        <td class="ps-4">
+                            <input class="form-check-input" type="checkbox">
+                        </td>
+                        <td>
+                            <div class="fw-bold" style="color: #4a3b32;" th:text="${detail.borrow != null ? 'PM' + detail.borrow.borrowId : '-'}">PM1</div>
+                        </td>
+
+                        <td>
+                            <div th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
+                                <div class="fw-bold" th:text="${detail.borrow.member.user.fullName}">Bạn đọc</div>
+                                <div class="small text-muted">Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
+                                <div class="small text-muted"><i class="bi bi-telephone text-classic me-1"></i> <span th:text="${detail.borrow.member.user.phone}">090...</span></div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div th:if="${detail.book != null}">
+                                <div class="fw-bold text-wrap" style="max-width: 200px;" th:text="${detail.book.title}">Tên sách</div>
+                                <div class="small text-muted">ISBN: <span th:text="${detail.book.isbn}">ISBN</span></div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="small">
+                                <span class="text-muted">Hẹn trả:</span> 
+                                <span class="fw-bold" th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : '-'}">-</span>
+                            </div>
+                            <div class="small mt-1">
+                                <span class="text-muted">Đã giao:</span> 
+                                <span th:text="${detail.borrow != null && detail.borrow.borrowDate != null ? #temporals.format(detail.borrow.borrowDate, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                            </div>
+                            <div class="small mt-1" th:if="${detail.returnDate != null}">
+                                <span class="text-muted">Thực trả:</span> 
+                                <span class="text-success" th:text="${#temporals.format(detail.returnDate, 'dd/MM/yyyy HH:mm')}">-</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="badge rounded-pill px-3 py-2"
+                                  th:classappend="${detail.status == 'Overdue' ? 'bg-danger bg-opacity-10 text-danger border border-danger' : detail.status == 'Returned' ? 'bg-secondary bg-opacity-10 text-secondary border border-secondary' : 'bg-warning bg-opacity-10 text-dark border border-warning'}"
+                                  th:text="${detail.status}">
+                                Borrowed
+                            </span>
+                        </td>
+
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-classic" title="Hoàn trả sách" th:if="${detail.status != 'Returned'}">
+                                <i class="bi bi-arrow-return-left"></i> Trả sách
+                            </button>
+                            <span class="text-success small" th:if="${detail.status == 'Returned'}">
+                                <i class="bi bi-check-circle-fill"></i> Đã trả
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(details)}">
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-calendar-x fs-1 d-block mb-3"></i>
+                                Chưa có dữ liệu lịch mượn trả.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
