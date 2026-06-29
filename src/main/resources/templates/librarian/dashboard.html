@@ -76,38 +76,6 @@
         </div>
     </div>
 
-    <!-- Section Navigation -->
-    <div class="d-flex flex-wrap dashboard-section-nav mb-4">
-        <a class="dashboard-section-link active" data-section="overview" href="javascript:void(0)"
-           onclick="showLibSection('overview', this)">
-            <i class="bi bi-speedometer2 me-1"></i>Tổng quan
-        </a>
-        <a class="dashboard-section-link" data-section="notifications" href="javascript:void(0)"
-           onclick="showLibSection('notifications', this)">
-            <i class="bi bi-bell me-1"></i>Gửi thông báo
-        </a>
-        <a class="dashboard-section-link" data-section="reviews" href="javascript:void(0)"
-           onclick="showLibSection('reviews', this)">
-            <i class="bi bi-star me-1"></i>Đánh giá sách
-        </a>
-        <a class="dashboard-section-link" data-section="acquisition" href="javascript:void(0)"
-           onclick="showLibSection('acquisition', this)">
-            <i class="bi bi-journal-plus me-1"></i>Đề xuất mua sách
-        </a>
-        <a class="dashboard-section-link" data-section="books" href="javascript:void(0)"
-           onclick="showLibSection('books', this)">
-            <i class="bi bi-book me-1"></i>Quản lý sách
-        </a>
-        <a class="dashboard-section-link" data-section="users" href="javascript:void(0)"
-           onclick="showLibSection('users', this)">
-            <i class="bi bi-people me-1"></i>Người dùng
-        </a>
-        <a class="dashboard-section-link" data-section="reports" href="javascript:void(0)"
-           onclick="showLibSection('reports', this)">
-            <i class="bi bi-bar-chart me-1"></i>Thống kê
-        </a>
-    </div>
-
     <div th:if="${success}" class="alert alert-success shadow-sm" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
 
@@ -1023,7 +991,7 @@
                 selectedSection.classList.add("active");
             }
 
-            const menuLinks = document.querySelectorAll(".dashboard-section-link[data-section]");
+            const menuLinks = document.querySelectorAll(".dashboard-section-link[data-section], .menu-link[data-section]");
 
             menuLinks.forEach(function (link) {
                 link.classList.remove("active");
@@ -1043,43 +1011,8 @@
         function openSectionFromUrl() {
             const params = new URLSearchParams(window.location.search);
             const sectionName = params.get("section") || "overview";
-            const menuLink = document.querySelector(".dashboard-section-link[data-section='" + sectionName + "']");
 
-            if (menuLink != null) {
-                showLibSection(sectionName, menuLink);
-            } else {
-                showLibSection(sectionName, null);
-            }
-            if (sectionName === 'books') {
-                showBookSubSection('inventory');
-            }
-        }
-
-        function showBookSubSection(subSection) {
-            const inventoryPanel = document.getElementById('bookInventoryPanel');
-            const shelfPanel = document.getElementById('bookShelfPanel');
-            const inventoryButton = document.getElementById('bookSubInventoryBtn');
-            const storageButton = document.getElementById('bookSubStorageBtn');
-
-            if (!inventoryPanel || !shelfPanel || !inventoryButton || !storageButton) {
-                return;
-            }
-
-            if (subSection === 'storage') {
-                inventoryPanel.style.display = 'none';
-                shelfPanel.style.display = 'block';
-                inventoryButton.classList.remove('btn-primary');
-                inventoryButton.classList.add('btn-outline-primary');
-                storageButton.classList.remove('btn-outline-primary');
-                storageButton.classList.add('btn-primary');
-            } else {
-                inventoryPanel.style.display = 'block';
-                shelfPanel.style.display = 'none';
-                inventoryButton.classList.remove('btn-outline-primary');
-                inventoryButton.classList.add('btn-primary');
-                storageButton.classList.remove('btn-primary');
-                storageButton.classList.add('btn-outline-primary');
-            }
+            showLibSection(sectionName, null);
         }
 
         function toggleMemberList() {

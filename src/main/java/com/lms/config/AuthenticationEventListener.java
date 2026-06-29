@@ -1,0 +1,57 @@
+package com.lms.config;
+
+import com.lms.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.event.EventListener;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.security.authentication.event.LogoutSuccessEvent;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+@Component
+public class AuthenticationEventListener {
+    private final AuthService authService;
+
+    public AuthenticationEventListener(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @EventListener
+    public void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
+        Object principal = event.getAuthentication().getPrincipal();
+        if (principal instanceof CustomUserDetails userDetails) {
+
+            Integer accountId = userDetails.getAccount().getAccountId();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                String ipAddress = request.getRemoteAddr();
+                String userAgent = request.getHeader("User-Agent");
+                String sessionId = request.getSession().getId();
+                authService.logLoginAction(accountId, ipAddress, userAgent, sessionId);
+            }
+        }
+    }
+
+    @EventListener
+    public void handleLogoutSuccessEvent(LogoutSuccessEvent event) {
+        Object principal = event.getAuthentication().getPrincipal();
+
+        if (principal instanceof CustomUserDetails userDetails) {
+            Integer accountId = userDetails.getAccount().getAccountId();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                String ipAddress = request.getRemoteAddr();
+                String userAgent = request.getHeader("User-Agent");
+                String sessionId = request.getSession().getId();
+                authService.logLogoutAction(accountId, ipAddress, userAgent, sessionId);
+
+            }
+        }
+    }
+
+}
