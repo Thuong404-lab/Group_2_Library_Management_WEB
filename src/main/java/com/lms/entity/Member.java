@@ -1,9 +1,12 @@
 package com.lms.entity;
+
 import jakarta.persistence.*;
+
 @Entity
 @Table(name = "Members")
 public class Member {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer memberId;
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -21,10 +24,27 @@ public class Member {
         this.tier = tier;
     }
 
-    public Integer getMemberId() { return memberId; }
-    public void setMemberId(Integer memberId) { this.memberId = memberId; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-    public MembershipTier getTier() { return tier; }
-    public void setTier(MembershipTier tier) { this.tier = tier; }
+    public Integer getMemberId() {
+        return memberId;
+    }
+
+    public void setMemberId(Integer memberId) {
+        this.memberId = memberId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public MembershipTier getTier() {
+        return tier;
+    }
+
+    public void setTier(MembershipTier tier) {
+        this.tier = tier;
+    }
 }
