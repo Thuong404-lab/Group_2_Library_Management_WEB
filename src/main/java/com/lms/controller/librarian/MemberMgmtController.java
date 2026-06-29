@@ -53,7 +53,7 @@ public class MemberMgmtController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Member Accounts Management
+    // UC-18.1: Member Accounts Management
     @GetMapping("/members")
     public String viewMemberList(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
@@ -83,6 +83,7 @@ public class MemberMgmtController {
         model.addAttribute("tiers", membershipTierRepository.findAll(Sort.by("tierId").ascending()));
 
         addCurrentUser(model, userDetails);
+
         return "librarian/member-list";
     }
 
@@ -199,12 +200,14 @@ public class MemberMgmtController {
         user.setEmail(email.trim());
         user.setPhone(phone.trim());
         user.setStatus(toUserStatus(status));
+
         account.setUsername(username.trim());
         account.setStatus(status);
 
         Member member = memberRepository.findByUserId(user.getId()).orElse(new Member());
         member.setUser(user);
         member.setTier(tier);
+
         userRepository.save(user);
         accountRepository.save(account);
         memberRepository.save(member);
@@ -230,8 +233,56 @@ public class MemberMgmtController {
         }
 
         accountRepository.save(account);
+
         redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành viên thành công.");
         return "redirect:/librarian/members";
+    }
+
+    // UC-14.2: Manage Fines & Violations
+    @GetMapping("/members/fines")
+    public String manageFines(Model model) {
+        // TODO: Implement - Hiển thị trang quản lý phạt
+        return "librarian/fines";
+    }
+
+    @PostMapping("/members/fines/create")
+    public String createFine(@RequestParam Integer memberId,
+            @RequestParam Double amount,
+            @RequestParam String reason,
+            Model model) {
+        // TODO: Implement - Tạo khoản phạt mới cho Member
+        // TODO: Cập nhật Wallet
+        // TODO: Tạo Transaction
+        // TODO: Gửi Notification cho Member
+        return "redirect:/librarian/members/fines?created";
+    }
+
+    // UC-14.3: View Transaction History
+    @GetMapping("/members/transactions")
+    public String viewAllTransactions(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String type,
+            Model model) {
+        // TODO: Implement - Xem toàn bộ lịch sử giao dịch hệ thống
+        // TODO: Lọc theo loại: TOP_UP, BORROW_FEE, FINE, REFUND
+        return "librarian/transactions";
+    }
+
+    // UC-14.4: Top Up Member Account
+    @GetMapping("/members/topup")
+    public String showTopupDesk(Model model) {
+        // TODO: Implement - Hiển thị quầy nạp tiền
+        return "librarian/topup-desk";
+    }
+
+    @PostMapping("/members/topup")
+    public String topUpMemberAccount(@RequestParam String memberPhone,
+            @RequestParam Double amount,
+            Model model) {
+        // TODO: Implement - Tìm Member theo SĐT
+        // TODO: Cộng tiền vào Wallet
+        // TODO: Tạo Transaction
+        // TODO: Gửi Notification xác nhận nạp tiền
+        return "redirect:/librarian/members/topup?success";
     }
 
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {

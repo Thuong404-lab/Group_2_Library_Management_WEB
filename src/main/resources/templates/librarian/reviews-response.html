@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="container mt-4">
+        <h2>Kiểm duyệt đánh giá của Độc giả</h2>
+        <hr>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <table class="table table-striped table-hover mt-3">
+            <thead class="table-dark">
+            <tr>
+                <th>Sách</th>
+                <th>Người gửi</th>
+                <th>Đánh giá</th>
+                <th>Nội dung</th>
+                <th>Phản hồi của thủ thư</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="review : ${reviews}">
+                <td th:text="${review.bookTitle}">Tên sách</td>
+                <td th:text="${review.memberName}">Tên độc giả</td>
+                <td>
+                    <span th:text="${review.rating} + ' sao'"></span>
+                </td>
+                <td th:text="${review.comment}">Nội dung bình luận...</td>
+
+                <td>
+                    <div th:if="${review.librarianResponse != null}">
+                        <p th:text="${review.librarianResponse}"></p>
+                        <small class="text-muted"
+                               th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
+                            Ngày phản hồi
+                        </small>
+                    </div>
+
+                    <div th:if="${review.librarianResponse == null}">
+                        <span class="text-muted">Chưa phản hồi</span>
+                    </div>
+                </td>
+
+                <td>
+                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                          method="post"
+                          class="mb-2">
+                <textarea name="response"
+                          class="form-control form-control-sm mb-1"
+                          rows="2"
+                          placeholder="Nhập phản hồi..."></textarea>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            Phản hồi
+                        </button>
+                    </form>
+
+                    <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                          method="post"
+                          onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            Xoá
+                        </button>
+                    </form>
+                </td>
+            </tr>
+
+            <tr th:if="${reviews == null || reviews.totalElements == 0}">
+                <td colspan="6" class="text-center">Hiện chưa có đánh giá nào.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>
