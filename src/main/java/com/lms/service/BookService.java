@@ -7,7 +7,7 @@ package com.lms.service;
 public interface BookService {
 
     // UC-1: Tìm kiếm sách
-    void searchBooks(String keyword, Integer categoryId, Integer genreId, int page);
+    org.springframework.data.domain.Page<com.lms.entity.Book> searchBooks(String keyword, Integer genreId, String status, org.springframework.data.domain.Pageable pageable);
 
     // UC-3: Xem danh sách sách
     org.springframework.data.domain.Page<com.lms.entity.Book> findAllBooks(org.springframework.data.domain.Pageable pageable);
