@@ -2,6 +2,7 @@ package com.lms.controller.auth;
 
 import com.lms.config.SecurityConfig;
 import com.lms.service.AuthService;
+import com.lms.service.MemberNotificationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration;
@@ -39,6 +40,9 @@ class AuthControllerTest {
 
         @MockBean
         private AuthService authService;
+
+        @MockBean
+        private MemberNotificationService memberNotificationService;
 
         @Test
         void anonymousUserCanOpenForgotPasswordPage() throws Exception {
