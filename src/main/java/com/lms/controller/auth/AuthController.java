@@ -5,6 +5,7 @@ import com.lms.dto.request.RegisterRequest;
 import com.lms.dto.request.ResetPasswordRequest;
 import com.lms.exception.AuthException;
 import com.lms.service.AuthService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -86,16 +87,30 @@ public class AuthController {
 
     // UC-21.2: Reset Password - Hiển thị trang đặt lại mật khẩu
     @GetMapping("/reset-password")
-    public String showResetPasswordPage(@RequestParam("token") String token,
+    public String showResetPasswordPage(@RequestParam(value = "token", required = false) String token,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
         try {
+            if (token != null && !token.isBlank()) {
+                authService.validatePasswordResetToken(token);
+                session.setAttribute("passwordResetToken", token);
+                return "redirect:/reset-password";
+            }
+
+            token = (String) session.getAttribute("passwordResetToken");
+            if (token == null || token.isBlank()) {
+                redirectAttributes.addFlashAttribute("errorMsg", "Token đặt lại mật khẩu không hợp lệ.");
+                return "redirect:/login";
+            }
+
             authService.validatePasswordResetToken(token);
             ResetPasswordRequest request = new ResetPasswordRequest();
             request.setToken(token);
             model.addAttribute("resetPasswordRequest", request);
             return "reset-password";
         } catch (Exception e) {
+            session.removeAttribute("passwordResetToken");
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
             return "redirect:/login";
         }
@@ -106,7 +121,8 @@ public class AuthController {
     public String processResetPassword(
             @Valid @ModelAttribute("resetPasswordRequest") ResetPasswordRequest resetPasswordRequest,
             BindingResult result,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
 
         if (result.hasErrors()) {
             return "reset-password";
@@ -122,10 +138,12 @@ public class AuthController {
 
         try {
             authService.resetPassword(resetPasswordRequest.getToken(), resetPasswordRequest.getNewPassword());
+            session.removeAttribute("passwordResetToken");
             redirectAttributes.addFlashAttribute("successMsg",
                     "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập.");
             return "redirect:/login";
         } catch (Exception e) {
+            session.removeAttribute("passwordResetToken");
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
             return "redirect:/login";
         }
