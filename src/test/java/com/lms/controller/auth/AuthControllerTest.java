@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -74,10 +75,22 @@ class AuthControllerTest {
         }
 
         @Test
-        void resetPageBindsTokenToForm() throws Exception {
+        void resetLinkRedirectsWithoutTokenInUrl() throws Exception {
                 String token = "73967be5-08d6-43a7-8fe1-4cd94311c877";
 
                 mockMvc.perform(get("/reset-password").param("token", token))
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("/reset-password"))
+                                .andExpect(request().sessionAttribute("passwordResetToken", token));
+
+                verify(authService).validatePasswordResetToken(token);
+        }
+
+        @Test
+        void resetPageBindsSessionTokenToForm() throws Exception {
+                String token = "73967be5-08d6-43a7-8fe1-4cd94311c877";
+
+                mockMvc.perform(get("/reset-password").sessionAttr("passwordResetToken", token))
                                 .andExpect(status().isOk())
                                 .andExpect(view().name("reset-password"))
                                 .andExpect(model().attribute("resetPasswordRequest",
