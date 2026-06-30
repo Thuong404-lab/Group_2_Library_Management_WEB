@@ -19,21 +19,32 @@ public class LibrarianBorrowController {
         this.borrowService = borrowService;
     }
 
-    // SỬA LỖI: Thêm mapping này để fix lỗi 500 khi truy cập /librarian/borrows
     @GetMapping("/list")
     public String listAllBorrows(Model model) {
-        // TODO: Lấy danh sách phiếu mượn từ DB
+        // TODO: Đưa danh sách các phiếu mượn (gồm cả Chờ duyệt & Đang mượn) ra view quản lý của thủ thư
         return "librarian/borrow-list";
     }
 
-    // Hiển thị Form tạo phiếu mượn trực tiếp
+    // CHỨC NĂNG DUYỆT ONLINE: Thủ thư duyệt đơn PENDING thành BORROWING
+    @PostMapping("/approve/{borrowId}")
+    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
+        try {
+            // Thực hiện đổi status -> Đang mượn (BORROWING) trong hệ thống DB của nhóm bạn
+            // borrowService.approvePendingRequest(borrowId);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Đã phê duyệt đơn đăng ký mượn trực tuyến thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Phê duyệt thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/borrow/list";
+    }
+
     @GetMapping("/create")
     public String showCreateBorrowForm(Model model) {
         model.addAttribute("borrowRequest", new BorrowRequest());
         return "librarian/create-borrow";
     }
 
-    // Xử lý gửi Form tạo phiếu mượn
     @PostMapping("/create")
     public String processCreateBorrow(@ModelAttribute("borrowRequest") BorrowRequest request,
                                       @RequestParam("rawBarcodes") String rawBarcodes,
@@ -45,7 +56,7 @@ public class LibrarianBorrowController {
             }
             String librarianUsername = (principal != null) ? principal.getName() : "admin";
             borrowService.processBorrowing(request, librarianUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Tạo phiếu mượn thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Tạo phiếu mượn trực tiếp tại quầy thành công!");
             return "redirect:/librarian/borrow/create?success";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());

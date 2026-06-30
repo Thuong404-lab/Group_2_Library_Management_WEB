@@ -105,4 +105,30 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
                 .map(favorite -> favorite.getBook().getBookId())
                 .collect(Collectors.toSet());
     }
+
+    // Khai báo thêm Repository găm giữ chỗ ở đầu Class (Nhớ Autowired hoặc thêm vào Constructor injection)
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.lms.repository.ReservationRepository reservationRepository;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void reserveBook(String username, Integer bookId) throws Exception {
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
+
+        Member member = memberRepository.findByUserId(account.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả"));
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sách không tồn tại"));
+
+        // Thực hiện lưu bản ghi đặt giữ chỗ trước sách trực tuyến vào Database
+        com.lms.entity.Reservation reservation = new com.lms.entity.Reservation();
+        reservation.setMember(member);
+        reservation.setBook(book);
+        reservation.setReservationDate(java.time.LocalDateTime.now());
+        reservation.setStatus("Pending"); // Chờ cuốn sách có người mang đến trả sẽ chuyển sang Reserved
+
+        reservationRepository.save(reservation);
+    }
 }
