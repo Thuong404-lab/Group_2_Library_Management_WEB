@@ -37,14 +37,17 @@ public class AdminProfileController {
 
     @PostMapping("/update")
     public String updateProfile(@RequestParam String fullName,
-            @RequestParam String email,
-            @RequestParam String phone,
-            Principal principal,
-            RedirectAttributes redirectAttributes) {
-        if (principal == null)
+                                @RequestParam String email,
+                                @RequestParam String phone,
+                                @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
+                                Principal principal,
+                                RedirectAttributes redirectAttributes) {
+        if (principal == null) {
             return "redirect:/login";
+        }
+
         try {
-            profileService.updateProfile(principal.getName(), fullName, email, phone);
+            profileService.updateProfile(principal.getName(), fullName, email, phone, avatarFile);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
