@@ -35,14 +35,26 @@
         <form th:action="@{/member/interaction/reviews}" th:object="${reviewRequest}" method="post">
             <div class="mb-3">
                 <label class="form-label fw-bold">Sách</label>
-                <select class="form-select" th:field="*{bookId}">
-                    <option value="">-- Chọn sách --</option>
-                    <option th:each="book : ${books}"
-                            th:value="${book.bookId}"
-                            th:text="${book.title}">
+                <input type="text"
+                       id="bookSearchInput"
+                       class="form-control"
+                       placeholder="Nhập tên sách để tìm..."
+                       autocomplete="off">
+
+                <input type="hidden" th:field="*{bookId}" id="selectedBookId">
+
+                <div id="bookList"
+                     class="border rounded mt-2 bg-white"
+                     style="max-height: 220px; overflow-y: auto;">
+                    <div th:each="book : ${books}"
+                         class="book-option px-3 py-2"
+                         style="cursor: pointer;"
+                         th:data-id="${book.bookId}"
+                         th:data-title="${book.title}"
+                         th:text="${book.title}">
                         Tên sách
-                    </option>
-                </select>
+                    </div>
+                </div>
                 <div class="text-danger small mt-1"
                      th:if="${#fields.hasErrors('bookId')}"
                      th:errors="*{bookId}">
@@ -142,6 +154,39 @@
             <i class="bi bi-box-arrow-up-right me-1"></i>Xem sách
         </a>
     </div>
+
+    <script>
+        const bookSearchInput = document.getElementById('bookSearchInput');
+        const bookList = document.getElementById('bookList');
+        const selectedBookId = document.getElementById('selectedBookId');
+
+        const originalBookOptions = Array.from(document.querySelectorAll('.book-option'));
+
+        bookSearchInput.addEventListener('input', function () {
+            const keyword = this.value.trim().toLowerCase();
+            selectedBookId.value = '';
+
+            bookList.innerHTML = '';
+
+            const matchedBooks = originalBookOptions.filter(option =>
+                option.dataset.title.toLowerCase().includes(keyword)
+            );
+
+            const booksToShow = keyword === '' ? originalBookOptions : matchedBooks;
+
+            booksToShow.forEach(option => {
+                bookList.appendChild(option);
+                option.style.display = 'block';
+            });
+        });
+
+        originalBookOptions.forEach(option => {
+            option.addEventListener('click', function () {
+                bookSearchInput.value = this.dataset.title;
+                selectedBookId.value = this.dataset.id;
+            });
+        });
+    </script>
 </div>
 </body>
 </html>
