@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/librarian_base}">
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/librarian_base}">
 
 <!-- * Người phụ trách: Trần Ngọc Linh Đang (CE191088) -->
 <!-- * Refactor: giữ giao diện dashboard mới, giữ chức năng từ oldDashboard -->
@@ -58,296 +60,382 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='dashboard'">
+<div layout:fragment="content" th:with="activeMenu='dashboard'">
 
-        <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
-            <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                    Tổng quan
-                </h2>
-                <div class="text-muted">
-                    Cập nhật:
-                    <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+         style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                Tổng quan
+            </h2>
+            <div class="text-muted">
+                Cập nhật:
+                <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success shadow-sm" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
+
+    <!-- Overview -->
+    <section id="section-overview" class="lib-section active">
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #0d6efd !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                            <i class="bi bi-book fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Đang mượn</div>
+                            <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #fd7e14 !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
+                            <i class="bi bi-clock-history fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Chờ đặt trước</div>
+                            <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #dc3545 !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 48px; height: 48px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                            <i class="bi bi-exclamation-triangle fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Quá hạn</div>
+                            <h3 class="fw-bold mb-0 text-danger" th:text="${overdueDetails}">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #198754 !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
+                            <i class="bi bi-check2-square fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Sách sẵn có</div>
+                            <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${availableItems}">0</h3>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div th:if="${success}" class="alert alert-success shadow-sm" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
-
-        <!-- Overview -->
-        <section id="section-overview" class="lib-section active">
-            <!-- Statistics Cards -->
-            <div class="row g-3 mb-5">
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #0d6efd !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
-                                <i class="bi bi-book fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Tổng Đầu Sách</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalBookCount}">0</h3>
-                            </div>
-                        </div>
+        <!-- Main Dashboard Content -->
+        <div class="row g-4">
+            <!-- Sắp đến hạn trả -->
+            <div class="col-lg-8">
+                <div class="card-classic h-100 shadow-sm">
+                    <div class="card-header bg-white border-bottom p-4 border-color">
+                        <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-calendar-event me-2 text-classic"></i>Sắp đến hạn trả (7 ngày tới)
+                        </h5>
                     </div>
-                </div>
-
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #198754 !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
-                                <i class="bi bi-check2-square fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Bản sách sẵn có</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${availableItems}">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #0dcaf0 !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0;">
-                                <i class="bi bi-journal-arrow-up fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Đang Mượn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #fd7e14 !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
-                                <i class="bi bi-clock-history fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Yêu cầu mượn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #dc3545 !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">
-                                <i class="bi bi-exclamation-triangle fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Phiếu mượn quá hạn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${overdueDetails}">0</h3>
-                            </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-uppercase small text-muted">
+                                <tr>
+                                    <th class="ps-4">STT</th>
+                                    <th>Thông tin</th>
+                                    <th>Ngày đến hạn</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="detail, iterStat : ${dueSoonDetails}">
+                                    <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                                    <td>Sách đang mượn</td>
+                                    <td class="fw-bold"
+                                        th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'N/A'}">N/A</td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark border" th:text="${detail.status}">Borrowed</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
+                                        Không có sách nào sắp đến hạn.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Dashboard Content -->
-            <div class="row g-4">
-                <!-- Sắp đến hạn trả -->
-                <div class="col-lg-8">
-                    <div class="card-classic h-100 shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                <i class="bi bi-calendar-event me-2 text-classic"></i> Sắp đến hạn trả (7 ngày tới)
-                            </h5>
+            <!-- Hoạt động gần đây -->
+            <div class="col-lg-4">
+                <div class="card-classic h-100 shadow-sm">
+                    <div class="card-header bg-white border-bottom p-4 border-color">
+                        <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-activity me-2 text-classic"></i>Hoạt động gần đây
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div th:if="${#lists.isEmpty(recentBorrows)}" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            Chưa có hoạt động mượn sách nào.
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light text-uppercase small text-muted">
-                                        <tr>
-                                            <th class="ps-4">STT</th>
-                                            <th>Thông tin</th>
-                                            <th>Ngày đến hạn</th>
-                                            <th>Trạng thái</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="detail, iterStat : ${dueSoonDetails}">
-                                            <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
-                                            <td>Sách đang mượn</td>
-                                            <td class="fw-bold"
-                                                th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'N/A'}">
-                                                N/A</td>
-                                            <td>
-                                                <span class="badge bg-warning text-dark border"
-                                                    th:text="${detail.status}">Borrowed</span>
-                                            </td>
-                                        </tr>
-                                        <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
-                                            <td colspan="4" class="text-center text-muted py-5">
-                                                <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
-                                                Không có sách nào sắp đến hạn.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+
+                        <div class="d-flex mb-3 pb-3 border-bottom"
+                             th:each="borrow, iterStat : ${recentBorrows}"
+                             style="border-color: rgba(139, 90, 43, 0.1) !important;">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center"
+                                     style="width: 40px; height: 40px; font-weight: bold;"
+                                     th:styleappend="${iterStat.index % 4 == 0 ? 'background-color: #0d6efd;' : iterStat.index % 4 == 1 ? 'background-color: #198754;' : iterStat.index % 4 == 2 ? 'background-color: #6f42c1;' : 'background-color: #fd7e14;'}"
+                                     th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
+                                    N
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1 fw-bold"
+                                    th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Người dùng ẩn danh'}">Người dùng</h6>
+                                <div class="text-muted small">
+                                    <i class="bi bi-box-arrow-right me-1"></i>Đã mượn sách ·
+                                    <span th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">Hôm nay</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Hoạt động gần đây -->
-                <div class="col-lg-4">
-                    <div class="card-classic h-100 shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                <i class="bi bi-activity me-2 text-classic"></i> Hoạt động gần đây
-                            </h5>
-                        </div>
-                        <div class="card-body p-4">
-                            <div th:if="${#lists.isEmpty(recentBorrows)}" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                Chưa có hoạt động mượn sách nào.
-                            </div>
-
-                            <div class="d-flex mb-3 pb-3 border-bottom" th:each="borrow, iterStat : ${recentBorrows}"
-                                style="border-color: rgba(139, 90, 43, 0.1) !important;">
-                                <div class="flex-shrink-0">
-                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center"
-                                        style="width: 40px; height: 40px; font-weight: bold;"
-                                        th:styleappend="${iterStat.index % 4 == 0 ? 'background-color: #0d6efd;' : iterStat.index % 4 == 1 ? 'background-color: #198754;' : iterStat.index % 4 == 2 ? 'background-color: #6f42c1;' : 'background-color: #fd7e14;'}"
-                                        th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
-                                        N
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 fw-bold"
-                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Người dùng ẩn danh'}">
-                                        Người dùng</h6>
-                                    <div class="text-muted small">
-                                        <i class="bi bi-box-arrow-right me-1"></i> Đã mượn sách ·
-                                        <span
-                                            th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Hôm
-                                            nay</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white border-top text-center p-3 border-color"
-                            th:if="${!#lists.isEmpty(recentBorrows)}">
-                            <a th:href="@{/admin/reports}" class="text-decoration-none fw-bold text-classic">Xem tất cả
-                                hoạt động <i class="bi bi-arrow-right"></i></a>
-                        </div>
+                    <div class="card-footer bg-white border-top text-center p-3 border-color" th:if="${!#lists.isEmpty(recentBorrows)}">
+                        <a th:href="@{/librarian/borrow-desk}" class="text-decoration-none fw-bold text-classic">
+                            Xem tất cả <i class="bi bi-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Notifications -->
-        <section id="section-notifications" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-bell me-2 text-classic"></i>Gửi thông báo
-                    </h5>
-                    <div class="text-muted small">Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.</div>
-                </div>
+    <!-- Notifications -->
+    <section id="section-notifications" class="lib-section">
+        <div class="card-classic shadow-sm">
+            <div class="card-header bg-white border-bottom p-4 border-color">
+                <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <i class="bi bi-bell me-2 text-classic"></i>Gửi thông báo
+                </h5>
+                <div class="text-muted small">Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.</div>
+            </div>
 
-                <div class="card-body p-4">
-                    <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
-                        method="post">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
-                            th:value="${_csrf.token}">
+            <div class="card-body p-4">
+                <form th:action="@{/librarian/interaction/notifications}"
+                      th:object="${notificationRequest}"
+                      method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-                        <div class="row g-4">
-                            <div class="col-lg-5">
-                                <label class="form-label fw-bold">Đối tượng nhận</label>
-                                <div class="border rounded-3 p-3 bg-light">
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" th:field="*{recipientType}"
-                                            value="ALL" id="recipientAll">
-                                        <label class="form-check-label" for="recipientAll">Gửi cho tất cả Member</label>
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <label class="form-label fw-bold">Đối tượng nhận</label>
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" th:field="*{recipientType}" value="ALL" id="recipientAll">
+                                    <label class="form-check-label" for="recipientAll">Gửi cho tất cả Member</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" th:field="*{recipientType}" value="SELECTED" id="recipientSelected">
+                                    <label class="form-check-label" for="recipientSelected">Gửi cho Member được chọn</label>
+                                </div>
+                            </div>
+
+                            <div class="mt-4" id="memberListBox">
+                                <label class="form-label fw-bold">Chọn Member</label>
+                                <input type="text" id="memberSearchInput" class="form-control mb-2" placeholder="Nhập tên Member để tìm...">
+
+                                <div class="border rounded-3 p-3 member-list-scroll">
+                                    <div th:each="member : ${members}"
+                                         class="form-check member-item mb-2"
+                                         th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
+                                        <input class="form-check-input member-checkbox" type="checkbox" name="memberIds" th:value="${member.memberId}">
+                                        <label class="form-check-label"
+                                               th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
+                                            Member name
+                                        </label>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" th:field="*{recipientType}"
-                                            value="SELECTED" id="recipientSelected">
-                                        <label class="form-check-label" for="recipientSelected">Gửi cho Member được
-                                            chọn</label>
+
+                                    <div th:if="${members == null || members.isEmpty()}" class="text-center text-muted py-4">
+                                        <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+                                        Chưa có member nào trong hệ thống.
                                     </div>
                                 </div>
 
-                                <div class="mt-4" id="memberListBox">
-                                    <label class="form-label fw-bold">Chọn Member</label>
-                                    <input type="text" id="memberSearchInput" class="form-control mb-2"
-                                        placeholder="Nhập tên Member để tìm...">
+                                <small class="text-muted d-block mt-2">
+                                    Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
+                                </small>
+                            </div>
+                        </div>
 
-                                    <div class="border rounded-3 p-3 member-list-scroll">
-                                        <div th:each="member : ${members}" class="form-check member-item mb-2"
-                                            th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
-                                            <input class="form-check-input member-checkbox" type="checkbox"
-                                                name="memberIds" th:value="${member.memberId}">
-                                            <label class="form-check-label"
-                                                th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
-                                                Member name
-                                            </label>
-                                        </div>
+                        <div class="col-lg-7">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tiêu đề</label>
+                                <input type="text" class="form-control" th:field="*{title}" placeholder="Nhập tiêu đề thông báo">
+                            </div>
 
-                                        <div th:if="${members == null || members.isEmpty()}"
-                                            class="text-center text-muted py-4">
-                                            <i class="bi bi-person-x fs-3 d-block mb-2"></i>
-                                            Chưa có member nào trong hệ thống.
-                                        </div>
-                                    </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Nội dung</label>
+                                <textarea class="form-control" rows="8" th:field="*{content}" placeholder="Nhập nội dung thông báo"></textarea>
+                            </div>
 
-                                    <small class="text-muted d-block mt-2">
-                                        Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-send me-1"></i>Gửi thông báo
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews -->
+    <section id="section-reviews" class="lib-section">
+        <div class="card-classic shadow-sm">
+            <div class="card-header bg-white border-bottom p-4 border-color">
+                <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
+                </h5>
+                <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th class="ps-4">Sách</th>
+                            <th>Người gửi</th>
+                            <th>Đánh giá</th>
+                            <th>Nội dung</th>
+                            <th>Phản hồi của thủ thư</th>
+                            <th class="table-fixed-action">Thao tác</th>
+                        </tr>
+                        </thead>
+
+                        <tbody th:if="${reviews != null}">
+                        <tr th:each="review : ${reviews.content}">
+                            <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
+                            <td th:text="${review.memberName}">Người gửi</td>
+                            <td>
+                                <span class="badge bg-warning text-dark border">
+                                    <i class="bi bi-star-fill me-1"></i><span th:text="${review.rating + ' sao'}">5 sao</span>
+                                </span>
+                            </td>
+                            <td th:text="${review.comment}">Nội dung</td>
+
+                            <td>
+                                <div th:if="${review.librarianResponse != null}">
+                                    <div class="fw-semibold" th:text="${review.librarianResponse}">Phản hồi</div>
+                                    <small class="text-muted"
+                                           th:if="${review.responseDate != null}"
+                                           th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
                                     </small>
                                 </div>
-                            </div>
+                                <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản hồi</span>
+                            </td>
 
-                            <div class="col-lg-7">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Tiêu đề</label>
-                                    <input type="text" class="form-control" th:field="*{title}"
-                                        placeholder="Nhập tiêu đề thông báo">
-                                </div>
+                            <td>
+                                <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                                      method="post"
+                                      class="review-reply-box mb-2">
+                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <textarea name="response" class="form-control form-control-sm mb-2" rows="2" placeholder="Nhập phản hồi..."></textarea>
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                                        <i class="bi bi-reply me-1"></i>Phản hồi
+                                    </button>
+                                </form>
 
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold">Nội dung</label>
-                                    <textarea class="form-control" rows="8" th:field="*{content}"
-                                        placeholder="Nhập nội dung thông báo"></textarea>
-                                </div>
+                                <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                      method="post"
+                                      onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                        <i class="bi bi-trash me-1"></i>Xoá
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
 
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="bi bi-send me-1"></i>Gửi thông báo
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+                        <tbody th:if="${reviews == null || reviews.totalElements == 0}">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
+                                Hiện chưa có đánh giá nào.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Reviews -->
-        <section id="section-reviews" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
-                    </h5>
-                    <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
+    <!-- Book Suggestions -->
+    <section id="section-acquisition" class="lib-section">
+        <div class="card-classic shadow-sm">
+            <div class="card-header bg-white border-bottom p-4 border-color">
+                <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <i class="bi bi-journal-plus me-2 text-classic"></i>Đề xuất mua sách
+                </h5>
+                <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th class="ps-4">Mã</th>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>Người đề xuất</th>
+                            <th>Ngày đề xuất</th>
+                        </tr>
+                        </thead>
+
+                        <tbody th:if="${requests != null}">
+                        <tr th:each="request : ${requests.content}">
+                            <td class="ps-4 fw-bold" th:text="${request.requestId}">1</td>
+                            <td th:text="${request.title}">Tên sách</td>
+                            <td th:text="${request.author}">Tác giả</td>
+                            <td th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : 'Không rõ'}">Người đề xuất</td>
+                            <td th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">Ngày đề xuất</td>
+                        </tr>
+                        </tbody>
+
+                        <tbody th:if="${requests == null || requests.totalElements == 0}">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                Chưa có đề xuất mua sách nào.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -360,94 +448,35 @@
                 <div class="d-flex flex-wrap gap-2">
                     <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-classic active" onclick="showBookSubSection('inventory')" style="margin-right: 1px !important;">Quản lý kho sách</button>
                     <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-classic" onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
-
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th class="ps-4">Sách</th>
-                                    <th>Người gửi</th>
-                                    <th>Đánh giá</th>
-                                    <th>Nội dung</th>
-                                    <th>Phản hồi của thủ thư</th>
-                                    <th class="table-fixed-action">Thao tác</th>
-                                </tr>
-                            </thead>
-
-                            <tbody th:if="${reviews != null}">
-                                <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
-                                    <td th:text="${review.memberName}">Người gửi</td>
-                                    <td>
-                                        <span class="badge bg-warning text-dark border">
-                                            <i class="bi bi-star-fill me-1"></i><span
-                                                th:text="${review.rating + ' sao'}">5 sao</span>
-                                        </span>
-                                    </td>
-                                    <td th:text="${review.comment}">Nội dung</td>
-
-                                    <td>
-                                        <div th:if="${review.librarianResponse != null}">
-                                            <div class="fw-semibold" th:text="${review.librarianResponse}">Phản hồi
-                                            </div>
-                                            <small class="text-muted" th:if="${review.responseDate != null}"
-                                                th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
-                                            </small>
-                                        </div>
-                                        <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
-                                            hồi</span>
-                                    </td>
-
-                                    <td>
-                                        <form
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                            method="post" class="review-reply-box mb-2">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <textarea name="response" class="form-control form-control-sm mb-2" rows="2"
-                                                placeholder="Nhập phản hồi..."></textarea>
-                                            <button type="submit" class="btn btn-sm btn-primary w-100">
-                                                <i class="bi bi-reply me-1"></i>Phản hồi
-                                            </button>
-                                        </form>
-
-                                        <form
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
-                                            method="post"
-                                            onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                                <i class="bi bi-trash me-1"></i>Xoá
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            </tbody>
-
-                            <tbody th:if="${reviews == null || reviews.totalElements == 0}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-5">
-                                        <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
-                                        Hiện chưa có đánh giá nào.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
-        </section>
-
-        <!-- Book Suggestions -->
-        <section id="section-acquisition" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-journal-plus me-2 text-classic"></i> Đề xuất mua sách
-                    </h5>
-                    <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
+            <div class="card-body p-4">
+                <div id="bookInventoryPanel">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #8b5a2b !important;">
+                                <div class="text-muted small text-uppercase fw-bold mb-1">Tổng đầu sách</div>
+                                <h4 class="fw-bold mb-0 text-classic" th:text="${totalBookCount}">0</h4>
+                            </div>
+                        </div>
+                    <div class="col-md-3">
+                        <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #198754 !important;">
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Danh mục</div>
+                            <h4 class="fw-bold mb-0 text-success" th:text="${totalCategories}">0</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #0d6efd !important;">
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Thể loại</div>
+                            <h4 class="fw-bold mb-0" style="color: #0d6efd;" th:text="${totalGenres}">0</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #fd7e14 !important;">
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Sẵn sàng</div>
+                            <h4 class="fw-bold mb-0 text-warning" th:text="${inventoryStatusCounts['Available']} ?: 0">0</h4>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex flex-wrap gap-3 mb-4">
@@ -461,208 +490,145 @@
                         <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
                     </button>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th class="ps-4">Mã</th>
-                                    <th>Tên sách</th>
-                                    <th>Tác giả</th>
-                                    <th>Người đề xuất</th>
-                                    <th>Ngày đề xuất</th>
-                                </tr>
-                            </thead>
 
-                            <tbody th:if="${requests != null}">
-                                <tr th:each="request : ${requests.content}">
-                                    <td class="ps-4 fw-bold" th:text="${request.requestId}">1</td>
-                                    <td th:text="${request.title}">Tên sách</td>
-                                    <td th:text="${request.author}">Tác giả</td>
-                                    <td
-                                        th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : 'Không rõ'}">
-                                        Người đề xuất</td>
-                                    <td
-                                        th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">
-                                        Ngày đề xuất</td>
-                                </tr>
-                            </tbody>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th>STT</th>
+                            <th>Sách</th>
+                            <th>ISBN</th>
+                            <th>Danh mục / Thể loại</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="book, iterStat : ${books}">
+                            <td class="ps-3 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                            <td>
+                                <div class="fw-bold text-classic" th:text="${book.title}">Tên sách</div>
+                                <div class="small text-muted" th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">Thể loại</div>
+                            </td>
+                            <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                            <td>
+                                <div class="small text-muted" th:text="${book.genre != null && book.genre.category != null ? book.genre.category.categoryName : 'Chưa có danh mục'}">Danh mục</div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill"
+                                      th:classappend="${book.status == 'Disposed'} ? ' bg-danger' : ' bg-success'"
+                                      th:text="${book.status}">Active</span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" th:data-bs-target="${'#editBookModal' + book.bookId}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="${'#deleteBookModal' + book.bookId}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr th:if="${books == null || #lists.isEmpty(books)}">
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-book fs-2 d-block mb-2"></i>
+                                Chưa có sách trong kho.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-                            <tbody th:if="${requests == null || requests.totalElements == 0}">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-5">
-                                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                        Chưa có đề xuất mua sách nào.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+        <!-- Add Book Modal -->
+        <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addBookModalLabel">Thêm sách mới</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/librarian/inventory/add}" method="post">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tiêu đề sách</label>
+                                    <input type="text" name="title" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">ISBN</label>
+                                    <input type="text" name="isbn" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Thể loại</label>
+                                    <select name="genreId" class="form-select" required>
+                                        <option value="" disabled selected>Chọn thể loại</option>
+                                        <option th:each="genre : ${genres}" th:value="${genre.genreId}" th:text="${genre.genreName}">Thể loại</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Số lượng bản</label>
+                                    <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category/Genre Modal -->
+        <div class="modal fade" id="categoryGenreModal" tabindex="-1" aria-labelledby="categoryGenreModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="categoryGenreModalLabel">Quản lý danh mục và thể loại</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card-classic p-4 shadow-sm">
+                                    <h6 class="fw-bold mb-3">Thêm danh mục</h6>
+                                    <form th:action="@{/librarian/inventory/categories/add}" method="post">
+                                        <input type="hidden" name="type" value="category" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Tên danh mục</label>
+                                            <input type="text" name="name" class="form-control" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-classic btn-sm">Lưu danh mục</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-classic p-4 shadow-sm">
+                                    <h6 class="fw-bold mb-3">Thêm thể loại</h6>
+                                    <form th:action="@{/librarian/inventory/categories/add}" method="post">
+                                        <input type="hidden" name="type" value="genre" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Thuộc danh mục</label>
+                                            <select name="categoryId" class="form-select" required>
+                                                <option value="" disabled selected>Chọn danh mục</option>
+                                                <option th:each="category : ${categories}" th:value="${category.categoryId}" th:text="${category.categoryName}">Danh mục</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Tên thể loại</label>
+                                            <input type="text" name="name" class="form-control" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-classic btn-sm">Lưu thể loại</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- Books -->
-        <section id="section-books" class="lib-section">
-            <div class="card-classic shadow-sm mb-4">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <div class="d-flex flex-wrap gap-2">
-                        <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-primary"
-                            onclick="showBookSubSection('inventory')">Quản lý kho sách</button>
-                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-outline-primary"
-                            onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
-                    </div>
-                </div>
-                <div class="card-body p-4">
-                    <div id="bookInventoryPanel">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #8b5a2b !important;">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1">Tổng đầu sách</div>
-                                    <h4 class="fw-bold mb-0 text-classic" th:text="${totalBookCount}">0</h4>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #198754 !important;">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1">Danh mục</div>
-                                    <h4 class="fw-bold mb-0 text-success" th:text="${totalCategories}">0</h4>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #0d6efd !important;">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1">Thể loại</div>
-                                    <h4 class="fw-bold mb-0" style="color: #0d6efd;" th:text="${totalGenres}">0</h4>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #fd7e14 !important;">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1">Sẵn sàng</div>
-                                    <h4 class="fw-bold mb-0 text-warning"
-                                        th:text="${inventoryStatusCounts['Available']} ?: 0">0</h4>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex flex-wrap gap-2 mb-4">
-                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#addBookModal">
-                                <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
-                            </button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#categoryGenreModal">
-                                <i class="bi bi-tags me-1"></i>Quản lý danh mục
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#auditModal">
-                                <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
-                            </button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light text-uppercase small text-muted">
-                                    <tr>
-                                        <th>STT</th>
-                                        <th>Sách</th>
-                                        <th>ISBN</th>
-                                        <th>Danh mục / Thể loại</th>
-                                        <th>Trạng thái</th>
-                                        <th class="text-end">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="book, iterStat : ${books}">
-                                        <td class="ps-3 fw-bold" th:text="${iterStat.index + 1}">1</td>
-                                        <td>
-                                            <div class="fw-bold text-classic" th:text="${book.title}">Tên sách</div>
-                                            <div class="small text-muted"
-                                                th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">
-                                                Thể loại</div>
-                                        </td>
-                                        <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
-                                        <td>
-                                            <div class="small text-muted"
-                                                th:text="${book.genre != null && book.genre.category != null ? book.genre.category.categoryName : 'Chưa có danh mục'}">
-                                                Danh mục</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge rounded-pill"
-                                                th:classappend="${book.status == 'Disposed'} ? ' bg-danger' : ' bg-success'"
-                                                th:text="${book.status}">Active</span>
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                                                data-bs-toggle="modal"
-                                                th:data-bs-target="${'#editBookModal' + book.bookId}">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                                data-bs-toggle="modal"
-                                                th:data-bs-target="${'#deleteBookModal' + book.bookId}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${books == null || #lists.isEmpty(books)}">
-                                        <td colspan="6" class="text-center text-muted py-5">
-                                            <i class="bi bi-book fs-2 d-block mb-2"></i>
-                                            Chưa có sách trong kho.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add Book Modal -->
-                <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="addBookModalLabel">Thêm sách mới</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <form th:action="@{/librarian/inventory/add}" method="post">
-                                <div class="modal-body">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Tiêu đề sách</label>
-                                            <input type="text" name="title" class="form-control" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">ISBN</label>
-                                            <input type="text" name="isbn" class="form-control" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Thể loại</label>
-                                            <select name="genreId" class="form-select" required>
-                                                <option value="" disabled selected>Chọn thể loại</option>
-                                                <option th:each="genre : ${genres}" th:value="${genre.genreId}"
-                                                    th:text="${genre.genreName}">Thể loại</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Số lượng bản</label>
-                                            <input type="number" name="quantity" class="form-control" min="1" value="1"
-                                                required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-primary">Lưu</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+        </div>
 
         <!-- Audit Modal -->
         <div class="modal fade" id="auditModal" tabindex="-1" aria-labelledby="auditModalLabel" aria-hidden="true">
@@ -697,70 +663,80 @@
                                         <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
                                     </div>
                                 </div>
-                <!-- Category/Genre Modal -->
-                <div class="modal fade" id="categoryGenreModal" tabindex="-1" aria-labelledby="categoryGenreModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="categoryGenreModalLabel">Quản lý danh mục và thể loại</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
                             </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Thực hiện kiểm kê</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div th:each="book : ${books}">
+            <!-- Edit Book Modal -->
+            <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1" th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" th:id="${'editBookModalLabel' + book.bookId}">Chỉnh sửa sách</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form th:action="@{/librarian/inventory/edit/{id}(id=${book.bookId})}" method="post">
                             <div class="modal-body">
-                                <div class="row g-4">
+                                <div class="row g-3">
                                     <div class="col-md-6">
-                                        <div class="card-classic p-4 shadow-sm">
-                                            <h6 class="fw-bold mb-3">Thêm danh mục</h6>
-                                            <form th:action="@{/librarian/inventory/categories/add}" method="post">
-                                                <input type="hidden" name="type" value="category" />
-                                                <div class="mb-3">
-                                                    <label class="form-label">Tên danh mục</label>
-                                                    <input type="text" name="name" class="form-control" required>
-                                                </div>
-                                                <button type="submit" class="btn btn-classic btn-sm">Lưu danh
-                                                    mục</button>
-                                            </form>
-                                        </div>
+                                        <label class="form-label">Tiêu đề sách</label>
+                                        <input type="text" name="title" class="form-control" th:value="${book.title}" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="card-classic p-4 shadow-sm">
-                                            <h6 class="fw-bold mb-3">Thêm thể loại</h6>
-                                            <form th:action="@{/librarian/inventory/categories/add}" method="post">
-                                                <input type="hidden" name="type" value="genre" />
-                                                <div class="mb-3">
-                                                    <label class="form-label">Thuộc danh mục</label>
-                                                    <select name="categoryId" class="form-select" required>
-                                                        <option value="" disabled selected>Chọn danh mục</option>
-                                                        <option th:each="category : ${categories}"
-                                                            th:value="${category.categoryId}"
-                                                            th:text="${category.categoryName}">Danh mục</option>
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Tên thể loại</label>
-                                                    <input type="text" name="name" class="form-control" required>
-                                                </div>
-                                                <button type="submit" class="btn btn-classic btn-sm">Lưu thể
-                                                    loại</button>
-                                            </form>
-                                        </div>
+                                        <label class="form-label">ISBN</label>
+                                        <input type="text" name="isbn" class="form-control" th:value="${book.isbn}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Thể loại</label>
+                                        <select name="genreId" class="form-select" required>
+                                            <option value="" disabled>Chọn thể loại</option>
+                                            <option th:each="genre : ${genres}"
+                                                    th:value="${genre.genreId}"
+                                                    th:selected="${book.genre != null && genre.genreId == book.genre.genreId}"
+                                                    th:text="${genre.genreName}">Thể loại</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Trạng thái</label>
+                                        <select name="status" class="form-select" required>
+                                            <option th:selected="${book.status == 'Active'}" value="Active">Active</option>
+                                            <option th:selected="${book.status == 'Disposed'}" value="Disposed">Disposed</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
+            </div>
 
-                <!-- Audit Modal -->
-                <div class="modal fade" id="auditModal" tabindex="-1" aria-labelledby="auditModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="auditModalLabel">Kiểm kê kho sách</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+            <!-- Delete Book Modal -->
+            <div class="modal fade" th:id="${'deleteBookModal' + book.bookId}" tabindex="-1" th:aria-labelledby="${'deleteBookModalLabel' + book.bookId}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" th:id="${'deleteBookModalLabel' + book.bookId}">Xác nhận xóa</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form th:action="@{/librarian/inventory/delete/{id}(id=${book.bookId})}" method="post">
+                            <div class="modal-body">
+                                <p>Bạn có chắc muốn xóa sách <strong th:text="${book.title}">Tên sách</strong> không?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-danger">Xóa</button>
                             </div>
                         </form>
                     </div>
@@ -810,345 +786,197 @@
                         </table>
                     </div>
                 </div>
-
-                <div th:each="book : ${books}">
-                    <!-- Edit Book Modal -->
-                    <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1"
-                        th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
+                    <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1" th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" th:id="${'editBookModalLabel' + book.bookId}">Chỉnh sửa sách
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
+                                    <h5 class="modal-title" th:id="${'editStorageModalLabel' + shelf.shelfId}">Cập nhật vị trí lưu trữ</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <form th:action="@{/librarian/inventory/edit/{id}(id=${book.bookId})}" method="post">
+                                <form th:action="@{/librarian/storage/update/{id}(id=${shelf.shelfId})}" method="post">
                                     <div class="modal-body">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Tiêu đề sách</label>
-                                                <input type="text" name="title" class="form-control"
-                                                    th:value="${book.title}" required>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">ISBN</label>
-                                                <input type="text" name="isbn" class="form-control"
-                                                    th:value="${book.isbn}" required>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Thể loại</label>
-                                                <select name="genreId" class="form-select" required>
-                                                    <option value="" disabled>Chọn thể loại</option>
-                                                    <option th:each="genre : ${genres}" th:value="${genre.genreId}"
-                                                        th:selected="${book.genre != null && genre.genreId == book.genre.genreId}"
-                                                        th:text="${genre.genreName}">Thể loại</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Trạng thái</label>
-                                                <select name="status" class="form-select" required>
-                                                    <option th:selected="${book.status == 'Active'}" value="Active">
-                                                        Active</option>
-                                                    <option th:selected="${book.status == 'Disposed'}" value="Disposed">
-                                                        Disposed</option>
-                                                </select>
-                                            </div>
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Tên vị trí</label>
+                                            <input type="text" class="form-control" name="shelfName" th:value="${shelf.shelfName}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Vị trí</label>
+                                            <input type="text" class="form-control" name="location" th:value="${shelf.location}">
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                        <button type="submit" class="btn btn-primary">Lưu</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Delete Book Modal -->
-                    <div class="modal fade" th:id="${'deleteBookModal' + book.bookId}" tabindex="-1"
-                        th:aria-labelledby="${'deleteBookModalLabel' + book.bookId}" aria-hidden="true">
+                    <div class="modal fade" th:id="${'deleteStorageModal' + shelf.shelfId}" tabindex="-1" th:aria-labelledby="${'deleteStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" th:id="${'deleteBookModalLabel' + book.bookId}">Xác nhận xóa
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
+                                    <h5 class="modal-title" th:id="${'deleteStorageModalLabel' + shelf.shelfId}">Xác nhận xoá</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <form th:action="@{/librarian/inventory/delete/{id}(id=${book.bookId})}" method="post">
+                                <form th:action="@{/librarian/storage/delete/{id}(id=${shelf.shelfId})}" method="post">
                                     <div class="modal-body">
-                                        <p>Bạn có chắc muốn xóa sách <strong th:text="${book.title}">Tên sách</strong>
-                                            không?</p>
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <p>Bạn có chắc muốn xoá vị trí lưu trữ <strong th:text="${shelf.shelfName}">Tên vị trí</strong> không?</p>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Hủy</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                                         <button type="submit" class="btn btn-danger">Xóa</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <div id="bookShelfPanel" style="display: none;">
-                        <div class="card-classic shadow-sm">
-                            <div class="card-header bg-white border-bottom p-4 border-color">
-                                <h5 class="fw-bold mb-1"
-                                    style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                    <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
-                                </h5>
-                                <div class="text-muted small">Xem và quản lý vị trí lưu trữ sách trong kho mà không rời
-                                    dashboard.</div>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light text-uppercase small text-muted">
-                                            <tr>
-                                                <th>STT</th>
-                                                <th>Tên vị trí</th>
-                                                <th>Vị trí</th>
-                                                <th>Thao tác</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr th:each="shelf, iterStat : ${shelves}">
-                                                <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
-                                                <td th:text="${shelf.shelfName}">Tên vị trí</td>
-                                                <td th:text="${shelf.location}">Vị trí</td>
-                                                <td class="table-fixed-action">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                                                        data-bs-toggle="modal"
-                                                        th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
-                                                        title="Sửa">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        data-bs-toggle="modal"
-                                                        th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
-                                                        title="Xóa">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr th:if="${shelves == null || #lists.isEmpty(shelves)}">
-                                                <td colspan="4" class="text-center text-muted py-5">
-                                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                                    Hiện chưa có vị trí lưu trữ nào.
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
-                                <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1"
-                                    th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title"
-                                                    th:id="${'editStorageModalLabel' + shelf.shelfId}">Cập nhật vị trí
-                                                    lưu trữ</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <form th:action="@{/librarian/storage/update/{id}(id=${shelf.shelfId})}"
-                                                method="post">
-                                                <div class="modal-body">
-                                                    <input type="hidden" th:if="${_csrf != null}"
-                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Tên vị trí</label>
-                                                        <input type="text" class="form-control" name="shelfName"
-                                                            th:value="${shelf.shelfName}" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Vị trí</label>
-                                                        <input type="text" class="form-control" name="location"
-                                                            th:value="${shelf.location}">
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-primary">Lưu</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                </div>
+                <div class="card-footer bg-white border-top p-4 border-color text-end">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStorageModal">
+                        Thêm vị trí mới
+                    </button>
+                </div>
+            </div>
 
-                                <div class="modal fade" th:id="${'deleteStorageModal' + shelf.shelfId}" tabindex="-1"
-                                    th:aria-labelledby="${'deleteStorageModalLabel' + shelf.shelfId}"
-                                    aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title"
-                                                    th:id="${'deleteStorageModalLabel' + shelf.shelfId}">Xác nhận xoá
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <form th:action="@{/librarian/storage/delete/{id}(id=${shelf.shelfId})}"
-                                                method="post">
-                                                <div class="modal-body">
-                                                    <input type="hidden" th:if="${_csrf != null}"
-                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                                    <p>Bạn có chắc muốn xoá vị trí lưu trữ <strong
-                                                            th:text="${shelf.shelfName}">Tên vị trí</strong> không?</p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-white border-top p-4 border-color text-end">
-                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#addStorageModal">
-                                    Thêm vị trí mới
-                                </button>
-                            </div>
+            <!-- Storage Modals -->
+            <div class="modal fade" id="addStorageModal" tabindex="-1" aria-labelledby="addStorageModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addStorageModalLabel">Thêm vị trí lưu trữ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-
-                        <!-- Storage Modals -->
-                        <div class="modal fade" id="addStorageModal" tabindex="-1"
-                            aria-labelledby="addStorageModalLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="addStorageModalLabel">Thêm vị trí lưu trữ</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <form th:action="@{/librarian/storage/add}" method="post">
-                                        <div class="modal-body">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                            <div class="mb-3">
-                                                <label class="form-label">Tên vị trí</label>
-                                                <input type="text" class="form-control" name="shelfName" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Vị trí</label>
-                                                <input type="text" class="form-control" name="location">
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary">Lưu</button>
-                                        </div>
-                                    </form>
+                        <form th:action="@{/librarian/storage/add}" method="post">
+                            <div class="modal-body">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <div class="mb-3">
+                                    <label class="form-label">Tên vị trí</label>
+                                    <input type="text" class="form-control" name="shelfName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Vị trí</label>
+                                    <input type="text" class="form-control" name="location">
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-        </section>
-
-        <!-- Users -->
-        <section id="section-users" class="lib-section">
-            <div class="row g-4 mb-4">
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #198754 !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
-                                <i class="bi bi-people fs-4"></i>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu</button>
                             </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Tổng Thành Viên</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #0d6efd !important;">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
-                                <i class="bi bi-person-badge fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Tổng thủ thư</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalLibrarians}">0</h3>
-                            </div>
+    </section>
+
+    <!-- Users -->
+
+    <!-- Users -->
+    <section id="section-users" class="lib-section">
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #198754 !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
+                            <i class="bi bi-people fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Tổng thành viên</div>
+                            <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-people me-2 text-classic"></i>Danh sách thành viên
-                        </h5>
-                        <p class="text-muted mb-3">Tạo, cập nhật và xóa tài khoản thành viên.</p>
-                        <a class="btn btn-outline-classic btn-sm" th:href="@{/librarian/members}">
-                            Mở trang <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-person-badge me-2 text-classic"></i>Danh sách thủ thư
-                        </h5>
-                        <p class="text-muted mb-3">Xem danh sách thủ thư đang làm việc trong hệ thống.</p>
-                        <a class="btn btn-outline-classic btn-sm" th:href="@{/librarian/librarians}">
-                            Mở trang <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #0d6efd !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                            <i class="bi bi-person-badge fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold mb-1">Tổng thủ thư</div>
+                            <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${totalLibrarians}">0</h3>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Reports -->
-        <section id="section-reports" class="lib-section">
-            <div class="row g-4 mb-4">
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #0d6efd !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Đang mượn</div>
-                        <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #fd7e14 !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Chờ đặt trước</div>
-                        <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #dc3545 !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Quá hạn</div>
-                        <h3 class="fw-bold mb-0 text-danger" th:text="${overdueDetails}">0</h3>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #198754 !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Thành viên</div>
-                        <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
-                    </div>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card-classic h-100 shadow-sm p-4">
+                    <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-people me-2 text-classic"></i>Danh sách thành viên
+                    </h5>
+                    <p class="text-muted mb-3">Tạo, cập nhật và xóa tài khoản thành viên.</p>
+                    <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/members}">
+                        Mở trang <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
                 </div>
             </div>
+
+            <div class="col-lg-6">
+                <div class="card-classic h-100 shadow-sm p-4">
+                    <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-person-badge me-2 text-classic"></i>Danh sách thủ thư
+                    </h5>
+                    <p class="text-muted mb-3">Xem danh sách thủ thư đang làm việc trong hệ thống.</p>
+                    <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/librarians}">
+                        Mở trang <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reports -->
+    <section id="section-reports" class="lib-section">
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #0d6efd !important;">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Đang mượn</div>
+                    <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #fd7e14 !important;">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Chờ đặt trước</div>
+                    <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #dc3545 !important;">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Quá hạn</div>
+                    <h3 class="fw-bold mb-0 text-danger" th:text="${overdueDetails}">0</h3>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #198754 !important;">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Thành viên</div>
+                    <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-classic shadow-sm p-4">
+            <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                <i class="bi bi-bar-chart me-2 text-classic"></i>Báo cáo thư viện
+            </h5>
+            <p class="text-muted mb-3">Xem báo cáo tổng quan hoạt động thư viện.</p>
+            <a class="btn btn-outline-primary btn-sm" th:href="@{/librarian/reports}">
+                Mở trang <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </section>
 
     <script>
         function showBookSubSection(panelName) {
@@ -1179,114 +1007,96 @@
             sections.forEach(function (section) {
                 section.classList.remove("active");
             });
-            <div class="card-classic shadow-sm p-4">
-                <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                    <i class="bi bi-bar-chart me-2 text-classic"></i>Báo cáo thư viện
-                </h5>
-                <p class="text-muted mb-3">Xem báo cáo tổng quan hoạt động thư viện.</p>
-                <a class="btn btn-outline-classic btn-sm" th:href="@{/librarian/reports}">
-                    Mở trang <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
-        </section>
 
-        <script>
-            function showLibSection(sectionName, clickedLink) {
-                const sections = document.querySelectorAll(".lib-section");
+            const selectedSection = document.getElementById("section-" + sectionName);
 
-                sections.forEach(function (section) {
-                    section.classList.remove("active");
-                });
-
-                const selectedSection = document.getElementById("section-" + sectionName);
-
-                if (selectedSection != null) {
-                    selectedSection.classList.add("active");
-                }
-
-                const menuLinks = document.querySelectorAll(".dashboard-section-link[data-section], .menu-link[data-section]");
-
-                menuLinks.forEach(function (link) {
-                    link.classList.remove("active");
-                });
-
-                if (clickedLink != null && clickedLink.dataset.section != null) {
-                    clickedLink.classList.add("active");
-                }
-
-                const newUrl = sectionName === "overview"
-                    ? window.location.pathname
-                    : window.location.pathname + "?section=" + sectionName;
-
-                window.history.replaceState(null, "", newUrl);
+            if (selectedSection != null) {
+                selectedSection.classList.add("active");
             }
 
-            function openSectionFromUrl() {
-                const params = new URLSearchParams(window.location.search);
-                const sectionName = params.get("section") || "overview";
+            const menuLinks = document.querySelectorAll(".dashboard-section-link[data-section], .menu-link[data-section]");
 
-                showLibSection(sectionName, null);
-            }
-
-            function toggleMemberList() {
-                const selected = document.getElementById("recipientSelected");
-                const memberListBox = document.getElementById("memberListBox");
-                const checkboxes = document.querySelectorAll(".member-checkbox");
-
-                if (memberListBox == null) {
-                    return;
-                }
-
-                if (selected != null && selected.checked) {
-                    memberListBox.style.display = "block";
-                    checkboxes.forEach(function (checkbox) {
-                        checkbox.disabled = false;
-                    });
-                } else {
-                    memberListBox.style.display = "none";
-                    checkboxes.forEach(function (checkbox) {
-                        checkbox.checked = false;
-                        checkbox.disabled = true;
-                    });
-                }
-            }
-
-            function filterMembers() {
-                const searchInput = document.getElementById("memberSearchInput");
-                const memberItems = document.querySelectorAll(".member-item");
-
-                if (searchInput == null) {
-                    return;
-                }
-
-                const keyword = searchInput.value.toLowerCase().trim();
-
-                memberItems.forEach(function (item) {
-                    const memberName = item.getAttribute("data-member-name") || "";
-                    item.style.display = memberName.includes(keyword) ? "block" : "none";
-                });
-            }
-
-            document.addEventListener("DOMContentLoaded", function () {
-                openSectionFromUrl();
-
-                const recipientAll = document.getElementById("recipientAll");
-                const recipientSelected = document.getElementById("recipientSelected");
-
-                if (recipientAll != null && recipientSelected != null) {
-                    recipientAll.addEventListener("change", toggleMemberList);
-                    recipientSelected.addEventListener("change", toggleMemberList);
-                    toggleMemberList();
-                }
-
-                const memberSearchInput = document.getElementById("memberSearchInput");
-
-                if (memberSearchInput != null) {
-                    memberSearchInput.addEventListener("input", filterMembers);
-                }
+            menuLinks.forEach(function (link) {
+                link.classList.remove("active");
             });
-        </script>
-    </div>
+
+            if (clickedLink != null && clickedLink.dataset.section != null) {
+                clickedLink.classList.add("active");
+            }
+
+            const newUrl = sectionName === "overview"
+                ? window.location.pathname
+                : window.location.pathname + "?section=" + sectionName;
+
+            window.history.replaceState(null, "", newUrl);
+        }
+
+        function openSectionFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const sectionName = params.get("section") || "overview";
+
+            showLibSection(sectionName, null);
+        }
+
+        function toggleMemberList() {
+            const selected = document.getElementById("recipientSelected");
+            const memberListBox = document.getElementById("memberListBox");
+            const checkboxes = document.querySelectorAll(".member-checkbox");
+
+            if (memberListBox == null) {
+                return;
+            }
+
+            if (selected != null && selected.checked) {
+                memberListBox.style.display = "block";
+                checkboxes.forEach(function (checkbox) {
+                    checkbox.disabled = false;
+                });
+            } else {
+                memberListBox.style.display = "none";
+                checkboxes.forEach(function (checkbox) {
+                    checkbox.checked = false;
+                    checkbox.disabled = true;
+                });
+            }
+        }
+
+        function filterMembers() {
+            const searchInput = document.getElementById("memberSearchInput");
+            const memberItems = document.querySelectorAll(".member-item");
+
+            if (searchInput == null) {
+                return;
+            }
+
+            const keyword = searchInput.value.toLowerCase().trim();
+
+            memberItems.forEach(function (item) {
+                const memberName = item.getAttribute("data-member-name") || "";
+                item.style.display = memberName.includes(keyword) ? "block" : "none";
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            openSectionFromUrl();
+
+            const recipientAll = document.getElementById("recipientAll");
+            const recipientSelected = document.getElementById("recipientSelected");
+
+            if (recipientAll != null && recipientSelected != null) {
+                recipientAll.addEventListener("change", toggleMemberList);
+                recipientSelected.addEventListener("change", toggleMemberList);
+                toggleMemberList();
+            }
+
+            const memberSearchInput = document.getElementById("memberSearchInput");
+
+            if (memberSearchInput != null) {
+                memberSearchInput.addEventListener("input", filterMembers);
+            }
+        });
+    </script>
+</div>
 </body>
 
 </html>
