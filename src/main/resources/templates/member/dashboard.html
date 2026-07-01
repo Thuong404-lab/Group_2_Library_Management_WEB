@@ -4,6 +4,28 @@
       layout:decorate="~{layout/base}">
 <head>
     <title>Dashboard Độc Giả</title>
+    <style>
+        /* CSS Khắc phục lỗi lệch khung: Cố định kích thước card hiển thị đồng bộ */
+        .equal-height-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+        .card-body-flex {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+        .text-truncate-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.6rem;
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content" class="container-fluid py-4">
@@ -16,14 +38,6 @@
     <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Thông báo lỗi</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-    <div th:if="${param.success != null}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:if="${param.success[0] == 'borrow'}">Yêu cầu đăng ký mượn sách đã được gửi tới Thủ thư duyệt!</span>
-        <span th:if="${param.success[0] == 'return'}">Yêu cầu trả sách thành công! Đang chờ Thủ thư xác nhận kho.</span>
-        <span th:if="${param.success[0] == 'reserve'}">Đặt trước sách thành công! Bạn sẽ nhận thông báo khi sách có sẵn.</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
@@ -67,29 +81,38 @@
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-journal-text text-primary me-2"></i>Sách Bạn Đang Mượn</h5>
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-journal-text text-primary me-2"></i>Trạng Thái Yêu Cầu Sách Của Bạn</h5>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th>Mã Sách</th>
-                            <th>Ngày Mượn</th>
-                            <th>Hạn Trả</th>
+                            <th>Mã Đơn</th>
+                            <th>Ngày Tạo Yêu Cầu</th>
+                            <th>Trạng Thái</th>
                             <th>Hành Động</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr>
-                            <td>BK-2026</td>
-                            <td>30/06/2026</td>
-                            <td>14/07/2026</td>
+                        <tr th:if="${#lists.isEmpty(activeBorrows)}">
+                            <td colspan="4" class="text-center py-4 text-muted">Bạn không có yêu cầu mượn hoặc giữ sách nào đang xử lý.</td>
+                        </tr>
+                        <tr th:each="borrow : ${activeBorrows}">
+                            <td class="fw-semibold" th:text="${'BRW-' + borrow.borrowId}">BRW-1</td>
+                            <td th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">30/06/2026</td>
                             <td>
-                                <form th:action="@{/member/borrow/return/1}" method="post" class="d-inline">
+                                <span th:if="${borrow.status == 'Pending' || borrow.status == 'PENDING'}" class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Chờ Thủ Thư Duyệt</span>
+                                <span th:if="${borrow.status == 'Active' || borrow.status == 'BORROWING'}" class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Đang Mượn</span>
+                                <span th:if="${borrow.status == 'Return_Pending'}" class="badge bg-info text-dark"><i class="bi bi-arrow-left-right me-1"></i>Chờ xác nhận trả</span>
+                                <span th:if="${borrow.status == 'Reserved_Pending'}" class="badge bg-secondary"><i class="bi bi-bookmark-fill me-1"></i>Đang đặt chỗ</span>
+                            </td>
+                            <td>
+                                <form th:if="${borrow.status == 'Active' || borrow.status == 'BORROWING'}" th:action="@{/member/borrow/return/{id}(id=${borrow.borrowId})}" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Trả sách
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Yêu cầu trả
                                     </button>
                                 </form>
+                                <span th:unless="${borrow.status == 'Active' || borrow.status == 'BORROWING'}" class="text-muted small">-</span>
                             </td>
                         </tr>
                         </tbody>
@@ -99,20 +122,35 @@
 
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-search text-success me-2"></i>Thử Nghiệm Tính Năng Trực Tuyến</h5>
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-grid-3x3-gap text-success me-2"></i>Sách Có Sẵn Tại Thư Viện</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small">Kích hoạt nhanh các chức năng kiểm thử của hệ thống theo đúng Endpoint trong BorrowController:</p>
-                    <div class="d-flex gap-2">
-                        <a th:href="@{/member/borrow/create(bookId=101)}" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus-circle me-1"></i>Đăng ký mượn cuốn sách ID 101
-                        </a>
+                    <div class="row row-cols-1 row-cols-md-3 g-3">
+                        <div class="col" th:each="book : ${books}">
+                            <div class="card equal-height-card shadow-sm border-light-subtle">
+                                <div class="card-body card-body-flex">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold text-dark mb-0 text-truncate-title" th:text="${book.title}">Tên Sách</h6>
+                                            <span class="badge bg-success-subtle text-success small" th:text="${book.status}">Available</span>
+                                        </div>
+                                        <p class="text-muted mb-1 small"><i class="bi bi-upc-scan me-1"></i>ISBN: <span th:text="${book.isbn}">ISBN</span></p>
+                                        <p class="text-muted mb-0 small"><i class="bi bi-bookmark me-1"></i>Thể loại: <span th:text="${book.genre != null ? book.genre.genreName : 'Chưa phân loại'}">Genre</span></p>
+                                    </div>
 
-                        <form th:action="@{/member/borrow/reserve/102}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-warning btn-sm text-dark">
-                                <i class="bi bi-bookmark-star me-1"></i>Đặt trước cuốn sách ID 102 (Reserve)
-                            </button>
-                        </form>
+                                    <div class="d-flex gap-2 pt-3 mt-3 border-top border-light-subtle">
+                                        <a th:href="@{/member/borrow/create(bookId=${book.bookId})}" class="btn btn-sm btn-primary flex-fill fw-bold">
+                                            <i class="bi bi-plus-circle me-1"></i>Mượn sách
+                                        </a>
+                                        <form th:action="@{/member/borrow/reserve/{id}(id=${book.bookId})}" method="post" class="flex-fill">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark w-100 fw-bold">
+                                                <i class="bi bi-bookmark-star me-1"></i>Đặt trước
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -128,18 +166,17 @@
                     <div th:each="leader, iter : ${leaderBoard}" class="list-group-item d-flex align-items-center justify-content-between py-3">
                         <div class="d-flex align-items-center">
                             <span class="fw-bold me-3 text-center" style="width: 24px;">
-                                <span th:if="${iter.index == 0}" class="text-warning fs-5">🥇</span>
-                                <span th:if="${iter.index == 1}" class="text-secondary fs-5">🥈</span>
-                                <span th:if="${iter.index == 2}" class="text-brown fs-5">🥉</span>
+                                <span th:if="${iter.index == 0}">🥇</span>
+                                <span th:if="${iter.index == 1}">🥈</span>
+                                <span th:if="${iter.index == 2}">🥉</span>
                                 <span th:if="${iter.index > 2}" th:text="${iter.count}" class="text-muted small">4</span>
                             </span>
                             <div>
                                 <h6 class="mb-0 fw-semibold text-dark" th:text="${leader.user.fullName}">Tên Độc Giả</h6>
-                                <small class="text-muted text-uppercase" style="font-size: 11px;"
-                                       th:text="${leader.tier != null ? leader.tier.tierName : 'Standard'}">Hạng</small>
+                                <small class="text-muted text-uppercase" style="font-size: 11px;" th:text="${leader.tier != null ? leader.tier.tierName : 'Standard'}">Hạng</small>
                             </div>
                         </div>
-                        <span class="badge bg-light text-dark rounded-pill fw-normal">Độc giả tích cực</span>
+                        <span class="badge bg-light text-dark rounded-pill fw-normal">Tích cực</span>
                     </div>
                 </div>
             </div>

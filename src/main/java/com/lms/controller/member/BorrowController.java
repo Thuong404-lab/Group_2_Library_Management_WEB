@@ -1,7 +1,9 @@
 package com.lms.controller.member;
 
+import com.lms.entity.Book;
 import com.lms.service.BorrowService;
 import com.lms.service.MemberFavoriteService;
+import com.lms.service.BookService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +16,17 @@ public class BorrowController {
 
     private final BorrowService borrowService;
     private final MemberFavoriteService memberFavoriteService;
+    private final BookService bookService;
 
-    public BorrowController(BorrowService borrowService, MemberFavoriteService memberFavoriteService) {
+    public BorrowController(BorrowService borrowService,
+                            MemberFavoriteService memberFavoriteService,
+                            BookService bookService) {
         this.borrowService = borrowService;
         this.memberFavoriteService = memberFavoriteService;
+        this.bookService = bookService;
     }
 
-    // UC-6.0: Hiển thị form tạo yêu cầu mượn sách (Sửa đổi để trả về đúng file form)
+    // UC-6.0: Hiển thị form tạo yêu cầu mượn sách trực tuyến
     @GetMapping("/create")
     public String showCreateRequestForm(@RequestParam(value = "bookId", required = false) Integer bookId, Model model, Principal principal) {
         if (principal == null) return "redirect:/login";
@@ -28,11 +34,16 @@ public class BorrowController {
         model.addAttribute("currentMemberName", principal.getName());
         model.addAttribute("selectedBookId", bookId);
 
-        // Trả về file HTML giao diện điền thông tin/Form mượn sách giống mẫu hình bạn gửi
+        if (bookId != null) {
+            try {
+                Book book = bookService.findBookById(bookId);
+                model.addAttribute("selectedBook", book);
+            } catch (Exception ignored) {}
+        }
         return "member/borrow-create";
     }
 
-    // UC-6.0: Xử lý submit đơn đăng ký mượn trực tuyến (PENDING)
+    // UC-6.0: Xử lý submit đơn đăng ký mượn trực tuyến (Lưu trạng thái Pending vào bảng Borrows)
     @PostMapping("/request/submit")
     public String submitBorrowRequest(@RequestParam("bookId") Integer bookId,
                                       @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
@@ -40,10 +51,7 @@ public class BorrowController {
                                       RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            // Gọi hàm của Service để lưu yêu cầu mượn vào DB dưới trạng thái PENDING
             borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-
-            // Đẩy thông báo Flash chờ duyệt hiển thị tại Dashboard
             redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của bạn đã được gửi tới Thủ thư và đang chờ phê duyệt.");
             return "redirect:/member/dashboard?success=borrow";
         } catch (Exception e) {
@@ -52,13 +60,28 @@ public class BorrowController {
         }
     }
 
-    // UC-6.2: Gọi xử lý đặt chỗ sách trực tuyến khi hết bản sao (Reserve)
+    // UC-6.2: Gọi xử lý đặt giữ chỗ sách trực tuyến (Reserve) -> Form trung gian
+    @GetMapping("/reserve/form/{bookId}")
+    public String showReserveForm(@PathVariable Integer bookId, Model model, Principal principal) {
+        if (principal == null) return "redirect:/login";
+        try {
+            Book book = bookService.findBookById(bookId);
+            model.addAttribute("book", book);
+            model.addAttribute("username", principal.getName());
+            return "member/reserve-confirm";
+        } catch (Exception e) {
+            return "redirect:/member/dashboard";
+        }
+    }
+
+    // FIX LỖI 1: Thực hiện gửi yêu cầu đặt chỗ lưu trực tiếp vào bảng Reservations (Không lỗi 500)
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
+            // Chuyển sang service quản lý Favorites/Reservation để xử lý đặt trước
             memberFavoriteService.reserveBook(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt giữ chỗ sách (Reserve) thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt giữ chỗ sách (Reserve) thành công! Yêu cầu đã được gửi tới Thủ thư và đang chờ phê duyệt.");
             return "redirect:/member/dashboard?success=reserve";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi đặt chỗ: " + e.getMessage());
@@ -66,12 +89,13 @@ public class BorrowController {
         }
     }
 
-    // UC-7.0: Độc giả gửi yêu cầu trả sách trực tuyến
+    // UC-7.0: Độc giả gửi yêu cầu trả sách trực tuyến ra quầy
     @PostMapping("/return/{loanId}")
     public String returnBook(@PathVariable("loanId") Integer loanId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được ghi nhận! Vui lòng đợi thủ thư xác nhận kho.");
+            borrowService.updateStatus(loanId, "Return_Pending");
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi đi! Vui lòng đợi thủ thư tiếp nhận vật lý tại quầy.");
             return "redirect:/member/dashboard?success=return";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý trả sách: " + e.getMessage());
@@ -80,7 +104,12 @@ public class BorrowController {
     }
 
     @GetMapping("/history")
-    public String viewBorrowingHistory(Principal principal, Model model) { return "member/borrow-history"; }
+    public String viewBorrowingHistory(Principal principal, Model model) {
+        if (principal != null) {
+            model.addAttribute("historyBorrows", borrowService.getAllBorrowHistoryByMember(principal.getName()));
+        }
+        return "member/borrow-history";
+    }
 
     @GetMapping("/current")
     public String viewCurrentBorrows() { return "member/current-borrows"; }

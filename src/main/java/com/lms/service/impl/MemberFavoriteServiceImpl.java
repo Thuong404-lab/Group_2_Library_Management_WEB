@@ -3,10 +3,7 @@ package com.lms.service.impl;
 import com.lms.entity.*;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
-import com.lms.repository.AccountRepository;
-import com.lms.repository.BookRepository;
-import com.lms.repository.FavoritesRepository;
-import com.lms.repository.MemberRepository;
+import com.lms.repository.*;
 import com.lms.service.MemberFavoriteService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,21 +19,23 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final FavoritesRepository favoritesRepository;
+    private final ReservationRepository reservationRepository;
 
     public MemberFavoriteServiceImpl(AccountRepository accountRepository,
                                      MemberRepository memberRepository,
                                      BookRepository bookRepository,
-                                     FavoritesRepository favoritesRepository) {
+                                     FavoritesRepository favoritesRepository,
+                                     ReservationRepository reservationRepository) {
         this.accountRepository = accountRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @Override
     @Transactional
     public void addToFavorites(String username, Integer bookId) {
-        System.out.println(">>> ĐÃ VÀO SERVICE: username=" + username + ", bookId=" + bookId);
         Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
 
@@ -46,15 +45,8 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách"));
 
-        System.out.println("DEBUG: MemberID = " + member.getMemberId());
-        System.out.println("DEBUG: BookID = " + book.getBookId());
-
         FavoritesId id = new FavoritesId(member.getMemberId(), book.getBookId());
-
-        boolean exists = favoritesRepository.existsById(id);
-        System.out.println("DEBUG: Exists in DB? " + exists);
-
-        if (exists) {
+        if (favoritesRepository.existsById(id)) {
             throw new ValidationException("Sách này đã có trong danh sách yêu thích.");
         }
 
@@ -63,10 +55,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         favorites.setMember(member);
         favorites.setBook(book);
 
-        // Sử dụng save thay vì saveAndFlush nếu dùng @Transactional
-        // Hibernate sẽ tự động flush khi transaction kết thúc (commit)
         favoritesRepository.saveAndFlush(favorites);
-        System.out.println("DEBUG: Saved Successfully!");
     }
 
     @Override
@@ -79,7 +68,6 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username));
 
         FavoritesId id = new FavoritesId(member.getMemberId(), bookId);
-
         Favorites favorites = favoritesRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách yêu thích."));
 
@@ -106,10 +94,6 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
                 .collect(Collectors.toSet());
     }
 
-    // Khai báo thêm Repository găm giữ chỗ ở đầu Class (Nhớ Autowired hoặc thêm vào Constructor injection)
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.lms.repository.ReservationRepository reservationRepository;
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void reserveBook(String username, Integer bookId) throws Exception {
@@ -122,13 +106,21 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sách không tồn tại"));
 
-        // Thực hiện lưu bản ghi đặt giữ chỗ trước sách trực tuyến vào Database
-        com.lms.entity.Reservation reservation = new com.lms.entity.Reservation();
+        Reservation reservation = new Reservation();
         reservation.setMember(member);
         reservation.setBook(book);
         reservation.setReservationDate(java.time.LocalDateTime.now());
-        reservation.setStatus("Pending"); // Chờ cuốn sách có người mang đến trả sẽ chuyển sang Reserved
+        reservation.setStatus("Pending");
 
         reservationRepository.save(reservation);
+    }
+
+    // TRIỂN KHAI BỔ SUNG: Trích xuất danh sách sách để hiển thị Đề Cử trên Dashboard
+    @Override
+    @Transactional(readOnly = true)
+    public List<Book> getFavoriteBooksByMember(String username) {
+        return getMyFavorites(username).stream()
+                .map(Favorites::getBook)
+                .collect(Collectors.toList());
     }
 }
