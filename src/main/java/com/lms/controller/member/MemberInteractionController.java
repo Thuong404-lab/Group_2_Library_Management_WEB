@@ -106,7 +106,7 @@ public class MemberInteractionController {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
 
-        return "member/member-book-acquisition-request";
+        return "member/book-acquisition-request";
     }
 
     @PostMapping("/acquisition-requests")
@@ -118,7 +118,7 @@ public class MemberInteractionController {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
-            return "member/member-book-acquisition-request";
+            return "member/book-acquisition-request";
         }
 
         try {
@@ -128,7 +128,7 @@ public class MemberInteractionController {
 
         } catch (ValidationException | ResourceNotFoundException e) {
             model.addAttribute("error", e.getMessage());
-            return "member/member-book-acquisition-request";
+            return "member/book-acquisition-request";
         }
     }
 

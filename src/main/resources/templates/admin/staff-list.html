@@ -129,24 +129,27 @@
 
                                 <td class="text-end pe-3">
                                     <div th:if="${account != null}">
-                                        <button type="button" class="btn btn-sm btn-outline-classic"
-                                            data-bs-toggle="modal"
-                                            th:data-bs-target="${'#updateStaffModal' + account.accountId}">
+                                        <a class="btn btn-sm btn-outline-classic"
+                                            th:href="${'#updateStaffModal' + account.accountId}"
+                                            onclick="document.body.appendChild(document.querySelector(this.getAttribute('href')));"
+                                            aria-label="Cập nhật tài khoản">
                                             <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1"
-                                            data-bs-toggle="modal"
-                                            th:data-bs-target="${'#deleteStaffModal' + account.accountId}">
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger ms-1"
+                                            th:href="${'#deleteStaffModal' + account.accountId}"
+                                            onclick="document.body.appendChild(document.querySelector(this.getAttribute('href')));"
+                                            aria-label="Xóa tài khoản">
                                             <i class="bi bi-trash"></i>
-                                        </button>
+                                        </a>
 
                                         <!-- Update Modal -->
                                         <div class="modal fade text-start"
                                             th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
-                                            aria-hidden="true">
+                                            aria-hidden="true"
+                                            th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
                                             <div class="modal-dialog modal-dialog-centered modal-lg">
                                                 <div class="modal-content border-0 shadow">
-                                                    <form method="post"
+                                                    <form method="post" class="edit-account-form" novalidate
                                                         th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -161,77 +164,127 @@
                                                                 nhật tài khoản nhân sự
                                                             </h5>
                                                             <button type="button" class="btn-close"
-                                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                aria-label="Close"
+                                                                onclick="window.location.hash = '';"></button>
                                                         </div>
 
                                                         <div class="modal-body p-4">
                                                             <div class="row g-3">
-                                                                <div class="col-md-6">
+                                                                <div class="col-md-6 order-md-1">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Họ
-                                                                        tên</label>
-                                                                    <input class="form-control" name="fullName"
-                                                                        th:value="${staff.user != null ? staff.user.fullName : ''}"
+                                                                        tên <span class="text-danger">*</span></label>
+                                                                    <input class="form-control edit-validate-field"
+                                                                        name="fullName" data-label="Họ tên"
+                                                                        th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (staff.user != null ? staff.user.fullName : '')}"
+                                                                        th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                         required>
+                                                                    <div class="invalid-feedback"
+                                                                        data-default-message="Họ tên không được để trống."
+                                                                        th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
+                                                                        Họ tên không được để trống.
+                                                                    </div>
                                                                 </div>
-                                                                <div class="col-md-6">
+                                                                <div class="col-md-6 order-md-4">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase">Email</label>
-                                                                    <input class="form-control" name="email"
-                                                                        type="email"
-                                                                        th:value="${staff.user != null ? staff.user.email : ''}"
+                                                                        class="form-label fw-bold small text-muted text-uppercase">
+                                                                        Email <span class="text-danger">*</span>
+                                                                    </label>
+                                                                    <input class="form-control edit-validate-field"
+                                                                        name="email" type="email" data-label="Email"
+                                                                        th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (staff.user != null ? staff.user.email : '')}"
+                                                                        th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                         required>
+                                                                    <div class="invalid-feedback"
+                                                                        data-default-message="Email không được để trống."
+                                                                        th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
+                                                                        Email không hợp lệ.
+                                                                    </div>
                                                                 </div>
-                                                                <div class="col-md-6">
+                                                                <div class="col-md-6 order-md-3">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Số
-                                                                        điện thoại</label>
-                                                                    <input class="form-control" name="phone"
-                                                                        th:value="${staff.user != null ? staff.user.phone : ''}">
+                                                                        điện thoại <span class="text-danger">*</span>
+                                                                    </label>
+                                                                    <input class="form-control edit-validate-field"
+                                                                        name="phone" data-label="Số điện thoại" required
+                                                                        pattern="[0-9]{10}" minlength="10"
+                                                                        maxlength="10" inputmode="numeric"
+                                                                        th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (staff.user != null ? staff.user.phone : '')}"
+                                                                        th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
+                                                                    <div class="invalid-feedback"
+                                                                        data-default-message="Số điện thoại không được để trống."
+                                                                        th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
+                                                                        Số điện thoại không hợp lệ.
+                                                                    </div>
                                                                 </div>
-                                                                <div class="col-md-6">
+                                                                <div class="col-md-6 order-md-2">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase">Username</label>
-                                                                    <input class="form-control" name="username"
-                                                                        th:value="${account.username}" required>
+                                                                        class="form-label fw-bold small text-muted text-uppercase">
+                                                                        Username <span class="text-danger">*</span>
+                                                                    </label>
+                                                                    <input class="form-control edit-validate-field"
+                                                                        name="username" data-label="Username"
+                                                                        th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                        th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
+                                                                        required>
+                                                                    <div class="invalid-feedback"
+                                                                        data-default-message="Username không được để trống."
+                                                                        th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
+                                                                        Username không được để trống.
+                                                                    </div>
                                                                 </div>
-                                                                <div class="col-md-6">
+                                                                <div class="col-md-6 order-md-5">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Loại
                                                                         nhân viên</label>
-                                                                    <select class="form-select form-control"
-                                                                        name="staffType" required>
+                                                                    <select
+                                                                        class="form-select form-control edit-validate-field"
+                                                                        name="staffType" data-label="Loại nhân viên"
+                                                                        required
+                                                                        th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
                                                                         <option value="Admin"
-                                                                            th:selected="${staff.staffType == 'Admin'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Admin' : staff.staffType == 'Admin'}">
                                                                             Admin</option>
                                                                         <option value="Librarian"
-                                                                            th:selected="${staff.staffType == 'Librarian'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Librarian' : staff.staffType == 'Librarian'}">
                                                                             Librarian</option>
                                                                     </select>
+                                                                    <div class="invalid-feedback"
+                                                                        data-default-message="Vui lòng chọn loại nhân viên."
+                                                                        th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
+                                                                        Vui lòng chọn loại nhân viên.
+                                                                    </div>
                                                                 </div>
-                                                                <div class="col-md-6">
+                                                                <div class="col-md-6 order-md-6">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Trạng
-                                                                        thái</label>
-                                                                    <select class="form-select form-control"
-                                                                        name="status" required>
+                                                                        thái <span class="text-danger">*</span></label>
+                                                                    <select
+                                                                        class="form-select form-control edit-validate-field"
+                                                                        name="status" data-label="Trạng thái" required
+                                                                        th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                         <option value="Active"
-                                                                            th:selected="${account.status == 'Active'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}">
                                                                             Active</option>
                                                                         <option value="Inactive"
-                                                                            th:selected="${account.status == 'Inactive'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}">
                                                                             Inactive</option>
                                                                         <option value="Blocked"
-                                                                            th:selected="${account.status == 'Blocked'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}">
                                                                             Blocked</option>
                                                                     </select>
+                                                                    <div class="invalid-feedback"
+                                                                        data-default-message="Vui lòng chọn trạng thái."
+                                                                        th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
+                                                                        Vui lòng chọn trạng thái.
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
                                                         <div class="modal-footer border-top bg-light">
-                                                            <button type="button" class="btn btn-secondary"
-                                                                data-bs-dismiss="modal">Hủy bỏ</button>
+                                                            <a href="#" class="btn btn-secondary">Hủy bỏ</a>
                                                             <button type="submit" class="btn btn-classic">Lưu thay
                                                                 đổi</button>
                                                         </div>
@@ -253,28 +306,87 @@
                                                         <input type="hidden" name="source" value="staff">
 
                                                         <div class="modal-header border-bottom-0">
-                                                            <h5 class="modal-title fw-bold text-danger"><i
-                                                                    class="bi bi-exclamation-triangle-fill me-2"></i>Xác
-                                                                nhận xóa tài khoản</h5>
+                                                            <h5 class="modal-title fw-bold text-danger">
+                                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                                Xác nhận xóa tài khoản
+                                                            </h5>
                                                             <button type="button" class="btn-close"
-                                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                aria-label="Close"
+                                                                onclick="window.location.hash = '';"></button>
                                                         </div>
 
                                                         <div class="modal-body pb-0">
-                                                            <p class="mb-3">Bạn có chắc chắn muốn xóa tài khoản này
-                                                                không? Thao tác này không thể hoàn tác.</p>
+                                                            <p class="mb-3">
+                                                                Bạn có chắc chắn muốn xóa tài khoản này không?
+                                                                Thao tác này không thể hoàn tác.
+                                                            </p>
                                                             <div class="p-3 bg-light rounded border">
-                                                                <div class="fw-bold mb-1" th:text="${account.username}">
-                                                                    username</div>
-                                                                <div class="small text-muted"
-                                                                    th:text="${staff.user != null ? staff.user.email : 'Không có email'}">
-                                                                    email</div>
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted">Username:</div>
+                                                                        <div class="fw-bold mb-1"
+                                                                            th:text="${account.username}">
+                                                                            username
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted">Account ID:</div>
+                                                                        <div class="fw-bold"
+                                                                            th:text="${account.accountId}">
+                                                                            id
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted">Họ tên:</div>
+                                                                        <div class="fw-bold"
+                                                                            th:text="${staff.user != null ? staff.user.fullName : 'Không có họ tên'}">
+                                                                            họ và tên
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted">Email:</div>
+                                                                        <div>
+                                                                            <i
+                                                                                class="bi bi-envelope me-1 text-classic"></i>
+                                                                            <span
+                                                                                th:text="${staff.user != null ? staff.user.email : 'Không có email'}">
+                                                                                email
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted">Số điện thoại:
+                                                                        </div>
+                                                                        <div>
+                                                                            <i
+                                                                                class="bi bi-telephone me-1 text-classic"></i>
+                                                                            <span
+                                                                                th:text="${staff.user != null and staff.user.phone != null ? staff.user.phone : 'Không có SĐT'}">
+                                                                                phone
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted">Loại nhân viên
+                                                                        </div>
+                                                                        <span
+                                                                            class="badge rounded-pill px-3 py-2 text-white"
+                                                                            th:text="${staff.staffType}"
+                                                                            th:style="${staff.staffType == 'Admin' ? 'background-color: #0d6efd;' : staff.staffType == 'Librarian' ? 'background-color: #5bc0de;' : 'background-color: #6c757d;'}">
+                                                                            Librarian
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
 
                                                         <div class="modal-footer border-top-0 pt-4">
-                                                            <button type="button" class="btn btn-light"
-                                                                data-bs-dismiss="modal">Hủy</button>
+                                                            <a href="#" class="btn btn-light">Hủy</a>
                                                             <button type="submit" class="btn btn-danger">Đồng ý
                                                                 xóa</button>
                                                         </div>
@@ -333,6 +445,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 </body>
 

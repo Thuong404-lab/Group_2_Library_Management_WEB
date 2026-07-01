@@ -54,11 +54,25 @@
         .table-fixed-action {
             min-width: 180px;
         }
+
+        .dashboard-stat-card {
+            width: 92%;
+            margin: 0 auto;
+            min-height: 100px;
+        }
+
+        .validate-field.is-invalid,
+        .validate-group.is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+            background-image: none !important;
+        }
     </style>
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='dashboard'">
+    <div layout:fragment="content"
+        th:with="activeMenu='dashboard', currentSection=${param.section != null ? param.section[0] : 'overview'}">
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
@@ -78,89 +92,109 @@
         <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
 
         <!-- Overview -->
-        <section id="section-overview" class="lib-section active">
+        <section id="section-overview" class="lib-section"
+            th:classappend="${currentSection == 'overview'} ? ' active' : ''">
             <!-- Statistics Cards -->
-            <div class="row g-3 mb-5">
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+            <div class="row row-cols-5 g-3 mb-5">
+
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #0d6efd !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
                                 <i class="bi bi-book fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Tổng Đầu Sách</div>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Tổng Đầu Sách
+                                </div>
                                 <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalBookCount}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #198754 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
                                 <i class="bi bi-check2-square fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Bản sách sẵn có</div>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Bản sách sẵn có
+                                </div>
                                 <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${availableItems}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #0dcaf0 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0;">
                                 <i class="bi bi-journal-arrow-up fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Đang Mượn</div>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Đang Mượn
+                                </div>
                                 <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #fd7e14 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
                                 <i class="bi bi-clock-history fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Yêu cầu mượn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Yêu cầu mượn
+                                </div>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${pendingReservations}">0
+                                </h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #dc3545 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">
                                 <i class="bi bi-exclamation-triangle fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Phiếu mượn quá hạn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${overdueDetails}">0</h3>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Quá hạn mượn
+                                </div>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${overdueDetails}">0
+                                </h3>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- Main Dashboard Content -->
             <div class="row g-4">
@@ -256,7 +290,9 @@
         </section>
 
         <!-- Notifications -->
-        <section id="section-notifications" class="lib-section">
+        <section id="section-notifications" class="lib-section"
+            th:classappend="${currentSection == 'notifications'} ? ' active' : ''">
+
             <div class="card-classic shadow-sm">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
@@ -267,14 +303,15 @@
 
                 <div class="card-body p-4">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
-                        method="post">
+                        method="post" id="notificationForm" novalidate>
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                             th:value="${_csrf.token}">
 
                         <div class="row g-4">
                             <div class="col-lg-5">
                                 <label class="form-label fw-bold">Đối tượng nhận</label>
-                                <div class="border rounded-3 p-3 bg-light">
+                                <div class="border rounded-3 p-3 bg-light validate-group" id="recipientTypeGroup"
+                                    th:classappend="${notificationFieldErrors != null and notificationFieldErrors['recipientType'] != null} ? 'is-invalid'">
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="radio" th:field="*{recipientType}"
                                             value="ALL" id="recipientAll">
@@ -287,17 +324,22 @@
                                             chọn</label>
                                     </div>
                                 </div>
+                                <div class="invalid-feedback d-block"
+                                    th:text="${notificationFieldErrors != null ? notificationFieldErrors['recipientType'] : ''}">
+                                </div>
 
                                 <div class="mt-4" id="memberListBox">
                                     <label class="form-label fw-bold">Chọn Member</label>
                                     <input type="text" id="memberSearchInput" class="form-control mb-2"
                                         placeholder="Nhập tên Member để tìm...">
 
-                                    <div class="border rounded-3 p-3 member-list-scroll">
+                                    <div class="border rounded-3 p-3 member-list-scroll validate-group" id="memberIdsGroup"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
                                         <div th:each="member : ${members}" class="form-check member-item mb-2"
                                             th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
                                             <input class="form-check-input member-checkbox" type="checkbox"
-                                                name="memberIds" th:value="${member.memberId}">
+                                                name="memberIds" th:value="${member.memberId}"
+                                                th:checked="${notificationRequest != null and notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
                                             <label class="form-check-label"
                                                 th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
                                                 Member name
@@ -314,23 +356,34 @@
                                     <small class="text-muted d-block mt-2">
                                         Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
                                     </small>
+                                    <div class="invalid-feedback d-block"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['memberIds'] : ''}">
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="col-lg-7">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Tiêu đề</label>
-                                    <input type="text" class="form-control" th:field="*{title}"
-                                        placeholder="Nhập tiêu đề thông báo">
+                                    <input type="text" class="form-control validate-field" th:field="*{title}" required
+                                        placeholder="Nhập tiêu đề thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
+                                    </div>
                                 </div>
 
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Nội dung</label>
-                                    <textarea class="form-control" rows="8" th:field="*{content}"
-                                        placeholder="Nhập nội dung thông báo"></textarea>
+                                    <textarea class="form-control validate-field" rows="8" th:field="*{content}" required
+                                        placeholder="Nhập nội dung thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
+                                    </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-classic px-4">
                                     <i class="bi bi-send me-1"></i>Gửi thông báo
                                 </button>
                             </div>
@@ -339,9 +392,9 @@
                 </div>
             </div>
         </section>
-
         <!-- Reviews -->
-        <section id="section-reviews" class="lib-section">
+        <section id="section-reviews" class="lib-section"
+            th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
             <div class="card-classic shadow-sm">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
@@ -349,6 +402,7 @@
                     </h5>
                     <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
                 </div>
+
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -363,39 +417,40 @@
                                 </tr>
                             </thead>
 
-                            <tbody th:if="${reviews != null}">
+                            <tbody th:if="${reviews != null && reviews.totalElements > 0}">
                                 <tr th:each="review : ${reviews.content}">
                                     <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
                                     <td th:text="${review.memberName}">Người gửi</td>
                                     <td>
                                         <span class="badge bg-warning text-dark border">
-                                            <i class="bi bi-star-fill me-1"></i><span
-                                                th:text="${review.rating + ' sao'}">5 sao</span>
+                                            <i class="bi bi-star-fill me-1"></i>
+                                            <span th:text="${review.rating + ' sao'}">5 sao</span>
                                         </span>
                                     </td>
                                     <td th:text="${review.comment}">Nội dung</td>
-
                                     <td>
-                                        <div th:if="${review.librarianResponse != null}">
-                                            <div class="fw-semibold" th:text="${review.librarianResponse}">Phản hồi
-                                            </div>
-                                            <small class="text-muted" th:if="${review.responseDate != null}"
-                                                th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
-                                            </small>
+                                        <div th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
+                                            class="fw-semibold" th:text="${review.librarianResponse}">
+                                            Phản hồi
                                         </div>
-                                        <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
-                                            hồi</span>
+                                        <span th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
+                                            class="text-muted">Chưa phản hồi</span>
                                     </td>
-
                                     <td>
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                            method="post" class="review-reply-box mb-2">
+                                            method="post" class="review-reply-box mb-2" novalidate>
                                             <input type="hidden" th:if="${_csrf != null}"
                                                 th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <textarea name="response" class="form-control form-control-sm mb-2" rows="2"
-                                                placeholder="Nhập phản hồi..."></textarea>
-                                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                            <textarea name="response"
+                                                class="form-control form-control-sm validate-field mb-2" rows="2"
+                                                placeholder="Nhập phản hồi..."
+                                                th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
+                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
+                                            <div class="invalid-feedback d-block"
+                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-classic w-100">
                                                 <i class="bi bi-reply me-1"></i>Phản hồi
                                             </button>
                                         </form>
@@ -427,27 +482,16 @@
                 </div>
             </div>
         </section>
-
         <!-- Book Suggestions -->
-        <section id="section-acquisition" class="lib-section">
+        <section id="section-acquisition" class="lib-section"
+            th:classappend="${currentSection == 'acquisition'} ? ' active' : ''">
+
             <div class="card-classic shadow-sm">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                         <i class="bi bi-journal-plus me-2 text-classic"></i> Đề xuất mua sách
                     </h5>
                     <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
-                </div>
-
-                <div class="d-flex flex-wrap gap-3 mb-4">
-                    <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;" data-bs-toggle="modal" data-bs-target="#addBookModal">
-                        <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
-                    </button>
-                    <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;" data-bs-toggle="modal" data-bs-target="#categoryGenreModal">
-                        <i class="bi bi-tags me-1"></i>Quản lý danh mục
-                    </button>
-                    <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal" data-bs-target="#auditModal">
-                        <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
-                    </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -491,7 +535,8 @@
         </section>
 
         <!-- Books -->
-        <section id="section-books" class="lib-section">
+        <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
+
             <div class="card-classic shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <div class="d-flex flex-wrap gap-2">
@@ -588,7 +633,7 @@
                                                 th:data-bs-target="${'#editBookModal' + book.bookId}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                            <button type="button" class="btn btn-sm btn-classic"
                                                 data-bs-toggle="modal"
                                                 th:data-bs-target="${'#deleteBookModal' + book.bookId}">
                                                 <i class="bi bi-trash"></i>
@@ -645,7 +690,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                    <button type="submit" class="btn btn-classic">Lưu</button>
                                 </div>
                             </form>
                         </div>
@@ -801,7 +846,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="submit" class="btn btn-classic">Lưu thay đổi</button>
                                     </div>
                                 </form>
                             </div>
@@ -827,7 +872,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-danger">Xóa</button>
+                                        <button type="submit" class="btn btn-classic">Xóa</button>
                                     </div>
                                 </form>
                             </div>
@@ -868,7 +913,7 @@
                                                         title="Sửa">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    <button type="button" class="btn btn-sm btn-classic"
                                                         data-bs-toggle="modal"
                                                         th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
                                                         title="Xóa">
@@ -893,7 +938,8 @@
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title"
-                                                    th:id="${'editStorageModalLabel' + shelf.shelfId}">Cập nhật vị trí
+                                                    th:id="${'editStorageModalLabel' + shelf.shelfId}">
+                                                    Cập nhật vị trí
                                                     lưu trữ</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                     aria-label="Close"></button>
@@ -917,7 +963,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                                    <button type="submit" class="btn btn-classic">Lưu</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -947,7 +993,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                    <button type="submit" class="btn btn-classic">Xóa</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -955,7 +1001,7 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white border-top p-4 border-color text-end">
-                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                     data-bs-target="#addStorageModal">
                                     Thêm vị trí mới
                                 </button>
@@ -988,7 +1034,7 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary">Lưu</button>
+                                            <button type="submit" class="btn btn-classic">Lưu</button>
                                         </div>
                                     </form>
                                 </div>
@@ -1000,7 +1046,8 @@
         </section>
 
         <!-- Users -->
-        <section id="section-users" class="lib-section">
+        <section id="section-users" class="lib-section" th:classappend="${currentSection == 'users'} ? ' active' : ''">
+
             <div class="row g-4 mb-4">
                 <div class="col-xl-3 col-sm-6">
                     <div class="card-classic h-100 p-4 border-0 shadow-sm"
@@ -1028,7 +1075,8 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Tổng thủ thư</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalLibrarians}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalLibrarians}">0
+                                </h3>
                             </div>
                         </div>
                     </div>
@@ -1063,7 +1111,9 @@
         </section>
 
         <!-- Reports -->
-        <section id="section-reports" class="lib-section">
+        <section id="section-reports" class="lib-section"
+            th:classappend="${currentSection == 'reports'} ? ' active' : ''">
+
             <div class="row g-4 mb-4">
                 <div class="col-xl-3 col-sm-6">
                     <div class="card-classic h-100 p-4 border-0 shadow-sm"
@@ -1205,6 +1255,91 @@
                 });
             }
 
+
+            function setInlineError(element, message) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.add("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = message;
+                }
+            }
+
+            function clearInlineError(element) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.remove("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function validateNotificationForm(event) {
+                const form = document.getElementById("notificationForm");
+                if (form == null) {
+                    return;
+                }
+
+                let isValid = true;
+                const recipientAll = document.getElementById("recipientAll");
+                const recipientSelected = document.getElementById("recipientSelected");
+                const recipientTypeGroup = document.getElementById("recipientTypeGroup");
+                const memberIdsGroup = document.getElementById("memberIdsGroup");
+                const titleInput = form.querySelector("[name='title']");
+                const contentInput = form.querySelector("[name='content']");
+                const selectedMembers = form.querySelectorAll(".member-checkbox:checked");
+
+                clearInlineError(recipientTypeGroup);
+                clearInlineError(memberIdsGroup);
+                clearInlineError(titleInput);
+                clearInlineError(contentInput);
+
+                if ((recipientAll == null || !recipientAll.checked) && (recipientSelected == null || !recipientSelected.checked)) {
+                    setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
+                    isValid = false;
+                }
+
+                if (recipientSelected != null && recipientSelected.checked && selectedMembers.length === 0) {
+                    setInlineError(memberIdsGroup, "Vui lòng chọn ít nhất một Member.");
+                    isValid = false;
+                }
+
+                if (titleInput != null && titleInput.value.trim() === "") {
+                    setInlineError(titleInput, "Tiêu đề không được để trống.");
+                    isValid = false;
+                }
+
+                if (contentInput != null && contentInput.value.trim() === "") {
+                    setInlineError(contentInput, "Nội dung không được để trống.");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+
+            function validateReviewReplyForms() {
+                document.querySelectorAll(".review-reply-box").forEach(function (form) {
+                    form.addEventListener("submit", function (event) {
+                        const response = form.querySelector("textarea[name='response']");
+                        clearInlineError(response);
+
+                        if (response != null && response.value.trim() === "") {
+                            setInlineError(response, "Nội dung phản hồi không được để trống.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
+                });
+            }
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 
@@ -1216,6 +1351,14 @@
                     recipientSelected.addEventListener("change", toggleMemberList);
                     toggleMemberList();
                 }
+
+                const notificationForm = document.getElementById("notificationForm");
+
+                if (notificationForm != null) {
+                    notificationForm.addEventListener("submit", validateNotificationForm);
+                }
+
+                validateReviewReplyForms();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 
