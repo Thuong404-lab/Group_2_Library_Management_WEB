@@ -54,11 +54,18 @@
         .table-fixed-action {
             min-width: 180px;
         }
+
+        .dashboard-stat-card {
+            width: 92%;
+            margin: 0 auto;
+            min-height: 100px;
+        }
     </style>
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='dashboard'">
+    <div layout:fragment="content"
+        th:with="activeMenu='dashboard', currentSection=${param.section != null ? param.section[0] : 'overview'}">
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
@@ -78,89 +85,109 @@
         <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
 
         <!-- Overview -->
-        <section id="section-overview" class="lib-section active">
+        <section id="section-overview" class="lib-section"
+            th:classappend="${currentSection == 'overview'} ? ' active' : ''">
             <!-- Statistics Cards -->
-            <div class="row g-3 mb-5">
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+            <div class="row row-cols-5 g-3 mb-5">
+
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #0d6efd !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
                                 <i class="bi bi-book fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Tổng Đầu Sách</div>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Tổng Đầu Sách
+                                </div>
                                 <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalBookCount}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #198754 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
                                 <i class="bi bi-check2-square fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Bản sách sẵn có</div>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Bản sách sẵn có
+                                </div>
                                 <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${availableItems}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #0dcaf0 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0;">
                                 <i class="bi bi-journal-arrow-up fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Đang Mượn</div>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Đang Mượn
+                                </div>
                                 <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #fd7e14 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
                                 <i class="bi bi-clock-history fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Yêu cầu mượn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Yêu cầu mượn
+                                </div>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${pendingReservations}">0
+                                </h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-2 col-lg-4 col-sm-6">
-                    <div class="card-classic h-100 py-3 px-3 border-0 shadow-sm"
+                <div class="col">
+                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
                         style="border-left: 4px solid #dc3545 !important;">
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center h-100">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
                                 style="width: 48px; height: 48px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">
                                 <i class="bi bi-exclamation-triangle fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0">Phiếu mượn quá hạn</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${overdueDetails}">0</h3>
+                                <div class="text-muted small text-uppercase fw-bold mb-0"
+                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                                    Quá hạn mượn
+                                </div>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${overdueDetails}">0
+                                </h3>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- Main Dashboard Content -->
             <div class="row g-4">
@@ -256,7 +283,9 @@
         </section>
 
         <!-- Notifications -->
-        <section id="section-notifications" class="lib-section">
+        <section id="section-notifications" class="lib-section"
+            th:classappend="${currentSection == 'notifications'} ? ' active' : ''">
+
             <div class="card-classic shadow-sm">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
@@ -341,96 +370,100 @@
         </section>
 
         <!-- Reviews -->
-        <section id="section-reviews" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
-                    </h5>
-                    <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
-                </div>
+        <section id="section-reviews" class="lib-section"
+            th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
 
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th class="ps-4">Sách</th>
-                                    <th>Người gửi</th>
-                                    <th>Đánh giá</th>
-                                    <th>Nội dung</th>
-                                    <th>Phản hồi của thủ thư</th>
-                                    <th class="table-fixed-action">Thao tác</th>
-                                </tr>
-                            </thead>
+        <div class="card-classic shadow-sm">
+            <div class="card-header bg-white border-bottom p-4 border-color">
+                <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
+                </h5>
+                <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
+            </div>
 
-                            <tbody th:if="${reviews != null}">
-                                <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
-                                    <td th:text="${review.memberName}">Người gửi</td>
-                                    <td>
-                                        <span class="badge bg-warning text-dark border">
-                                            <i class="bi bi-star-fill me-1"></i><span
-                                                th:text="${review.rating + ' sao'}">5 sao</span>
-                                        </span>
-                                    </td>
-                                    <td th:text="${review.comment}">Nội dung</td>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small text-muted">
+                            <tr>
+                                <th class="ps-4">Sách</th>
+                                <th>Người gửi</th>
+                                <th>Đánh giá</th>
+                                <th>Nội dung</th>
+                                <th>Phản hồi của thủ thư</th>
+                                <th class="table-fixed-action">Thao tác</th>
+                            </tr>
+                        </thead>
 
-                                    <td>
-                                        <div th:if="${review.librarianResponse != null}">
-                                            <div class="fw-semibold" th:text="${review.librarianResponse}">Phản hồi
-                                            </div>
-                                            <small class="text-muted" th:if="${review.responseDate != null}"
-                                                th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
-                                            </small>
+                        <tbody th:if="${reviews != null}">
+                            <tr th:each="review : ${reviews.content}">
+                                <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
+                                <td th:text="${review.memberName}">Người gửi</td>
+                                <td>
+                                    <span class="badge bg-warning text-dark border">
+                                        <i class="bi bi-star-fill me-1"></i><span th:text="${review.rating + ' sao'}">5
+                                            sao</span>
+                                    </span>
+                                </td>
+                                <td th:text="${review.comment}">Nội dung</td>
+
+                                <td>
+                                    <div th:if="${review.librarianResponse != null}">
+                                        <div class="fw-semibold" th:text="${review.librarianResponse}">Phản hồi
                                         </div>
-                                        <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
-                                            hồi</span>
-                                    </td>
+                                        <small class="text-muted" th:if="${review.responseDate != null}"
+                                            th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
+                                        </small>
+                                    </div>
+                                    <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
+                                        hồi</span>
+                                </td>
 
-                                    <td>
-                                        <form
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                            method="post" class="review-reply-box mb-2">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <textarea name="response" class="form-control form-control-sm mb-2" rows="2"
-                                                placeholder="Nhập phản hồi..."></textarea>
-                                            <button type="submit" class="btn btn-sm btn-primary w-100">
-                                                <i class="bi bi-reply me-1"></i>Phản hồi
-                                            </button>
-                                        </form>
+                                <td>
+                                    <form
+                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                                        method="post" class="review-reply-box mb-2">
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                                            th:value="${_csrf.token}">
+                                        <textarea name="response" class="form-control form-control-sm mb-2" rows="2"
+                                            placeholder="Nhập phản hồi..."></textarea>
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                                            <i class="bi bi-reply me-1"></i>Phản hồi
+                                        </button>
+                                    </form>
 
-                                        <form
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
-                                            method="post"
-                                            onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                                <i class="bi bi-trash me-1"></i>Xoá
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            </tbody>
+                                    <form
+                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                        method="post"
+                                        onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                                            th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                            <i class="bi bi-trash me-1"></i>Xoá
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
 
-                            <tbody th:if="${reviews == null || reviews.totalElements == 0}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-5">
-                                        <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
-                                        Hiện chưa có đánh giá nào.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                        <tbody th:if="${reviews == null || reviews.totalElements == 0}">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
+                                    Hiện chưa có đánh giá nào.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
         </section>
 
         <!-- Book Suggestions -->
-        <section id="section-acquisition" class="lib-section">
+        <section id="section-acquisition" class="lib-section"
+            th:classappend="${currentSection == 'acquisition'} ? ' active' : ''">
+
             <div class="card-classic shadow-sm">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
@@ -481,7 +514,8 @@
         </section>
 
         <!-- Books -->
-        <section id="section-books" class="lib-section">
+        <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
+
             <div class="card-classic shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <div class="d-flex flex-wrap gap-2">
@@ -882,7 +916,8 @@
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title"
-                                                    th:id="${'editStorageModalLabel' + shelf.shelfId}">Cập nhật vị trí
+                                                    th:id="${'editStorageModalLabel' + shelf.shelfId}">
+                                                    Cập nhật vị trí
                                                     lưu trữ</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                     aria-label="Close"></button>
@@ -988,7 +1023,8 @@
         </section>
 
         <!-- Users -->
-        <section id="section-users" class="lib-section">
+        <section id="section-users" class="lib-section" th:classappend="${currentSection == 'users'} ? ' active' : ''">
+
             <div class="row g-4 mb-4">
                 <div class="col-xl-3 col-sm-6">
                     <div class="card-classic h-100 p-4 border-0 shadow-sm"
@@ -1016,7 +1052,8 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Tổng thủ thư</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalLibrarians}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalLibrarians}">0
+                                </h3>
                             </div>
                         </div>
                     </div>
@@ -1051,7 +1088,9 @@
         </section>
 
         <!-- Reports -->
-        <section id="section-reports" class="lib-section">
+        <section id="section-reports" class="lib-section"
+            th:classappend="${currentSection == 'reports'} ? ' active' : ''">
+
             <div class="row g-4 mb-4">
                 <div class="col-xl-3 col-sm-6">
                     <div class="card-classic h-100 p-4 border-0 shadow-sm"
