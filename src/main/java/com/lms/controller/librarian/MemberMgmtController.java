@@ -99,53 +99,104 @@ public class MemberMgmtController {
 
     @PostMapping("/members/create")
     @Transactional
-    public String createMemberAccount(@RequestParam String fullName,
-            @RequestParam String email,
+    public String createMemberAccount(@RequestParam(required = false, defaultValue = "") String fullName,
+            @RequestParam(required = false, defaultValue = "") String email,
             @RequestParam(required = false, defaultValue = "") String phone,
-            @RequestParam String username,
-            @RequestParam String password,
-            @RequestParam Integer tierId,
-            @RequestParam(defaultValue = "Active") String status,
+            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam(required = false, defaultValue = "") String password,
+            @RequestParam(required = false) Integer tierId,
+            @RequestParam(required = false, defaultValue = "") String status,
             Model model,
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        if (accountRepository.existsByUsername(username.trim())) {
-            model.addAttribute("error", "Username đã tồn tại.");
-            model.addAttribute("tiers", membershipTierRepository.findAll(Sort.by("tierId").ascending()));
-            addCurrentUser(model, userDetails);
-            return "librarian/create-member";
+        String trimmedFullName = fullName.trim();
+        String trimmedUsername = username.trim();
+        String trimmedEmail = email.trim();
+        String trimmedPhone = phone == null ? "" : phone.trim();
+
+        Map<String, Object> formValues = new HashMap<>();
+        formValues.put("fullName", trimmedFullName);
+        formValues.put("email", trimmedEmail);
+        formValues.put("phone", trimmedPhone);
+        formValues.put("username", trimmedUsername);
+        formValues.put("tierId", tierId);
+        formValues.put("status", status);
+        model.addAttribute("formValues", formValues);
+
+        if (trimmedFullName.isEmpty()) {
+            return createMemberFormWithError(model, userDetails, "fullName", "Họ tên không được để trống.");
         }
 
-        if (userRepository.existsByEmail(email.trim())) {
-            model.addAttribute("error", "Email đã tồn tại.");
-            model.addAttribute("tiers", membershipTierRepository.findAll(Sort.by("tierId").ascending()));
-            addCurrentUser(model, userDetails);
-            return "librarian/create-member";
+        if (trimmedEmail.isEmpty()) {
+            return createMemberFormWithError(model, userDetails, "email", "Email không được để trống.");
+        }
+
+        if (!trimmedEmail.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            return createMemberFormWithError(model, userDetails, "email", "Email không đúng định dạng.");
+        }
+
+        if (trimmedUsername.isEmpty()) {
+            return createMemberFormWithError(model, userDetails, "username", "Username không được để trống.");
+        }
+
+        if (password.isBlank()) {
+            return createMemberFormWithError(model, userDetails, "password", "Mật khẩu không được để trống.");
+        }
+
+        if (accountRepository.existsByUsername(trimmedUsername)) {
+            return createMemberFormWithError(model, userDetails, "username", "Username đã tồn tại.");
+        }
+
+        if (userRepository.existsByEmail(trimmedEmail)) {
+            return createMemberFormWithError(model, userDetails, "email", "Email đã được sử dụng.");
+        }
+
+        if (trimmedPhone.isEmpty()) {
+            return createMemberFormWithError(model, userDetails, "phone",
+                    "Số điện thoại không được để trống.");
+        }
+
+        if (!trimmedPhone.matches("\\d{10}")) {
+            return createMemberFormWithError(model, userDetails, "phone",
+                    "Số điện thoại phải gồm đúng 10 chữ số.");
+        }
+
+        if (userRepository.existsByPhone(trimmedPhone)) {
+            return createMemberFormWithError(model, userDetails, "phone",
+                    "Số điện thoại đã được sử dụng.");
+        }
+
+        if (tierId == null) {
+            return createMemberFormWithError(model, userDetails, "tierId",
+                    "Vui lòng chọn hạng thành viên.");
+        }
+
+        if (status.isBlank()) {
+            return createMemberFormWithError(model, userDetails, "status",
+                    "Vui lòng chọn trạng thái thành viên.");
         }
 
         MembershipTier tier = membershipTierRepository.findById(tierId).orElse(null);
 
         if (tier == null) {
-            model.addAttribute("error", "Hạng thành viên không hợp lệ.");
-            model.addAttribute("tiers", membershipTierRepository.findAll(Sort.by("tierId").ascending()));
-            addCurrentUser(model, userDetails);
-            return "librarian/create-member";
+            return createMemberFormWithError(model, userDetails, "tierId",
+                    "Hạng thành viên không hợp lệ.");
         }
 
         Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy role MEMBER trong database."));
 
         User user = new User();
-        user.setFullName(fullName.trim());
-        user.setEmail(email.trim());
-        user.setPhone(phone.trim());
+        user.setFullName(trimmedFullName);
+        user.setEmail(trimmedEmail);
+        user.setPhone(trimmedPhone);
         user.setStatus(toUserStatus(status));
         userRepository.save(user);
 
         Account account = new Account();
         account.setUser(user);
-        account.setUsername(username.trim());
+        account.setUsername(trimmedUsername);
         account.setPasswordHash(passwordEncoder.encode(password));
         account.setStatus(status);
         account.getRoles().add(memberRole);
@@ -178,13 +229,32 @@ public class MemberMgmtController {
             return "redirect:/librarian/members";
         }
 
-        if (accountRepository.existsByUsernameAndAccountIdNot(username.trim(), id)) {
+        String trimmedUsername = username.trim();
+        String trimmedEmail = email.trim();
+        String trimmedPhone = phone == null ? "" : phone.trim();
+
+        if (accountRepository.existsByUsernameAndAccountIdNot(trimmedUsername, account.getAccountId())) {
             redirectAttributes.addFlashAttribute("error", "Username đã tồn tại.");
             return "redirect:/librarian/members";
         }
 
-        if (userRepository.existsByEmailAndIdNot(email.trim(), account.getUser().getId())) {
-            redirectAttributes.addFlashAttribute("error", "Email đã tồn tại.");
+        if (userRepository.existsByEmailAndIdNot(trimmedEmail, account.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("error", "Email đã được sử dụng.");
+            return "redirect:/librarian/members";
+        }
+
+        if (trimmedPhone.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Số điện thoại không được để trống.");
+            return "redirect:/librarian/members";
+        }
+
+        if (!trimmedPhone.matches("\\d{10}")) {
+            redirectAttributes.addFlashAttribute("error", "Số điện thoại phải gồm đúng 10 chữ số.");
+            return "redirect:/librarian/members";
+        }
+
+        if (userRepository.existsByPhoneAndIdNot(trimmedPhone, account.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("error", "Số điện thoại đã được sử dụng.");
             return "redirect:/librarian/members";
         }
 
@@ -197,11 +267,11 @@ public class MemberMgmtController {
 
         User user = account.getUser();
         user.setFullName(fullName.trim());
-        user.setEmail(email.trim());
-        user.setPhone(phone.trim());
+        user.setEmail(trimmedEmail);
+        user.setPhone(trimmedPhone);
         user.setStatus(toUserStatus(status));
 
-        account.setUsername(username.trim());
+        account.setUsername(trimmedUsername);
         account.setStatus(status);
 
         Member member = memberRepository.findByUserId(user.getId()).orElse(new Member());
@@ -289,6 +359,14 @@ public class MemberMgmtController {
         if (userDetails != null && userDetails.getAccount() != null) {
             model.addAttribute("currentUser", userDetails.getAccount().getUser());
         }
+    }
+
+    private String createMemberFormWithError(Model model, CustomUserDetails userDetails,
+            String fieldName, String message) {
+        model.addAttribute("fieldErrors", Map.of(fieldName, message));
+        model.addAttribute("tiers", membershipTierRepository.findAll(Sort.by("tierId").ascending()));
+        addCurrentUser(model, userDetails);
+        return "librarian/create-member";
     }
 
     private UserStatus toUserStatus(String status) {
