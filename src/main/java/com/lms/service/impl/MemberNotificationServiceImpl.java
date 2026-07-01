@@ -12,6 +12,7 @@ import com.lms.service.MemberNotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -100,5 +101,26 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
     public long countUnreadNotifications(String username) {
         Member member = getMemberByUsername(username);
         return memberNotificationRepository.countByMember_MemberIdAndIsReadFalse(member.getMemberId());
+    }
+
+    @Override
+    @Transactional
+    public void markAllNotificationsAsRead(String username) {
+        Member member = getMemberByUsername(username);
+
+        List<MemberNotification> unreadNotifications = memberNotificationRepository
+                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
+                .stream()
+                .filter(mn -> Boolean.FALSE.equals(mn.getIsRead()))
+                .toList();
+
+        if (!unreadNotifications.isEmpty()) {
+            LocalDateTime now = LocalDateTime.now();
+            unreadNotifications.forEach(mn -> {
+                mn.setIsRead(true);
+                mn.setReadDate(now);
+            });
+            memberNotificationRepository.saveAll(unreadNotifications);
+        }
     }
 }
