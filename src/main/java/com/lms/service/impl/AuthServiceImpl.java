@@ -1,23 +1,14 @@
 package com.lms.service.impl;
 
 import com.lms.dto.request.RegisterRequest;
-import com.lms.entity.Account;
-import com.lms.entity.Member;
-import com.lms.entity.PasswordResetToken;
-import com.lms.entity.SystemLog;
-import com.lms.entity.User;
-import com.lms.entity.Wallet;
+import com.lms.entity.*;
 import com.lms.enums.ActionType;
 import com.lms.exception.AuthException;
-import com.lms.repository.AccountRepository;
-import com.lms.repository.MemberRepository;
-import com.lms.repository.PasswordResetTokenRepository;
-import com.lms.repository.SystemLogRepository;
-import com.lms.repository.UserRepository;
-import com.lms.repository.WalletRepository;
+import com.lms.repository.*;
 import com.lms.service.AuthService;
 import com.lms.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,11 +34,15 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final SystemLogRepository systemLogRepository;
     private final String applicationBaseUrl;
+    private final RoleRepository roleRepository;
+    private final MembershipTierRepository membershipTierRepository;
 
     public AuthServiceImpl(UserRepository userRepository,
             AccountRepository accountRepository,
             MemberRepository memberRepository,
             WalletRepository walletRepository,
+            RoleRepository roleRepository,
+            MembershipTierRepository membershipTierRepository,
             PasswordEncoder passwordEncoder,
             PasswordResetTokenRepository passwordResetTokenRepository,
             EmailService emailService,
@@ -57,6 +52,8 @@ public class AuthServiceImpl implements AuthService {
         this.accountRepository = accountRepository;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
+        this.roleRepository = roleRepository;
+        this.membershipTierRepository = membershipTierRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
@@ -133,6 +130,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Account createCoreAccount(String userName, String fullName, String pass, String email, String phone) {
+        // 1. Tạo dữ liệu User (Lưu thông tin cá nhân cơ bản)
         User user = new User();
         user.setFullName(fullName);
         user.setEmail(email);
@@ -140,19 +138,34 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
+        // 2. Tạo dữ liệu Tài khoản đăng nhập
         Account account = new Account();
         account.setUsername(userName);
         account.setPasswordHash(pass);
         account.setUser(user);
         account.setStatus("Active");
+        
+        // 2.1. Tìm Role "MEMBER" từ database và gán cho tài khoản để tự động lưu vào bảng Account_Roles
+        Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER").orElse(null);
+        if (memberRole != null) {
+            account.getRoles().add(memberRole);
+        }
+        
         accountRepository.save(account);
 
+
         Member member = new Member();
-        member.setUser(user);
+        member.setUser(user); // Liên kết với User
+        
+        // 3.1. Tìm hạng thẻ (Tier) mặc định (có ID thấp nhất) và gán cho Member để tránh lỗi NULL
+        membershipTierRepository.findAll(Sort.by("tierId").ascending())
+                .stream().findFirst().ifPresent(member::setTier);
+
         memberRepository.save(member);
 
+        // 4. Tạo Ví điện tử khởi tạo số dư là 0
         Wallet wallet = new Wallet();
-        wallet.setMember(member);
+        wallet.setMember(member); // Liên kết với Member
         wallet.setBalance(BigDecimal.ZERO);
         walletRepository.save(wallet);
 
