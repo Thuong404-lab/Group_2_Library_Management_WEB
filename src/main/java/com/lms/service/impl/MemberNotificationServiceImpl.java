@@ -46,12 +46,7 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
     }
 
     private Member getMemberByUsername(String username) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy tài khoản: " + username
-                ));
-
-        return memberRepository.findByUserId(account.getUser().getId())
+        return memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy độc giả với tài khoản: " + username
                 ));
