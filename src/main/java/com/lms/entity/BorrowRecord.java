@@ -1,6 +1,10 @@
 package com.lms.entity;
 
 import com.lms.enums.BorrowStatus;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
 import java.time.LocalDate;
 import java.util.List;
 
