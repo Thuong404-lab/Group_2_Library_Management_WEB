@@ -45,17 +45,22 @@ public class MemberInteractionController {
 
     @GetMapping("/notifications")
     public String viewNotifications(Model model, Principal principal) {
+        memberNotificationService.markAllNotificationsAsRead(principal.getName());
+
         model.addAttribute(
                 "notifications",
                 memberNotificationService.getMyNotifications(principal.getName())
         );
-        model.addAttribute(
-                "unreadCount",
-                memberNotificationService.countUnreadNotifications(principal.getName())
-        );
         model.addAttribute("showNotificationBell", false);
 
         return "member/notifications";
+    }
+
+    @GetMapping("/notifications/mark-read")
+    @ResponseBody
+    public String markNotificationsAsRead(Principal principal) {
+        memberNotificationService.markAllNotificationsAsRead(principal.getName());
+        return "OK";
     }
 
     @GetMapping("/reviews")

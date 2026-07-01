@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Xác nhận đăng ký mượn sách</title>
+</head>
+<body>
+<div layout:fragment="content" class="container py-4" style="max-width: 650px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text-fill me-2"></i>Phiếu Đăng Ký Mượn Sách Trực Tuyến</h5>
+        </div>
+        <div class="card-body p-4">
+            <form th:action="@{/member/borrow/request/submit}" method="post">
+                <input type="hidden" name="bookId" th:value="${selectedBookId}" />
+
+                <div class="mb-3 bg-light p-3 rounded text-muted">
+                    <small class="d-block fw-bold text-uppercase">Tài khoản đăng ký:</small>
+                    <span class="text-dark fw-semibold" th:text="${currentMemberName}">Username</span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Thời gian mượn mong muốn</label>
+                    <select class="form-select" name="numberOfDays">
+                        <option value="7">Mượn ngắn hạn (7 ngày)</option>
+                        <option value="14" selected>Mượn tiêu chuẩn (14 ngày)</option>
+                        <option value="30">Mượn dài hạn (30 ngày - Chỉ dành cho VIP)</option>
+                    </select>
+                    <div class="form-text text-muted">Sau khi gửi, phiếu sẽ ở trạng thái chờ duyệt. Vui lòng đợi thông báo từ thủ thư.</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <a th:href="@{/member/dashboard}" class="btn btn-light px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-success px-4 fw-bold">Gửi yêu cầu phê duyệt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

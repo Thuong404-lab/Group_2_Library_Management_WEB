@@ -1,147 +1,407 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
-
-<head>
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}"
+>
+  <head>
     <title>Đánh giá của tôi</title>
     <style>
-        .review-card { border-left: 3px solid #8b5a2b; transition: box-shadow 0.2s; }
-        .review-card:hover { box-shadow: 0 4px 16px rgba(139,90,43,0.12) !important; }
-        .star-option { color: #ffc107; letter-spacing: 1px; }
+      .review-card {
+        border-left: 3px solid #8b5a2b;
+        transition: box-shadow 0.2s;
+      }
+      .review-card:hover {
+        box-shadow: 0 4px 16px rgba(139, 90, 43, 0.12) !important;
+      }
+      .star-option {
+        color: #ffc107;
+        letter-spacing: 1px;
+      }
+      .rating-picker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .rating-star {
+        width: 2.4rem;
+        height: 2.4rem;
+        border: 0;
+        background: transparent;
+        color: #adb5bd;
+        cursor: pointer;
+        font-size: 1.85rem;
+        line-height: 1;
+        padding: 0;
+        transition:
+          color 0.15s ease,
+          transform 0.15s ease;
+      }
+      .rating-star:hover,
+      .rating-star.active {
+        color: #ffc107;
+      }
+      .rating-star:hover {
+        transform: translateY(-1px) scale(1.08);
+      }
+      .rating-star:focus,
+      .rating-star:focus-visible {
+        outline: none;
+        box-shadow: none;
+      }
+      .book-option {
+        transition:
+          background-color 0.15s ease,
+          font-weight 0.15s ease;
+      }
+      .book-option:hover {
+        background-color: rgba(139, 90, 43, 0.08);
+        font-weight: 600;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-<div layout:fragment="content" class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+  <body>
+    <div layout:fragment="content" class="container mt-4 mb-5">
+      <div
+        class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+      >
         <div>
-            <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-star-fill me-2" style="color:#8b5a2b;"></i>Đánh giá của tôi
-            </h2>
-            <div class="text-muted">
-                <span th:text="${myReviews != null ? myReviews.size() : 0}">0</span> đánh giá bạn đã gửi
-            </div>
+          <h2
+            class="fw-bold mb-1"
+            style="
+              font-family: &quot;Playfair Display&quot;, serif;
+              color: #4a3b32;
+            "
+          >
+            <i class="bi bi-star-fill me-2" style="color: #8b5a2b"></i>Đánh giá
+            của tôi
+          </h2>
+          <div class="text-muted">
+            <span th:text="${myReviews != null ? myReviews.size() : 0}">0</span>
+            đánh giá bạn đã gửi
+          </div>
         </div>
-    </div>
+      </div>
 
-    <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
-    <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+      <div
+        class="alert alert-success"
+        th:if="${success}"
+        th:text="${success}"
+      ></div>
+      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-    <div class="bg-white rounded shadow-sm p-4 mb-5 review-card">
-        <h5 class="fw-bold mb-4" style="color:#4a3b32;">
-            <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Gửi đánh giá sách
+      <div class="bg-white rounded shadow-sm p-4 mb-5 review-card">
+        <h5 class="fw-bold mb-4" style="color: #4a3b32">
+          <i class="bi bi-pencil-square me-2" style="color: #8b5a2b"></i>Gửi
+          đánh giá sách
         </h5>
 
-        <form th:action="@{/member/interaction/reviews}" th:object="${reviewRequest}" method="post">
-            <div class="mb-3">
-                <label class="form-label fw-bold">Sách</label>
-                <select class="form-select" th:field="*{bookId}">
-                    <option value="">-- Chọn sách --</option>
-                    <option th:each="book : ${books}"
-                            th:value="${book.bookId}"
-                            th:text="${book.title}">
-                        Tên sách
-                    </option>
-                </select>
-                <div class="text-danger small mt-1"
-                     th:if="${#fields.hasErrors('bookId')}"
-                     th:errors="*{bookId}">
-                </div>
-            </div>
+        <form
+          th:action="@{/member/interaction/reviews}"
+          th:object="${reviewRequest}"
+          method="post"
+        >
+          <div class="mb-3">
+            <label class="form-label fw-bold">Sách</label>
+            <input
+              type="text"
+              id="bookSearchInput"
+              class="form-control"
+              placeholder="Nhập tên sách để tìm..."
+              autocomplete="off"
+            />
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">Số sao</label>
-                <select class="form-select" th:field="*{rating}">
-                    <option value="">-- Chọn số sao --</option>
-                    <option value="1">1 sao</option>
-                    <option value="2">2 sao</option>
-                    <option value="3">3 sao</option>
-                    <option value="4">4 sao</option>
-                    <option value="5">5 sao</option>
-                </select>
-                <div class="text-danger small mt-1"
-                     th:if="${#fields.hasErrors('rating')}"
-                     th:errors="*{rating}">
-                </div>
-            </div>
+            <input type="hidden" th:field="*{bookId}" id="selectedBookId" />
 
-            <div class="mb-4">
-                <label class="form-label fw-bold">Bình luận</label>
-                <textarea class="form-control"
-                          rows="5"
-                          th:field="*{comment}"
-                          maxlength="1000"
-                          placeholder="Nhập nội dung đánh giá"></textarea>
-                <div class="text-danger small mt-1"
-                     th:if="${#fields.hasErrors('comment')}"
-                     th:errors="*{comment}">
-                </div>
+            <div
+              id="bookList"
+              class="border rounded mt-2 bg-white"
+              style="max-height: 220px; overflow-y: auto"
+            >
+              <div
+                th:each="book : ${books}"
+                class="book-option px-3 py-2"
+                style="cursor: pointer"
+                th:data-id="${book.bookId}"
+                th:data-title="${book.title}"
+                th:text="${book.title}"
+              >
+                Tên sách
+              </div>
             </div>
+            <div
+              class="text-danger small mt-1"
+              th:if="${#fields.hasErrors('bookId')}"
+              th:errors="*{bookId}"
+            ></div>
+          </div>
 
-            <button type="submit" class="btn text-white px-4" style="background:#8b5a2b;">
-                <i class="bi bi-send me-1"></i>Gửi đánh giá
-            </button>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Số sao</label>
+            <input type="hidden" th:field="*{rating}" id="ratingValue" />
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <div
+                class="rating-picker"
+                id="memberRatingPicker"
+                role="radiogroup"
+                aria-label="Chon so sao"
+              >
+                <button
+                  type="button"
+                  class="rating-star"
+                  data-value="1"
+                  role="radio"
+                  aria-label="1 sao"
+                  aria-checked="false"
+                >
+                  <i class="bi bi-star-fill"></i>
+                </button>
+                <button
+                  type="button"
+                  class="rating-star"
+                  data-value="2"
+                  role="radio"
+                  aria-label="2 sao"
+                  aria-checked="false"
+                >
+                  <i class="bi bi-star-fill"></i>
+                </button>
+                <button
+                  type="button"
+                  class="rating-star"
+                  data-value="3"
+                  role="radio"
+                  aria-label="3 sao"
+                  aria-checked="false"
+                >
+                  <i class="bi bi-star-fill"></i>
+                </button>
+                <button
+                  type="button"
+                  class="rating-star"
+                  data-value="4"
+                  role="radio"
+                  aria-label="4 sao"
+                  aria-checked="false"
+                >
+                  <i class="bi bi-star-fill"></i>
+                </button>
+                <button
+                  type="button"
+                  class="rating-star"
+                  data-value="5"
+                  role="radio"
+                  aria-label="5 sao"
+                  aria-checked="false"
+                >
+                  <i class="bi bi-star-fill"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              class="text-danger small mt-1"
+              th:if="${#fields.hasErrors('rating')}"
+              th:errors="*{rating}"
+            ></div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold">Bình luận</label>
+            <textarea
+              class="form-control"
+              rows="5"
+              th:field="*{comment}"
+              maxlength="1000"
+              placeholder="Nhập nội dung đánh giá"
+            ></textarea>
+            <div
+              class="text-danger small mt-1"
+              th:if="${#fields.hasErrors('comment')}"
+              th:errors="*{comment}"
+            ></div>
+          </div>
+
+          <button
+            type="submit"
+            class="btn text-white px-4"
+            style="background: #8b5a2b"
+          >
+            <i class="bi bi-send me-1"></i>Gửi đánh giá
+          </button>
         </form>
-    </div>
+      </div>
 
-    <div class="mb-3">
-        <h5 class="fw-bold" style="color:#4a3b32;">
-            <i class="bi bi-list-stars me-2" style="color:#8b5a2b;"></i>Đánh giá đã gửi
+      <div class="mb-3">
+        <h5 class="fw-bold" style="color: #4a3b32">
+          <i class="bi bi-list-stars me-2" style="color: #8b5a2b"></i>Đánh giá
+          đã gửi
         </h5>
-    </div>
+      </div>
 
-    <div th:if="${myReviews == null || myReviews.isEmpty()}"
-         class="bg-white rounded shadow-sm p-4 text-center text-muted">
+      <div
+        th:if="${myReviews == null || myReviews.isEmpty()}"
+        class="bg-white rounded shadow-sm p-4 text-center text-muted"
+      >
         Bạn chưa gửi đánh giá nào.
-    </div>
+      </div>
 
-    <div th:each="review : ${myReviews}" class="bg-white rounded shadow-sm p-4 mb-4 review-card">
+      <div
+        th:each="review : ${myReviews}"
+        class="bg-white rounded shadow-sm p-4 mb-4 review-card"
+      >
         <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center gap-3">
-                <img th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
-                     class="rounded shadow-sm"
-                     alt="Book"
-                     style="width:54px;height:76px;object-fit:cover;">
-                <div>
-                    <div class="fw-bold fs-5" th:text="${review.book.title}">Tên sách</div>
-                    <div class="small text-muted">
-                        <span th:if="${review.book.authors != null && !review.book.authors.isEmpty()}"
-                              th:text="${review.book.authors.iterator().next().authorName}">
-                            Tác giả
-                        </span>
-                        <span th:unless="${review.book.authors != null && !review.book.authors.isEmpty()}">Chưa rõ tác giả</span>
-                    </div>
-                </div>
+          <div class="d-flex align-items-center gap-3">
+            <img
+              th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
+              class="rounded shadow-sm"
+              alt="Book"
+              style="width: 54px; height: 76px; object-fit: cover"
+            />
+            <div>
+              <div class="fw-bold fs-5" th:text="${review.book.title}">
+                Tên sách
+              </div>
+              <div class="small text-muted">
+                <span
+                  th:if="${review.book.authors != null && !review.book.authors.isEmpty()}"
+                  th:text="${review.book.authors.iterator().next().authorName}"
+                >
+                  Tác giả
+                </span>
+                <span
+                  th:unless="${review.book.authors != null && !review.book.authors.isEmpty()}"
+                  >Chưa rõ tác giả</span
+                >
+              </div>
             </div>
-            <div class="text-end">
-                <div class="text-warning fs-5 mb-1">
-                    <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
-                    <span class="text-muted small" th:text="${review.rating + '/5'}">5/5</span>
-                </div>
-                <div class="small text-muted"
-                     th:text="${review.createdDate != null ? 'Đánh giá ngày ' + #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}">
-                    Đánh giá ngày
-                </div>
-                <span class="badge bg-success mt-2" th:if="${review.status == 'APPROVED'}">Đã duyệt</span>
-                <span class="badge bg-warning text-dark mt-2" th:if="${review.status == 'PENDING'}">Chờ duyệt</span>
+          </div>
+          <div class="text-end">
+            <div class="text-warning fs-5 mb-1">
+              <span th:each="i : ${#numbers.sequence(1, review.rating)}"
+                >★</span
+              >
+              <span class="text-muted small" th:text="${review.rating + '/5'}"
+                >5/5</span
+              >
             </div>
+            <div
+              class="small text-muted"
+              th:text="${review.createdDate != null ? 'Đánh giá ngày ' + #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}"
+            >
+              Đánh giá ngày
+            </div>
+            <span
+              class="badge bg-success mt-2"
+              th:if="${review.status == 'APPROVED'}"
+              >Đã duyệt</span
+            >
+            <span
+              class="badge bg-warning text-dark mt-2"
+              th:if="${review.status == 'PENDING'}"
+              >Chờ duyệt</span
+            >
+          </div>
         </div>
 
-        <div class="p-3 rounded mb-3 lh-lg" style="background:#fdfbf7;border-left:3px solid #8b5a2b;"
-             th:text="${review.comment}">
-            Nội dung đánh giá
+        <div
+          class="p-3 rounded mb-3 lh-lg"
+          style="background: #fdfbf7; border-left: 3px solid #8b5a2b"
+          th:text="${review.comment}"
+        >
+          Nội dung đánh giá
         </div>
 
-        <div class="p-3 rounded mb-3" th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
-             style="background:#f7fbff;border-left:3px solid #0d6efd;">
-            <div class="fw-bold mb-1" style="color:#0d6efd;">Phản hồi của thủ thư</div>
-            <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
+        <div
+          class="p-3 rounded mb-3"
+          th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
+          style="background: #f7fbff; border-left: 3px solid #0d6efd"
+        >
+          <div class="fw-bold mb-1" style="color: #0d6efd">
+            Phản hồi của thủ thư
+          </div>
+          <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
         </div>
 
-        <a th:href="@{'/books/' + ${review.book.bookId}}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-box-arrow-up-right me-1"></i>Xem sách
+        <a
+          th:href="@{'/books/' + ${review.book.bookId}}"
+          class="btn btn-sm btn-outline-secondary"
+        >
+          <i class="bi bi-box-arrow-up-right me-1"></i>Xem sách
         </a>
+      </div>
+
+      <script>
+        const bookSearchInput = document.getElementById("bookSearchInput");
+        const bookList = document.getElementById("bookList");
+        const selectedBookId = document.getElementById("selectedBookId");
+
+        const originalBookOptions = Array.from(
+          document.querySelectorAll(".book-option"),
+        );
+
+        bookSearchInput.addEventListener("input", function () {
+          const keyword = this.value.trim().toLowerCase();
+          selectedBookId.value = "";
+
+          bookList.innerHTML = "";
+
+          const matchedBooks = originalBookOptions.filter((option) =>
+            option.dataset.title.toLowerCase().includes(keyword),
+          );
+
+          const booksToShow =
+            keyword === "" ? originalBookOptions : matchedBooks;
+
+          booksToShow.forEach((option) => {
+            bookList.appendChild(option);
+            option.style.display = "block";
+          });
+        });
+
+        originalBookOptions.forEach((option) => {
+          option.addEventListener("click", function () {
+            bookSearchInput.value = this.dataset.title;
+            selectedBookId.value = this.dataset.id;
+          });
+        });
+
+        const ratingPicker = document.getElementById("memberRatingPicker");
+        const ratingStars = Array.from(
+          document.querySelectorAll("#memberRatingPicker .rating-star"),
+        );
+        const ratingInput = document.getElementById("ratingValue");
+
+        function updateRatingStars(value) {
+          ratingStars.forEach((star) => {
+            const starValue = Number(star.dataset.value);
+            const isActive = starValue <= value;
+            star.classList.toggle("active", isActive);
+            star.setAttribute("aria-checked", String(starValue === value));
+          });
+        }
+
+        function setRating(value) {
+          ratingInput.value = value || "";
+          updateRatingStars(value);
+        }
+
+        ratingStars.forEach((star) => {
+          star.addEventListener("click", function () {
+            setRating(Number(this.dataset.value));
+          });
+
+          star.addEventListener("mouseenter", function () {
+            updateRatingStars(Number(this.dataset.value));
+          });
+        });
+
+        ratingPicker.addEventListener("mouseleave", function () {
+          updateRatingStars(Number(ratingInput.value) || 0);
+        });
+
+        setRating(Number(ratingInput.value) || 0);
+      </script>
     </div>
-</div>
-</body>
+  </body>
 </html>
