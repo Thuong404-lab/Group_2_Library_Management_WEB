@@ -46,7 +46,7 @@ public class GuestController {
                                @RequestParam(required = false) String status,
                                @RequestParam(required = false, defaultValue = "newest") String sort,
                                @RequestParam(defaultValue = "0") int page,
-                               Model model) {
+                               Model model, java.security.Principal principal) {
         
         org.springframework.data.domain.Sort sorting;
         if ("title_asc".equals(sort)) sorting = org.springframework.data.domain.Sort.by("title").ascending();
@@ -69,6 +69,8 @@ public class GuestController {
         model.addAttribute("selectedGenreId", genreId);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("sort", sort);
+        
+        addFavoriteBookIds(model, principal);
         
         return "guest/books";
     }
