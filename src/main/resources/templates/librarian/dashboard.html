@@ -349,6 +349,17 @@
                     </h5>
                     <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Books -->
+    <section id="section-books" class="lib-section">
+        <div class="card-classic shadow-sm mb-4">  
+            <div class="card-header bg-white border-bottom p-4 border-color">
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-classic active" onclick="showBookSubSection('inventory')" style="margin-right: 1px !important;">Quản lý kho sách</button>
+                    <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-classic" onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
 
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -439,6 +450,17 @@
                     <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
                 </div>
 
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                        <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
+                    </button>
+                    <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;" data-bs-toggle="modal" data-bs-target="#categoryGenreModal">
+                        <i class="bi bi-tags me-1"></i>Quản lý danh mục
+                    </button>
+                    <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal" data-bs-target="#auditModal">
+                        <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
+                    </button>
+                </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -642,6 +664,39 @@
                     </div>
                 </div>
 
+        <!-- Audit Modal -->
+        <div class="modal fade" id="auditModal" tabindex="-1" aria-labelledby="auditModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="auditModalLabel">Kiểm kê kho sách</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/librarian/inventory/audit}" method="post">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border" style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Available</span>
+                                        <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border" style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Borrowed</span>
+                                        <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border" style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Lost</span>
+                                        <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border" style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Damaged</span>
+                                        <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 rounded-2 border" style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Disposed</span>
+                                        <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
+                                    </div>
+                                </div>
                 <!-- Category/Genre Modal -->
                 <div class="modal fade" id="categoryGenreModal" tabindex="-1" aria-labelledby="categoryGenreModalLabel"
                     aria-hidden="true">
@@ -707,40 +762,52 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
-                            <form th:action="@{/librarian/inventory/audit}" method="post">
-                                <div class="modal-body">
-                                    <div class="row g-3">
-                                        <div class="col-12">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Available</span>
-                                                <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Borrowed</span>
-                                                <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Lost</span>
-                                                <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Damaged</span>
-                                                <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-semibold">Disposed</span>
-                                                <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Đóng</button>
-                                    <button type="submit" class="btn btn-primary">Thực hiện kiểm kê</button>
-                                </div>
-                            </form>
-                        </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="bookShelfPanel" style="display: none;">
+                <div class="card-classic shadow-sm">
+                    <div class="card-header bg-white border-bottom p-4 border-color">
+                        <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
+                        </h5>
+                        <div class="text-muted small">Xem và quản lý vị trí lưu trữ sách trong kho mà không rời dashboard.</div>
+                    </div>
+                    <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-uppercase small text-muted">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên vị trí</th>
+                                <th>Vị trí</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="shelf, iterStat : ${shelves}">
+                                <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                                <td th:text="${shelf.shelfName}">Tên vị trí</td>
+                                <td th:text="${shelf.location}">Vị trí</td>
+                                <td class="table-fixed-action">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" th:data-bs-target="${'#editStorageModal' + shelf.shelfId}" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}" title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${shelves == null || #lists.isEmpty(shelves)}">
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Hiện chưa có vị trí lưu trữ nào.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -1083,6 +1150,35 @@
                 </div>
             </div>
 
+    <script>
+        function showBookSubSection(panelName) {
+            const inventoryPanel = document.getElementById("bookInventoryPanel");
+            const shelfPanel = document.getElementById("bookShelfPanel");
+            const inventoryBtn = document.getElementById("bookSubInventoryBtn");
+            const storageBtn = document.getElementById("bookSubStorageBtn");
+
+            if (inventoryPanel && shelfPanel) {
+                if (panelName === "storage") {
+                    inventoryPanel.style.display = "none";
+                    shelfPanel.style.display = "block";
+                } else {
+                    inventoryPanel.style.display = "block";
+                    shelfPanel.style.display = "none";
+                }
+            }
+
+            if (inventoryBtn && storageBtn) {
+                inventoryBtn.classList.toggle("active", panelName !== "storage");
+                storageBtn.classList.toggle("active", panelName === "storage");
+            }
+        }
+
+        function showLibSection(sectionName, clickedLink) {
+            const sections = document.querySelectorAll(".lib-section");
+
+            sections.forEach(function (section) {
+                section.classList.remove("active");
+            });
             <div class="card-classic shadow-sm p-4">
                 <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                     <i class="bi bi-bar-chart me-2 text-classic"></i>Báo cáo thư viện
