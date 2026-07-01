@@ -54,6 +54,13 @@
         .table-fixed-action {
             min-width: 180px;
         }
+
+        .validate-field.is-invalid,
+        .validate-group.is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+            background-image: none !important;
+        }
     </style>
 </head>
 
@@ -267,14 +274,15 @@
 
                 <div class="card-body p-4">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
-                        method="post">
+                        method="post" id="notificationForm" novalidate>
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                             th:value="${_csrf.token}">
 
                         <div class="row g-4">
                             <div class="col-lg-5">
                                 <label class="form-label fw-bold">Đối tượng nhận</label>
-                                <div class="border rounded-3 p-3 bg-light">
+                                <div class="border rounded-3 p-3 bg-light validate-group" id="recipientTypeGroup"
+                                    th:classappend="${notificationFieldErrors != null and notificationFieldErrors['recipientType'] != null} ? 'is-invalid'">
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="radio" th:field="*{recipientType}"
                                             value="ALL" id="recipientAll">
@@ -287,17 +295,22 @@
                                             chọn</label>
                                     </div>
                                 </div>
+                                <div class="invalid-feedback d-block"
+                                    th:text="${notificationFieldErrors != null ? notificationFieldErrors['recipientType'] : ''}">
+                                </div>
 
                                 <div class="mt-4" id="memberListBox">
                                     <label class="form-label fw-bold">Chọn Member</label>
                                     <input type="text" id="memberSearchInput" class="form-control mb-2"
                                         placeholder="Nhập tên Member để tìm...">
 
-                                    <div class="border rounded-3 p-3 member-list-scroll">
+                                    <div class="border rounded-3 p-3 member-list-scroll validate-group" id="memberIdsGroup"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
                                         <div th:each="member : ${members}" class="form-check member-item mb-2"
                                             th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
                                             <input class="form-check-input member-checkbox" type="checkbox"
-                                                name="memberIds" th:value="${member.memberId}">
+                                                name="memberIds" th:value="${member.memberId}"
+                                                th:checked="${notificationRequest != null and notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
                                             <label class="form-check-label"
                                                 th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
                                                 Member name
@@ -314,20 +327,31 @@
                                     <small class="text-muted d-block mt-2">
                                         Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
                                     </small>
+                                    <div class="invalid-feedback d-block"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['memberIds'] : ''}">
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="col-lg-7">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Tiêu đề</label>
-                                    <input type="text" class="form-control" th:field="*{title}"
-                                        placeholder="Nhập tiêu đề thông báo">
+                                    <input type="text" class="form-control validate-field" th:field="*{title}" required
+                                        placeholder="Nhập tiêu đề thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
+                                    </div>
                                 </div>
 
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Nội dung</label>
-                                    <textarea class="form-control" rows="8" th:field="*{content}"
-                                        placeholder="Nhập nội dung thông báo"></textarea>
+                                    <textarea class="form-control validate-field" rows="8" th:field="*{content}" required
+                                        placeholder="Nhập nội dung thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
+                                    </div>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary px-4">
@@ -390,11 +414,16 @@
                                     <td>
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                            method="post" class="review-reply-box mb-2">
+                                            method="post" class="review-reply-box mb-2" novalidate>
                                             <input type="hidden" th:if="${_csrf != null}"
                                                 th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <textarea name="response" class="form-control form-control-sm mb-2" rows="2"
-                                                placeholder="Nhập phản hồi..."></textarea>
+                                            <textarea name="response" class="form-control form-control-sm validate-field mb-2" rows="2"
+                                                placeholder="Nhập phản hồi..."
+                                                th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
+                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
+                                            <div class="invalid-feedback d-block"
+                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
+                                            </div>
                                             <button type="submit" class="btn btn-sm btn-primary w-100">
                                                 <i class="bi bi-reply me-1"></i>Phản hồi
                                             </button>
@@ -436,18 +465,6 @@
                         <i class="bi bi-journal-plus me-2 text-classic"></i> Đề xuất mua sách
                     </h5>
                     <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
-                </div>
-
-                <div class="d-flex flex-wrap gap-3 mb-4">
-                    <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;" data-bs-toggle="modal" data-bs-target="#addBookModal">
-                        <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
-                    </button>
-                    <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;" data-bs-toggle="modal" data-bs-target="#categoryGenreModal">
-                        <i class="bi bi-tags me-1"></i>Quản lý danh mục
-                    </button>
-                    <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal" data-bs-target="#auditModal">
-                        <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
-                    </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -1205,6 +1222,91 @@
                 });
             }
 
+
+            function setInlineError(element, message) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.add("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = message;
+                }
+            }
+
+            function clearInlineError(element) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.remove("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function validateNotificationForm(event) {
+                const form = document.getElementById("notificationForm");
+                if (form == null) {
+                    return;
+                }
+
+                let isValid = true;
+                const recipientAll = document.getElementById("recipientAll");
+                const recipientSelected = document.getElementById("recipientSelected");
+                const recipientTypeGroup = document.getElementById("recipientTypeGroup");
+                const memberIdsGroup = document.getElementById("memberIdsGroup");
+                const titleInput = form.querySelector("[name='title']");
+                const contentInput = form.querySelector("[name='content']");
+                const selectedMembers = form.querySelectorAll(".member-checkbox:checked");
+
+                clearInlineError(recipientTypeGroup);
+                clearInlineError(memberIdsGroup);
+                clearInlineError(titleInput);
+                clearInlineError(contentInput);
+
+                if ((recipientAll == null || !recipientAll.checked) && (recipientSelected == null || !recipientSelected.checked)) {
+                    setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
+                    isValid = false;
+                }
+
+                if (recipientSelected != null && recipientSelected.checked && selectedMembers.length === 0) {
+                    setInlineError(memberIdsGroup, "Vui lòng chọn ít nhất một Member.");
+                    isValid = false;
+                }
+
+                if (titleInput != null && titleInput.value.trim() === "") {
+                    setInlineError(titleInput, "Tiêu đề không được để trống.");
+                    isValid = false;
+                }
+
+                if (contentInput != null && contentInput.value.trim() === "") {
+                    setInlineError(contentInput, "Nội dung không được để trống.");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+
+            function validateReviewReplyForms() {
+                document.querySelectorAll(".review-reply-box").forEach(function (form) {
+                    form.addEventListener("submit", function (event) {
+                        const response = form.querySelector("textarea[name='response']");
+                        clearInlineError(response);
+
+                        if (response != null && response.value.trim() === "") {
+                            setInlineError(response, "Nội dung phản hồi không được để trống.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
+                });
+            }
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 
@@ -1216,6 +1318,14 @@
                     recipientSelected.addEventListener("change", toggleMemberList);
                     toggleMemberList();
                 }
+
+                const notificationForm = document.getElementById("notificationForm");
+
+                if (notificationForm != null) {
+                    notificationForm.addEventListener("submit", validateNotificationForm);
+                }
+
+                validateReviewReplyForms();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 

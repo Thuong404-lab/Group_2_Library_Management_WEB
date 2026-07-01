@@ -54,6 +54,14 @@
           background-color 0.15s ease,
           font-weight 0.15s ease;
       }
+      .rating-picker.is-invalid .rating-star {
+        color: #dc3545;
+      }
+      .validate-field.is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+        background-image: none !important;
+      }
       .book-option:hover {
         background-color: rgba(139, 90, 43, 0.08);
         font-weight: 600;
@@ -101,13 +109,16 @@
           th:action="@{/member/interaction/reviews}"
           th:object="${reviewRequest}"
           method="post"
+          id="memberReviewForm"
+          novalidate
         >
           <div class="mb-3">
             <label class="form-label fw-bold">Sách</label>
             <input
               type="text"
               id="bookSearchInput"
-              class="form-control"
+              class="form-control validate-field"
+              th:classappend="${#fields.hasErrors('bookId')} ? 'is-invalid'"
               placeholder="Nhập tên sách để tìm..."
               autocomplete="off"
             />
@@ -131,7 +142,8 @@
               </div>
             </div>
             <div
-              class="text-danger small mt-1"
+              id="bookIdFeedback"
+              class="invalid-feedback d-block"
               th:if="${#fields.hasErrors('bookId')}"
               th:errors="*{bookId}"
             ></div>
@@ -200,9 +212,9 @@
               </div>
             </div>
             <div
-              class="text-danger small mt-1"
-              th:if="${#fields.hasErrors('rating')}"
-              th:errors="*{rating}"
+              id="ratingFeedback"
+              class="invalid-feedback d-block"
+              th:text="${#fields.hasErrors('rating') ? #fields.errors('rating')[0] : ''}"
             ></div>
           </div>
 
@@ -336,6 +348,29 @@
         const bookList = document.getElementById("bookList");
         const selectedBookId = document.getElementById("selectedBookId");
 
+
+        function setBookError(message) {
+          bookSearchInput.classList.add("is-invalid");
+          let feedback = document.getElementById("bookIdFeedback");
+
+          if (feedback == null) {
+            feedback = document.createElement("div");
+            feedback.id = "bookIdFeedback";
+            feedback.className = "invalid-feedback d-block";
+            selectedBookId.insertAdjacentElement("afterend", feedback);
+          }
+
+          feedback.textContent = message;
+        }
+
+        function clearBookError() {
+          bookSearchInput.classList.remove("is-invalid");
+          const feedback = document.getElementById("bookIdFeedback");
+
+          if (feedback != null) {
+            feedback.textContent = "";
+          }
+        }
         const originalBookOptions = Array.from(
           document.querySelectorAll(".book-option"),
         );
@@ -343,6 +378,7 @@
         bookSearchInput.addEventListener("input", function () {
           const keyword = this.value.trim().toLowerCase();
           selectedBookId.value = "";
+          clearBookError();
 
           bookList.innerHTML = "";
 
@@ -363,6 +399,7 @@
           option.addEventListener("click", function () {
             bookSearchInput.value = this.dataset.title;
             selectedBookId.value = this.dataset.id;
+            clearBookError();
           });
         });
 
@@ -381,9 +418,28 @@
           });
         }
 
+        function setRatingError(message) {
+          ratingPicker.classList.add("is-invalid");
+          const feedback = document.getElementById("ratingFeedback");
+
+          if (feedback != null) {
+            feedback.textContent = message;
+          }
+        }
+
+        function clearRatingError() {
+          ratingPicker.classList.remove("is-invalid");
+          const feedback = document.getElementById("ratingFeedback");
+
+          if (feedback != null) {
+            feedback.textContent = "";
+          }
+        }
+
         function setRating(value) {
           ratingInput.value = value || "";
           updateRatingStars(value);
+          clearRatingError();
         }
 
         ratingStars.forEach((star) => {
@@ -401,6 +457,31 @@
         });
 
         setRating(Number(ratingInput.value) || 0);
+        const reviewForm = document.getElementById("memberReviewForm");
+
+        if (reviewForm != null) {
+          reviewForm.addEventListener("submit", function (event) {
+            let isValid = true;
+
+            clearBookError();
+            clearRatingError();
+
+            if (selectedBookId.value.trim() === "") {
+              setBookError("Vui lòng chọn sách.");
+              isValid = false;
+            }
+
+            if (ratingInput.value.trim() === "") {
+              setRatingError("Vui lòng chọn đánh giá sao.");
+              isValid = false;
+            }
+
+            if (!isValid) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          });
+        }
       </script>
     </div>
   </body>

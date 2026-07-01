@@ -2,15 +2,22 @@ package com.lms.controller.librarian;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
+import com.lms.enums.NotificationRecipientType;
 import com.lms.service.LibrarianInteractionService;
-import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/librarian/interaction")
@@ -37,8 +44,20 @@ public class LibrarianInteractionController {
     @PostMapping("/reviews/{id}/reply")
     public String replyReview(
             @PathVariable("id") Integer feedbackId,
-            @Valid @ModelAttribute LibrarianReviewReplyRequest request,
+            @ModelAttribute LibrarianReviewReplyRequest request,
             RedirectAttributes flash) {
+
+        String response = request.getResponse() == null ? "" : request.getResponse().trim();
+
+        if (response.isEmpty()) {
+            flash.addFlashAttribute("reviewReplyErrorId", feedbackId);
+            flash.addFlashAttribute("reviewReplyErrors",
+                    Map.of("response", "Nội dung phản hồi không được để trống."));
+            flash.addFlashAttribute("reviewReplyValues", Map.of("response", response));
+            return "redirect:/librarian/dashboard?section=reviews";
+        }
+
+        request.setResponse(response);
 
         try {
             librarianInteractionService.replyReview(feedbackId, request);
@@ -78,10 +97,19 @@ public class LibrarianInteractionController {
             @ModelAttribute("notificationRequest") LibrarianNotificationSendRequest request,
             RedirectAttributes flash) {
 
+        Map<String, String> fieldErrors = validateNotificationRequest(request);
+
+        if (!fieldErrors.isEmpty()) {
+            flash.addFlashAttribute("notificationRequest", request);
+            flash.addFlashAttribute("notificationFieldErrors", fieldErrors);
+            return "redirect:/librarian/dashboard?section=notifications";
+        }
+
         try {
             librarianInteractionService.sendNotificationToMembers(request);
             flash.addFlashAttribute("success", "Đã gửi thông báo thành công.");
         } catch (Exception e) {
+            flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
@@ -97,5 +125,32 @@ public class LibrarianInteractionController {
                 PageRequest.of(page, 20, Sort.by("createdDate").descending())));
 
         return "librarian/acquisition-request-list";
+    }
+
+    private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {
+        Map<String, String> fieldErrors = new HashMap<>();
+
+        if (request.getRecipientType() == null) {
+            fieldErrors.put("recipientType", "Vui lòng chọn đối tượng nhận thông báo.");
+        }
+
+        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+            fieldErrors.put("title", "Tiêu đề không được để trống.");
+        } else {
+            request.setTitle(request.getTitle().trim());
+        }
+
+        if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+            fieldErrors.put("content", "Nội dung không được để trống.");
+        } else {
+            request.setContent(request.getContent().trim());
+        }
+
+        if (request.getRecipientType() == NotificationRecipientType.SELECTED
+                && (request.getMemberIds() == null || request.getMemberIds().isEmpty())) {
+            fieldErrors.put("memberIds", "Vui lòng chọn ít nhất một Member.");
+        }
+
+        return fieldErrors;
     }
 }

@@ -93,7 +93,9 @@ public class LibrarianDashboardController {
                         now.plusDays(7)));
         model.addAttribute("reviews", librarianInteractionService.getReviewsForModeration(null, PageRequest.of(0, 20,
                 Sort.by("createdDate").descending())));
-        model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+        if (!model.containsAttribute("notificationRequest")) {
+            model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+        }
         model.addAttribute("members", librarianInteractionService.getAllMembers());
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(PageRequest.of(0, 20,
                 Sort.by("createdDate").descending())));
