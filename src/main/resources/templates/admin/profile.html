@@ -37,10 +37,16 @@
             <!-- Profile Card -->
             <div class="card-classic border-0 shadow-sm mb-4">
                 <div class="card-header bg-white p-4 border-bottom text-center" style="border-color: rgba(139, 90, 43, 0.1) !important;">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 text-white shadow-sm" 
-                         style="width: 80px; height: 80px; background-color: var(--sidebar-active); font-size: 2rem; font-family: 'Playfair Display', serif;"
-                         th:text="${admin != null ? #strings.substring(admin.fullName, 0, 1).toUpperCase() : 'A'}">
-                        A
+                    <div class="position-relative mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <div th:if="${admin?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm w-100 h-100" 
+                             style="background-color: var(--sidebar-active); font-size: 2rem; font-family: 'Playfair Display', serif;"
+                             th:text="${admin != null ? #strings.substring(admin.fullName, 0, 1).toUpperCase() : 'A'}">A</div>
+                        <img th:if="${admin?.avatar != null}" id="avatarPreview" th:src="${admin.avatar}" class="rounded-circle shadow-sm w-100 h-100" style="object-fit: cover;">
+                        <img th:if="${admin?.avatar == null}" id="avatarPreview" src="" class="rounded-circle shadow-sm w-100 h-100 d-none" style="object-fit: cover;">
+                        
+                        <label for="avatarUploadAdmin" class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; cursor: pointer; color: var(--sidebar-active);" title="Đổi ảnh đại diện">
+                            <i class="bi bi-camera-fill" style="font-size: 0.8rem;"></i>
+                        </label>
                     </div>
                     <h4 class="fw-bold mb-1" style="color: #4a3b32;" th:text="${admin?.fullName}">Admin Tổng</h4>
                     <span class="badge bg-success text-uppercase px-3 py-1 mt-2 shadow-sm"><i class="bi bi-shield-lock-fill me-1"></i>System Administrator</span>
@@ -48,7 +54,8 @@
                 
                 <div class="card-body p-4">
                     <h6 class="fw-bold text-uppercase mb-4" style="color: #8b5a2b; font-size: 0.85rem;"><i class="bi bi-person-lines-fill me-2"></i>Thông tin tài khoản</h6>
-                    <form th:action="@{/admin/profile/update}" method="post">
+                    <form th:action="@{/admin/profile/update}" method="post" enctype="multipart/form-data">
+                        <input type="file" id="avatarUploadAdmin" name="avatarFile" accept="image/*" class="d-none">
                         <div class="row g-4 mb-4">
                             <div class="col-12">
                                 <label class="form-label fw-bold text-muted small">Họ và Tên</label>
@@ -98,5 +105,31 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.getElementById('avatarUploadAdmin');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+
+        if(fileInput) {
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if(avatarPlaceholder) avatarPlaceholder.classList.add('d-none');
+                        if(avatarPreview) {
+                            avatarPreview.src = e.target.result;
+                            avatarPreview.classList.remove('d-none');
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+
 </body>
 </html>

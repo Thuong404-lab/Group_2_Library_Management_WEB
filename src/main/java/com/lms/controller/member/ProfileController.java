@@ -52,6 +52,7 @@ public class ProfileController {
     public String updateProfile(@RequestParam String fullName,
                                 @RequestParam String email,
                                 @RequestParam String phone,
+                                @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
         if (principal == null) {
@@ -60,7 +61,7 @@ public class ProfileController {
 
         try {
             String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone);
+            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
             return "redirect:/member/profile?updated";
         } catch (Exception e) {

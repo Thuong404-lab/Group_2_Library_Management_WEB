@@ -4,10 +4,12 @@ import com.lms.entity.User;
 import com.lms.entity.Account;
 import com.lms.repository.UserRepository;
 import com.lms.repository.AccountRepository;
+import com.lms.service.FileUploadService;
 import com.lms.service.ProfileService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ProfileServiceImpl - Xử lý nghiệp vụ thông tin cá nhân
@@ -19,13 +21,16 @@ public class ProfileServiceImpl implements ProfileService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileUploadService fileUploadService;
 
     public ProfileServiceImpl(UserRepository userRepository,
                               AccountRepository accountRepository,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder,
+                              FileUploadService fileUploadService) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.fileUploadService = fileUploadService;
     }
 
     // Lấy thông tin cá nhân (User) dựa theo Username của tài khoản đang kết nối
@@ -43,7 +48,7 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    public void updateProfile(String username, String fullName, String email, String phone) {
+    public void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile) {
         Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
@@ -71,6 +76,12 @@ public class ProfileServiceImpl implements ProfileService {
         user.setFullName(fullName);
         user.setEmail(email);
         user.setPhone(phone);
+        
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            String avatarUrl = fileUploadService.storeFile(avatarFile);
+            user.setAvatar(avatarUrl);
+        }
+        
         userRepository.save(user);
     }
 
