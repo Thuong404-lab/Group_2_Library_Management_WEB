@@ -122,7 +122,7 @@ public class LibrarianInteractionController {
             Model model) {
 
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(
-                PageRequest.of(page, 20, Sort.by("createdDate").descending())));
+                PageRequest.of(page, 20, Sort.by("requestId").ascending())));
 
         return "librarian/acquisition-request-list";
     }

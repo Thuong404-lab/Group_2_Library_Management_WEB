@@ -98,7 +98,7 @@ public class LibrarianDashboardController {
         }
         model.addAttribute("members", librarianInteractionService.getAllMembers());
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(PageRequest.of(0, 20,
-                Sort.by("createdDate").descending())));
+                Sort.by("requestId").ascending())));
         model.addAttribute("shelves", storageService.getAllStorageLocations());
         model.addAttribute("books", inventoryService.getAllBooks());
         model.addAttribute("categories", inventoryService.getAllCategories());

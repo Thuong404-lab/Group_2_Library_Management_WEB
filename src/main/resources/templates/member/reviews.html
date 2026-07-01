@@ -66,6 +66,72 @@
         background-color: rgba(139, 90, 43, 0.08);
         font-weight: 600;
       }
+      .sent-review-card {
+        background: #fffdfa;
+        border: 1px solid rgba(139, 90, 43, 0.14);
+        border-left: 4px solid #8b5a2b;
+        border-radius: 8px;
+        box-shadow: 0 4px 14px rgba(74, 59, 50, 0.07) !important;
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+      }
+      .sent-review-card:hover {
+        box-shadow: 0 10px 24px rgba(74, 59, 50, 0.12) !important;
+        transform: translateY(-1px);
+      }
+      .sent-review-cover {
+        width: 60px;
+        height: 84px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid rgba(139, 90, 43, 0.12);
+      }
+      .sent-review-title {
+        color: #2c1e16;
+        font-family: 'Playfair Display', serif;
+      }
+      .sent-review-rating {
+        color: #c8942d;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .sent-review-status {
+        background: #edf5ed;
+        color: #3f6f45;
+        border: 1px solid rgba(63, 111, 69, 0.22);
+        font-weight: 700;
+      }
+      .sent-review-status.pending {
+        background: #f5eadf;
+        color: #8b5a2b;
+        border-color: rgba(139, 90, 43, 0.2);
+      }
+      .sent-review-comment {
+        background: #fbf6ee;
+        border-left: 3px solid #8b5a2b;
+        color: #3f3128;
+      }
+      .librarian-response-box {
+        background: #f1f6ef;
+        border-left: 3px solid #6f8a57;
+        color: #3f3128;
+      }
+      .librarian-response-title {
+        color: #557143;
+      }
+      .btn-review-classic {
+        border-color: rgba(139, 90, 43, 0.35);
+        color: #6b4b35;
+        background: #fff;
+        font-weight: 700;
+      }
+      .btn-review-classic:hover,
+      .btn-review-classic:focus {
+        background: #8b5a2b;
+        border-color: #8b5a2b;
+        color: #fff;
+      }
     </style>
   </head>
 
@@ -260,18 +326,17 @@
 
       <div
         th:each="review : ${myReviews}"
-        class="bg-white rounded shadow-sm p-4 mb-4 review-card"
+        class="p-4 mb-4 sent-review-card"
       >
         <div class="d-flex justify-content-between align-items-start mb-3">
           <div class="d-flex align-items-center gap-3">
             <img
               th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
-              class="rounded shadow-sm"
+              class="sent-review-cover shadow-sm"
               alt="Book"
-              style="width: 54px; height: 76px; object-fit: cover"
             />
             <div>
-              <div class="fw-bold fs-5" th:text="${review.book.title}">
+              <div class="fw-bold fs-5 sent-review-title" th:text="${review.book.title}">
                 Tên sách
               </div>
               <div class="small text-muted">
@@ -289,7 +354,7 @@
             </div>
           </div>
           <div class="text-end">
-            <div class="text-warning fs-5 mb-1">
+            <div class="sent-review-rating fs-5 mb-1">
               <span th:each="i : ${#numbers.sequence(1, review.rating)}"
                 >★</span
               >
@@ -304,12 +369,12 @@
               Đánh giá ngày
             </div>
             <span
-              class="badge bg-success mt-2"
+              class="badge sent-review-status mt-2"
               th:if="${review.status == 'APPROVED'}"
               >Đã duyệt</span
             >
             <span
-              class="badge bg-warning text-dark mt-2"
+              class="badge sent-review-status pending mt-2"
               th:if="${review.status == 'PENDING'}"
               >Chờ duyệt</span
             >
@@ -317,19 +382,17 @@
         </div>
 
         <div
-          class="p-3 rounded mb-3 lh-lg"
-          style="background: #fdfbf7; border-left: 3px solid #8b5a2b"
+          class="p-3 rounded mb-3 lh-lg sent-review-comment"
           th:text="${review.comment}"
         >
           Nội dung đánh giá
         </div>
 
         <div
-          class="p-3 rounded mb-3"
+          class="p-3 rounded mb-3 librarian-response-box"
           th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
-          style="background: #f7fbff; border-left: 3px solid #0d6efd"
         >
-          <div class="fw-bold mb-1" style="color: #0d6efd">
+          <div class="fw-bold mb-1 librarian-response-title">
             Phản hồi của thủ thư
           </div>
           <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
@@ -337,7 +400,7 @@
 
         <a
           th:href="@{'/books/' + ${review.book.bookId}}"
-          class="btn btn-sm btn-outline-secondary"
+          class="btn btn-sm btn-review-classic"
         >
           <i class="bi bi-box-arrow-up-right me-1"></i>Xem sách
         </a>
