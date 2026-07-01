@@ -1,81 +1,73 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
-    <meta charset="UTF-8">
-    <title>Membership Tier Status</title>
-    <style>
-        .container { width: 65%; margin: 50px auto; font-family: Arial, sans-serif; }
-        .card { border: 1px solid #e0e0e0; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background: #ffffff; }
-        .tier-header { text-align: center; padding: 15px; background: #2196F3; color: white; border-radius: 6px; margin-bottom: 20px; }
-        .info-section { margin: 20px 0; font-size: 16px; }
-        .tier-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .tier-table th, .tier-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .tier-table th { background-color: #f5f5f5; }
-        .progress-box { background-color: #fff8e1; border-left: 5px solid #ffb300; padding: 15px; margin: 15px 0; border-radius: 4px; }
-        .btn-group { margin-top: 25px; text-align: center; display: flex; justify-content: center; gap: 20px; }
-        .btn-link { text-decoration: none; font-weight: bold; font-size: 15px; }
-    </style>
+    <title>Tiến Trình Nâng Hạng Thành Viên</title>
 </head>
 <body>
+<div layout:fragment="content" class="container py-4">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4 text-center bg-light rounded">
+            <h4 class="text-muted mb-1">Hạng Thẻ Hiện Tại</h4>
+            <h1 class="display-4 text-primary fw-bold" th:text="${member.tier != null ? member.tier.tierName : 'Standard'}">MỚI</h1>
 
-<div class="container">
-    <div class="card">
-        <div class="tier-header">
-            <h1>Membership Tier Status</h1>
+            <div class="mt-3">
+                <p class="text-secondary mb-2">
+                    Tổng chi tiêu tích lũy: <strong class="text-dark" th:text="${#numbers.formatDecimal(currentSpent, 1, 'DEFAULT', 0, 'DEFAULT')} + ' đ'">150,000 đ</strong>
+                </p>
+            </div>
+
+            <div class="mt-4 mx-auto" style="max-width: 600px;" th:if="${nextTier != null}">
+                <div class="d-flex justify-content-between mb-1 small text-muted">
+                    <span>Mức hiện tại</span>
+                    <span>Hạng tiếp theo: <strong th:text="${nextTier.tierName}">VIP</strong></span>
+                </div>
+                <div class="progress mb-3" style="height: 12px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                         role="progressbar"
+                         th:style="'width: ' + (${currentSpent} / ${nextTier.condition} * 100) + '%'"></div>
+                </div>
+                <div class="alert alert-info border-0 shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Bạn cần chi tiêu thêm <strong th:text="${#numbers.formatDecimal(amountNeeded, 1, 'DEFAULT', 0, 'DEFAULT')} + ' đ'">50,000 đ</strong> để mở khóa hạng <span th:text="${nextTier.tierName}">VIP</span>!
+                </div>
+            </div>
+
+            <div class="mt-4" th:if="${nextTier == null}">
+                <span class="badge bg-gold p-2 text-warning border border-warning fs-6"><i class="bi bi-trophy-fill me-1"></i>Chúc mừng! Bạn đã đạt hạng thành viên cao nhất.</span>
+            </div>
         </div>
+    </div>
 
-        <div class="info-section">
-            <h3>Welcome, <span th:text="${member != null and member.user != null ? member.user.fullName : 'Member'}">User</span></h3>
-            <p><strong>Current Tier:</strong> <span style="color: #2196F3; font-size: 18px;" th:text="${member != null and member.tier != null ? member.tier.tierName : 'Not Assigned'}">Bronze</span></p>
-            <p><strong>Total Accumulated Spending:</strong> <span th:text="${currentSpent}">0.00</span> VND</p>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-layers me-2 text-primary"></i>Hệ Thống Các Cấp Bậc Thành Viên</h5>
         </div>
-
-        <div class="progress-box" th:if="${nextTier != null}">
-            <h4>Next Milestone Progression</h4>
-            <p>You are currently working towards <strong th:text="${nextTier.tierName}">Silver</strong> tier.</p>
-            <p>You need to spend an additional <span style="color: #d32f2f; font-weight: bold;"><span th:text="${amountNeeded}">0.00</span> VND</span> to level up (Requirement: <span th:text="${nextTier.condition}">0.00</span> VND).</p>
-        </div>
-
-        <div class="progress-box" th:if="${nextTier == null}" style="border-left-color: #4caf50; background-color: #e8f5e9;">
-            <h4>Congratulations!</h4>
-            <p>You have reached the highest membership level in our system!</p>
-        </div>
-
-        <hr>
-
-        <div class="info-section">
-            <h3>Membership Tier Structure</h3>
-            <table class="tier-table">
-                <thead>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                 <tr>
-                    <th>Tier Name</th>
-                    <th>Borrow Limit</th>
-                    <th>Discount</th>
-                    <th>Required Milestone</th>
+                    <th>Tên Hạng</th>
+                    <th>Hạn Mức Mượn Sách</th>
+                    <th>Ưu Đãi Giảm Giá</th>
+                    <th>Cột Mốc Yêu Cầu (Chi tiêu)</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="t : ${allTiers}"
-                    th:style="${member != null and member.tier != null and member.tier.tierId == t.tierId} ? 'background-color: #e3f2fd; font-weight: bold;' : ''">
+                <tr th:each="tier : ${allTiers}" th:classappend="${member.tier != null && member.tier.tierId == tier.tierId} ? 'table-primary fw-bold' : ''">
                     <td>
-                        <span th:text="${t.tierName}">Tier Name</span>
-                        <span th:if="${member != null and member.tier != null and member.tier.tierId == t.tierId}" style="color: #2196F3; font-size: 12px;">(Your Current Tier)</span>
+                        <span th:text="${tier.tierName}">Tên Hạng</span>
+                        <span th:if="${member.tier != null && member.tier.tierId == tier.tierId}" class="badge bg-primary ms-2 small">Của Bạn</span>
                     </td>
-                    <td th:text="${t.borrowLimit} + ' books'">0 books</td>
-                    <td th:text="${t.discountPercent} + '%'">0%</td>
-                    <td th:text="${t.condition} + ' VND'">0.00</td>
+                    <td th:text="${tier.borrowLimit} + ' cuốn cùng lúc'">3 cuốn</td>
+                    <td th:text="${tier.discountPercent} + '% phí mượn'">0%</td>
+                    <td th:text="${#numbers.formatDecimal(tier.condition, 1, 'DEFAULT', 0, 'DEFAULT')} + ' đ'">0 đ</td>
                 </tr>
                 </tbody>
             </table>
         </div>
-
-        <div class="btn-group">
-            <a href="/" class="btn-link" style="color: #666;">🏠 Back to Home</a>
-            <span style="color: #ccc;">|</span>
-            <a href="/member/membership/benefits" class="btn-link" style="color: #2196F3;">← Back to Detailed Benefits</a>
-        </div>
     </div>
 </div>
-
 </body>
 </html>

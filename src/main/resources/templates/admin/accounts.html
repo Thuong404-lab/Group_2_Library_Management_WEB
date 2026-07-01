@@ -128,7 +128,7 @@
                                     th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
                                     <button type="button" class="btn btn-sm btn-outline-classic" data-bs-toggle="modal"
                                         th:data-bs-target="${'#updateMemberModal' + account.accountId}">
-                                        <i class="bi bi-pencil-square"></i> Cập nhật
+                                        <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger ms-1"
                                         data-bs-toggle="modal"
@@ -137,12 +137,13 @@
                                     </button>
 
                                     <!-- Update Modal -->
-                                    <div class="modal fade text-start"
-                                        th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
-                                        aria-hidden="true">
+                                        <div class="modal fade text-start"
+                                            th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                            aria-hidden="true"
+                                            th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
                                         <div class="modal-dialog modal-dialog-centered modal-lg">
                                             <div class="modal-content border-0 shadow">
-                                                <form method="post"
+                                                <form method="post" class="edit-account-form" novalidate
                                                     th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -164,52 +165,87 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên
+                                                                    Họ tên <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control" name="fullName"
-                                                                    th:value="${account.user != null ? account.user.fullName : ''}"
+                                                                <input class="form-control edit-validate-field"
+                                                                    name="fullName" data-label="Họ tên"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (account.user != null ? account.user.fullName : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                     required>
+                                                                <div class="invalid-feedback"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
+                                                                    Họ tên không được để trống.
+                                                                </div>
                                                             </div>
 
                                                              <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username
+                                                                    Username <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control" name="username"
-                                                                    th:value="${account.username}" required>
+                                                                <input class="form-control edit-validate-field"
+                                                                    name="username" data-label="Username"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
+                                                                    required>
+                                                                <div class="invalid-feedback"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
+                                                                    Username không được để trống.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại
+                                                                    Số điện thoại <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control" name="phone"
-                                                                    th:value="${account.user != null ? account.user.phone : ''}">
+                                                                <input class="form-control edit-validate-field"
+                                                                    name="phone" data-label="Số điện thoại" required
+                                                                    pattern="[0-9]{10}" minlength="10" maxlength="10"
+                                                                    inputmode="numeric"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
+                                                                <div class="invalid-feedback"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
+                                                                    Số điện thoại không hợp lệ.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Email</label>
-                                                                <input class="form-control" name="email" type="email"
-                                                                    th:value="${account.user != null ? account.user.email : ''}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Email <span class="text-danger">*</span>
+                                                                </label>
+                                                                <input class="form-control edit-validate-field"
+                                                                    name="email" type="email" data-label="Email"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                     required>
+                                                                <div class="invalid-feedback"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
+                                                                    Email không hợp lệ.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label class="form-label fw-bold small text-muted text-uppercase">
                                                                     Hạng thành viên
                                                                 </label>
-                                                                <select class="form-select form-control" name="tierId"
-                                                                    required>
+                                                                <select
+                                                                    class="form-select form-control edit-validate-field"
+                                                                    name="tierId" data-label="Hạng thành viên" required
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['tierId'] != null} ? 'is-invalid'">
                                                                     <option th:each="tier : ${tiers}"
                                                                         th:value="${tier.tierId}"
-                                                                        th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['tierId'] == tier.tierId : (member != null and member.tier != null and member.tier.tierId == tier.tierId)}"
                                                                         th:text="${tier.tierName}">
                                                                         Standard Member
                                                                     </option>
                                                                 </select>
+                                                                <div class="invalid-feedback"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['tierId'] : ''}">
+                                                                    Vui lòng chọn hạng thành viên.
+                                                                </div>
                                                             </div>
                                                             
 

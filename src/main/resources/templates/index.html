@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    layout:decorate="~{layout/base}">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/base}">
 
 <head>
     <title>Danh Mục Sách</title>
-    <!-- Include Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
             background-color: #f8f7f5; /* Light beige/gray background similar to the image */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         .page-title {
             font-family: 'Playfair Display', serif; /* Serif font for title */
             color: #1a202c;
@@ -22,7 +21,7 @@
         .search-container {
             position: relative;
         }
-        
+
         .search-container i {
             position: absolute;
             left: 15px;
@@ -30,7 +29,7 @@
             transform: translateY(-50%);
             color: #718096;
         }
-        
+
         .search-input {
             padding-left: 40px;
             border-radius: 8px;
@@ -49,11 +48,11 @@
             padding: 6px 16px;
             transition: all 0.2s;
         }
-        
+
         .filter-btn:hover {
             background-color: #f1f5f9;
         }
-        
+
         .filter-btn.active {
             background-color: #1a365d;
             color: white;
@@ -68,7 +67,7 @@
             overflow: hidden;
             background-color: white;
         }
-        
+
         .book-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
@@ -114,7 +113,7 @@
             color: #d97706;
             font-weight: 600;
         }
-        
+
         .book-stock {
             color: #059669; /* Green */
         }
@@ -122,39 +121,35 @@
 </head>
 
 <body>
-    <div layout:fragment="content" class="container-fluid p-0">
-        <!-- HERO SECTION -->
-        <div class="position-relative" style="background: linear-gradient(rgba(26, 54, 93, 0.8), rgba(26, 54, 93, 0.9)), url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000&auto=format&fit=crop') center/cover; padding: 100px 0;">
-            <div class="container text-center text-white position-relative" style="z-index: 1;">
-                <h1 class="display-4 fw-bold mb-3" style="font-family: 'Playfair Display', serif;">Chào mừng đến với Thư Viện LMW</h1>
-                <p class="lead mb-5 opacity-75">Khám phá kho tàng hơn 10,000+ cuốn sách, tài liệu nghiên cứu và văn học kinh điển.</p>
-                
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
-                        <!-- Search Bar in Hero -->
-                        <form action="/books" method="GET" class="input-group input-group-lg shadow-lg" style="border-radius: 50px; overflow: hidden;">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-white border-0 px-4 text-primary"><i class="bi bi-search"></i></span>
-                            </div>
-                            <input type="text" name="keyword" class="form-control border-0 py-3" placeholder="Tìm tên sách, tác giả, ISBN..." style="box-shadow: none;" required>
-                            <div class="input-group-append">
-                                <button class="btn btn-warning px-5 font-weight-bold" type="submit" style="background-color: #f6d365; border: none; color: #1a365d;">TÌM KIẾM</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<div layout:fragment="content" class="container-fluid p-0">
+    <div class="position-relative" style="background: linear-gradient(rgba(26, 54, 93, 0.8), rgba(26, 54, 93, 0.9)), url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000&auto=format&fit=crop') center/cover; padding: 100px 0;">
+        <div class="container text-center text-white position-relative" style="z-index: 1;">
+            <h1 class="display-4 fw-bold mb-3" style="font-family: 'Playfair Display', serif;">Chào mừng đến với Thư Viện LMW</h1>
+            <p class="lead mb-5 opacity-75">Khám phá kho tàng hơn 10,000+ cuốn sách, tài liệu nghiên cứu và văn học kinh điển.</p>
 
-                <!-- Login/Register Buttons for Guest -->
-                <div class="mt-4" th:if="${!#authorization.expression('isAuthenticated()')}">
-                    <a th:href="@{/login}" class="btn btn-outline-light rounded-pill px-4 mr-2 border-2 font-weight-bold">Đăng nhập</a>
-                    <a th:href="@{/register}" class="btn btn-warning rounded-pill px-4 font-weight-bold" style="background-color: #f6d365; border: none; color: #1a365d;">Đăng ký ngay</a>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <form action="/books" method="GET" class="input-group input-group-lg shadow-lg" style="border-radius: 50px; overflow: hidden;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-white border-0 px-4 text-primary"><i class="bi bi-search"></i></span>
+                        </div>
+                        <input type="text" name="keyword" class="form-control border-0 py-3" placeholder="Tìm tên sách, tác giả, ISBN..." style="box-shadow: none;" required>
+                        <div class="input-group-append">
+                            <button class="btn btn-warning px-5 font-weight-bold" type="submit" style="background-color: #f6d365; border: none; color: #1a365d;">TÌM KIẾM</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
 
-        <div class="container py-5">
-        
-        <!-- FEATURED CATEGORIES (CLASSIC UI) -->
+            <div class="mt-4" th:if="${!#authorization.expression('isAuthenticated()')}">
+                <a th:href="@{/login}" class="btn btn-outline-light rounded-pill px-4 mr-2 border-2 font-weight-bold">Đăng nhập</a>
+                <a th:href="@{/register}" class="btn btn-warning rounded-pill px-4 font-weight-bold" style="background-color: #f6d365; border: none; color: #1a365d;">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5">
+
         <div class="mb-5 pb-3">
             <h3 class="fw-bold mb-4 text-center" style="color: #4a3b32; font-family: 'Playfair Display', serif;"><i class="bi bi-bookmark-heart text-danger me-2"></i>Chủ đề Nổi bật</h3>
             <div class="row g-4 justify-content-center text-center">
@@ -213,14 +208,13 @@
                     transform: translateY(-5px);
                     box-shadow: 0 10px 20px rgba(139, 90, 43, 0.2);
                 }
-                .category-classic-card:hover i, 
+                .category-classic-card:hover i,
                 .category-classic-card:hover h6 {
                     color: #fff !important;
                 }
             </style>
         </div>
 
-        <!-- RECENT BOOKS HORIZONTAL SLIDER (CLASSIC UI) -->
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-dark pb-2">
                 <div>
@@ -229,7 +223,6 @@
                 <a href="/books" class="btn btn-outline-dark btn-sm rounded-0 border-2 fw-bold" style="font-family: 'Playfair Display', serif;">Xem tất cả <i class="bi bi-arrow-right"></i></a>
             </div>
 
-            <!-- Horizontal Scrollable Container (Slider 1) -->
             <div class="d-flex overflow-x-auto pb-4 pt-2 px-1 book-slider-container w-100" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;" th:if="${books != null and !books.isEmpty()}">
                 <div class="flex-shrink-0 mr-4" style="width: 160px; scroll-snap-align: start;" th:each="book : ${books}">
                     <a href="#" data-toggle="modal" th:data-target="'#bookModal' + ${book.bookId}" class="text-decoration-none text-dark">
@@ -251,7 +244,6 @@
             </div>
         </div>
 
-        <!-- HOT TRENDING BOOKS HORIZONTAL SLIDER -->
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-dark pb-2">
                 <div>
@@ -260,13 +252,11 @@
                 <a href="/books" class="btn btn-outline-dark btn-sm rounded-0 border-2 fw-bold" style="font-family: 'Playfair Display', serif;">Xem bảng xếp hạng <i class="bi bi-arrow-right"></i></a>
             </div>
 
-            <!-- Horizontal Scrollable Container (Slider 2) -->
             <div class="d-flex overflow-x-auto pb-4 pt-2 px-1 book-slider-container w-100" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;" th:if="${books != null and !books.isEmpty()}">
                 <div class="flex-shrink-0 mr-4" style="width: 160px; scroll-snap-align: start;" th:each="book : ${books}">
                     <a href="#" data-toggle="modal" th:data-target="'#bookModal' + ${book.bookId}" class="text-decoration-none text-dark">
                         <div class="card h-100 border-0 bg-transparent classic-book-card">
                             <div class="position-relative shadow-sm mb-2 rounded-1" style="height: 240px; border-left: 4px solid #8b5a2b; overflow: hidden; transition: 0.3s;">
-                                <!-- Dùng ảnh động theo ID sách -->
                                 <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
                                 <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 10%, rgba(255,255,255,0) 90%, rgba(0,0,0,0.1) 100%);"></div>
                                 <span class="position-absolute top-0 end-0 m-1 badge badge-danger fw-bold shadow-sm">🔥 HOT</span>
@@ -284,7 +274,6 @@
             </div>
         </div>
 
-        <!-- Modals for both sliders (reused) -->
         <div th:if="${books != null and !books.isEmpty()}">
             <div class="modal fade" th:each="book : ${books}" th:id="'bookModal' + ${book.bookId}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -304,7 +293,7 @@
                                 </div>
                                 <div class="col-md-8 text-start">
                                     <h2 class="fw-bold mb-2" style="font-family: 'Playfair Display', serif; color: #2c1e16;" th:text="${book.title}">Tên Sách</h2>
-                                    <h5 class="text-muted mb-3 fst-italic" style="font-family: 'Lora', serif;">Chấp bút: 
+                                    <h5 class="text-muted mb-3 fst-italic" style="font-family: 'Lora', serif;">Chấp bút:
                                         <span th:each="author, iterStat : ${book.authors}"><span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span></span>
                                     </h5>
                                     <p class="text-dark mb-4" style="line-height: 1.6; text-align: justify; font-size: 0.95rem;" th:text="${book.description != null ? book.description : 'Một tác phẩm kinh điển đáng để đọc và suy ngẫm, đưa bạn đến với những chân trời tri thức mới.'}"></p>
@@ -330,21 +319,47 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="mt-2 d-flex">
-                                        <button sec:authorize="isAuthenticated()" class="btn rounded-0 px-4 fw-bold mr-3" style="background-color: #8b5a2b; color: #fdfbf7; border: none;" onclick="showToast('Tính năng yêu cầu mượn đang được phát triển!')"><i class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
-                                        <button sec:authorize="!isAuthenticated()" class="btn rounded-0 px-4 fw-bold mr-3" style="background-color: #8b5a2b; color: #fdfbf7; border: none;" onclick="window.location.href='/login'"><i class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
+
+                                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+
+                                        <a sec:authorize="isAuthenticated()"
+                                           th:href="@{/member/borrow/create(bookId=${book.bookId})}"
+                                           class="btn rounded-0 px-3 fw-bold btn-primary">
+                                            <i class="bi bi-plus-circle mr-2"></i>Mượn sách
+                                        </a>
+                                        <a sec:authorize="!isAuthenticated()"
+                                           th:href="@{/login}"
+                                           class="btn rounded-0 px-3 fw-bold btn-primary">
+                                            <i class="bi bi-plus-circle mr-2"></i>Mượn sách
+                                        </a>
+
+                                        <form sec:authorize="isAuthenticated()"
+                                              th:action="@{'/member/borrow/reserve/' + ${book.bookId}}"
+                                              method="post" class="m-0">
+                                            <button type="submit" class="btn rounded-0 px-3 fw-bold text-dark" style="background-color: #ffc107; border: 1px solid #ffc107;">
+                                                <i class="bi bi-bookmark-star mr-2"></i>Đặt trước
+                                            </button>
+                                        </form>
+                                        <button sec:authorize="!isAuthenticated()"
+                                                class="btn rounded-0 px-3 fw-bold text-dark"
+                                                style="background-color: #ffc107; border: 1px solid #ffc107;"
+                                                onclick="window.location.href='/login'">
+                                            <i class="bi bi-bookmark-star mr-2"></i>Đặt trước
+                                        </button>
+
                                         <form sec:authorize="isAuthenticated()"
                                               th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
                                               method="post"
-                                              class="d-inline favorite-form"
+                                              class="d-inline favorite-form m-0"
                                               th:data-book-id="${book.bookId}">
                                             <button type="submit"
-                                                    th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger rounded-0 px-4 fw-bold js-favorite-button active' : 'btn btn-outline-danger rounded-0 px-4 fw-bold js-favorite-button'}">
+                                                    th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger rounded-0 px-3 fw-bold js-favorite-button active' : 'btn btn-outline-danger rounded-0 px-3 fw-bold js-favorite-button'}">
                                                 <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill mr-2' : 'bi bi-heart mr-2'}"></i>
-                                                <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                                                <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã thích' : 'Yêu thích'}">Yêu thích</span>
                                             </button>
                                         </form>
-                                        <button sec:authorize="!isAuthenticated()" class="btn btn-outline-danger rounded-0 px-4 fw-bold" onclick="window.location.href='/login'"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
+                                        <button sec:authorize="!isAuthenticated()" class="btn btn-outline-danger rounded-0 px-3 fw-bold" onclick="window.location.href='/login'"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
+
                                     </div>
                                 </div>
                             </div>
@@ -353,29 +368,29 @@
                 </div>
             </div>
         </div>
-            
-            <style>
-                .book-slider-container::-webkit-scrollbar {
-                    height: 8px;
-                }
-                .book-slider-container::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                    border-radius: 4px;
-                }
-                .book-slider-container::-webkit-scrollbar-thumb {
-                    background: #8b5a2b;
-                    border-radius: 4px;
-                }
-                .classic-book-card:hover div.shadow-lg {
-                    transform: translateY(-10px);
-                    box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important;
-                }
-            </style>
-        </div>
-        
-        <div class="alert alert-info" th:if="${books == null or books.isEmpty()}">
-            Chưa có sách nào trong hệ thống.
-        </div>
+
+        <style>
+            .book-slider-container::-webkit-scrollbar {
+                height: 8px;
+            }
+            .book-slider-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+            }
+            .book-slider-container::-webkit-scrollbar-thumb {
+                background: #8b5a2b;
+                border-radius: 4px;
+            }
+            .classic-book-card:hover div.shadow-lg {
+                transform: translateY(-10px);
+                box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important;
+            }
+        </style>
     </div>
+
+    <div class="alert alert-info" th:if="${books == null or books.isEmpty()}">
+        Chưa có sách nào trong hệ thống.
+    </div>
+</div>
 </body>
 </html>

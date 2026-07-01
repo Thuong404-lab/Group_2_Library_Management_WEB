@@ -7,6 +7,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.security.Principal;
 
 /**
@@ -24,7 +27,8 @@ public class AdminProfileController {
 
     @GetMapping
     public String viewAdminProfile(Principal principal, Model model) {
-        if (principal == null) return "redirect:/login";
+        if (principal == null)
+            return "redirect:/login";
         String username = principal.getName();
         User admin = profileService.getProfile(username);
         model.addAttribute("admin", admin);
@@ -32,14 +36,18 @@ public class AdminProfileController {
     }
 
     @PostMapping("/update")
-    public String updateProfile(@org.springframework.web.bind.annotation.RequestParam String fullName,
-                                @org.springframework.web.bind.annotation.RequestParam String email,
-                                @org.springframework.web.bind.annotation.RequestParam String phone,
+    public String updateProfile(@RequestParam String fullName,
+                                @RequestParam String email,
+                                @RequestParam String phone,
+                                @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
-                                org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+                                RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
         try {
-            profileService.updateProfile(principal.getName(), fullName, email, phone);
+            profileService.updateProfile(principal.getName(), fullName, email, phone, avatarFile);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
@@ -49,11 +57,12 @@ public class AdminProfileController {
 
     @PostMapping("/change-password")
     public String changePassword(@org.springframework.web.bind.annotation.RequestParam String oldPassword,
-                                 @org.springframework.web.bind.annotation.RequestParam String newPassword,
-                                 @org.springframework.web.bind.annotation.RequestParam String confirmPassword,
-                                 Principal principal,
-                                 org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+            @org.springframework.web.bind.annotation.RequestParam String newPassword,
+            @org.springframework.web.bind.annotation.RequestParam String confirmPassword,
+            Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận không khớp!");
             return "redirect:/admin/profile";

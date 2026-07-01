@@ -26,4 +26,12 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
             String phone,
             Pageable pageable
     );
+
+    @Query("""
+            SELECT m FROM Member m 
+            WHERE m.user.id = (
+                SELECT a.user.id FROM Account a WHERE a.username = :username
+            )
+            """)
+    Optional<Member> findByAccountUsername(@Param("username") String username);
 }

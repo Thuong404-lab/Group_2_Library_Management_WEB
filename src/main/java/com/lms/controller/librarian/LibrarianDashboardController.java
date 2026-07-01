@@ -22,6 +22,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.service.LibrarianInteractionService;
 
+import com.lms.entity.Account;
+import com.lms.repository.AccountRepository;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -40,16 +46,18 @@ public class LibrarianDashboardController {
     private final StorageService storageService;
     private final InventoryService inventoryService;
     private final LibrarianInteractionService librarianInteractionService;
+    private final AccountRepository accountRepository;
 
     public LibrarianDashboardController(BorrowRepository borrowRepository,
-                                        BorrowDetailRepository borrowDetailRepository,
-                                        ReservationRepository reservationRepository,
-                                        BookItemRepository bookItemRepository,
-                                        MemberRepository memberRepository,
-                                        StaffRepository staffRepository,
-                                        StorageService storageService,
-                                        InventoryService inventoryService,
-                                        LibrarianInteractionService librarianInteractionService) {
+            BorrowDetailRepository borrowDetailRepository,
+            ReservationRepository reservationRepository,
+            BookItemRepository bookItemRepository,
+            MemberRepository memberRepository,
+            StaffRepository staffRepository,
+            StorageService storageService,
+            InventoryService inventoryService,
+            LibrarianInteractionService librarianInteractionService,
+            AccountRepository accountRepository) {
 
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
@@ -60,6 +68,7 @@ public class LibrarianDashboardController {
         this.storageService = storageService;
         this.inventoryService = inventoryService;
         this.librarianInteractionService = librarianInteractionService;
+        this.accountRepository = accountRepository;
     }
 
     @GetMapping("/dashboard")
@@ -83,11 +92,13 @@ public class LibrarianDashboardController {
                         now,
                         now.plusDays(7)));
         model.addAttribute("reviews", librarianInteractionService.getReviewsForModeration(null, PageRequest.of(0, 20,
-                                Sort.by("createdDate").descending())));
-        model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+                Sort.by("createdDate").descending())));
+        if (!model.containsAttribute("notificationRequest")) {
+            model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+        }
         model.addAttribute("members", librarianInteractionService.getAllMembers());
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(PageRequest.of(0, 20,
-                                Sort.by("createdDate").descending())));
+                Sort.by("requestId").ascending())));
         model.addAttribute("shelves", storageService.getAllStorageLocations());
         model.addAttribute("books", inventoryService.getAllBooks());
         model.addAttribute("categories", inventoryService.getAllCategories());
@@ -109,13 +120,20 @@ public class LibrarianDashboardController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("staffId").ascending());
         Page<Staff> staffPage;
-
         if (keyword != null && !keyword.trim().isEmpty()) {
             staffPage = staffRepository.searchByStaffTypeAndKeyword("Librarian", keyword.trim(), pageRequest);
         } else {
             staffPage = staffRepository.findByStaffTypeIgnoreCase("Librarian", pageRequest);
         }
 
+        Map<Integer, Account> accountByUserId = new HashMap<>();
+        for (Staff staff : staffPage.getContent()) {
+            if (staff.getUser() != null && staff.getUser().getId() != null) {
+                accountRepository.findByUserId(staff.getUser().getId())
+                        .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
+            }
+        }
+        model.addAttribute("accountByUserId", accountByUserId);
         model.addAttribute("staffPage", staffPage);
         model.addAttribute("keyword", keyword);
         addCurrentUser(model, userDetails);

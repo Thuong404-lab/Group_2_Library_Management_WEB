@@ -36,11 +36,16 @@ public class LibrarianProfileController {
     public String updateProfile(@RequestParam String fullName,
                                 @RequestParam String email,
                                 @RequestParam String phone,
+                                @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
         try {
             String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone);
+            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());

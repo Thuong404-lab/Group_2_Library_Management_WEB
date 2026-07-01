@@ -1,6 +1,7 @@
 package com.lms.service;
 
 import com.lms.entity.User;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ProfileService - Xử lý Logic Hồ sơ (Member + Librarian)
@@ -12,7 +13,7 @@ public interface ProfileService {
     User getProfile(String username);
 
     // UC-4.2 & UC-16.2: Cập nhật Profile
-    void updateProfile(String username, String fullName, String email, String phone);
+    void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile);
 
     // UC-4.3 + UC-16.3: Đổi mật khẩu
     void changePassword(String username, String oldPassword, String newPassword);

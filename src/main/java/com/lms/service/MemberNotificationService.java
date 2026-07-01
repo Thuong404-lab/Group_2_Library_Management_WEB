@@ -12,4 +12,6 @@ public interface MemberNotificationService {
     List<MemberNotificationResponse> getLatestNotifications(String username);
 
     long countUnreadNotifications(String username);
+
+    void markAllNotificationsAsRead(String username);
 }
