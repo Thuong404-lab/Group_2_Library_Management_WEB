@@ -92,10 +92,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) throws Exception {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new Exception("Không tìm thấy tài khoản người dùng!"));
-
-        Member member = memberRepository.findByUserId(account.getUser().getId())
+        Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new Exception("Không tìm thấy thông tin độc giả!"));
 
         Book book = bookRepository.findById(bookId)

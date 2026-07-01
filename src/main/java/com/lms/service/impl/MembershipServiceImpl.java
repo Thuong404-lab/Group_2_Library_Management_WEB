@@ -40,16 +40,8 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Member getMemberByUsername(String username) {
-        var account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Account not found for: " + username));
-
-        var user = account.getUser();
-        if (user == null) {
-            throw new RuntimeException("User profile not linked to account: " + username);
-        }
-
-        var memberOpt = memberRepository.findByUserEmail(user.getEmail());
-        return memberOpt.orElse(null);
+        return memberRepository.findByAccountUsername(username)
+                .orElseThrow(() -> new RuntimeException("Member not found for: " + username));
     }
 
     // --- BỔ SUNG XỬ LÝ LOGIC TIẾN TRÌNH HẠNG ĐỘNG CHO VIEW ---
