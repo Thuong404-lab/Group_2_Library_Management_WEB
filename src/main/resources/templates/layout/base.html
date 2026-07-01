@@ -1,148 +1,261 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Library Management System</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link rel="stylesheet" th:href="@{/css/bootstrap.css}" />
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
     <!-- Classic Theme Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
-        body {
-            font-family: 'Lora', Georgia, serif;
-            color: #2c1e16;
-        }
-        h1, h2, h3, h4, h5, h6, .navbar-brand {
-            font-family: 'Playfair Display', serif;
-        }
-        .btn-classic {
-            background-color: #8b5a2b;
-            color: white;
-            border: none;
-        }
-        .btn-classic:hover {
-            background-color: #6b4423;
-            color: white;
-        }
-        .btn-outline-classic {
-            border: 2px solid #8b5a2b;
-            color: #8b5a2b;
-            background: transparent;
-        }
-        .btn-outline-classic:hover {
-            background-color: #8b5a2b;
-            color: white;
-        }
-        .text-classic {
-            color: #8b5a2b !important;
-        }
-        .bg-classic {
-            background-color: #fdfbf7 !important;
-        }
+      body {
+        font-family: "Lora", Georgia, serif;
+        color: #2c1e16;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      .navbar-brand {
+        font-family: "Playfair Display", serif;
+      }
+      .btn-classic {
+        background-color: #8b5a2b;
+        color: white;
+        border: none;
+      }
+      .btn-classic:hover {
+        background-color: #6b4423;
+        color: white;
+      }
+      .btn-outline-classic {
+        border: 2px solid #8b5a2b;
+        color: #8b5a2b;
+        background: transparent;
+      }
+      .btn-outline-classic:hover {
+        background-color: #8b5a2b;
+        color: white;
+      }
+      .text-classic {
+        color: #8b5a2b !important;
+      }
+      .bg-classic {
+        background-color: #fdfbf7 !important;
+      }
     </style>
-</head>
-<body class="bg-classic">
+  </head>
+  <body class="bg-classic">
     <header th:replace="~{fragments/header :: header}"></header>
-    
-    <main style="background-color: #fdfbf7; min-height: 100vh;">
-        <div layout:fragment="content"></div>
+
+    <main style="background-color: #fdfbf7; min-height: 100vh">
+      <div layout:fragment="content"></div>
     </main>
 
     <footer th:replace="~{fragments/footer :: footer}"></footer>
 
     <!-- Global Toast Notification -->
-    <div id="customToast" style="position: fixed; bottom: 20px; right: 20px; background-color: #8b5a2b; color: white; padding: 12px 24px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 9999; opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none;">
-        <span id="toastMessage">Thông báo</span>
+    <div
+      id="customToast"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #8b5a2b;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        opacity: 0;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        transform: translateY(20px);
+        pointer-events: none;
+      "
+    >
+      <span id="toastMessage">Thông báo</span>
     </div>
 
     <script>
-        function showToast(message) {
-            var toast = document.getElementById("customToast");
-            document.getElementById("toastMessage").innerText = message;
-            toast.style.opacity = "1";
-            toast.style.transform = "translateY(0)";
-            setTimeout(function() {
-                toast.style.opacity = "0";
-                toast.style.transform = "translateY(20px)";
-            }, 3000);
+      function showToast(message) {
+        var toast = document.getElementById("customToast");
+        document.getElementById("toastMessage").innerText = message;
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(0)";
+        setTimeout(function () {
+          toast.style.opacity = "0";
+          toast.style.transform = "translateY(20px)";
+        }, 3000);
+      }
+
+      document.addEventListener("submit", function (event) {
+        var form = event.target;
+        if (!form.matches(".favorite-form")) {
+          return;
         }
 
-        document.addEventListener("submit", function(event) {
-            var form = event.target;
-            if (!form.matches(".favorite-form")) {
-                return;
+        event.preventDefault();
+        var button = form.querySelector(".js-favorite-button");
+        if (button) {
+          button.disabled = true;
+        }
+
+        fetch(form.action, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then(function (response) {
+            if (response.status === 401 || response.status === 403) {
+              window.location.href = "/login";
+              return null;
+            }
+            if (!response.ok) {
+              throw new Error("Không thể thêm vào yêu thích.");
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            if (!data) {
+              return;
             }
 
-            event.preventDefault();
-            var button = form.querySelector(".js-favorite-button");
+            var bookId = form.dataset.bookId;
+            document
+              .querySelectorAll(
+                '.favorite-form[data-book-id="' +
+                  bookId +
+                  '"] .js-favorite-button',
+              )
+              .forEach(function (favoriteButton) {
+                setFavoriteButtonActive(favoriteButton);
+              });
+
+            showToast(data.message || "Đã thêm vào danh sách yêu thích!");
+          })
+          .catch(function (error) {
+            showToast(error.message || "Có lỗi xảy ra khi thêm yêu thích.");
+          })
+          .finally(function () {
             if (button) {
-                button.disabled = true;
+              button.disabled = false;
             }
+          });
+      });
 
-            fetch(form.action, {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {
-                    "Accept": "application/json",
-                    "X-Requested-With": "XMLHttpRequest"
-                }
+      function setFavoriteButtonActive(button) {
+        button.classList.remove("btn-outline-danger");
+        button.classList.add("btn-danger", "active");
+
+        var icon = button.querySelector("i");
+        if (icon) {
+          icon.className =
+            icon.className.indexOf("me-1") >= 0
+              ? "bi bi-heart-fill me-1"
+              : "bi bi-heart-fill mr-2";
+        }
+
+        var label = button.querySelector("span");
+        if (label) {
+          label.innerText = "Đã yêu thích";
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        var notificationDropdown = document.getElementById(
+          "notificationDropdown",
+        );
+        var notificationToggle = document.getElementById("notificationToggle");
+        if (!notificationDropdown || !notificationToggle) {
+          return;
+        }
+
+        var openedWithUnreadNotifications = false;
+        var notificationsMarkedRead = false;
+
+        function removeNotificationBadge() {
+          var badge = document.getElementById("notificationBellBadge");
+          if (badge) {
+            openedWithUnreadNotifications = true;
+            badge.remove();
+          }
+        }
+
+        function clearUnreadNotificationStyles() {
+          notificationDropdown
+            .querySelectorAll(".font-weight-bold")
+            .forEach(function (item) {
+              item.classList.remove("font-weight-bold");
+            });
+        }
+
+        function markNotificationsRead() {
+          if (!openedWithUnreadNotifications || notificationsMarkedRead) {
+            return;
+          }
+
+          notificationsMarkedRead = true;
+
+          fetch("/member/interaction/notifications/mark-read", {
+            method: "GET",
+            credentials: "same-origin",
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+            },
+          })
+            .then(function (response) {
+              if (response.ok) {
+                clearUnreadNotificationStyles();
+              } else {
+                notificationsMarkedRead = false;
+              }
             })
-                .then(function(response) {
-                    if (response.status === 401 || response.status === 403) {
-                        window.location.href = "/login";
-                        return null;
-                    }
-                    if (!response.ok) {
-                        throw new Error("Không thể thêm vào yêu thích.");
-                    }
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (!data) {
-                        return;
-                    }
+            .catch(function (error) {
+              notificationsMarkedRead = false;
+              console.error(
+                "Không thể cập nhật trạng thái thông báo đọc:",
+                error,
+              );
+            });
+        }
 
-                    var bookId = form.dataset.bookId;
-                    document.querySelectorAll('.favorite-form[data-book-id="' + bookId + '"] .js-favorite-button')
-                        .forEach(function(favoriteButton) {
-                            setFavoriteButtonActive(favoriteButton);
-                        });
-
-                    showToast(data.message || "Đã thêm vào danh sách yêu thích!");
-                })
-                .catch(function(error) {
-                    showToast(error.message || "Có lỗi xảy ra khi thêm yêu thích.");
-                })
-                .finally(function() {
-                    if (button) {
-                        button.disabled = false;
-                    }
-                });
+        notificationToggle.addEventListener("click", function () {
+          removeNotificationBadge();
         });
 
-        function setFavoriteButtonActive(button) {
-            button.classList.remove("btn-outline-danger");
-            button.classList.add("btn-danger", "active");
-
-            var icon = button.querySelector("i");
-            if (icon) {
-                icon.className = icon.className.indexOf("me-1") >= 0
-                    ? "bi bi-heart-fill me-1"
-                    : "bi bi-heart-fill mr-2";
-            }
-
-            var label = button.querySelector("span");
-            if (label) {
-                label.innerText = "Đã yêu thích";
-            }
+        if (window.jQuery) {
+          window.jQuery(notificationDropdown).on("hidden.bs.dropdown", function () {
+            markNotificationsRead();
+          });
+        } else {
+          notificationDropdown.addEventListener("hidden.bs.dropdown", function () {
+            markNotificationsRead();
+          });
         }
+      });
     </script>
 
     <!-- TODO: Thêm các script JS chung -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
-</body>
+  </body>
 </html>

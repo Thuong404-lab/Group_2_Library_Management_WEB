@@ -59,6 +59,11 @@
             width: 92%;
             margin: 0 auto;
             min-height: 100px;
+        .validate-field.is-invalid,
+        .validate-group.is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+            background-image: none !important;
         }
     </style>
 </head>
@@ -296,14 +301,15 @@
 
                 <div class="card-body p-4">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
-                        method="post">
+                        method="post" id="notificationForm" novalidate>
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                             th:value="${_csrf.token}">
 
                         <div class="row g-4">
                             <div class="col-lg-5">
                                 <label class="form-label fw-bold">Đối tượng nhận</label>
-                                <div class="border rounded-3 p-3 bg-light">
+                                <div class="border rounded-3 p-3 bg-light validate-group" id="recipientTypeGroup"
+                                    th:classappend="${notificationFieldErrors != null and notificationFieldErrors['recipientType'] != null} ? 'is-invalid'">
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="radio" th:field="*{recipientType}"
                                             value="ALL" id="recipientAll">
@@ -316,17 +322,22 @@
                                             chọn</label>
                                     </div>
                                 </div>
+                                <div class="invalid-feedback d-block"
+                                    th:text="${notificationFieldErrors != null ? notificationFieldErrors['recipientType'] : ''}">
+                                </div>
 
                                 <div class="mt-4" id="memberListBox">
                                     <label class="form-label fw-bold">Chọn Member</label>
                                     <input type="text" id="memberSearchInput" class="form-control mb-2"
                                         placeholder="Nhập tên Member để tìm...">
 
-                                    <div class="border rounded-3 p-3 member-list-scroll">
+                                    <div class="border rounded-3 p-3 member-list-scroll validate-group" id="memberIdsGroup"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
                                         <div th:each="member : ${members}" class="form-check member-item mb-2"
                                             th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
                                             <input class="form-check-input member-checkbox" type="checkbox"
-                                                name="memberIds" th:value="${member.memberId}">
+                                                name="memberIds" th:value="${member.memberId}"
+                                                th:checked="${notificationRequest != null and notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
                                             <label class="form-check-label"
                                                 th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
                                                 Member name
@@ -343,23 +354,34 @@
                                     <small class="text-muted d-block mt-2">
                                         Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
                                     </small>
+                                    <div class="invalid-feedback d-block"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['memberIds'] : ''}">
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="col-lg-7">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Tiêu đề</label>
-                                    <input type="text" class="form-control" th:field="*{title}"
-                                        placeholder="Nhập tiêu đề thông báo">
+                                    <input type="text" class="form-control validate-field" th:field="*{title}" required
+                                        placeholder="Nhập tiêu đề thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
+                                    </div>
                                 </div>
 
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Nội dung</label>
-                                    <textarea class="form-control" rows="8" th:field="*{content}"
-                                        placeholder="Nhập nội dung thông báo"></textarea>
+                                    <textarea class="form-control validate-field" rows="8" th:field="*{content}" required
+                                        placeholder="Nhập nội dung thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
+                                    </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-classic px-4">
                                     <i class="bi bi-send me-1"></i>Gửi thông báo
                                 </button>
                             </div>
@@ -372,6 +394,26 @@
         <!-- Reviews -->
         <section id="section-reviews" class="lib-section"
             th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
+            <div class="card-classic shadow-sm">
+                <div class="card-header bg-white border-bottom p-4 border-color">
+                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
+                    </h5>
+                    <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-uppercase small text-muted">
+                                <tr>
+                                    <th class="ps-4">Sách</th>
+                                    <th>Người gửi</th>
+                                    <th>Đánh giá</th>
+                                    <th>Nội dung</th>
+                                    <th>Phản hồi của thủ thư</th>
+                                    <th class="table-fixed-action">Thao tác</th>
+                                </tr>
+                            </thead>
 
         <div class="card-classic shadow-sm">
             <div class="card-header bg-white border-bottom p-4 border-color">
@@ -411,26 +453,41 @@
                                     <div th:if="${review.librarianResponse != null}">
                                         <div class="fw-semibold" th:text="${review.librarianResponse}">Phản hồi
                                         </div>
-                                        <small class="text-muted" th:if="${review.responseDate != null}"
-                                            th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
-                                        </small>
-                                    </div>
-                                    <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
-                                        hồi</span>
-                                </td>
+                                        <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
+                                            hồi</span>
+                                    </td>
 
-                                <td>
-                                    <form
-                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                        method="post" class="review-reply-box mb-2">
-                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
-                                            th:value="${_csrf.token}">
-                                        <textarea name="response" class="form-control form-control-sm mb-2" rows="2"
-                                            placeholder="Nhập phản hồi..."></textarea>
-                                        <button type="submit" class="btn btn-sm btn-primary w-100">
-                                            <i class="bi bi-reply me-1"></i>Phản hồi
-                                        </button>
-                                    </form>
+                                    <td>
+                                        <form
+                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                                            method="post" class="review-reply-box mb-2" novalidate>
+                                            <input type="hidden" th:if="${_csrf != null}"
+                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                            <textarea name="response" class="form-control form-control-sm validate-field mb-2" rows="2"
+                                                placeholder="Nhập phản hồi..."
+                                                th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
+                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
+                                            <div class="invalid-feedback d-block"
+                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-classic w-100">
+                                                <i class="bi bi-reply me-1"></i>Phản hồi
+                                            </button>
+                                        </form>
+
+                                        <form
+                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                            method="post"
+                                            onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                                            <input type="hidden" th:if="${_csrf != null}"
+                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                            <button type="submit" class="btn btn-sm btn-classic w-100">
+                                                <i class="bi bi-trash me-1"></i>Xoá
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
 
                                     <form
                                         th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
@@ -471,7 +528,6 @@
                     </h5>
                     <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
                 </div>
-
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -519,9 +575,9 @@
             <div class="card-classic shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <div class="d-flex flex-wrap gap-2">
-                        <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-primary"
-                            onclick="showBookSubSection('inventory')">Quản lý kho sách</button>
-                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-outline-primary"
+                        <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-classic active"
+                            onclick="showBookSubSection('inventory')" style="margin-right: 1px !important;">Quản lý kho sách</button>
+                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-classic"
                             onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
                     </div>
                 </div>
@@ -559,16 +615,16 @@
                             </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-2 mb-4">
-                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#addBookModal">
+                        <div class="d-flex flex-wrap gap-3 mb-4">
+                            <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;"
+                                data-bs-toggle="modal" data-bs-target="#addBookModal">
                                 <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
                             </button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#categoryGenreModal">
+                            <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;"
+                                data-bs-toggle="modal" data-bs-target="#categoryGenreModal">
                                 <i class="bi bi-tags me-1"></i>Quản lý danh mục
                             </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
+                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#auditModal">
                                 <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
                             </button>
@@ -612,7 +668,7 @@
                                                 th:data-bs-target="${'#editBookModal' + book.bookId}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                            <button type="button" class="btn btn-sm btn-classic"
                                                 data-bs-toggle="modal"
                                                 th:data-bs-target="${'#deleteBookModal' + book.bookId}">
                                                 <i class="bi bi-trash"></i>
@@ -669,7 +725,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                    <button type="submit" class="btn btn-classic">Lưu</button>
                                 </div>
                             </form>
                         </div>
@@ -743,35 +799,34 @@
                             </div>
                             <form th:action="@{/librarian/inventory/audit}" method="post">
                                 <div class="modal-body">
-                                    <div class="row g-3">
-                                        <div class="col-12">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Available</span>
-                                                <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Borrowed</span>
-                                                <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Lost</span>
-                                                <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Damaged</span>
-                                                <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-semibold">Disposed</span>
-                                                <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
-                                            </div>
-                                        </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
+                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Available</span>
+                                        <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
+                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Borrowed</span>
+                                        <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
+                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Lost</span>
+                                        <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
+                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Damaged</span>
+                                        <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 rounded-2 border"
+                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
+                                        <span class="fw-semibold">Disposed</span>
+                                        <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Đóng</button>
-                                    <button type="submit" class="btn btn-primary">Thực hiện kiểm kê</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                                 </div>
                             </form>
                         </div>
@@ -826,7 +881,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="submit" class="btn btn-classic">Lưu thay đổi</button>
                                     </div>
                                 </form>
                             </div>
@@ -852,13 +907,15 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-danger">Xóa</button>
+                                        <button type="submit" class="btn btn-classic">Xóa</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <div id="bookShelfPanel" style="display: none;">
+                </div>
+
+                <div id="bookShelfPanel" style="display: none;">
                         <div class="card-classic shadow-sm">
                             <div class="card-header bg-white border-bottom p-4 border-color">
                                 <h5 class="fw-bold mb-1"
@@ -891,7 +948,7 @@
                                                         title="Sửa">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    <button type="button" class="btn btn-sm btn-classic"
                                                         data-bs-toggle="modal"
                                                         th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
                                                         title="Xóa">
@@ -941,7 +998,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                                    <button type="submit" class="btn btn-classic">Lưu</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -971,7 +1028,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                    <button type="submit" class="btn btn-classic">Xóa</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -979,7 +1036,7 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white border-top p-4 border-color text-end">
-                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                     data-bs-target="#addStorageModal">
                                     Thêm vị trí mới
                                 </button>
@@ -1012,13 +1069,14 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary">Lưu</button>
+                                            <button type="submit" class="btn btn-classic">Lưu</button>
                                         </div>
                                     </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
         </section>
 
@@ -1134,6 +1192,28 @@
         </section>
 
         <script>
+            function showBookSubSection(panelName) {
+                const inventoryPanel = document.getElementById("bookInventoryPanel");
+                const shelfPanel = document.getElementById("bookShelfPanel");
+                const inventoryBtn = document.getElementById("bookSubInventoryBtn");
+                const storageBtn = document.getElementById("bookSubStorageBtn");
+
+                if (inventoryPanel && shelfPanel) {
+                    if (panelName === "storage") {
+                        inventoryPanel.style.display = "none";
+                        shelfPanel.style.display = "block";
+                    } else {
+                        inventoryPanel.style.display = "block";
+                        shelfPanel.style.display = "none";
+                    }
+                }
+
+                if (inventoryBtn && storageBtn) {
+                    inventoryBtn.classList.toggle("active", panelName !== "storage");
+                    storageBtn.classList.toggle("active", panelName === "storage");
+                }
+            }
+
             function showLibSection(sectionName, clickedLink) {
                 const sections = document.querySelectorAll(".lib-section");
 
@@ -1210,6 +1290,91 @@
                 });
             }
 
+
+            function setInlineError(element, message) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.add("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = message;
+                }
+            }
+
+            function clearInlineError(element) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.remove("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function validateNotificationForm(event) {
+                const form = document.getElementById("notificationForm");
+                if (form == null) {
+                    return;
+                }
+
+                let isValid = true;
+                const recipientAll = document.getElementById("recipientAll");
+                const recipientSelected = document.getElementById("recipientSelected");
+                const recipientTypeGroup = document.getElementById("recipientTypeGroup");
+                const memberIdsGroup = document.getElementById("memberIdsGroup");
+                const titleInput = form.querySelector("[name='title']");
+                const contentInput = form.querySelector("[name='content']");
+                const selectedMembers = form.querySelectorAll(".member-checkbox:checked");
+
+                clearInlineError(recipientTypeGroup);
+                clearInlineError(memberIdsGroup);
+                clearInlineError(titleInput);
+                clearInlineError(contentInput);
+
+                if ((recipientAll == null || !recipientAll.checked) && (recipientSelected == null || !recipientSelected.checked)) {
+                    setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
+                    isValid = false;
+                }
+
+                if (recipientSelected != null && recipientSelected.checked && selectedMembers.length === 0) {
+                    setInlineError(memberIdsGroup, "Vui lòng chọn ít nhất một Member.");
+                    isValid = false;
+                }
+
+                if (titleInput != null && titleInput.value.trim() === "") {
+                    setInlineError(titleInput, "Tiêu đề không được để trống.");
+                    isValid = false;
+                }
+
+                if (contentInput != null && contentInput.value.trim() === "") {
+                    setInlineError(contentInput, "Nội dung không được để trống.");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+
+            function validateReviewReplyForms() {
+                document.querySelectorAll(".review-reply-box").forEach(function (form) {
+                    form.addEventListener("submit", function (event) {
+                        const response = form.querySelector("textarea[name='response']");
+                        clearInlineError(response);
+
+                        if (response != null && response.value.trim() === "") {
+                            setInlineError(response, "Nội dung phản hồi không được để trống.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
+                });
+            }
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 
@@ -1221,6 +1386,14 @@
                     recipientSelected.addEventListener("change", toggleMemberList);
                     toggleMemberList();
                 }
+
+                const notificationForm = document.getElementById("notificationForm");
+
+                if (notificationForm != null) {
+                    notificationForm.addEventListener("submit", validateNotificationForm);
+                }
+
+                validateReviewReplyForms();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 

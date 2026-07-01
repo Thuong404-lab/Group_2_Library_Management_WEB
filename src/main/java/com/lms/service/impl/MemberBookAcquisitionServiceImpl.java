@@ -33,10 +33,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
     @Override
     @Transactional
     public void submitRequest(String username, MemberBookAcquisitionRequest request) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
-
-        Member member = memberRepository.findByUserId(account.getUser().getId())
+        Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username));
 
         String title = request.getTitle().trim();

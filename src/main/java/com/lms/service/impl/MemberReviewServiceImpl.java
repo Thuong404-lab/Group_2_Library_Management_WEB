@@ -39,10 +39,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Override
     @Transactional
     public void submitReview(String username, MemberReviewSubmitRequest request) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
-
-        Member member = memberRepository.findByUserId(account.getUser().getId())
+        Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username));
 
         Book book = bookRepository.findById(request.getBookId())
@@ -66,11 +63,8 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<Feedback> getMyReviews(String username) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n: " + username));
-
-        Member member = memberRepository.findByUserId(account.getUser().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘á»™c giáº£ vá»›i tÃ i khoáº£n: " + username));
+        Member member = memberRepository.findByAccountUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username));
 
         return feedbackRepository.findByMember_MemberIdOrderByCreatedDateDesc(member.getMemberId());
     }

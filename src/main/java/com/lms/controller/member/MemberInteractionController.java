@@ -45,17 +45,22 @@ public class MemberInteractionController {
 
     @GetMapping("/notifications")
     public String viewNotifications(Model model, Principal principal) {
+        memberNotificationService.markAllNotificationsAsRead(principal.getName());
+
         model.addAttribute(
                 "notifications",
                 memberNotificationService.getMyNotifications(principal.getName())
         );
-        model.addAttribute(
-                "unreadCount",
-                memberNotificationService.countUnreadNotifications(principal.getName())
-        );
         model.addAttribute("showNotificationBell", false);
 
         return "member/notifications";
+    }
+
+    @GetMapping("/notifications/mark-read")
+    @ResponseBody
+    public String markNotificationsAsRead(Principal principal) {
+        memberNotificationService.markAllNotificationsAsRead(principal.getName());
+        return "OK";
     }
 
     @GetMapping("/reviews")
@@ -101,7 +106,7 @@ public class MemberInteractionController {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
 
-        return "member/member-book-acquisition-request";
+        return "member/book-acquisition-request";
     }
 
     @PostMapping("/acquisition-requests")
@@ -113,7 +118,7 @@ public class MemberInteractionController {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
-            return "member/member-book-acquisition-request";
+            return "member/book-acquisition-request";
         }
 
         try {
@@ -123,7 +128,7 @@ public class MemberInteractionController {
 
         } catch (ValidationException | ResourceNotFoundException e) {
             model.addAttribute("error", e.getMessage());
-            return "member/member-book-acquisition-request";
+            return "member/book-acquisition-request";
         }
     }
 
