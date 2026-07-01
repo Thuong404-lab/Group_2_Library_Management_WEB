@@ -10,38 +10,62 @@
     <div layout:fragment="content" class="container mt-4 mb-5">
         <h2 class="fw-bold mb-4">Hồ Sơ Cá Nhân</h2>
 
+    <!-- Alerts -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${passwordSuccess}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${passwordError}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
         <div class="row g-4">
             <!-- Profile Card -->
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm rounded-3 mb-4">
                     <div class="card-body text-center p-4">
                         <div class="position-relative d-inline-block mb-3">
-                            <img src="https://ui-avatars.com/api/?name=Nguyễn+Lan+Anh&background=0D8ABC&color=fff&size=120" alt="Avatar" class="rounded-circle border border-3 border-white shadow-sm">
-                            <button class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle" style="width: 32px; height: 32px;"><i class="bi bi-camera-fill"></i></button>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto border border-3 border-white shadow-sm" 
+                                 style="width: 120px; height: 120px; background-color: #8b5a2b; color: white; font-size: 3rem; font-family: 'Playfair Display', serif;"
+                                 th:text="${member != null ? #strings.substring(member.fullName, 0, 1).toUpperCase() : 'M'}">M</div>
+                            <button class="btn btn-sm position-absolute bottom-0 end-0 rounded-circle text-white shadow-sm" style="width: 32px; height: 32px; background-color: #d97706;"><i class="bi bi-camera-fill"></i></button>
                         </div>
-                        <h4 class="fw-bold mb-1">Nguyễn Thị Lan Anh</h4>
-                        <p class="text-muted mb-3">lananh.nguyen@example.com</p>
+                        <h4 class="fw-bold mb-1" style="color: #4a3b32;" th:text="${member?.fullName}">Tên Thành Viên</h4>
+                        <p class="text-muted mb-3" th:text="${member?.email}">email@example.com</p>
                         <div class="d-flex justify-content-center gap-2 mb-3">
-                            <span class="badge bg-primary px-3 py-2">Thành viên</span>
-                            <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-star-fill"></i> LOYAL</span>
+                            <span class="badge px-3 py-2" style="background-color: #8b5a2b; color: white;">Thành viên</span>
+                            <span th:if="${member?.status?.name() == 'Active'}" class="badge bg-success text-white px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i> Hoạt động</span>
+                            <span th:if="${member?.status?.name() != 'Active'}" class="badge bg-danger text-white px-3 py-2" th:text="${member?.status}">Trạng thái</span>
                         </div>
-                        <hr>
-                        <div class="d-flex justify-content-between text-start small mt-3">
-                            <span class="text-muted">Ngày tham gia:</span>
-                            <span class="fw-bold">12/05/2023</span>
-                        </div>
+                        <hr style="border-color: rgba(139, 90, 43, 0.2) !important;">
                         <div class="d-flex justify-content-between text-start small mt-2">
-                            <span class="text-muted">Tổng sách đã mượn:</span>
-                            <span class="fw-bold text-primary">45 cuốn</span>
+                            <span class="text-muted">Hạng thành viên:</span>
+                            <span class="fw-bold" style="color: #d97706;">Tiêu chuẩn</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-3">
+                <div class="card border-0 shadow-sm rounded-3" th:if="${#authentication.principal.attributes == null}">
                     <div class="card-body p-4">
-                        <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill text-secondary me-2"></i>Bảo mật tài khoản</h6>
-                        <button class="btn btn-outline-primary w-100 mb-2">Đổi mật khẩu</button>
-                        <button class="btn btn-outline-danger w-100">Yêu cầu xóa tài khoản</button>
+                        <h6 class="fw-bold mb-3" style="color: #4a3b32;"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Bảo mật tài khoản</h6>
+                        <button class="btn w-100 mb-2 fw-bold" style="border: 2px solid #8b5a2b; color: #8b5a2b;" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Đổi mật khẩu</button>
+                    </div>
+                </div>
+                
+                <div class="card border-0 shadow-sm rounded-3" th:if="${#authentication.principal.attributes != null}">
+                    <div class="card-body p-4 text-center">
+                        <i class="bi bi-google mb-2" style="font-size: 2rem; color: #DB4437;"></i>
+                        <h6 class="fw-bold mb-2" style="color: #4a3b32;">Tài khoản Google</h6>
+                        <p class="text-muted small mb-0">Tài khoản của bạn được liên kết với Google. Không cần đổi mật khẩu.</p>
                     </div>
                 </div>
             </div>
@@ -50,52 +74,68 @@
             <div class="col-lg-8">
                 <div class="card border-0 shadow-sm rounded-3 h-100">
                     <div class="card-header bg-white border-0 pt-4 pb-0">
-                        <h5 class="fw-bold mb-0">Thông tin chi tiết</h5>
+                        <h5 class="fw-bold mb-0" style="color: #4a3b32;">Thông tin chi tiết</h5>
                     </div>
                     <div class="card-body p-4">
-                        <form>
+                        <form th:action="@{/member/profile/update}" method="post">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Họ và Tên</label>
-                                    <input type="text" class="form-control" value="Nguyễn Thị Lan Anh">
+                                    <input type="text" name="fullName" class="form-control" th:value="${member?.fullName}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Tên đăng nhập (Username)</label>
-                                    <input type="text" class="form-control bg-light" value="lananh123" readonly>
+                                    <input type="text" class="form-control bg-light" th:value="${#authentication.name}" readonly>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Email</label>
-                                    <input type="email" class="form-control" value="lananh.nguyen@example.com">
+                                    <input type="email" name="email" class="form-control" th:value="${member?.email}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Số điện thoại</label>
-                                    <input type="tel" class="form-control" value="0987654321">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label fw-bold text-muted small">Địa chỉ</label>
-                                    <input type="text" class="form-control" value="Số 1, Đại Cồ Việt, Hai Bà Trưng, Hà Nội">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small">Ngày sinh</label>
-                                    <input type="date" class="form-control" value="1998-05-15">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small">Giới tính</label>
-                                    <select class="form-select">
-                                        <option value="male">Nam</option>
-                                        <option value="female" selected>Nữ</option>
-                                        <option value="other">Khác</option>
-                                    </select>
+                                    <input type="tel" name="phone" class="form-control" th:value="${member?.phone}" required>
                                 </div>
                                 
-                                <div class="col-12 mt-4">
-                                    <button type="submit" class="btn btn-primary px-4 fw-bold">Cập nhật thông tin</button>
+                                <div class="col-12 mt-4 text-end">
+                                    <button type="submit" class="btn px-4 fw-bold shadow-sm" style="background-color: #8b5a2b; color: white;">Cập nhật thông tin</button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
+
+        <!-- Change Password Modal -->
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold" style="color: #4a3b32;"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi mật khẩu</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/member/change-password}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>
+                                <input type="password" name="oldPassword" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu mới</label>
+                                <input type="password" name="newPassword" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="confirmPassword" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-light rounded-pill fw-bold" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn rounded-pill fw-bold text-white shadow-sm" style="background-color: #8b5a2b;">Cập nhật mật khẩu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
 
     </div>

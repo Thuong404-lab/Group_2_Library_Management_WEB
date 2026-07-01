@@ -68,8 +68,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
-        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-            throw new AuthException("Tên đăng nhập không được để trống!");
+        if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
+            throw new AuthException("Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
         }
 
         if (request.getPassword() == null || request.getPassword().length() < 6) {
@@ -80,12 +80,12 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Họ và tên không được để trống!");
         }
 
-        if (request.getEmail() == null || !request.getEmail().contains("@")) {
-            throw new AuthException("Email không hợp lệ (phải chứa ký tự @)!");
+        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new AuthException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
 
-        if (request.getPhone() == null || request.getPhone().length() < 10) {
-            throw new AuthException("Số điện thoại phải có ít nhất 10 số!");
+        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)[0-9]{9}$")) {
+            throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
         }
 
         if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -172,12 +172,14 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userOptional.get();
 
-        passwordResetTokenRepository.deleteByUser(user);
-
         String token = UUID.randomUUID().toString();
         LocalDateTime expiryDate = LocalDateTime.now().plusHours(24);
 
-        PasswordResetToken resetToken = new PasswordResetToken(token, user, expiryDate);
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByUser(user)
+                .orElseGet(PasswordResetToken::new);
+        resetToken.setToken(token);
+        resetToken.setUser(user);
+        resetToken.setExpiryDate(expiryDate);
         passwordResetTokenRepository.save(resetToken);
 
         String resetLink = applicationBaseUrl + "/reset-password?token=" + token;

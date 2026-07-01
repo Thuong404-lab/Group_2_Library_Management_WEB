@@ -1,14 +1,13 @@
 package com.lms.entity;
 
 import com.lms.enums.BorrowStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.LocalDate;
 import java.util.List;
 
-@Entity
 public class BorrowRecord {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String memberEmail; // Lưu email member để xác định ai mượn

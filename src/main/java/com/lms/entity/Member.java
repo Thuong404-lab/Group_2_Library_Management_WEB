@@ -24,27 +24,10 @@ public class Member {
         this.tier = tier;
     }
 
-    public Integer getMemberId() {
-        return memberId;
-    }
-
-    public void setMemberId(Integer memberId) {
-        this.memberId = memberId;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public MembershipTier getTier() {
-        return tier;
-    }
-
-    public void setTier(MembershipTier tier) {
-        this.tier = tier;
-    }
+    public Integer getMemberId() { return memberId; }
+    public void setMemberId(Integer memberId) { this.memberId = memberId; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public MembershipTier getTier() { return tier; }
+    public void setTier(MembershipTier tier) { this.tier = tier; }
 }

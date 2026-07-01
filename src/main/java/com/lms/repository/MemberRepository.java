@@ -27,4 +27,3 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
             Pageable pageable
     );
 }
-

@@ -29,9 +29,8 @@ public class BookServiceImpl implements BookService {
 
     // UC-1: Tìm kiếm sách
     @Override
-    public void searchBooks(String keyword, Integer categoryId, Integer genreId, int page) {
-        // TODO: Implement - Tìm kiếm theo keyword, category, genre
-        // TODO: Hỗ trợ phân trang (Pageable)
+    public org.springframework.data.domain.Page<com.lms.entity.Book> searchBooks(String keyword, Integer genreId, String status, org.springframework.data.domain.Pageable pageable) {
+        return bookRepository.searchBooks(keyword, genreId, status, pageable);
     }
 
     // UC-3: Xem danh sách sách

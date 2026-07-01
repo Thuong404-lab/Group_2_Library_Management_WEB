@@ -1,7 +1,6 @@
 package com.lms.config;
 
 import com.lms.service.CustomOAuth2UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -56,9 +55,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // TODO: Có thể bật CSRF lên và xử lý token sau khi hoàn thành dự án
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/books/**", "/about"
+                        .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password",
+                                "/css/**", "/js/**", "/books/**", "/about"
                                 ).permitAll()
 
                         .requestMatchers("/admin/**").hasRole("ADMIN")
