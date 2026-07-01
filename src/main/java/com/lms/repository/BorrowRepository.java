@@ -15,4 +15,7 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
             LocalDateTime startDate,
             LocalDateTime endDate
     );
+
+    // BỔ SUNG: Tìm kiếm lịch sử yêu cầu mượn sách của độc giả
+    List<Borrow> findByMember_MemberIdOrderByBorrowDateDesc(Integer memberId);
 }

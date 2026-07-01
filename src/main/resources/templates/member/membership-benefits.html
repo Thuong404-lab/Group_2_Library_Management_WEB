@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Quyền Lợi Hạng Thành Viên</title>
+</head>
+<body>
+<div layout:fragment="content" class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3 text-center">
+                    <h4 class="mb-0 fw-bold">Đặc Quyền Của Bạn</h4>
+                    <small class="text-white-50">Áp dụng dựa trên cấp bậc tài khoản hiện tại</small>
+                </div>
+                <div class="card-body p-4" th:if="${tierBenefits != null}">
+                    <div class="text-center mb-4">
+                        <span class="badge bg-light text-primary border border-primary px-4 py-2 fs-5 text-uppercase fw-bold"
+                              th:text="${tierBenefits.tierName}">Hạng Thẻ</span>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 text-center border-end">
+                            <h6 class="text-muted text-uppercase mb-1">Hạn mức tối đa</h6>
+                            <span class="fs-4 fw-bold text-dark" th:text="${tierBenefits.borrowLimit} + ' cuốn'">3 cuốn</span>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h6 class="text-muted text-uppercase mb-1">Ưu đãi giảm giá</h6>
+                            <span class="fs-4 fw-bold text-success" th:text="${tierBenefits.discountPercent} + '%'">0%</span>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="text-dark mb-3"><i class="bi bi-gift me-2 text-danger"></i>Mô Tả Quyền Lợi Chi Tiết:</h5>
+                    <div class="bg-light p-3 rounded text-secondary" style="white-space: pre-line;" th:text="${tierBenefits.benefits}">
+                        Các điều khoản ưu đãi chi tiết của hạng thẻ này chưa được thủ thư cấu hình văn bản cụ thể.
+                    </div>
+                </div>
+
+                <div class="card-body text-center py-5" th:if="${tierBenefits == null}">
+                    <i class="bi bi-person-exclamation text-muted display-1"></i>
+                    <p class="text-secondary mt-3">Hệ thống chưa tìm thấy dữ liệu cấu hình quyền lợi phân hạng cho tài khoản của bạn.</p>
+                </div>
+                <div class="card-footer bg-white text-center py-3">
+                    <a th:href="@{/member/membership/tier}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i>Xem lộ trình nâng hạng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
