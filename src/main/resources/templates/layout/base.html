@@ -189,11 +189,31 @@
           return;
         }
 
-        function markNotificationsRead() {
+        var openedWithUnreadNotifications = false;
+        var notificationsMarkedRead = false;
+
+        function removeNotificationBadge() {
           var badge = document.getElementById("notificationBellBadge");
-          if (!badge) {
+          if (badge) {
+            openedWithUnreadNotifications = true;
+            badge.remove();
+          }
+        }
+
+        function clearUnreadNotificationStyles() {
+          notificationDropdown
+            .querySelectorAll(".font-weight-bold")
+            .forEach(function (item) {
+              item.classList.remove("font-weight-bold");
+            });
+        }
+
+        function markNotificationsRead() {
+          if (!openedWithUnreadNotifications || notificationsMarkedRead) {
             return;
           }
+
+          notificationsMarkedRead = true;
 
           fetch("/member/interaction/notifications/mark-read", {
             method: "GET",
@@ -204,10 +224,13 @@
           })
             .then(function (response) {
               if (response.ok) {
-                badge.remove();
+                clearUnreadNotificationStyles();
+              } else {
+                notificationsMarkedRead = false;
               }
             })
             .catch(function (error) {
+              notificationsMarkedRead = false;
               console.error(
                 "Không thể cập nhật trạng thái thông báo đọc:",
                 error,
@@ -216,12 +239,18 @@
         }
 
         notificationToggle.addEventListener("click", function () {
-          markNotificationsRead();
+          removeNotificationBadge();
         });
 
-        notificationDropdown.addEventListener("shown.bs.dropdown", function () {
-          markNotificationsRead();
-        });
+        if (window.jQuery) {
+          window.jQuery(notificationDropdown).on("hidden.bs.dropdown", function () {
+            markNotificationsRead();
+          });
+        } else {
+          notificationDropdown.addEventListener("hidden.bs.dropdown", function () {
+            markNotificationsRead();
+          });
+        }
       });
     </script>
 
