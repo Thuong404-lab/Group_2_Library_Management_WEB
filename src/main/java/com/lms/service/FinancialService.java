@@ -9,8 +9,8 @@ public interface FinancialService {
     // UC-8.1: Thanh toán phí phạt quá hạn
     void payOverdueFine(Integer memberId, Integer fineId);
 
-    // UC-8.2: Thanh toán phí mượn
-    void payBorrowingFee(Integer memberId, Double amount);
+    // UC-8.2: Thanh toán phí mượn theo phiếu mượn (BorrowDetail)
+    void payBorrowingFee(Integer memberId, Integer borrowId);
 
     // UC-8.3: Thanh toán tiền cọc đặt trước
     void payReservationDeposit(Integer memberId, Integer reservationId);

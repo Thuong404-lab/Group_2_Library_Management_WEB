@@ -6,6 +6,9 @@ import com.lms.entity.Transaction;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.TransactionRepository;
+import com.lms.dto.response.BorrowFeeViewData;
+import com.lms.repository.BorrowRepository;
+import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.WalletRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,15 +38,24 @@ public class FinancialController {
     private final MemberNotificationRepository memberNotificationRepository;
     private final MemberRepository memberRepository;
     private final WalletRepository walletRepository;
+    private final BorrowRepository borrowRepository;
+    private final BorrowDetailRepository borrowDetailRepository;
+    private final com.lms.service.FinancialService financialService;
 
     public FinancialController(TransactionRepository transactionRepository,
                                MemberNotificationRepository memberNotificationRepository,
                                MemberRepository memberRepository,
-                               WalletRepository walletRepository) {
+                               WalletRepository walletRepository,
+                               BorrowRepository borrowRepository,
+                               BorrowDetailRepository borrowDetailRepository,
+                               com.lms.service.FinancialService financialService) {
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
+        this.borrowRepository = borrowRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
+        this.financialService = financialService;
     }
 
     // UC-8.1: Pay Overdue Fines
@@ -67,9 +79,77 @@ public class FinancialController {
     // UC-8.2: Pay Borrowing Fees
     @GetMapping("/fees")
     public String viewBorrowingFees(Principal principal, Model model) {
-        // TODO: Implement - Hiển thị phí mượn sách chưa thanh toán
+        Member member = getCurrentMember(principal);
+
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
+                .orElse(BigDecimal.ZERO);
+
+        // Theo quy ước: phí mượn = số quyển * 10 ngày * (giá trị phí trên 1 ngày của “quyển”)
+        // Vì repo hiện chưa có đơn giá, mình triển khai tối thiểu theo số ngày dự kiến và “1 ngày = 1 đ”.
+        // Nếu bạn có đơn giá cụ thể, chỉ cần sửa chỗ computeBorrowFeeAmount().
+        List<BorrowFeeViewData> fees = new java.util.ArrayList<>();
+
+        // Lấy toàn bộ phiếu mượn của member và chỉ lấy các phiếu đang Pending/Borrowed/Overdue
+        // (tránh tính lại các phiếu đã được trả/đã thanh toán).
+        List<com.lms.entity.Borrow> borrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(member.getMemberId());
+
+        for (com.lms.entity.Borrow borrow : borrows) {
+            if (borrow == null) continue;
+            String status = borrow.getStatus();
+            if (status == null) continue;
+            if (!("Pending".equalsIgnoreCase(status) || "Active".equalsIgnoreCase(status) || "Borrowing".equalsIgnoreCase(status))) {
+                continue;
+            }
+
+            List<com.lms.entity.BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
+            if (details == null || details.isEmpty()) continue;
+
+            int quantity = (int) details.size();
+            int days = 10; // mặc định 1 quyển là 10 ngày theo yêu cầu
+
+            BigDecimal amount = computeBorrowFeeAmount(quantity, days);
+
+            BorrowFeeViewData feeViewData = new BorrowFeeViewData();
+            feeViewData.setBorrowId(borrow.getBorrowId());
+            feeViewData.setQuantity(quantity);
+            feeViewData.setDays(days);
+            feeViewData.setAmount(amount);
+            fees.add(feeViewData);
+        }
+
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("fees", fees);
         return "member/fees";
     }
+
+    private BigDecimal computeBorrowFeeAmount(int quantity, int days) {
+        // Mặc định: 1 ngày * 1 đ / quyển
+        // -> tổng = quantity * days.
+        return BigDecimal.valueOf((long) quantity).multiply(BigDecimal.valueOf((long) days));
+    }
+
+    // UC-8.2: Pay Borrowing Fees
+    @PostMapping("/fees/pay/{borrowId}")
+    public String payBorrowingFee(@PathVariable Integer borrowId,
+                                   Principal principal,
+                                   Model model) {
+        Member member = getCurrentMember(principal);
+
+        try {
+            // amount được tính trong service dựa trên BorrowDetail (quantity * 10 ngày * 1đ/ngày)
+            // trừ ví + tạo Transaction BORROW_FEE
+            financialService.payBorrowingFee(member.getMemberId(), borrowId);
+            model.addAttribute("message", "Đã thanh toán phí mượn thành công!");
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+        }
+
+        // reload page
+        return viewBorrowingFees(principal, model);
+    }
+
+
 
     // UC-8.3: Pay Reservation Deposit
     @PostMapping("/deposit/{reservationId}")

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Phí mượn sách</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h2 class="fw-bold mb-0">Phí mượn sách</h2>
+        <div class="text-muted">Số dư ví: <span class="fw-bold" th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ</div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">Các phiếu mượn đang cần thanh toán</h5>
+
+            <div th:if="${fees == null or #lists.isEmpty(fees)}" class="text-center text-muted py-4">
+                Chưa có phí mượn cần thanh toán.
+            </div>
+
+            <div class="table-responsive" th:if="${fees != null and !#lists.isEmpty(fees)}">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Phiếu mượn (Borrow ID)</th>
+                        <th>Số quyển</th>
+                        <th>Số ngày dự kiến</th>
+                        <th>Tổng phí cần trả</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fee : ${fees}">
+                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${fee.quantity}">1</td>
+                        <td th:text="${fee.days}">10</td>
+                        <td class="fw-bold">
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </td>
+                        <td class="text-end">
+                            <form method="post" th:action="@{/member/financial/fees/pay/{borrowId}(borrowId=${fee.borrowId})}" class="d-inline">
+                                <button type="submit" class="btn btn-primary btn-sm rounded-pill">Thanh toán</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="text-center" th:if="${message != null}">
+        <div class="alert alert-success d-inline-block" role="alert" th:text="${message}"></div>
+    </div>
+
+    <div class="text-center" th:if="${error != null}">
+        <div class="alert alert-danger d-inline-block" role="alert" th:text="${error}"></div>
+    </div>
+</div>
+</body>
+</html>
+
