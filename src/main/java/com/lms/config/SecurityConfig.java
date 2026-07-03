@@ -13,7 +13,9 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import java.util.Set;
-
+import org.springframework.core.annotation.Order;
+import com.lms.service.impl.CustomStaffDetailsService;
+import com.lms.service.impl.CustomMemberDetailsService;
 /**
  * SecurityConfig - Spring Security Configuration
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
@@ -53,46 +55,73 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain staffSecurityFilterChain(HttpSecurity http, CustomStaffDetailsService staffDetailsService) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password",
-                                "/css/**", "/js/**", "/books/**", "/about"
-                                ).permitAll()
+            .securityMatcher("/admin/**", "/librarian/**", "/staff-login", "/staff-logout")
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/staff-login").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/staff-login")
+                .loginProcessingUrl("/staff-login")
+                .successHandler(customSuccessHandler())
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/staff-logout")
+                .logoutSuccessUrl("/staff-login?logout")
+                .permitAll()
+            )
+            .userDetailsService(staffDetailsService)
+            .exceptionHandling(exception -> exception.accessDeniedPage("/403"));
 
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
-                        .requestMatchers("/member/**").hasRole("MEMBER")
-                        .anyRequest().authenticated()
-                )
+        return http.build();
+    }
 
-                //Quoc Anh đã sửa chỗ này ( Dùng method successHandler thay vì defaultSuccessUrl)
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .successHandler(customSuccessHandler())
-                        .permitAll()
+    @Bean
+    @Order(2)
+    public SecurityFilterChain memberSecurityFilterChain(HttpSecurity http, CustomMemberDetailsService memberDetailsService) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password",
+                        "/css/**", "/js/**", "/books/**", "/about", "/images/**"
+                        ).permitAll()
+                .requestMatchers("/member/**").hasRole("MEMBER")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .successHandler(customSuccessHandler())
+                .permitAll()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
+                .userInfoEndpoint(userInfo -> userInfo
+                        .userService(customOAuth2UserService)
                 )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(customSuccessHandler())
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/login?logout")
-                        .permitAll()
-                )
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
-                        .expiredUrl("/login?expired=true")
-                        .sessionRegistry(sessionRegistry())
-                )
-                .exceptionHandling(exception -> exception
-                        .accessDeniedPage("/403")
-                );
+                .successHandler(customSuccessHandler())
+            )
+            .logout(logout -> logout
+                .logoutSuccessUrl("/login?logout")
+                .permitAll()
+            )
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+                .expiredUrl("/login?expired=true")
+                .sessionRegistry(sessionRegistry())
+            )
+            .userDetailsService(memberDetailsService)
+            .exceptionHandling(exception -> exception
+                .accessDeniedPage("/403")
+            );
 
         return http.build();
     }

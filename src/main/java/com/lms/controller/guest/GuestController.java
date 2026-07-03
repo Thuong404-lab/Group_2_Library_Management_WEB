@@ -11,8 +11,14 @@ import com.lms.service.MemberFavoriteService;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.lms.entity.Book;
-
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 /**
  * GuestController - Trang công khai cho Khách (Guest)
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
@@ -48,15 +54,15 @@ public class GuestController {
                                @RequestParam(defaultValue = "0") int page,
                                Model model, java.security.Principal principal) {
         
-        org.springframework.data.domain.Sort sorting;
-        if ("title_asc".equals(sort)) sorting = org.springframework.data.domain.Sort.by("title").ascending();
-        else if ("title_desc".equals(sort)) sorting = org.springframework.data.domain.Sort.by("title").descending();
-        else if ("oldest".equals(sort)) sorting = org.springframework.data.domain.Sort.by("bookId").ascending();
-        else sorting = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "bookId");
+        Sort sorting;
+        if ("title_asc".equals(sort)) sorting = Sort.by("title").ascending();
+        else if ("title_desc".equals(sort)) sorting = Sort.by("title").descending();
+        else if ("oldest".equals(sort)) sorting = Sort.by("bookId").ascending();
+        else sorting = Sort.by(Sort.Direction.DESC, "bookId");
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, 12, sorting);
+        Pageable pageable = PageRequest.of(page, 12, sorting);
         
-        org.springframework.data.domain.Page<Book> bookPage;
+        Page<Book> bookPage;
         if ((keyword != null && !keyword.trim().isEmpty()) || genreId != null || (status != null && !status.trim().isEmpty())) {
             bookPage = bookService.searchBooks(keyword, genreId, status, pageable);
         } else {
@@ -101,5 +107,36 @@ public class GuestController {
         } catch (RuntimeException e) {
             model.addAttribute("favoriteBookIds", Collections.emptySet());
         }
+    }
+
+    // API for Live Search Suggestion
+    @GetMapping("/api/books/search/suggest")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> suggestBooks(@RequestParam String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return org.springframework.http.ResponseEntity.ok(Collections.emptyList());
+        }
+        
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5, org.springframework.data.domain.Sort.by("title").ascending());
+        org.springframework.data.domain.Page<Book> bookPage = bookService.searchBooks(keyword, null, "Active", pageable);
+        
+        List<Map<String, Object>> suggestions = bookPage.getContent().stream().map(book -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("bookId", book.getBookId());
+            map.put("title", book.getTitle());
+            String authorNames = "";
+            if (book.getAuthors() != null && !book.getAuthors().isEmpty()) {
+                authorNames = book.getAuthors().stream()
+                        .map(com.lms.entity.Author::getAuthorName)
+                        .collect(Collectors.joining(", "));
+            } else {
+                authorNames = "Nhiều tác giả";
+            }
+            map.put("authorName", authorNames);
+            map.put("thumbnailUrl", "https://picsum.photos/seed/" + book.getBookId() + "/60/80");
+            return map;
+        }).collect(Collectors.toList());
+        
+        return org.springframework.http.ResponseEntity.ok(suggestions);
     }
 }

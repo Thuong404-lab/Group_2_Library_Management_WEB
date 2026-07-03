@@ -15,8 +15,8 @@ public class SystemLog {
     private Integer logId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
-    private Account account;
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(name = "action_type", nullable = false, length = 100)
     private String actionType;
@@ -37,8 +37,8 @@ public class SystemLog {
     public SystemLog() {
     }
 
-    public SystemLog(Account account, String actionType, String ipAddress, String userAgent, String description) {
-        this.account = account;
+    public SystemLog(User user, String actionType, String ipAddress, String userAgent, String description) {
+        this.user = user;
         this.actionType = actionType;
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
@@ -53,12 +53,12 @@ public class SystemLog {
         this.logId = logId;
     }
 
-    public Account getAccount() {
-        return account;
+    public User getUser() {
+        return user;
     }
 
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getActionType() {

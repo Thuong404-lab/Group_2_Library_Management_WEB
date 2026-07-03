@@ -18,15 +18,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * AuthServiceImpl - Xử lý Logic Xác thực
- * Người phụ trách: Nguyễn Tiến Thương (CE191329)
- */
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
+    private final StaffAccountRepository staffAccountRepository;
     private final MemberRepository memberRepository;
     private final WalletRepository walletRepository;
     private final PasswordEncoder passwordEncoder;
@@ -38,7 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final MembershipTierRepository membershipTierRepository;
 
     public AuthServiceImpl(UserRepository userRepository,
-            AccountRepository accountRepository,
+            MemberAccountRepository memberAccountRepository,
+            StaffAccountRepository staffAccountRepository,
             MemberRepository memberRepository,
             WalletRepository walletRepository,
             RoleRepository roleRepository,
@@ -49,7 +47,8 @@ public class AuthServiceImpl implements AuthService {
             SystemLogRepository systemLogRepository,
             @Value("${app.base-url:http://localhost:8080}") String applicationBaseUrl) {
         this.userRepository = userRepository;
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
+        this.staffAccountRepository = staffAccountRepository;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
         this.roleRepository = roleRepository;
@@ -61,7 +60,6 @@ public class AuthServiceImpl implements AuthService {
         this.applicationBaseUrl = applicationBaseUrl.replaceAll("/+$", "");
     }
 
-    // UC-2: Đăng ký thành viên mới
     @Override
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
@@ -85,7 +83,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
         }
 
-        if (accountRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AuthException("Tên đăng nhập đã tồn tại!");
         }
 
@@ -103,34 +101,33 @@ public class AuthServiceImpl implements AuthService {
                 request.getPhone());
     }
 
-    private void createAndSaveLog(Integer accountId,
+    private void createAndSaveLog(Integer userId,
             String actionType,
             String ipAddress,
             String userAgent,
             String description) {
-        Account account = accountRepository.findById(accountId).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
 
-        if (account != null) {
-            SystemLog log = new SystemLog(account, actionType, ipAddress, userAgent, description);
+        if (user != null) {
+            SystemLog log = new SystemLog(user, actionType, ipAddress, userAgent, description);
             systemLogRepository.save(log);
         }
     }
 
     @Override
-    public void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
+    public void logLoginAction(Integer userId, String ipAddress, String userAgent, String sessionId) {
         String description = "Đăng nhập thành công. Session ID: " + sessionId;
-        createAndSaveLog(accountId, ActionType.LOGIN.name(), ipAddress, userAgent, description);
+        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, description);
     }
 
     @Override
-    public void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId) {
+    public void logLogoutAction(Integer userId, String ipAddress, String userAgent, String sessionId) {
         String description = "Đăng xuất thành công. Session ID: " + sessionId;
-        createAndSaveLog(accountId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
+        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
     }
 
     @Override
-    public Account createCoreAccount(String userName, String fullName, String pass, String email, String phone) {
-        // 1. Tạo dữ liệu User (Lưu thông tin cá nhân cơ bản)
+    public MemberAccount createCoreAccount(String userName, String fullName, String pass, String email, String phone) {
         User user = new User();
         user.setFullName(fullName);
         user.setEmail(email);
@@ -138,41 +135,30 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
-        // 2. Tạo dữ liệu Tài khoản đăng nhập
-        Account account = new Account();
-        account.setUsername(userName);
-        account.setPasswordHash(pass);
-        account.setUser(user);
-        account.setStatus("Active");
-        
-        // 2.1. Tìm Role "MEMBER" từ database và gán cho tài khoản để tự động lưu vào bảng Account_Roles
-        Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER").orElse(null);
-        if (memberRole != null) {
-            account.getRoles().add(memberRole);
-        }
-        
-        accountRepository.save(account);
-
-
         Member member = new Member();
-        member.setUser(user); // Liên kết với User
+        member.setUser(user);
         
-        // 3.1. Tìm hạng thẻ (Tier) mặc định (có ID thấp nhất) và gán cho Member để tránh lỗi NULL
         membershipTierRepository.findAll(Sort.by("tierId").ascending())
                 .stream().findFirst().ifPresent(member::setTier);
 
-        memberRepository.save(member);
+        member = memberRepository.save(member);
 
-        // 4. Tạo Ví điện tử khởi tạo số dư là 0
+        MemberAccount account = new MemberAccount();
+        account.setUsername(userName);
+        account.setPasswordHash(pass);
+        account.setMember(member);
+        account.setStatus("Active");
+        
+        account = memberAccountRepository.save(account);
+
         Wallet wallet = new Wallet();
-        wallet.setMember(member); // Liên kết với Member
+        wallet.setMember(member);
         wallet.setBalance(BigDecimal.ZERO);
         walletRepository.save(wallet);
 
         return account;
     }
 
-    // UC-21.2: Yêu cầu đặt lại mật khẩu
     @Override
     @Transactional
     public void requestPasswordReset(String email) throws Exception {
@@ -211,7 +197,6 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("Password reset email sent to: " + user.getEmail());
     }
 
-    // UC-21.2: Xác thực token đặt lại mật khẩu
     @Override
     public void validatePasswordResetToken(String token) throws Exception {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
@@ -228,7 +213,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    // UC-21.2: Đặt lại mật khẩu
     @Override
     @Transactional
     public void resetPassword(String token, String newPassword) throws Exception {
@@ -247,15 +231,21 @@ public class AuthServiceImpl implements AuthService {
 
         User user = resetToken.getUser();
 
-        Optional<Account> accountOptional = accountRepository.findByUser(user);
-
-        if (accountOptional.isEmpty()) {
-            throw new Exception("Không tìm thấy tài khoản liên kết với người dùng.");
+        Optional<MemberAccount> memberAccOpt = memberAccountRepository.findByMember_User_Email(user.getEmail());
+        if (memberAccOpt.isPresent()) {
+            MemberAccount memberAccount = memberAccOpt.get();
+            memberAccount.setPasswordHash(passwordEncoder.encode(newPassword));
+            memberAccountRepository.save(memberAccount);
+        } else {
+            Optional<StaffAccount> staffAccOpt = staffAccountRepository.findByStaff_User_Email(user.getEmail());
+            if (staffAccOpt.isPresent()) {
+                StaffAccount staffAccount = staffAccOpt.get();
+                staffAccount.setPasswordHash(passwordEncoder.encode(newPassword));
+                staffAccountRepository.save(staffAccount);
+            } else {
+                throw new Exception("Không tìm thấy tài khoản liên kết với người dùng.");
+            }
         }
-
-        Account account = accountOptional.get();
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
-        accountRepository.save(account);
 
         passwordResetTokenRepository.delete(resetToken);
     }
