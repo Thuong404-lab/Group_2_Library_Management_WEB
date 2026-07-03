@@ -1,0 +1,47 @@
+package com.lms.service.impl;
+
+import com.lms.config.CustomUserDetails;
+import com.lms.entity.StaffAccount;
+import com.lms.repository.StaffAccountRepository;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.stream.Collectors;
+import java.util.List;
+
+@Service
+public class CustomStaffDetailsService implements UserDetailsService {
+
+    private final StaffAccountRepository staffAccountRepository;
+
+    public CustomStaffDetailsService(StaffAccountRepository staffAccountRepository) {
+        this.staffAccountRepository = staffAccountRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        StaffAccount account = staffAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản nhân viên: " + username));
+
+        if (!"Active".equalsIgnoreCase(account.getStatus())) {
+            throw new org.springframework.security.authentication.DisabledException("Tài khoản đã bị khóa hoặc chưa kích hoạt.");
+        }
+
+        List<GrantedAuthority> authorities = account.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()))
+                .collect(Collectors.toList());
+
+        return new CustomUserDetails(
+                account.getStaff().getUser(),
+                account.getUsername(),
+                account.getPasswordHash(),
+                account.getStatus(),
+                account.getId(),
+                authorities
+        );
+    }
+}

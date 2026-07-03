@@ -32,6 +32,12 @@ public class AuthController {
         return "login";
     }
 
+    // Login cho Staff (Admin/Librarian)
+    @GetMapping("/staff-login")
+    public String showStaffLoginPage() {
+        return "staff-login";
+    }
+
     // UC-2: Register - Hiển thị form đăng ký
     @GetMapping("/register")
     public String showRegisterPage(Model model) {

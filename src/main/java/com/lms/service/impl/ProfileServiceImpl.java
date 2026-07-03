@@ -1,61 +1,61 @@
 package com.lms.service.impl;
 
 import com.lms.entity.User;
-import com.lms.entity.Account;
+import com.lms.entity.MemberAccount;
+import com.lms.entity.StaffAccount;
 import com.lms.repository.UserRepository;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.StaffAccountRepository;
 import com.lms.service.FileUploadService;
 import com.lms.service.ProfileService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Optional;
 
-/**
- * ProfileServiceImpl - Xử lý nghiệp vụ thông tin cá nhân
- * Người phụ trách: Nguyễn Tiến Thương (CE191329)
- */
 @Service
 public class ProfileServiceImpl implements ProfileService {
 
     private final UserRepository userRepository;
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
+    private final StaffAccountRepository staffAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileUploadService fileUploadService;
 
     public ProfileServiceImpl(UserRepository userRepository,
-                              AccountRepository accountRepository,
+                              MemberAccountRepository memberAccountRepository,
+                              StaffAccountRepository staffAccountRepository,
                               PasswordEncoder passwordEncoder,
                               FileUploadService fileUploadService) {
         this.userRepository = userRepository;
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
+        this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
         this.fileUploadService = fileUploadService;
     }
 
-    // Lấy thông tin cá nhân (User) dựa theo Username của tài khoản đang kết nối
+    private User getUserByUsername(String username) {
+        Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
+        if (memberAccount.isPresent()) {
+            return memberAccount.get().getMember().getUser();
+        }
+        Optional<StaffAccount> staffAccount = staffAccountRepository.findByUsername(username);
+        if (staffAccount.isPresent()) {
+            return staffAccount.get().getStaff().getUser();
+        }
+        throw new RuntimeException("Account not found for: " + username);
+    }
+
     @Override
     public User getProfile(String username) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Account not found for: " + username));
-
-        if (account.getUser() == null) {
-            throw new RuntimeException("No profile user linked to this account: " + username);
-        }
-
-        return account.getUser();
+        return getUserByUsername(username);
     }
 
     @Override
     @Transactional
     public void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        User user = account.getUser();
-        if (user == null) {
-            throw new RuntimeException("User profile not found");
-        }
+        User user = getUserByUsername(username);
 
         if (fullName == null || fullName.trim().isEmpty()) {
             throw new IllegalArgumentException("Họ và tên không được để trống!");
@@ -88,18 +88,34 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-            throw new IllegalArgumentException("Incorrect old password");
+        Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
+        if (memberAccount.isPresent()) {
+            MemberAccount account = memberAccount.get();
+            if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
+                throw new IllegalArgumentException("Incorrect old password");
+            }
+            if (oldPassword.equals(newPassword)) {
+                throw new IllegalArgumentException("New password cannot be identical to the old one");
+            }
+            account.setPasswordHash(passwordEncoder.encode(newPassword));
+            memberAccountRepository.save(account);
+            return;
         }
 
-        if (oldPassword.equals(newPassword)) {
-            throw new IllegalArgumentException("New password cannot be identical to the old one");
+        Optional<StaffAccount> staffAccount = staffAccountRepository.findByUsername(username);
+        if (staffAccount.isPresent()) {
+            StaffAccount account = staffAccount.get();
+            if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
+                throw new IllegalArgumentException("Incorrect old password");
+            }
+            if (oldPassword.equals(newPassword)) {
+                throw new IllegalArgumentException("New password cannot be identical to the old one");
+            }
+            account.setPasswordHash(passwordEncoder.encode(newPassword));
+            staffAccountRepository.save(account);
+            return;
         }
 
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
-        accountRepository.save(account);
+        throw new RuntimeException("Account not found");
     }
 }

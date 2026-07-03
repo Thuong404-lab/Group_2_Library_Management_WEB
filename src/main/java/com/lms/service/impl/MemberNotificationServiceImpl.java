@@ -1,14 +1,13 @@
 package com.lms.service.impl;
 
 import com.lms.dto.response.MemberNotificationResponse;
-import com.lms.entity.Account;
+import com.lms.entity.MemberAccount;
 import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.Notification;
 import com.lms.exception.ResourceNotFoundException;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberNotificationRepository;
-import com.lms.repository.MemberRepository;
 import com.lms.service.MemberNotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,15 +18,12 @@ import java.util.List;
 @Service
 public class MemberNotificationServiceImpl implements MemberNotificationService {
 
-    private final AccountRepository accountRepository;
-    private final MemberRepository memberRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final MemberNotificationRepository memberNotificationRepository;
 
-    public MemberNotificationServiceImpl(AccountRepository accountRepository,
-                                         MemberRepository memberRepository,
+    public MemberNotificationServiceImpl(MemberAccountRepository memberAccountRepository,
                                          MemberNotificationRepository memberNotificationRepository) {
-        this.accountRepository = accountRepository;
-        this.memberRepository = memberRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.memberNotificationRepository = memberNotificationRepository;
     }
 
@@ -47,10 +43,16 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
     }
 
     private Member getMemberByUsername(String username) {
-        return memberRepository.findByAccountUsername(username)
+        MemberAccount account = memberAccountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy độc giả với tài khoản: " + username
+                        "Không tìm thấy tài khoản: " + username
                 ));
+
+        Member member = account.getMember();
+        if (member == null) {
+            throw new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username);
+        }
+        return member;
     }
 
     private MemberNotificationResponse mapToResponse(MemberNotification memberNotification) {
