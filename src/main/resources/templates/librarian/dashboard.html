@@ -390,7 +390,7 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-classic px-4">
                                     <i class="bi bi-send me-1"></i>Gửi thông báo
                                 </button>
                             </div>
@@ -534,9 +534,9 @@
             <div class="card-classic shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <div class="d-flex flex-wrap gap-2">
-                        <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-primary"
+                        <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-classic active"
                             onclick="showBookSubSection('inventory')">Quản lý kho sách</button>
-                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-outline-primary"
+                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-outline-classic"
                             onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
                     </div>
                 </div>
@@ -579,11 +579,11 @@
                                 data-bs-target="#addBookModal">
                                 <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
                             </button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                            <button type="button" class="btn btn-outline-classic btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#categoryGenreModal">
                                 <i class="bi bi-tags me-1"></i>Quản lý danh mục
                             </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
+                            <button type="button" class="btn btn-outline-classic btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#auditModal">
                                 <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
                             </button>
@@ -622,7 +622,7 @@
                                                 th:text="${book.status}">Active</span>
                                         </td>
                                         <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                            <button type="button" class="btn btn-sm btn-outline-classic me-1"
                                                 data-bs-toggle="modal"
                                                 th:data-bs-target="${'#editBookModal' + book.bookId}">
                                                 <i class="bi bi-pencil-square"></i>
@@ -684,7 +684,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                    <button type="submit" class="btn btn-classic">Lưu</button>
                                 </div>
                             </form>
                         </div>
@@ -786,7 +786,7 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary"
                                         data-bs-dismiss="modal">Đóng</button>
-                                    <button type="submit" class="btn btn-primary">Thực hiện kiểm kê</button>
+                                    <button type="submit" class="btn btn-classic">Thực hiện kiểm kê</button>
                                 </div>
                             </form>
                         </div>
@@ -841,7 +841,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="submit" class="btn btn-classic">Lưu thay đổi</button>
                                     </div>
                                 </form>
                             </div>
@@ -902,7 +902,7 @@
                                                 <td th:text="${shelf.shelfName}">Tên vị trí</td>
                                                 <td th:text="${shelf.location}">Vị trí</td>
                                                 <td class="table-fixed-action">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                    <button type="button" class="btn btn-sm btn-outline-classic me-1"
                                                         data-bs-toggle="modal"
                                                         th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
                                                         title="Sửa">
@@ -958,7 +958,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                                    <button type="submit" class="btn btn-classic">Lưu</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -996,7 +996,7 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white border-top p-4 border-color text-end">
-                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                     data-bs-target="#addStorageModal">
                                     Thêm vị trí mới
                                 </button>
@@ -1029,7 +1029,7 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary">Lưu</button>
+                                            <button type="submit" class="btn btn-classic">Lưu</button>
                                         </div>
                                     </form>
                                 </div>
@@ -1169,8 +1169,15 @@
                 }
 
                 if (inventoryBtn && storageBtn) {
-                    inventoryBtn.classList.toggle("active", panelName !== "storage");
-                    storageBtn.classList.toggle("active", panelName === "storage");
+                    const showStorage = panelName === "storage";
+
+                    inventoryBtn.classList.toggle("btn-classic", !showStorage);
+                    inventoryBtn.classList.toggle("btn-outline-classic", showStorage);
+                    inventoryBtn.classList.toggle("active", !showStorage);
+
+                    storageBtn.classList.toggle("btn-classic", showStorage);
+                    storageBtn.classList.toggle("btn-outline-classic", !showStorage);
+                    storageBtn.classList.toggle("active", showStorage);
                 }
             }
 
