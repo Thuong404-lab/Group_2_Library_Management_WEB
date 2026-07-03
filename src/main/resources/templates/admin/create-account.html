@@ -3,7 +3,22 @@
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Tạo tài khoản</title>
+    <title th:text="${source == 'staff' ? 'Tạo tài khoản nhân viên' : 'Tạo tài khoản thành viên'}">
+        Tạo tài khoản
+    </title>
+    <style>
+        .validate-field.is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+            background-image: none !important;
+        }
+
+        .validate-field.is-valid {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
+            background-image: none !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -11,22 +26,20 @@
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Tạo Tài Khoản
-                    Mới</h2>
-                <div class="text-muted">
-                    Thêm một tài khoản thành viên hoặc nhân viên mới vào hệ thống
+                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;"
+                    th:text="${source == 'staff' ? 'Tạo Tài Khoản Nhân Sự' : 'Tạo Tài Khoản Thành Viên'}">
+                    Tạo Tài Khoản Mới
+                </h2>
+                <div class="text-muted"
+                    th:text="${source == 'staff' ? 'Thêm một tài khoản nhân viên mới vào hệ thống' : 'Thêm một tài khoản thành viên mới vào hệ thống'}">
+                    Thêm một tài khoản mới vào hệ thống
                 </div>
             </div>
             <div>
                 <a class="btn btn-outline-secondary" th:href="${backUrl}">
-                    </i> <span th:text="${backText}">Về danh sách</span>
+                    <span th:text="${backText}">← Quản lý tài khoản</span>
                 </a>
             </div>
-        </div>
-
-        <!-- Alerts -->
-        <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
-            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
         </div>
 
         <div class="row justify-content-center">
@@ -34,11 +47,13 @@
                 <div class="card-classic shadow-sm mb-4">
                     <div class="card-header bg-white border-bottom border-color p-4">
                         <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Thông tin tài khoản
+                            <i class="bi bi-person-lines-fill me-2 text-classic"></i>
+                            Thông tin tài khoản
                         </h5>
                     </div>
-                    <div class="card-body p-4">
-                        <form method="post" th:action="@{/admin/accounts/create}" autocomplete="off">
+                    <div class="card-body px-4 pb-4 pt-2">
+                        <form method="post" th:action="@{/admin/accounts/create}" autocomplete="off"
+                            id="createAccountForm" novalidate>
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                 th:value="${_csrf.token}">
                             <input type="hidden" name="source" th:value="${source}">
@@ -48,64 +63,151 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Họ tên <span
                                             class="text-danger">*</span></label>
-                                    <input class="form-control" name="fullName" required placeholder="Nguyễn Văn A">
+                                    <input class="form-control validate-field" name="fullName" required
+                                        placeholder="Nguyễn Văn A"
+                                        th:value="${formValues != null ? formValues['fullName'] : ''}"
+                                        th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['fullName'] : ''}">
+                                        Họ tên không được để trống.
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Email <span
                                             class="text-danger">*</span></label>
-                                    <input class="form-control" name="email" type="email" required
-                                        placeholder="email@example.com"  autocomplete="off">
+                                    <input class="form-control validate-field" name="email" type="email" required
+                                        placeholder="email@example.com" autocomplete="off"
+                                        th:value="${formValues != null ? formValues['email'] : ''}"
+                                        th:classappend="${fieldErrors != null and fieldErrors['email'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['email'] : ''}">
+                                        Email không hợp lệ.
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Số điện
-                                        thoại</label>
-                                    <input class="form-control" name="phone" placeholder="0912345678">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">
+                                        Số điện thoại <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control validate-field" name="phone" required pattern="[0-9]{10}"
+                                        minlength="10" maxlength="10" inputmode="numeric" placeholder="0912345678"
+                                        th:value="${formValues != null ? formValues['phone'] : ''}"
+                                        th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['phone'] : ''}">
+                                        Số điện thoại không hợp lệ.
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Username <span
                                             class="text-danger">*</span></label>
-                                    <input class="form-control" name="username" required
-                                        placeholder="Nhập tên đăng nhập" autocomplete="new-password">
+                                    <input class="form-control validate-field" name="username" required
+                                        placeholder="Nhập tên đăng nhập" autocomplete="new-password"
+                                        th:value="${formValues != null ? formValues['username'] : ''}"
+                                        th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['username'] : ''}">
+                                        Username không được để trống.
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
                                         Mật khẩu <span class="text-danger">*</span>
                                     </label>
-                                    <input class="form-control" name="password" type="password" required
-                                        placeholder="Nhập mật khẩu" autocomplete="new-password">
+                                    <input class="form-control validate-field" name="password" type="password" required
+                                        placeholder="Nhập mật khẩu" autocomplete="new-password"
+                                        th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['password'] : ''}">
+                                        Mật khẩu không được để trống.
+                                    </div>
                                 </div>
+                            </div>
 
+                            <h5 class="fw-bold mb-1 mt-3"
+                                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                <i class="bi bi-card-heading me-2 text-classic"></i>
+                                <span
+                                    th:text="${source == 'staff' ? 'Thiết lập Tài khoản Nhân viên' : 'Thiết lập Thẻ Thư viện'}">
+                                    Thiết lập tài khoản
+                                </span>
+                            </h5>
+
+                            <div class="row g-4">
                                 <div class="col-md-6" id="tierBox" th:if="${source == 'members'}">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
                                         Hạng thành viên <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select form-control" name="tierId">
+                                    <select class="form-select form-control validate-field" name="tierId" required
+                                        th:classappend="${fieldErrors != null and fieldErrors['tierId'] != null} ? 'is-invalid'">
+                                        <option value="" disabled
+                                            th:selected="${formValues == null or formValues['tierId'] == null}">
+                                            -- Chọn hạng thành viên --
+                                        </option>
                                         <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
-                                            th:text="${tier.tierName}">
+                                            th:text="${tier.tierName}"
+                                            th:selected="${formValues != null and formValues['tierId'] == tier.tierId}">
                                             Standard Member
                                         </option>
                                     </select>
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['tierId'] : ''}">
+                                        Vui lòng chọn hạng thành viên.
+                                    </div>
                                 </div>
 
                                 <div class="col-md-6" th:if="${source != 'members'}">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
                                         Loại tài khoản <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select form-control" name="accountType" id="accountType">
-                                        <option value="LIBRARIAN">Thủ thư (Librarian)</option>
-                                        <option value="ADMIN">Quản trị viên (Admin)</option>
+                                    <select class="form-select form-control validate-field" name="accountType"
+                                        id="accountType" required
+                                        th:classappend="${fieldErrors != null and fieldErrors['accountType'] != null} ? 'is-invalid'">
+                                        <option value="" disabled
+                                            th:selected="${formValues == null or #strings.isEmpty(formValues['accountType'])}">
+                                            -- Chọn loại tài khoản --
+                                        </option>
+                                        <option value="LIBRARIAN"
+                                            th:selected="${formValues != null and formValues['accountType'] == 'LIBRARIAN'}">
+                                            Thủ thư (Librarian)
+                                        </option>
+                                        <option value="ADMIN"
+                                            th:selected="${formValues != null and formValues['accountType'] == 'ADMIN'}">
+                                            Quản trị viên (Admin)
+                                        </option>
                                     </select>
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['accountType'] : ''}">
+                                        Vui lòng chọn loại tài khoản.
+                                    </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
                                         Trạng thái <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select form-control" name="status">
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                        <option value="Blocked">Blocked</option>
+                                    <select class="form-select form-control validate-field" name="status" required
+                                        th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
+                                        <option value="" disabled
+                                            th:selected="${formValues == null or #strings.isEmpty(formValues['status'])}">
+                                            -- Chọn trạng thái tài khoản --
+                                        </option>
+                                        <option value="Active"
+                                            th:selected="${formValues != null and formValues['status'] == 'Active'}">
+                                            Active
+                                        </option>
+                                        <option value="Inactive"
+                                            th:selected="${formValues != null and formValues['status'] == 'Inactive'}">
+                                            Inactive
+                                        </option>
+                                        <option value="Blocked"
+                                            th:selected="${formValues != null and formValues['status'] == 'Blocked'}">
+                                            Blocked
+                                        </option>
                                     </select>
+                                    <div class="invalid-feedback"
+                                        th:text="${fieldErrors != null ? fieldErrors['status'] : ''}">
+                                        Vui lòng chọn trạng thái tài khoản.
+                                    </div>
                                 </div>
 
                             </div>
@@ -115,8 +217,9 @@
                                 <a class="btn btn-light border shadow-sm" th:href="${backUrl}">
                                     Hủy bỏ
                                 </a>
-                                <button class="btn btn-classic px-2" type="submit">
-                                    <i class="bi bi-check-circle me-1"></i> Tạo tài khoản
+                                <button class="btn btn-classic px-4" type="submit">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Tạo tài khoản
                                 </button>
                             </div>
                         </form>
@@ -124,9 +227,106 @@
                 </div>
             </div>
         </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const form = document.getElementById("createAccountForm");
+
+                if (form == null) {
+                    return;
+                }
+
+                const fields = form.querySelectorAll(".validate-field");
+
+                function getFeedback(field) {
+                    return field.parentElement.querySelector(".invalid-feedback");
+                }
+
+                function getErrorMessage(field) {
+                    const labels = {
+                        fullName: "Họ tên",
+                        email: "Email",
+                        phone: "Số điện thoại",
+                        username: "Username",
+                        password: "Mật khẩu",
+                        tierId: "Hạng thành viên",
+                        accountType: "Loại tài khoản",
+                        status: "Trạng thái tài khoản"
+                    };
+
+                    if (field.validity.valueMissing) {
+                        if (field.tagName === "SELECT") {
+                            return "Vui lòng chọn " + labels[field.name].toLowerCase() + ".";
+                        }
+                        return labels[field.name] + " không được để trống.";
+                    }
+
+                    if (field.name === "phone") {
+                        return "Số điện thoại phải gồm đúng 10 chữ số.";
+                    }
+
+                    if (field.name === "email" && field.validity.typeMismatch) {
+                        return "Email không đúng định dạng.";
+                    }
+
+                    return "Giá trị không hợp lệ.";
+                }
+
+                function validateField(field) {
+                    const value = field.value.trim();
+                    const feedback = getFeedback(field);
+
+                    if (!field.hasAttribute("required") && value === "") {
+                        field.classList.remove("is-invalid", "is-valid");
+                        feedback.textContent = "";
+                        return true;
+                    }
+
+                    if (!field.checkValidity()) {
+                        field.classList.remove("is-valid");
+                        field.classList.add("is-invalid");
+                        feedback.textContent = getErrorMessage(field);
+                        return false;
+                    }
+
+                    field.classList.remove("is-invalid");
+                    field.classList.add("is-valid");
+                    feedback.textContent = "";
+                    return true;
+                }
+
+                fields.forEach(function (field) {
+                    field.addEventListener("input", function () {
+                        validateField(field);
+                    });
+
+                    field.addEventListener("change", function () {
+                        validateField(field);
+                    });
+
+                    field.addEventListener("blur", function () {
+                        validateField(field);
+                    });
+                });
+
+                form.addEventListener("submit", function (event) {
+                    let isFormValid = true;
+
+                    fields.forEach(function (field) {
+                        if (!validateField(field)) {
+                            isFormValid = false;
+                        }
+                    });
+
+                    if (!isFormValid) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                });
+            });
+        </script>
     </div>
 
-    
 </body>
 
 </html>

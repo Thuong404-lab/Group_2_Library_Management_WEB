@@ -7,8 +7,17 @@
   <head>
     <title>Đánh giá của tôi</title>
     <style>
+      .member-page {
+        max-width: 1250px;
+      }
+      .member-page-title {
+        color: #4a3b32;
+        font-family: "Playfair Display", serif;
+      }
       .review-card {
-        border-left: 3px solid #8b5a2b;
+        border: 1px solid rgba(139, 90, 43, 0.14);
+        border-left: 4px solid #8b5a2b;
+        border-radius: 8px;
         transition: box-shadow 0.2s;
       }
       .review-card:hover {
@@ -54,27 +63,97 @@
           background-color 0.15s ease,
           font-weight 0.15s ease;
       }
+      .rating-picker.is-invalid .rating-star {
+        color: #dc3545;
+      }
+      .validate-field.is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+        background-image: none !important;
+      }
       .book-option:hover {
         background-color: rgba(139, 90, 43, 0.08);
         font-weight: 600;
+      }
+      .sent-review-card {
+        background: #fffdfa;
+        border: 1px solid rgba(139, 90, 43, 0.14);
+        border-left: 4px solid #8b5a2b;
+        border-radius: 8px;
+        box-shadow: 0 4px 14px rgba(74, 59, 50, 0.07) !important;
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+      }
+      .sent-review-card:hover {
+        box-shadow: 0 10px 24px rgba(74, 59, 50, 0.12) !important;
+        transform: translateY(-1px);
+      }
+      .sent-review-cover {
+        width: 60px;
+        height: 84px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid rgba(139, 90, 43, 0.12);
+      }
+      .sent-review-title {
+        color: #2c1e16;
+        font-family: 'Playfair Display', serif;
+      }
+      .sent-review-rating {
+        color: #c8942d;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .sent-review-status {
+        background: #edf5ed;
+        color: #3f6f45;
+        border: 1px solid rgba(63, 111, 69, 0.22);
+        font-weight: 700;
+      }
+      .sent-review-status.pending {
+        background: #f5eadf;
+        color: #8b5a2b;
+        border-color: rgba(139, 90, 43, 0.2);
+      }
+      .sent-review-comment {
+        background: #fbf6ee;
+        border-left: 3px solid #8b5a2b;
+        color: #3f3128;
+      }
+      .librarian-response-box {
+        background: #f1f6ef;
+        border-left: 3px solid #6f8a57;
+        color: #3f3128;
+      }
+      .librarian-response-title {
+        color: #557143;
+      }
+      .btn-review-classic {
+        border-color: #8b5a2b;
+        color: #fff;
+        background: #8b5a2b;
+        font-weight: 700;
+      }
+      .btn-review-classic:hover,
+      .btn-review-classic:focus {
+        background: #74481f;
+        border-color: #74481f;
+        color: #fff;
       }
     </style>
   </head>
 
   <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
+    <div layout:fragment="content" class="container member-page mt-4 mb-5">
       <div
         class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
       >
         <div>
           <h2
-            class="fw-bold mb-1"
-            style="
-              font-family: &quot;Playfair Display&quot;, serif;
-              color: #4a3b32;
-            "
+            class="member-page-title fw-bold mb-1"
           >
-            <i class="bi bi-star-fill me-2" style="color: #8b5a2b"></i>Đánh giá
+            Đánh giá
             của tôi
           </h2>
           <div class="text-muted">
@@ -101,13 +180,16 @@
           th:action="@{/member/interaction/reviews}"
           th:object="${reviewRequest}"
           method="post"
+          id="memberReviewForm"
+          novalidate
         >
           <div class="mb-3">
             <label class="form-label fw-bold">Sách</label>
             <input
               type="text"
               id="bookSearchInput"
-              class="form-control"
+              class="form-control validate-field"
+              th:classappend="${#fields.hasErrors('bookId')} ? 'is-invalid'"
               placeholder="Nhập tên sách để tìm..."
               autocomplete="off"
             />
@@ -131,7 +213,8 @@
               </div>
             </div>
             <div
-              class="text-danger small mt-1"
+              id="bookIdFeedback"
+              class="invalid-feedback d-block"
               th:if="${#fields.hasErrors('bookId')}"
               th:errors="*{bookId}"
             ></div>
@@ -200,9 +283,9 @@
               </div>
             </div>
             <div
-              class="text-danger small mt-1"
-              th:if="${#fields.hasErrors('rating')}"
-              th:errors="*{rating}"
+              id="ratingFeedback"
+              class="invalid-feedback d-block"
+              th:text="${#fields.hasErrors('rating') ? #fields.errors('rating')[0] : ''}"
             ></div>
           </div>
 
@@ -227,7 +310,7 @@
             class="btn text-white px-4"
             style="background: #8b5a2b"
           >
-            <i class="bi bi-send me-1"></i>Gửi đánh giá
+            Gửi đánh giá
           </button>
         </form>
       </div>
@@ -248,18 +331,17 @@
 
       <div
         th:each="review : ${myReviews}"
-        class="bg-white rounded shadow-sm p-4 mb-4 review-card"
+        class="p-4 mb-4 sent-review-card"
       >
         <div class="d-flex justify-content-between align-items-start mb-3">
           <div class="d-flex align-items-center gap-3">
             <img
               th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
-              class="rounded shadow-sm"
+              class="sent-review-cover shadow-sm"
               alt="Book"
-              style="width: 54px; height: 76px; object-fit: cover"
             />
             <div>
-              <div class="fw-bold fs-5" th:text="${review.book.title}">
+              <div class="fw-bold fs-5 sent-review-title" th:text="${review.book.title}">
                 Tên sách
               </div>
               <div class="small text-muted">
@@ -277,7 +359,7 @@
             </div>
           </div>
           <div class="text-end">
-            <div class="text-warning fs-5 mb-1">
+            <div class="sent-review-rating fs-5 mb-1">
               <span th:each="i : ${#numbers.sequence(1, review.rating)}"
                 >★</span
               >
@@ -292,12 +374,12 @@
               Đánh giá ngày
             </div>
             <span
-              class="badge bg-success mt-2"
+              class="badge sent-review-status mt-2"
               th:if="${review.status == 'APPROVED'}"
               >Đã duyệt</span
             >
             <span
-              class="badge bg-warning text-dark mt-2"
+              class="badge sent-review-status pending mt-2"
               th:if="${review.status == 'PENDING'}"
               >Chờ duyệt</span
             >
@@ -305,19 +387,17 @@
         </div>
 
         <div
-          class="p-3 rounded mb-3 lh-lg"
-          style="background: #fdfbf7; border-left: 3px solid #8b5a2b"
+          class="p-3 rounded mb-3 lh-lg sent-review-comment"
           th:text="${review.comment}"
         >
           Nội dung đánh giá
         </div>
 
         <div
-          class="p-3 rounded mb-3"
+          class="p-3 rounded mb-3 librarian-response-box"
           th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
-          style="background: #f7fbff; border-left: 3px solid #0d6efd"
         >
-          <div class="fw-bold mb-1" style="color: #0d6efd">
+          <div class="fw-bold mb-1 librarian-response-title">
             Phản hồi của thủ thư
           </div>
           <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
@@ -325,9 +405,9 @@
 
         <a
           th:href="@{'/books/' + ${review.book.bookId}}"
-          class="btn btn-sm btn-outline-secondary"
+          class="btn btn-sm btn-review-classic"
         >
-          <i class="bi bi-box-arrow-up-right me-1"></i>Xem sách
+          Xem sách
         </a>
       </div>
 
@@ -336,6 +416,29 @@
         const bookList = document.getElementById("bookList");
         const selectedBookId = document.getElementById("selectedBookId");
 
+
+        function setBookError(message) {
+          bookSearchInput.classList.add("is-invalid");
+          let feedback = document.getElementById("bookIdFeedback");
+
+          if (feedback == null) {
+            feedback = document.createElement("div");
+            feedback.id = "bookIdFeedback";
+            feedback.className = "invalid-feedback d-block";
+            selectedBookId.insertAdjacentElement("afterend", feedback);
+          }
+
+          feedback.textContent = message;
+        }
+
+        function clearBookError() {
+          bookSearchInput.classList.remove("is-invalid");
+          const feedback = document.getElementById("bookIdFeedback");
+
+          if (feedback != null) {
+            feedback.textContent = "";
+          }
+        }
         const originalBookOptions = Array.from(
           document.querySelectorAll(".book-option"),
         );
@@ -343,6 +446,7 @@
         bookSearchInput.addEventListener("input", function () {
           const keyword = this.value.trim().toLowerCase();
           selectedBookId.value = "";
+          clearBookError();
 
           bookList.innerHTML = "";
 
@@ -363,6 +467,7 @@
           option.addEventListener("click", function () {
             bookSearchInput.value = this.dataset.title;
             selectedBookId.value = this.dataset.id;
+            clearBookError();
           });
         });
 
@@ -381,9 +486,28 @@
           });
         }
 
+        function setRatingError(message) {
+          ratingPicker.classList.add("is-invalid");
+          const feedback = document.getElementById("ratingFeedback");
+
+          if (feedback != null) {
+            feedback.textContent = message;
+          }
+        }
+
+        function clearRatingError() {
+          ratingPicker.classList.remove("is-invalid");
+          const feedback = document.getElementById("ratingFeedback");
+
+          if (feedback != null) {
+            feedback.textContent = "";
+          }
+        }
+
         function setRating(value) {
           ratingInput.value = value || "";
           updateRatingStars(value);
+          clearRatingError();
         }
 
         ratingStars.forEach((star) => {
@@ -401,6 +525,31 @@
         });
 
         setRating(Number(ratingInput.value) || 0);
+        const reviewForm = document.getElementById("memberReviewForm");
+
+        if (reviewForm != null) {
+          reviewForm.addEventListener("submit", function (event) {
+            let isValid = true;
+
+            clearBookError();
+            clearRatingError();
+
+            if (selectedBookId.value.trim() === "") {
+              setBookError("Vui lòng chọn sách.");
+              isValid = false;
+            }
+
+            if (ratingInput.value.trim() === "") {
+              setRatingError("Vui lòng chọn đánh giá sao.");
+              isValid = false;
+            }
+
+            if (!isValid) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          });
+        }
       </script>
     </div>
   </body>
