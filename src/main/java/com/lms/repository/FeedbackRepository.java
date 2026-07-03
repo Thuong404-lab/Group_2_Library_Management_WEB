@@ -18,6 +18,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
     @EntityGraph(attributePaths = {"book", "book.authors"})
     List<Feedback> findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(Integer memberId, String status);
 
+    @EntityGraph(attributePaths = {"book", "book.authors"})
+    Page<Feedback> findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
+            Integer memberId, String status, Pageable pageable);
+
     @EntityGraph(attributePaths = {"member", "member.user"})
     List<Feedback> findByBook_BookIdAndStatusOrderByCreatedDateDesc(Integer bookId, String status);
 }

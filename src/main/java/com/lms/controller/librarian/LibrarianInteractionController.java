@@ -23,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/librarian/interaction")
 public class LibrarianInteractionController {
 
+    private static final int PAGE_SIZE = 5;
+
     private final LibrarianInteractionService librarianInteractionService;
 
     public LibrarianInteractionController(LibrarianInteractionService librarianInteractionService) {
@@ -36,7 +38,7 @@ public class LibrarianInteractionController {
             Model model) {
 
         model.addAttribute("reviews", librarianInteractionService.getReviewsForModeration(
-                status, PageRequest.of(page, 20, Sort.by("createdDate").descending())));
+                status, PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("createdDate").descending())));
 
         return "librarian/reviews-response";
     }
@@ -122,7 +124,7 @@ public class LibrarianInteractionController {
             Model model) {
 
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(
-                PageRequest.of(page, 20, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("requestId").ascending())));
 
         return "librarian/acquisition-request-list";
     }

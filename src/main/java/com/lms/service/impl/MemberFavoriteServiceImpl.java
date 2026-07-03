@@ -5,6 +5,8 @@ import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.MemberFavoriteService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +81,14 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         Member member = getMemberByUsername(username);
 
         return favoritesRepository.findByMember_MemberId(member.getMemberId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Favorites> getMyFavorites(String username, Pageable pageable) {
+        Member member = getMemberByUsername(username);
+
+        return favoritesRepository.findByMember_MemberId(member.getMemberId(), pageable);
     }
 
     @Override

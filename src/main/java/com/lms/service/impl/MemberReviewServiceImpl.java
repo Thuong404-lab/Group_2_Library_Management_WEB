@@ -11,6 +11,8 @@ import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.FeedbackRepository;
 import com.lms.service.MemberReviewService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,6 +80,21 @@ public class MemberReviewServiceImpl implements MemberReviewService {
 
         return feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
                 member.getMemberId(), DELETED_BY_MEMBER_STATUS);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Feedback> getMyReviews(String username, Pageable pageable) {
+        MemberAccount account = memberAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n: " + username));
+
+        Member member = account.getMember();
+        if (member == null) {
+            throw new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘á»™c giáº£ vá»›i tÃ i khoáº£n: " + username);
+        }
+
+        return feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
+                member.getMemberId(), DELETED_BY_MEMBER_STATUS, pageable);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.lms.repository.BookRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MemberNotificationService;
 import com.lms.service.MemberReviewService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,8 @@ import com.lms.service.MemberBookAcquisitionService;
 @Controller
 @RequestMapping("/member/interaction")
 public class MemberInteractionController {
+
+    private static final int PAGE_SIZE = 5;
 
     private final MemberNotificationService memberNotificationService;
     private final MemberReviewService memberReviewService;
@@ -64,12 +67,15 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/reviews")
-    public String showReviewForm(Model model, Principal principal) {
+    public String showReviewForm(Model model,
+                                 Principal principal,
+                                 @RequestParam(defaultValue = "0") int page) {
         if (!model.containsAttribute("reviewRequest")) {
             model.addAttribute("reviewRequest", new MemberReviewSubmitRequest());
         }
         model.addAttribute("books", bookRepository.findAll());
-        model.addAttribute("myReviews", memberReviewService.getMyReviews(principal.getName()));
+        model.addAttribute("myReviews", memberReviewService.getMyReviews(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/reviews";
     }
@@ -83,7 +89,8 @@ public class MemberInteractionController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("books", bookRepository.findAll());
-            model.addAttribute("myReviews", memberReviewService.getMyReviews(principal.getName()));
+            model.addAttribute("myReviews", memberReviewService.getMyReviews(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/reviews";
         }
 
@@ -95,7 +102,8 @@ public class MemberInteractionController {
         } catch (ValidationException | ResourceNotFoundException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("books", bookRepository.findAll());
-            model.addAttribute("myReviews", memberReviewService.getMyReviews(principal.getName()));
+            model.addAttribute("myReviews", memberReviewService.getMyReviews(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/reviews";
         }
     }
@@ -175,8 +183,11 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/favorites")
-    public String viewFavorites(Model model, Principal principal) {
-        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(principal.getName()));
+    public String viewFavorites(Model model,
+                                Principal principal,
+                                @RequestParam(defaultValue = "0") int page) {
+        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/favorites";
     }
