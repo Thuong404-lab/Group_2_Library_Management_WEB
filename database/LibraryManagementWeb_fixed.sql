@@ -1,20 +1,90 @@
 ﻿USE [master]
 GO
-
-IF DB_ID(N'LibraryManagementWeb') IS NOT NULL
-BEGIN
-    ALTER DATABASE [LibraryManagementWeb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE [LibraryManagementWeb];
-END
+/****** Object:  Database [tes]    Script Date: 7/3/2026 5:56:34 PM ******/
+CREATE DATABASE [tes]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'tes', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\tes.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+ LOG ON 
+( NAME = N'tes_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\tes_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+ WITH CATALOG_COLLATION = DATABASE_DEFAULT, LEDGER = OFF
 GO
-
-CREATE DATABASE [LibraryManagementWeb];
+ALTER DATABASE [tes] SET COMPATIBILITY_LEVEL = 160
 GO
-
-USE [LibraryManagementWeb];
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [tes].[dbo].[sp_fulltext_database] @action = 'enable'
+end
 GO
-
-/****** Object:  Table [dbo].[Account_Roles]    Script Date: 28/06/2026 11:36:46 pm ******/
+ALTER DATABASE [tes] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [tes] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [tes] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [tes] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [tes] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [tes] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [tes] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [tes] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [tes] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [tes] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [tes] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [tes] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [tes] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [tes] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [tes] SET  ENABLE_BROKER 
+GO
+ALTER DATABASE [tes] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [tes] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [tes] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [tes] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [tes] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [tes] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [tes] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [tes] SET RECOVERY FULL 
+GO
+ALTER DATABASE [tes] SET  MULTI_USER 
+GO
+ALTER DATABASE [tes] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [tes] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [tes] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [tes] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [tes] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [tes] SET ACCELERATED_DATABASE_RECOVERY = OFF  
+GO
+EXEC sys.sp_db_vardecimal_storage_format N'tes', N'ON'
+GO
+ALTER DATABASE [tes] SET QUERY_STORE = ON
+GO
+ALTER DATABASE [tes] SET QUERY_STORE (OPERATION_MODE = READ_WRITE, CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30), DATA_FLUSH_INTERVAL_SECONDS = 900, INTERVAL_LENGTH_MINUTES = 60, MAX_STORAGE_SIZE_MB = 1000, QUERY_CAPTURE_MODE = AUTO, SIZE_BASED_CLEANUP_MODE = AUTO, MAX_PLANS_PER_QUERY = 200, WAIT_STATS_CAPTURE_MODE = ON)
+GO
+USE [tes]
+GO
+/****** Object:  Table [dbo].[Account_Roles]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -26,10 +96,10 @@ PRIMARY KEY CLUSTERED
 (
 	[account_id] ASC,
 	[role_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Accounts]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Accounts]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -43,10 +113,10 @@ CREATE TABLE [dbo].[Accounts](
 PRIMARY KEY CLUSTERED 
 (
 	[account_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Authors]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Authors]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -57,10 +127,10 @@ CREATE TABLE [dbo].[Authors](
 PRIMARY KEY CLUSTERED 
 (
 	[author_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BookAcquisitionRequests]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[BookAcquisitionRequests]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -74,10 +144,10 @@ CREATE TABLE [dbo].[BookAcquisitionRequests](
 PRIMARY KEY CLUSTERED 
 (
 	[request_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BookAuthors]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[BookAuthors]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -89,10 +159,10 @@ PRIMARY KEY CLUSTERED
 (
 	[book_id] ASC,
 	[author_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BookDisposals]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[BookDisposals]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -107,10 +177,10 @@ CREATE TABLE [dbo].[BookDisposals](
 PRIMARY KEY CLUSTERED 
 (
 	[disposal_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BookItems]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[BookItems]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -124,10 +194,10 @@ CREATE TABLE [dbo].[BookItems](
 PRIMARY KEY CLUSTERED 
 (
 	[book_item_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Books]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Books]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -139,13 +209,14 @@ CREATE TABLE [dbo].[Books](
 	[isbn] [varchar](20) NULL,
 	[description] [nvarchar](max) NULL,
 	[status] [varchar](50) NULL,
+	[image] [nvarchar](500) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[book_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BorrowDetails]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[BorrowDetails]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -162,10 +233,10 @@ CREATE TABLE [dbo].[BorrowDetails](
 PRIMARY KEY CLUSTERED 
 (
 	[borrow_detail_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Borrows]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Borrows]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -179,10 +250,10 @@ CREATE TABLE [dbo].[Borrows](
 PRIMARY KEY CLUSTERED 
 (
 	[borrow_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Categories]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Categories]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -193,10 +264,10 @@ CREATE TABLE [dbo].[Categories](
 PRIMARY KEY CLUSTERED 
 (
 	[category_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Favorites]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Favorites]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -208,10 +279,10 @@ PRIMARY KEY CLUSTERED
 (
 	[member_id] ASC,
 	[book_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Feedbacks]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Feedbacks]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -229,10 +300,10 @@ CREATE TABLE [dbo].[Feedbacks](
 PRIMARY KEY CLUSTERED 
 (
 	[feedback_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Genres]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Genres]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -244,10 +315,10 @@ CREATE TABLE [dbo].[Genres](
 PRIMARY KEY CLUSTERED 
 (
 	[genre_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[MemberNotifications]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[MemberNotifications]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -261,10 +332,10 @@ PRIMARY KEY CLUSTERED
 (
 	[member_id] ASC,
 	[notification_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Members]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Members]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -276,10 +347,10 @@ CREATE TABLE [dbo].[Members](
 PRIMARY KEY CLUSTERED 
 (
 	[member_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[MembershipTiers]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[MembershipTiers]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -294,10 +365,10 @@ CREATE TABLE [dbo].[MembershipTiers](
 PRIMARY KEY CLUSTERED 
 (
 	[tier_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Notifications]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Notifications]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -312,10 +383,26 @@ CREATE TABLE [dbo].[Notifications](
 PRIMARY KEY CLUSTERED 
 (
 	[notification_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Reservations]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[PasswordResetTokens]    Script Date: 7/3/2026 5:56:34 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[PasswordResetTokens](
+	[reset_token_id] [int] IDENTITY(1,1) NOT NULL,
+	[token] [varchar](36) NOT NULL,
+	[user_id] [int] NOT NULL,
+	[expiry_date] [datetime2](7) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[reset_token_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Reservations]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -329,10 +416,10 @@ CREATE TABLE [dbo].[Reservations](
 PRIMARY KEY CLUSTERED 
 (
 	[reservation_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Roles]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Roles]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -343,10 +430,10 @@ CREATE TABLE [dbo].[Roles](
 PRIMARY KEY CLUSTERED 
 (
 	[role_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Shelves]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Shelves]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -358,10 +445,10 @@ CREATE TABLE [dbo].[Shelves](
 PRIMARY KEY CLUSTERED 
 (
 	[shelf_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Staff]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Staff]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -373,10 +460,10 @@ CREATE TABLE [dbo].[Staff](
 PRIMARY KEY CLUSTERED 
 (
 	[staff_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SystemLogs]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[SystemLogs]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -392,10 +479,10 @@ CREATE TABLE [dbo].[SystemLogs](
 PRIMARY KEY CLUSTERED 
 (
 	[log_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SystemSettings]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[SystemSettings]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -408,10 +495,10 @@ CREATE TABLE [dbo].[SystemSettings](
 PRIMARY KEY CLUSTERED 
 (
 	[setting_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Transactions]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Transactions]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -427,10 +514,10 @@ CREATE TABLE [dbo].[Transactions](
 PRIMARY KEY CLUSTERED 
 (
 	[transaction_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Users]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Users]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -441,13 +528,14 @@ CREATE TABLE [dbo].[Users](
 	[email] [varchar](255) NOT NULL,
 	[phone] [varchar](20) NULL,
 	[status] [varchar](50) NULL,
+	[avatar] [nvarchar](500) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[user_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Wallets]    Script Date: 28/06/2026 11:36:46 pm ******/
+/****** Object:  Table [dbo].[Wallets]    Script Date: 7/3/2026 5:56:34 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -459,7 +547,7 @@ CREATE TABLE [dbo].[Wallets](
 PRIMARY KEY CLUSTERED 
 (
 	[wallet_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (1, 1)
@@ -477,27 +565,33 @@ INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (12, 3)
 INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (13, 3)
 INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (14, 3)
 INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (15, 3)
+INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (21, 3)
+INSERT [dbo].[Account_Roles] ([account_id], [role_id]) VALUES (22, 3)
 GO
 SET IDENTITY_INSERT [dbo].[Accounts] ON 
 
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (1, 1, N'admin', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (2, 2, N'librarian01', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (3, 3, N'librarian02', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (4, 4, N'member01', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (5, 5, N'member02', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (6, 6, N'member03', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (7, 7, N'member04', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (8, 8, N'member05', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (9, 9, N'member06', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (10, 10, N'member07', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (11, 11, N'member08', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (12, 12, N'member09', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (13, 13, N'member10', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (14, 14, N'member11', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (15, 15, N'member12', N'$2a$10$bJLIrjlLH.3QENfIE03./eqJDJKTF.xaMoUS4IjQU1zPzNlJK0cxu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (16, 16, N'quocanh', N'$2a$10$IuVZoed54AL1jy4eKPK3j.MjYK0BUej2yhQ655PJQxYvr4ozidHfm', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (17, 17, N'wusenminu', N'$2a$10$1mdevMAKYn07DVa091ID4.5LsatFj2b3YxUgeZW6xbP/DJIEp8seu', N'Active')
-INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (18, 18, N'sa', N'$2a$10$9g1GXlJffmuFyCpLvYSIReEWDz92PUFVHi.tgav9Z7eB35FEvcmgy', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (1, 1, N'admin', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve.', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (2, 2, N'librarian01', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve.', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (3, 3, N'librarian02', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (4, 4, N'member01', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (5, 5, N'member02', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (6, 6, N'member03', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (7, 7, N'member04', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (8, 8, N'member05', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (9, 9, N'member06', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (10, 10, N'member07', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (11, 11, N'member08', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (12, 12, N'member09', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (13, 13, N'member10', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (14, 14, N'member11', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (15, 15, N'member12', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (16, 16, N'quocanh', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (17, 17, N'wusenminu', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (18, 18, N'sa', N'$2a$10$ms3v5xqzpJCLxKyzQVPLjuYA3b6jIKMnY8SsnfKlJsSJPMN7A3ve', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (19, 19, N'nhoc2323@gmail.com', N'', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (20, 20, N'test1', N'$2a$10$OiRgm5HFnPF55ivgfoWAyuwykjkh5lKVhaWwK92bPmEjL2QrE2p5a', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (21, 21, N'test2', N'$2a$10$v00NLAXLiK2NZaA2DqHOU.t.kZmASSI9kIhVrPBQAfxPFq9mIJB4q', N'Active')
+INSERT [dbo].[Accounts] ([account_id], [user_id], [username], [password_hash], [status]) VALUES (22, 22, N'thuongnt.ce191329@gmail.com', N'', N'Active')
 SET IDENTITY_INSERT [dbo].[Accounts] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Authors] ON 
@@ -568,21 +662,21 @@ SET IDENTITY_INSERT [dbo].[BookItems] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Books] ON 
 
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (1, 1, N'Chí Phèo', N'9786040100003', N'Truyện ngắn kinh điển Việt Nam.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (2, 3, N'Clean Code', N'9786040100014', N'Sách gối đầu giường của lập trình viên.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (3, 5, N'Sapiens: Lược Sử Loài Người', N'9786040100010', N'Lịch sử tiến hóa nhân loại.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (4, 11, N'Harry Potter và Hòn Đá Phù Thủy', N'9786040100007', N'Tiểu thuyết phép thuật nổi tiếng.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (5, 10, N'Đắc Nhân Tâm', N'9786040100021', N'Nghệ thuật thu phục lòng người.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (6, 1, N'Nhà Giả Kim', N'9786040100038', N'Hành trình đi tìm kho báu.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (7, 12, N'Phía Sau Nghi Can X', N'9786040100045', N'Trinh thám Nhật Bản hấp dẫn.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (8, 1, N'Mắt Biếc', N'9786040100052', N'Tình yêu tuổi học trò buồn.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (9, 7, N'Người Giàu Có Nhất Thành Babylon', N'9786040100069', N'Bí quyết làm giàu từ xa xưa.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (10, 2, N'Dế Mèn Phiêu Lưu Ký', N'9786040100076', N'Truyện thiếu nhi kinh điển.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (11, 3, N'Clean Architecture', N'9786040100083', N'Kiến trúc phần mềm sạch.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (12, 5, N'21 Bài Học Cho Thế Kỷ 21', N'9786040100090', N'Góc nhìn sâu sắc về hiện tại.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (13, 11, N'Harry Potter và Phòng Chứa Bí Mật', N'9786040100106', N'Tập 2 của Harry Potter.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (14, 1, N'Cho Tôi Xin Một Vé Đi Tuổi Thơ', N'9786040100113', N'Ký ức tuổi thơ tươi đẹp.', N'Active')
-INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status]) VALUES (15, 12, N'Bạch Dạ Hành', N'9786040100120', N'Tiểu thuyết trinh thám ám ảnh.', N'Active')
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (1, 1, N'Chí Phèo', N'9786040100003', N'Truyện ngắn kinh điển Việt Nam.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (2, 3, N'Clean Code', N'9786040100014', N'Sách gối đầu giường của lập trình viên.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (3, 5, N'Sapiens: Lược Sử Loài Người', N'9786040100010', N'Lịch sử tiến hóa nhân loại.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (4, 11, N'Harry Potter và Hòn Đá Phù Thủy', N'9786040100007', N'Tiểu thuyết phép thuật nổi tiếng.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (5, 10, N'Đắc Nhân Tâm', N'9786040100021', N'Nghệ thuật thu phục lòng người.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (6, 1, N'Nhà Giả Kim', N'9786040100038', N'Hành trình đi tìm kho báu.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (7, 12, N'Phía Sau Nghi Can X', N'9786040100045', N'Trinh thám Nhật Bản hấp dẫn.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (8, 1, N'Mắt Biếc', N'9786040100052', N'Tình yêu tuổi học trò buồn.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (9, 7, N'Người Giàu Có Nhất Thành Babylon', N'9786040100069', N'Bí quyết làm giàu từ xa xưa.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (10, 2, N'Dế Mèn Phiêu Lưu Ký', N'9786040100076', N'Truyện thiếu nhi kinh điển.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (11, 3, N'Clean Architecture', N'9786040100083', N'Kiến trúc phần mềm sạch.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (12, 5, N'21 Bài Học Cho Thế Kỷ 21', N'9786040100090', N'Góc nhìn sâu sắc về hiện tại.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (13, 11, N'Harry Potter và Phòng Chứa Bí Mật', N'9786040100106', N'Tập 2 của Harry Potter.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (14, 1, N'Cho Tôi Xin Một Vé Đi Tuổi Thơ', N'9786040100113', N'Ký ức tuổi thơ tươi đẹp.', N'Active', NULL)
+INSERT [dbo].[Books] ([book_id], [genre_id], [title], [isbn], [description], [status], [image]) VALUES (15, 12, N'Bạch Dạ Hành', N'9786040100120', N'Tiểu thuyết trinh thám ám ảnh.', N'Active', NULL)
 SET IDENTITY_INSERT [dbo].[Books] OFF
 GO
 SET IDENTITY_INSERT [dbo].[BorrowDetails] ON 
@@ -593,6 +687,7 @@ INSERT [dbo].[BorrowDetails] ([borrow_detail_id], [borrow_id], [book_id], [book_
 INSERT [dbo].[BorrowDetails] ([borrow_detail_id], [borrow_id], [book_id], [book_item_id], [due_date], [return_date], [renew_count], [status]) VALUES (4, 4, 9, 19, CAST(N'2026-07-06T20:01:08.297' AS DateTime), NULL, 0, N'Borrowed')
 INSERT [dbo].[BorrowDetails] ([borrow_detail_id], [borrow_id], [book_id], [book_item_id], [due_date], [return_date], [renew_count], [status]) VALUES (5, 5, 5, 10, CAST(N'2026-06-08T20:01:08.297' AS DateTime), CAST(N'2026-06-06T20:01:08.297' AS DateTime), 0, N'Returned')
 INSERT [dbo].[BorrowDetails] ([borrow_detail_id], [borrow_id], [book_id], [book_item_id], [due_date], [return_date], [renew_count], [status]) VALUES (6, 6, 6, 13, CAST(N'2026-06-23T20:01:08.297' AS DateTime), NULL, 0, N'Overdue')
+INSERT [dbo].[BorrowDetails] ([borrow_detail_id], [borrow_id], [book_id], [book_item_id], [due_date], [return_date], [renew_count], [status]) VALUES (7, 7, 5, NULL, CAST(N'2026-07-15T22:48:08.387' AS DateTime), NULL, 0, N'Pending')
 SET IDENTITY_INSERT [dbo].[BorrowDetails] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Borrows] ON 
@@ -603,6 +698,7 @@ INSERT [dbo].[Borrows] ([borrow_id], [member_id], [staff_id], [borrow_date], [st
 INSERT [dbo].[Borrows] ([borrow_id], [member_id], [staff_id], [borrow_date], [status]) VALUES (4, 7, 3, CAST(N'2026-06-22T20:01:08.297' AS DateTime), N'Active')
 INSERT [dbo].[Borrows] ([borrow_id], [member_id], [staff_id], [borrow_date], [status]) VALUES (5, 2, 2, CAST(N'2026-05-25T20:01:08.297' AS DateTime), N'Returned')
 INSERT [dbo].[Borrows] ([borrow_id], [member_id], [staff_id], [borrow_date], [status]) VALUES (6, 9, 3, CAST(N'2026-06-09T20:01:08.297' AS DateTime), N'Overdue')
+INSERT [dbo].[Borrows] ([borrow_id], [member_id], [staff_id], [borrow_date], [status]) VALUES (7, 17, NULL, CAST(N'2026-07-01T22:48:08.383' AS DateTime), N'Pending')
 SET IDENTITY_INSERT [dbo].[Borrows] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Categories] ON 
@@ -625,6 +721,9 @@ INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (3, 11)
 INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (4, 1)
 INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (5, 9)
 INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (6, 7)
+INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (16, 12)
+INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (16, 15)
+INSERT [dbo].[Favorites] ([member_id], [book_id]) VALUES (17, 14)
 GO
 SET IDENTITY_INSERT [dbo].[Feedbacks] ON 
 
@@ -638,6 +737,8 @@ INSERT [dbo].[Feedbacks] ([feedback_id], [member_id], [book_id], [rating], [comm
 INSERT [dbo].[Feedbacks] ([feedback_id], [member_id], [book_id], [rating], [comment], [created_date], [status], [librarian_response], [response_date]) VALUES (8, 13, 3, 1, N'Quá dở', CAST(N'2026-06-28T01:50:03.073' AS DateTime), N'APPROVED', N'Ok hehe', CAST(N'2026-06-28T20:23:10.113' AS DateTime))
 INSERT [dbo].[Feedbacks] ([feedback_id], [member_id], [book_id], [rating], [comment], [created_date], [status], [librarian_response], [response_date]) VALUES (9, 13, 6, 4, N'Hay lắm', CAST(N'2026-06-28T01:50:17.470' AS DateTime), N'APPROVED', N'Ok', CAST(N'2026-06-28T20:12:18.697' AS DateTime))
 INSERT [dbo].[Feedbacks] ([feedback_id], [member_id], [book_id], [rating], [comment], [created_date], [status], [librarian_response], [response_date]) VALUES (10, 13, 12, 5, N'Hay quá đi', CAST(N'2026-06-28T17:43:36.710' AS DateTime), N'APPROVED', N'Ok cảm ơn', CAST(N'2026-06-28T17:47:04.447' AS DateTime))
+INSERT [dbo].[Feedbacks] ([feedback_id], [member_id], [book_id], [rating], [comment], [created_date], [status], [librarian_response], [response_date]) VALUES (11, 16, 5, 4, N'll', CAST(N'2026-06-30T16:07:09.857' AS DateTime), N'APPROVED', NULL, NULL)
+INSERT [dbo].[Feedbacks] ([feedback_id], [member_id], [book_id], [rating], [comment], [created_date], [status], [librarian_response], [response_date]) VALUES (12, 17, 4, 5, N'égrsdh', CAST(N'2026-07-01T22:48:25.477' AS DateTime), N'APPROVED', N'nguuu', CAST(N'2026-07-01T22:48:47.277' AS DateTime))
 SET IDENTITY_INSERT [dbo].[Feedbacks] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Genres] ON 
@@ -698,6 +799,7 @@ INSERT [dbo].[MemberNotifications] ([member_id], [notification_id], [is_read], [
 INSERT [dbo].[MemberNotifications] ([member_id], [notification_id], [is_read], [read_date]) VALUES (13, 10, 0, NULL)
 INSERT [dbo].[MemberNotifications] ([member_id], [notification_id], [is_read], [read_date]) VALUES (13, 12, 0, NULL)
 INSERT [dbo].[MemberNotifications] ([member_id], [notification_id], [is_read], [read_date]) VALUES (13, 13, 0, NULL)
+INSERT [dbo].[MemberNotifications] ([member_id], [notification_id], [is_read], [read_date]) VALUES (17, 14, 1, CAST(N'2026-07-01T22:49:01.047' AS DateTime))
 GO
 SET IDENTITY_INSERT [dbo].[Members] ON 
 
@@ -716,6 +818,10 @@ INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (12, 15, 3)
 INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (13, 16, NULL)
 INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (14, 17, NULL)
 INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (15, 18, NULL)
+INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (16, 19, NULL)
+INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (17, 20, NULL)
+INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (18, 21, 1)
+INSERT [dbo].[Members] ([member_id], [user_id], [tier_id]) VALUES (19, 22, 1)
 SET IDENTITY_INSERT [dbo].[Members] OFF
 GO
 SET IDENTITY_INSERT [dbo].[MembershipTiers] ON 
@@ -736,7 +842,13 @@ INSERT [dbo].[Notifications] ([notification_id], [staff_id], [title], [content],
 INSERT [dbo].[Notifications] ([notification_id], [staff_id], [title], [content], [created_date], [status]) VALUES (11, NULL, N'Phản hồi đánh giá', N'Thủ thư đã phản hồi đánh giá của bạn cho sách ''Phía Sau Nghi Can X''.', CAST(N'2026-06-28T20:23:27.203' AS DateTime), N'Active')
 INSERT [dbo].[Notifications] ([notification_id], [staff_id], [title], [content], [created_date], [status]) VALUES (12, NULL, N'abc', N'abc', CAST(N'2026-06-28T20:23:55.437' AS DateTime), N'Active')
 INSERT [dbo].[Notifications] ([notification_id], [staff_id], [title], [content], [created_date], [status]) VALUES (13, NULL, N'M ngu', N'abc', CAST(N'2026-06-28T21:13:36.080' AS DateTime), N'Active')
+INSERT [dbo].[Notifications] ([notification_id], [staff_id], [title], [content], [created_date], [status]) VALUES (14, NULL, N'Phản hồi đánh giá', N'Thủ thư đã phản hồi đánh giá của bạn cho sách ''Harry Potter và Hòn Đá Phù Thủy''.', CAST(N'2026-07-01T22:48:47.280' AS DateTime), N'Active')
 SET IDENTITY_INSERT [dbo].[Notifications] OFF
+GO
+SET IDENTITY_INSERT [dbo].[PasswordResetTokens] ON 
+
+INSERT [dbo].[PasswordResetTokens] ([reset_token_id], [token], [user_id], [expiry_date]) VALUES (1, N'a608ceb6-c42b-47b1-9b9f-ef9e4c6cc708', 20, CAST(N'2026-07-03T13:11:11.6583185' AS DateTime2))
+SET IDENTITY_INSERT [dbo].[PasswordResetTokens] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Roles] ON 
 
@@ -761,282 +873,38 @@ INSERT [dbo].[Staff] ([staff_id], [user_id], [staff_type]) VALUES (2, 2, N'Libra
 INSERT [dbo].[Staff] ([staff_id], [user_id], [staff_type]) VALUES (3, 3, N'Librarian')
 SET IDENTITY_INSERT [dbo].[Staff] OFF
 GO
-SET IDENTITY_INSERT [dbo].[SystemSettings] ON 
+SET IDENTITY_INSERT [dbo].[SystemLogs] ON 
 
-INSERT [dbo].[SystemSettings] ([setting_id], [setting_key], [setting_value], [description]) VALUES (1, N'Fine_Per_Day', N'5000', N'Phí phạt trễ hạn tính theo ngày (VND)')
-INSERT [dbo].[SystemSettings] ([setting_id], [setting_key], [setting_value], [description]) VALUES (2, N'Max_Borrow_Days', N'14', N'Số ngày mượn sách tối đa tiêu chuẩn')
-INSERT [dbo].[SystemSettings] ([setting_id], [setting_key], [setting_value], [description]) VALUES (3, N'Deposit_Amount', N'50000', N'Tiền cọc đặt trước một quyển sách (VND)')
-SET IDENTITY_INSERT [dbo].[SystemSettings] OFF
-GO
-SET IDENTITY_INSERT [dbo].[Transactions] ON 
-
-INSERT [dbo].[Transactions] ([transaction_id], [wallet_id], [borrow_id], [transaction_type], [amount], [transaction_date], [status]) VALUES (1, 1, NULL, N'TOP_UP', CAST(200000.00 AS Decimal(18, 2)), CAST(N'2026-06-09T20:01:08.297' AS DateTime), N'Completed')
-INSERT [dbo].[Transactions] ([transaction_id], [wallet_id], [borrow_id], [transaction_type], [amount], [transaction_date], [status]) VALUES (2, 1, 1, N'BORROW_FEE', CAST(-5000.00 AS Decimal(18, 2)), CAST(N'2026-06-14T20:01:08.297' AS DateTime), N'Completed')
-INSERT [dbo].[Transactions] ([transaction_id], [wallet_id], [borrow_id], [transaction_type], [amount], [transaction_date], [status]) VALUES (3, 3, NULL, N'TOP_UP', CAST(500000.00 AS Decimal(18, 2)), CAST(N'2026-05-25T20:01:08.297' AS DateTime), N'Completed')
-INSERT [dbo].[Transactions] ([transaction_id], [wallet_id], [borrow_id], [transaction_type], [amount], [transaction_date], [status]) VALUES (4, 3, 2, N'BORROW_FEE', CAST(-2500.00 AS Decimal(18, 2)), CAST(N'2026-06-04T20:01:08.297' AS DateTime), N'Completed')
-INSERT [dbo].[Transactions] ([transaction_id], [wallet_id], [borrow_id], [transaction_type], [amount], [transaction_date], [status]) VALUES (5, 5, NULL, N'TOP_UP', CAST(1000000.00 AS Decimal(18, 2)), CAST(N'2026-06-14T20:01:08.297' AS DateTime), N'Completed')
-INSERT [dbo].[Transactions] ([transaction_id], [wallet_id], [borrow_id], [transaction_type], [amount], [transaction_date], [status]) VALUES (6, 2, 5, N'BORROW_FEE', CAST(-5000.00 AS Decimal(18, 2)), CAST(N'2026-05-25T20:01:08.297' AS DateTime), N'Completed')
-SET IDENTITY_INSERT [dbo].[Transactions] OFF
-GO
-SET IDENTITY_INSERT [dbo].[Users] ON 
-
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (1, N'Admin Tổng', N'admin@library.vn', N'0901000001', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (2, N'Nguyễn Thị Lan', N'lib01@library.vn', N'', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (3, N'Trần Văn Minh', N'lib02@library.vn', N'0902000002', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (4, N'Lê Thị Hoa', N'member01@gmail.com', N'0903000001', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (5, N'Phạm Minh Tuấn', N'member02@gmail.com', N'0903000002', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (6, N'Nguyễn Văn An', N'member03@gmail.com', N'0903000003', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (7, N'Trần Thị Mai', N'member04@gmail.com', N'0903000004', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (8, N'Hoàng Văn Dũng', N'member05@gmail.com', N'0903000005', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (9, N'Đặng Thu Hà', N'member06@gmail.com', N'0903000006', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (10, N'Vũ Đức Cường', N'member07@gmail.com', N'0903000007', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (11, N'Bùi Thị Thanh', N'member08@gmail.com', N'0903000008', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (12, N'Đỗ Xuân Hùng', N'member09@gmail.com', N'0903000009', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (13, N'Ngô Bảo Châu', N'member10@gmail.com', N'0903000010', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (14, N'Lý Hải Yến', N'member11@gmail.com', N'0903000011', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (15, N'Dương Tấn Sang', N'member12@gmail.com', N'0903000012', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (16, N'Quốc Anh', N'tnquocanh.ce191655@gmail.com', N'0856989555', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (17, N'Thế Hiển', N'quocanh26032005@gmail.com', N'0856989555', N'Active')
-INSERT [dbo].[Users] ([user_id], [full_name], [email], [phone], [status]) VALUES (18, N'uuuwuwuuw', N'dantnl.ce191088@gmail.com', N'08569895553', N'Active')
-SET IDENTITY_INSERT [dbo].[Users] OFF
-GO
-SET IDENTITY_INSERT [dbo].[Wallets] ON 
-
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (1, 1, CAST(150000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (2, 2, CAST(50000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (3, 3, CAST(300000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (4, 4, CAST(0.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (5, 5, CAST(500000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (6, 6, CAST(1200000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (7, 7, CAST(10000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (8, 8, CAST(250000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (9, 9, CAST(0.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (10, 10, CAST(80000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (11, 11, CAST(15000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (12, 12, CAST(1000000.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (13, 13, CAST(0.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (14, 14, CAST(0.00 AS Decimal(18, 2)))
-INSERT [dbo].[Wallets] ([wallet_id], [member_id], [balance]) VALUES (15, 15, CAST(0.00 AS Decimal(18, 2)))
-SET IDENTITY_INSERT [dbo].[Wallets] OFF
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UQ__Accounts__F3DBC57227C9EBBB]    Script Date: 28/06/2026 11:36:46 pm ******/
-ALTER TABLE [dbo].[Accounts] ADD UNIQUE NONCLUSTERED 
-(
-	[username] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UQ__BookItem__C16E36F8B409C9E8]    Script Date: 28/06/2026 11:36:46 pm ******/
-ALTER TABLE [dbo].[BookItems] ADD UNIQUE NONCLUSTERED 
-(
-	[barcode] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UQ__Books__99F9D0A4C834C099]    Script Date: 28/06/2026 11:36:46 pm ******/
-ALTER TABLE [dbo].[Books] ADD UNIQUE NONCLUSTERED 
-(
-	[isbn] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UQ__Roles__72E12F1BB3A159DE]    Script Date: 28/06/2026 11:36:46 pm ******/
-ALTER TABLE [dbo].[Roles] ADD UNIQUE NONCLUSTERED 
-(
-	[name] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UQ__SystemSe__0DFAC4271D0D9AD0]    Script Date: 28/06/2026 11:36:46 pm ******/
-ALTER TABLE [dbo].[SystemSettings] ADD UNIQUE NONCLUSTERED 
-(
-	[setting_key] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UQ__Users__AB6E6164B2487540]    Script Date: 28/06/2026 11:36:46 pm ******/
-ALTER TABLE [dbo].[Users] ADD UNIQUE NONCLUSTERED 
-(
-	[email] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-ALTER TABLE [dbo].[Accounts] ADD  DEFAULT ('Active') FOR [status]
-GO
-ALTER TABLE [dbo].[BookAcquisitionRequests] ADD  DEFAULT (getdate()) FOR [created_date]
-GO
-ALTER TABLE [dbo].[BookDisposals] ADD  DEFAULT (getdate()) FOR [disposal_date]
-GO
-ALTER TABLE [dbo].[BookDisposals] ADD  DEFAULT ('Completed') FOR [status]
-GO
-ALTER TABLE [dbo].[BookItems] ADD  DEFAULT ('Available') FOR [status]
-GO
-ALTER TABLE [dbo].[Books] ADD  DEFAULT ('Active') FOR [status]
-GO
-ALTER TABLE [dbo].[BorrowDetails] ADD  DEFAULT ((0)) FOR [renew_count]
-GO
-ALTER TABLE [dbo].[BorrowDetails] ADD  DEFAULT ('Borrowed') FOR [status]
-GO
-ALTER TABLE [dbo].[Borrows] ADD  DEFAULT (getdate()) FOR [borrow_date]
-GO
-ALTER TABLE [dbo].[Borrows] ADD  DEFAULT ('Active') FOR [status]
-GO
-ALTER TABLE [dbo].[Feedbacks] ADD  DEFAULT (getdate()) FOR [created_date]
-GO
-ALTER TABLE [dbo].[Feedbacks] ADD  DEFAULT ('PENDING') FOR [status]
-GO
-ALTER TABLE [dbo].[MemberNotifications] ADD  DEFAULT ((0)) FOR [is_read]
-GO
-ALTER TABLE [dbo].[MembershipTiers] ADD  DEFAULT ((0)) FOR [discount_percent]
-GO
-ALTER TABLE [dbo].[MembershipTiers] ADD  DEFAULT ((5)) FOR [borrow_limit]
-GO
-ALTER TABLE [dbo].[MembershipTiers] ADD  DEFAULT ((0)) FOR [condition]
-GO
-ALTER TABLE [dbo].[Notifications] ADD  DEFAULT (getdate()) FOR [created_date]
-GO
-ALTER TABLE [dbo].[Notifications] ADD  DEFAULT ('Active') FOR [status]
-GO
-ALTER TABLE [dbo].[Reservations] ADD  DEFAULT (getdate()) FOR [reservation_date]
-GO
-ALTER TABLE [dbo].[Reservations] ADD  DEFAULT ('Pending') FOR [status]
-GO
-ALTER TABLE [dbo].[SystemLogs] ADD  DEFAULT (getdate()) FOR [created_at]
-GO
-ALTER TABLE [dbo].[Transactions] ADD  DEFAULT (getdate()) FOR [transaction_date]
-GO
-ALTER TABLE [dbo].[Transactions] ADD  DEFAULT ('Completed') FOR [status]
-GO
-ALTER TABLE [dbo].[Users] ADD  DEFAULT ('Active') FOR [status]
-GO
-ALTER TABLE [dbo].[Wallets] ADD  DEFAULT ((0)) FOR [balance]
-GO
-ALTER TABLE [dbo].[Account_Roles]  WITH CHECK ADD FOREIGN KEY([account_id])
-REFERENCES [dbo].[Accounts] ([account_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Account_Roles]  WITH CHECK ADD FOREIGN KEY([role_id])
-REFERENCES [dbo].[Roles] ([role_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Accounts]  WITH CHECK ADD FOREIGN KEY([user_id])
-REFERENCES [dbo].[Users] ([user_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[BookAcquisitionRequests]  WITH CHECK ADD  CONSTRAINT [FK_BookAcquisitionRequests_Member] FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-GO
-ALTER TABLE [dbo].[BookAcquisitionRequests] CHECK CONSTRAINT [FK_BookAcquisitionRequests_Member]
-GO
-ALTER TABLE [dbo].[BookAuthors]  WITH CHECK ADD FOREIGN KEY([author_id])
-REFERENCES [dbo].[Authors] ([author_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[BookAuthors]  WITH CHECK ADD FOREIGN KEY([book_id])
-REFERENCES [dbo].[Books] ([book_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[BookDisposals]  WITH CHECK ADD FOREIGN KEY([book_item_id])
-REFERENCES [dbo].[BookItems] ([book_item_id])
-GO
-ALTER TABLE [dbo].[BookDisposals]  WITH CHECK ADD FOREIGN KEY([staff_id])
-REFERENCES [dbo].[Staff] ([staff_id])
-GO
-ALTER TABLE [dbo].[BookItems]  WITH CHECK ADD FOREIGN KEY([book_id])
-REFERENCES [dbo].[Books] ([book_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[BookItems]  WITH CHECK ADD FOREIGN KEY([shelf_id])
-REFERENCES [dbo].[Shelves] ([shelf_id])
-GO
-ALTER TABLE [dbo].[Books]  WITH CHECK ADD FOREIGN KEY([genre_id])
-REFERENCES [dbo].[Genres] ([genre_id])
-GO
-ALTER TABLE [dbo].[BorrowDetails]  WITH CHECK ADD FOREIGN KEY([book_id])
-REFERENCES [dbo].[Books] ([book_id])
-GO
-ALTER TABLE [dbo].[BorrowDetails]  WITH CHECK ADD FOREIGN KEY([book_item_id])
-REFERENCES [dbo].[BookItems] ([book_item_id])
-GO
-ALTER TABLE [dbo].[BorrowDetails]  WITH CHECK ADD FOREIGN KEY([borrow_id])
-REFERENCES [dbo].[Borrows] ([borrow_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Borrows]  WITH CHECK ADD FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-GO
-ALTER TABLE [dbo].[Borrows]  WITH CHECK ADD FOREIGN KEY([staff_id])
-REFERENCES [dbo].[Staff] ([staff_id])
-GO
-ALTER TABLE [dbo].[Favorites]  WITH CHECK ADD FOREIGN KEY([book_id])
-REFERENCES [dbo].[Books] ([book_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Favorites]  WITH CHECK ADD FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Feedbacks]  WITH CHECK ADD FOREIGN KEY([book_id])
-REFERENCES [dbo].[Books] ([book_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Feedbacks]  WITH CHECK ADD FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Genres]  WITH CHECK ADD FOREIGN KEY([category_id])
-REFERENCES [dbo].[Categories] ([category_id])
-GO
-ALTER TABLE [dbo].[MemberNotifications]  WITH CHECK ADD FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[MemberNotifications]  WITH CHECK ADD FOREIGN KEY([notification_id])
-REFERENCES [dbo].[Notifications] ([notification_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Members]  WITH CHECK ADD FOREIGN KEY([tier_id])
-REFERENCES [dbo].[MembershipTiers] ([tier_id])
-GO
-ALTER TABLE [dbo].[Members]  WITH CHECK ADD FOREIGN KEY([user_id])
-REFERENCES [dbo].[Users] ([user_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Notifications]  WITH CHECK ADD FOREIGN KEY([staff_id])
-REFERENCES [dbo].[Staff] ([staff_id])
-GO
-ALTER TABLE [dbo].[Reservations]  WITH CHECK ADD FOREIGN KEY([book_id])
-REFERENCES [dbo].[Books] ([book_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Reservations]  WITH CHECK ADD FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Staff]  WITH CHECK ADD FOREIGN KEY([user_id])
-REFERENCES [dbo].[Users] ([user_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[SystemLogs]  WITH CHECK ADD FOREIGN KEY([account_id])
-REFERENCES [dbo].[Accounts] ([account_id])
-ON DELETE SET NULL
-GO
-ALTER TABLE [dbo].[Transactions]  WITH CHECK ADD FOREIGN KEY([borrow_id])
-REFERENCES [dbo].[Borrows] ([borrow_id])
-GO
-ALTER TABLE [dbo].[Transactions]  WITH CHECK ADD FOREIGN KEY([wallet_id])
-REFERENCES [dbo].[Wallets] ([wallet_id])
-GO
-ALTER TABLE [dbo].[Wallets]  WITH CHECK ADD FOREIGN KEY([member_id])
-REFERENCES [dbo].[Members] ([member_id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Feedbacks]  WITH CHECK ADD CHECK  (([rating]>=(1) AND [rating]<=(5)))
-GO
-GO
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (1, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 5D0E0E199EE2C20E8F7546CD549961E8', CAST(N'2026-06-30T16:06:39.070' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (2, 19, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 01C89BC503E9CE169B12DF04F3C8D1DE', CAST(N'2026-06-30T16:08:16.140' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (3, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 01C89BC503E9CE169B12DF04F3C8D1DE', CAST(N'2026-06-30T16:08:56.320' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (4, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 2B4E36BA44D37874373EBD7A12E5778B', CAST(N'2026-06-30T16:08:56.537' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (5, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: A3199CBD16166D1A0E2917BFDB3700D6', CAST(N'2026-06-30T16:11:10.587' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (6, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 0168C839C9CD28D6DD057C0F08DEA1C2', CAST(N'2026-07-01T22:06:58.617' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (7, 19, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 9D493B32BA6C73E50C6B4282B3073AB8', CAST(N'2026-07-01T22:07:01.237' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (8, 1, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 9D493B32BA6C73E50C6B4282B3073AB8', CAST(N'2026-07-01T22:32:23.117' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (9, 1, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 8E849DA2A13BACBA883822926F86520A', CAST(N'2026-07-01T22:32:27.090' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (10, 1, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 8E849DA2A13BACBA883822926F86520A', CAST(N'2026-07-01T22:38:29.997' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (11, 1, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: E8E990AA2AE94D818B4F102F18F82556', CAST(N'2026-07-01T22:39:12.237' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (12, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: E8E990AA2AE94D818B4F102F18F82556', CAST(N'2026-07-01T22:39:21.440' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (13, 1, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 375F3B28E1AE9D20B020EF8413B691DA', CAST(N'2026-07-01T22:39:45.947' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (14, 1, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: A8620FFE9CE99B755D935E1D23040865', CAST(N'2026-07-01T22:39:47.947' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (15, 2, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: A8620FFE9CE99B755D935E1D23040865', CAST(N'2026-07-01T22:40:32.753' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (16, 2, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 77C272BE4883684A3ECDF89747A71B4D', CAST(N'2026-07-01T22:40:49.990' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (17, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 77C272BE4883684A3ECDF89747A71B4D', CAST(N'2026-07-01T22:40:52.263' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (18, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 5466FCE4A70B89BF314ABA3206F269FE', CAST(N'2026-07-01T22:41:10.947' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (19, 19, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 75CE20589A15B8D353735879C9184467', CAST(N'2026-07-01T22:41:19.677' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (20, 20, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 75CE20589A15B8D353735879C9184467', CAST(N'2026-07-01T22:43:11.160' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (21, 20, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: D27B2E914A58A1C0808BFDBED6C03A1F', CAST(N'2026-07-01T22:47:56.613' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (22, 20, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 7EFA7EF66180DB4932D3AA93F0E403BC', CAST(N'2026-07-01T22:48:28.237' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (23, 2, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 7EFA7EF66180DB4932D3AA93F0E403BC', CAST(N'2026-07-01T22:48:37.480' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (24, 2, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 2F632D94E77D2B554C32921EAF6D0E02', CAST(N'2026-07-01T22:48:49.090' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (25, 20, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: 2F632D94E77D2B554C32921EAF6D0E02', CAST(N'2026-07-01T22:48:54.477' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (26, 20, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: F436DB2583189B7D5A36C50EBCB948E4', CAST(N'2026-07-01T22:51:07.293' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (27, 19, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: AD43F3FCB936828E44BB183FF98F775A', CAST(N'2026-07-01T23:18:19.973' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (28, 19, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: CC162781615C2936E7198A21B865CCCF', CAST(N'2026-07-01T23:19:09.510' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (29, 20, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: CC162781615C2936E7198A21B865CCCF', CAST(N'2026-07-01T23:21:06.647' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (30, 20, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: DB03C859CCECBBD2D1989C71D8FC9F9D', CAST(N'2026-07-01T23:21:34.253' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (31, 20, N'LOGIN', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng nhập thành công. Session ID: DB03C859CCECBBD2D1989C71D8FC9F9D', CAST(N'2026-07-01T23:21:39.010' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [account_id], [action_type], [ip_address], [user_agent], [description], [created_at]) VALUES (32, 20, N'LOGOUT', N'0:0:0:0:0:0:0:1', N'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', N'Đăng xuất thành công. Session ID: 3AADEBE80089AD041886FA17CB80299F', CAST(N'2026-07-01T23:21:56.890' AS DateTime))
+INSERT [dbo].[SystemLogs] ([log_id], [accou

@@ -1,165 +1,187 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
-
 <head>
-    <title>Tổng quan (Dashboard)</title>
-    <!-- Chart.js for beautiful charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard Độc Giả</title>
+    <style>
+        /* CSS Khắc phục lỗi lệch khung: Cố định kích thước card hiển thị đồng bộ */
+        .equal-height-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+        .card-body-flex {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+        .text-truncate-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.6rem;
+        }
+    </style>
 </head>
-
 <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
-        <h2 class="fw-bold mb-4">Tổng quan tài khoản</h2>
+<div layout:fragment="content" class="container-fluid py-4">
 
-        <!-- Stats Row -->
-        <div class="row g-4 mb-5">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm h-100 rounded-3 bg-primary text-white p-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-uppercase mb-2 opacity-75">Sách đang mượn</h6>
-                                <h2 class="mb-0 fw-bold">3 <span class="fs-6 fw-normal">cuốn</span></h2>
-                            </div>
-                            <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-book fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMessage}">Thông báo thành công</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMessage}">Thông báo lỗi</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm h-100 rounded-3 bg-success text-white p-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-uppercase mb-2 opacity-75">Số dư ví (Wallet)</h6>
-                                <h2 class="mb-0 fw-bold">150.000 <span class="fs-6 fw-normal">VNĐ</span></h2>
-                            </div>
-                            <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-wallet2 fs-4"></i>
-                            </div>
-                        </div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-white-50 mb-1">Sách Đang Mượn</h6>
+                        <h2 class="mb-0" th:text="${activeBorrowsCount}">0</h2>
                     </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm h-100 rounded-3 bg-danger text-white p-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-uppercase mb-2 opacity-75">Phí phạt (Chưa đóng)</h6>
-                                <h2 class="mb-0 fw-bold">15.000 <span class="fs-6 fw-normal">VNĐ</span></h2>
-                            </div>
-                            <div class="bg-white text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-exclamation-triangle fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
+                    <i class="bi bi-book fs-1 text-white-50"></i>
                 </div>
             </div>
         </div>
-
-        <div class="row g-4">
-            <!-- Left Column: Activity Chart -->
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm rounded-3 h-100">
-                    <div class="card-header bg-white border-0 pt-4 pb-0">
-                        <h5 class="fw-bold mb-0">Hoạt động mượn sách 6 tháng qua</h5>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-white-50 mb-1">Hạng Thành Viên</h6>
+                        <h2 class="mb-0" th:text="${member.tier != null ? member.tier.tierName : 'Standard'}">Standard</h2>
                     </div>
-                    <div class="card-body">
-                        <canvas id="borrowChart" height="100"></canvas>
-                    </div>
+                    <i class="bi bi-person-badge fs-1 text-white-50"></i>
                 </div>
             </div>
-
-            <!-- Right Column: Membership Card & Upcoming Deadlines -->
-            <div class="col-lg-4">
-                <!-- Digital Membership Card -->
-                <div class="card border-0 shadow-sm rounded-3 mb-4 text-white" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-4">
-                            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-star-fill text-warning me-2" style="text-shadow: 0 0 2px #000;"></i>Thẻ Thành Viên</h5>
-                            <span class="badge bg-dark text-warning">LOYAL</span>
-                        </div>
-                        <h4 class="mb-1 text-dark fw-bold">NGUYỄN THỊ LAN ANH</h4>
-                        <p class="mb-3 text-dark opacity-75">ID: MEM-2023-0891</p>
-                        <div class="d-flex justify-content-between text-dark opacity-75 small">
-                            <span>Tham gia: 12/05/2023</span>
-                            <span>Hết hạn: Vĩnh viễn</span>
-                        </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Giới Hạn Mượn</h6>
+                        <h2 class="mb-0" th:text="${member.tier != null ? member.tier.borrowLimit + ' cuốn' : '3 cuốn'}">3 cuốn</h2>
                     </div>
-                </div>
-
-                <!-- Upcoming Deadlines -->
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-header bg-white border-0 pt-4 pb-0">
-                        <h5 class="fw-bold mb-0">Hạn trả sách sắp tới</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item px-0 py-3 border-bottom">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1 fw-bold text-dark">Đất Rừng Phương Nam</h6>
-                                        <small class="text-danger"><i class="bi bi-clock"></i> Còn 2 ngày (20/11/2026)</small>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="list-group-item px-0 py-3 border-bottom">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1 fw-bold text-dark">Nhà Giả Kim</h6>
-                                        <small class="text-muted"><i class="bi bi-clock"></i> Còn 5 ngày (23/11/2026)</small>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                        <div class="mt-3 text-center">
-                            <a th:href="@{/member/borrow}" class="text-decoration-none small fw-bold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-                        </div>
-                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 text-dark-50"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Script to render chart -->
-    <th:block layout:fragment="script">
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const ctx = document.getElementById('borrowChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11'],
-                        datasets: [{
-                            label: 'Số sách mượn',
-                            data: [2, 4, 1, 5, 3, 3],
-                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                            borderColor: 'rgba(13, 110, 253, 1)',
-                            borderWidth: 1,
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { stepSize: 1 }
-                            }
-                        },
-                        plugins: {
-                            legend: { display: false }
-                        }
-                    }
-                });
-            });
-        </script>
-    </th:block>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-journal-text text-primary me-2"></i>Trạng Thái Yêu Cầu Sách Của Bạn</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Ngày Tạo Yêu Cầu</th>
+                            <th>Trạng Thái</th>
+                            <th>Hành Động</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(activeBorrows)}">
+                            <td colspan="4" class="text-center py-4 text-muted">Bạn không có yêu cầu mượn hoặc giữ sách nào đang xử lý.</td>
+                        </tr>
+                        <tr th:each="borrow : ${activeBorrows}">
+                            <td class="fw-semibold" th:text="${'BRW-' + borrow.borrowId}">BRW-1</td>
+                            <td th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">30/06/2026</td>
+                            <td>
+                                <span th:if="${borrow.status == 'Pending' || borrow.status == 'PENDING'}" class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Chờ Thủ Thư Duyệt</span>
+                                <span th:if="${borrow.status == 'Active' || borrow.status == 'BORROWING'}" class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Đang Mượn</span>
+                                <span th:if="${borrow.status == 'Return_Pending'}" class="badge bg-info text-dark"><i class="bi bi-arrow-left-right me-1"></i>Chờ xác nhận trả</span>
+                                <span th:if="${borrow.status == 'Reserved_Pending'}" class="badge bg-secondary"><i class="bi bi-bookmark-fill me-1"></i>Đang đặt chỗ</span>
+                            </td>
+                            <td>
+                                <form th:if="${borrow.status == 'Active' || borrow.status == 'BORROWING'}" th:action="@{/member/borrow/return/{id}(id=${borrow.borrowId})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Yêu cầu trả
+                                    </button>
+                                </form>
+                                <span th:unless="${borrow.status == 'Active' || borrow.status == 'BORROWING'}" class="text-muted small">-</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-grid-3x3-gap text-success me-2"></i>Sách Có Sẵn Tại Thư Viện</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-1 row-cols-md-3 g-3">
+                        <div class="col" th:each="book : ${books}">
+                            <div class="card equal-height-card shadow-sm border-light-subtle">
+                                <div class="card-body card-body-flex">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold text-dark mb-0 text-truncate-title" th:text="${book.title}">Tên Sách</h6>
+                                            <span class="badge bg-success-subtle text-success small" th:text="${book.status}">Available</span>
+                                        </div>
+                                        <p class="text-muted mb-1 small"><i class="bi bi-upc-scan me-1"></i>ISBN: <span th:text="${book.isbn}">ISBN</span></p>
+                                        <p class="text-muted mb-0 small"><i class="bi bi-bookmark me-1"></i>Thể loại: <span th:text="${book.genre != null ? book.genre.genreName : 'Chưa phân loại'}">Genre</span></p>
+                                    </div>
+
+                                    <div class="d-flex gap-2 pt-3 mt-3 border-top border-light-subtle">
+                                        <a th:href="@{/member/borrow/create(bookId=${book.bookId})}" class="btn btn-sm btn-primary flex-fill fw-bold">
+                                            <i class="bi bi-plus-circle me-1"></i>Mượn sách
+                                        </a>
+                                        <form th:action="@{/member/borrow/reserve/{id}(id=${book.bookId})}" method="post" class="flex-fill">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark w-100 fw-bold">
+                                                <i class="bi bi-bookmark-star me-1"></i>Đặt trước
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-trophy text-warning me-2"></i>Bảng Xếp Hạng Độc Giả</h5>
+                    <span class="badge bg-light text-muted">Top 5</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div th:each="leader, iter : ${leaderBoard}" class="list-group-item d-flex align-items-center justify-content-between py-3">
+                        <div class="d-flex align-items-center">
+                            <span class="fw-bold me-3 text-center" style="width: 24px;">
+                                <span th:if="${iter.index == 0}">🥇</span>
+                                <span th:if="${iter.index == 1}">🥈</span>
+                                <span th:if="${iter.index == 2}">🥉</span>
+                                <span th:if="${iter.index > 2}" th:text="${iter.count}" class="text-muted small">4</span>
+                            </span>
+                            <div>
+                                <h6 class="mb-0 fw-semibold text-dark" th:text="${leader.user.fullName}">Tên Độc Giả</h6>
+                                <small class="text-muted text-uppercase" style="font-size: 11px;" th:text="${leader.tier != null ? leader.tier.tierName : 'Standard'}">Hạng</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-dark rounded-pill fw-normal">Tích cực</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

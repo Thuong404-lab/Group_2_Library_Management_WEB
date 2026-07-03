@@ -13,7 +13,6 @@ public class MemberReviewSubmitRequest {
     @Max(value = 5, message = "Tối đa 5 sao")
     private Integer rating;
 
-    @NotBlank(message = "Nội dung bình luận không được để trống")
     private String comment;
 
     public MemberReviewSubmitRequest() {

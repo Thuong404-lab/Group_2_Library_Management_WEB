@@ -1,7 +1,7 @@
 package com.lms.service;
 
 import com.lms.dto.request.RegisterRequest;
-import com.lms.entity.Account;
+import com.lms.entity.MemberAccount;
 
 /**
  * AuthService Interface - Định nghĩa các method giao tiếp
@@ -17,17 +17,17 @@ public interface AuthService {
     /**
      * Ghi log khi đăng nhập
      */
-    void logLoginAction(Integer accountId, String ipAddress, String userAgent, String sessionId);
+    void logLoginAction(Integer userId, String ipAddress, String userAgent, String sessionId);
 
     /**
      * Ghi log khi đăng xuất
      */
-    void logLogoutAction(Integer accountId, String ipAddress, String userAgent, String sessionId);
+    void logLogoutAction(Integer userId, String ipAddress, String userAgent, String sessionId);
 
     /**
      * Tạo user, account, member, wallet cơ bản
      */
-    Account createCoreAccount(String userName, String fullName, String pass, String email, String phone);
+    MemberAccount createCoreAccount(String userName, String fullName, String pass, String email, String phone);
 
     /**
      * Yêu cầu đặt lại mật khẩu
