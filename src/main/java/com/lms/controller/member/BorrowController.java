@@ -67,7 +67,7 @@ public class BorrowController {
             return "redirect:/member/dashboard?success=borrow";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
-            return "redirect:/member/borrow/create?bookId=" + (bookId != null ? bookId : "");
+            return "redirect:/member/borrow/create?bookId=" + (bookId != null ? bookId : "") + "&error=borrow";
         }
     }
 

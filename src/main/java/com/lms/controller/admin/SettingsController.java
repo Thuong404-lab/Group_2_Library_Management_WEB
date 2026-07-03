@@ -1,5 +1,6 @@
 package com.lms.controller.admin;
 
+import com.lms.service.SystemService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,12 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequestMapping("/admin/settings")
 public class SettingsController {
+
+    private final SystemService systemService;
+
+    public SettingsController(SystemService systemService) {
+        this.systemService = systemService;
+    }
 
     // UC-21.1: Manage Borrowing/Return Policies
     @GetMapping
@@ -26,8 +33,9 @@ public class SettingsController {
                                            @RequestParam Integer maxBooksPerMember,
                                            @RequestParam Double borrowFeePerBook,
                                            Model model) {
-        // TODO: Implement - Cập nhật SystemSettings
         // TODO: Ghi log thay đổi vào SystemLogs
+        // Lưu settings (ADMIN-only vì endpoint nằm dưới /admin/**)
+        systemService.updateBorrowingPolicies(maxBorrowDays, maxRenewals, maxBooksPerMember, borrowFeePerBook);
         return "redirect:/admin/settings?updated";
     }
 }

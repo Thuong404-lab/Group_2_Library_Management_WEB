@@ -40,6 +40,33 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public void updateBorrowingPolicies(Integer maxBorrowDays, Integer maxRenewals,
                                          Integer maxBooksPerMember, Double borrowFeePerBook) {
-        // TODO: Implement - Cập nhật SystemSettings
+        // TODO: Hiện tại chỉ cần borrowFeePerBook cho bài toán "giá tiền mượn".
+        // Các tham số khác có thể được mở rộng tương tự.
+
+        upsertSetting("MAX_BORROW_DAYS", maxBorrowDays);
+        upsertSetting("MAX_RENEWALS", maxRenewals);
+        upsertSetting("MAX_BOOKS_PER_MEMBER", maxBooksPerMember);
+        upsertSetting("BORROW_FEE_PER_BOOK", borrowFeePerBook);
+    }
+
+    private void upsertSetting(String key, Object value) {
+        if (key == null || key.trim().isEmpty()) {
+            return;
+        }
+
+        String settingValue = value == null ? null : String.valueOf(value);
+        com.lms.entity.SystemSetting setting = systemSettingRepository
+                .findAll()
+                .stream()
+                .filter(s -> key.equalsIgnoreCase(s.getSettingKey()))
+                .findFirst()
+                .orElseGet(() -> new com.lms.entity.SystemSetting());
+
+        setting.setSettingKey(key);
+        setting.setSettingValue(settingValue);
+        setting.setDescription("Auto-updated by admin/settings");
+
+        systemSettingRepository.save(setting);
     }
 }
+

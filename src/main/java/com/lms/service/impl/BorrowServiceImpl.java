@@ -5,8 +5,10 @@ import com.lms.entity.*;
 import com.lms.enums.UserStatus;
 import com.lms.repository.*;
 import com.lms.service.BorrowService;
+import com.lms.service.FinancialService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,20 +24,24 @@ public class BorrowServiceImpl implements BorrowService {
     private final BorrowDetailRepository borrowDetailRepository;
     private final BookRepository bookRepository;
     private final AccountRepository accountRepository;
+    private final FinancialService financialService;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
                              BookItemRepository bookItemRepository,
                              BorrowRepository borrowRepository,
                              BorrowDetailRepository borrowDetailRepository,
                              BookRepository bookRepository,
-                             AccountRepository accountRepository) {
+                             AccountRepository accountRepository,
+                             FinancialService financialService) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookRepository = bookRepository;
         this.accountRepository = accountRepository;
+        this.financialService = financialService;
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -223,7 +229,15 @@ public class BorrowServiceImpl implements BorrowService {
                 bookItemRepository.save(item);
             }
         }
+
+        // UC-8.2: Thủ thư duyệt xong thì trừ phí mượn ngay
+        if (borrow.getMember() == null || borrow.getMember().getMemberId() == null) {
+            throw new RuntimeException("Phiếu mượn không có member hợp lệ để tính phí mượn.");
+        }
+
+        financialService.payBorrowingFee(borrow.getMember().getMemberId(), borrowId);
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

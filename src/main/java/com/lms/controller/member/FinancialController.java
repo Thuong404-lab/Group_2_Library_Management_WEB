@@ -41,6 +41,7 @@ public class FinancialController {
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final com.lms.service.FinancialService financialService;
+    private final com.lms.repository.SystemSettingRepository systemSettingRepository;
 
     public FinancialController(TransactionRepository transactionRepository,
                                MemberNotificationRepository memberNotificationRepository,
@@ -48,7 +49,10 @@ public class FinancialController {
                                WalletRepository walletRepository,
                                BorrowRepository borrowRepository,
                                BorrowDetailRepository borrowDetailRepository,
-                               com.lms.service.FinancialService financialService) {
+                               com.lms.service.FinancialService financialService,
+                               com.lms.repository.SystemSettingRepository systemSettingRepository) {
+        this.systemSettingRepository = systemSettingRepository;
+
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
@@ -98,17 +102,26 @@ public class FinancialController {
             if (borrow == null) continue;
             String status = borrow.getStatus();
             if (status == null) continue;
-            if (!("Pending".equalsIgnoreCase(status) || "Active".equalsIgnoreCase(status) || "Borrowing".equalsIgnoreCase(status))) {
+            // Hệ thống đang dùng enum BorrowStatus: Active, Returned, Overdue
+            // Nên coi Active/Overdue là đang cần thanh toán.
+            if (!("Active".equalsIgnoreCase(status) || "Overdue".equalsIgnoreCase(status))) {
                 continue;
             }
+
 
             List<com.lms.entity.BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
             if (details == null || details.isEmpty()) continue;
 
             int quantity = (int) details.size();
-            int days = 10; // mặc định 1 quyển là 10 ngày theo yêu cầu
 
-            BigDecimal amount = computeBorrowFeeAmount(quantity, days);
+            int days = 10; // số ngày dự kiến (theo logic hiện tại)
+
+            // Lấy giá tiền mượn từ SystemSettings (ADMIN cấu hình). Nếu chưa có thì fallback 5000.
+            // Quy ước: borrowFeePerBook = tiền 1 quyển / 1 ngày.
+            BigDecimal amount = BigDecimal.valueOf(quantity)
+                    .multiply(BigDecimal.valueOf(days))
+                    .multiply(getBorrowFeePerBook());
+
 
             BorrowFeeViewData feeViewData = new BorrowFeeViewData();
             feeViewData.setBorrowId(borrow.getBorrowId());
@@ -123,11 +136,22 @@ public class FinancialController {
         return "member/fees";
     }
 
-    private BigDecimal computeBorrowFeeAmount(int quantity, int days) {
-        // Mặc định: 1 ngày * 1 đ / quyển
-        // -> tổng = quantity * days.
-        return BigDecimal.valueOf((long) quantity).multiply(BigDecimal.valueOf((long) days));
+    private BigDecimal getBorrowFeePerBook() {
+        // borrowFeePerBook = tiền 1 quyển / 1 ngày
+        try {
+            java.util.Optional<com.lms.entity.SystemSetting> settingOpt = systemSettingRepository.findAll().stream()
+                    .filter(s -> s.getSettingKey() != null && s.getSettingKey().equalsIgnoreCase("BORROW_FEE_PER_BOOK"))
+                    .findFirst();
+
+            if (settingOpt.isPresent() && settingOpt.get().getSettingValue() != null) {
+                return BigDecimal.valueOf(Double.parseDouble(settingOpt.get().getSettingValue()));
+            }
+        } catch (Exception ignored) {
+        }
+
+        return BigDecimal.valueOf(5000d);
     }
+
 
     // UC-8.2: Pay Borrowing Fees
     @PostMapping("/fees/pay/{borrowId}")

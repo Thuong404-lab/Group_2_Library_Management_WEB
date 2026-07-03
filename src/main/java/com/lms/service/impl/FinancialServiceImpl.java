@@ -6,6 +6,9 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
+import com.lms.entity.SystemSetting;
+import com.lms.repository.SystemSettingRepository;
+
 /**
  * FinancialService - Xử lý Logic Tài chính & Phạt
  * Người phụ trách: Phạm Kiến Quốc (CE201286)
@@ -16,16 +19,20 @@ public class FinancialServiceImpl implements FinancialService {
     private final WalletRepository walletRepository;
     private final com.lms.repository.BorrowRepository borrowRepository;
     private final com.lms.repository.BorrowDetailRepository borrowDetailRepository;
+    private final SystemSettingRepository systemSettingRepository;
 
     public FinancialServiceImpl(TransactionRepository transactionRepository,
                                   WalletRepository walletRepository,
                                   com.lms.repository.BorrowRepository borrowRepository,
-                                  com.lms.repository.BorrowDetailRepository borrowDetailRepository) {
+                                  com.lms.repository.BorrowDetailRepository borrowDetailRepository,
+                                  SystemSettingRepository systemSettingRepository) {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
+        this.systemSettingRepository = systemSettingRepository;
     }
+
 
 
     // UC-8.1: Thanh toán phí phạt quá hạn
@@ -53,41 +60,27 @@ public class FinancialServiceImpl implements FinancialService {
 
         int quantity = details.size();
 
-        // Tính theo "gói" ngày mượn dựa vào dueDate của chi tiết (lấy trung bình để suy ra gói).
-        // Giá cơ bản: 5.000đ/ngày.
-        // - 7 ngày: 5.000đ/ngày
-        // - 14 ngày: giảm 10% còn 4.500đ/ngày
-        // - 30 ngày: giảm 20% còn 4.000đ/ngày
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        java.time.Duration avgDuration = details.stream()
-                .filter(d -> d.getDueDate() != null)
-                .map(d -> d.getDueDate().toLocalDate().atStartOfDay())
-                .map(d -> java.time.Duration.between(now, d))
-                .reduce(java.time.Duration.ZERO, java.time.Duration::plus);
+        // UC-8.2: TÍNH PHÍ CỐ ĐỊNH THEO OPTION ĐÃ CÀI
+        // Màn hình đang hiển thị theo quy ước: fees = quantity * 10(days) * (borrowFeePerBook).
+        int billableDays = 10;
 
-        int avgDays = 10;
-        if (!details.isEmpty()) {
-            long totalMillis = avgDuration.toMillis();
-            avgDays = (int) Math.round((double) totalMillis / (24.0 * 60 * 60 * 1000));
+        // Giá tiền mượn lấy từ SystemSettings (ADMIN set). Nếu chưa có, dùng fallback hardcode.
+        // Quy ước: borrowFeePerBook là tiền 1 quyển/1 ngày.
+        double borrowFeePerBook = 5000d; // fallback
+        try {
+            java.util.Optional<SystemSetting> settingOpt = systemSettingRepository.findAll().stream()
+                    .filter(s -> s.getSettingKey() != null && s.getSettingKey().equalsIgnoreCase("BORROW_FEE_PER_BOOK"))
+                    .findFirst();
+            if (settingOpt.isPresent() && settingOpt.get().getSettingValue() != null) {
+                borrowFeePerBook = Double.parseDouble(settingOpt.get().getSettingValue());
+            }
+        } catch (Exception ex) {
+            borrowFeePerBook = 5000d;
         }
-
-        int perDayFee;
-        if (avgDays <= 9) {
-            perDayFee = 5000; // mặc định gói 7 ngày
-        } else if (avgDays <= 20) {
-            perDayFee = 4500; // gói 14 ngày
-        } else {
-            perDayFee = 4000; // gói 30 ngày
-        }
-
-        int billableDays;
-        if (avgDays <= 9) billableDays = 7;
-        else if (avgDays <= 20) billableDays = 14;
-        else billableDays = 30;
 
         java.math.BigDecimal feeAmount = java.math.BigDecimal.valueOf(quantity)
                 .multiply(java.math.BigDecimal.valueOf(billableDays))
-                .multiply(java.math.BigDecimal.valueOf(perDayFee));
+                .multiply(java.math.BigDecimal.valueOf(borrowFeePerBook));
 
         var wallet = walletRepository.findByMemberMemberId(memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));

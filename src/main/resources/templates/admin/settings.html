@@ -15,10 +15,35 @@
     </div>
 
     <div class="card-classic shadow-sm">
-        <div class="card-body p-5 text-center">
-            <i class="bi bi-tools text-muted mb-3" style="font-size: 3rem;"></i>
-            <h4 class="fw-bold text-classic">Đang phát triển</h4>
-            <p class="text-muted">Tính năng cài đặt hệ thống đang được xây dựng.</p>
+        <div class="card-body p-5">
+            <h4 class="fw-bold text-classic mb-3">Cấu hình phí mượn</h4>
+
+<form th:action="@{/admin/settings/policies}" method="post" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Số ngày mượn tối đa</label>
+                    <input name="maxBorrowDays" type="number" class="form-control" placeholder="14" value="14" min="1" required />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Số lần gia hạn tối đa</label>
+                    <input name="maxRenewals" type="number" class="form-control" placeholder="2" value="2" min="0" required />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Số sách tối đa mỗi thành viên</label>
+                    <input name="maxBooksPerMember" type="number" class="form-control" placeholder="10" value="10" min="1" required />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Giá tiền mượn (VNĐ / quyển / ngày)</label>
+                    <input name="borrowFeePerBook" type="number" class="form-control" placeholder="5000" value="5000" min="0" step="500" required />
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn" style="background-color:#8b5a2b; color:#fff;">Lưu cấu hình</button>
+                    <span class="ms-2 text-success" th:if="${param.updated}">Đã cập nhật thành công.</span>
+                </div>
+            </form>
         </div>
     </div>
 </div>
