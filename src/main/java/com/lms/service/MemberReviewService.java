@@ -10,4 +10,8 @@ public interface MemberReviewService {
     void submitReview(String username, MemberReviewSubmitRequest request);
 
     List<Feedback> getMyReviews(String username);
+
+    List<Feedback> getApprovedReviewsByBookId(Integer bookId);
+
+    void deleteMyReview(String username, Integer feedbackId);
 }

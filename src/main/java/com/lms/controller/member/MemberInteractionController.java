@@ -100,6 +100,48 @@ public class MemberInteractionController {
         }
     }
 
+    @PostMapping("/books/{bookId}/reviews")
+    public String submitBookDetailReview(@PathVariable("bookId") Integer bookId,
+                                         @Valid @ModelAttribute("reviewRequest") MemberReviewSubmitRequest request,
+                                         BindingResult bindingResult,
+                                         Principal principal,
+                                         RedirectAttributes flash) {
+        request.setBookId(bookId);
+
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getAllErrors().isEmpty()
+                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    : bindingResult.getAllErrors().get(0).getDefaultMessage();
+            flash.addFlashAttribute("error", message);
+            flash.addFlashAttribute("reviewRequest", request);
+            return "redirect:/books/" + bookId;
+        }
+
+        try {
+            memberReviewService.submitReview(principal.getName(), request);
+            flash.addFlashAttribute("success", "Đã gửi đánh giá thành công.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+            flash.addFlashAttribute("reviewRequest", request);
+        }
+
+        return "redirect:/books/" + bookId;
+    }
+
+    @PostMapping("/reviews/{feedbackId}/delete")
+    public String deleteMyReview(@PathVariable("feedbackId") Integer feedbackId,
+                                 Principal principal,
+                                 RedirectAttributes flash) {
+        try {
+            memberReviewService.deleteMyReview(principal.getName(), feedbackId);
+            flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/member/interaction/reviews";
+    }
+
     @GetMapping("/acquisition-requests/new")
     public String showBookAcquisitionRequestForm(Model model) {
         if (!model.containsAttribute("acquisitionRequest")) {

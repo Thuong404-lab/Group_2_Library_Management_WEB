@@ -429,6 +429,8 @@
                                     </td>
                                     <td th:text="${review.comment}">Nội dung</td>
                                     <td>
+                                        <span th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                                            class="badge bg-secondary mb-2">Member đã xoá</span>
                                         <div th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
                                             class="fw-semibold" th:text="${review.librarianResponse}">
                                             Phản hồi
@@ -438,6 +440,7 @@
                                     </td>
                                     <td class="pe-3 table-fixed-action">
                                         <form
+                                            th:if="${review.status != 'DELETED_BY_MEMBER'}"
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                                             method="post" class="review-reply-box mb-2" novalidate>
                                             <input type="hidden" th:if="${_csrf != null}"
@@ -454,6 +457,10 @@
                                                 Phản hồi
                                             </button>
                                         </form>
+                                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                                            class="text-muted small mb-2">
+                                            Member đã xoá đánh giá này, không thể phản hồi.
+                                        </div>
 
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
