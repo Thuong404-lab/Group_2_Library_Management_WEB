@@ -11,6 +11,9 @@ public class UpdateMemberAccountRequest {
     private String fullName;
 
     @NotBlank(message = "Username không được để trống.")
+    @Pattern(
+            regexp = "^(?:|[a-zA-Z0-9_]{3,20})$",
+            message = "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.")
     private String username;
 
     @NotBlank(message = "Email không được để trống.")
@@ -31,7 +34,9 @@ public class UpdateMemberAccountRequest {
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public void setUsername(String username) {
+        this.username = username == null ? null : username.trim();
+    }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
@@ -41,4 +46,3 @@ public class UpdateMemberAccountRequest {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 }
-

@@ -63,24 +63,6 @@ public class MemberInteractionController {
         return "OK";
     }
 
-    @PostMapping("/notifications/delete-all")
-    public String deleteAllNotifications(Principal principal, RedirectAttributes flash) {
-        memberNotificationService.deleteAllNotifications(principal.getName());
-        flash.addFlashAttribute("success", "Đã xóa tất cả thông báo.");
-        return "redirect:/member/interaction/notifications";
-    }
-
-    @PostMapping("/notifications/delete/{id}")
-    public String deleteNotificationById(@PathVariable Integer id,
-                                           Principal principal,
-                                           RedirectAttributes flash) {
-        memberNotificationService.deleteNotificationById(id, principal.getName());
-        flash.addFlashAttribute("success", "Đã xóa thông báo.");
-        return "redirect:/member/interaction/notifications";
-    }
-
-
-
     @GetMapping("/reviews")
     public String showReviewForm(Model model, Principal principal) {
         if (!model.containsAttribute("reviewRequest")) {

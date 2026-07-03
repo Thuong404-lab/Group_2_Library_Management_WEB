@@ -3,81 +3,58 @@
       layout:decorate="~{layout/base}">
 
 <head>
-    <title>Ví & Lịch sử giao dịch</title>
+    <title>Ví & Phí Phạt</title>
 </head>
 
 <body>
     <div layout:fragment="content" class="container mt-4 mb-5">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-            <h2 class="fw-bold mb-0">Ví & Lịch sử giao dịch</h2>
-        </div>
+        <h2 class="fw-bold mb-4">Ví & Phí Phạt</h2>
 
         <div class="row g-4 mb-4">
+            <!-- Digital Wallet -->
             <div class="col-lg-5">
-                <div class="card border-0 shadow-sm rounded-3 h-100 text-white"
-                     style="background: linear-gradient(135deg, #0d6efd 0%, #20c997 100%);">
+                <div class="card border-0 shadow-sm rounded-3 h-100 text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
                         <div class="d-flex justify-content-between align-items-start mb-4">
                             <div>
                                 <h5 class="opacity-75 mb-1">Số dư hiện tại</h5>
-                                <h1 class="display-5 fw-bold mb-0">
-                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span class="fs-4">VNĐ</span>
-                                </h1>
+                                <h1 class="display-5 fw-bold mb-0">150.000 <span class="fs-4">VNĐ</span></h1>
                             </div>
                             <i class="bi bi-wallet2 display-6 opacity-50"></i>
                         </div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn btn-light fw-bold px-4 rounded-pill">
-                                <i class="bi bi-clock-history me-1"></i> Lịch sử nạp
-                            </a>
-                            <a th:href="@{/member/financial/transactions}" class="btn btn-outline-light rounded-pill px-4">
-                                Tất cả giao dịch
-                            </a>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light fw-bold px-4 rounded-pill"><i class="bi bi-plus-circle me-1"></i> Nạp Tiền</button>
+                            <button class="btn btn-outline-light rounded-pill px-4">Lịch sử nạp</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Fines Alert -->
             <div class="col-lg-7">
                 <div class="card border-0 shadow-sm rounded-3 h-100 bg-white">
                     <div class="card-body p-4">
-                        <h5 class="fw-bold text-danger mb-3">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Phí phạt chưa thanh toán
-                        </h5>
-                        <div class="text-muted">
-                            Chức năng thanh toán phí phạt đang được xử lý ở UC-8.1.
+                        <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Phí phạt chưa thanh toán</h5>
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3 border-start border-danger border-4">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Quá hạn trả sách: Đất Rừng Phương Nam</h6>
+                                <small class="text-muted">Phát sinh ngày: 15/11/2026 (Quá hạn 5 ngày)</small>
+                            </div>
+                            <h5 class="text-danger fw-bold mb-0">15.000 VNĐ</h5>
                         </div>
+                        <button class="btn btn-danger w-100 fw-bold rounded-pill">Thanh Toán Tất Cả (15.000 VNĐ)</button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Transaction History -->
         <div class="card border-0 shadow-sm rounded-3 mt-4">
             <div class="card-header bg-white border-0 pt-4 pb-0">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <h5 class="fw-bold mb-0">Lịch sử giao dịch</h5>
-                    <form method="get" th:action="@{/member/financial/transactions}" class="d-flex gap-2">
-                        <select name="type" class="form-select" aria-label="Lọc loại giao dịch">
-                            <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả</option>
-                            <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
-                            <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
-                            <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}">Tiền cọc</option>
-                            <option value="FINE" th:selected="${selectedType == 'FINE'}">Phí phạt</option>
-                            <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}">Phí hư hỏng</option>
-                            <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary">Lọc</button>
-                    </form>
-                </div>
+                <h5 class="fw-bold mb-0">Lịch sử giao dịch gần đây</h5>
             </div>
-
             <div class="card-body">
-                <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="text-center text-muted py-5">
-                    Chưa có giao dịch nào.
-                </div>
-
-                <div class="table-responsive" th:if="${transactions != null and !#lists.isEmpty(transactions)}">
+                <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
@@ -89,74 +66,37 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="transaction : ${transactions}">
-                                <td>
-                                    <span class="text-primary fw-bold"
-                                          th:text="|#TXN-${transaction.transactionId}|">#TXN-1</span>
-                                </td>
-                                <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
-                                    01/01/2026 08:00
-                                </td>
-                                <td>
-                                    <span th:switch="${transaction.transactionType}">
-                                        <span th:case="'TOP_UP'">Nạp tiền vào ví</span>
-                                        <span th:case="'BORROW_FEE'">Phí mượn sách</span>
-                                        <span th:case="'DEPOSIT'">Tiền cọc đặt trước</span>
-                                        <span th:case="'FINE'">Phí phạt</span>
-                                        <span th:case="'DAMAGE_FEE'">Phí hư hỏng</span>
-                                        <span th:case="'REFUND'">Hoàn tiền</span>
-                                        <span th:case="*" th:text="${transaction.transactionType}">Khác</span>
-                                    </span>
-                                </td>
-                                <td class="fw-bold"
-                                    th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
-                                    <span th:text="${transaction.amount != null and transaction.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
-                                    <span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span> đ</span>
-                                </td>
-                                <td>
-                                    <span class="badge"
-                                          th:classappend="${transaction.status == 'Completed'} ? ' bg-success' : ' bg-secondary'"
-                                          th:text="${transaction.status}">Completed</span>
-                                </td>
+                            <tr>
+                                <td><span class="text-primary fw-bold">#TXN-8932</span></td>
+                                <td>20/10/2026 14:30</td>
+                                <td>Nạp tiền vào ví</td>
+                                <td class="text-success fw-bold">+ 100.000 đ</td>
+                                <td><span class="badge bg-success">Thành công</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="text-primary fw-bold">#TXN-8711</span></td>
+                                <td>15/09/2026 09:15</td>
+                                <td>Thanh toán phí phạt (Quá hạn)</td>
+                                <td class="text-danger fw-bold">- 10.000 đ</td>
+                                <td><span class="badge bg-success">Thành công</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="text-primary fw-bold">#TXN-8500</span></td>
+                                <td>01/08/2026 10:00</td>
+                                <td>Nạp tiền vào ví</td>
+                                <td class="text-success fw-bold">+ 50.000 đ</td>
+                                <td><span class="badge bg-success">Thành công</span></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
-                <nav th:if="${transactionPage != null && transactionPage.totalPages > 1}" class="mt-4" aria-label="Phân trang giao dịch">
-                    <ul class="pagination justify-content-center mb-0">
-                        <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
-                            <a class="page-link"
-                               th:href="@{/member/financial/transactions(page=${currentPage - 1}, type=${selectedType})}">
-                                Trước
-                            </a>
-                        </li>
-                        <li class="page-item"
-                            th:each="i : ${#numbers.sequence(0, transactionPage.totalPages - 1)}"
-                            th:classappend="${i == currentPage} ? 'active'">
-                            <a class="page-link"
-                               th:href="@{/member/financial/transactions(page=${i}, type=${selectedType})}"
-                               th:text="${i + 1}">1</a>
-                        </li>
-                        <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
-                            <a class="page-link"
-                               th:href="@{/member/financial/transactions(page=${currentPage + 1}, type=${selectedType})}">
-                                Sau
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
             </div>
         </div>
-
-        <script th:if="${topupPopupMessage != null}" th:inline="javascript">
-            document.addEventListener("DOMContentLoaded", function () {
-                if (typeof showToast === "function") {
-                    showToast(/*[[${topupPopupMessage}]]*/ "Bạn có giao dịch nạp tiền trong lịch sử giao dịch.");
-                }
-            });
-        </script>
     </div>
+
+    <a th:href="@{/member/financial/topup-notifications}" class="btn btn-outline-info mt-3">
+        Xem thông báo nạp tiền
+    </a>
+</div>
 </body>
 </html>

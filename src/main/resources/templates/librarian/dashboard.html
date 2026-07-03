@@ -48,11 +48,11 @@
         }
 
         .review-reply-box {
-            min-width: 220px;
+            min-width: 260px;
         }
 
         .table-fixed-action {
-            min-width: 180px;
+            min-width: 260px;
         }
 
         .dashboard-stat-card {
@@ -79,11 +79,25 @@
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
                 <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                    Tổng quan
+                    <span th:if="${currentSection == 'notifications'}">Gửi thông báo</span>
+                    <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
+                    <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
+                    <span th:if="${currentSection == 'users'}">Quản lý người dùng</span>
+                    <span
+                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users'}">Tổng quan</span>
                 </h2>
-                <div class="text-muted">
+                <div class="text-muted" th:if="${currentSection == 'notifications'}">
+                    Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
+                </div>
+                <div class="text-muted" th:if="${currentSection == 'reviews'}">
+                    Xem, phản hồi và xoá đánh giá của độc giả.
+                </div>
+                <div class="text-muted" th:if="${currentSection == 'acquisition'}">
+                    Xem danh sách sách do độc giả đề xuất.
+                </div>
+                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">
                     Cập nhật:
-                    <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>
+                    <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
             </div>
         </div>
@@ -293,14 +307,7 @@
         <section id="section-notifications" class="lib-section"
             th:classappend="${currentSection == 'notifications'} ? ' active' : ''">
 
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-bell me-2 text-classic"></i>Gửi thông báo
-                    </h5>
-                    <div class="text-muted small">Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.</div>
-                </div>
-
+            <div class="card-classic shadow-sm mb-4">
                 <div class="card-body p-4">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
                         method="post" id="notificationForm" novalidate>
@@ -395,31 +402,24 @@
         <!-- Reviews -->
         <section id="section-reviews" class="lib-section"
             th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
-                    </h5>
-                    <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
-                </div>
-
-                <div class="card-body p-0">
+            <div class="card-classic shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
-                                    <th class="ps-4">Sách</th>
+                                    <th class="ps-3">Sách</th>
                                     <th>Người gửi</th>
                                     <th>Đánh giá</th>
                                     <th>Nội dung</th>
                                     <th>Phản hồi của thủ thư</th>
-                                    <th class="table-fixed-action">Thao tác</th>
+                                    <th class="text-end pe-3 table-fixed-action">Thao tác</th>
                                 </tr>
                             </thead>
 
                             <tbody th:if="${reviews != null && reviews.totalElements > 0}">
                                 <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
+                                    <td class="ps-3 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
                                     <td th:text="${review.memberName}">Người gửi</td>
                                     <td>
                                         <span class="badge bg-warning text-dark border">
@@ -436,7 +436,7 @@
                                         <span th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
                                             class="text-muted">Chưa phản hồi</span>
                                     </td>
-                                    <td>
+                                    <td class="pe-3 table-fixed-action">
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                                             method="post" class="review-reply-box mb-2" novalidate>
@@ -451,7 +451,7 @@
                                                 th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
                                             </div>
                                             <button type="submit" class="btn btn-sm btn-classic w-100">
-                                                <i class="bi bi-reply me-1"></i>Phản hồi
+                                                Phản hồi
                                             </button>
                                         </form>
 
@@ -462,7 +462,7 @@
                                             <input type="hidden" th:if="${_csrf != null}"
                                                 th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                                <i class="bi bi-trash me-1"></i>Xoá
+                                                Xoá
                                             </button>
                                         </form>
                                     </td>
@@ -486,19 +486,13 @@
         <section id="section-acquisition" class="lib-section"
             th:classappend="${currentSection == 'acquisition'} ? ' active' : ''">
 
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-journal-plus me-2 text-classic"></i> Đề xuất mua sách
-                    </h5>
-                    <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
-                </div>
-                <div class="card-body p-0">
+            <div class="card-classic shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
-                                    <th class="ps-4">Mã</th>
+                                    <th class="ps-3">Mã</th>
                                     <th>Tên sách</th>
                                     <th>Tác giả</th>
                                     <th>Người đề xuất</th>
@@ -508,7 +502,7 @@
 
                             <tbody th:if="${requests != null}">
                                 <tr th:each="request : ${requests.content}">
-                                    <td class="ps-4 fw-bold" th:text="${request.requestId}">1</td>
+                                    <td class="ps-3 fw-bold" th:text="${request.requestId}">1</td>
                                     <td th:text="${request.title}">Tên sách</td>
                                     <td th:text="${request.author}">Tác giả</td>
                                     <td
@@ -541,8 +535,8 @@
                 <div class="card-header bg-white border-bottom p-4 border-color">
                     <div class="d-flex flex-wrap gap-2">
                         <button id="bookSubInventoryBtn" type="button" class="btn btn-sm btn-classic active"
-                            onclick="showBookSubSection('inventory')" style="margin-right: 1px !important;">Quản lý kho sách</button>
-                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-classic"
+                            onclick="showBookSubSection('inventory')">Quản lý kho sách</button>
+                        <button id="bookSubStorageBtn" type="button" class="btn btn-sm btn-outline-classic"
                             onclick="showBookSubSection('storage')">Quản lý kệ sách</button>
                     </div>
                 </div>
@@ -580,16 +574,16 @@
                             </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-3 mb-4">
-                            <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;"
-                                data-bs-toggle="modal" data-bs-target="#addBookModal">
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#addBookModal">
                                 <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
                             </button>
-                            <button type="button" class="btn btn-classic btn-sm" style="margin-right: 1px !important;"
-                                data-bs-toggle="modal" data-bs-target="#categoryGenreModal">
+                            <button type="button" class="btn btn-outline-classic btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#categoryGenreModal">
                                 <i class="bi bi-tags me-1"></i>Quản lý danh mục
                             </button>
-                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                            <button type="button" class="btn btn-outline-classic btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#auditModal">
                                 <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
                             </button>
@@ -628,12 +622,12 @@
                                                 th:text="${book.status}">Active</span>
                                         </td>
                                         <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                            <button type="button" class="btn btn-sm btn-outline-classic me-1"
                                                 data-bs-toggle="modal"
                                                 th:data-bs-target="${'#editBookModal' + book.bookId}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-classic"
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
                                                 data-bs-toggle="modal"
                                                 th:data-bs-target="${'#deleteBookModal' + book.bookId}">
                                                 <i class="bi bi-trash"></i>
@@ -764,34 +758,35 @@
                             </div>
                             <form th:action="@{/librarian/inventory/audit}" method="post">
                                 <div class="modal-body">
-                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
-                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
-                                        <span class="fw-semibold">Available</span>
-                                        <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
-                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
-                                        <span class="fw-semibold">Borrowed</span>
-                                        <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
-                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
-                                        <span class="fw-semibold">Lost</span>
-                                        <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 rounded-2 border"
-                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
-                                        <span class="fw-semibold">Damaged</span>
-                                        <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 rounded-2 border"
-                                        style="background-color: #f8f5ef; border-color: rgba(139, 90, 43, 0.12) !important;">
-                                        <span class="fw-semibold">Disposed</span>
-                                        <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold">Available</span>
+                                                <span th:text="${inventoryStatusCounts['Available']} ?: 0">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold">Borrowed</span>
+                                                <span th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold">Lost</span>
+                                                <span th:text="${inventoryStatusCounts['Lost']} ?: 0">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold">Damaged</span>
+                                                <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-semibold">Disposed</span>
+                                                <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Đóng</button>
+                                    <button type="submit" class="btn btn-classic">Thực hiện kiểm kê</button>
                                 </div>
                             </form>
                         </div>
@@ -872,7 +867,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-classic">Xóa</button>
+                                        <button type="submit" class="btn btn-danger">Xóa</button>
                                     </div>
                                 </form>
                             </div>
@@ -907,13 +902,13 @@
                                                 <td th:text="${shelf.shelfName}">Tên vị trí</td>
                                                 <td th:text="${shelf.location}">Vị trí</td>
                                                 <td class="table-fixed-action">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                    <button type="button" class="btn btn-sm btn-outline-classic me-1"
                                                         data-bs-toggle="modal"
                                                         th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
                                                         title="Sửa">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-classic"
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
                                                         data-bs-toggle="modal"
                                                         th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
                                                         title="Xóa">
@@ -993,7 +988,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
                                                         data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-classic">Xóa</button>
+                                                    <button type="submit" class="btn btn-danger">Xóa</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -1087,7 +1082,7 @@
                 <div class="col-lg-6">
                     <div class="card-classic h-100 shadow-sm p-4">
                         <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-people me-2 text-classic"></i>Danh sách thành viên
+                            <i class="bi bi-people me-2 text-classic"></i> Danh sách thành viên
                         </h5>
                         <p class="text-muted mb-3">Tạo, cập nhật và xóa tài khoản thành viên.</p>
                         <a class="btn btn-outline-classic btn-sm" th:href="@{/librarian/members}">
@@ -1099,7 +1094,7 @@
                 <div class="col-lg-6">
                     <div class="card-classic h-100 shadow-sm p-4">
                         <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-person-badge me-2 text-classic"></i>Danh sách thủ thư
+                            <i class="bi bi-person-badge me-2 text-classic"></i> Danh sách thủ thư
                         </h5>
                         <p class="text-muted mb-3">Xem danh sách thủ thư đang làm việc trong hệ thống.</p>
                         <a class="btn btn-outline-classic btn-sm" th:href="@{/librarian/librarians}">
@@ -1174,8 +1169,15 @@
                 }
 
                 if (inventoryBtn && storageBtn) {
-                    inventoryBtn.classList.toggle("active", panelName !== "storage");
-                    storageBtn.classList.toggle("active", panelName === "storage");
+                    const showStorage = panelName === "storage";
+
+                    inventoryBtn.classList.toggle("btn-classic", !showStorage);
+                    inventoryBtn.classList.toggle("btn-outline-classic", showStorage);
+                    inventoryBtn.classList.toggle("active", !showStorage);
+
+                    storageBtn.classList.toggle("btn-classic", showStorage);
+                    storageBtn.classList.toggle("btn-outline-classic", !showStorage);
+                    storageBtn.classList.toggle("active", showStorage);
                 }
             }
 
@@ -1255,7 +1257,6 @@
                 });
             }
 
-
             function setInlineError(element, message) {
                 if (element == null) {
                     return;
@@ -1300,7 +1301,8 @@
                 clearInlineError(titleInput);
                 clearInlineError(contentInput);
 
-                if ((recipientAll == null || !recipientAll.checked) && (recipientSelected == null || !recipientSelected.checked)) {
+                if ((recipientAll == null || !recipientAll.checked)
+                        && (recipientSelected == null || !recipientSelected.checked)) {
                     setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
                     isValid = false;
                 }
@@ -1340,6 +1342,7 @@
                     });
                 });
             }
+
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 

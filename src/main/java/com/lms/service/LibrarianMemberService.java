@@ -24,4 +24,3 @@ public interface LibrarianMemberService {
 
     boolean deactivateMember(Integer accountId);
 }
-

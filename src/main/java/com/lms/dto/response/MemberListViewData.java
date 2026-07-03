@@ -13,4 +13,3 @@ public record MemberListViewData(
         Map<Integer, Member> memberByUserId,
         List<MembershipTier> tiers) {
 }
-
