@@ -21,8 +21,7 @@ public class AuthenticationEventListener {
     public void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
         Object principal = event.getAuthentication().getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
-
-            Integer accountId = userDetails.getAccountId();
+            Integer userId = userDetails.getUser().getId();
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attributes != null) {
@@ -30,7 +29,7 @@ public class AuthenticationEventListener {
                 String ipAddress = request.getRemoteAddr();
                 String userAgent = request.getHeader("User-Agent");
                 String sessionId = request.getSession().getId();
-                authService.logLoginAction(accountId, ipAddress, userAgent, sessionId);
+                authService.logLoginAction(userId, ipAddress, userAgent, sessionId);
             }
         }
     }
@@ -40,7 +39,7 @@ public class AuthenticationEventListener {
         Object principal = event.getAuthentication().getPrincipal();
 
         if (principal instanceof CustomUserDetails userDetails) {
-            Integer accountId = userDetails.getAccountId();
+            Integer userId = userDetails.getUser().getId();
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attributes != null) {
@@ -48,8 +47,7 @@ public class AuthenticationEventListener {
                 String ipAddress = request.getRemoteAddr();
                 String userAgent = request.getHeader("User-Agent");
                 String sessionId = request.getSession().getId();
-                authService.logLogoutAction(accountId, ipAddress, userAgent, sessionId);
-
+                authService.logLogoutAction(userId, ipAddress, userAgent, sessionId);
             }
         }
     }
