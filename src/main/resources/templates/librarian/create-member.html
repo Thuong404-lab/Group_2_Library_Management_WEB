@@ -91,8 +91,8 @@
                                     <label class="form-label fw-bold small text-muted text-uppercase">
                                         Số điện thoại <span class="text-danger">*</span>
                                     </label>
-                                    <input class="form-control validate-field" name="phone" required pattern="[0-9]{10}"
-                                        minlength="10" maxlength="10" placeholder="09xxxxxxxx"
+                                    <input class="form-control validate-field" name="phone" required pattern="0[0-9]{9}"
+                                        minlength="10" placeholder="09xxxxxxxx"
                                         th:value="${formValues != null ? formValues['phone'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
@@ -237,7 +237,7 @@
                 }
 
                 if (field.name === "phone") {
-                    return "Số điện thoại phải gồm đúng 10 chữ số.";
+                    return "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
                 }
 
                 if (field.name === "email" && field.validity.typeMismatch) {
@@ -258,7 +258,7 @@
                     return false;
                 }
 
-                if (field.name === "phone" && !/^[0-9]{10}$/.test(value)) {
+                if (field.name === "phone" && !/^0[0-9]{9}$/.test(value)) {
                     field.classList.remove("is-valid");
                     field.classList.add("is-invalid");
                     feedback.textContent = getErrorMessage(field);
@@ -292,20 +292,6 @@
                 });
             });
 
-            form.addEventListener("submit", function (event) {
-                let isFormValid = true;
-
-                fields.forEach(function (field) {
-                    if (!validateField(field)) {
-                        isFormValid = false;
-                    }
-                });
-
-                if (!isFormValid) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-            });
         });
     </script>
 
