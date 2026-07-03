@@ -118,34 +118,4 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
             memberNotificationRepository.saveAll(unreadNotifications);
         }
     }
-
-    @Override
-    @Transactional
-    public void deleteNotificationById(Integer memberNotificationId, String username) {
-        Member member = getMemberByUsername(username);
-
-        // MemberNotificationId = (memberId, notificationId) -> ta dùng notificationId làm input.
-        // Truy vấn theo memberId + notificationId sẽ xóa đúng bản ghi.
-        memberNotificationRepository
-                .findByMemberMemberIdAndNotificationId(member.getMemberId(), memberNotificationId)
-                .ifPresentOrElse(
-                        memberNotificationRepository::delete,
-                        () -> {
-                            // không cần throw để tránh UX xấu khi id không tồn tại
-                        }
-                );
-    }
-
-    @Override
-    @Transactional
-    public void deleteAllNotifications(String username) {
-        Member member = getMemberByUsername(username);
-        List<MemberNotification> notifications = memberNotificationRepository
-                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId());
-        if (notifications == null || notifications.isEmpty()) {
-            return;
-        }
-        memberNotificationRepository.deleteAll(notifications);
-    }
 }
-

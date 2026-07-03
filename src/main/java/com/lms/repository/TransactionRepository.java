@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 // Người phụ trách: Trần Ngọc Linh Đang (CE191088)
 
@@ -37,17 +36,4 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Page<Transaction> findByWalletMemberMemberIdOrderByTransactionDateDesc(
             Integer memberId,
             Pageable pageable);
-
-    Page<Transaction> findAllByOrderByTransactionDateDesc(Pageable pageable);
-
-    Page<Transaction> findAllByTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-            String transactionType,
-            Pageable pageable);
-
-
-    Optional<Transaction> findTopByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-            Integer memberId,
-            String transactionType);
-
-    List<Transaction> findTop5ByTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(String transactionType);
 }

@@ -6,7 +6,6 @@ import com.lms.entity.Transaction;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.TransactionRepository;
-import com.lms.repository.WalletRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,14 +13,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.security.Principal;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 /**
  * FinancialController - Giao dịch Tài chính (Phía Member)
@@ -34,16 +30,13 @@ public class FinancialController {
     private final TransactionRepository transactionRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final MemberRepository memberRepository;
-    private final WalletRepository walletRepository;
 
     public FinancialController(TransactionRepository transactionRepository,
                                MemberNotificationRepository memberNotificationRepository,
-                               MemberRepository memberRepository,
-                               WalletRepository walletRepository) {
+                               MemberRepository memberRepository) {
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
-        this.walletRepository = walletRepository;
     }
 
     // UC-8.1: Pay Overdue Fines
@@ -88,8 +81,7 @@ public class FinancialController {
                                          @RequestParam(required = false) String type,
                                          Model model) {
         Member member = getCurrentMember(principal);
-        int currentPage = Math.max(page, 0);
-        Pageable pageable = PageRequest.of(currentPage, 10);
+        Pageable pageable = PageRequest.of(page, 10);
 
         Page<Transaction> transactionPage;
         if (type == null || type.trim().isEmpty()) {
@@ -107,24 +99,9 @@ public class FinancialController {
                     );
         }
 
-        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
-                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
-                .orElse(BigDecimal.ZERO);
-
-        transactionRepository
-                .findTopByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-                        member.getMemberId(),
-                        "TOP_UP"
-                )
-                .ifPresent(transaction -> model.addAttribute(
-                        "topupPopupMessage",
-                        buildTopupPopupMessage(transaction)
-                ));
-
-        model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("transactions", transactionPage.getContent());
-        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("currentPage", page);
         model.addAttribute("selectedType", type);
 
         return "member/wallet";
@@ -135,21 +112,40 @@ public class FinancialController {
     public String viewTopupNotifications(Principal principal, Model model) {
         Member member = getCurrentMember(principal);
 
-        List<MemberNotification> notifications = memberNotificationRepository
-                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
-                .stream()
-                .filter(this::isTopupNotification)
-                .collect(Collectors.toList());
+        List<MemberNotification> titleMatches =
+                memberNotificationRepository
+                        .findByMemberMemberIdAndNotificationTitleContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
+                                member.getMemberId(),
+                                "nạp tiền"
+                        );
+
+        List<MemberNotification> contentMatches =
+                memberNotificationRepository
+                        .findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
+                                member.getMemberId(),
+                                "nạp tiền"
+                        );
+
+        Map<Integer, MemberNotification> notificationMap = new LinkedHashMap<>();
+
+        for (MemberNotification memberNotification : titleMatches) {
+            notificationMap.put(
+                    memberNotification.getNotification().getNotificationId(),
+                    memberNotification
+            );
+        }
+
+        for (MemberNotification memberNotification : contentMatches) {
+            notificationMap.put(
+                    memberNotification.getNotification().getNotificationId(),
+                    memberNotification
+            );
+        }
+        List<MemberNotification> notifications = new ArrayList<>(notificationMap.values());
 
         model.addAttribute("notifications", notifications);
-        model.addAttribute("showNotificationBell", false);
 
         return "member/topup-notifications";
-    }
-
-    @GetMapping("/top-up-notifications")
-    public String redirectTopUpNotifications() {
-        return "redirect:/member/financial/topup-notifications";
     }
 
     private Member getCurrentMember(Principal principal) {
@@ -161,104 +157,6 @@ public class FinancialController {
 
         return memberRepository.findByUserEmail(usernameOrEmail)
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
-                .or(() -> memberRepository.findByAccountUsername(usernameOrEmail))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin member hiện tại"));
-    }
-
-    private boolean isTopupNotification(MemberNotification memberNotification) {
-        if (memberNotification == null || memberNotification.getNotification() == null) {
-            return false;
-        }
-
-        String title = Objects.toString(memberNotification.getNotification().getTitle(), "");
-        String content = Objects.toString(memberNotification.getNotification().getContent(), "");
-        String searchableText = normalizeText(title + " " + content);
-
-        // Chỉ coi là "Thông báo nạp tiền" khi đúng title mà librarian tạo ra.
-        // Điều này giúp tránh bị trùng với các thông báo khác.
-        return "Nạp tiền vào ví thành công".equalsIgnoreCase(title);
-    }
-
-    private String buildTopupPopupMessage(Transaction transaction) {
-        BigDecimal amount = transaction.getAmount() == null ? BigDecimal.ZERO : transaction.getAmount().abs();
-        NumberFormat currencyFormatter = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-        currencyFormatter.setMaximumFractionDigits(0);
-
-        return "Bạn có giao dịch nạp tiền "
-                + currencyFormatter.format(amount)
-                + " đ trong lịch sử giao dịch.";
-    }
-
-    private String normalizeText(String value) {
-        return value == null
-                ? ""
-                : value.toLowerCase(Locale.ROOT)
-                        .replace('ạ', 'a')
-                        .replace('ả', 'a')
-                        .replace('ã', 'a')
-                        .replace('á', 'a')
-                        .replace('à', 'a')
-                        .replace('ậ', 'a')
-                        .replace('ẩ', 'a')
-                        .replace('ẫ', 'a')
-                        .replace('ấ', 'a')
-                        .replace('ầ', 'a')
-                        .replace('ắ', 'a')
-                        .replace('ằ', 'a')
-                        .replace('ẳ', 'a')
-                        .replace('ẵ', 'a')
-                        .replace('ặ', 'a')
-                        .replace('ă', 'a')
-                        .replace('â', 'a')
-                        .replace('ẹ', 'e')
-                        .replace('ẻ', 'e')
-                        .replace('ẽ', 'e')
-                        .replace('é', 'e')
-                        .replace('è', 'e')
-                        .replace('ệ', 'e')
-                        .replace('ể', 'e')
-                        .replace('ễ', 'e')
-                        .replace('ế', 'e')
-                        .replace('ề', 'e')
-                        .replace('ê', 'e')
-                        .replace('ị', 'i')
-                        .replace('ỉ', 'i')
-                        .replace('ĩ', 'i')
-                        .replace('í', 'i')
-                        .replace('ì', 'i')
-                        .replace('ọ', 'o')
-                        .replace('ỏ', 'o')
-                        .replace('õ', 'o')
-                        .replace('ó', 'o')
-                        .replace('ò', 'o')
-                        .replace('ộ', 'o')
-                        .replace('ổ', 'o')
-                        .replace('ỗ', 'o')
-                        .replace('ố', 'o')
-                        .replace('ồ', 'o')
-                        .replace('ơ', 'o')
-                        .replace('ợ', 'o')
-                        .replace('ở', 'o')
-                        .replace('ỡ', 'o')
-                        .replace('ớ', 'o')
-                        .replace('ờ', 'o')
-                        .replace('ô', 'o')
-                        .replace('ụ', 'u')
-                        .replace('ủ', 'u')
-                        .replace('ũ', 'u')
-                        .replace('ú', 'u')
-                        .replace('ù', 'u')
-                        .replace('ư', 'u')
-                        .replace('ự', 'u')
-                        .replace('ử', 'u')
-                        .replace('ữ', 'u')
-                        .replace('ứ', 'u')
-                        .replace('ừ', 'u')
-                        .replace('ỵ', 'y')
-                        .replace('ỷ', 'y')
-                        .replace('ỹ', 'y')
-                        .replace('ý', 'y')
-                        .replace('ỳ', 'y')
-                        .replace('đ', 'd');
     }
 }
