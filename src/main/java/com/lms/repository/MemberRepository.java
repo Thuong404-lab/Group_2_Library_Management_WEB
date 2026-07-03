@@ -28,10 +28,7 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
     );
 
     @Query("""
-            SELECT m FROM Member m 
-            WHERE m.user.id = (
-                SELECT a.user.id FROM Account a WHERE a.username = :username
-            )
+            SELECT a.member FROM MemberAccount a WHERE a.username = :username
             """)
     Optional<Member> findByAccountUsername(@Param("username") String username);
 }

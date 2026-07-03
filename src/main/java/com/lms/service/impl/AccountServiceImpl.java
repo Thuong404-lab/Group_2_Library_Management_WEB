@@ -2,7 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.service.AccountService;
 
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AccountServiceImpl implements AccountService {
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final UserRepository userRepository;
 
-    public AccountServiceImpl(AccountRepository accountRepository, UserRepository userRepository) {
-        this.accountRepository = accountRepository;
+    public AccountServiceImpl(MemberAccountRepository memberAccountRepository, UserRepository userRepository) {
+        this.memberAccountRepository = memberAccountRepository;
         this.userRepository = userRepository;
     }
 
