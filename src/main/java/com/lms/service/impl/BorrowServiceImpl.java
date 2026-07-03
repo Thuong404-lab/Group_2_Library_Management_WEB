@@ -21,20 +21,20 @@ public class BorrowServiceImpl implements BorrowService {
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final BookRepository bookRepository;
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
                              BookItemRepository bookItemRepository,
                              BorrowRepository borrowRepository,
                              BorrowDetailRepository borrowDetailRepository,
                              BookRepository bookRepository,
-                             AccountRepository accountRepository) {
+                             MemberAccountRepository memberAccountRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookRepository = bookRepository;
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
     }
 
     @Override
@@ -92,11 +92,13 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) throws Exception {
-        Account account = accountRepository.findByUsername(username)
+        MemberAccount account = memberAccountRepository.findByUsername(username)
                 .orElseThrow(() -> new Exception("Không tìm thấy tài khoản người dùng!"));
 
-        Member member = memberRepository.findByUserId(account.getUser().getId())
-                .orElseThrow(() -> new Exception("Không tìm thấy thông tin độc giả!"));
+        Member member = account.getMember();
+        if (member == null) {
+            throw new Exception("Không tìm thấy thông tin độc giả!");
+        }
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new Exception("Sách yêu cầu mượn không tồn tại!"));
@@ -163,8 +165,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getBorrowsByMemberAndStatus(String username, String status) {
-        Integer targetMemberId = accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
+        Integer targetMemberId = memberAccountRepository.findByUsername(username)
+                .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
 
@@ -272,8 +274,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getAllBorrowHistoryByMember(String username) {
-        Integer targetMemberId = accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
+        Integer targetMemberId = memberAccountRepository.findByUsername(username)
+                .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
 

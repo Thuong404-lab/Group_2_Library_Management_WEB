@@ -1,13 +1,13 @@
 package com.lms.controller.librarian;
 
 import com.lms.config.CustomUserDetails;
-import com.lms.entity.Account;
+import com.lms.entity.MemberAccount;
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import com.lms.entity.Role;
 import com.lms.entity.User;
 import com.lms.enums.UserStatus;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
@@ -32,20 +32,20 @@ import java.util.Map;
 @RequestMapping("/librarian")
 public class MemberMgmtController {
 
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public MemberMgmtController(AccountRepository accountRepository,
+    public MemberMgmtController(MemberAccountRepository memberAccountRepository,
             MemberRepository memberRepository,
             MembershipTierRepository membershipTierRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder) {
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
         this.userRepository = userRepository;
@@ -60,20 +60,19 @@ public class MemberMgmtController {
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("accountId").ascending());
-        Page<Account> accounts;
+        Page<MemberAccount> accounts;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            accounts = accountRepository.searchMemberAccounts(keyword.trim(), pageRequest);
+            accounts = memberAccountRepository.searchMemberAccounts(keyword.trim(), pageRequest);
         } else {
-            accounts = accountRepository.findMemberAccounts(pageRequest);
+            accounts = memberAccountRepository.findAll(pageRequest);
         }
 
         Map<Integer, Member> memberByUserId = new HashMap<>();
 
-        for (Account account : accounts.getContent()) {
-            if (account.getUser() != null && account.getUser().getId() != null) {
-                memberRepository.findByUserId(account.getUser().getId())
-                        .ifPresent(member -> memberByUserId.put(account.getUser().getId(), member));
+        for (MemberAccount account : accounts.getContent()) {
+            if (account.getMember() != null && account.getMember().getUser() != null) {
+                memberByUserId.put(account.getMember().getUser().getId(), account.getMember());
             }
         }
 
@@ -110,7 +109,7 @@ public class MemberMgmtController {
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        if (accountRepository.existsByUsername(username.trim())) {
+        if (memberAccountRepository.existsByUsername(username.trim())) {
             model.addAttribute("error", "Username đã tồn tại.");
             model.addAttribute("tiers", membershipTierRepository.findAll(Sort.by("tierId").ascending()));
             addCurrentUser(model, userDetails);
@@ -143,18 +142,18 @@ public class MemberMgmtController {
         user.setStatus(toUserStatus(status));
         userRepository.save(user);
 
-        Account account = new Account();
-        account.setUser(user);
-        account.setUsername(username.trim());
-        account.setPasswordHash(passwordEncoder.encode(password));
-        account.setStatus(status);
-        account.getRoles().add(memberRole);
-        accountRepository.save(account);
-
         Member member = new Member();
         member.setUser(user);
         member.setTier(tier);
         memberRepository.save(member);
+
+        MemberAccount account = new MemberAccount();
+        account.setMember(member);
+        account.setUsername(username.trim());
+        account.setPasswordHash(passwordEncoder.encode(password));
+        account.setStatus(status);
+        account.getRoles().add(memberRole);
+        memberAccountRepository.save(account);
 
         redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành viên thành công.");
         return "redirect:/librarian/members";
@@ -171,19 +170,19 @@ public class MemberMgmtController {
             @RequestParam(defaultValue = "Active") String status,
             RedirectAttributes redirectAttributes) {
 
-        Account account = accountRepository.findById(id).orElse(null);
+        MemberAccount account = memberAccountRepository.findById(id).orElse(null);
 
-        if (account == null || account.getUser() == null) {
+        if (account == null || account.getMember() == null || account.getMember().getUser() == null) {
             redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
             return "redirect:/librarian/members";
         }
 
-        if (accountRepository.existsByUsernameAndAccountIdNot(username.trim(), id)) {
+        if (memberAccountRepository.existsByUsernameAndIdNot(username.trim(), id)) {
             redirectAttributes.addFlashAttribute("error", "Username đã tồn tại.");
             return "redirect:/librarian/members";
         }
 
-        if (userRepository.existsByEmailAndIdNot(email.trim(), account.getUser().getId())) {
+        if (userRepository.existsByEmailAndIdNot(email.trim(), account.getMember().getUser().getId())) {
             redirectAttributes.addFlashAttribute("error", "Email đã tồn tại.");
             return "redirect:/librarian/members";
         }
@@ -195,22 +194,21 @@ public class MemberMgmtController {
             return "redirect:/librarian/members";
         }
 
-        User user = account.getUser();
+        User user = account.getMember().getUser();
         user.setFullName(fullName.trim());
         user.setEmail(email.trim());
         user.setPhone(phone.trim());
         user.setStatus(toUserStatus(status));
+        userRepository.save(user);
 
         account.setUsername(username.trim());
         account.setStatus(status);
 
-        Member member = memberRepository.findByUserId(user.getId()).orElse(new Member());
-        member.setUser(user);
+        Member member = account.getMember();
         member.setTier(tier);
-
-        userRepository.save(user);
-        accountRepository.save(account);
         memberRepository.save(member);
+        
+        memberAccountRepository.save(account);
 
         redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành viên thành công.");
         return "redirect:/librarian/members";
@@ -219,7 +217,7 @@ public class MemberMgmtController {
     @PostMapping("/members/delete/{id}")
     public String deleteMemberAccount(@PathVariable Integer id,
             RedirectAttributes redirectAttributes) {
-        Account account = accountRepository.findById(id).orElse(null);
+        MemberAccount account = memberAccountRepository.findById(id).orElse(null);
 
         if (account == null) {
             redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
@@ -228,11 +226,11 @@ public class MemberMgmtController {
 
         account.setStatus("Inactive");
 
-        if (account.getUser() != null) {
-            account.getUser().setStatus(UserStatus.Inactive);
+        if (account.getMember() != null && account.getMember().getUser() != null) {
+            account.getMember().getUser().setStatus(UserStatus.Inactive);
         }
 
-        accountRepository.save(account);
+        memberAccountRepository.save(account);
 
         redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành viên thành công.");
         return "redirect:/librarian/members";
@@ -286,8 +284,8 @@ public class MemberMgmtController {
     }
 
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {
-        if (userDetails != null && userDetails.getAccount() != null) {
-            model.addAttribute("currentUser", userDetails.getAccount().getUser());
+        if (userDetails != null && userDetails.getUser() != null) {
+            model.addAttribute("currentUser", userDetails.getUser());
         }
     }
 

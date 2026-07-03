@@ -22,7 +22,7 @@ public class AuthenticationEventListener {
         Object principal = event.getAuthentication().getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
 
-            Integer accountId = userDetails.getAccount().getAccountId();
+            Integer accountId = userDetails.getAccountId();
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attributes != null) {
@@ -40,7 +40,7 @@ public class AuthenticationEventListener {
         Object principal = event.getAuthentication().getPrincipal();
 
         if (principal instanceof CustomUserDetails userDetails) {
-            Integer accountId = userDetails.getAccount().getAccountId();
+            Integer accountId = userDetails.getAccountId();
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attributes != null) {

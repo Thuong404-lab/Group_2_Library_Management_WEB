@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.service.LibrarianInteractionService;
 
-import com.lms.entity.Account;
-import com.lms.repository.AccountRepository;
+import com.lms.entity.StaffAccount;
+import com.lms.repository.StaffAccountRepository;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class LibrarianDashboardController {
     private final StorageService storageService;
     private final InventoryService inventoryService;
     private final LibrarianInteractionService librarianInteractionService;
-    private final AccountRepository accountRepository;
+    private final StaffAccountRepository staffAccountRepository;
 
     public LibrarianDashboardController(BorrowRepository borrowRepository,
             BorrowDetailRepository borrowDetailRepository,
@@ -57,7 +57,7 @@ public class LibrarianDashboardController {
             StorageService storageService,
             InventoryService inventoryService,
             LibrarianInteractionService librarianInteractionService,
-            AccountRepository accountRepository) {
+            StaffAccountRepository staffAccountRepository) {
 
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
@@ -68,7 +68,7 @@ public class LibrarianDashboardController {
         this.storageService = storageService;
         this.inventoryService = inventoryService;
         this.librarianInteractionService = librarianInteractionService;
-        this.accountRepository = accountRepository;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @GetMapping("/dashboard")
@@ -124,10 +124,10 @@ public class LibrarianDashboardController {
             staffPage = staffRepository.findByStaffTypeIgnoreCase("Librarian", pageRequest);
         }
 
-        Map<Integer, Account> accountByUserId = new HashMap<>();
+        Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
         for (Staff staff : staffPage.getContent()) {
             if (staff.getUser() != null && staff.getUser().getId() != null) {
-                accountRepository.findByUserId(staff.getUser().getId())
+                staffAccountRepository.findByStaff_User_Id(staff.getUser().getId())
                         .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
             }
         }
@@ -139,8 +139,8 @@ public class LibrarianDashboardController {
     }
 
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {
-        if (userDetails != null && userDetails.getAccount() != null) {
-            model.addAttribute("currentUser", userDetails.getAccount().getUser());
+        if (userDetails != null && userDetails.getUser() != null) {
+            model.addAttribute("currentUser", userDetails.getUser());
         }
     }
 }
