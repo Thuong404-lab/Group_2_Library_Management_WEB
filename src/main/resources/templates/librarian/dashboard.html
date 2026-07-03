@@ -48,11 +48,11 @@
         }
 
         .review-reply-box {
-            min-width: 220px;
+            min-width: 260px;
         }
 
         .table-fixed-action {
-            min-width: 180px;
+            min-width: 260px;
         }
 
         .validate-field.is-invalid,
@@ -65,16 +65,29 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='dashboard'">
+    <div layout:fragment="content"
+        th:with="activeMenu='dashboard', currentSection=${param.section != null ? param.section[0] : 'overview'}">
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
                 <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                    Tổng quan
+                    <span th:if="${currentSection == 'notifications'}">Gửi thông báo</span>
+                    <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
+                    <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
+                    <span th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">Tổng quan</span>
                 </h2>
-                <div class="text-muted">
+                <div class="text-muted" th:if="${currentSection == 'notifications'}">
+                    Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
+                </div>
+                <div class="text-muted" th:if="${currentSection == 'reviews'}">
+                    Xem, phản hồi và xoá đánh giá của độc giả.
+                </div>
+                <div class="text-muted" th:if="${currentSection == 'acquisition'}">
+                    Xem danh sách sách do độc giả đề xuất.
+                </div>
+                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">
                     Cập nhật:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>
                 </div>
@@ -85,7 +98,8 @@
         <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
 
         <!-- Overview -->
-        <section id="section-overview" class="lib-section active">
+        <section id="section-overview" class="lib-section"
+            th:classappend="${currentSection == 'overview'} ? ' active' : ''">
             <!-- Statistics Cards -->
             <div class="row g-3 mb-5">
                 <div class="col-xl-2 col-lg-4 col-sm-6">
@@ -263,15 +277,10 @@
         </section>
 
         <!-- Notifications -->
-        <section id="section-notifications" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-bell me-2 text-classic"></i>Gửi thông báo
-                    </h5>
-                    <div class="text-muted small">Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.</div>
-                </div>
+        <section id="section-notifications" class="lib-section"
+            th:classappend="${currentSection == 'notifications'} ? ' active' : ''">
 
+            <div class="card-classic shadow-sm mb-4">
                 <div class="card-body p-4">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
                         method="post" id="notificationForm" novalidate>
@@ -365,31 +374,26 @@
         </section>
 
         <!-- Reviews -->
-        <section id="section-reviews" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
-                    </h5>
-                    <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
-                </div>
-                <div class="card-body p-0">
+        <section id="section-reviews" class="lib-section"
+            th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
+            <div class="card-classic shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
-                                    <th class="ps-4">Sách</th>
+                                    <th class="ps-3">Sách</th>
                                     <th>Người gửi</th>
                                     <th>Đánh giá</th>
                                     <th>Nội dung</th>
                                     <th>Phản hồi của thủ thư</th>
-                                    <th class="table-fixed-action">Thao tác</th>
+                                    <th class="text-end pe-3 table-fixed-action">Thao tác</th>
                                 </tr>
                             </thead>
 
                             <tbody th:if="${reviews != null}">
                                 <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
+                                    <td class="ps-3 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
                                     <td th:text="${review.memberName}">Người gửi</td>
                                     <td>
                                         <span class="badge bg-warning text-dark border">
@@ -410,8 +414,7 @@
                                         <span th:if="${review.librarianResponse == null}" class="text-muted">Chưa phản
                                             hồi</span>
                                     </td>
-
-                                    <td>
+                                    <td class="pe-3 table-fixed-action">
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                                             method="post" class="review-reply-box mb-2" novalidate>
@@ -425,7 +428,7 @@
                                                 th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
                                             </div>
                                             <button type="submit" class="btn btn-sm btn-classic w-100">
-                                                <i class="bi bi-reply me-1"></i>Phản hồi
+                                                Phản hồi
                                             </button>
                                         </form>
 
@@ -435,8 +438,8 @@
                                             onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
                                             <input type="hidden" th:if="${_csrf != null}"
                                                 th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-classic w-100">
-                                                <i class="bi bi-trash me-1"></i>Xoá
+                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                                Xoá
                                             </button>
                                         </form>
                                     </td>
@@ -458,20 +461,15 @@
         </section>
 
         <!-- Book Suggestions -->
-        <section id="section-acquisition" class="lib-section">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-journal-plus me-2 text-classic"></i> Đề xuất mua sách
-                    </h5>
-                    <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
-                </div>
-                <div class="card-body p-0">
+        <section id="section-acquisition" class="lib-section"
+            th:classappend="${currentSection == 'acquisition'} ? ' active' : ''">
+            <div class="card-classic shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
-                                    <th class="ps-4">Mã</th>
+                                    <th class="ps-3">Mã</th>
                                     <th>Tên sách</th>
                                     <th>Tác giả</th>
                                     <th>Người đề xuất</th>
@@ -481,7 +479,7 @@
 
                             <tbody th:if="${requests != null}">
                                 <tr th:each="request : ${requests.content}">
-                                    <td class="ps-4 fw-bold" th:text="${request.requestId}">1</td>
+                                    <td class="ps-3 fw-bold" th:text="${request.requestId}">1</td>
                                     <td th:text="${request.title}">Tên sách</td>
                                     <td th:text="${request.author}">Tác giả</td>
                                     <td
