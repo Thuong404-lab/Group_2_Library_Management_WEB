@@ -4,7 +4,7 @@ import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.service.MembershipService;
 import org.springframework.stereotype.Service;
 
@@ -16,14 +16,14 @@ import java.util.Optional;
 public class MembershipServiceImpl implements MembershipService {
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
 
     public MembershipServiceImpl(MemberRepository memberRepository,
                                  MembershipTierRepository membershipTierRepository,
-                                 AccountRepository accountRepository) {
+                                 MemberAccountRepository memberAccountRepository) {
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
     }
 
     @Override
@@ -40,15 +40,16 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Member getMemberByUsername(String username) {
-        return memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new RuntimeException("Member not found for: " + username));
+        var account = memberAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Account not found for: " + username));
+
+        return account.getMember();
     }
 
     // --- BỔ SUNG XỬ LÝ LOGIC TIẾN TRÌNH HẠNG ĐỘNG CHO VIEW ---
 
     @Override
     public List<MembershipTier> getAllTiers() {
-        // Lấy tất cả hạng thẻ và sắp xếp theo điều kiện (condition - kiểu BigDecimal) tăng dần
         return membershipTierRepository.findAll().stream()
                 .sorted((t1, t2) -> {
                     if (t1.getCondition() == null) return -1;
@@ -60,9 +61,6 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public double getAccumulatedSpending(Member member) {
-        // Vì Entity Member của bạn chưa có trường tích lũy spending,
-        // tạm thời trả về con số mặc định (ví dụ: 150000.0) để đổ lên HTML không bị trống.
-        // Sau này bạn có thể liên kết qua bảng hóa đơn hoặc Wallet tùy cấu trúc nhóm.
         return 150000.0;
     }
 
@@ -71,18 +69,16 @@ public class MembershipServiceImpl implements MembershipService {
         if (currentTier == null) return null;
         List<MembershipTier> tiers = getAllTiers();
 
-        // Sử dụng .compareTo() của BigDecimal thay cho dấu '>'
         return tiers.stream()
                 .filter(t -> t.getCondition() != null && currentTier.getCondition() != null
                         && t.getCondition().compareTo(currentTier.getCondition()) > 0)
                 .findFirst()
-                .orElse(null); // Trả về null nếu đã ở hạng cao nhất
+                .orElse(null);
     }
     @Override
     public List<Member> getTopMembersBySpending() {
-        // Lấy tất cả thành viên, tạm thời trả về danh sách để hiển thị làm bảng xếp hạng trên Dashboard
         return memberRepository.findAll().stream()
-                .limit(5) // Lấy top 5 thành viên
+                .limit(5)
                 .toList();
     }
 }

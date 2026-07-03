@@ -109,33 +109,7 @@
                 </ol>
             </nav>
 
-            <div class="page-header mt-0 mb-5 text-white"
-                style="background: linear-gradient(135deg, #4a3b32 0%, #8b5a2b 100%); padding: 40px; box-shadow: 0 10px 25px rgba(139, 90, 43, 0.2); border-radius: 8px;">
-                <div class="row w-100 align-items-center">
-                    <div class="col-md-7 mb-3 mb-md-0">
-                        <h2 class="fw-bold mb-2" style="font-family: 'Playfair Display', serif;"><i
-                                class="bi bi-compass me-2"></i>Khám phá kho tàng tri thức</h2>
-                        <p class="text-white-50 mb-0 fs-5" style="font-family: 'Lora', serif;">Hơn 10,000+ đầu sách đang
-                            chờ bạn khám phá và trải nghiệm.</p>
-                    </div>
-                    <div class="col-md-5">
-                        <form action="/books" method="GET" class="input-group shadow-sm">
-                            <input type="hidden" name="genreId" th:if="${selectedGenreId != null}"
-                                th:value="${selectedGenreId}">
-                            <input type="hidden" name="status" th:if="${selectedStatus != null}"
-                                th:value="${selectedStatus}">
-                            <input type="text" name="keyword" th:value="${keyword}"
-                                class="form-control border-0 px-4 py-3"
-                                style="background-color: #fdfbf7; color: #4a3b32; font-family: 'Lora', serif; border-radius: 30px 0 0 30px;"
-                                placeholder="Tìm kiếm sách, tác giả, ISBN...">
-                            <button type="submit" class="btn btn-light px-4 fw-bold"
-                                style="background-color: #dcb38a; border: 0; color: #2c1e16; border-radius: 0 30px 30px 0;">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+            <!-- Hero banner removed to reduce redundancy -->
 
             <!-- Main Content: Filter Sidebar + Book Grid -->
             <div class="row">
@@ -194,6 +168,82 @@
 
                 <!-- Book Grid (Right) -->
                 <div class="col-lg-9 col-md-8">
+                    <!-- Compact Search Bar (Shopee Style) -->
+                    <div class="mb-4 position-relative" id="booksSearchContainer">
+                        <form action="/books" method="GET" class="input-group shadow-sm" style="position: relative; z-index: 1050; border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 90, 43, 0.3);">
+                            <input type="hidden" name="genreId" th:if="${selectedGenreId != null}" th:value="${selectedGenreId}">
+                            <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}">
+                            <input type="hidden" name="sort" th:if="${sort != null}" th:value="${sort}">
+                            <span class="input-group-text bg-white border-0" style="color: #8b5a2b;"><i class="bi bi-search"></i></span>
+                            <input type="text" id="booksSearchInput" name="keyword" th:value="${keyword}" 
+                                class="form-control border-0 py-2" placeholder="Tìm kiếm trong danh mục..." autocomplete="off">
+                            <button class="btn px-4 fw-bold" type="submit" style="background-color: #8b5a2b; color: white; border: none;">TÌM</button>
+                        </form>
+                        
+                        <!-- Dropdown Overlay -->
+                        <div id="booksSearchDropdown" class="dropdown-menu w-100 shadow border-0 mt-1 p-0" style="border-radius: 8px; display: none; position: absolute; z-index: 1040; overflow: hidden; top: 100%;">
+                            <div id="booksLiveSearchSuggestions" class="bg-white">
+                                <div class="list-group list-group-flush" id="booksSuggestionList">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- JS for Compact Live Search -->
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const searchInput = document.getElementById('booksSearchInput');
+                            const searchDropdown = document.getElementById('booksSearchDropdown');
+                            const suggestionList = document.getElementById('booksSuggestionList');
+                            let timeoutId;
+
+                            document.addEventListener('click', function(e) {
+                                if (!document.getElementById('booksSearchContainer').contains(e.target)) {
+                                    searchDropdown.style.display = 'none';
+                                }
+                            });
+
+                            searchInput.addEventListener('input', function() {
+                                const keyword = this.value.trim();
+                                if (keyword === '') {
+                                    searchDropdown.style.display = 'none';
+                                    return;
+                                }
+
+                                searchDropdown.style.display = 'block';
+                                clearTimeout(timeoutId);
+                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Đang tìm...</div>';
+
+                                timeoutId = setTimeout(() => {
+                                    fetch('/api/books/search/suggest?keyword=' + encodeURIComponent(keyword))
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            suggestionList.innerHTML = '';
+                                            if (data.length === 0) {
+                                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small">Không tìm thấy sách.</div>';
+                                                return;
+                                            }
+                                            data.forEach(book => {
+                                                const item = document.createElement('a');
+                                                item.href = '/books/' + book.bookId;
+                                                item.className = 'list-group-item list-group-item-action d-flex align-items-center border-0 py-2 px-2 suggestion-item';
+                                                item.innerHTML = `
+                                                    <img src="${book.thumbnailUrl}" class="rounded me-2 shadow-sm" style="width: 30px; height: 40px; object-fit: cover;">
+                                                    <div class="flex-grow-1 overflow-hidden">
+                                                        <h6 class="mb-0 text-truncate fw-bold" style="color: #2c1e16; font-size: 0.85rem;">${book.title}</h6>
+                                                        <small class="text-muted text-truncate d-block" style="font-size: 0.75rem;">${book.authorName}</small>
+                                                    </div>
+                                                `;
+                                                item.addEventListener('mouseenter', function() { this.style.backgroundColor = '#f8f9fa'; });
+                                                item.addEventListener('mouseleave', function() { this.style.backgroundColor = 'transparent'; });
+                                                suggestionList.appendChild(item);
+                                            });
+                                        });
+                                }, 300);
+                            });
+                        });
+                    </script>
+
                     <!-- Advanced Status Bar -->
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm"
                         style="background-color: #fdfbf7; border: 1px solid rgba(139, 90, 43, 0.2);">
@@ -222,8 +272,8 @@
                         <!-- Lặp qua từng cuốn sách trong Page -->
                         <div class="col-lg-4 col-md-6 col-sm-6" th:each="book : ${bookPage.content}">
                             <div class="card book-card h-100 border-0 shadow-sm position-relative"
-                                style="border-radius: 12px; cursor: pointer;" data-toggle="modal"
-                                th:data-target="'#bookModal' + ${book.bookId}">
+                                style="border-radius: 12px; cursor: pointer;"
+                                th:onclick="'window.location.href=\'/books/' + ${book.bookId} + '\''">
                                 <!-- Hover Overlay Container -->
                                 <div class="position-relative overflow-hidden"
                                     style="border-radius: 12px 12px 0 0; height: 260px; background-color: #f8f9fa;">
@@ -238,7 +288,7 @@
                                     <!-- Hover Actions (Requires custom CSS to animate, but inline works for demo) -->
                                     <div class="position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 opacity-0 overlay-hover transition-base"
                                         style="opacity: 0; transition: 0.3s; cursor: pointer;">
-                                        <a href="#" data-toggle="modal" th:data-target="'#bookModal' + ${book.bookId}"
+                                        <a th:href="@{'/books/' + ${book.bookId}}"
                                             class="btn btn-light rounded-pill mb-2 fw-bold w-75"><i
                                                 class="bi bi-eye me-1"></i> Xem chi tiết</a>
                                         <button sec:authorize="isAuthenticated()" class="btn rounded-pill fw-bold w-75"
@@ -312,111 +362,7 @@
                 </div>
             </div>
 
-            <!-- Modals for books in the list -->
-            <div th:if="${bookPage != null && !bookPage.isEmpty()}">
-                <div class="modal fade" th:each="book : ${bookPage.content}" th:id="'bookModal' + ${book.bookId}"
-                    tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered">
-                        <div class="modal-content border-0 shadow-lg" style="background-color: #fdfbf7;">
-                            <div class="modal-header border-bottom border-secondary-subtle">
-                                <h4 class="modal-title font-playfair fw-bold" style="color: #4a3b32;"><i
-                                        class="bi bi-book-half me-2"></i>Chi tiết Tác phẩm</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body p-4 pt-4">
-                                <div class="row">
-                                    <div class="col-md-4 mb-4 mb-md-0">
-                                        <div class="shadow-lg rounded-1"
-                                            style="border-left: 6px solid #8b5a2b; overflow: hidden;">
-                                            <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}"
-                                                class="img-fluid w-100" alt="Book cover">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-8 text-start">
-                                        <h2 class="fw-bold mb-2"
-                                            style="font-family: 'Playfair Display', serif; color: #2c1e16;"
-                                            th:text="${book.title}">Tên Sách</h2>
-                                        <h5 class="text-muted mb-3 fst-italic" style="font-family: 'Lora', serif;">Chấp
-                                            bút:
-                                            <span th:each="author, iterStat : ${book.authors}"><span
-                                                    th:text="${author.authorName}"></span><span
-                                                    th:if="${!iterStat.last}">, </span></span>
-                                        </h5>
-                                        <p class="text-dark mb-4"
-                                            style="line-height: 1.6; text-align: justify; font-size: 0.95rem;"
-                                            th:text="${book.description != null ? book.description : 'Một tác phẩm kinh điển đáng để đọc và suy ngẫm, đưa bạn đến với những chân trời tri thức mới.'}">
-                                        </p>
-                                        <div class="p-3 mb-4 rounded-2"
-                                            style="background-color: rgba(139, 90, 43, 0.05); border: 1px dashed #8b5a2b;">
-                                            <div class="row">
-                                                <div class="col-sm-6 mb-2">
-                                                    <strong style="color: #4a3b32;">Ký hiệu (ISBN):</strong> <span
-                                                        th:text="${book.isbn}"></span>
-                                                </div>
-                                                <div class="col-sm-6 mb-2">
-                                                    <strong style="color: #4a3b32;">Thể loại:</strong> <span
-                                                        class="badge bg-dark text-light rounded-0 px-2"
-                                                        th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể
-                                                        loại</span>
-                                                </div>
-                                                <div class="col-sm-6 mb-2">
-                                                    <strong style="color: #4a3b32;">Tình trạng:</strong> <span
-                                                        class="text-success fw-bold"
-                                                        th:text="${book.status == 'Active' ? 'Sẵn sàng' : 'Không có sẵn'}">Sẵn
-                                                        có</span>
-                                                </div>
-                                                <div class="col-sm-6 mb-2">
-                                                    <strong style="color: #4a3b32;">Số lượng hiện có:</strong> <span
-                                                        class="fw-bold" style="color: #8b5a2b;">5 cuốn</span>
-                                                </div>
-                                                <div class="col-sm-6 mb-2">
-                                                    <strong style="color: #4a3b32;">Vị trí sách:</strong> <span>Kho mượn
-                                                        đọc</span>
-                                                </div>
-                                                <div class="col-sm-6 mb-2">
-                                                    <strong style="color: #4a3b32;">Tủ kệ sách:</strong> <span>Kệ A -
-                                                        Ngăn 3</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2 d-flex">
-                                            <button sec:authorize="isAuthenticated()"
-                                                class="btn rounded-0 px-4 fw-bold mr-3"
-                                                style="background-color: #8b5a2b; color: #fdfbf7; border: none;"
-                                                onclick="showToast('Tính năng yêu cầu mượn đang được phát triển!')"><i
-                                                    class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
-                                            <button sec:authorize="!isAuthenticated()"
-                                                class="btn rounded-0 px-4 fw-bold mr-3"
-                                                style="background-color: #8b5a2b; color: #fdfbf7; border: none;"
-                                                onclick="window.location.href='/login'"><i
-                                                    class="bi bi-journal-plus mr-2"></i>Yêu cầu mượn</button>
-                                            <form sec:authorize="isAuthenticated()"
-                                                th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
-                                                method="post" class="d-inline favorite-form"
-                                                th:data-book-id="${book.bookId}">
-                                                <button type="submit"
-                                                    th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger rounded-0 px-4 fw-bold js-favorite-button active' : 'btn btn-outline-danger rounded-0 px-4 fw-bold js-favorite-button'}">
-                                                    <i
-                                                        th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill mr-2' : 'bi bi-heart mr-2'}"></i>
-                                                    <span
-                                                        th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu
-                                                        thích</span>
-                                                </button>
-                                            </form>
-                                            <button sec:authorize="!isAuthenticated()"
-                                                class="btn btn-outline-danger rounded-0 px-4 fw-bold"
-                                                onclick="window.location.href='/login'"><i
-                                                    class="bi bi-heart mr-2"></i>Yêu thích</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Modals removed as per user request to navigate to detail page instead -->
 
             <!-- Add CSS for overlay hover -->
             <style>

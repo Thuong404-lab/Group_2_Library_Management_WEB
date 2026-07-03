@@ -1,13 +1,15 @@
 package com.lms.controller.admin;
 
-import com.lms.entity.Account;
+import com.lms.entity.MemberAccount;
+import com.lms.entity.StaffAccount;
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import com.lms.entity.Role;
 import com.lms.entity.Staff;
 import com.lms.entity.User;
 import com.lms.enums.UserStatus;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
@@ -26,11 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-/**
- * AccountController - Quản lý tài khoản thành viên
- * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
- */
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/admin/accounts")
@@ -40,7 +38,8 @@ public class AccountController {
             "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
                     + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
 
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
+    private final StaffAccountRepository staffAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
@@ -48,14 +47,16 @@ public class AccountController {
     private final RoleRepository roleRepository;
     private final StaffRepository staffRepository;
 
-    public AccountController(AccountRepository accountRepository,
+    public AccountController(MemberAccountRepository memberAccountRepository,
+            StaffAccountRepository staffAccountRepository,
             PasswordEncoder passwordEncoder,
             MemberRepository memberRepository,
             MembershipTierRepository membershipTierRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
             StaffRepository staffRepository) {
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
+        this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
@@ -70,20 +71,19 @@ public class AccountController {
             @RequestParam(required = false, defaultValue = "") String keyword,
             Model model) {
         PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("accountId").ascending());
-        Page<Account> accounts;
+        Page<MemberAccount> accounts;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            accounts = accountRepository.searchMemberAccounts(keyword.trim(), pageRequest);
+            accounts = memberAccountRepository.searchMemberAccounts(keyword.trim(), pageRequest);
         } else {
-            accounts = accountRepository.findMemberAccounts(pageRequest);
+            accounts = memberAccountRepository.findAll(pageRequest);
         }
 
         Map<Integer, Member> memberByUserId = new HashMap<>();
 
-        for (Account account : accounts.getContent()) {
-            if (account.getUser() != null && account.getUser().getId() != null) {
-                memberRepository.findByUserId(account.getUser().getId())
-                        .ifPresent(member -> memberByUserId.put(account.getUser().getId(), member));
+        for (MemberAccount account : accounts.getContent()) {
+            if (account.getMember() != null && account.getMember().getUser() != null) {
+                memberByUserId.put(account.getMember().getUser().getId(), account.getMember());
             }
         }
 
@@ -112,14 +112,14 @@ public class AccountController {
 
     @PostMapping("/create")
     @Transactional
-    public String createAccount(@RequestParam(required = false, defaultValue = "") String fullName,
-            @RequestParam(required = false, defaultValue = "") String email,
+    public String createAccount(@RequestParam String fullName,
+            @RequestParam String email,
             @RequestParam(required = false, defaultValue = "") String phone,
-            @RequestParam(required = false, defaultValue = "") String username,
-            @RequestParam(required = false, defaultValue = "") String password,
-            @RequestParam(required = false, defaultValue = "") String accountType,
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam String accountType,
             @RequestParam(required = false) Integer tierId,
-            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(defaultValue = "Active") String status,
             @RequestParam(required = false, defaultValue = "members") String source,
             Model model,
             RedirectAttributes redirectAttributes) {
@@ -189,7 +189,8 @@ public class AccountController {
                     "Trạng thái tài khoản không hợp lệ.");
         }
 
-        if (accountRepository.existsByUsername(trimmedUsername)) {
+        if (memberAccountRepository.existsByUsername(trimmedUsername)
+                || staffAccountRepository.existsByUsername(trimmedUsername)) {
             return createAccountFormWithError(model, source, "username", "Username đã tồn tại.");
         }
 
@@ -205,15 +206,17 @@ public class AccountController {
 
         if (roleName.equals("MEMBER")) {
             if (tierId == null) {
-                return createAccountFormWithError(model, source, "tierId",
-                        "Vui lòng chọn hạng thành viên.");
+                model.addAttribute("error", "Vui lòng chọn hạng thành viên.");
+                prepareCreateAccountPage(model, source);
+                return "admin/create-account";
             }
 
             selectedTier = membershipTierRepository.findById(tierId).orElse(null);
 
             if (selectedTier == null) {
-                return createAccountFormWithError(model, source, "tierId",
-                        "Hạng thành viên không hợp lệ.");
+                model.addAttribute("error", "Hạng thành viên không hợp lệ.");
+                prepareCreateAccountPage(model, source);
+                return "admin/create-account";
             }
         }
 
@@ -227,30 +230,36 @@ public class AccountController {
         user.setStatus(toUserStatus(status));
         userRepository.save(user);
 
-        Account account = new Account();
-        account.setUser(user);
-        account.setUsername(trimmedUsername);
-        account.setPasswordHash(passwordEncoder.encode(password));
-        account.setStatus(status);
-        account.getRoles().add(role);
-        accountRepository.save(account);
-
         if (roleName.equals("MEMBER")) {
             Member member = new Member();
             member.setUser(user);
             member.setTier(selectedTier);
             memberRepository.save(member);
+
+            MemberAccount account = new MemberAccount();
+            account.setMember(member);
+            account.setUsername(trimmedUsername);
+            account.setPasswordHash(passwordEncoder.encode(password));
+            account.setStatus(status);
+            account.getRoles().add(role);
+            memberAccountRepository.save(account);
         } else {
             Staff staff = new Staff();
             staff.setUser(user);
-
             if (roleName.equals("ADMIN")) {
                 staff.setStaffType("Admin");
             } else {
                 staff.setStaffType("Librarian");
             }
-
             staffRepository.save(staff);
+
+            StaffAccount account = new StaffAccount();
+            account.setStaff(staff);
+            account.setUsername(trimmedUsername);
+            account.setPasswordHash(passwordEncoder.encode(password));
+            account.setStatus(status);
+            account.getRoles().add(role);
+            staffAccountRepository.save(account);
         }
 
         redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công.");
@@ -268,29 +277,23 @@ public class AccountController {
             @RequestParam(required = false, defaultValue = "") String username,
             @RequestParam(required = false) Integer tierId,
             @RequestParam(required = false) String staffType,
-            @RequestParam(required = false, defaultValue = "") String status) {
-        return collectAccountUpdateErrors(id, fullName, email, phone, username, tierId, staffType, status);
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "members") String source) {
+        return collectAccountUpdateErrors(id, fullName, email, phone, username, tierId, staffType, status, source);
     }
 
     @PostMapping("/edit/{id}")
     @Transactional
     public String updateAccount(@PathVariable Integer id,
-            @RequestParam(required = false, defaultValue = "") String fullName,
-            @RequestParam(required = false, defaultValue = "") String email,
+            @RequestParam String fullName,
+            @RequestParam String email,
             @RequestParam(required = false, defaultValue = "") String phone,
-            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam String username,
             @RequestParam(required = false) Integer tierId,
             @RequestParam(required = false) String staffType,
-            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(defaultValue = "Active") String status,
             @RequestParam(required = false, defaultValue = "members") String source,
             RedirectAttributes redirectAttributes) {
-
-        Account account = accountRepository.findById(id).orElse(null);
-
-        if (account == null || account.getUser() == null) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
-            return redirectBySource(source);
-        }
 
         String trimmedFullName = fullName.trim();
         String trimmedUsername = username.trim();
@@ -306,114 +309,63 @@ public class AccountController {
         editFormValues.put("staffType", staffType);
         editFormValues.put("status", status);
 
-        if (trimmedFullName.isEmpty()) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "fullName", "Họ tên không được để trống.");
+        Map<String, String> errors = collectAccountUpdateErrors(
+                id, fullName, email, phone, username, tierId, staffType, status, source);
+        if (!errors.isEmpty()) {
+            redirectAttributes.addFlashAttribute("editAccountId", id);
+            redirectAttributes.addFlashAttribute("editFormValues", editFormValues);
+            redirectAttributes.addFlashAttribute("editFieldErrors", errors);
+            String modalId = "staff".equalsIgnoreCase(source)
+                    ? "updateStaffModal" + id
+                    : "updateMemberModal" + id;
+            return redirectBySource(source) + "#" + modalId;
         }
 
-        if (trimmedUsername.isEmpty()) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "username", "Username không được để trống.");
-        }
+        if ("staff".equalsIgnoreCase(source)) {
+            StaffAccount account = staffAccountRepository.findById(id).orElseThrow();
+            User user = account.getStaff().getUser();
+            user.setFullName(trimmedFullName);
+            user.setEmail(trimmedEmail);
+            user.setPhone(trimmedPhone);
+            user.setStatus(toUserStatus(status));
 
-        if (!trimmedUsername.matches("[a-zA-Z0-9_]{3,20}")) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "username", "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.");
-        }
+            account.setUsername(trimmedUsername);
+            account.setStatus(status);
 
-        if (trimmedEmail.isEmpty()) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "email", "Email không được để trống.");
-        }
-
-        if (!trimmedEmail.matches(EMAIL_PATTERN)) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "email", "Email không đúng định dạng.");
-        }
-
-        if (trimmedPhone.isEmpty()) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "phone", "Số điện thoại không được để trống.");
-        }
-
-        if (!trimmedPhone.matches("^(?!0{10}$)0\\d{9}$")) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "phone", "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0");
-        }
-
-        if (accountRepository.existsByUsernameAndAccountIdNot(trimmedUsername, id)) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "username", "Username đã tồn tại.");
-        }
-
-        if (userRepository.existsByEmailAndIdNot(trimmedEmail, account.getUser().getId())) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "email", "Email đã được sử dụng.");
-        }
-
-        if (userRepository.existsByPhoneAndIdNot(trimmedPhone, account.getUser().getId())) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "phone", "Số điện thoại đã được sử dụng.");
-        }
-
-        if (!isValidStatus(status)) {
-            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "status", "Trạng thái tài khoản không hợp lệ.");
-        }
-
-        User user = account.getUser();
-        Member member = memberRepository.findByUserId(user.getId()).orElse(null);
-        MembershipTier selectedTier = null;
-        if (member != null) {
-            if (tierId == null) {
-                return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                        "tierId", "Vui lòng chọn hạng thành viên.");
-            }
-
-            selectedTier = membershipTierRepository.findById(tierId).orElse(null);
-
-            if (selectedTier == null) {
-                return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                        "tierId", "Hạng thành viên không hợp lệ.");
-            }
-        }
-
-        Staff staff = staffRepository.findByUserId(user.getId()).orElse(null);
-        String normalizedStaffType = null;
-
-        if (staff != null) {
-            normalizedStaffType = staffType == null ? "" : staffType.trim();
-
-            if (!normalizedStaffType.equals("Admin") && !normalizedStaffType.equals("Librarian")) {
-                return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                        "staffType", normalizedStaffType.isEmpty()
-                                ? "Vui lòng chọn loại nhân viên."
-                                : "Loại nhân viên không hợp lệ.");
-            }
-        }
-
-        user.setFullName(trimmedFullName);
-        user.setEmail(trimmedEmail);
-        user.setPhone(trimmedPhone);
-        user.setStatus(toUserStatus(status));
-
-        account.setUsername(trimmedUsername);
-        account.setStatus(status);
-
-        if (member != null) {
-            member.setTier(selectedTier);
-            memberRepository.save(member);
-        }
-
-        if (staff != null) {
-            staff.setStaffType(normalizedStaffType);
+            Staff staff = account.getStaff();
+            staff.setStaffType(staffType.trim());
             staffRepository.save(staff);
+            userRepository.save(user);
+            staffAccountRepository.save(account);
+
+            redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
+            return redirectBySource(source);
         }
 
-        userRepository.save(user);
-        accountRepository.save(account);
+        Optional<MemberAccount> memberAccountOpt = memberAccountRepository.findById(id);
+        if (memberAccountOpt.isPresent()) {
+            MemberAccount account = memberAccountOpt.get();
+            User user = account.getMember().getUser();
+            user.setFullName(trimmedFullName);
+            user.setEmail(trimmedEmail);
+            user.setPhone(trimmedPhone);
+            user.setStatus(toUserStatus(status));
 
-        redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
+            account.setUsername(trimmedUsername);
+            account.setStatus(status);
+
+            Member member = account.getMember();
+            MembershipTier tier = membershipTierRepository.findById(tierId).orElseThrow();
+            member.setTier(tier);
+            memberRepository.save(member);
+            userRepository.save(user);
+            memberAccountRepository.save(account);
+
+            redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
+            return redirectBySource(source);
+        }
+
+        redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
         return redirectBySource(source);
     }
 
@@ -422,21 +374,32 @@ public class AccountController {
     public String deleteAccount(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "members") String source,
             RedirectAttributes redirectAttributes) {
-        Account account = accountRepository.findById(id).orElse(null);
 
+        if ("staff".equalsIgnoreCase(source)) {
+            StaffAccount account = staffAccountRepository.findById(id).orElse(null);
+            if (account == null) {
+                redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
+                return redirectBySource(source);
+            }
+            account.setStatus("Inactive");
+            if (account.getStaff().getUser() != null) {
+                account.getStaff().getUser().setStatus(UserStatus.Inactive);
+            }
+            staffAccountRepository.save(account);
+            redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
+            return redirectBySource(source);
+        }
+
+        MemberAccount account = memberAccountRepository.findById(id).orElse(null);
         if (account == null) {
             redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
             return redirectBySource(source);
         }
-
         account.setStatus("Inactive");
-
-        if (account.getUser() != null) {
-            account.getUser().setStatus(UserStatus.Inactive);
+        if (account.getMember().getUser() != null) {
+            account.getMember().getUser().setStatus(UserStatus.Inactive);
         }
-
-        accountRepository.save(account);
-
+        memberAccountRepository.save(account);
         redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
         return redirectBySource(source);
     }
@@ -446,11 +409,11 @@ public class AccountController {
 
         if ("staff".equalsIgnoreCase(source)) {
             model.addAttribute("source", "staff");
-            model.addAttribute("backText", "← Quản lý nhân sự");
+            model.addAttribute("backText", "← Về danh sách nhân viên");
             model.addAttribute("backUrl", "/admin/staff");
         } else {
             model.addAttribute("source", "members");
-            model.addAttribute("backText", "← Quản lý thành viên");
+            model.addAttribute("backText", "← Về danh sách thành viên");
             model.addAttribute("backUrl", "/admin/accounts");
         }
     }
@@ -461,17 +424,6 @@ public class AccountController {
         return "admin/create-account";
     }
 
-    private String redirectWithEditError(RedirectAttributes redirectAttributes, String source, Integer accountId,
-            Map<String, Object> formValues, String fieldName, String message) {
-        redirectAttributes.addFlashAttribute("editAccountId", accountId);
-        redirectAttributes.addFlashAttribute("editFormValues", formValues);
-        redirectAttributes.addFlashAttribute("editFieldErrors", Map.of(fieldName, message));
-        String modalId = "staff".equalsIgnoreCase(source)
-                ? "updateStaffModal" + accountId
-                : "updateMemberModal" + accountId;
-        return redirectBySource(source) + "#" + modalId;
-    }
-
     private Map<String, String> collectAccountUpdateErrors(
             Integer accountId,
             String fullName,
@@ -480,11 +432,19 @@ public class AccountController {
             String username,
             Integer tierId,
             String staffType,
-            String status) {
+            String status,
+            String source) {
         Map<String, String> errors = new LinkedHashMap<>();
-        Account account = accountRepository.findById(accountId).orElse(null);
+        boolean staffSource = "staff".equalsIgnoreCase(source);
+        MemberAccount memberAccount = staffSource ? null : memberAccountRepository.findById(accountId).orElse(null);
+        StaffAccount staffAccount = staffSource ? staffAccountRepository.findById(accountId).orElse(null) : null;
+        User user = memberAccount != null && memberAccount.getMember() != null
+                ? memberAccount.getMember().getUser()
+                : staffAccount != null && staffAccount.getStaff() != null
+                        ? staffAccount.getStaff().getUser()
+                        : null;
 
-        if (account == null || account.getUser() == null) {
+        if (user == null) {
             errors.put("_global", "Không tìm thấy tài khoản.");
             return errors;
         }
@@ -503,7 +463,12 @@ public class AccountController {
         } else if (!trimmedUsername.matches("[a-zA-Z0-9_]{3,20}")) {
             errors.put("username",
                     "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.");
-        } else if (accountRepository.existsByUsernameAndAccountIdNot(trimmedUsername, accountId)) {
+        } else if ((staffSource
+                && (staffAccountRepository.existsByUsernameAndIdNot(trimmedUsername, accountId)
+                        || memberAccountRepository.existsByUsername(trimmedUsername)))
+                || (!staffSource
+                        && (memberAccountRepository.existsByUsernameAndIdNot(trimmedUsername, accountId)
+                                || staffAccountRepository.existsByUsername(trimmedUsername)))) {
             errors.put("username", "Username đã tồn tại.");
         }
 
@@ -511,7 +476,7 @@ public class AccountController {
             errors.put("email", "Email không được để trống.");
         } else if (!trimmedEmail.matches(EMAIL_PATTERN)) {
             errors.put("email", "Email không đúng định dạng.");
-        } else if (userRepository.existsByEmailAndIdNot(trimmedEmail, account.getUser().getId())) {
+        } else if (userRepository.existsByEmailAndIdNot(trimmedEmail, user.getId())) {
             errors.put("email", "Email đã được sử dụng.");
         }
 
@@ -520,20 +485,16 @@ public class AccountController {
         } else if (!trimmedPhone.matches("^(?!0{10}$)0\\d{9}$")) {
             errors.put("phone",
                     "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.");
-        } else if (userRepository.existsByPhoneAndIdNot(trimmedPhone, account.getUser().getId())) {
+        } else if (userRepository.existsByPhoneAndIdNot(trimmedPhone, user.getId())) {
             errors.put("phone", "Số điện thoại đã được sử dụng.");
         }
 
-        Member member = memberRepository.findByUserId(account.getUser().getId()).orElse(null);
-        Staff staff = staffRepository.findByUserId(account.getUser().getId()).orElse(null);
-        if (member != null && (tierId == null || !membershipTierRepository.existsById(tierId))) {
+        if (!staffSource && (tierId == null || !membershipTierRepository.existsById(tierId))) {
             errors.put("tierId", "Hạng thành viên không hợp lệ.");
-        } else if (staff != null
+        } else if (staffSource
                 && !"Admin".equals(staffType)
                 && !"Librarian".equals(staffType)) {
             errors.put("staffType", "Loại nhân viên không hợp lệ.");
-        } else if (member == null && staff == null) {
-            errors.put("_global", "Tài khoản không có hồ sơ thành viên hoặc nhân sự.");
         }
 
         if (!isValidStatus(status)) {

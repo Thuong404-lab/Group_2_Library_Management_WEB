@@ -14,24 +14,23 @@ import java.util.List;
 
 public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
 
-    List<SystemLog> findByAccount_AccountId(Integer accountId);
+    List<SystemLog> findByUser_Id(Integer userId);
 
-    @EntityGraph(attributePaths = {"account", "account.user"})
+    @EntityGraph(attributePaths = {"user"})
     Page<SystemLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"account", "account.user"})
+    @EntityGraph(attributePaths = {"user"})
     @Query("""
             SELECT log
             FROM SystemLog log
-            LEFT JOIN log.account account
-            LEFT JOIN account.user user
+            LEFT JOIN log.user user
             WHERE (:action IS NULL OR :action = '' OR LOWER(log.actionType) LIKE LOWER(CONCAT('%', :action, '%')))
               AND (
                     :keyword IS NULL OR :keyword = ''
                     OR LOWER(log.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     OR LOWER(log.ipAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    OR LOWER(account.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
                   )
             ORDER BY log.createdAt DESC
             """)

@@ -187,8 +187,8 @@ public class MemberMgmtController {
     }
 
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {
-        if (userDetails != null && userDetails.getAccount() != null) {
-            model.addAttribute("currentUser", userDetails.getAccount().getUser());
+        if (userDetails != null && userDetails.getUser() != null) {
+            model.addAttribute("currentUser", userDetails.getUser());
         }
     }
 }

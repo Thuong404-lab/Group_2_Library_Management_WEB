@@ -15,29 +15,35 @@ import java.util.stream.Collectors;
 @Service
 public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
-    private final AccountRepository accountRepository;
-    private final MemberRepository memberRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final BookRepository bookRepository;
     private final FavoritesRepository favoritesRepository;
     private final ReservationRepository reservationRepository;
 
-    public MemberFavoriteServiceImpl(AccountRepository accountRepository,
-                                     MemberRepository memberRepository,
+    public MemberFavoriteServiceImpl(MemberAccountRepository memberAccountRepository,
                                      BookRepository bookRepository,
                                      FavoritesRepository favoritesRepository,
                                      ReservationRepository reservationRepository) {
-        this.accountRepository = accountRepository;
-        this.memberRepository = memberRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
         this.reservationRepository = reservationRepository;
     }
 
+    private Member getMemberByUsername(String username) {
+        MemberAccount account = memberAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
+        Member member = account.getMember();
+        if (member == null) {
+            throw new ResourceNotFoundException("Không tìm thấy độc giả");
+        }
+        return member;
+    }
+
     @Override
     @Transactional
     public void addToFavorites(String username, Integer bookId) {
-        Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsername(username);
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách"));
@@ -58,8 +64,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     @Override
     @Transactional
     public void removeFromFavorites(String username, Integer bookId) {
-        Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsername(username);
 
         FavoritesId id = new FavoritesId(member.getMemberId(), bookId);
         Favorites favorites = favoritesRepository.findById(id)
@@ -71,8 +76,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     @Override
     @Transactional(readOnly = true)
     public List<Favorites> getMyFavorites(String username) {
-        Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsername(username);
 
         return favoritesRepository.findByMember_MemberId(member.getMemberId());
     }
@@ -88,8 +92,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void reserveBook(String username, Integer bookId) throws Exception {
-        Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsername(username);
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sách không tồn tại"));

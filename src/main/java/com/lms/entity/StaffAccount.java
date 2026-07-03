@@ -1,54 +1,60 @@
 package com.lms.entity;
+
 import jakarta.persistence.*;
+
 @Entity
-@Table(name = "Accounts")
-public class Account {
+@Table(name = "Staff_Accounts")
+public class StaffAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer accountId;
+    private Integer id;
+
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "staff_id", nullable = false)
+    private Staff staff;
+
     @Column(unique = true, nullable = false, length = 100)
     private String username;
+
     @Column(nullable = false, length = 255)
     private String passwordHash;
+
     @Column(length = 50)
     private String status = "Active";
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "Account_Roles",
-        joinColumns = @JoinColumn(name = "account_id"),
+        name = "Staff_Account_Roles",
+        joinColumns = @JoinColumn(name = "staff_account_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private java.util.Set<Role> roles = new java.util.HashSet<>();
 
-    public Account() {
+    public StaffAccount() {
     }
 
-    public Account(Integer accountId, User user, String username, String passwordHash, String status) {
-        this.accountId = accountId;
-        this.user = user;
+    public StaffAccount(Integer id, Staff staff, String username, String passwordHash, String status) {
+        this.id = id;
+        this.staff = staff;
         this.username = username;
         this.passwordHash = passwordHash;
         this.status = status;
     }
 
-    public Integer getAccountId() {
-        return accountId;
+    public Integer getId() {
+        return id;
     }
 
-    public void setAccountId(Integer accountId) {
-        this.accountId = accountId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public Staff getStaff() {
+        return staff;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setStaff(Staff staff) {
+        this.staff = staff;
     }
 
     public String getUsername() {

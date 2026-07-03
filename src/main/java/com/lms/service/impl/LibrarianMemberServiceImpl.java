@@ -3,13 +3,13 @@ package com.lms.service.impl;
 import com.lms.dto.request.CreateMemberAccountRequest;
 import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.dto.response.MemberListViewData;
-import com.lms.entity.Account;
+import com.lms.entity.MemberAccount;
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import com.lms.entity.Role;
 import com.lms.entity.User;
 import com.lms.enums.UserStatus;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
@@ -30,7 +30,7 @@ import java.util.Map;
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final UserRepository userRepository;
@@ -38,13 +38,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     private final PasswordEncoder passwordEncoder;
 
     public LibrarianMemberServiceImpl(
-            AccountRepository accountRepository,
+            MemberAccountRepository memberAccountRepository,
             MemberRepository memberRepository,
             MembershipTierRepository membershipTierRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder) {
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
         this.userRepository = userRepository;
@@ -57,15 +57,15 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     public MemberListViewData getMemberList(int page, String keyword) {
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("accountId").ascending());
         String normalizedKeyword = trim(keyword);
-        Page<Account> accounts = normalizedKeyword.isEmpty()
-                ? accountRepository.findMemberAccounts(pageable)
-                : accountRepository.searchMemberAccounts(normalizedKeyword, pageable);
+        Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
+                ? memberAccountRepository.findAll(pageable)
+                : memberAccountRepository.searchMemberAccounts(normalizedKeyword, pageable);
 
         Map<Integer, Member> memberByUserId = new HashMap<>();
-        for (Account account : accounts.getContent()) {
-            if (account.getUser() != null && account.getUser().getId() != null) {
-                memberRepository.findByUserId(account.getUser().getId())
-                        .ifPresent(member -> memberByUserId.put(account.getUser().getId(), member));
+        for (MemberAccount account : accounts.getContent()) {
+            if (account.getMember().getUser() != null && account.getMember().getUser().getId() != null) {
+                memberRepository.findByUserId(account.getMember().getUser().getId())
+                        .ifPresent(member -> memberByUserId.put(account.getMember().getUser().getId(), member));
             }
         }
         return new MemberListViewData(accounts, memberByUserId, getMembershipTiers());
@@ -91,7 +91,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (!phone.isEmpty() && userRepository.existsByPhone(phone)) {
             errors.put("phone", "Số điện thoại đã được sử dụng.");
         }
-        if (!username.isEmpty() && accountRepository.existsByUsername(username)) {
+        if (!username.isEmpty() && memberAccountRepository.existsByUsername(username)) {
             errors.put("username", "Username đã tồn tại.");
         }
         if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
@@ -125,26 +125,26 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         user.setStatus(toUserStatus(request.getStatus()));
         userRepository.save(user);
 
-        Account account = new Account();
-        account.setUser(user);
-        account.setUsername(trim(request.getUsername()));
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        account.setStatus(request.getStatus());
-        account.getRoles().add(memberRole);
-        accountRepository.save(account);
-
         Member member = new Member();
         member.setUser(user);
         member.setTier(tier);
         memberRepository.save(member);
+
+        MemberAccount account = new MemberAccount();
+        account.setMember(member);
+        account.setUsername(trim(request.getUsername()));
+        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        account.setStatus(request.getStatus());
+        account.getRoles().add(memberRole);
+        memberAccountRepository.save(account);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, String> validateUpdate(Integer accountId, UpdateMemberAccountRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
-        Account account = accountRepository.findById(accountId).orElse(null);
-        if (account == null || account.getUser() == null) {
+        MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
+        if (account == null || account.getMember().getUser() == null) {
             errors.put("_global", "Không tìm thấy tài khoản cần cập nhật.");
             return errors;
         }
@@ -154,13 +154,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         String phone = trim(request.getPhone());
 
         if (!username.isEmpty()
-                && accountRepository.existsByUsernameAndAccountIdNot(username, account.getAccountId())) {
+                && memberAccountRepository.existsByUsernameAndIdNot(username, account.getId())) {
             errors.put("username", "Username đã tồn tại.");
         }
-        if (!email.isEmpty() && userRepository.existsByEmailAndIdNot(email, account.getUser().getId())) {
+        if (!email.isEmpty() && userRepository.existsByEmailAndIdNot(email, account.getMember().getUser().getId())) {
             errors.put("email", "Email đã được sử dụng.");
         }
-        if (!phone.isEmpty() && userRepository.existsByPhoneAndIdNot(phone, account.getUser().getId())) {
+        if (!phone.isEmpty() && userRepository.existsByPhoneAndIdNot(phone, account.getMember().getUser().getId())) {
             errors.put("phone", "Số điện thoại đã được sử dụng.");
         }
         if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
@@ -183,11 +183,11 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             throw new IllegalArgumentException(errors.values().iterator().next());
         }
 
-        Account account = accountRepository.findById(accountId)
+        MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
                 .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
-        User user = account.getUser();
+        User user = account.getMember().getUser();
 
         user.setFullName(trim(request.getFullName()));
         user.setEmail(trim(request.getEmail()));
@@ -201,22 +201,22 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         member.setTier(tier);
 
         userRepository.save(user);
-        accountRepository.save(account);
+        memberAccountRepository.save(account);
         memberRepository.save(member);
     }
 
     @Override
     @Transactional
     public boolean deactivateMember(Integer accountId) {
-        Account account = accountRepository.findById(accountId).orElse(null);
+        MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
         if (account == null) {
             return false;
         }
         account.setStatus("Inactive");
-        if (account.getUser() != null) {
-            account.getUser().setStatus(UserStatus.Inactive);
+        if (account.getMember().getUser() != null) {
+            account.getMember().getUser().setStatus(UserStatus.Inactive);
         }
-        accountRepository.save(account);
+        memberAccountRepository.save(account);
         return true;
     }
 

@@ -4,7 +4,7 @@
       layout:decorate="~{layout/base}">
 
 <head>
-    <title>Chi tiết sách - Đắc Nhân Tâm</title>
+    <title th:text="${book.title} + ' - Thư Viện Số'">Chi tiết sách</title>
     <style>
         .star-btn { transition: color 0.1s; }
         .review-card { border-left: 3px solid #8b5a2b; }
@@ -16,11 +16,12 @@
     <div layout:fragment="content" class="container mt-4 mb-5">
         
         <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none">Danh mục sách</a></li>
-                <li class="breadcrumb-item active">Đắc Nhân Tâm</li>
+        <nav aria-label="breadcrumb" class="mb-4 pt-3">
+            <ol class="breadcrumb bg-transparent p-0 mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none" style="color: #8b5a2b;"><i
+                            class="bi bi-house-door"></i> Sảnh chính</a></li>
+                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none" style="color: #8b5a2b;">Khám phá sách</a></li>
+                <li class="breadcrumb-item active fw-bold" aria-current="page" style="color: #4a3b32;" th:text="${book.title}">Tên sách</li>
             </ol>
         </nav>
 
@@ -28,18 +29,25 @@
         <div class="row mt-3 bg-white p-4 rounded shadow-sm">
             <!-- Book Cover -->
             <div class="col-md-4 text-center mb-4 mb-md-0">
-                <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop"
-                     class="img-fluid rounded shadow" alt="Đắc Nhân Tâm" style="max-height: 380px; object-fit: cover;">
+                <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}"
+                     class="img-fluid rounded shadow" th:alt="${book.title}" style="max-height: 380px; object-fit: cover;">
                 <div class="mt-3">
-                    <span class="badge bg-success px-3 py-2 fs-6">Có sẵn — 8 cuốn</span>
+                    <span th:class="${book.status == 'Active' ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
+                          th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}">Có sẵn</span>
                 </div>
             </div>
 
             <!-- Book Details -->
             <div class="col-md-8">
-                <div class="badge mb-2" style="background:#8b5a2b;color:white;">Kỹ năng sống</div>
-                <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;">Đắc Nhân Tâm</h2>
-                <p class="text-muted fs-5 mb-3">Dale Carnegie · Nguyễn Hiến Lê (dịch)</p>
+                <div class="badge mb-2" style="background:#8b5a2b;color:white;" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
+                <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;" th:text="${book.title}">Tên sách</h2>
+                <p class="text-muted fs-5 mb-3">
+                    <span th:if="${book.authors != null && !book.authors.isEmpty()}"
+                          th:each="author, iterStat : ${book.authors}">
+                        <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
+                    </span>
+                    <span th:if="${book.authors == null || book.authors.isEmpty()}">Khuyết danh</span>
+                </p>
 
                 <!-- Stats -->
                 <div class="d-flex gap-4 mb-4">
@@ -60,19 +68,19 @@
                 <div class="row mb-4">
                     <div class="col-sm-6">
                         <ul class="list-unstyled">
-                            <li class="mb-2"><strong>ISBN:</strong> 978-604-1-03820-2</li>
+                            <li class="mb-2"><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></li>
                             <li class="mb-2"><strong>Ngôn ngữ:</strong> Tiếng Việt</li>
-                            <li class="mb-2"><strong>Năm XB:</strong> 2016</li>
-                            <li class="mb-2"><strong>NXB:</strong> NXB Tổng Hợp TP.HCM</li>
+                            <li class="mb-2"><strong>Kho:</strong> Kho mượn đọc</li>
+                            <li class="mb-2"><strong>Vị trí:</strong> Kệ A - Ngăn 3</li>
                         </ul>
                     </div>
                     <div class="col-sm-6">
                         <ul class="list-unstyled">
-                            <li class="mb-2"><strong>Thể loại:</strong> Kỹ năng — Tâm lý</li>
-                            <li class="mb-2"><strong>Trạng thái:</strong> <span class="badge bg-success">Có sẵn</span></li>
+                            <li class="mb-2"><strong>Thể loại:</strong> <span th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}"></span></li>
+                            <li class="mb-2"><strong>Trạng thái:</strong> <span th:class="${book.status == 'Active' ? 'badge bg-success' : 'badge bg-danger'}" th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}"></span></li>
                             <li class="mb-2">
                                 <strong>Đánh giá:</strong>
-                                <span class="text-warning">★★★★★</span> <span class="text-muted">(4.8 / 5 — 3 lượt)</span>
+                                <span class="text-warning">★★★★★</span> <span class="text-muted">(4.8 / 5)</span>
                             </li>
                         </ul>
                     </div>
@@ -80,10 +88,8 @@
 
                 <div class="mb-4">
                     <h5 class="fw-bold">Mô tả sách</h5>
-                    <p class="text-muted lh-lg">
-                        "Đắc Nhân Tâm" là cuốn sách nổi tiếng nhất, bán chạy nhất và có tầm ảnh hưởng nhất của mọi thời đại.
-                        Tác phẩm đã được chuyển ngữ sang hầu hết các thứ tiếng trên thế giới và không ngừng được tái bản từ khi ra đời đến nay.
-                        Nguyên tắc của Dale Carnegie vẫn còn nguyên giá trị và tiếp tục được hàng triệu người áp dụng trong cuộc sống thường ngày.
+                    <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : 'Đang cập nhật mô tả cho cuốn sách này...'}">
+                        Mô tả sách...
                     </p>
                 </div>
 
