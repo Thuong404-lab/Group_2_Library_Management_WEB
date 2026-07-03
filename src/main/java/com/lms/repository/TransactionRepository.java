@@ -28,6 +28,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
     List<Transaction> findTop5ByOrderByTransactionDateDesc();
 
+    @Query("""
+            select t
+            from Transaction t
+            where t.wallet.member.memberId = :memberId
+              and upper(t.transactionType) in :types
+              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+            order by t.transactionDate desc
+            """)
+    List<Transaction> findUnpaidFineTransactions(@Param("memberId") Integer memberId,
+            @Param("types") List<String> types);
+
     Page<Transaction> findByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
             Integer memberId,
             String transactionType,

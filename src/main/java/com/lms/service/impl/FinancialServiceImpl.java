@@ -38,9 +38,44 @@ public class FinancialServiceImpl implements FinancialService {
     // UC-8.1: Thanh toán phí phạt quá hạn
     @Override
     public void payOverdueFine(Integer memberId, Integer fineId) {
-        // TODO: Implement - Trừ tiền từ Wallet
-        // TODO: Cho phép Wallet âm theo nghiệp vụ
-        // TODO: Tạo Transaction (type = FINE_PAYMENT)
+        com.lms.entity.Transaction fine = transactionRepository.findById(fineId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phạt với ID: " + fineId));
+
+        if (fine.getWallet() == null
+                || fine.getWallet().getMember() == null
+                || fine.getWallet().getMember().getMemberId() == null
+                || !fine.getWallet().getMember().getMemberId().equals(memberId)) {
+            throw new RuntimeException("Khoản phạt không thuộc về thành viên hiện tại.");
+        }
+
+        String type = fine.getTransactionType() == null ? "" : fine.getTransactionType();
+        if (!"FINE".equalsIgnoreCase(type) && !"DAMAGE_FEE".equalsIgnoreCase(type)) {
+            throw new RuntimeException("Giao dịch này không phải khoản phạt.");
+        }
+
+        String status = fine.getStatus() == null ? "" : fine.getStatus();
+        if ("Completed".equalsIgnoreCase(status) || "Paid".equalsIgnoreCase(status)) {
+            throw new RuntimeException("Khoản phạt này đã được thanh toán.");
+        }
+
+        java.math.BigDecimal fineAmount = fine.getAmount() == null
+                ? java.math.BigDecimal.ZERO
+                : fine.getAmount().abs();
+        if (fineAmount.signum() <= 0) {
+            throw new RuntimeException("Số tiền phạt không hợp lệ.");
+        }
+
+        var wallet = fine.getWallet();
+        java.math.BigDecimal currentBalance = wallet.getBalance() == null
+                ? java.math.BigDecimal.ZERO
+                : wallet.getBalance();
+        wallet.setBalance(currentBalance.subtract(fineAmount));
+        walletRepository.save(wallet);
+
+        fine.setAmount(fineAmount.negate());
+        fine.setTransactionDate(java.time.LocalDateTime.now());
+        fine.setStatus("Completed");
+        transactionRepository.save(fine);
     }
 
     // UC-8.2: Thanh toán phí mượn theo phiếu mượn (BorrowDetail)
@@ -114,7 +149,20 @@ public class FinancialServiceImpl implements FinancialService {
     // UC-14.2: Tạo phạt vi phạm (Thủ thư)
     @Override
     public void createFine(Integer memberId, Double amount, String reason) {
-        // TODO: Implement
+        if (amount == null || amount <= 0) {
+            throw new RuntimeException("Số tiền phạt phải lớn hơn 0.");
+        }
+
+        var wallet = walletRepository.findByMemberMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+
+        com.lms.entity.Transaction transaction = new com.lms.entity.Transaction();
+        transaction.setWallet(wallet);
+        transaction.setTransactionType("FINE");
+        transaction.setAmount(java.math.BigDecimal.valueOf(amount).abs().negate());
+        transaction.setTransactionDate(java.time.LocalDateTime.now());
+        transaction.setStatus("Pending");
+        transactionRepository.save(transaction);
     }
 
     // UC-14.3: Lấy lịch sử giao dịch toàn hệ thống (Thủ thư)

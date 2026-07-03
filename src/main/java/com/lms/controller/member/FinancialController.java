@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -63,19 +64,23 @@ public class FinancialController {
     // UC-8.1: Pay Overdue Fines
     @GetMapping("/fines")
     public String viewOverdueFines(Principal principal, Model model) {
-        // TODO: Implement - Lấy danh sách khoản phạt chưa thanh toán
-        // TODO: Tính tổng tiền phạt quá hạn
-        return "member/fines";
+        return viewTransactionHistory(principal, 0, "FINE", model);
     }
 
     @PostMapping("/fines/pay/{fineId}")
     public String payOverdueFine(@PathVariable Integer fineId,
                                  Principal principal,
-                                 Model model) {
-        // TODO: Implement - Trừ tiền phạt từ Wallet
-        // TODO: Nếu Wallet không đủ → cho phép thẻ âm (theo nghiệp vụ)
-        // TODO: Tạo Transaction (type = FINE_PAYMENT)
-        return "redirect:/member/financial/fines?paid";
+                                 RedirectAttributes redirectAttributes) {
+        Member member = getCurrentMember(principal);
+
+        try {
+            financialService.payOverdueFine(member.getMemberId(), fineId);
+            redirectAttributes.addFlashAttribute("success", "Đã thanh toán phí phạt thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/member/financial/transactions";
     }
 
     // UC-8.2: Pay Borrowing Fees
@@ -208,6 +213,20 @@ public class FinancialController {
                     );
         }
 
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
+                .orElse(BigDecimal.ZERO);
+        List<Transaction> unpaidFines = transactionRepository.findUnpaidFineTransactions(
+                member.getMemberId(), List.of("FINE", "DAMAGE_FEE"));
+        BigDecimal totalUnpaidFines = unpaidFines.stream()
+                .map(transaction -> transaction.getAmount() == null
+                        ? BigDecimal.ZERO
+                        : transaction.getAmount().abs())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("unpaidFines", unpaidFines);
+        model.addAttribute("totalUnpaidFines", totalUnpaidFines);
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("transactions", transactionPage.getContent());
         model.addAttribute("currentPage", page);
