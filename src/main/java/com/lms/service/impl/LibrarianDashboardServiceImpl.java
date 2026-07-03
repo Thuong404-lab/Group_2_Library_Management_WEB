@@ -2,9 +2,9 @@ package com.lms.service.impl;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.response.LibrarianListViewData;
-import com.lms.entity.Account;
+import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -43,7 +43,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     private final StaffRepository staffRepository;
     private final StorageService storageService;
     private final LibrarianInteractionService interactionService;
-    private final AccountRepository accountRepository;
+    private final StaffAccountRepository staffAccountRepository;
 
     public LibrarianDashboardServiceImpl(
             BorrowRepository borrowRepository,
@@ -57,7 +57,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             StaffRepository staffRepository,
             StorageService storageService,
             LibrarianInteractionService interactionService,
-            AccountRepository accountRepository) {
+            StaffAccountRepository staffAccountRepository) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.reservationRepository = reservationRepository;
@@ -69,7 +69,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         this.staffRepository = staffRepository;
         this.storageService = storageService;
         this.interactionService = interactionService;
-        this.accountRepository = accountRepository;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @Override
@@ -116,12 +116,11 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 : staffRepository.searchByStaffTypeAndKeyword(
                         "Librarian", normalizedKeyword, pageable);
 
-        Map<Integer, Account> accountByUserId = new HashMap<>();
+        Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
         for (Staff staff : staffPage.getContent()) {
             if (staff.getUser() != null && staff.getUser().getId() != null) {
-                accountRepository.findByUserId(staff.getUser().getId())
-                        .ifPresent(account ->
-                                accountByUserId.put(staff.getUser().getId(), account));
+                staffAccountRepository.findByStaff_User_Id(staff.getUser().getId())
+                        .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
             }
         }
         return new LibrarianListViewData(staffPage, accountByUserId);

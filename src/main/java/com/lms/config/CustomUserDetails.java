@@ -1,6 +1,6 @@
 package com.lms.config;
 
-import com.lms.entity.Account;
+import com.lms.entity.User;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,23 +11,40 @@ import java.util.Map;
 
 public class CustomUserDetails implements UserDetails, OAuth2User {
 
-    private final Account account;
-    private final Collection<? extends GrantedAuthority> authorities ;
+    private final User user;
+    private final String username;
+    private final String passwordHash;
+    private final String status;
+    private final Integer accountId; // Can be MemberAccount.id or StaffAccount.id
+    
+    private final Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
-
-    public CustomUserDetails(Account account, Collection<? extends GrantedAuthority> authorities) {
-        this.account = account;
+    public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId, Collection<? extends GrantedAuthority> authorities) {
+        this.user = user;
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.status = status;
+        this.accountId = accountId;
         this.authorities = authorities;
     }
 
-    public CustomUserDetails(Account account, Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes) {
-        this.account = account;
+    public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId, Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes) {
+        this.user = user;
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.status = status;
+        this.accountId = accountId;
         this.authorities = authorities;
         this.attributes = attributes;
     }
-    public Account getAccount() {
-        return account;
+
+    public User getUser() {
+        return user;
+    }
+    
+    public Integer getAccountId() {
+        return accountId;
     }
 
     @Override
@@ -37,12 +54,12 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public String getPassword() {
-        return account.getPasswordHash();
+        return passwordHash;
     }
 
     @Override
     public String getUsername() {
-        return account.getUsername();
+        return username;
     }
 
     @Override
@@ -52,7 +69,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isAccountNonLocked() {
-        return "Active".equalsIgnoreCase(account.getStatus());
+        return "Active".equalsIgnoreCase(status);
     }
 
     @Override
@@ -76,11 +93,11 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isEnabled() {
-        return "Active".equalsIgnoreCase(account.getStatus());
+        return "Active".equalsIgnoreCase(status);
     }
 
     @Override
     public String getName() {
-        return account.getUsername();
+        return username;
     }
 }
