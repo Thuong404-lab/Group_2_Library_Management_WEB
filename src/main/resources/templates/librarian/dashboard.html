@@ -48,11 +48,11 @@
         }
 
         .review-reply-box {
-            min-width: 220px;
+            min-width: 260px;
         }
 
         .table-fixed-action {
-            min-width: 180px;
+            min-width: 260px;
         }
 
         .dashboard-stat-card {
@@ -78,11 +78,24 @@
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;"
-                    th:text="${currentSection == 'users' ? 'Quản lý người dùng' : 'Tổng quan'}">
-                    Tổng quan
+                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <span th:if="${currentSection == 'notifications'}">Gửi thông báo</span>
+                    <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
+                    <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
+                    <span th:if="${currentSection == 'users'}">Quản lý người dùng</span>
+                    <span
+                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users'}">Tổng quan</span>
                 </h2>
-                <div class="text-muted">
+                <div class="text-muted" th:if="${currentSection == 'notifications'}">
+                    Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
+                </div>
+                <div class="text-muted" th:if="${currentSection == 'reviews'}">
+                    Xem, phản hồi và xoá đánh giá của độc giả.
+                </div>
+                <div class="text-muted" th:if="${currentSection == 'acquisition'}">
+                    Xem danh sách sách do độc giả đề xuất.
+                </div>
+                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">
                     Cập nhật:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
@@ -294,24 +307,18 @@
         <section id="section-notifications" class="lib-section"
             th:classappend="${currentSection == 'notifications'} ? ' active' : ''">
 
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-bell me-2 text-classic"></i>Gửi thông báo
-                    </h5>
-                    <div class="text-muted small">Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.</div>
-                </div>
-
+            <div class="card-classic shadow-sm mb-4">
                 <div class="card-body p-4">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
-                        method="post">
+                        method="post" id="notificationForm" novalidate>
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                             th:value="${_csrf.token}">
 
                         <div class="row g-4">
                             <div class="col-lg-5">
                                 <label class="form-label fw-bold">Đối tượng nhận</label>
-                                <div class="border rounded-3 p-3 bg-light">
+                                <div class="border rounded-3 p-3 bg-light validate-group" id="recipientTypeGroup"
+                                    th:classappend="${notificationFieldErrors != null and notificationFieldErrors['recipientType'] != null} ? 'is-invalid'">
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="radio" th:field="*{recipientType}"
                                             value="ALL" id="recipientAll">
@@ -324,17 +331,22 @@
                                             chọn</label>
                                     </div>
                                 </div>
+                                <div class="invalid-feedback d-block"
+                                    th:text="${notificationFieldErrors != null ? notificationFieldErrors['recipientType'] : ''}">
+                                </div>
 
                                 <div class="mt-4" id="memberListBox">
                                     <label class="form-label fw-bold">Chọn Member</label>
                                     <input type="text" id="memberSearchInput" class="form-control mb-2"
                                         placeholder="Nhập tên Member để tìm...">
 
-                                    <div class="border rounded-3 p-3 member-list-scroll">
+                                    <div class="border rounded-3 p-3 member-list-scroll validate-group" id="memberIdsGroup"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
                                         <div th:each="member : ${members}" class="form-check member-item mb-2"
                                             th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
                                             <input class="form-check-input member-checkbox" type="checkbox"
-                                                name="memberIds" th:value="${member.memberId}">
+                                                name="memberIds" th:value="${member.memberId}"
+                                                th:checked="${notificationRequest != null and notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
                                             <label class="form-check-label"
                                                 th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
                                                 Member name
@@ -351,20 +363,31 @@
                                     <small class="text-muted d-block mt-2">
                                         Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
                                     </small>
+                                    <div class="invalid-feedback d-block"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['memberIds'] : ''}">
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="col-lg-7">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Tiêu đề</label>
-                                    <input type="text" class="form-control" th:field="*{title}"
-                                        placeholder="Nhập tiêu đề thông báo">
+                                    <input type="text" class="form-control validate-field" th:field="*{title}" required
+                                        placeholder="Nhập tiêu đề thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
+                                    </div>
                                 </div>
 
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Nội dung</label>
-                                    <textarea class="form-control" rows="8" th:field="*{content}"
-                                        placeholder="Nhập nội dung thông báo"></textarea>
+                                    <textarea class="form-control validate-field" rows="8" th:field="*{content}" required
+                                        placeholder="Nhập nội dung thông báo"
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
+                                    <div class="invalid-feedback"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
+                                    </div>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary px-4">
@@ -379,31 +402,24 @@
         <!-- Reviews -->
         <section id="section-reviews" class="lib-section"
             th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-star me-2 text-classic"></i>Đánh giá sách
-                    </h5>
-                    <div class="text-muted small">Xem, phản hồi và xoá đánh giá của độc giả.</div>
-                </div>
-
-                <div class="card-body p-0">
+            <div class="card-classic shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
-                                    <th class="ps-4">Sách</th>
+                                    <th class="ps-3">Sách</th>
                                     <th>Người gửi</th>
                                     <th>Đánh giá</th>
                                     <th>Nội dung</th>
                                     <th>Phản hồi của thủ thư</th>
-                                    <th class="table-fixed-action">Thao tác</th>
+                                    <th class="text-end pe-3 table-fixed-action">Thao tác</th>
                                 </tr>
                             </thead>
 
                             <tbody th:if="${reviews != null && reviews.totalElements > 0}">
                                 <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-4 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
+                                    <td class="ps-3 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
                                     <td th:text="${review.memberName}">Người gửi</td>
                                     <td>
                                         <span class="badge bg-warning text-dark border">
@@ -420,7 +436,7 @@
                                         <span th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
                                             class="text-muted">Chưa phản hồi</span>
                                     </td>
-                                    <td>
+                                    <td class="pe-3 table-fixed-action">
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                                             method="post" class="review-reply-box mb-2" novalidate>
@@ -435,7 +451,7 @@
                                                 th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
                                             </div>
                                             <button type="submit" class="btn btn-sm btn-classic w-100">
-                                                <i class="bi bi-reply me-1"></i>Phản hồi
+                                                Phản hồi
                                             </button>
                                         </form>
 
@@ -446,7 +462,7 @@
                                             <input type="hidden" th:if="${_csrf != null}"
                                                 th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                                <i class="bi bi-trash me-1"></i>Xoá
+                                                Xoá
                                             </button>
                                         </form>
                                     </td>
@@ -470,20 +486,13 @@
         <section id="section-acquisition" class="lib-section"
             th:classappend="${currentSection == 'acquisition'} ? ' active' : ''">
 
-            <div class="card-classic shadow-sm">
-                <div class="card-header bg-white border-bottom p-4 border-color">
-                    <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-journal-plus me-2 text-classic"></i> Đề xuất mua sách
-                    </h5>
-                    <div class="text-muted small">Xem danh sách sách do độc giả đề xuất.</div>
-                </div>
-
-                <div class="card-body p-0">
+            <div class="card-classic shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
-                                    <th class="ps-4">Mã</th>
+                                    <th class="ps-3">Mã</th>
                                     <th>Tên sách</th>
                                     <th>Tác giả</th>
                                     <th>Người đề xuất</th>
@@ -493,7 +502,7 @@
 
                             <tbody th:if="${requests != null}">
                                 <tr th:each="request : ${requests.content}">
-                                    <td class="ps-4 fw-bold" th:text="${request.requestId}">1</td>
+                                    <td class="ps-3 fw-bold" th:text="${request.requestId}">1</td>
                                     <td th:text="${request.title}">Tên sách</td>
                                     <td th:text="${request.author}">Tác giả</td>
                                     <td
@@ -1143,6 +1152,28 @@
         </section>
 
         <script>
+            function showBookSubSection(panelName) {
+                const inventoryPanel = document.getElementById("bookInventoryPanel");
+                const shelfPanel = document.getElementById("bookShelfPanel");
+                const inventoryBtn = document.getElementById("bookSubInventoryBtn");
+                const storageBtn = document.getElementById("bookSubStorageBtn");
+
+                if (inventoryPanel && shelfPanel) {
+                    if (panelName === "storage") {
+                        inventoryPanel.style.display = "none";
+                        shelfPanel.style.display = "block";
+                    } else {
+                        inventoryPanel.style.display = "block";
+                        shelfPanel.style.display = "none";
+                    }
+                }
+
+                if (inventoryBtn && storageBtn) {
+                    inventoryBtn.classList.toggle("active", panelName !== "storage");
+                    storageBtn.classList.toggle("active", panelName === "storage");
+                }
+            }
+
             function showLibSection(sectionName, clickedLink) {
                 const sections = document.querySelectorAll(".lib-section");
 
@@ -1219,6 +1250,92 @@
                 });
             }
 
+            function setInlineError(element, message) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.add("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = message;
+                }
+            }
+
+            function clearInlineError(element) {
+                if (element == null) {
+                    return;
+                }
+
+                element.classList.remove("is-invalid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function validateNotificationForm(event) {
+                const form = document.getElementById("notificationForm");
+                if (form == null) {
+                    return;
+                }
+
+                let isValid = true;
+                const recipientAll = document.getElementById("recipientAll");
+                const recipientSelected = document.getElementById("recipientSelected");
+                const recipientTypeGroup = document.getElementById("recipientTypeGroup");
+                const memberIdsGroup = document.getElementById("memberIdsGroup");
+                const titleInput = form.querySelector("[name='title']");
+                const contentInput = form.querySelector("[name='content']");
+                const selectedMembers = form.querySelectorAll(".member-checkbox:checked");
+
+                clearInlineError(recipientTypeGroup);
+                clearInlineError(memberIdsGroup);
+                clearInlineError(titleInput);
+                clearInlineError(contentInput);
+
+                if ((recipientAll == null || !recipientAll.checked)
+                        && (recipientSelected == null || !recipientSelected.checked)) {
+                    setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
+                    isValid = false;
+                }
+
+                if (recipientSelected != null && recipientSelected.checked && selectedMembers.length === 0) {
+                    setInlineError(memberIdsGroup, "Vui lòng chọn ít nhất một Member.");
+                    isValid = false;
+                }
+
+                if (titleInput != null && titleInput.value.trim() === "") {
+                    setInlineError(titleInput, "Tiêu đề không được để trống.");
+                    isValid = false;
+                }
+
+                if (contentInput != null && contentInput.value.trim() === "") {
+                    setInlineError(contentInput, "Nội dung không được để trống.");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+
+            function validateReviewReplyForms() {
+                document.querySelectorAll(".review-reply-box").forEach(function (form) {
+                    form.addEventListener("submit", function (event) {
+                        const response = form.querySelector("textarea[name='response']");
+                        clearInlineError(response);
+
+                        if (response != null && response.value.trim() === "") {
+                            setInlineError(response, "Nội dung phản hồi không được để trống.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
+                });
+            }
+
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 
@@ -1230,6 +1347,14 @@
                     recipientSelected.addEventListener("change", toggleMemberList);
                     toggleMemberList();
                 }
+
+                const notificationForm = document.getElementById("notificationForm");
+
+                if (notificationForm != null) {
+                    notificationForm.addEventListener("submit", validateNotificationForm);
+                }
+
+                validateReviewReplyForms();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 
