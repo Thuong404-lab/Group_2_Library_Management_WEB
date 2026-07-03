@@ -94,7 +94,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
-                PageRequest.of(0, 20, Sort.by("createdDate").descending())));
+                PageRequest.of(0, 20, Sort.by("requestId").ascending())));
         data.put("shelves", storageService.getAllStorageLocations());
         data.put("books", bookRepository.findAll());
         data.put("categories", categoryRepository.findAll());
