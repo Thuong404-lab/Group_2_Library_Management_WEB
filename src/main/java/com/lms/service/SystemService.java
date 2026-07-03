@@ -1,22 +1,40 @@
 package com.lms.service;
 
+import com.lms.entity.SystemLog;
+import com.lms.entity.SystemSetting;
+import com.lms.entity.MembershipTier;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * SystemService - Xử lý Logic Quản lý Hệ thống (Backup/Restore/Settings)
  * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
  */
 public interface SystemService {
 
-    // UC-19.1: Backup data
-    void backupData();
-
-    // UC-19.2: Restore data
     void restoreData(String backupFilePath);
 
-    // UC-19.3: Lấy System Logs
-    void getSystemLogs(int page, String action);
+    Page<SystemLog> getSystemLogs(int page, String action, String keyword);
 
-    // UC-21.1: Cập nhật chính sách mượn/trả
-    void updateBorrowingPolicies(Integer maxBorrowDays, Integer maxRenewals,
-                                 Integer maxBooksPerMember, Double borrowFeePerBook);
+    List<SystemSetting> getAllSettings();
 
+    Map<String, String> getSettingMap();
+
+    List<MembershipTier> getMembershipTiers();
+
+    void updateBorrowingPolicies(Integer maxBorrowDays,
+                                 Integer maxRenewals,
+                                 Map<Integer, Integer> tierBorrowLimits,
+                                 Double borrowFeePerBook,
+                                 Double finePerDay,
+                                 Double damageCompensationAmount,
+                                 Integer damageCompensationThreshold,
+                                 Integer overdueViolationLockLimit,
+                                 Integer bookDisposalConditionThreshold,
+                                 Double loyalUpgradeSpendingThreshold,
+                                 Integer standardTierId,
+                                 Integer loyalTierId,
+                                 Double depositAmount);
 }

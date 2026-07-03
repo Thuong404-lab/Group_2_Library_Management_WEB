@@ -1,26 +1,182 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/admin_base}">
+
 <head>
-    <title>Nhật ký Hệ thống</title>
+    <title>Nhật ký hệ thống</title>
 </head>
+
 <body>
-<div layout:fragment="content" th:with="activeMenu='logs'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
-        <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Nhật ký Hệ thống</h2>
-            <div class="text-muted">
-                Xem lịch sử hoạt động và cảnh báo của hệ thống
+    <div layout:fragment="content" th:with="activeMenu='logs'">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    Nhật ký hệ thống
+                </h2>
+                <div class="text-muted">
+                    Theo dõi các hoạt động quan trọng trong hệ thống
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="card-classic shadow-sm">
-        <div class="card-body p-5 text-center">
-            <i class="bi bi-tools text-muted mb-3" style="font-size: 3rem;"></i>
-            <h4 class="fw-bold text-classic">Đang phát triển</h4>
-            <p class="text-muted">Tính năng nhật ký hệ thống đang được xây dựng.</p>
+        <div class="card-classic shadow-sm mb-4">
+            <div class="card-body p-4">
+                <form class="row g-3 align-items-end" method="get" th:action="@{/admin/system/logs}">
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            Loại hành động
+                        </label>
+                        <input type="text" name="action" class="form-control" placeholder="LOGIN, LOGOUT, CREATE..."
+                            th:value="${action}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            Từ khóa
+                        </label>
+                        <input type="text" name="keyword" class="form-control"
+                            placeholder="Username, họ tên, IP hoặc mô tả..." th:value="${keyword}">
+                    </div>
+
+                    <div class="col-md-auto d-flex gap-2">
+                        <button type="submit" class="btn btn-classic px-3" title="Tìm kiếm" aria-label="Tìm kiếm">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a th:href="@{/admin/system/logs}" class="btn btn-outline-secondary px-3" title="Tải lại"
+                            aria-label="Tải lại">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
+
+        <div class="card-classic shadow-sm">
+            <div class="card-header bg-white border-bottom border-color p-4">
+                <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <i class="bi bi-journal-text me-2 text-classic"></i>
+                    Danh sách nhật ký
+                </h5>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f7f1e8;">
+                            <tr>
+                                <th class="ps-4">ID</th>
+                                <th>Thời gian</th>
+                                <th>Người thực hiện</th>
+                                <th>Hành động</th>
+                                <th>IP</th>
+                                <th>Mô tả</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:if="${logs == null or logs.content.isEmpty()}">
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    Không có nhật ký hệ thống.
+                                </td>
+                            </tr>
+
+                            <tr th:each="log : ${logs.content}">
+                                <td class="ps-4 fw-semibold" th:text="${log.logId}">
+                                    1
+                                </td>
+
+                                <td>
+                                    <span th:if="${log.createdAt != null}"
+                                        th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss')}">
+                                        01/07/2026 10:00:00
+                                    </span>
+                                    <span th:if="${log.createdAt == null}" class="text-muted">
+                                        N/A
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="fw-semibold"
+                                        th:text="${log.account != null ? log.account.username : 'System'}">
+                                        admin
+                                    </div>
+                                    <small class="text-muted"
+                                        th:if="${log.account != null and log.account.user != null}"
+                                        th:text="${log.account.user.fullName}">
+                                        Admin Tổng
+                                    </small>
+                                </td>
+
+                                <td>
+                                    <span class="badge rounded-pill px-2 py-1 text-white"
+                                        th:classappend="${log.actionType == 'LOGIN' ? 'bg-success' : (log.actionType == 'LOGOUT' ? 'bg-danger' : 'bg-secondary')}"
+                                        th:text="${log.actionType}">
+                                        LOGIN
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span th:text="${log.ipAddress != null ? log.ipAddress : 'N/A'}">
+                                        127.0.0.1
+                                    </span>
+                                </td>
+
+                                <td style="max-width: 420px;">
+                                    <span th:text="${log.description != null ? log.description : 'Không có mô tả'}">
+                                        Đăng nhập thành công.
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
+                th:if="${logs != null and logs.totalPages > 1}">
+                <nav aria-label="Phân trang nhật ký hệ thống">
+                    <ul class="pagination mb-0">
+                        <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/admin/system/logs(page=${logs.number - 1}, action=${action}, keyword=${keyword})}"
+                                th:attr="aria-disabled=${logs.first}"
+                                aria-label="Trang trước"
+                                style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+                            th:classappend="${i == logs.number} ? 'active'">
+                            <a class="page-link"
+                                th:href="@{/admin/system/logs(page=${i}, action=${action}, keyword=${keyword})}"
+                                th:text="${i + 1}"
+                                th:attr="aria-current=${i == logs.number ? 'page' : null}"
+                                th:style="${i == logs.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
+                                1
+                            </a>
+                        </li>
+
+                        <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/admin/system/logs(page=${logs.number + 1}, action=${action}, keyword=${keyword})}"
+                                th:attr="aria-disabled=${logs.last}"
+                                aria-label="Trang sau"
+                                style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
     </div>
-</div>
 </body>
+
 </html>

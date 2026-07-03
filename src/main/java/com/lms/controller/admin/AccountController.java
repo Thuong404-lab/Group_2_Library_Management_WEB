@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,6 +35,10 @@ import java.util.Map;
 @Controller
 @RequestMapping("/admin/accounts")
 public class AccountController {
+
+    private static final String EMAIL_PATTERN =
+            "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
+                    + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
@@ -143,7 +148,7 @@ public class AccountController {
             return createAccountFormWithError(model, source, "email", "Email không được để trống.");
         }
 
-        if (!trimmedEmail.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+        if (!trimmedEmail.matches(EMAIL_PATTERN)) {
             return createAccountFormWithError(model, source, "email", "Email không đúng định dạng.");
         }
 
@@ -152,26 +157,36 @@ public class AccountController {
                     "Số điện thoại không được để trống.");
         }
 
-        if (!trimmedPhone.matches("\\d{10}")) {
+        if (!trimmedPhone.matches("^(?!0{10}$)0\\d{9}$")) {
             return createAccountFormWithError(model, source, "phone",
-                    "Số điện thoại phải gồm đúng 10 chữ số.");
+                    "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0");
         }
 
         if (trimmedUsername.isEmpty()) {
             return createAccountFormWithError(model, source, "username", "Username không được để trống.");
         }
 
+        if (!trimmedUsername.matches("[a-zA-Z0-9_]{3,20}")) {
+            return createAccountFormWithError(model, source, "username",
+                    "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.");
+        }
+
         if (password.isBlank()) {
             return createAccountFormWithError(model, source, "password", "Mật khẩu không được để trống.");
+        }
+
+        if (password.length() < 6) {
+            return createAccountFormWithError(model, source, "password",
+                    "Mật khẩu phải có ít nhất 6 ký tự.");
         }
 
         if (!roleName.equals("MEMBER") && !roleName.equals("ADMIN") && !roleName.equals("LIBRARIAN")) {
             return createAccountFormWithError(model, source, "accountType", "Loại tài khoản không hợp lệ.");
         }
 
-        if (status.isBlank()) {
+        if (!isValidStatus(status)) {
             return createAccountFormWithError(model, source, "status",
-                    "Vui lòng chọn trạng thái tài khoản.");
+                    "Trạng thái tài khoản không hợp lệ.");
         }
 
         if (accountRepository.existsByUsername(trimmedUsername)) {
@@ -243,6 +258,20 @@ public class AccountController {
     }
 
     // Update Account bằng Modal
+    @GetMapping("/edit/{id}/validate")
+    @ResponseBody
+    public Map<String, String> validateAccountUpdate(
+            @PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "") String fullName,
+            @RequestParam(required = false, defaultValue = "") String email,
+            @RequestParam(required = false, defaultValue = "") String phone,
+            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam(required = false) Integer tierId,
+            @RequestParam(required = false) String staffType,
+            @RequestParam(required = false, defaultValue = "") String status) {
+        return collectAccountUpdateErrors(id, fullName, email, phone, username, tierId, staffType, status);
+    }
+
     @PostMapping("/edit/{id}")
     @Transactional
     public String updateAccount(@PathVariable Integer id,
@@ -287,12 +316,17 @@ public class AccountController {
                     "username", "Username không được để trống.");
         }
 
+        if (!trimmedUsername.matches("[a-zA-Z0-9_]{3,20}")) {
+            return redirectWithEditError(redirectAttributes, source, id, editFormValues,
+                    "username", "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.");
+        }
+
         if (trimmedEmail.isEmpty()) {
             return redirectWithEditError(redirectAttributes, source, id, editFormValues,
                     "email", "Email không được để trống.");
         }
 
-        if (!trimmedEmail.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+        if (!trimmedEmail.matches(EMAIL_PATTERN)) {
             return redirectWithEditError(redirectAttributes, source, id, editFormValues,
                     "email", "Email không đúng định dạng.");
         }
@@ -302,9 +336,9 @@ public class AccountController {
                     "phone", "Số điện thoại không được để trống.");
         }
 
-        if (!trimmedPhone.matches("\\d{10}")) {
+        if (!trimmedPhone.matches("^(?!0{10}$)0\\d{9}$")) {
             return redirectWithEditError(redirectAttributes, source, id, editFormValues,
-                    "phone", "Số điện thoại phải gồm đúng 10 chữ số.");
+                    "phone", "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0");
         }
 
         if (accountRepository.existsByUsernameAndAccountIdNot(trimmedUsername, id)) {
@@ -322,7 +356,7 @@ public class AccountController {
                     "phone", "Số điện thoại đã được sử dụng.");
         }
 
-        if (!status.equals("Active") && !status.equals("Inactive") && !status.equals("Blocked")) {
+        if (!isValidStatus(status)) {
             return redirectWithEditError(redirectAttributes, source, id, editFormValues,
                     "status", "Trạng thái tài khoản không hợp lệ.");
         }
@@ -436,6 +470,81 @@ public class AccountController {
                 ? "updateStaffModal" + accountId
                 : "updateMemberModal" + accountId;
         return redirectBySource(source) + "#" + modalId;
+    }
+
+    private Map<String, String> collectAccountUpdateErrors(
+            Integer accountId,
+            String fullName,
+            String email,
+            String phone,
+            String username,
+            Integer tierId,
+            String staffType,
+            String status) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        Account account = accountRepository.findById(accountId).orElse(null);
+
+        if (account == null || account.getUser() == null) {
+            errors.put("_global", "Không tìm thấy tài khoản.");
+            return errors;
+        }
+
+        String trimmedFullName = fullName == null ? "" : fullName.trim();
+        String trimmedEmail = email == null ? "" : email.trim();
+        String trimmedPhone = phone == null ? "" : phone.trim();
+        String trimmedUsername = username == null ? "" : username.trim();
+
+        if (trimmedFullName.isEmpty()) {
+            errors.put("fullName", "Họ tên không được để trống.");
+        }
+
+        if (trimmedUsername.isEmpty()) {
+            errors.put("username", "Username không được để trống.");
+        } else if (!trimmedUsername.matches("[a-zA-Z0-9_]{3,20}")) {
+            errors.put("username",
+                    "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.");
+        } else if (accountRepository.existsByUsernameAndAccountIdNot(trimmedUsername, accountId)) {
+            errors.put("username", "Username đã tồn tại.");
+        }
+
+        if (trimmedEmail.isEmpty()) {
+            errors.put("email", "Email không được để trống.");
+        } else if (!trimmedEmail.matches(EMAIL_PATTERN)) {
+            errors.put("email", "Email không đúng định dạng.");
+        } else if (userRepository.existsByEmailAndIdNot(trimmedEmail, account.getUser().getId())) {
+            errors.put("email", "Email đã được sử dụng.");
+        }
+
+        if (trimmedPhone.isEmpty()) {
+            errors.put("phone", "Số điện thoại không được để trống.");
+        } else if (!trimmedPhone.matches("^(?!0{10}$)0\\d{9}$")) {
+            errors.put("phone",
+                    "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.");
+        } else if (userRepository.existsByPhoneAndIdNot(trimmedPhone, account.getUser().getId())) {
+            errors.put("phone", "Số điện thoại đã được sử dụng.");
+        }
+
+        Member member = memberRepository.findByUserId(account.getUser().getId()).orElse(null);
+        Staff staff = staffRepository.findByUserId(account.getUser().getId()).orElse(null);
+        if (member != null && (tierId == null || !membershipTierRepository.existsById(tierId))) {
+            errors.put("tierId", "Hạng thành viên không hợp lệ.");
+        } else if (staff != null
+                && !"Admin".equals(staffType)
+                && !"Librarian".equals(staffType)) {
+            errors.put("staffType", "Loại nhân viên không hợp lệ.");
+        } else if (member == null && staff == null) {
+            errors.put("_global", "Tài khoản không có hồ sơ thành viên hoặc nhân sự.");
+        }
+
+        if (!isValidStatus(status)) {
+            errors.put("status", "Trạng thái tài khoản không hợp lệ.");
+        }
+
+        return errors;
+    }
+
+    private boolean isValidStatus(String status) {
+        return "Active".equals(status) || "Inactive".equals(status) || "Blocked".equals(status);
     }
 
     private String redirectBySource(String source) {
