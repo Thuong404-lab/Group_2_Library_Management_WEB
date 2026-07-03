@@ -12,6 +12,9 @@ import com.lms.entity.Transaction;
 import com.lms.entity.User;
 import com.lms.entity.Wallet;
 import com.lms.enums.UserStatus;
+
+import org.springframework.stereotype.Controller;
+
 import com.lms.repository.AccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MemberNotificationRepository;
@@ -47,6 +50,7 @@ import java.util.Optional;
 public class MemberMgmtController {
 
     private final AccountRepository accountRepository;
+
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final UserRepository userRepository;
