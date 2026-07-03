@@ -23,7 +23,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final BookRepository bookRepository;
-    private final AccountRepository accountRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final ReservationRepository reservationRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
@@ -31,14 +31,14 @@ public class BorrowServiceImpl implements BorrowService {
                              BorrowRepository borrowRepository,
                              BorrowDetailRepository borrowDetailRepository,
                              BookRepository bookRepository,
-                             AccountRepository accountRepository,
+                             MemberAccountRepository memberAccountRepository,
                              ReservationRepository reservationRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookRepository = bookRepository;
-        this.accountRepository = accountRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.reservationRepository = reservationRepository;
     }
 
@@ -165,8 +165,9 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getBorrowsByMemberAndStatus(String username, String status) {
-        Integer targetMemberId = accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
+        // 🛠️ FIX: Gọi chuẩn thông qua getMember().getMemberId()
+        Integer targetMemberId = memberAccountRepository.findByUsername(username)
+                .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
 
@@ -272,8 +273,9 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getAllBorrowHistoryByMember(String username) {
-        Integer targetMemberId = accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
+        // 🛠️ FIX: Gọi chuẩn thông qua getMember().getMemberId()
+        Integer targetMemberId = memberAccountRepository.findByUsername(username)
+                .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
 
@@ -399,8 +401,9 @@ public class BorrowServiceImpl implements BorrowService {
     // PHƯƠNG THỨC HELPER ĐÃ ĐƯỢC BỔ SUNG ĐỂ SỬA LỖI CANNOT FIND SYMBOL
     // ==========================================
     private Integer getMemberIdByUsername(String username) {
-        return accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
+        // 🛠️ FIX: Map chuẩn qua getMember().getMemberId() theo đúng cấu trúc Entity mới cung cấp
+        return memberAccountRepository.findByUsername(username)
+                .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
     }
