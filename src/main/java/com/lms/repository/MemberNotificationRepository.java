@@ -24,4 +24,17 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
     List<MemberNotification> findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
             Integer memberId,
             String content);
+
+    // Lấy 1 bản ghi theo cặp (memberId, notificationId)
+    java.util.Optional<MemberNotification> findByMemberMemberIdAndNotificationNotificationId(
+            Integer memberId,
+            Integer notificationId);
+
+    // Helper: cho service gọi nhanh hơn theo tên method.
+    default java.util.Optional<MemberNotification> findByMemberMemberIdAndNotificationId(
+            Integer memberId,
+            Integer notificationId) {
+        return findByMemberMemberIdAndNotificationNotificationId(memberId, notificationId);
+    }
 }
+

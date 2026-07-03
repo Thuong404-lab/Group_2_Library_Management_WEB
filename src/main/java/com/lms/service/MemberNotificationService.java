@@ -14,4 +14,9 @@ public interface MemberNotificationService {
     long countUnreadNotifications(String username);
 
     void markAllNotificationsAsRead(String username);
+
+    void deleteNotificationById(Integer memberNotificationId, String username);
+
+    void deleteAllNotifications(String username);
 }
+

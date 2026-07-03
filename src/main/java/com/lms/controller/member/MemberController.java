@@ -73,11 +73,16 @@ public class MemberController {
 
     @GetMapping("/wallet")
     public String wallet() {
-        return "member/wallet";
+        return "redirect:/member/financial/transactions";
     }
 
     @GetMapping("/notifications")
     public String notifications() {
         return "redirect:/member/interaction/notifications";
+    }
+
+    @GetMapping("/topup-notifications")
+    public String topupNotifications() {
+        return "redirect:/member/financial/topup-notifications";
     }
 }
