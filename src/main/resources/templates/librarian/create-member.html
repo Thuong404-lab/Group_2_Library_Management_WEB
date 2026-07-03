@@ -106,6 +106,7 @@
                                         Username <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="username" required
+                                        pattern="[a-zA-Z0-9_]{3,20}"
                                         placeholder="Nhập tên đăng nhập" autocomplete="new-password"
                                         th:value="${formValues != null ? formValues['username'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
@@ -120,6 +121,7 @@
                                         Mật khẩu <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="password" type="password" required
+                                        minlength="6"
                                         placeholder="Nhập mật khẩu" autocomplete="new-password"
                                         th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
@@ -240,6 +242,14 @@
                     return "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
                 }
 
+                if (field.name === "username") {
+                    return "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
+                }
+
+                if (field.name === "password") {
+                    return "Mật khẩu phải có ít nhất 6 ký tự.";
+                }
+
                 if (field.name === "email" && field.validity.typeMismatch) {
                     return "Email không đúng định dạng.";
                 }
@@ -278,18 +288,36 @@
                 return true;
             }
 
+            function clearFieldError(field) {
+                const feedback = getFeedback(field);
+                field.classList.remove("is-invalid", "is-valid");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
             fields.forEach(function (field) {
                 field.addEventListener("input", function () {
-                    validateField(field);
+                    clearFieldError(field);
                 });
 
                 field.addEventListener("change", function () {
-                    validateField(field);
+                    clearFieldError(field);
+                });
+            });
+
+            form.addEventListener("submit", function (event) {
+                let isFormValid = true;
+
+                fields.forEach(function (field) {
+                    if (!validateField(field)) {
+                        isFormValid = false;
+                    }
                 });
 
-                field.addEventListener("blur", function () {
-                    validateField(field);
-                });
+                if (!isFormValid) {
+                    event.preventDefault();
+                }
             });
 
         });

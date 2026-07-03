@@ -192,7 +192,8 @@
                                                                     Username
                                                                 </label>
                                                                 <input class="form-control" name="username"
-                                                                    th:value="${account.username}" required>
+                                                                    th:value="${account.username}" required
+                                                                    pattern="[a-zA-Z0-9_]{3,20}">
                                                                 <div class="invalid-feedback"
                                                                     data-error-for="username"></div>
                                                             </div>
@@ -437,6 +438,12 @@
                         field.addEventListener("focus", function () {
                             lastFocusedField = field;
                         });
+                        field.addEventListener("input", function () {
+                            clearFieldError(field);
+                        });
+                        field.addEventListener("change", function () {
+                            clearFieldError(field);
+                        });
                     });
 
                     function clearErrors() {
@@ -448,6 +455,15 @@
                         });
                         globalError.textContent = "";
                         globalError.classList.add("d-none");
+                    }
+
+                    function clearFieldError(field) {
+                        field.classList.remove("is-invalid");
+                        const feedback = form.querySelector(
+                            "[data-error-for='" + field.name + "']");
+                        if (feedback != null) {
+                            feedback.textContent = "";
+                        }
                     }
 
                     function showErrors(errors) {
@@ -489,6 +505,8 @@
                         }
                         if (username === "") {
                             errors.username = "Username không được để trống.";
+                        } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                            errors.username = "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
                         }
                         if (email === "") {
                             errors.email = "Email không được để trống.";
@@ -514,6 +532,10 @@
                         clearErrors();
 
                         const localErrors = validateLocally();
+                        if (Object.keys(localErrors).length > 0) {
+                            showErrors(localErrors);
+                            return;
+                        }
 
                         submitButton.disabled = true;
                         try {
@@ -531,17 +553,16 @@
                             }
 
                             const serverErrors = await response.json();
-                            const allErrors = Object.assign({}, localErrors, serverErrors);
-                            if (Object.keys(allErrors).length > 0) {
-                                showErrors(allErrors);
+                            if (Object.keys(serverErrors).length > 0) {
+                                showErrors(serverErrors);
                                 return;
                             }
 
                             form.submit();
                         } catch (error) {
-                            showErrors(Object.assign({}, localErrors, {
+                            showErrors({
                                 _global: "Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại."
-                            }));
+                            });
                         } finally {
                             submitButton.disabled = false;
                         }
