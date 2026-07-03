@@ -5,6 +5,7 @@ import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.MemberFavoriteService;
+import com.lms.service.MemberNotificationService; // Import service mới tiêm
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,17 +21,20 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     private final BookRepository bookRepository;
     private final FavoritesRepository favoritesRepository;
     private final ReservationRepository reservationRepository;
+    private final MemberNotificationService notificationService; // Thêm biến thành viên
 
     public MemberFavoriteServiceImpl(AccountRepository accountRepository,
                                      MemberRepository memberRepository,
                                      BookRepository bookRepository,
                                      FavoritesRepository favoritesRepository,
-                                     ReservationRepository reservationRepository) {
+                                     ReservationRepository reservationRepository,
+                                     MemberNotificationService notificationService) { // Inject qua Constructor
         this.accountRepository = accountRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
         this.reservationRepository = reservationRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -85,6 +89,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
                 .collect(Collectors.toSet());
     }
 
+    // ======= CẢI TIẾN: KHI MEMBER GỬI ĐẶT TRƯỚC SẼ BÁO LIBRARIAN CỦA HỆ THỐNG =======
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void reserveBook(String username, Integer bookId) throws Exception {
@@ -101,9 +106,15 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         reservation.setStatus("Pending");
 
         reservationRepository.save(reservation);
+
+        // Phát ra tín hiệu thông báo thời gian thực lưu trữ đến nhóm quản trị Thủ thư
+        String memberName = (member.getUser() != null) ? member.getUser().getFullName() : username;
+        notificationService.sendNotificationToAllLibrarians(
+                "Yêu cầu chuẩn bị sách đặt trước",
+                "Độc giả " + memberName + " vừa tạo một đơn đặt trước trực tuyến cuốn sách: '" + book.getTitle() + "'."
+        );
     }
 
-    // TRIỂN KHAI BỔ SUNG: Trích xuất danh sách sách để hiển thị Đề Cử trên Dashboard
     @Override
     @Transactional(readOnly = true)
     public List<Book> getFavoriteBooksByMember(String username) {

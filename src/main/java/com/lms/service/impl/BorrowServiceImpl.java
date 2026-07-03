@@ -6,6 +6,7 @@ import com.lms.entity.*;
 import com.lms.enums.UserStatus;
 import com.lms.repository.*;
 import com.lms.service.BorrowService;
+import com.lms.service.MemberNotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final BookRepository bookRepository;
     private final AccountRepository accountRepository;
     private final ReservationRepository reservationRepository;
+    private final MemberNotificationService notificationService;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
                              BookItemRepository bookItemRepository,
@@ -32,7 +34,8 @@ public class BorrowServiceImpl implements BorrowService {
                              BorrowDetailRepository borrowDetailRepository,
                              BookRepository bookRepository,
                              AccountRepository accountRepository,
-                             ReservationRepository reservationRepository) {
+                             ReservationRepository reservationRepository,
+                             MemberNotificationService notificationService) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -40,6 +43,7 @@ public class BorrowServiceImpl implements BorrowService {
         this.bookRepository = bookRepository;
         this.accountRepository = accountRepository;
         this.reservationRepository = reservationRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -165,11 +169,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getBorrowsByMemberAndStatus(String username, String status) {
-        Integer targetMemberId = accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
-                .map(Member::getMemberId)
-                .orElse(null);
-
+        Integer targetMemberId = getMemberIdByUsername(username);
         if (targetMemberId == null) return new ArrayList<>();
 
         return borrowRepository.findAll().stream()
@@ -228,6 +228,7 @@ public class BorrowServiceImpl implements BorrowService {
         }
     }
 
+    // ======= ĐÃ FIX LỖI TRIỆT ĐỂ: Dùng Email để tìm ngược lại Username từ AccountRepository =======
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approveReturnRequest(Integer borrowId) throws Exception {
@@ -239,9 +240,39 @@ public class BorrowServiceImpl implements BorrowService {
         List<BorrowDetail> details = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBorrow() != null && d.getBorrow().getBorrowId().equals(borrowId))
                 .collect(Collectors.toList());
+
+        StringBuilder listTitles = new StringBuilder();
         for (BorrowDetail detail : details) {
             detail.setStatus("Returned");
+            detail.setReturnDate(LocalDateTime.now());
             borrowDetailRepository.save(detail);
+
+            if (detail.getBookItem() != null) {
+                BookItem item = detail.getBookItem();
+                item.setStatus("Available");
+                bookItemRepository.save(item);
+            }
+            listTitles.append("'").append(detail.getBook().getTitle()).append("' ");
+        }
+
+        // Khắc phục việc không có .getAccount() trong User: Tìm Account thông qua Email của User
+        if (borrow.getMember() != null && borrow.getMember().getUser() != null) {
+            String userEmail = borrow.getMember().getUser().getEmail();
+
+            // Tìm Account thông qua mối quan hệ user.id hoặc dựa trên email đặc trưng
+            String memberUsername = accountRepository.findAll().stream()
+                    .filter(acc -> acc.getUser() != null && userEmail.equalsIgnoreCase(acc.getUser().getEmail()))
+                    .map(Account::getUsername)
+                    .findFirst()
+                    .orElse(null);
+
+            if (memberUsername != null) {
+                notificationService.sendNotificationToUser(
+                        memberUsername,
+                        "Duyệt yêu cầu trả sách thành công",
+                        "Yêu cầu trả cuốn sách " + listTitles.toString() + "đã được duyệt thành công. Cảm ơn bạn đã đọc sách đúng hẹn!"
+                );
+            }
         }
     }
 
@@ -252,6 +283,16 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new Exception("Không tìm thấy đơn mượn/trả tương ứng!"));
         borrow.setStatus(status);
         borrowRepository.save(borrow);
+
+        if ("Return_Pending".equalsIgnoreCase(status)) {
+            String fullName = (borrow.getMember() != null && borrow.getMember().getUser() != null)
+                    ? borrow.getMember().getUser().getFullName() : "Độc giả";
+
+            notificationService.sendNotificationToAllLibrarians(
+                    "Yêu cầu xử lý trả sách",
+                    "Độc giả " + fullName + " đã gửi yêu cầu trả sách trực tuyến cho mã đơn mượn #" + loanId + ". Vui lòng kiểm tra và duyệt đơn."
+            );
+        }
     }
 
     @Override
@@ -272,21 +313,13 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getAllBorrowHistoryByMember(String username) {
-        Integer targetMemberId = accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
-                .map(Member::getMemberId)
-                .orElse(null);
-
+        Integer targetMemberId = getMemberIdByUsername(username);
         if (targetMemberId == null) return new ArrayList<>();
 
         return borrowRepository.findAll().stream()
                 .filter(b -> b.getMember() != null && targetMemberId.equals(b.getMember().getMemberId()))
                 .collect(Collectors.toList());
     }
-
-    // ==========================================
-    // LOGIC CHO CHỨC NĂNG PHÂN TAB MEMBER VIEW MANAGEMENT
-    // ==========================================
 
     @Override
     @Transactional(readOnly = true)
@@ -395,12 +428,8 @@ public class BorrowServiceImpl implements BorrowService {
         return dtoList;
     }
 
-    // ==========================================
-    // PHƯƠNG THỨC HELPER ĐÃ ĐƯỢC BỔ SUNG ĐỂ SỬA LỖI CANNOT FIND SYMBOL
-    // ==========================================
     private Integer getMemberIdByUsername(String username) {
-        return accountRepository.findByUsername(username)
-                .flatMap(acc -> memberRepository.findByUserId(acc.getUser().getId()))
+        return memberRepository.findByAccountUsername(username)
                 .map(Member::getMemberId)
                 .orElse(null);
     }

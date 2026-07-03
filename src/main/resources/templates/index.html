@@ -117,6 +117,61 @@
         .book-stock {
             color: #059669; /* Green */
         }
+
+        /* --- HỆ THỐNG ĐỒNG BỘ NÚT BẤM STYLE CLASSIC (ĐÃ FIX MARGIN CHO BOOTSTRAP 4) --- */
+        .btn-classic-primary {
+            background: #8b5a2b !important;
+            border: 1px solid #8b5a2b !important;
+            color: #ffffff !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+            margin-right: 14px !important; /* Ép giãn cách bên phải */
+            margin-bottom: 8px !important;
+        }
+
+        .btn-classic-primary:hover {
+            background: #74481f !important;
+            border-color: #74481f !important;
+            color: #ffffff !important;
+        }
+
+        .btn-classic-outline {
+            background: transparent !important;
+            border: 1px solid rgba(139, 90, 43, 0.4) !important;
+            color: #8b5a2b !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+            margin-right: 14px !important; /* Ép giãn cách bên phải */
+            margin-bottom: 8px !important;
+        }
+
+        .btn-classic-outline:hover {
+            background: rgba(139, 90, 43, 0.08) !important;
+            border-color: #8b5a2b !important;
+            color: #74481f !important;
+        }
+
+        .btn-classic-danger {
+            background: transparent !important;
+            border: 1px solid rgba(220, 53, 69, 0.4) !important;
+            color: #dc3545 !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+            margin-right: 14px !important; /* Ép giãn cách bên phải */
+            margin-bottom: 8px !important;
+        }
+
+        .btn-classic-danger:hover, .btn-classic-danger.active {
+            background: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
     </style>
 </head>
 
@@ -320,45 +375,48 @@
                                         </div>
                                     </div>
 
-                                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                    <!-- KHỐI HÀNH ĐỘNG: ĐÃ ĐƯỢC ÉP GIÃN CÁCH BIÊN AN TOÀN -->
+                                    <div class="mt-2 d-flex flex-wrap align-items-center">
 
+                                        <!-- Nút Mượn Sách -->
                                         <a sec:authorize="isAuthenticated()"
                                            th:href="@{/member/borrow/create(bookId=${book.bookId})}"
-                                           class="btn rounded-0 px-3 fw-bold btn-primary">
+                                           class="btn btn-classic-primary">
                                             <i class="bi bi-plus-circle mr-2"></i>Mượn sách
                                         </a>
                                         <a sec:authorize="!isAuthenticated()"
                                            th:href="@{/login}"
-                                           class="btn rounded-0 px-3 fw-bold btn-primary">
+                                           class="btn btn-classic-primary">
                                             <i class="bi bi-plus-circle mr-2"></i>Mượn sách
                                         </a>
 
+                                        <!-- Nút Đặt Trước -->
                                         <form sec:authorize="isAuthenticated()"
                                               th:action="@{'/member/borrow/reserve/' + ${book.bookId}}"
-                                              method="post" class="m-0">
-                                            <button type="submit" class="btn rounded-0 px-3 fw-bold text-dark" style="background-color: #ffc107; border: 1px solid #ffc107;">
+                                              method="post" class="m-0 d-inline">
+                                            <button type="submit" class="btn btn-classic-outline">
                                                 <i class="bi bi-bookmark-star mr-2"></i>Đặt trước
                                             </button>
                                         </form>
                                         <button sec:authorize="!isAuthenticated()"
-                                                class="btn rounded-0 px-3 fw-bold text-dark"
-                                                style="background-color: #ffc107; border: 1px solid #ffc107;"
+                                                class="btn btn-classic-outline"
                                                 onclick="window.location.href='/login'">
                                             <i class="bi bi-bookmark-star mr-2"></i>Đặt trước
                                         </button>
 
+                                        <!-- Nút Yêu Thích -->
                                         <form sec:authorize="isAuthenticated()"
                                               th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
                                               method="post"
                                               class="d-inline favorite-form m-0"
                                               th:data-book-id="${book.bookId}">
                                             <button type="submit"
-                                                    th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger rounded-0 px-3 fw-bold js-favorite-button active' : 'btn btn-outline-danger rounded-0 px-3 fw-bold js-favorite-button'}">
+                                                    th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-classic-danger active' : 'btn btn-classic-danger'}">
                                                 <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill mr-2' : 'bi bi-heart mr-2'}"></i>
                                                 <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã thích' : 'Yêu thích'}">Yêu thích</span>
                                             </button>
                                         </form>
-                                        <button sec:authorize="!isAuthenticated()" class="btn btn-outline-danger rounded-0 px-3 fw-bold" onclick="window.location.href='/login'"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
+                                        <button sec:authorize="!isAuthenticated()" class="btn btn-classic-danger" onclick="window.location.href='/login'"><i class="bi bi-heart mr-2"></i>Yêu thích</button>
 
                                     </div>
                                 </div>

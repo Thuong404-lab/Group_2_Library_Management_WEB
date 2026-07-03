@@ -1,132 +1,216 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
     <title>Quầy Quản Lý Mượn Sách</title>
+    <style>
+        /* Đồng bộ định dạng tiêu đề card và bảng theo font chữ Playfair Display */
+        .card-title-custom {
+            color: #4a3b32;
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            font-size: 1.25rem;
+        }
+
+        /* Định dạng cấu trúc Card tối giản */
+        .classic-card {
+            border: 1px solid rgba(139, 90, 43, 0.12) !important;
+            border-radius: 8px !important;
+            background-color: #ffffff !important;
+        }
+
+        .classic-card .card-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.1) !important;
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+
+        /* Đồng bộ Hệ thống Nút bấm (Classic Brown) */
+        .btn-classic {
+            background: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+            color: #fff !important;
+            font-weight: 500;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-classic:hover, .btn-classic:focus {
+            background: #74481f !important;
+            border-color: #74481f !important;
+        }
+
+        /* Bảng danh sách đồng bộ màu chữ nhạt trang nhã */
+        .classic-table thead th {
+            background: #fdfbf7 !important;
+            color: #4a3b32 !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
+            font-weight: 600;
+        }
+
+        .active-request-item {
+            background-color: #fdfbf7 !important;
+            border-left: 4px solid #8b5a2b !important;
+        }
+
+        /* Phần danh sách cuộn mượt */
+        .scrollable-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .scrollable-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Đường gạch phân cách dashed giữa các hàng */
+        .classic-divider {
+            border-top: 1px dashed rgba(139, 90, 43, 0.2) !important;
+        }
+
+        /* Định dạng Form control nhạt thanh lịch */
+        .form-control {
+            border-color: rgba(139, 90, 43, 0.15);
+            color: #4a3b32;
+        }
+        .form-control::placeholder {
+            color: #a0a0a0;
+        }
+    </style>
 </head>
 <body>
-<div layout:fragment="content" class="container-fluid py-4">
+<div layout:fragment="content" th:with="activeMenu='borrow-manage'">
 
-    <div class="row mb-3">
-        <div class="col-12">
-            <h3 class="fw-bold text-dark"><i class="bi bi-bookshelf text-primary me-2"></i>Quầy Thực Hiện Cấp Mượn Sách</h3>
-            <p class="text-muted">Hỗ trợ lập phiếu trực tiếp tại quầy và phê duyệt các yêu cầu đăng ký sách trực tuyến của Độc giả.</p>
+    <!-- KHỐI TIÊU ĐỀ CHUẨN ĐỒNG BỘ 100% VỚI CODE MẪU CỦA BẠN -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quầy Thực Hiện Cấp Mượn Sách</h2>
+            <div class="text-muted">Hỗ trợ lập phiếu trực tiếp tại quầy và phê duyệt các yêu cầu đăng ký sách trực tuyến của Độc giả.</div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <!-- HÀNG 1: LOGIC QUẢN LÝ MƯỢN SÁCH -->
+    <div class="row g-4 mb-4">
+
+        <!-- KHỐI BÊN TRÁI: YÊU CẦU TRỰC TUYẾN CHỜ DUYỆT -->
         <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold text-secondary"><i class="bi bi-people me-2"></i>Yêu cầu trực tuyến chờ duyệt</h5>
+            <div class="card classic-card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title-custom mb-0">Yêu cầu trực tuyến chờ duyệt</h5>
                 </div>
-                <div class="list-group list-group-flush scrollable-list" style="max-height: 600px; overflow-y: auto;">
+                <div class="list-group list-group-flush scrollable-list">
 
                     <a th:each="req : ${pendingRequests}"
                        th:href="@{/librarian/borrow/create(requestId=${req.borrowId})}"
                        class="list-group-item list-group-item-action py-3 px-3 border-bottom"
-                       th:classappend="${selectedRequest != null && selectedRequest.borrowId == req.borrowId} ? 'bg-primary-subtle border-primary' : ''">
+                       th:classappend="${selectedRequest != null && selectedRequest.borrowId == req.borrowId} ? 'active-request-item' : ''">
                         <div class="d-flex w-100 justify-content-between align-items-center mb-1">
-                            <h6 class="mb-0 fw-bold text-dark" th:text="${req.member.user.fullName}">Tên Thành Viên</h6>
+                            <h6 class="mb-0 fw-bold" style="color: #4a3b32;" th:text="${req.member.user.fullName}">Tên Thành Viên</h6>
                             <small class="text-muted" th:text="${#temporals.format(req.borrowDate, 'dd/MM/yyyy')}">Ngày gửi</small>
                         </div>
                         <div class="small text-muted mb-2" th:text="${req.member.user.email}">Email</div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Chờ duyệt cấp sách</span>
-                            <span class="text-primary small fw-semibold">Chi tiết <i class="bi bi-chevron-right"></i></span>
+                            <span class="badge" style="background: #eee4d6; color: #8b5a2b;">Chờ duyệt cấp sách</span>
+                            <span class="small fw-semibold" style="color: #8b5a2b;">Chi tiết <i class="bi bi-chevron-right small"></i></span>
                         </div>
                     </a>
 
                     <div th:if="${#lists.isEmpty(pendingRequests)}" class="text-center py-5 text-muted">
-                        <i class="bi bi-inbox fs-2 mb-2 d-block"></i>
-                        Hiện tại không có yêu cầu đăng ký online nào.
+                        <i class="bi bi-inbox fs-3 d-block mb-3 opacity-50"></i>
+                        <span class="small">Hiện tại không có yêu cầu đăng ký online nào.</span>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- KHỐI BÊN PHẢI: CHI TIẾT DUYỆT HOẶC FORM TẠO TẠI QUẦY -->
         <div class="col-md-8">
-            <div th:if="${selectedRequest == null}" class="card shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold text-secondary"><i class="bi bi-pen me-2"></i>Tạo phiếu mượn trực tiếp tại quầy</h5>
+
+            <!-- TRẠNG THÁI 1: FORM TẠO PHIẾU TẠI QUẦY -->
+            <div th:if="${selectedRequest == null}" class="card classic-card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title-custom mb-0">Tạo phiếu mượn trực tiếp tại quầy</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <form th:action="@{/librarian/borrow/create}" method="post" class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small">Email thành viên <span class="text-danger">*</span></label>
+                            <label class="form-label small text-muted">Email thành viên <span class="text-danger">*</span></label>
                             <input type="email" name="memberEmail" class="form-control" placeholder="member@example.com" required />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Danh sách mã vạch (mỗi mã 1 dòng hoặc dấu phẩy)</label>
+                            <label class="form-label small text-muted">Danh sách mã vạch (phân tách bằng dấu phẩy)</label>
                             <input type="text" name="rawBarcodes" class="form-control" placeholder="barcode1, barcode2" />
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label small">Ghi chú (tùy chọn)</label>
-                            <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú cho phiếu mượn"></textarea>
+                            <label class="form-label small text-muted">Ghi chú (tùy chọn)</label>
+                            <textarea name="note" class="form-control" rows="4" placeholder="Ghi chú cho phiếu mượn"></textarea>
                         </div>
 
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary px-4">Tạo phiếu mượn tại quầy</button>
+                        <div class="col-12 d-flex justify-content-end pt-3">
+                            <button type="submit" class="btn btn-classic">Tạo phiếu mượn tại quầy</button>
                         </div>
                     </form>
 
-                    <hr/>
-                    <div class="text-center text-muted pt-3">
-                        <i class="bi bi-info-circle me-1"></i> Hoặc chọn một yêu cầu trực tuyến bên trái để phê duyệt.
+                    <hr class="my-4 opacity-25"/>
+                    <div class="text-center text-muted small">
+                        Hoặc chọn một yêu cầu trực tuyến bên trái để phê duyệt.
                     </div>
                 </div>
             </div>
 
-            <div th:if="${selectedRequest != null}" class="card shadow-sm h-100">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-text text-primary me-2"></i>Bảng thông tin mượn chi tiết</h5>
-                    <span class="badge bg-primary px-3 py-2 fs-6" th:text="'MÃ ĐƠN: BRW-' + ${selectedRequest.borrowId}">Mã đơn</span>
+            <!-- TRẠNG THÁI 2: CHI TIẾT PHÊ DUYỆT ĐƠN -->
+            <div th:if="${selectedRequest != null}" class="card classic-card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title-custom mb-0">Bảng thông tin mượn chi tiết</h5>
+                    <span class="badge" style="background: #eee4d6; color: #4a3b32; padding: 6px 12px;" th:text="'MÃ ĐƠN: BRW-' + ${selectedRequest.borrowId}">Mã đơn</span>
                 </div>
-                <div class="card-body">
-                    <h5 class="fw-bold mb-3 text-secondary border-bottom pb-2">Thông tin Độc giả</h5>
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3 pb-2 text-uppercase small tracking-wide" style="color: #8b5a2b; border-bottom: 1px solid rgba(139, 90, 43, 0.1);">Thông tin Độc giả</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="text-muted small">Họ và tên độc giả:</label>
-                            <p class="fw-bold text-dark fs-5 mb-0" th:text="${selectedRequest.member.user.fullName}">Nguyễn Văn A</p>
+                            <label class="text-muted small d-block mb-1">Họ và tên độc giả:</label>
+                            <span class="fw-semibold" style="color: #4a3b32;" th:text="${selectedRequest.member.user.fullName}">Nguyễn Văn A</span>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-muted small">Số điện thoại / Liên hệ:</label>
-                            <p class="fw-bold text-dark fs-5 mb-0" th:text="${selectedRequest.member.user.phone != null ? selectedRequest.member.user.phone : 'Chưa cập nhật'}">0901234567</p>
+                            <label class="text-muted small d-block mb-1">Số điện thoại / Liên hệ:</label>
+                            <span class="fw-semibold" style="color: #4a3b32;" th:text="${selectedRequest.member.user.phone != null ? selectedRequest.member.user.phone : 'Chưa cập nhật'}">0901234567</span>
                         </div>
                     </div>
 
-                    <h5 class="fw-bold mb-3 text-secondary border-bottom pb-2">Danh sách sách đăng ký mượn</h5>
+                    <h6 class="fw-bold mb-3 pb-2 text-uppercase small tracking-wide" style="color: #8b5a2b; border-bottom: 1px solid rgba(139, 90, 43, 0.1);">Danh sách sách đăng ký mượn</h6>
                     <div class="table-responsive mb-4">
-                        <table class="table table-bordered align-middle">
-                            <thead class="table-light">
+                        <table class="table table-bordered classic-table align-middle mb-0">
+                            <thead>
                             <tr>
-                                <th>Tên Cuốn Sách</th>
-                                <th>Mã Định Danh (ISBN)</th>
-                                <th>Hạn Trả Dự Kiến</th>
+                                <th class="py-2">Tên Cuốn Sách</th>
+                                <th class="py-2">Mã Định Danh (ISBN)</th>
+                                <th class="py-2">Hạn Trả Dự Kiến</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:each="detail : ${requestDetails}">
-                                <td class="fw-bold text-primary" th:text="${detail.book.title}">Tên cuốn sách</td>
-                                <td class="text-mono" th:text="${detail.book.isbn}">ISBN-12345</td>
-                                <td th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">14/07/2026</td>
+                                <td class="fw-semibold" style="color: #8b5a2b;" th:text="${detail.book.title}">Tên cuốn sách</td>
+                                <td class="text-muted small" th:text="${detail.book.isbn}">ISBN-12345</td>
+                                <td class="text-secondary small" th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">14/07/2026</td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <div class="d-flex justify-content-end gap-3 pt-3 border-top">
-                        <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post">
-                            <button type="submit" class="btn btn-lg btn-danger px-4" onclick="return confirm('Bạn chắc chắn muốn Từ chối duyệt đơn mượn này?')">
+                        <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="m-0">
+                            <button type="submit" class="btn btn-sm btn-outline-danger px-4" onclick="return confirm('Bạn chắc chắn muốn Từ chối duyệt đơn mượn này?')">
                                 Từ chối
                             </button>
                         </form>
 
-                        <form th:action="@{/librarian/borrow/approve/{id}(id=${selectedRequest.borrowId})}" method="post">
-                            <button type="submit" class="btn btn-lg btn-success px-4" onclick="return confirm('Xác nhận phê duyệt cấp sách vật lý tại quầy cho độc giả?')">
-                                Phê duyệt
+                        <form th:action="@{/librarian/borrow/approve/{id}(id=${selectedRequest.borrowId})}" method="post" class="m-0">
+                            <button type="submit" class="btn btn-sm btn-classic" onclick="return confirm('Xác nhận phê duyệt cấp sách vật lý tại quầy cho độc giả?')">
+                                Phê duyệt cấp sách
                             </button>
                         </form>
                     </div>
@@ -134,6 +218,107 @@
             </div>
         </div>
     </div>
+
+    <!-- ĐƯỜNG PHÂN CÁCH DASHED GIỮA CÁC PHÂN KHU -->
+    <div class="row my-4">
+        <div class="col-12">
+            <hr class="classic-divider"/>
+        </div>
+    </div>
+
+    <!-- HÀNG 2: TIẾP NHẬN YÊU CẦU TRẢ SÁCH VÀ XỬ LÝ ĐẶT TRƯỚC SÁCH -->
+    <div class="row g-4">
+
+        <!-- KHỐI 1: YÊU CẦU TRẢ SÁCH -->
+        <div class="col-md-6">
+            <div class="card classic-card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title-custom mb-0">Yêu cầu trả sách chờ xử lý</h5>
+                </div>
+                <div class="table-responsive scrollable-table">
+                    <table class="table table-hover classic-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th class="py-2 ps-3">Độc giả</th>
+                            <th class="py-2">Thông tin Sách trả</th>
+                            <th class="text-end pe-3 py-2">Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="req : ${pendingReturnRequests}">
+                            <td class="ps-3">
+                                <span class="fw-semibold d-block" style="color: #4a3b32;" th:text="${req.memberName}">Nguyễn Văn A</span>
+                                <small class="text-muted" th:text="${req.memberEmail}">email@example.com</small>
+                            </td>
+                            <td>
+                                <span class="d-block text-truncate small" style="max-width: 220px; color: #4a3b32;" th:text="${req.bookTitle}">Tên Sách</span>
+                                <span class="badge" style="background: #eee4d6; color: #5f4736;" th:text="${req.barcode}">BC123456</span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <form th:action="@{/librarian/borrow/approve-return/{id}(id=${req.id})}" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-classic py-1 px-3" onclick="return confirm('Xác nhận độc giả đã trả sách vật lý thành công?')">
+                                        Nhận sách
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(pendingReturnRequests)}">
+                            <td colspan="3" class="text-center py-5 text-muted small">
+                                Không có yêu cầu trả sách trực tuyến nào cần xử lý.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- KHỐI 2: DANH SÁCH ĐẶT TRƯỚC SÁCH -->
+        <div class="col-md-6">
+            <div class="card classic-card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title-custom mb-0">Danh sách đặt trước sách chờ cấp</h5>
+                </div>
+                <div class="table-responsive scrollable-table">
+                    <table class="table table-hover classic-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th class="py-2 ps-3">Độc giả đặt trước</th>
+                            <th class="py-2">Sách giữ chỗ</th>
+                            <th class="text-end pe-3 py-2">Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="reserve : ${activeReservations}">
+                            <td class="ps-3">
+                                <span class="fw-semibold d-block" style="color: #4a3b32;" th:text="${reserve.memberName}">Trần Thị B</span>
+                                <small class="text-muted" th:text="${#temporals.format(reserve.bookingDate, 'dd/MM/yyyy')}">01/07/2026</small>
+                            </td>
+                            <td>
+                                <span class="d-block text-truncate small fw-semibold" style="max-width: 220px; color: #8b5a2b;" th:text="${reserve.bookTitle}">Nhà Giả Kim</span>
+                                <span class="badge" style="background: #e6f2e8; color: #2f6b3f;" th:text="'Hàng đợi: ' + ${reserve.queuePosition}">Vị trí: 1</span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <form th:action="@{/librarian/borrow/approve-reservation/{id}(id=${reserve.id})}" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-classic py-1 px-3" onclick="return confirm('Xác nhận cấp quyền mượn sách thuộc danh mục đặt giữ chỗ này?')">
+                                        Cấp mượn
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(activeReservations)}">
+                            <td colspan="3" class="text-center py-5 text-muted small">
+                                Không có danh sách hàng đợi đặt trước nào đang chờ.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </div>
 </body>
 </html>

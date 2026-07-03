@@ -4,6 +4,7 @@ import com.lms.dto.response.MemberNotificationResponse;
 import com.lms.entity.Account;
 import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
+import com.lms.entity.Notification;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.AccountRepository;
 import com.lms.repository.MemberNotificationRepository;
@@ -67,7 +68,6 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
                 memberNotification.getNotification().getContent()
         );
 
-        // Ngày gửi thông báo
         response.setSentDate(
                 memberNotification.getNotification().getCreatedDate()
         );
@@ -75,6 +75,7 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
 
         return response;
     }
+
     @Override
     @Transactional(readOnly = true)
     public List<MemberNotificationResponse> getLatestNotifications(String username) {
@@ -83,8 +84,8 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         List<MemberNotification> memberNotifications =
                 memberNotificationRepository
                         .findTop5ByMember_MemberIdOrderByNotification_CreatedDateDesc(
-                        member.getMemberId()
-                );
+                                member.getMemberId()
+                        );
 
         return memberNotifications.stream()
                 .map(this::mapToResponse)
@@ -116,6 +117,55 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
                 mn.setReadDate(now);
             });
             memberNotificationRepository.saveAll(unreadNotifications);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void sendNotificationToUser(String username, String title, String content) {
+        Member member = memberRepository.findByAccountUsername(username).orElse(null);
+        if (member == null) return;
+
+        Notification notification = new Notification();
+        notification.setTitle(title);
+        notification.setContent(content);
+        notification.setCreatedDate(LocalDateTime.now());
+
+        MemberNotification memberNotification = new MemberNotification();
+        memberNotification.setMember(member);
+        memberNotification.setNotification(notification);
+        memberNotification.setIsRead(false);
+
+        memberNotificationRepository.save(memberNotification);
+    }
+
+    // ======= ĐÃ FIX LỖI: Stream qua Collection Set<Role> để tìm quyền LIBRARIAN =======
+    @Override
+    @Transactional
+    public void sendNotificationToAllLibrarians(String title, String content) {
+        List<Account> librarians = accountRepository.findAll().stream()
+                .filter(acc -> acc.getRoles() != null && acc.getRoles().stream()
+                        .anyMatch(role -> {
+                            // Giả định thực thể Role của bạn có method getName() hoặc dùng toString()
+                            // Bạn hãy đổi thành .getRoleName() nếu thuộc tính trong class Role mang tên khác nhé
+                            String rName = (role.toString() != null) ? role.toString() : "";
+                            return rName.toUpperCase().contains("LIBRARIAN");
+                        }))
+                .toList();
+
+        for (Account acc : librarians) {
+            memberRepository.findByAccountUsername(acc.getUsername()).ifPresent(member -> {
+                Notification notification = new Notification();
+                notification.setTitle(title);
+                notification.setContent(content);
+                notification.setCreatedDate(LocalDateTime.now());
+
+                MemberNotification mn = new MemberNotification();
+                mn.setMember(member);
+                mn.setNotification(notification);
+                mn.setIsRead(false);
+                memberNotificationRepository.save(mn);
+            });
         }
     }
 }
