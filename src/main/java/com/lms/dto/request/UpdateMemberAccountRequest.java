@@ -21,8 +21,8 @@ public class UpdateMemberAccountRequest {
     private String email;
 
     @NotBlank(message = "Số điện thoại không được để trống.")
-    @Pattern(regexp = "0\\d{9}",
-            message = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.")
+    @Pattern(regexp = "^(?!0{10}$)0\\d{9}$",
+            message = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.")
     private String phone;
 
     @NotNull(message = "Hạng thành viên không hợp lệ.")

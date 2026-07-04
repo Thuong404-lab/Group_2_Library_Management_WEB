@@ -184,47 +184,58 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên
+                                                                    Họ tên <span class="text-danger">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
+                                                                    data-label="Họ tên"
                                                                     th:value="${account.user != null ? account.user.fullName : ''}"
                                                                     required>
-                                                                <div class="invalid-feedback" data-error-for="fullName"></div>
+                                                                <div class="invalid-feedback" data-error-for="fullName">
+                                                                    Họ tên không được để trống.
                                                                 </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username
+                                                                    Username <span class="text-danger">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
-                                                                    th:value="${account.username}" required
-                                                                    pattern="[a-zA-Z0-9_]{3,20}">
+                                                                    data-label="Username"
+                                                                    pattern="[a-zA-Z0-9_]{3,20}"
+                                                                    th:value="${account.username}" required>
                                                                 <div class="invalid-feedback" data-error-for="username">
+                                                                    Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.
                                                                 </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại
+                                                                    Số điện thoại <span class="text-danger">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
+                                                                    data-label="Số điện thoại"
                                                                     th:value="${account.user != null ? account.user.phone : ''}"
-                                                                    required pattern="0[0-9]{9}" minlength="10"
-                                                                    title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0">
+                                                                    required pattern="^(?!0{10}$)0[0-9]{9}$"
+                                                                    minlength="10" inputmode="numeric">
                                                                 <div class="invalid-feedback" data-error-for="phone">
+                                                                    Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.
                                                                 </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Email</label>
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Email <span class="text-danger">*</span>
+                                                                </label>
                                                                 <input class="form-control" name="email" type="email"
+                                                                    data-label="Email"
+                                                                    pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${account.user != null ? account.user.email : ''}"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="email">
+                                                                    Email không đúng định dạng.
                                                                 </div>
                                                             </div>
 
@@ -243,9 +254,9 @@
                                                                     </option>
                                                                 </select>
                                                                 <div class="invalid-feedback" data-error-for="tierId">
+                                                                    Vui lòng chọn hạng thành viên.
                                                                 </div>
                                                             </div>
-
 
                                                             <div class="col-md-6">
                                                                 <label
@@ -268,6 +279,7 @@
                                                                     </option>
                                                                 </select>
                                                                 <div class="invalid-feedback" data-error-for="status">
+                                                                    Trạng thái tài khoản không hợp lệ.
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -554,13 +566,13 @@
                         }
                         if (email === "") {
                             errors.email = "Email không được để trống.";
-                        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
                             errors.email = "Email không đúng định dạng.";
                         }
                         if (phone === "") {
                             errors.phone = "Số điện thoại không được để trống.";
-                        } else if (!/^0\d{9}$/.test(phone)) {
-                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
+                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
+                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
                         }
                         if (form.elements.tierId.value === "") {
                             errors.tierId = "Hạng thành viên không hợp lệ.";
