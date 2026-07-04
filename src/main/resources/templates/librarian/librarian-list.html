@@ -40,7 +40,7 @@
                             <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
                         </a>
                     </form>
-                    
+
                     <!-- Back Button -->
                     <div>
                         <a class="btn btn-outline-secondary shadow-sm text-nowrap"
@@ -274,27 +274,55 @@
 
                 <!-- Pagination -->
                 <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
-                    th:if="${staffPage.totalPages > 1}">
-                    <nav>
+                    th:if="${staffPage.totalPages > 1}"
+                    th:with="startPage=${staffPage.totalPages <= 10 ? 0 : (staffPage.number < 9 ? 0 : (staffPage.number - 8 > staffPage.totalPages - 10 ? staffPage.totalPages - 10 : staffPage.number - 8))}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < staffPage.totalPages ? startPage + 9 : staffPage.totalPages - 1}">
                         <ul class="pagination mb-0">
+
+                            <!-- First page -->
+                            <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/librarian/librarians(page=0, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                            </li>
+
+                            <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
-                            <li class="page-item"
-                                th:each="i : ${#numbers.sequence(0, staffPage.totalPages == 0 ? 0 : staffPage.totalPages - 1)}"
+
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Sliding window: at most 10 page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
                                 <a class="page-link" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}"
                                     th:text="${i + 1}"
                                     th:style="${i == staffPage.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
                             </li>
+
+                            <li class="page-item disabled" th:if="${endPage < staffPage.totalPages - 1}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
                                         class="bi bi-chevron-right"></i></a>
+                            </li>
+
+                            <!-- Last page -->
+                            <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
                             </li>
                         </ul>
                     </nav>

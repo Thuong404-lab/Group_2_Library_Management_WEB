@@ -37,28 +37,42 @@
             </tbody>
         </table>
 
-        <nav th:if="${requests != null && requests.totalPages > 1}">
+        <nav th:if="${requests != null && requests.totalPages > 1}"
+             th:with="startPage=${requests.totalPages <= 10 ? 0 : (requests.number < 9 ? 0 : (requests.number - 8 > requests.totalPages - 10 ? requests.totalPages - 10 : requests.number - 8))}, endPage=${startPage + 9 < requests.totalPages ? startPage + 9 : requests.totalPages - 1}">
             <ul class="pagination justify-content-center">
                 <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
                     <a class="page-link"
+                       th:href="@{/librarian/interaction/acquisition-requests(page=0)}">Đầu</a>
+                </li>
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
+                    <a class="page-link"
                        th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number - 1})}">
-                        Trước
+                        &lsaquo;
                     </a>
                 </li>
 
-                <li class="page-item disabled">
-                    <span class="page-link">
-                        Trang <span th:text="${requests.number + 1}">1</span>
-                        /
-                        <span th:text="${requests.totalPages}">1</span>
-                    </span>
+                <li class="page-item disabled" th:if="${startPage > 0}">
+                    <span class="page-link">…</span>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                    th:classappend="${i == requests.number} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/librarian/interaction/acquisition-requests(page=${i})}"
+                       th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item disabled" th:if="${endPage < requests.totalPages - 1}">
+                    <span class="page-link">…</span>
                 </li>
 
                 <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
                     <a class="page-link"
                        th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number + 1})}">
-                        Sau
+                        &rsaquo;
                     </a>
+                </li>
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/librarian/interaction/acquisition-requests(page=${requests.totalPages - 1})}">Cuối</a>
                 </li>
             </ul>
         </nav>

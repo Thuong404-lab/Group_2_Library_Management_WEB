@@ -26,6 +26,11 @@
             border-color: #dc3545 !important;
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
         }
+
+        .validate-field.is-valid {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
+        }
     </style>
 </head>
 
@@ -94,6 +99,7 @@
         const titleInput = document.getElementById('title');
 
         function setTitleError(message) {
+            titleInput.classList.remove('is-valid');
             titleInput.classList.add('is-invalid');
             let feedback = document.getElementById('titleFeedback');
 
@@ -108,7 +114,7 @@
         }
 
         function clearTitleError() {
-            titleInput.classList.remove('is-invalid');
+            titleInput.classList.remove('is-invalid', 'is-valid');
             const feedback = document.getElementById('titleFeedback');
 
             if (feedback) {
@@ -127,6 +133,9 @@
                 event.preventDefault();
                 setTitleError('Tên sách không được để trống');
                 titleInput.focus();
+            } else {
+                titleInput.classList.remove('is-invalid');
+                titleInput.classList.add('is-valid');
             }
         });
     </script>
