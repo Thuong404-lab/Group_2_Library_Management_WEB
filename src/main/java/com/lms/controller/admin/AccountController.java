@@ -7,6 +7,7 @@ import com.lms.entity.MembershipTier;
 import com.lms.entity.Role;
 import com.lms.entity.Staff;
 import com.lms.entity.User;
+import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.StaffAccountRepository;
@@ -15,6 +16,7 @@ import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
 import com.lms.repository.StaffRepository;
 import com.lms.repository.UserRepository;
+import com.lms.service.AuditLogService;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +48,7 @@ public class AccountController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final StaffRepository staffRepository;
+    private final AuditLogService auditLogService;
 
     public AccountController(MemberAccountRepository memberAccountRepository,
             StaffAccountRepository staffAccountRepository,
@@ -54,7 +57,8 @@ public class AccountController {
             MembershipTierRepository membershipTierRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
-            StaffRepository staffRepository) {
+            StaffRepository staffRepository,
+            AuditLogService auditLogService) {
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
@@ -63,6 +67,7 @@ public class AccountController {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.staffRepository = staffRepository;
+        this.auditLogService = auditLogService;
     }
 
     // Search Accounts
@@ -70,7 +75,7 @@ public class AccountController {
     public String listAccounts(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
             Model model) {
-        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("accountId").ascending());
+        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("id").ascending());
         Page<MemberAccount> accounts;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -262,6 +267,9 @@ public class AccountController {
             staffAccountRepository.save(account);
         }
 
+        auditLogService.log(
+                ActionType.CREATE_ACCOUNT,
+                "Tạo tài khoản " + trimmedUsername + " với loại " + roleName + ".");
         redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công.");
         return redirectBySource(source);
     }
@@ -338,6 +346,9 @@ public class AccountController {
             userRepository.save(user);
             staffAccountRepository.save(account);
 
+            auditLogService.log(
+                    ActionType.UPDATE_ACCOUNT,
+                    "Cập nhật tài khoản nhân sự " + trimmedUsername + ".");
             redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
             return redirectBySource(source);
         }
@@ -361,6 +372,9 @@ public class AccountController {
             userRepository.save(user);
             memberAccountRepository.save(account);
 
+            auditLogService.log(
+                    ActionType.UPDATE_ACCOUNT,
+                    "Cập nhật tài khoản thành viên " + trimmedUsername + ".");
             redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
             return redirectBySource(source);
         }
@@ -386,6 +400,9 @@ public class AccountController {
                 account.getStaff().getUser().setStatus(UserStatus.Inactive);
             }
             staffAccountRepository.save(account);
+            auditLogService.log(
+                    ActionType.DEACTIVATE_ACCOUNT,
+                    "Vô hiệu hóa tài khoản nhân sự " + account.getUsername() + ".");
             redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
             return redirectBySource(source);
         }
@@ -400,6 +417,9 @@ public class AccountController {
             account.getMember().getUser().setStatus(UserStatus.Inactive);
         }
         memberAccountRepository.save(account);
+        auditLogService.log(
+                ActionType.DEACTIVATE_ACCOUNT,
+                "Vô hiệu hóa tài khoản thành viên " + account.getUsername() + ".");
         redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
         return redirectBySource(source);
     }

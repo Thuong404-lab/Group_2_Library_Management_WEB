@@ -10,6 +10,12 @@
             background-image: none !important;
             padding-right: 0.75rem !important;
         }
+
+        .staff-update-form .form-control.is-valid,
+        .staff-update-form .form-select.is-valid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
     </style>
 </head>
 
@@ -181,12 +187,13 @@
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Họ
                                                                         tên <span class="text-danger">*</span></label>
-                                                                    <input class="form-control"
-                                                                        name="fullName" data-label="Họ tên"
+                                                                    <input class="form-control" name="fullName"
+                                                                        data-label="Họ tên"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (staff.user != null ? staff.user.fullName : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                         required>
-                                                                    <div class="invalid-feedback" data-error-for="fullName"
+                                                                    <div class="invalid-feedback"
+                                                                        data-error-for="fullName"
                                                                         data-default-message="Họ tên không được để trống."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
                                                                         Họ tên không được để trống.
@@ -197,8 +204,8 @@
                                                                         class="form-label fw-bold small text-muted text-uppercase">
                                                                         Email <span class="text-danger">*</span>
                                                                     </label>
-                                                                    <input class="form-control"
-                                                                        name="email" type="email" data-label="Email"
+                                                                    <input class="form-control" name="email"
+                                                                        type="email" data-label="Email"
                                                                         pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (staff.user != null ? staff.user.email : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
@@ -214,8 +221,8 @@
                                                                         class="form-label fw-bold small text-muted text-uppercase">Số
                                                                         điện thoại <span class="text-danger">*</span>
                                                                     </label>
-                                                                    <input class="form-control"
-                                                                        name="phone" data-label="Số điện thoại" required
+                                                                    <input class="form-control" name="phone"
+                                                                        data-label="Số điện thoại" required
                                                                         pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
                                                                         inputmode="numeric"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (staff.user != null ? staff.user.phone : '')}"
@@ -231,13 +238,14 @@
                                                                         class="form-label fw-bold small text-muted text-uppercase">
                                                                         Username <span class="text-danger">*</span>
                                                                     </label>
-                                                                    <input class="form-control"
-                                                                        name="username" data-label="Username"
+                                                                    <input class="form-control" name="username"
+                                                                        data-label="Username"
                                                                         pattern="[a-zA-Z0-9_]{3,20}"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                         required>
-                                                                    <div class="invalid-feedback" data-error-for="username"
+                                                                    <div class="invalid-feedback"
+                                                                        data-error-for="username"
                                                                         data-default-message="Username không được để trống."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
                                                                         Username không được để trống.
@@ -247,8 +255,7 @@
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Loại
                                                                         nhân viên</label>
-                                                                    <select
-                                                                        class="form-select form-control"
+                                                                    <select class="form-select form-control"
                                                                         name="staffType" data-label="Loại nhân viên"
                                                                         required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
@@ -259,7 +266,8 @@
                                                                             th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Librarian' : staff.staffType == 'Librarian'}">
                                                                             Librarian</option>
                                                                     </select>
-                                                                    <div class="invalid-feedback" data-error-for="staffType"
+                                                                    <div class="invalid-feedback"
+                                                                        data-error-for="staffType"
                                                                         data-default-message="Vui lòng chọn loại nhân viên."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
                                                                         Vui lòng chọn loại nhân viên.
@@ -269,8 +277,7 @@
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Trạng
                                                                         thái <span class="text-danger">*</span></label>
-                                                                    <select
-                                                                        class="form-select form-control"
+                                                                    <select class="form-select form-control"
                                                                         name="status" data-label="Trạng thái" required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                         <option value="Active"
@@ -283,7 +290,8 @@
                                                                             th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}">
                                                                             Blocked</option>
                                                                     </select>
-                                                                    <div class="invalid-feedback" data-error-for="status"
+                                                                    <div class="invalid-feedback"
+                                                                        data-error-for="status"
                                                                         data-default-message="Vui lòng chọn trạng thái."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
                                                                         Vui lòng chọn trạng thái.
@@ -421,9 +429,18 @@
 
                 <!-- Pagination -->
                 <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
-                    th:if="${staffPage.totalPages > 1}">
-                    <nav>
+                    th:if="${staffPage.totalPages > 1}"
+                    th:with="startPage=${staffPage.totalPages <= 10 ? 0 : (staffPage.number < 9 ? 0 : (staffPage.number - 8 > staffPage.totalPages - 10 ? staffPage.totalPages - 10 : staffPage.number - 8))}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < staffPage.totalPages ? startPage + 9 : staffPage.totalPages - 1}">
                         <ul class="pagination mb-0">
+                            <!-- First page -->
+                            <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/admin/staff(page=0, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                            </li>
+
+                            <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/admin/staff(page=${staffPage.number - 1}, keyword=${keyword})}"
@@ -432,7 +449,12 @@
                                 </a>
                             </li>
 
-                            <li class="page-item" th:each="i : ${#numbers.sequence(0, staffPage.totalPages - 1)}"
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Sliding window: at most 10 page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
                                 <a class="page-link" th:href="@{/admin/staff(page=${i}, keyword=${keyword})}"
                                     th:text="${i + 1}"
@@ -441,12 +463,24 @@
                                 </a>
                             </li>
 
+                            <li class="page-item disabled" th:if="${endPage < staffPage.totalPages - 1}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/admin/staff(page=${staffPage.number + 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
+                            </li>
+
+                            <!-- Last page -->
+                            <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
                             </li>
                         </ul>
                     </nav>
@@ -475,8 +509,8 @@
                     });
 
                     function clearErrors() {
-                        form.querySelectorAll(".is-invalid").forEach(function (field) {
-                            field.classList.remove("is-invalid");
+                        form.querySelectorAll(".is-invalid, .is-valid").forEach(function (field) {
+                            field.classList.remove("is-invalid", "is-valid");
                         });
                         form.querySelectorAll("[data-error-for]").forEach(function (feedback) {
                             feedback.textContent = "";
@@ -486,7 +520,7 @@
                     }
 
                     function clearFieldError(field) {
-                        field.classList.remove("is-invalid");
+                        field.classList.remove("is-invalid", "is-valid");
                         const feedback = form.querySelector(
                             "[data-error-for='" + field.name + "']");
                         if (feedback != null) {
@@ -495,6 +529,15 @@
                     }
 
                     function showErrors(errors) {
+                        form.querySelectorAll("input:not([type='hidden']), select, textarea")
+                            .forEach(function (field) {
+                                field.classList.remove("is-invalid", "is-valid");
+                                field.classList.add(
+                                    Object.prototype.hasOwnProperty.call(errors, field.name)
+                                        ? "is-invalid"
+                                        : "is-valid");
+                            });
+
                         Object.entries(errors).forEach(function (entry) {
                             const fieldName = entry[0];
                             const message = entry[1];
@@ -516,7 +559,7 @@
                         });
 
                         if (lastFocusedField != null
-                                && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
+                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
                             lastFocusedField.focus();
                         }
                     }
@@ -569,7 +612,11 @@
                                 }
                             });
 
-                            const response = await fetch(form.dataset.validationUrl + "?" + params.toString(), {
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
                                 headers: { "Accept": "application/json" }
                             });
                             if (!response.ok) {

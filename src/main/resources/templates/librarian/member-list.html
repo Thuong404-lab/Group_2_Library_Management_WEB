@@ -5,7 +5,14 @@
 <head>
     <title>Danh sách Thành viên</title>
     <style>
-        .member-update-form .form-control.is-invalid {
+        .member-update-form .form-control.is-invalid,
+        .member-update-form .form-select.is-invalid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
+        .member-update-form .form-control.is-valid,
+        .member-update-form .form-select.is-valid {
             background-image: none !important;
             padding-right: 0.75rem !important;
         }
@@ -182,8 +189,8 @@
                                                                 <input class="form-control" name="fullName"
                                                                     th:value="${account.user != null ? account.user.fullName : ''}"
                                                                     required>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="fullName"></div>
+                                                                <div class="invalid-feedback" data-error-for="fullName"></div>
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
@@ -194,8 +201,8 @@
                                                                 <input class="form-control" name="username"
                                                                     th:value="${account.username}" required
                                                                     pattern="[a-zA-Z0-9_]{3,20}">
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="username"></div>
+                                                                <div class="invalid-feedback" data-error-for="username">
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
@@ -207,8 +214,8 @@
                                                                     th:value="${account.user != null ? account.user.phone : ''}"
                                                                     required pattern="0[0-9]{9}" minlength="10"
                                                                     title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0">
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="phone"></div>
+                                                                <div class="invalid-feedback" data-error-for="phone">
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
@@ -217,8 +224,8 @@
                                                                 <input class="form-control" name="email" type="email"
                                                                     th:value="${account.user != null ? account.user.email : ''}"
                                                                     required>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="email"></div>
+                                                                <div class="invalid-feedback" data-error-for="email">
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
@@ -235,8 +242,8 @@
                                                                         Standard Member
                                                                     </option>
                                                                 </select>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="tierId"></div>
+                                                                <div class="invalid-feedback" data-error-for="tierId">
+                                                                </div>
                                                             </div>
 
 
@@ -260,8 +267,8 @@
                                                                         Blocked
                                                                     </option>
                                                                 </select>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="status"></div>
+                                                                <div class="invalid-feedback" data-error-for="status">
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -400,26 +407,54 @@
 
                 <!-- Pagination -->
                 <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
-                    th:if="${accounts.totalPages > 1}">
-                    <nav>
+                    th:if="${accounts.totalPages > 1}"
+                    th:with="startPage=${accounts.totalPages <= 10 ? 0 : (accounts.number < 9 ? 0 : (accounts.number - 8 > accounts.totalPages - 10 ? accounts.totalPages - 10 : accounts.number - 8))}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
                         <ul class="pagination mb-0">
+                            <!-- First page -->
+                            <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/librarian/members(page=0, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                            </li>
+
+                            <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
-                            <li class="page-item" th:each="i : ${#numbers.sequence(0, accounts.totalPages - 1)}"
+
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Sliding window: at most 10 page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == accounts.number ? 'active' : ''}">
                                 <a class="page-link" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}"
                                     th:text="${i + 1}"
                                     th:style="${i == accounts.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
                             </li>
+
+                            <li class="page-item disabled" th:if="${endPage < accounts.totalPages - 1}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
                                         class="bi bi-chevron-right"></i></a>
+                            </li>
+
+                            <!-- Last page -->
+                            <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/librarian/members(page=${accounts.totalPages - 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
                             </li>
                         </ul>
                     </nav>
@@ -447,8 +482,8 @@
                     });
 
                     function clearErrors() {
-                        form.querySelectorAll(".is-invalid").forEach(function (field) {
-                            field.classList.remove("is-invalid");
+                        form.querySelectorAll(".is-invalid, .is-valid").forEach(function (field) {
+                            field.classList.remove("is-invalid", "is-valid");
                         });
                         form.querySelectorAll("[data-error-for]").forEach(function (feedback) {
                             feedback.textContent = "";
@@ -458,7 +493,7 @@
                     }
 
                     function clearFieldError(field) {
-                        field.classList.remove("is-invalid");
+                        field.classList.remove("is-invalid", "is-valid");
                         const feedback = form.querySelector(
                             "[data-error-for='" + field.name + "']");
                         if (feedback != null) {
@@ -467,6 +502,15 @@
                     }
 
                     function showErrors(errors) {
+                        form.querySelectorAll("input:not([type='hidden']), select, textarea")
+                            .forEach(function (field) {
+                                field.classList.remove("is-invalid", "is-valid");
+                                field.classList.add(
+                                    Object.prototype.hasOwnProperty.call(errors, field.name)
+                                        ? "is-invalid"
+                                        : "is-valid");
+                            });
+
                         Object.entries(errors).forEach(function (entry) {
                             const fieldName = entry[0];
                             const message = entry[1];
@@ -488,7 +532,7 @@
                         });
 
                         if (lastFocusedField != null
-                                && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
+                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
                             lastFocusedField.focus();
                         }
                     }
@@ -545,7 +589,11 @@
                                     params.append(key, value);
                                 }
                             });
-                            const response = await fetch(form.dataset.validationUrl + "?" + params.toString(), {
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
                                 headers: { "Accept": "application/json" }
                             });
                             if (!response.ok) {

@@ -55,7 +55,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     @Override
     @Transactional(readOnly = true)
     public MemberListViewData getMemberList(int page, String keyword) {
-        PageRequest pageable = PageRequest.of(page, 10, Sort.by("accountId").ascending());
+        PageRequest pageable = PageRequest.of(page, 10, Sort.by("id").ascending());
         String normalizedKeyword = trim(keyword);
         Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
                 ? memberAccountRepository.findAll(pageable)

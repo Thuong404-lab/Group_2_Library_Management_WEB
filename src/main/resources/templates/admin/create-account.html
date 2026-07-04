@@ -90,8 +90,8 @@
                                         Số điện thoại <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="phone" required
-                                        pattern="^(?!0{10}$)0[0-9]{9}$"
-                                        minlength="10" inputmode="numeric" placeholder="0912345678"
+                                        pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
+                                        placeholder="0912345678"
                                         th:value="${formValues != null ? formValues['phone'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
@@ -103,8 +103,8 @@
                                     <label class="form-label fw-bold small text-muted text-uppercase">Username <span
                                             class="text-danger">*</span></label>
                                     <input class="form-control validate-field" name="username" required
-                                        pattern="[a-zA-Z0-9_]{3,20}"
-                                        placeholder="Nhập tên đăng nhập" autocomplete="new-password"
+                                        pattern="[a-zA-Z0-9_]{3,20}" placeholder="Nhập tên đăng nhập"
+                                        autocomplete="new-password"
                                         th:value="${formValues != null ? formValues['username'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
@@ -117,8 +117,7 @@
                                         Mật khẩu <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="password" type="password" required
-                                        minlength="6"
-                                        placeholder="Nhập mật khẩu" autocomplete="new-password"
+                                        minlength="6" placeholder="Nhập mật khẩu" autocomplete="new-password"
                                         th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['password'] : ''}">
@@ -191,21 +190,13 @@
                                     </label>
                                     <select class="form-select form-control validate-field" name="status" required
                                         th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
-                                        <option value="" disabled
-                                            th:selected="${formValues == null or #strings.isEmpty(formValues['status'])}">
-                                            -- Chọn trạng thái tài khoản --
-                                        </option>
                                         <option value="Active"
-                                            th:selected="${formValues != null and formValues['status'] == 'Active'}">
+                                            th:selected="${formValues == null or #strings.isEmpty(formValues['status']) or formValues['status'] == 'Active'}">
                                             Active
                                         </option>
                                         <option value="Inactive"
                                             th:selected="${formValues != null and formValues['status'] == 'Inactive'}">
                                             Inactive
-                                        </option>
-                                        <option value="Blocked"
-                                            th:selected="${formValues != null and formValues['status'] == 'Blocked'}">
-                                            Blocked
                                         </option>
                                     </select>
                                     <div class="invalid-feedback"
@@ -277,7 +268,7 @@
                     }
 
                     if (field.name === "email"
-                            && (field.validity.typeMismatch || field.validity.patternMismatch)) {
+                        && (field.validity.typeMismatch || field.validity.patternMismatch)) {
                         return "Email không đúng định dạng.";
                     }
 

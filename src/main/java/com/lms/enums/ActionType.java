@@ -6,5 +6,9 @@ public enum ActionType {
     CREATE_BOOK,
     UPDATE_BOOK,
     DELETE_BOOK,
+    CREATE_ACCOUNT,
+    UPDATE_ACCOUNT,
+    DEACTIVATE_ACCOUNT,
+    UPDATE_SETTINGS,
     GOOGLE
 }
