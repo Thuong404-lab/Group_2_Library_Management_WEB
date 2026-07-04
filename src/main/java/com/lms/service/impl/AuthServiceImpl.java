@@ -115,15 +115,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logLoginAction(Integer userId, String ipAddress, String userAgent, String sessionId) {
-        String description = "Đăng nhập thành công. Session ID: " + sessionId;
-        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, description);
+    public void logLoginAction(Integer userId, String ipAddress, String userAgent) {
+        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, "Đăng nhập thành công.");
     }
 
     @Override
-    public void logLogoutAction(Integer userId, String ipAddress, String userAgent, String sessionId) {
-        String description = "Đăng xuất thành công. Session ID: " + sessionId;
-        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
+    public void logLogoutAction(Integer userId, String ipAddress, String userAgent) {
+        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, "Đăng xuất thành công.");
     }
 
     @Override

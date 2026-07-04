@@ -132,22 +132,23 @@
 
                 <div class="col-md-6 setting-field">
                     <label class="form-label fw-bold small text-muted text-uppercase">
-                        Số lần gia hạn tối đa
+                        Số ngày gia hạn tối đa
                     </label>
-                    <input name="maxRenewals"
+                    <input name="maxRenewalDays"
                            type="number"
                            class="form-control"
-                           min="0"
+                           min="1"
                            required
-                           th:value="${settingMap['Max_Renewals'] != null ? settingMap['Max_Renewals'] : 2}">
+                           th:value="${settingMap['Max_Renewal_Days'] != null ? settingMap['Max_Renewal_Days'] : 7}">
                 </div>
 
                 <div class="col-12 mt-2">
                     <div class="subsection-label">
-                        Giới hạn số sách theo từng hạng thành viên
+                        <i class="bi bi-gem me-1"></i>
+                        Cấu hình hạng thành viên
                     </div>
                     <div class="form-text">
-                        Mỗi hạng có số lượng sách được phép mượn cùng lúc khác nhau.
+                        Thiết lập số sách được mượn và tổng chi tiêu tối thiểu để đạt từng hạng.
                     </div>
                 </div>
 
@@ -158,13 +159,21 @@
                                th:text="${tier.tierName}">
                             Regular
                         </label>
+                        <div class="form-text mb-1">Số sách tối đa</div>
                         <input name="tierBorrowLimits"
                                type="number"
                                class="form-control"
                                min="1"
                                required
                                th:value="${tier.borrowLimit != null ? tier.borrowLimit : 1}">
-                        <div class="form-text">Số sách được mượn cùng lúc</div>
+                        <div class="form-text mt-3 mb-1">Mức chi tiêu tối thiểu</div>
+                        <input name="tierSpendingConditions"
+                               type="text"
+                               inputmode="numeric"
+                               class="form-control money-input"
+                               required
+                               th:value="${tier.condition != null ? tier.condition : 0}">
+                        <div class="form-text">VNĐ tổng chi tiêu</div>
                     </div>
                 </div>
 
@@ -231,13 +240,17 @@
                     <label class="form-label fw-bold small text-muted text-uppercase">
                         Ngưỡng hư hỏng để bồi thường
                     </label>
-                    <input name="damageCompensationThreshold"
-                           type="number"
-                           class="form-control"
-                           min="0"
-                           max="100"
-                           required
-                           th:value="${settingMap['Damage_Compensation_Threshold'] != null ? settingMap['Damage_Compensation_Threshold'] : 50}">
+                    <div class="input-group">
+                        <input name="damageCompensationThreshold"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               max="100"
+                               step="1"
+                               required
+                               th:value="${settingMap['Damage_Compensation_Threshold'] != null ? settingMap['Damage_Compensation_Threshold'] : 50}">
+                        <span class="input-group-text">%</span>
+                    </div>
                     <div class="form-text">Nếu mức độ hư hỏng lớn hơn giá trị này thì tính phí bồi thường</div>
                 </div>
 
@@ -264,60 +277,18 @@
                     <label class="form-label fw-bold small text-muted text-uppercase">
                         Ngưỡng tình trạng sách được thanh lý
                     </label>
-                    <input name="bookDisposalConditionThreshold"
-                           type="number"
-                           class="form-control"
-                           min="0"
-                           max="100"
-                           required
-                           th:value="${settingMap['Book_Disposal_Condition_Threshold'] != null ? settingMap['Book_Disposal_Condition_Threshold'] : 40}">
+                    <div class="input-group">
+                        <input name="bookDisposalConditionThreshold"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               max="100"
+                               step="1"
+                               required
+                               th:value="${settingMap['Book_Disposal_Condition_Threshold'] != null ? settingMap['Book_Disposal_Condition_Threshold'] : 40}">
+                        <span class="input-group-text">%</span>
+                    </div>
                     <div class="form-text">Dưới giá trị này thì thủ thư được phép thanh lý sách</div>
-                </div>
-
-                <div class="col-12 settings-section-title">
-                    <h6 class="fw-bold text-classic mb-0">
-                        <i class="bi bi-gem me-1"></i>
-                        Cấu hình hạng thành viên
-                    </h6>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted text-uppercase">
-                        Điều kiện nâng hạng Loyal
-                    </label>
-                    <input name="loyalUpgradeSpendingThreshold"
-                           type="text"
-                           inputmode="numeric"
-                           class="form-control money-input"
-                           required
-                           th:value="${settingMap['Loyal_Upgrade_Spending_Threshold'] != null ? settingMap['Loyal_Upgrade_Spending_Threshold'] : 1000000}">
-                    <div class="form-text">Tổng chi tiêu thư viện, không tính số dư chưa dùng</div>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted text-uppercase">
-                        Hạng Standard tạm dùng
-                    </label>
-                    <input name="standardTierId"
-                           type="number"
-                           class="form-control"
-                           min="1"
-                           required
-                           th:value="${settingMap['Standard_Tier_Id'] != null ? settingMap['Standard_Tier_Id'] : 1}">
-                    <div class="form-text">Tạm dùng Regular = tier_id 1</div>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted text-uppercase">
-                        Hạng Loyal tạm dùng
-                    </label>
-                    <input name="loyalTierId"
-                           type="number"
-                           class="form-control"
-                           min="1"
-                           required
-                           th:value="${settingMap['Loyal_Tier_Id'] != null ? settingMap['Loyal_Tier_Id'] : 4}">
-                    <div class="form-text">Tạm dùng Diamond = tier_id 4, giảm 50%</div>
                 </div>
 
                 <div class="col-12">
@@ -338,35 +309,65 @@
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("policySettingsForm");
             const moneyInputs = document.querySelectorAll(".money-input");
-            const formatter = new Intl.NumberFormat("vi-VN");
-
             function initialDigits(value) {
                 const trimmed = value.trim();
-                if (/^\d+(?:\.0+)?$/.test(trimmed)) {
-                    return String(Math.trunc(Number(trimmed)));
+                if (/^\d+(?:\.0{1,2})?$/.test(trimmed)) {
+                    return trimmed.replace(/\.0{1,2}$/, "");
                 }
                 return trimmed.replace(/\D/g, "");
             }
 
-            function formatMoneyInput(input, initialLoad) {
-                let digits = initialLoad
-                    ? initialDigits(input.value)
-                    : input.value.replace(/\D/g, "");
+            function groupDigits(digits) {
+                return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
 
+            function normalizeDigits(value, initialLoad) {
+                let digits = initialLoad ? initialDigits(value) : value.replace(/\D/g, "");
                 digits = digits.replace(/^0+(?=\d)/, "");
-                input.value = digits === "" ? "" : formatter.format(Number(digits));
+                return digits;
+            }
+
+            function showFormattedMoney(input, initialLoad) {
+                const digits = normalizeDigits(input.value, initialLoad);
+                input.value = digits === "" ? "" : groupDigits(digits);
+            }
+
+            function showRawMoney(input) {
+                const oldCaret = input.selectionStart == null ? input.value.length : input.selectionStart;
+                const digitsBeforeCaret = input.value.slice(0, oldCaret).replace(/\D/g, "").length;
+                input.value = normalizeDigits(input.value, true);
+                const newCaret = Math.min(digitsBeforeCaret, input.value.length);
+                input.setSelectionRange(newCaret, newCaret);
+            }
+
+            function keepDigitsOnly(input) {
+                const oldCaret = input.selectionStart == null ? input.value.length : input.selectionStart;
+                const digitsBeforeCaret = input.value.slice(0, oldCaret).replace(/\D/g, "").length;
+                const digits = normalizeDigits(input.value, false);
+
+                if (input.value !== digits) {
+                    input.value = digits;
+                    const newCaret = Math.min(digitsBeforeCaret, digits.length);
+                    input.setSelectionRange(newCaret, newCaret);
+                }
             }
 
             moneyInputs.forEach(function (input) {
-                formatMoneyInput(input, true);
+                showFormattedMoney(input, true);
+                input.addEventListener("focus", function () {
+                    showRawMoney(input);
+                });
                 input.addEventListener("input", function () {
-                    formatMoneyInput(input, false);
+                    keepDigitsOnly(input);
+                });
+                input.addEventListener("blur", function () {
+                    showFormattedMoney(input, false);
                 });
             });
 
             form.addEventListener("submit", function () {
                 moneyInputs.forEach(function (input) {
-                    input.value = input.value.replace(/\D/g, "");
+                    input.value = normalizeDigits(input.value, false);
                 });
             });
         });

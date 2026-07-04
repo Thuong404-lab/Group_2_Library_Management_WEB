@@ -6,6 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,43 +36,42 @@ public class SettingsController {
 
     @PostMapping("/policies")
     public String updateBorrowingPolicies(@RequestParam Integer maxBorrowDays,
-            @RequestParam Integer maxRenewals,
+            @RequestParam Integer maxRenewalDays,
             @RequestParam List<Integer> tierIds,
             @RequestParam List<Integer> tierBorrowLimits,
-            @RequestParam Double borrowFeePerBook,
-            @RequestParam Double finePerDay,
-            @RequestParam Double damageCompensationAmount,
+            @RequestParam List<BigDecimal> tierSpendingConditions,
+            @RequestParam BigDecimal borrowFeePerBook,
+            @RequestParam BigDecimal finePerDay,
+            @RequestParam BigDecimal damageCompensationAmount,
             @RequestParam Integer damageCompensationThreshold,
             @RequestParam Integer overdueViolationLockLimit,
             @RequestParam Integer bookDisposalConditionThreshold,
-            @RequestParam Double loyalUpgradeSpendingThreshold,
-            @RequestParam Integer standardTierId,
-            @RequestParam Integer loyalTierId,
-            @RequestParam Double depositAmount,
+            @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
-            if (tierIds.size() != tierBorrowLimits.size()) {
-                throw new IllegalArgumentException("Dữ liệu giới hạn mượn theo hạng không hợp lệ.");
+            if (tierIds.size() != tierBorrowLimits.size()
+                    || tierIds.size() != tierSpendingConditions.size()) {
+                throw new IllegalArgumentException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
             }
 
             Map<Integer, Integer> borrowLimitsByTier = new LinkedHashMap<>();
+            Map<Integer, BigDecimal> spendingConditionsByTier = new LinkedHashMap<>();
             for (int i = 0; i < tierIds.size(); i++) {
                 borrowLimitsByTier.put(tierIds.get(i), tierBorrowLimits.get(i));
+                spendingConditionsByTier.put(tierIds.get(i), tierSpendingConditions.get(i));
             }
 
             systemService.updateBorrowingPolicies(
                     maxBorrowDays,
-                    maxRenewals,
+                    maxRenewalDays,
                     borrowLimitsByTier,
+                    spendingConditionsByTier,
                     borrowFeePerBook,
                     finePerDay,
                     damageCompensationAmount,
                     damageCompensationThreshold,
                     overdueViolationLockLimit,
                     bookDisposalConditionThreshold,
-                    loyalUpgradeSpendingThreshold,
-                    standardTierId,
-                    loyalTierId,
                     depositAmount);
 
             redirectAttributes.addFlashAttribute("success", "Cập nhật cấu hình thành công.");

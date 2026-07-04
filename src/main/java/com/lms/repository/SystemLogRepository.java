@@ -31,6 +31,18 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
                     OR LOWER(log.ipAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR EXISTS (
+                        SELECT memberAccount.id
+                        FROM MemberAccount memberAccount
+                        WHERE memberAccount.member.user = user
+                          AND LOWER(memberAccount.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    )
+                    OR EXISTS (
+                        SELECT staffAccount.id
+                        FROM StaffAccount staffAccount
+                        WHERE staffAccount.staff.user = user
+                          AND LOWER(staffAccount.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    )
                   )
             ORDER BY log.createdAt DESC
             """)
