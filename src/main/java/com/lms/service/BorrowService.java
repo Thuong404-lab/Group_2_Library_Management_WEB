@@ -1,6 +1,7 @@
 package com.lms.service;
 
 import com.lms.dto.request.BorrowRequest;
+import com.lms.dto.response.MemberBorrowDTO;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import java.util.List;
@@ -16,7 +17,6 @@ public interface BorrowService {
     List<Borrow> getAllReturnRequests();
     List<Borrow> getAllActiveLoans();
 
-    // ĐÃ FIX: Thêm tham số staffUsername vào đây để đồng bộ với Controller
     void approvePendingRequest(Integer borrowId, String staffUsername) throws Exception;
     void approveReturnRequest(Integer borrowId) throws Exception;
     void updateStatus(Integer loanId, String status) throws Exception;
@@ -25,4 +25,9 @@ public interface BorrowService {
 
     Borrow getBorrowById(Integer borrowId) throws Exception;
     List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId);
+
+    // BỔ SUNG ĐẦY ĐỦ CHO MEMBER VIEW MANAGEMENT:
+    List<MemberBorrowDTO> getMemberCurrentBorrows(String username);
+    List<MemberBorrowDTO> getMemberReservations(String username);
+    List<MemberBorrowDTO> getMemberOneMonthHistory(String username);
 }
