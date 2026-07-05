@@ -26,6 +26,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
+    @Query("select t.transactionType, count(t), coalesce(sum(t.amount), 0) " +
+            "from Transaction t " +
+            "where lower(t.status) = lower(:status) " +
+            "and t.transactionDate >= :fromDate " +
+            "and t.transactionDate < :toDate " +
+            "group by t.transactionType " +
+            "order by coalesce(sum(t.amount), 0) desc")
+    List<Object[]> summarizeByTypeAndStatusAndDateRange(@Param("status") String status,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
+
     List<Transaction> findTop5ByOrderByTransactionDateDesc();
 
     Page<Transaction> findByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(

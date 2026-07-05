@@ -1,6 +1,7 @@
 package com.lms.repository;
 
 import com.lms.entity.BorrowDetail;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,46 @@ import java.util.List;
 @Repository
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
     long countByStatusIgnoreCase(String status);
+
+    @Query("select count(bd) " +
+            "from BorrowDetail bd " +
+            "where bd.borrow.borrowDate >= :startDate and bd.borrow.borrowDate < :endDate")
+    long countBorrowedItemsByBorrowDateRange(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("select count(bd) " +
+            "from BorrowDetail bd " +
+            "where bd.returnDate is not null " +
+            "and bd.returnDate >= :startDate and bd.returnDate < :endDate " +
+            "and bd.returnDate <= bd.dueDate")
+    long countOnTimeReturnsByDateRange(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("select count(bd) " +
+            "from BorrowDetail bd " +
+            "where bd.returnDate is not null " +
+            "and bd.returnDate >= :startDate and bd.returnDate < :endDate " +
+            "and bd.returnDate > bd.dueDate")
+    long countLateReturnsByDateRange(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("select bd.book.title, coalesce(bd.book.isbn, ''), count(bd) " +
+            "from BorrowDetail bd " +
+            "where bd.borrow.borrowDate >= :startDate and bd.borrow.borrowDate < :endDate " +
+            "group by bd.book.bookId, bd.book.title, bd.book.isbn " +
+            "order by count(bd) desc")
+    List<Object[]> findTopBorrowedBooks(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
+
+    @Query("select bd.borrow.member.user.fullName, bd.borrow.member.user.email, count(bd) " +
+            "from BorrowDetail bd " +
+            "where bd.borrow.borrowDate >= :startDate and bd.borrow.borrowDate < :endDate " +
+            "group by bd.borrow.member.memberId, bd.borrow.member.user.fullName, bd.borrow.member.user.email " +
+            "order by count(bd) desc")
+    List<Object[]> findTopBorrowingMembers(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
 
     List<BorrowDetail> findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
             String status, LocalDateTime startDate, LocalDateTime endDate);

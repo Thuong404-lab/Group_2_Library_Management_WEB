@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<head>
+    <title>Bao cao & thong ke</title>
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='reports'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-3" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bao cao & thong ke</h2>
+            <div class="text-muted">UC-23.1 Admin console report va UC-23.2 Export Report</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-classic"
+               th:href="@{/admin/reports/export(format='csv', fromDate=${fromDate}, toDate=${toDate})}">
+                <i class="bi bi-filetype-csv me-1"></i>CSV
+            </a>
+            <a class="btn btn-classic"
+               th:href="@{/admin/reports/export(format='pdf', fromDate=${fromDate}, toDate=${toDate})}">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="card-classic shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form class="d-flex align-items-end gap-3 flex-wrap" method="get" th:action="@{/admin/reports}">
+                <div>
+                    <label class="form-label small text-muted text-uppercase fw-bold">Tu ngay</label>
+                    <input type="date" class="form-control form-control-sm" name="fromDate" th:value="${fromDate}">
+                </div>
+                <div>
+                    <label class="form-label small text-muted text-uppercase fw-bold">Den ngay</label>
+                    <input type="date" class="form-control form-control-sm" name="toDate" th:value="${toDate}">
+                </div>
+                <button class="btn btn-classic btn-sm px-3" type="submit">
+                    <i class="bi bi-funnel me-1"></i>Xem bao cao
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Phieu muon</div>
+                <h3 class="fw-bold mb-1 text-classic" th:text="${report.totalBorrows}">0</h3>
+                <div class="small text-muted">So phieu trong ky bao cao</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Sach da muon</div>
+                <h3 class="fw-bold mb-1 text-success" th:text="${report.totalBorrowedItems}">0</h3>
+                <div class="small text-muted">Tong ban sao da duoc muon</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Dang qua han</div>
+                <h3 class="fw-bold mb-1 text-danger" th:text="${report.overdueItems}">0</h3>
+                <div class="small text-muted">Ban ghi co trang thai Overdue</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Doanh thu</div>
+                <h3 class="fw-bold mb-1" style="color:#8b5a2b;" th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' d'}">0 d</h3>
+                <div class="small text-muted">Giao dich Completed</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Tra dung han</div>
+                <h4 class="fw-bold mb-0 text-success" th:text="${report.onTimeReturns}">0</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Tra tre han</div>
+                <h4 class="fw-bold mb-0 text-danger" th:text="${report.lateReturns}">0</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Thanh vien</div>
+                <h4 class="fw-bold mb-0 text-classic" th:text="${report.totalMembers}">0</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-4 h-100">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Sach / ban sao san co</div>
+                <h4 class="fw-bold mb-0 text-classic">
+                    <span th:text="${report.activeBooks}">0</span>
+                    <span class="text-muted">/</span>
+                    <span th:text="${report.availableItems}">0</span>
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-cash-coin me-2 text-classic"></i>Doanh thu theo loai giao dich
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Loai</th>
+                                <th class="text-end">So GD</th>
+                                <th class="text-end">So tien</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item : ${report.transactionBreakdown}">
+                                <td class="fw-semibold" th:text="${item.label}">TOP_UP</td>
+                                <td class="text-end" th:text="${item.count}">0</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT') + ' d'}">0 d</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}">
+                                <td colspan="3" class="text-center text-muted py-4">Chua co du lieu</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-calendar3 me-2 text-classic"></i>Luot muon theo thang
+                    </h5>
+                    <div th:each="item : ${report.monthlyBorrowStats}" class="d-flex align-items-center gap-3 mb-3">
+                        <div class="fw-semibold" style="width: 72px;" th:text="${item.label}">07/2026</div>
+                        <div class="progress flex-grow-1" style="height: 10px;">
+                            <div class="progress-bar"
+                                 th:style="'width:' + (${item.count} > 0 ? (${item.count} * 100 / (report.totalBorrows > 0 ? report.totalBorrows : 1)) : 2) + '%; background:#8b5a2b;'"></div>
+                        </div>
+                        <div class="text-end" style="width: 48px;" th:text="${item.count}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-trophy-fill me-2 text-classic"></i>Top sach duoc muon
+                    </h5>
+                    <div th:each="item, stat : ${report.topBooks}" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="fw-bold text-classic" style="min-width: 24px;" th:text="${stat.index + 1}">1</span>
+                            <span class="fw-semibold" th:text="${item.label}">Book</span>
+                        </div>
+                        <span class="badge px-3 py-2" style="background:#8b5a2b;" th:text="${item.count + ' luot'}">0 luot</span>
+                    </div>
+                    <div class="text-center text-muted py-4" th:if="${#lists.isEmpty(report.topBooks)}">Chua co du lieu</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card-classic shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-people-fill me-2 text-classic"></i>Top thanh vien muon sach
+                    </h5>
+                    <div th:each="item, stat : ${report.topMembers}" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="fw-bold text-classic" style="min-width: 24px;" th:text="${stat.index + 1}">1</span>
+                            <span class="fw-semibold" th:text="${item.label}">Member</span>
+                        </div>
+                        <span class="badge bg-info text-dark px-3 py-2" th:text="${item.count + ' cuon'}">0 cuon</span>
+                    </div>
+                    <div class="text-center text-muted py-4" th:if="${#lists.isEmpty(report.topMembers)}">Chua co du lieu</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
