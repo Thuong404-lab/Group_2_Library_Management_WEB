@@ -1,9 +1,9 @@
 package com.lms.controller.admin;
 
 import com.lms.config.CustomUserDetails;
-import com.lms.entity.Account;
+import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
-import com.lms.repository.AccountRepository;
+import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -47,7 +47,7 @@ public class DashboardController {
     private final BookRepository bookRepository;
     private final BookItemRepository bookItemRepository;
     private final StaffRepository staffRepository;
-    private final AccountRepository accountRepository;
+    private final StaffAccountRepository staffAccountRepository;
 
     public DashboardController(BorrowRepository borrowRepository,
             BorrowDetailRepository borrowDetailRepository,
@@ -56,7 +56,7 @@ public class DashboardController {
             BookRepository bookRepository,
             BookItemRepository bookItemRepository,
             StaffRepository staffRepository,
-            AccountRepository accountRepository) {
+            StaffAccountRepository staffAccountRepository) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.reservationRepository = reservationRepository;
@@ -64,7 +64,7 @@ public class DashboardController {
         this.bookRepository = bookRepository;
         this.bookItemRepository = bookItemRepository;
         this.staffRepository = staffRepository;
-        this.accountRepository = accountRepository;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @GetMapping("/dashboard")
@@ -86,8 +86,8 @@ public class DashboardController {
         model.addAttribute("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
         model.addAttribute("monthStats", getLastSixMonthStats());
         model.addAttribute("currentDate", LocalDate.now());
-        if (userDetails != null && userDetails.getAccount() != null) {
-            model.addAttribute("currentUser", userDetails.getAccount().getUser());
+        if (userDetails != null && userDetails.getUser() != null) {
+            model.addAttribute("currentUser", userDetails.getUser());
         }
         return "admin/dashboard";
     }
@@ -143,11 +143,11 @@ public class DashboardController {
         } else {
             staffPage = staffRepository.findAll(pageRequest);
         }
-        Map<Integer, Account> accountByUserId = new HashMap<>();
+        Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
 
         for (Staff staff : staffPage.getContent()) {
             if (staff.getUser() != null && staff.getUser().getId() != null) {
-                accountRepository.findByUserId(staff.getUser().getId())
+                staffAccountRepository.findByStaff_User_Id(staff.getUser().getId())
                         .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
             }
         }

@@ -4,254 +4,273 @@
       layout:decorate="~{layout/base}">
 
 <head>
-    <title>Chi tiết sách - Đắc Nhân Tâm</title>
+    <title th:text="${book.title} + ' - Thư Viện Số'">Chi tiết sách</title>
     <style>
         .star-btn { transition: color 0.1s; }
         .review-card { border-left: 3px solid #8b5a2b; }
         .write-review-box { border-left: 4px solid #8b5a2b; }
+
+        /* Đồng bộ màu sắc nút bấm phong cách cổ điển */
+        .btn-classic-borrow {
+            background-color: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+            color: #ffffff !important;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-borrow:hover {
+            background-color: #74481f !important;
+            border-color: #74481f !important;
+        }
     </style>
 </head>
 
 <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
-        
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none">Danh mục sách</a></li>
-                <li class="breadcrumb-item active">Đắc Nhân Tâm</li>
-            </ol>
-        </nav>
+<div layout:fragment="content" class="container mt-4 mb-5">
 
-        <!-- Book Info -->
-        <div class="row mt-3 bg-white p-4 rounded shadow-sm">
-            <!-- Book Cover -->
-            <div class="col-md-4 text-center mb-4 mb-md-0">
-                <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop"
-                     class="img-fluid rounded shadow" alt="Đắc Nhân Tâm" style="max-height: 380px; object-fit: cover;">
-                <div class="mt-3">
-                    <span class="badge bg-success px-3 py-2 fs-6">Có sẵn — 8 cuốn</span>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4 pt-3">
+        <ol class="breadcrumb bg-transparent p-0 mb-0">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none" style="color: #8b5a2b;"><i
+                    class="bi bi-house-door"></i> Sảnh chính</a></li>
+            <li class="breadcrumb-item"><a href="/books" class="text-decoration-none" style="color: #8b5a2b;">Khám phá sách</a></li>
+            <li class="breadcrumb-item active fw-bold" aria-current="page" style="color: #4a3b32;" th:text="${book.title}">Tên sách</li>
+        </ol>
+    </nav>
+
+    <!-- Book Info -->
+    <div class="row mt-3 bg-white p-4 rounded shadow-sm">
+        <!-- Book Cover -->
+        <div class="col-md-4 text-center mb-4 mb-md-0">
+            <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}"
+                 class="img-fluid rounded shadow" th:alt="${book.title}" style="max-height: 380px; object-fit: cover;">
+            <div class="mt-3">
+                    <span th:class="${book.status == 'Active' ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
+                          th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}">Có sẵn</span>
+            </div>
+        </div>
+
+        <!-- Book Details -->
+        <div class="col-md-8">
+            <div class="badge mb-2" style="background:#8b5a2b;color:white;" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
+            <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;" th:text="${book.title}">Tên sách</h2>
+            <p class="text-muted fs-5 mb-3">
+                    <span th:if="${book.authors != null && !book.authors.isEmpty()}"
+                          th:each="author, iterStat : ${book.authors}">
+                        <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
+                    </span>
+                <span th:if="${book.authors == null || book.authors.isEmpty()}">Khuyết danh</span>
+            </p>
+
+            <!-- Stats -->
+            <div class="d-flex gap-4 mb-4">
+                <div class="text-center">
+                    <div class="fw-bold fs-4" style="color:#ffc107;">4.8 ★</div>
+                    <div class="small text-muted">Điểm TB</div>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-4" style="color:#8b5a2b;">320</div>
+                    <div class="small text-muted">Trang</div>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-4" style="color:#198754;">42</div>
+                    <div class="small text-muted">Lượt mượn</div>
                 </div>
             </div>
 
-            <!-- Book Details -->
-            <div class="col-md-8">
-                <div class="badge mb-2" style="background:#8b5a2b;color:white;">Kỹ năng sống</div>
-                <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;">Đắc Nhân Tâm</h2>
-                <p class="text-muted fs-5 mb-3">Dale Carnegie · Nguyễn Hiến Lê (dịch)</p>
-
-                <!-- Stats -->
-                <div class="d-flex gap-4 mb-4">
-                    <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#ffc107;">4.8 ★</div>
-                        <div class="small text-muted">Điểm TB</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#8b5a2b;">320</div>
-                        <div class="small text-muted">Trang</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#198754;">42</div>
-                        <div class="small text-muted">Lượt mượn</div>
-                    </div>
+            <div class="row mb-4">
+                <div class="col-sm-6">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></li>
+                        <li class="mb-2"><strong>Ngôn ngữ:</strong> Tiếng Việt</li>
+                        <li class="mb-2"><strong>Kho:</strong> Kho mượn đọc</li>
+                        <li class="mb-2"><strong>Vị trí:</strong> Kệ A - Ngăn 3</li>
+                    </ul>
                 </div>
-
-                <div class="row mb-4">
-                    <div class="col-sm-6">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong>ISBN:</strong> 978-604-1-03820-2</li>
-                            <li class="mb-2"><strong>Ngôn ngữ:</strong> Tiếng Việt</li>
-                            <li class="mb-2"><strong>Năm XB:</strong> 2016</li>
-                            <li class="mb-2"><strong>NXB:</strong> NXB Tổng Hợp TP.HCM</li>
-                        </ul>
-                    </div>
-                    <div class="col-sm-6">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong>Thể loại:</strong> Kỹ năng — Tâm lý</li>
-                            <li class="mb-2"><strong>Trạng thái:</strong> <span class="badge bg-success">Có sẵn</span></li>
-                            <li class="mb-2">
-                                <strong>Đánh giá:</strong>
-                                <span class="text-warning">★★★★★</span> <span class="text-muted">(4.8 / 5 — 3 lượt)</span>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="col-sm-6">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Thể loại:</strong> <span th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}"></span></li>
+                        <li class="mb-2"><strong>Trạng thái:</strong> <span th:class="${book.status == 'Active' ? 'badge bg-success' : 'badge bg-danger'}" th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}"></span></li>
+                        <li class="mb-2">
+                            <strong>Đánh giá:</strong>
+                            <span class="text-warning">★★★★★</span> <span class="text-muted">(4.8 / 5)</span>
+                        </li>
+                    </ul>
                 </div>
+            </div>
 
-                <div class="mb-4">
-                    <h5 class="fw-bold">Mô tả sách</h5>
-                    <p class="text-muted lh-lg">
-                        "Đắc Nhân Tâm" là cuốn sách nổi tiếng nhất, bán chạy nhất và có tầm ảnh hưởng nhất của mọi thời đại.
-                        Tác phẩm đã được chuyển ngữ sang hầu hết các thứ tiếng trên thế giới và không ngừng được tái bản từ khi ra đời đến nay.
-                        Nguyên tắc của Dale Carnegie vẫn còn nguyên giá trị và tiếp tục được hàng triệu người áp dụng trong cuộc sống thường ngày.
-                    </p>
-                </div>
+            <div class="mb-4">
+                <h5 class="fw-bold">Mô tả sách</h5>
+                <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : 'Đang cập nhật mô tả cho cuốn sách này...'}">
+                    Mô tả sách...
+                </p>
+            </div>
 
-                <hr style="border-color: rgba(139,90,43,0.2);">
+            <hr style="border-color: rgba(139,90,43,0.2);">
 
-                <!-- Action Buttons -->
-                <!-- Mới chỉ sửa cho Yêu thích -->
-                <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
-                          method="post"
-                          class="flex-grow-1 favorite-form"
-                          th:data-book-id="${book.bookId}">
-                        <button type="submit"
-                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger w-100 py-2 js-favorite-button active' : 'btn btn-outline-danger w-100 py-2 js-favorite-button'}">
-                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
-                            <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
-                        </button>
-                    </form>
+            <!-- ACTION BUTTONS SECTION (Đã sửa URL chuẩn theo BorrowController) -->
+            <div class="d-flex gap-2 mt-3 flex-wrap">
 
-                    <button class="btn btn-outline-primary flex-grow-1 py-2">
+                <!-- 1. NÚT YÊU THÍCH (Gửi POST thêm/xóa mục yêu thích) -->
+                <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
+                      method="post"
+                      class="flex-grow-1 favorite-form"
+                      th:data-book-id="${book.bookId}">
+                    <button type="submit"
+                            th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger w-100 py-2 js-favorite-button active' : 'btn btn-outline-danger w-100 py-2 js-favorite-button'}">
+                        <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
+                        <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                    </button>
+                </form>
+
+                <!-- 2. NÚT ĐẶT TRƯỚC (Gửi POST khớp chính xác với @PostMapping("/reserve/{bookId}")) -->
+                <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1">
+                    <button type="submit" class="btn btn-outline-primary w-100 py-2">
                         <i class="bi bi-bookmark me-1"></i> Đặt trước
                     </button>
+                </form>
 
-                    <button class="btn btn-primary flex-grow-1 py-2">
+                <!-- 3. NÚT YÊU CẦU MƯỢN (Gửi GET mở Form điền phiếu tạo yêu cầu khớp với @GetMapping("/create")) -->
+                <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1">
+                    <input type="hidden" name="bookId" th:value="${book.bookId}" />
+                    <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold">
                         <i class="bi bi-book me-1"></i> Yêu cầu mượn
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ====================== REVIEWS SECTION ====================== -->
-        <div class="mt-5">
-            <h4 class="fw-bold mb-4" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-chat-square-quote-fill me-2" style="color:#8b5a2b;"></i>
-                Đánh giá từ bạn đọc
-                <span class="badge bg-secondary ms-2 fs-6">3</span>
-            </h4>
-
-            <!-- [DEMO] Form viết review — member đã mượn và trả sách -->
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box">
-                <h5 class="fw-bold mb-4" style="color:#4a3b32;">
-                    <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Viết đánh giá của bạn
-                </h5>
-                <form id="reviewForm" th:action="@{/member/interaction/reviews}" method="post">
-                    <input type="hidden" name="bookId" th:value="${book.bookId}">
-                    <!-- Star Rating -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Điểm đánh giá <span class="text-danger">*</span></label>
-                        <div class="d-flex align-items-center gap-1 mt-1" id="starRating">
-                            <input type="hidden" name="rating" id="ratingValue" value="0">
-                            <span class="star-btn" data-value="1" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
-                            <span class="star-btn" data-value="2" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
-                            <span class="star-btn" data-value="3" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
-                            <span class="star-btn" data-value="4" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
-                            <span class="star-btn" data-value="5" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
-                            <span class="ms-2 text-muted small" id="ratingLabel">Chưa chọn sao</span>
-                        </div>
-                    </div>
-                    <!-- Comment -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Nhận xét <span class="text-danger">*</span></label>
-                        <textarea class="form-control mt-1" name="comment" rows="4"
-                                  placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..." maxlength="1000"></textarea>
-                        <div class="text-end text-muted small mt-1">Tối đa 1000 ký tự</div>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="reset" class="btn btn-light border px-4">Xóa</button>
-                        <button type="submit" class="btn text-white px-4" style="background-color:#8b5a2b;">
-                            <i class="bi bi-send me-1"></i> Gửi đánh giá
-                        </button>
-                    </div>
                 </form>
-            </div>
 
-            <!-- Danh sách reviews cứng để demo -->
-            <!-- Review 1 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#8b5a2b;font-size:1.1rem;">N</div>
-                        <div>
-                            <div class="fw-bold">Nguyễn Văn An</div>
-                            <div class="small text-muted">15/06/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    Cuốn sách cực kỳ hay và bổ ích! Tôi đã đọc nhiều lần và mỗi lần đều rút ra được những bài học mới.
-                    Nguyên tắc của Dale Carnegie áp dụng được trong cả công việc lẫn cuộc sống hàng ngày.
-                    Rất đáng để đọc, đặc biệt là với những ai đang muốn cải thiện kỹ năng giao tiếp.
-                </p>
-            </div>
-
-            <!-- Review 2 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#4a3b32;font-size:1.1rem;">T</div>
-                        <div>
-                            <div class="fw-bold">Trần Thị Bình</div>
-                            <div class="small text-muted">20/05/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★<span style="color:#ccc;">★</span> <span class="text-muted small ms-1">4/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    Sách viết rất dễ đọc, nhiều ví dụ thực tế sinh động. Tuy nhiên một số nội dung có vẻ hơi cũ so với thời đại hiện nay.
-                    Nhìn chung vẫn là một cuốn sách đáng đọc và để trong tủ sách của mình.
-                </p>
-            </div>
-
-            <!-- Review 3 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#6c757d;font-size:1.1rem;">L</div>
-                        <div>
-                            <div class="fw-bold">Lê Minh Khoa</div>
-                            <div class="small text-muted">02/04/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    Kinh điển trong thể loại phát triển bản thân. Tôi đã nghe nhiều người khuyên đọc và giờ đọc xong thì thấy
-                    họ khuyên đúng! Nội dung đơn giản, dễ áp dụng, hiệu quả thực sự.
-                </p>
             </div>
         </div>
-        <!-- ====================== END REVIEWS ====================== -->
-
     </div>
 
-    <!-- Star Rating Script -->
-    <div layout:fragment="scripts">
-        <script>
-            (function() {
-                var stars = document.querySelectorAll('#starRating .star-btn');
-                var ratingInput = document.getElementById('ratingValue');
-                var ratingLabel = document.getElementById('ratingLabel');
-                var labels = ['', '1 sao — Tệ', '2 sao — Tạm', '3 sao — Bình thường', '4 sao — Tốt', '5 sao — Xuất sắc!'];
+    <!-- ====================== REVIEWS SECTION ====================== -->
+    <div class="mt-5">
+        <h4 class="fw-bold mb-4" style="font-family:'Playfair Display',serif; color:#4a3b32;">
+            <i class="bi bi-chat-square-quote-fill me-2" style="color:#8b5a2b;"></i>
+            Đánh giá từ bạn đọc
+            <span class="badge bg-secondary ms-2 fs-6">3</span>
+        </h4>
 
-                function highlight(upTo) {
-                    stars.forEach(function(s, idx) {
-                        s.style.color = idx < upTo ? '#ffc107' : '#ccc';
-                    });
-                }
+        <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box">
+            <h5 class="fw-bold mb-4" style="color:#4a3b32;">
+                <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Viết đánh giá của bạn
+            </h5>
+            <form id="reviewForm" th:action="@{/member/interaction/reviews}" method="post">
+                <input type="hidden" name="bookId" th:value="${book.bookId}">
+                <!-- Star Rating -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Điểm đánh giá <span class="text-danger">*</span></label>
+                    <div class="d-flex align-items-center gap-1 mt-1" id="starRating">
+                        <input type="hidden" name="rating" id="ratingValue" value="0">
+                        <span class="star-btn" data-value="1" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
+                        <span class="star-btn" data-value="2" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
+                        <span class="star-btn" data-value="3" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
+                        <span class="star-btn" data-value="4" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
+                        <span class="star-btn" data-value="5" style="font-size:2.2rem;cursor:pointer;color:#ccc;">★</span>
+                        <span class="ms-2 text-muted small" id="ratingLabel">Chưa chọn sao</span>
+                    </div>
+                </div>
+                <!-- Comment -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Nhận xét <span class="text-danger">*</span></label>
+                    <textarea class="form-control mt-1" name="comment" rows="4"
+                              placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..." maxlength="1000"></textarea>
+                    <div class="text-end text-muted small mt-1">Tối đa 1000 ký tự</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="reset" class="btn btn-light border px-4">Xóa</button>
+                    <button type="submit" class="btn text-white px-4" style="background-color:#8b5a2b;">
+                        <i class="bi bi-send me-1"></i> Gửi đánh giá
+                    </button>
+                </div>
+            </form>
+        </div>
 
-                stars.forEach(function(star) {
-                    star.addEventListener('click', function() {
-                        var val = parseInt(this.dataset.value);
-                        ratingInput.value = val;
-                        ratingLabel.textContent = labels[val];
-                        highlight(val);
-                    });
-                    star.addEventListener('mouseover', function() {
-                        highlight(parseInt(this.dataset.value));
-                    });
-                    star.addEventListener('mouseout', function() {
-                        highlight(parseInt(ratingInput.value) || 0);
-                    });
+        <!-- Danh sách reviews cứng để demo -->
+        <div class="bg-white rounded shadow-sm p-4 mb-3 review-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                         style="width:44px;height:44px;background:#8b5a2b;font-size:1.1rem;">N</div>
+                    <div>
+                        <div class="fw-bold">Nguyễn Văn An</div>
+                        <div class="small text-muted">15/06/2026</div>
+                    </div>
+                </div>
+                <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
+            </div>
+            <p class="mb-0 text-muted lh-lg">
+                Cuốn sách cực kỳ hay và bổ ích! Tôi đã đọc nhiều lần và mỗi lần đều rút ra được những bài học mới.
+            </p>
+        </div>
+
+        <div class="bg-white rounded shadow-sm p-4 mb-3 review-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                         style="width:44px;height:44px;background:#4a3b32;font-size:1.1rem;">T</div>
+                    <div>
+                        <div class="fw-bold">Trần Thị Bình</div>
+                        <div class="small text-muted">20/05/2026</div>
+                    </div>
+                </div>
+                <div class="text-warning fs-5">★★★★<span style="color:#ccc;">★</span> <span class="text-muted small ms-1">4/5</span></div>
+            </div>
+            <p class="mb-0 text-muted lh-lg">
+                Sách viết rất dễ đọc, nhiều ví dụ thực tế sinh động. Nhìn chung vẫn là một cuốn sách đáng đọc.
+            </p>
+        </div>
+
+        <div class="bg-white rounded shadow-sm p-4 mb-3 review-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                         style="width:44px;height:44px;background:#6c757d;font-size:1.1rem;">L</div>
+                    <div>
+                        <div class="fw-bold">Lê Minh Khoa</div>
+                        <div class="small text-muted">02/04/2026</div>
+                    </div>
+                </div>
+                <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
+            </div>
+            <p class="mb-0 text-muted lh-lg">
+                Kinh điển trong thể loại phát triển bản thân. Nội dung đơn giản, dễ áp dụng, hiệu quả thực sự.
+            </p>
+        </div>
+    </div>
+    <!-- ====================== END REVIEWS ====================== -->
+
+</div>
+
+<!-- Star Rating Script -->
+<div layout:fragment="scripts">
+    <script>
+        (function() {
+            var stars = document.querySelectorAll('#starRating .star-btn');
+            var ratingInput = document.getElementById('ratingValue');
+            var ratingLabel = document.getElementById('ratingLabel');
+            var labels = ['', '1 sao — Tệ', '2 sao — Tạm', '3 sao — Bình thường', '4 sao — Tốt', '5 sao — Xuất sắc!'];
+
+            function highlight(upTo) {
+                stars.forEach(function(s, idx) {
+                    s.style.color = idx < upTo ? '#ffc107' : '#ccc';
                 });
-            })();
-        </script>
-    </div>
+            }
+
+            stars.forEach(function(star) {
+                star.addEventListener('click', function() {
+                    var val = parseInt(this.dataset.value);
+                    ratingInput.value = val;
+                    ratingLabel.textContent = labels[val];
+                    highlight(val);
+                });
+                star.addEventListener('mouseover', function() {
+                    highlight(parseInt(this.dataset.value));
+                });
+                star.addEventListener('mouseout', function() {
+                    highlight(parseInt(ratingInput.value) || 0);
+                });
+            });
+        })();
+    </script>
+</div>
 </body>
 </html>

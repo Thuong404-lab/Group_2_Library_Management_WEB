@@ -7,211 +7,198 @@
 </head>
 
 <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold mb-0">Quản lý Mượn / Trả</h2>
-            <a th:href="@{/}" class="btn btn-primary"><i class="bi bi-search"></i> Mượn sách mới</a>
-        </div>
+<div layout:fragment="content" class="container mt-4 mb-5">
 
-        <ul class="nav nav-pills mb-4" id="borrowTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active rounded-pill px-4" id="borrowing-tab" data-bs-toggle="pill" data-bs-target="#borrowing" type="button" role="tab" aria-controls="borrowing" aria-selected="true">
-                    Đang mượn <span class="badge bg-light text-primary ms-1">3</span>
-                </button>
-            </li>
-            <li class="nav-item ms-2" role="presentation">
-                <button class="nav-link rounded-pill px-4" id="reserved-tab" data-bs-toggle="pill" data-bs-target="#reserved" type="button" role="tab" aria-controls="reserved" aria-selected="false">
-                    Đã đặt trước <span class="badge bg-light text-primary ms-1">1</span>
-                </button>
-            </li>
-            <li class="nav-item ms-2" role="presentation">
-                <button class="nav-link rounded-pill px-4" id="history-tab" data-bs-toggle="pill" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
-                    Lịch sử mượn
-                </button>
-            </li>
-        </ul>
+    <!-- Hộp thông báo Flash Alert -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
-        <div class="tab-content" id="borrowTabsContent">
-            <!-- Đang Mượn Tab -->
-            <div class="tab-pane fade show active" id="borrowing" role="tabpanel" aria-labelledby="borrowing-tab">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Tên Sách</th>
-                                        <th>Mã sách (ID)</th>
-                                        <th>Ngày mượn</th>
-                                        <th>Hạn trả</th>
-                                        <th>Trạng thái</th>
-                                        <th class="text-end pe-4">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=100&auto=format&fit=crop" class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
-                                                <div>
-                                                    <h6 class="mb-0 fw-bold">Đất Rừng Phương Nam</h6>
-                                                    <small class="text-muted">Đoàn Giỏi</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>BK-10023</td>
-                                        <td>10/11/2026</td>
-                                        <td><strong class="text-danger">20/11/2026</strong></td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge bg-warning text-dark">Sắp đến hạn</span>
-                                                <small class="text-danger">(Còn 2 ngày)</small>
-                                            </div>
-                                            <div class="progress mt-2" style="height: 4px;">
-                                                <div class="progress-bar bg-warning" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="showToast('Chức năng gia hạn đang được phát triển!')">Gia hạn</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=100&auto=format&fit=crop" class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
-                                                <div>
-                                                    <h6 class="mb-0 fw-bold">Nhà Giả Kim</h6>
-                                                    <small class="text-muted">Paulo Coelho</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>BK-10045</td>
-                                        <td>13/11/2026</td>
-                                        <td><strong>23/11/2026</strong></td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge bg-success">Đang mượn</span>
-                                            </div>
-                                            <div class="progress mt-2" style="height: 4px;">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="showToast('Chức năng gia hạn đang được phát triển!')">Gia hạn</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=100&auto=format&fit=crop" class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
-                                                <div>
-                                                    <h6 class="mb-0 fw-bold">Số Đỏ</h6>
-                                                    <small class="text-muted">Vũ Trọng Phụng</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>BK-10012</td>
-                                        <td>15/11/2026</td>
-                                        <td><strong>25/11/2026</strong></td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge bg-success">Đang mượn</span>
-                                            </div>
-                                            <div class="progress mt-2" style="height: 4px;">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="showToast('Chức năng gia hạn đang được phát triển!')">Gia hạn</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Quản lý Mượn / Trả</h2>
+        <a th:href="@{/}" class="btn btn-primary"><i class="bi bi-search"></i> Mượn sách mới</a>
+    </div>
 
-            <!-- Đã Đặt Trước Tab -->
-            <div class="tab-pane fade" id="reserved" role="tabpanel" aria-labelledby="reserved-tab">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Tên Sách</th>
-                                        <th>Ngày đặt</th>
-                                        <th>Ngày hết hạn lấy sách</th>
-                                        <th>Trạng thái</th>
-                                        <th class="text-end pe-4">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=100&auto=format&fit=crop" class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
-                                                <div>
-                                                    <h6 class="mb-0 fw-bold">Truyện Kiều</h6>
-                                                    <small class="text-muted">Nguyễn Du</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>18/11/2026</td>
-                                        <td><strong>21/11/2026</strong></td>
-                                        <td><span class="badge bg-info">Đang chờ lấy</span></td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-danger" onclick="showToast('Đã hủy đặt sách thành công!')">Hủy đặt</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Thanh Tabs Pills cấu trúc lại liên kết href động -->
+    <ul class="nav nav-pills mb-4" id="borrowTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a th:href="@{/member/borrow/management(tab='borrowing')}"
+               th:classappend="${activeTab == 'borrowing' || activeTab == null} ? 'active' : ''"
+               class="nav-link rounded-pill px-4 text-decoration-none">
+                Đang mượn <span class="badge bg-light text-primary ms-1" th:text="${borrowingCount}">0</span>
+            </a>
+        </li>
+        <li class="nav-item ms-2" role="presentation">
+            <a th:href="@{/member/borrow/management(tab='reserved')}"
+               th:classappend="${activeTab == 'reserved'} ? 'active' : ''"
+               class="nav-link rounded-pill px-4 text-decoration-none">
+                Đã đặt trước <span class="badge bg-light text-primary ms-1" th:text="${reservationCount}">0</span>
+            </a>
+        </li>
+        <li class="nav-item ms-2" role="presentation">
+            <a th:href="@{/member/borrow/management(tab='history')}"
+               th:classappend="${activeTab == 'history'} ? 'active' : ''"
+               class="nav-link rounded-pill px-4 text-decoration-none">
+                Lịch sử mượn
+            </a>
+        </li>
+    </ul>
 
-            <!-- Lịch Sử Mượn Tab -->
-            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Tên Sách</th>
-                                        <th>Ngày mượn</th>
-                                        <th>Ngày trả thực tế</th>
-                                        <th>Trạng thái</th>
-                                        <th class="text-end pe-4">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=100&auto=format&fit=crop" class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
-                                                <div>
-                                                    <h6 class="mb-0 fw-bold">Gió Lạnh Đầu Mùa</h6>
-                                                    <small class="text-muted">Thạch Lam</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>01/10/2026</td>
-                                        <td>10/10/2026</td>
-                                        <td><span class="badge bg-secondary">Đã trả</span></td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-primary" onclick="showToast('Chức năng mượn sách đang được phát triển!')">Mượn lại</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+    <div class="tab-content" id="borrowTabsContent">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+
+                    <!-- ================= TAB: ĐANG MƯỢN ================= -->
+                    <table class="table table-hover align-middle mb-0" th:if="${activeTab == 'borrowing' || activeTab == null}">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Tên Sách</th>
+                            <th>Mã sách (ID)</th>
+                            <th>Ngày mượn</th>
+                            <th>Hạn trả</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(booksData)}">
+                            <td colspan="6" class="text-center py-4 text-muted">Hiện tại bạn không mượn cuốn sách nào.</td>
+                        </tr>
+                        <tr th:each="item : ${booksData}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
+                                         class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold" th:text="${item.bookTitle}">Tên Sách</h6>
+                                        <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td th:text="${item.bookIdStr}">BK-10023</td>
+                            <td th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">10/11/2026</td>
+                            <td>
+                                <strong th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}"
+                                        th:classappend="${item.daysLeft <= 2 || item.status == 'Overdue'} ? 'text-danger' : ''">20/11/2026</strong>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span th:if="${item.daysLeft <= 2 && item.status == 'Borrowed'}" class="badge bg-warning text-dark">Sắp đến hạn</span>
+                                    <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge bg-success">Đang mượn</span>
+                                    <span th:if="${item.status == 'Overdue'}" class="badge bg-danger">Quá hạn</span>
+                                    <span th:if="${item.status == 'Pending'}" class="badge bg-info text-dark">Chờ duyệt mượn</span>
+                                    <span th:if="${item.status == 'Return_Pending'}" class="badge bg-secondary">Chờ duyệt trả</span>
+
+                                    <small class="text-danger" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="'(Còn ' + ${item.daysLeft} + ' ngày)'"></small>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         th:style="'width: ' + ${item.progressPercentage} + '%'"
+                                         th:classappend="${item.daysLeft <= 2 || item.status == 'Overdue'} ? 'bg-danger' : 'bg-success'"
+                                         th:aria-valuenow="${item.progressPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-primary" onclick="alert('Chức năng gia hạn đang được phát triển!')">Gia hạn</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ================= TAB: ĐÃ ĐẶT TRƯỚC ================= -->
+                    <table class="table table-hover align-middle mb-0" th:if="${activeTab == 'reserved'}">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Tên Sách</th>
+                            <th>Ngày đặt</th>
+                            <th>Ngày hết hạn lấy sách</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(booksData)}">
+                            <td colspan="5" class="text-center py-4 text-muted">Không có sách đặt trước nào.</td>
+                        </tr>
+                        <tr th:each="item : ${booksData}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
+                                         class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold" th:text="${item.bookTitle}">Tên Sách</h6>
+                                        <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">18/11/2026</td>
+                            <td><strong th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">21/11/2026</strong></td>
+                            <td>
+                                <span th:if="${item.status == 'Pending'}" class="badge bg-warning text-dark">Chờ chuẩn bị</span>
+                                <span th:if="${item.status == 'Ready'}" class="badge bg-info text-dark">Đang chờ lấy</span>
+                                <span th:if="${item.status == 'Canceled'}" class="badge bg-danger">Đã hủy</span>
+                                <span th:if="${item.status == 'Completed'}" class="badge bg-success">Đã hoàn thành</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button th:if="${item.status == 'Pending' || item.status == 'Ready'}" class="btn btn-sm btn-outline-danger" onclick="alert('Đã gửi yêu cầu hủy đặt sách!')">Hủy đặt</button>
+                                <span th:unless="${item.status == 'Pending' || item.status == 'Ready'}">-</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ================= TAB: LỊCH SỬ MƯỢN ================= -->
+                    <table class="table table-hover align-middle mb-0" th:if="${activeTab == 'history'}">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Tên Sách</th>
+                            <th>Mã Sách</th>
+                            <th>Ngày mượn</th>
+                            <th>Ngày trả thực tế</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(booksData)}">
+                            <td colspan="6" class="text-center py-4 text-muted">Không tìm thấy lịch sử mượn trả trong vòng 1 tháng qua.</td>
+                        </tr>
+                        <tr th:each="item : ${booksData}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
+                                         class="rounded me-3" alt="Book" style="width: 40px; height: 55px; object-fit: cover;">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold" th:text="${item.bookTitle}">Tên Sách</h6>
+                                        <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td th:text="${item.bookIdStr}">BK-10012</td>
+                            <td th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">01/10/2026</td>
+                            <td th:text="${item.returnDate != null ? #temporals.format(item.returnDate, 'dd/MM/yyyy') : '-'}">10/10/2026</td>
+                            <td>
+                                <span th:if="${item.status == 'Returned'}" class="badge bg-secondary">Đã trả</span>
+                                <span th:if="${item.status == 'Lost'}" class="badge bg-dark text-white">Làm mất</span>
+                                <span th:if="${item.status == 'Canceled'}" class="badge bg-light text-muted">Đã hủy</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a th:href="@{/}" class="btn btn-sm btn-primary">Mượn lại</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
                 </div>
             </div>
         </div>
     </div>
+</div>
 </body>
 </html>
