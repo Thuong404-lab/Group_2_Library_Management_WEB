@@ -21,22 +21,30 @@
 <form th:action="@{/admin/settings/policies}" method="post" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Số ngày mượn tối đa</label>
-                    <input name="maxBorrowDays" type="number" class="form-control" placeholder="14" value="14" min="1" required />
+                    <input name="maxBorrowDays" type="number" class="form-control" placeholder="14"
+                           th:value="${policySettings != null ? policySettings['maxBorrowDays'] : 14}"
+                           min="1" required />
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Số lần gia hạn tối đa</label>
-                    <input name="maxRenewals" type="number" class="form-control" placeholder="2" value="2" min="0" required />
+                    <input name="maxRenewals" type="number" class="form-control" placeholder="2"
+                           th:value="${policySettings != null ? policySettings['maxRenewals'] : 2}"
+                           min="0" required />
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Số sách tối đa mỗi thành viên</label>
-                    <input name="maxBooksPerMember" type="number" class="form-control" placeholder="10" value="10" min="1" required />
+                    <input name="maxBooksPerMember" type="number" class="form-control" placeholder="10"
+                           th:value="${policySettings != null ? policySettings['maxBooksPerMember'] : 10}"
+                           min="1" required />
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Giá tiền mượn (VNĐ / quyển / ngày)</label>
-                    <input name="borrowFeePerBook" type="number" class="form-control" placeholder="5000" value="5000" min="0" step="500" required />
+                    <input name="borrowFeePerBook" type="number" class="form-control" placeholder="5000"
+                           th:value="${policySettings != null ? policySettings['borrowFeePerBook'] : 5000}"
+                           min="0" step="500" required />
                 </div>
 
                 <div class="col-12">

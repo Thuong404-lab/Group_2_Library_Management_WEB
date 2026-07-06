@@ -366,9 +366,7 @@ public class FinancialServiceImpl implements FinancialService {
 
     private BigDecimal getBorrowFeePerBookPerDay() {
         try {
-            return systemSettingRepository.findAll().stream()
-                    .filter(setting -> setting.getSettingKey() != null)
-                    .filter(setting -> BORROW_FEE_SETTING_KEY.equalsIgnoreCase(setting.getSettingKey()))
+            return systemSettingRepository.findBySettingKeyIgnoreCase(BORROW_FEE_SETTING_KEY).stream()
                     .map(SystemSetting::getSettingValue)
                     .filter(value -> value != null && !value.isBlank())
                     .map(String::trim)
@@ -395,9 +393,7 @@ public class FinancialServiceImpl implements FinancialService {
 
     private BigDecimal getReservationDepositAmount() {
         try {
-            return systemSettingRepository.findAll().stream()
-                    .filter(setting -> setting.getSettingKey() != null)
-                    .filter(setting -> DEPOSIT_SETTING_KEY.equalsIgnoreCase(setting.getSettingKey()))
+            return systemSettingRepository.findBySettingKeyIgnoreCase(DEPOSIT_SETTING_KEY).stream()
                     .map(SystemSetting::getSettingValue)
                     .filter(value -> value != null && !value.isBlank())
                     .map(String::trim)

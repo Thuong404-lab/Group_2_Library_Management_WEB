@@ -23,19 +23,22 @@ public class BorrowServiceImpl implements BorrowService {
     private final BorrowDetailRepository borrowDetailRepository;
     private final BookRepository bookRepository;
     private final MemberAccountRepository memberAccountRepository;
+    private final SystemSettingRepository systemSettingRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
                              BookItemRepository bookItemRepository,
                              BorrowRepository borrowRepository,
                              BorrowDetailRepository borrowDetailRepository,
                              BookRepository bookRepository,
-                             MemberAccountRepository memberAccountRepository) {
+                             MemberAccountRepository memberAccountRepository,
+                             SystemSettingRepository systemSettingRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookRepository = bookRepository;
         this.memberAccountRepository = memberAccountRepository;
+        this.systemSettingRepository = systemSettingRepository;
     }
 
 
@@ -61,12 +64,14 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
-        int maxLimit = member.getTier() != null ? member.getTier().getBorrowLimit() : 3;
+        int maxLimit = getEffectiveBorrowLimit(member);
         int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
 
         if (totalRequestedBooks > maxLimit) {
             throw new Exception("Số lượng sách vượt quá giới hạn mượn của hạng thành viên!");
         }
+
+        int borrowDays = normalizeBorrowDays(request.getNumberOfDays());
 
         Borrow borrow = new Borrow();
         borrow.setMember(member);
@@ -79,7 +84,7 @@ public class BorrowServiceImpl implements BorrowService {
             detail.setBorrow(borrow);
             detail.setBook(item.getBook());
             detail.setBookItem(item);
-            detail.setDueDate(LocalDateTime.now().plusDays(14));
+            detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
             detail.setStatus("Borrowed");
             detail.setRenewCount(0);
             borrowDetailRepository.save(detail);
@@ -106,10 +111,12 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new Exception("Sách yêu cầu mượn không tồn tại!"));
 
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
-        int maxLimit = member.getTier() != null ? member.getTier().getBorrowLimit() : 3;
+        int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowed >= maxLimit) {
             throw new Exception("Yêu cầu bị từ chối! Bạn đã mượn chạm giới hạn tối đa cho phép (" + maxLimit + " cuốn).");
         }
+
+        int borrowDays = normalizeBorrowDays(numberOfDays);
 
         Borrow borrow = new Borrow();
         borrow.setMember(member);
@@ -121,7 +128,7 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setBorrow(borrow);
         detail.setBook(book);
         detail.setBookItem(null);
-        detail.setDueDate(LocalDateTime.now().plusDays(numberOfDays != null ? numberOfDays : 14));
+        detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
         detail.setStatus("Pending");
         detail.setRenewCount(0);
         borrowDetailRepository.save(detail);
@@ -294,5 +301,33 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowRepository.findAll().stream()
                 .filter(b -> b.getMember() != null && targetMemberId.equals(b.getMember().getMemberId()))
                 .collect(Collectors.toList());
+    }
+
+    private int getEffectiveBorrowLimit(Member member) {
+        int configuredLimit = getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10);
+        int tierLimit = member != null && member.getTier() != null && member.getTier().getBorrowLimit() != null
+                ? member.getTier().getBorrowLimit()
+                : configuredLimit;
+        return Math.max(1, Math.min(configuredLimit, tierLimit));
+    }
+
+    private int normalizeBorrowDays(Integer requestedDays) {
+        int maxBorrowDays = getPositiveIntSetting("MAX_BORROW_DAYS", 14);
+        int safeRequestedDays = requestedDays == null || requestedDays <= 0 ? maxBorrowDays : requestedDays;
+        return Math.min(safeRequestedDays, maxBorrowDays);
+    }
+
+    private int getPositiveIntSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .filter(value -> value > 0)
+                    .orElse(defaultValue);
+        } catch (Exception ignored) {
+            return defaultValue;
+        }
     }
 }

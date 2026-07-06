@@ -1,5 +1,7 @@
 package com.lms.service;
 
+import java.util.Map;
+
 /**
  * SystemService - Xử lý Logic Quản lý Hệ thống (Backup/Restore/Settings)
  * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
@@ -18,5 +20,7 @@ public interface SystemService {
     // UC-21.1: Cập nhật chính sách mượn/trả
     void updateBorrowingPolicies(Integer maxBorrowDays, Integer maxRenewals,
                                  Integer maxBooksPerMember, Double borrowFeePerBook);
+
+    Map<String, String> getBorrowingPolicySettings();
 
 }
