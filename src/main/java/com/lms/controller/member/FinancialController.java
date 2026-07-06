@@ -141,8 +141,17 @@ public class FinancialController {
     @PostMapping("/deposit/{reservationId}")
     public String payReservationDeposit(@PathVariable Integer reservationId,
                                         Principal principal,
-                                        Model model) {
-        return "redirect:/member/borrow/reservations?depositPaid";
+                                        RedirectAttributes redirectAttributes) {
+        Member member = getCurrentMember(principal);
+
+        try {
+            financialService.payReservationDeposit(member.getMemberId(), reservationId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thanh toán tiền cọc đặt trước thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/member/borrow/reservations";
     }
 
     @GetMapping("/transactions")

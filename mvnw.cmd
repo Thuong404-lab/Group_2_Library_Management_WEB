@@ -43,17 +43,19 @@
 @SET MVNW_PASSWORD=
 @IF NOT "%__MVNW_CMD__%"=="" (
   @IF "%__MVNW_SUBST__%"=="" (
-    @IF /I NOT "%CD:~0,2%"=="X:" (
-      @IF NOT EXIST X:\NUL (
-        @subst X: "%CD%" >NUL 2>NUL
-        @IF NOT ERRORLEVEL 1 (
-          @SET __MVNW_SUBST__=X:
-          @pushd X:\ >NUL
-          @"%__MVNW_CMD__%" %*
-          @SET __MVNW_STATUS__=!ERRORLEVEL!
-          @popd >NUL
-          @subst X: /D >NUL 2>NUL
-          @exit /b !__MVNW_STATUS__!
+    @FOR %%D IN (Z Y X W V U T S R Q P O N M L K J I H G) DO @(
+      @IF /I NOT "%CD:~0,2%"=="%%D:" (
+        @IF NOT EXIST %%D:\NUL (
+          @subst %%D: "%CD%" >NUL 2>NUL
+          @IF NOT ERRORLEVEL 1 (
+            @SET __MVNW_SUBST__=%%D:
+            @pushd %%D:\ >NUL
+            @"%__MVNW_CMD__%" %*
+            @SET __MVNW_STATUS__=!ERRORLEVEL!
+            @popd >NUL
+            @subst %%D: /D >NUL 2>NUL
+            @exit /b !__MVNW_STATUS__!
+          )
         )
       )
     )

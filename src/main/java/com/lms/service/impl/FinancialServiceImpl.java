@@ -6,6 +6,7 @@ import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
+import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
@@ -14,6 +15,7 @@ import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.NotificationRepository;
+import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
@@ -31,9 +33,12 @@ public class FinancialServiceImpl implements FinancialService {
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
     private static final String TOP_UP_TYPE = "TOP_UP";
+    private static final String DEPOSIT_TYPE = "DEPOSIT";
     private static final String COMPLETED_STATUS = "Completed";
     private static final String PAID_STATUS = "Paid";
     private static final String BORROW_FEE_SETTING_KEY = "BORROW_FEE_PER_BOOK";
+    private static final String DEPOSIT_SETTING_KEY = "Deposit_Amount";
+    private static final BigDecimal DEFAULT_DEPOSIT_AMOUNT = BigDecimal.valueOf(50000);
     private static final int DEFAULT_BORROW_FEE_DAYS = 10;
     private static final BigDecimal DEFAULT_BORROW_FEE_PER_BOOK = BigDecimal.valueOf(5000);
 
@@ -45,6 +50,7 @@ public class FinancialServiceImpl implements FinancialService {
     private final MemberRepository memberRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final ReservationRepository reservationRepository;
 
     public FinancialServiceImpl(TransactionRepository transactionRepository,
                                 WalletRepository walletRepository,
@@ -53,7 +59,8 @@ public class FinancialServiceImpl implements FinancialService {
                                 SystemSettingRepository systemSettingRepository,
                                 MemberRepository memberRepository,
                                 NotificationRepository notificationRepository,
-                                MemberNotificationRepository memberNotificationRepository) {
+                                MemberNotificationRepository memberNotificationRepository,
+                                ReservationRepository reservationRepository) {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
         this.borrowRepository = borrowRepository;
@@ -62,6 +69,7 @@ public class FinancialServiceImpl implements FinancialService {
         this.memberRepository = memberRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @Override
@@ -159,8 +167,50 @@ public class FinancialServiceImpl implements FinancialService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void payReservationDeposit(Integer memberId, Integer reservationId) {
-        // TODO: Implement UC-8.3.
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu đặt trước với ID: " + reservationId));
+
+        if (reservation.getMember() == null
+                || reservation.getMember().getMemberId() == null
+                || !reservation.getMember().getMemberId().equals(memberId)) {
+            throw new RuntimeException("Yêu cầu đặt trước không thuộc về thành viên hiện tại.");
+        }
+
+        String reservationStatus = normalize(reservation.getStatus());
+        if ("DEPOSIT_PAID".equals(reservationStatus) || "PAID".equals(reservationStatus)) {
+            throw new RuntimeException("Tiền cọc cho yêu cầu đặt trước này đã được thanh toán.");
+        }
+        if ("COMPLETED".equals(reservationStatus) || "CANCELED".equals(reservationStatus) || "CANCELLED".equals(reservationStatus)) {
+            throw new RuntimeException("Yêu cầu đặt trước này không thể thanh toán tiền cọc.");
+        }
+
+        Wallet wallet = walletRepository.findByMemberMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+        BigDecimal depositAmount = getReservationDepositAmount();
+        BigDecimal currentBalance = balanceOf(wallet.getBalance());
+        ensureSufficientBalance(currentBalance, depositAmount, "tiền cọc đặt trước");
+
+        wallet.setBalance(currentBalance.subtract(depositAmount));
+        walletRepository.save(wallet);
+
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setTransactionType(DEPOSIT_TYPE);
+        transaction.setAmount(depositAmount.negate());
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setStatus(COMPLETED_STATUS);
+        transactionRepository.save(transaction);
+
+        reservation.setStatus("Deposit_Paid");
+        reservationRepository.save(reservation);
+
+        createMemberNotification(
+                reservation.getMember(),
+                "Thanh toán tiền cọc thành công",
+                "Thư viện đã ghi nhận tiền cọc đặt trước " + formatMoney(depositAmount)
+                        + " cho sách \"" + (reservation.getBook() == null ? "" : reservation.getBook().getTitle()) + "\".");
     }
 
     @Override
@@ -312,6 +362,23 @@ public class FinancialServiceImpl implements FinancialService {
                     .orElse(DEFAULT_BORROW_FEE_PER_BOOK);
         } catch (Exception ignored) {
             return DEFAULT_BORROW_FEE_PER_BOOK;
+        }
+    }
+
+    private BigDecimal getReservationDepositAmount() {
+        try {
+            return systemSettingRepository.findAll().stream()
+                    .filter(setting -> setting.getSettingKey() != null)
+                    .filter(setting -> DEPOSIT_SETTING_KEY.equalsIgnoreCase(setting.getSettingKey()))
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(value -> value.signum() > 0)
+                    .findFirst()
+                    .orElse(DEFAULT_DEPOSIT_AMOUNT);
+        } catch (Exception ignored) {
+            return DEFAULT_DEPOSIT_AMOUNT;
         }
     }
 
