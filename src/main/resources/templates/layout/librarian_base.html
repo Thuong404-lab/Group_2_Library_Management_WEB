@@ -134,6 +134,21 @@
             font-weight: 600;
         }
 
+        #financeMenu .menu-link {
+            color: #e6dfd7 !important;
+            font-weight: 400;
+        }
+
+        #financeMenu .menu-link:hover {
+            color: #fdfbf7 !important;
+            background-color: var(--sidebar-hover);
+        }
+
+        #financeMenu .menu-link.active-submenu {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
         .menu-icon {
             font-size: 1.1rem;
             min-width: 30px;
@@ -335,6 +350,41 @@
                 <i class="bi bi-graph-up menu-icon"></i>
                 <span class="menu-text">Thống kê</span>
             </a>
+        </li>
+        <li class="menu-item">
+            <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link"
+               th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'active'"
+               style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <i class="bi bi-wallet2 menu-icon"></i>
+                    <span class="menu-text">Tài chính</span>
+                </div>
+                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+            </a>
+            <ul class="collapse list-unstyled ps-4" id="financeMenu"
+                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'show'">
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/topup}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'topup'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Nạp tiền</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/transactions}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'transactions'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Lịch sử giao dịch</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/fines}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'fines'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Phí phạt</span>
+                    </a>
+                </li>
+            </ul>
         </li>
     </ul>
 </aside>

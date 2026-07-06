@@ -5,7 +5,6 @@ import com.lms.entity.*;
 import com.lms.enums.UserStatus;
 import com.lms.repository.*;
 import com.lms.service.BorrowService;
-import com.lms.service.FinancialService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,6 @@ public class BorrowServiceImpl implements BorrowService {
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final BookRepository bookRepository;
-    private final FinancialService financialService;
     private final MemberAccountRepository memberAccountRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
@@ -31,14 +29,12 @@ public class BorrowServiceImpl implements BorrowService {
                              BorrowRepository borrowRepository,
                              BorrowDetailRepository borrowDetailRepository,
                              BookRepository bookRepository,
-                             MemberAccountRepository memberAccountRepository,
-                             FinancialService financialService) {
+                             MemberAccountRepository memberAccountRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookRepository = bookRepository;
-        this.financialService = financialService;
         this.memberAccountRepository = memberAccountRepository;
     }
 
@@ -240,7 +236,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new RuntimeException("Phiếu mượn không có member hợp lệ để tính phí mượn.");
         }
 
-        financialService.payBorrowingFee(borrow.getMember().getMemberId(), borrowId);
+        // Phí mượn chỉ được trừ khi member chủ động bấm "Thanh toán" ở trang phí mượn.
     }
 
 
