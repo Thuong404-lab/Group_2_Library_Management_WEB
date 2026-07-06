@@ -2,224 +2,184 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <!-- Librarian top-up desk UI maintained by Pham Kien Quoc. -->
-    <title>Nạp tiền tại quầy</title>
+    <title>Nạp Tiền Tại Quầy</title>
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='topup'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139,90,43,0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139,90,43,0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Nạp tiền tại quầy</h2>
-            <div class="text-muted">Tra cứu thành viên, cộng tiền vào ví điện tử và tạo giao dịch nạp tiền.</div>
+            <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Nạp Tiền Tại Quầy</h2>
+            <div class="text-muted">Hỗ trợ thành viên nạp tiền vào ví điện tử</div>
         </div>
-        <a th:href="@{/librarian/members/transactions(type='TOP_UP')}" class="btn btn-outline-classic">
-            <i class="bi bi-clock-history me-1"></i>Lịch sử nạp
-        </a>
     </div>
 
-    <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
-
-    <div class="row g-4">
-        <div class="col-lg-7">
+    <div class="row">
+        <!-- Form nạp tiền -->
+        <div class="col-md-7">
             <div class="bg-white rounded shadow-sm p-4 mb-4" style="border-left:4px solid #8b5a2b;">
-                <h5 class="fw-bold mb-3" style="color:#4a3b32;">
-                    <i class="bi bi-search me-2" style="color:#8b5a2b;"></i>Tra cứu thành viên
-                </h5>
-                <form method="get" th:action="@{/librarian/members/topup}" class="row g-2 align-items-end mb-3">
-                    <div class="col-md-9">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Tên / email / số điện thoại / mã thành viên</label>
-                        <input type="text" class="form-control" name="memberKeyword"
-                               th:value="${memberKeyword}" placeholder="Nhập thông tin cần tra cứu">
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-classic w-100">Tra cứu</button>
-                    </div>
-                </form>
+                <h5 class="fw-bold mb-4" style="color:#4a3b32;"><i class="bi bi-wallet2 me-2" style="color:#8b5a2b;"></i>Nạp tiền cho thành viên</h5>
 
-                <div th:if="${memberKeyword != null and !#strings.isEmpty(memberKeyword) and #lists.isEmpty(memberSearchResults)}"
-                     class="text-muted text-center py-3">
-                    Không tìm thấy thành viên phù hợp.
-                </div>
-
-                <div th:if="${memberSearchResults != null and !#lists.isEmpty(memberSearchResults)}" class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                        <tr>
-                            <th>Mã TV</th>
-                            <th>Thành viên</th>
-                            <th>Email</th>
-                            <th>SĐT</th>
-                            <th class="text-end">Chọn</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="member : ${memberSearchResults}">
-                            <td class="fw-bold" th:text="${member.memberId}">1</td>
-                            <td th:text="${member.user != null ? member.user.fullName : 'Không rõ'}">Thành viên</td>
-                            <td th:text="${member.user != null ? member.user.email : '-'}">email</td>
-                            <td th:text="${member.user != null ? member.user.phone : '-'}">phone</td>
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-classic"
-                                        th:attr="data-member-id=${member.memberId}">
-                                    Chọn
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <form method="post" th:action="@{/librarian/members/topup}"
-                  class="bg-white rounded shadow-sm p-4 mb-4" style="border-left:4px solid #198754;">
-                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-
-                <h5 class="fw-bold mb-4" style="color:#4a3b32;">
-                    <i class="bi bi-wallet2 me-2" style="color:#198754;"></i>Nạp tiền cho thành viên
-                </h5>
-
+                <!-- Tra cứu thành viên -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Mã thành viên / email / số điện thoại</label>
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-white"><i class="bi bi-person-badge"></i></span>
-                        <input type="text" class="form-control" name="memberPhone" id="topupMemberLookup"
-                               th:value="${memberPhone != null ? memberPhone : ''}"
-                               placeholder="Bấm chọn từ kết quả tra cứu hoặc nhập trực tiếp" required>
+                    <label class="form-label fw-bold small text-muted text-uppercase">Mã thẻ thành viên / Email / SĐT</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-lg" placeholder="Nhập mã thẻ, email hoặc SĐT..." value="MEM-0012">
+                        <button class="btn btn-lg fw-bold text-white" style="background:#8b5a2b;">
+                            <i class="bi bi-search me-1"></i>Tra cứu
+                        </button>
                     </div>
                 </div>
 
+                <!-- Thông tin thành viên (sau khi tra cứu) -->
+                <div class="p-3 rounded mb-4" style="background:#fdf5ec;border:1px solid rgba(139,90,43,0.2);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                             style="width:48px;height:48px;background:#8b5a2b;font-size:1.2rem;flex-shrink:0;">N</div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold" style="color:#4a3b32;">Nguyễn Văn An</div>
+                            <div class="text-muted small">MEM-0012 · nguyen.van.an@email.com</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-muted small">Số dư hiện tại</div>
+                            <div class="fw-bold fs-5" style="color:#198754;">150.000đ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Số tiền nạp -->
                 <div class="mb-4">
                     <label class="form-label fw-bold small text-muted text-uppercase">Số tiền nạp</label>
                     <div class="input-group input-group-lg">
-                        <input type="number" class="form-control" name="amount"
-                               th:value="${amount != null ? amount : ''}"
-                               placeholder="Nhập số tiền" min="10000" step="10000" required>
+                        <input type="number" class="form-control" placeholder="Nhập số tiền" value="100000" min="10000" step="10000">
                         <span class="input-group-text fw-bold" style="background:#fdf5ec;color:#8b5a2b;">VNĐ</span>
                     </div>
+                    <!-- Quick select amounts -->
                     <div class="mt-2 d-flex flex-wrap gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-amount="50000">50.000</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-amount="100000">100.000</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-amount="200000">200.000</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-amount="500000">500.000</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.mb-4').querySelector('input').value=50000">50.000đ</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.mb-4').querySelector('input').value=100000">100.000đ</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.mb-4').querySelector('input').value=200000">200.000đ</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.mb-4').querySelector('input').value=500000">500.000đ</button>
                     </div>
                 </div>
 
+                <!-- Phương thức -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Phương thức ghi nhận</label>
-                    <div class="d-flex flex-wrap gap-3 mt-1">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Phương thức thanh toán</label>
+                    <div class="d-flex gap-3 mt-1">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="payMethod" id="payCash" value="cash" checked>
-                            <label class="form-check-label fw-bold" for="payCash">
-                                <i class="bi bi-cash me-1"></i>Tiền mặt
-                            </label>
+                            <label class="form-check-label fw-bold" for="payCash"><i class="bi bi-cash me-1"></i>Tiền mặt</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="payMethod" id="payTransfer" value="transfer">
-                            <label class="form-check-label fw-bold" for="payTransfer">
-                                <i class="bi bi-bank me-1"></i>Chuyển khoản
-                            </label>
+                            <label class="form-check-label fw-bold" for="payTransfer"><i class="bi bi-bank me-1"></i>Chuyển khoản</label>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Ghi chú (tùy chọn)</label>
+                    <textarea class="form-control" rows="2" placeholder="Ghi chú thêm nếu cần..."></textarea>
+                </div>
+
+                <!-- Summary -->
+                <div class="p-3 rounded mb-4" style="background:#f0f9f0;border:1px solid #c3e6cb;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Số dư hiện tại:</span>
+                        <span class="fw-bold">150.000đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Số tiền nạp:</span>
+                        <span class="fw-bold text-success">+ 100.000đ</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Số dư sau khi nạp:</span>
+                        <span class="fw-bold fs-5 text-success">250.000đ</span>
                     </div>
                 </div>
 
                 <div class="d-flex gap-2">
-                    <button type="reset" class="btn btn-light border flex-grow-1">Xóa form</button>
-                    <button type="submit" class="btn text-white fw-bold flex-grow-1" style="background:#198754;">
-                        <i class="bi bi-check-circle me-1"></i>Xác nhận nạp tiền
+                    <button type="button" class="btn btn-light border flex-grow-1">Hủy</button>
+                    <button type="button" class="btn text-white fw-bold flex-grow-1" style="background:#198754;" data-toggle="modal" data-target="#confirmTopupModal">
+                        <i class="bi bi-check-circle me-1"></i>Xác nhận Nạp tiền
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
 
-        <div class="col-lg-5">
-            <div class="bg-white rounded shadow-sm p-4 mb-4">
+        <!-- Lịch sử nạp hôm nay -->
+        <div class="col-md-5">
+            <div class="bg-white rounded shadow-sm p-4">
                 <h5 class="fw-bold mb-3" style="color:#4a3b32;">Nạp tiền hôm nay</h5>
-                <div class="d-flex justify-content-between mb-3 p-3 rounded" style="background:#f8f9fa;">
+                <div class="d-flex justify-content-between mb-3 p-2 rounded" style="background:#f8f9fa;">
                     <div class="text-center">
-                        <div class="fw-bold fs-5 text-success" th:text="${todayTopupCount != null ? todayTopupCount : 0}">0</div>
+                        <div class="fw-bold fs-5 text-success">3</div>
                         <div class="text-muted small">Giao dịch</div>
                     </div>
                     <div class="text-center">
-                        <div class="fw-bold fs-5" style="color:#8b5a2b;">
-                            <span th:text="${todayTopupTotal != null ? #numbers.formatDecimal(todayTopupTotal, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                            VNĐ
-                        </div>
+                        <div class="fw-bold fs-5" style="color:#8b5a2b;">650.000đ</div>
                         <div class="text-muted small">Tổng nạp</div>
                     </div>
                 </div>
 
-                <div th:if="${todayTopups == null or #lists.isEmpty(todayTopups)}" class="text-muted text-center py-4">
-                    Hôm nay chưa có giao dịch nạp tiền.
-                </div>
-
-                <div th:if="${todayTopups != null and !#lists.isEmpty(todayTopups)}" class="border-top pt-3">
-                    <div th:each="transaction : ${todayTopups}"
-                         class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <!-- Transaction list -->
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                         <div>
-                            <div class="fw-bold small" style="color:#4a3b32;"
-                                 th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
-                                Thành viên
-                            </div>
-                            <div class="text-muted" style="font-size:0.78rem;"
-                                 th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'HH:mm dd/MM') : '-'}">
-                                -
-                            </div>
+                            <div class="fw-bold small" style="color:#4a3b32;">Nguyễn Văn An</div>
+                            <div class="text-muted" style="font-size:0.78rem;">09:15 · Tiền mặt</div>
                         </div>
-                        <span class="fw-bold text-success">
-                            +<span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                        </span>
+                        <span class="fw-bold text-success">+200.000đ</span>
                     </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded shadow-sm p-4">
-                <h5 class="fw-bold mb-3" style="color:#4a3b32;">10 giao dịch nạp gần nhất</h5>
-                <div th:if="${recentTopups == null or #lists.isEmpty(recentTopups)}" class="text-muted text-center py-4">
-                    Chưa có lịch sử nạp tiền.
-                </div>
-                <div th:if="${recentTopups != null and !#lists.isEmpty(recentTopups)}">
-                    <div th:each="transaction : ${recentTopups}" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                         <div>
-                            <div class="fw-bold small"
-                                 th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
-                                Thành viên
-                            </div>
-                            <div class="text-muted" style="font-size:0.78rem;"
-                                 th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">
-                                -
-                            </div>
+                            <div class="fw-bold small" style="color:#4a3b32;">Trần Thị Bình</div>
+                            <div class="text-muted" style="font-size:0.78rem;">11:30 · Chuyển khoản</div>
                         </div>
-                        <span class="fw-bold text-success">
-                            +<span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                        </span>
+                        <span class="fw-bold text-success">+300.000đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            <div class="fw-bold small" style="color:#4a3b32;">Lê Minh Khoa</div>
+                            <div class="text-muted" style="font-size:0.78rem;">14:00 · Tiền mặt</div>
+                        </div>
+                        <span class="fw-bold text-success">+150.000đ</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.querySelectorAll("[data-amount]").forEach(function (button) {
-            button.addEventListener("click", function () {
-                const input = document.querySelector("input[name='amount']");
-                if (input != null) {
-                    input.value = button.getAttribute("data-amount");
-                }
-            });
-        });
-
-        document.querySelectorAll("[data-member-id]").forEach(function (button) {
-            button.addEventListener("click", function () {
-                const input = document.getElementById("topupMemberLookup");
-                if (input != null) {
-                    input.value = button.getAttribute("data-member-id");
-                    input.focus();
-                }
-            });
-        });
-    </script>
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmTopupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header" style="background:#fdfbf7;border-bottom:1px solid rgba(139,90,43,0.2);">
+                    <h5 class="modal-title fw-bold" style="color:#4a3b32;font-family:'Playfair Display',serif;">
+                        <i class="bi bi-wallet2 me-2" style="color:#8b5a2b;"></i>Xác nhận nạp tiền
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                         style="width:64px;height:64px;background:#d4edda;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size:2rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color:#4a3b32;">Nạp <span class="text-success">100.000đ</span> cho thành viên</h5>
+                    <p class="text-muted mb-1"><strong>Nguyễn Văn An</strong> (MEM-0012)</p>
+                    <p class="text-muted small">Số dư sau: <strong class="text-success">250.000đ</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn text-white fw-bold" style="background:#198754;" data-bs-dismiss="modal">
+                        <i class="bi bi-check-lg me-1"></i>Xác nhận
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

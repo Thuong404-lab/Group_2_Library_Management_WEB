@@ -1,127 +1,109 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/librarian_base}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
 <head>
-    <!-- Librarian fine management UI maintained by Pham Kien Quoc. -->
-    <title>Quản lý phạt vi phạm</title>
+    <title>Quản lý Phạt Vi Phạm</title>
 </head>
+
 <body>
 <div layout:fragment="content" th:with="activeMenu='fines'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139,90,43,0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Quản lý phạt vi phạm</h2>
-            <div class="text-muted">Tra cứu thành viên, tạo khoản phạt và theo dõi các vi phạm của độc giả.</div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Phạt Vi Phạm</h2>
+            <div class="text-muted">Theo dõi và xử lý các khoản phạt trễ hạn, hỏng sách của độc giả</div>
         </div>
-        <a th:href="@{/librarian/members/transactions(type='FINE')}" class="btn btn-outline-classic">
-            <i class="bi bi-receipt me-1"></i>Lịch sử phạt
-        </a>
+        <button class="btn btn-classic shadow-sm">
+            <i class="bi bi-plus-circle me-2"></i>Thêm biên bản phạt
+        </button>
     </div>
 
-    <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
-
-    <div class="card-classic p-4 mb-4">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;">
-            <i class="bi bi-search me-2 text-classic"></i>Tra cứu thành viên
-        </h5>
-        <form method="get" th:action="@{/librarian/members/fines}" class="row g-2 align-items-end mb-3">
-            <div class="col-md-9">
-                <label class="form-label fw-bold small text-muted text-uppercase">Tên / email / số điện thoại / mã thành viên</label>
-                <input type="text" class="form-control" name="memberKeyword"
-                       th:value="${memberKeyword}" placeholder="Nhập thông tin cần tra cứu">
+    <!-- Toolbar -->
+    <div class="card-classic mb-4 border-0 shadow-sm p-3">
+        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/fines}">
+            <div class="col-md-2">
+                <input type="date" class="form-control text-muted" name="fineDate" title="Ngày vi phạm">
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-classic w-100">Tra cứu</button>
+                <select class="form-select text-muted" name="fineType">
+                    <option value="">-- Hình thức phạt --</option>
+                    <option value="late">Trễ hạn trả sách</option>
+                    <option value="lost">Làm mất sách</option>
+                    <option value="damaged">Làm rách/hỏng sách</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" placeholder="Mã vi phạm, tên bạn đọc, mã thẻ...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
             </div>
         </form>
+    </div>
 
-        <div th:if="${memberKeyword != null and !#strings.isEmpty(memberKeyword) and #lists.isEmpty(memberSearchResults)}"
-             class="text-muted text-center py-3">
-            Không tìm thấy thành viên phù hợp.
-        </div>
-
-        <div th:if="${memberSearchResults != null and !#lists.isEmpty(memberSearchResults)}" class="table-responsive">
+    <!-- Table -->
+    <div class="card-classic border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                <tr>
-                    <th>Mã TV</th>
-                    <th>Thành viên</th>
-                    <th>Email</th>
-                    <th>SĐT</th>
-                    <th class="text-end">Chọn</th>
-                </tr>
+                    <tr>
+                        <th class="ps-4">Mã VP</th>
+                        <th>Thông tin Độc giả</th>
+                        <th>Ngày vi phạm</th>
+                        <th>Hình thức / Lý do phạt</th>
+                        <th>Ghi chú sách</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
                 </thead>
+
                 <tbody>
-                <tr th:each="member : ${memberSearchResults}">
-                    <td class="fw-bold" th:text="${member.memberId}">1</td>
-                    <td th:text="${member.user != null ? member.user.fullName : 'Không rõ'}">Thành viên</td>
-                    <td th:text="${member.user != null ? member.user.email : '-'}">email</td>
-                    <td th:text="${member.user != null ? member.user.phone : '-'}">phone</td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-classic"
-                                th:attr="data-member-id=${member.memberId}">
-                            Chọn
-                        </button>
-                    </td>
-                </tr>
+                    <tr th:each="detail, iter : ${overdueDetails}">
+                        <td class="ps-4 fw-bold" style="color: #4a3b32;" th:text="${'VP' + detail.borrowDetailId}">VP1</td>
+
+                        <td>
+                            <div th:if="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null}">
+                                <div class="fw-bold text-dark" th:text="${detail.borrow.member.user.fullName}">Bạn đọc</div>
+                                <div class="small text-muted">Mã thẻ: <span th:text="${'TV' + detail.borrow.member.memberId}">TV1</span></div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="fw-bold" th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : '-'}">-</div>
+                        </td>
+                        
+                        <td>
+                            <div><span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">Phạt trễ hạn</span></div>
+                            <div class="small text-muted mt-1">Trả sách quá hạn</div>
+                        </td>
+
+                        <td th:text="${detail.book != null ? 'Sách: ' + detail.book.title : ''}" class="fst-italic text-muted">Ghi chú</td>
+
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(overdueDetails)}">
+                        <td colspan="6" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-check-circle fs-1 d-block mb-3 text-success opacity-50"></i>
+                                Không có vi phạm nào trong hệ thống.
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
-
-    <div class="card-classic p-4 mb-4">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;">
-            <i class="bi bi-plus-circle me-2 text-classic"></i>Tạo khoản phạt mới
-        </h5>
-        <form method="post" th:action="@{/librarian/members/fines/create}" class="row g-3">
-            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted text-uppercase">Mã thành viên</label>
-                <input type="number" class="form-control" id="fineMemberId" name="memberId" min="1"
-                       placeholder="Bấm chọn ở bảng trên" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted text-uppercase">Số tiền phạt</label>
-                <div class="input-group">
-                    <input type="number" class="form-control" name="amount" min="1000" step="1000" required>
-                    <span class="input-group-text">VNĐ</span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold small text-muted text-uppercase">Lý do</label>
-                <input type="text" class="form-control" name="reason" placeholder="Quá hạn, mất sách, hư hỏng..." required>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-classic w-100">
-                    <i class="bi bi-check-circle me-1"></i>Tạo phạt
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <div class="card-classic border-0 shadow-sm p-5 text-center">
-        <i class="bi bi-info-circle fs-1 d-block mb-3 text-classic opacity-75"></i>
-        <h5 class="fw-bold">Khoản phạt được lưu vào lịch sử giao dịch</h5>
-        <p class="text-muted mb-3">
-            Sau khi tạo phạt, thành viên sẽ thấy khoản phạt trong trang ví và có thể thanh toán từ số dư ví.
-        </p>
-        <a th:href="@{/librarian/members/transactions(type='FINE')}" class="btn btn-outline-classic">
-            Xem các giao dịch phạt
-        </a>
-    </div>
-
-    <script>
-        document.querySelectorAll("[data-member-id]").forEach(function (button) {
-            button.addEventListener("click", function () {
-                const input = document.getElementById("fineMemberId");
-                if (input != null) {
-                    input.value = button.getAttribute("data-member-id");
-                    input.focus();
-                }
-            });
-        });
-    </script>
 </div>
 </body>
 </html>

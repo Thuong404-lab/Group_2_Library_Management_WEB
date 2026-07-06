@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout/base}">
@@ -122,10 +122,12 @@
                     </button>
                 </form>
 
-                <a th:href="@{/member/borrow/reserve/form/{id}(id=${book.bookId})}"
-                   class="btn btn-outline-primary flex-grow-1 py-2">
-                    <i class="bi bi-bookmark me-1"></i> Đặt trước & cọc
-                </a>
+                <!-- 2. NÚT ĐẶT TRƯỚC (Gửi POST khớp chính xác với @PostMapping("/reserve/{bookId}")) -->
+                <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1">
+                    <button type="submit" class="btn btn-outline-primary w-100 py-2">
+                        <i class="bi bi-bookmark me-1"></i> Đặt trước
+                    </button>
+                </form>
 
                 <!-- 3. NÚT YÊU CẦU MƯỢN (Gửi GET mở Form điền phiếu tạo yêu cầu khớp với @GetMapping("/create")) -->
                 <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1">
