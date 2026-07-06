@@ -2,6 +2,9 @@ package com.lms.service;
 
 import java.math.BigDecimal;
 
+import com.lms.entity.Transaction;
+import org.springframework.data.domain.Page;
+
 public interface FinancialService {
 
     void payOverdueFine(Integer memberId, Integer fineId);
@@ -14,11 +17,11 @@ public interface FinancialService {
 
     void payReservationDeposit(Integer memberId, Integer reservationId);
 
-    void getTransactionHistory(Integer memberId, int page);
+    Page<Transaction> getTransactionHistory(Integer memberId, int page, String type);
 
     void createFine(Integer memberId, Double amount, String reason);
 
-    void getAllTransactions(int page, String type);
+    Page<Transaction> getAllTransactions(int page, String type);
 
     void topUpMemberAccount(String memberPhone, Double amount);
 }

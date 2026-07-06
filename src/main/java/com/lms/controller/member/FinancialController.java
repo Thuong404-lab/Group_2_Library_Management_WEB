@@ -5,6 +5,7 @@ import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
+import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Transaction;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
@@ -15,7 +16,6 @@ import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,10 +27,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/member/financial")
@@ -160,17 +160,7 @@ public class FinancialController {
                                          @RequestParam(required = false) String type,
                                          Model model) {
         Member member = getCurrentMember(principal);
-        Pageable pageable = PageRequest.of(page, 10);
-
-        Page<Transaction> transactionPage;
-        if (type == null || type.trim().isEmpty()) {
-            transactionPage = transactionRepository
-                    .findByWalletMemberMemberIdOrderByTransactionDateDesc(member.getMemberId(), pageable);
-        } else {
-            transactionPage = transactionRepository
-                    .findByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-                            member.getMemberId(), type.trim(), pageable);
-        }
+        Page<Transaction> transactionPage = financialService.getTransactionHistory(member.getMemberId(), page, type);
 
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                 .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
@@ -195,23 +185,58 @@ public class FinancialController {
     }
 
     @GetMapping("/topup-notifications")
-    public String viewTopupNotifications(Principal principal, Model model) {
+    public String viewTopupNotifications(Principal principal,
+                                         @RequestParam(defaultValue = "0") int page,
+                                         Model model) {
         Member member = getCurrentMember(principal);
-        Map<Integer, MemberNotification> notificationMap = new LinkedHashMap<>();
+        Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
+                member.getMemberId(),
+                "nạp tiền",
+                PageRequest.of(Math.max(page, 0), 10));
 
-        for (String keyword : TOP_UP_NOTIFICATION_KEYWORDS) {
-            addNotifications(notificationMap,
-                    memberNotificationRepository
-                            .findByMemberMemberIdAndNotificationTitleContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
-                                    member.getMemberId(), keyword));
-            addNotifications(notificationMap,
-                    memberNotificationRepository
-                            .findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
-                                    member.getMemberId(), keyword));
+        model.addAttribute("notificationPage", notificationPage);
+        model.addAttribute("notifications", notificationPage.getContent());
+        model.addAttribute("currentPage", page);
+        return "member/topup-notifications";
+    }
+
+    @PostMapping("/topup-notifications/{notificationId}/mark-read")
+    public String markTopupNotificationAsRead(@PathVariable Integer notificationId,
+                                              @RequestParam(defaultValue = "0") int page,
+                                              Principal principal,
+                                              RedirectAttributes redirectAttributes) {
+        Member member = getCurrentMember(principal);
+        MemberNotificationId id = new MemberNotificationId(member.getMemberId(), notificationId);
+        memberNotificationRepository.findById(id).ifPresent(memberNotification -> {
+            memberNotification.setIsRead(true);
+            memberNotification.setReadDate(LocalDateTime.now());
+            memberNotificationRepository.save(memberNotification);
+        });
+
+        redirectAttributes.addFlashAttribute("success", "Đã đánh dấu thông báo là đã đọc.");
+        return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
+    }
+
+    @PostMapping("/topup-notifications/mark-all-read")
+    public String markAllTopupNotificationsAsRead(@RequestParam(defaultValue = "0") int page,
+                                                  Principal principal,
+                                                  RedirectAttributes redirectAttributes) {
+        Member member = getCurrentMember(principal);
+        Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
+                member.getMemberId(),
+                "nạp tiền",
+                PageRequest.of(0, 1000));
+
+        for (MemberNotification memberNotification : notificationPage.getContent()) {
+            if (!Boolean.TRUE.equals(memberNotification.getIsRead())) {
+                memberNotification.setIsRead(true);
+                memberNotification.setReadDate(LocalDateTime.now());
+                memberNotificationRepository.save(memberNotification);
+            }
         }
 
-        model.addAttribute("notifications", new ArrayList<>(notificationMap.values()));
-        return "member/topup-notifications";
+        redirectAttributes.addFlashAttribute("success", "Đã đánh dấu tất cả thông báo nạp tiền là đã đọc.");
+        return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
     }
 
     private BorrowFeeViewData buildBorrowFeeViewData(Integer memberId, Borrow borrow) {
@@ -227,7 +252,7 @@ public class FinancialController {
         BorrowFeeViewData feeViewData = new BorrowFeeViewData();
         feeViewData.setBorrowId(borrow.getBorrowId());
         feeViewData.setQuantity(details.size());
-        feeViewData.setDays(BORROW_FEE_DAYS);
+        feeViewData.setDays(calculateDisplayBorrowDays(details));
         feeViewData.setBorrowStatus(borrow.getStatus());
         feeViewData.setBorrowDate(borrow.getBorrowDate());
 
@@ -270,14 +295,20 @@ public class FinancialController {
                 || "Overdue".equalsIgnoreCase(borrowStatus);
     }
 
-    private void addNotifications(Map<Integer, MemberNotification> notificationMap,
-                                  List<MemberNotification> notifications) {
-        for (MemberNotification memberNotification : notifications) {
-            if (memberNotification.getNotification() != null
-                    && memberNotification.getNotification().getNotificationId() != null) {
-                notificationMap.put(memberNotification.getNotification().getNotificationId(), memberNotification);
+    private int calculateDisplayBorrowDays(List<BorrowDetail> details) {
+        int maxDays = 1;
+        for (BorrowDetail detail : details) {
+            LocalDateTime start = detail.getBorrow() == null ? null : detail.getBorrow().getBorrowDate();
+            LocalDateTime end = detail.getDueDate();
+            if (start == null || end == null || !end.isAfter(start)) {
+                continue;
             }
+
+            long hours = Duration.between(start, end).toHours();
+            int days = (int) Math.max((hours + 23) / 24, 1);
+            maxDays = Math.max(maxDays, days);
         }
+        return maxDays;
     }
 
     private Member getCurrentMember(Principal principal) {

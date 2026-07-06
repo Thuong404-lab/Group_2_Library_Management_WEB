@@ -20,10 +20,13 @@ import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -155,9 +158,9 @@ public class FinancialServiceImpl implements FinancialService {
         }
 
         BigDecimal perBookPerDay = getBorrowFeePerBookPerDay();
-        return BigDecimal.valueOf(details.size())
-                .multiply(BigDecimal.valueOf(DEFAULT_BORROW_FEE_DAYS))
-                .multiply(perBookPerDay);
+        return details.stream()
+                .map(detail -> BigDecimal.valueOf(calculateBorrowDays(detail)).multiply(perBookPerDay))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
@@ -214,8 +217,15 @@ public class FinancialServiceImpl implements FinancialService {
     }
 
     @Override
-    public void getTransactionHistory(Integer memberId, int page) {
-        // TODO: Implement UC-8.4 service-level pagination if needed.
+    @Transactional(readOnly = true)
+    public Page<Transaction> getTransactionHistory(Integer memberId, int page, String type) {
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), 10);
+        if (type == null || type.trim().isEmpty()) {
+            return transactionRepository.findByWalletMemberMemberIdOrderByTransactionDateDesc(memberId, pageable);
+        }
+        return transactionRepository
+                .findByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
+                        memberId, type.trim(), pageable);
     }
 
     @Override
@@ -246,8 +256,14 @@ public class FinancialServiceImpl implements FinancialService {
     }
 
     @Override
-    public void getAllTransactions(int page, String type) {
-        // TODO: Implement UC-14.3.
+    @Transactional(readOnly = true)
+    public Page<Transaction> getAllTransactions(int page, String type) {
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), 12);
+        if (type == null || type.trim().isEmpty()) {
+            return transactionRepository.findAllByOrderByTransactionDateDesc(pageable);
+        }
+        return transactionRepository.findByTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
+                type.trim(), pageable);
     }
 
     @Override
@@ -363,6 +379,18 @@ public class FinancialServiceImpl implements FinancialService {
         } catch (Exception ignored) {
             return DEFAULT_BORROW_FEE_PER_BOOK;
         }
+    }
+
+    private int calculateBorrowDays(BorrowDetail detail) {
+        LocalDateTime start = detail.getBorrow() == null ? null : detail.getBorrow().getBorrowDate();
+        LocalDateTime end = detail.getDueDate();
+        if (start == null || end == null || !end.isAfter(start)) {
+            return DEFAULT_BORROW_FEE_DAYS;
+        }
+
+        long hours = Duration.between(start, end).toHours();
+        long days = (hours + 23) / 24;
+        return (int) Math.max(days, 1);
     }
 
     private BigDecimal getReservationDepositAmount() {

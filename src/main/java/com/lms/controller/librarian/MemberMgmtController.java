@@ -148,6 +148,24 @@ public class MemberMgmtController {
         return "redirect:/librarian/members";
     }
 
+    @PostMapping("/members/status/{id}")
+    public String changeMemberStatus(
+            @PathVariable Integer id,
+            @RequestParam String status,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            RedirectAttributes redirectAttributes) {
+        try {
+            memberService.changeMemberStatus(id, status);
+            redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        redirectAttributes.addAttribute("page", Math.max(page, 0));
+        redirectAttributes.addAttribute("keyword", keyword);
+        return "redirect:/librarian/members";
+    }
+
     @GetMapping("/members/fines")
     public String manageFines(@RequestParam(required = false, defaultValue = "") String memberKeyword,
                               Model model,
@@ -179,10 +197,7 @@ public class MemberMgmtController {
             @RequestParam(required = false) String type,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        PageRequest pageable = PageRequest.of(page, 12);
-        Page<Transaction> transactionPage = (type == null || type.isBlank())
-                ? transactionRepository.findAllByOrderByTransactionDateDesc(pageable)
-                : transactionRepository.findByTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(type.trim(), pageable);
+        Page<Transaction> transactionPage = financialService.getAllTransactions(page, type);
 
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("transactions", transactionPage.getContent());

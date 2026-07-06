@@ -147,6 +147,39 @@
                                         th:data-bs-target="${'#deleteMemberModal' + account.accountId}">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status != 'Blocked'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.accountId}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Blocked">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning ms-1"
+                                            onclick="return confirm('Khóa tài khoản thành viên này?')">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status != 'Active'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.accountId}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Active">
+                                        <button type="submit" class="btn btn-sm btn-outline-success ms-1"
+                                            onclick="return confirm('Kích hoạt lại tài khoản thành viên này?')">
+                                            <i class="bi bi-unlock-fill"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status == 'Active'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.accountId}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Inactive">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary ms-1"
+                                            onclick="return confirm('Ngưng hoạt động tài khoản thành viên này?')">
+                                            <i class="bi bi-person-dash-fill"></i>
+                                        </button>
+                                    </form>
 
                                     <!-- Update Modal -->
                                     <div class="modal fade text-start"
