@@ -108,7 +108,7 @@
             border: 1px solid #feb2b2;
         }
 
-        /* --- HỆ THỐNG NÚT BẤM (CÓ BIÊN GIÃN CÁCH) --- */
+        /* --- HỆ THỐNG NÚT BẤM --- */
         .btn-classic-primary {
             background: #8b5a2b !important;
             border: 1px solid #8b5a2b !important;
@@ -176,7 +176,7 @@
         <a th:href="@{/}" class="btn btn-classic-primary"><i class="bi bi-search me-1"></i> Mượn sách mới</a>
     </div>
 
-    <!-- Thanh Điều Hướng Tabs Điều Kiện (Đã đồng bộ) -->
+    <!-- Thanh Điều Hướng Tabs Điều Kiện -->
     <ul class="nav nav-pills nav-pills-classic mb-4" id="borrowTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <a th:href="@{/member/borrow/management(tab='borrowing')}"
@@ -206,7 +206,7 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
 
-                    <!-- ================= TAB: ĐANG MƯỢN ================= -->
+                    <!-- ================= TAB: ĐANG MƯỢN (ĐÃ NÂNG CẤP CHỨC NĂNG YÊU CẦU TRẢ) ================= -->
                     <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'borrowing' || activeTab == null}">
                         <thead>
                         <tr>
@@ -245,7 +245,7 @@
                                     <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-success">Đang mượn</span>
                                     <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger">Quá hạn</span>
                                     <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt mượn</span>
-                                    <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status">Chờ duyệt trả</span>
+                                    <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status" style="background-color: #edf2f7; color: #4a5568; border-color: #cbd5e0;">Chờ duyệt trả</span>
 
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="'(Còn ' + ${item.daysLeft} + ' ngày)'"></small>
                                 </div>
@@ -257,13 +257,23 @@
                                 </div>
                             </td>
                             <td class="text-end pe-4">
-                                <button class="btn btn-classic-outline" onclick="alert('Chức năng gia hạn đang được phát triển!')"><i class="bi bi-clock-history me-1"></i>Gia hạn</button>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <!-- Nút gửi yêu cầu trả sách -->
+                                    <form th:action="@{/member/borrow/return/{detailId}(detailId=${item.id})}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-warning">Trả sách</button>
+                                    </form>
+
+                                    <!-- Hiển thị nhãn khi đang chờ thủ thư xử lý -->
+                                    <span th:if="${item.status == 'Return_Pending'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
+
+                                    <button th:if="${item.status == 'Borrowed'}" class="btn btn-classic-outline" onclick="alert('Chức năng gia hạn đang được phát triển!')"><i class="bi bi-clock-history me-1"></i>Gia hạn</button>
+                                </div>
                             </td>
                         </tr>
                         </tbody>
                     </table>
 
-                    <!-- ================= TAB: ĐÃ ĐẶT TRƯỚC ================= -->
+                    <!-- ================= TAB: ĐÃ ĐẶT TRƯỚC (ĐÃ NÂNG CẤP HỦY ĐẶT TRƯỚC) ================= -->
                     <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'reserved'}">
                         <thead>
                         <tr>
@@ -276,7 +286,7 @@
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(booksData)}">
-                            <td colspan="5" class="text-center py-4 text-muted fst-italic">Không có sách đặt trước nào.</td>
+                            <td colspan="5" class="text-center py-4 text-muted fst-italic">Không có sách đặt trước nào đang hoạt động.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
@@ -293,13 +303,16 @@
                             <td><strong class="text-dark" th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">21/11/2026</strong></td>
                             <td>
                                 <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ chuẩn bị</span>
-                                <span th:if="${item.status == 'Ready'}" class="badge badge-classic-status badge-classic-success"><i class="bi bi-bell me-1"></i>Đang chờ lấy</span>
+                                <span th:if="${item.status == 'Active' || item.status == 'Ready'}" class="badge badge-classic-status badge-classic-success"><i class="bi bi-bell me-1"></i>Đã phê duyệt (Chờ lấy)</span>
                                 <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status badge-classic-danger">Đã hủy</span>
                                 <span th:if="${item.status == 'Completed'}" class="badge badge-classic-status">Đã nhận sách</span>
                             </td>
                             <td class="text-end pe-4">
-                                <button th:if="${item.status == 'Pending' || item.status == 'Ready'}" class="btn btn-classic-danger-outline" onclick="alert('Đã gửi yêu cầu hủy đặt sách!')"><i class="bi bi-x-circle me-1"></i>Hủy đặt</button>
-                                <span th:unless="${item.status == 'Pending' || item.status == 'Ready'}" class="text-muted">-</span>
+                                <!-- Form thực hiện Hủy đặt trước -->
+                                <form th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${item.id})}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Hủy đặt</button>
+                                </form>
+                                <span th:unless="${item.status == 'Active' || item.status == 'Pending' || item.status == 'Ready'}" class="text-muted">-</span>
                             </td>
                         </tr>
                         </tbody>

@@ -299,10 +299,9 @@
                                 <span class="badge" style="background: #e6f2e8; color: #2f6b3f;" th:text="'Hàng đợi: ' + ${reserve.queuePosition}">Vị trí: 1</span>
                             </td>
                             <td class="text-end pe-3">
-                                <form th:action="@{/librarian/borrow/approve-reservation/{id}(id=${reserve.id})}" method="post" class="m-0">
-                                    <button type="submit" class="btn btn-sm btn-classic py-1 px-3" onclick="return confirm('Xác nhận cấp quyền mượn sách thuộc danh mục đặt giữ chỗ này?')">
-                                        Cấp mượn
-                                    </button>
+                                <!-- Sửa lại đường dẫn form phê duyệt đặt trước khớp với Router Controller của Librarian -->
+                                <form th:action="@{/librarian/reservations/approve/{id}(id=${reserve.id})}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-xs btn-success">Cấp mượn</button>
                                 </form>
                             </td>
                         </tr>
