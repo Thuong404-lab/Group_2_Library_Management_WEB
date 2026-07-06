@@ -1,4 +1,5 @@
 package com.lms.repository;
+
 import com.lms.entity.Reservation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
     long countByStatusIgnoreCase(String status);
 
     List<Reservation> findByMemberMemberIdOrderByReservationDateDesc(Integer memberId);
+
+    List<Reservation> findByMember_MemberIdOrderByReservationDateDesc(Integer memberId);
 
     @Query("""
             select case when count(r) > 0 then true else false end

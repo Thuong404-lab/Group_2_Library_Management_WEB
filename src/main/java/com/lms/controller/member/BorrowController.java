@@ -1,21 +1,27 @@
 package com.lms.controller.member;
 
+import com.lms.dto.response.MemberBorrowDTO;
 import com.lms.entity.Book;
 import com.lms.entity.Member;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.WalletRepository;
+import com.lms.service.BookService;
 import com.lms.service.BorrowService;
 import com.lms.service.MemberFavoriteService;
-import com.lms.service.BookService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/member/borrow")
@@ -45,15 +51,42 @@ public class BorrowController {
         this.systemSettingRepository = systemSettingRepository;
     }
 
-    // UC-6.0: Hiển thị form tạo yêu cầu mượn sách trực tuyến
+    @GetMapping("/management")
+    public String viewBorrowManagement(@RequestParam(value = "tab", defaultValue = "borrowing") String tab,
+                                       Principal principal,
+                                       Model model) {
+        if (principal == null) return "redirect:/login";
+
+        String username = principal.getName();
+        model.addAttribute("activeTab", tab);
+
+        List<MemberBorrowDTO> currentBorrows = borrowService.getMemberCurrentBorrows(username);
+        List<MemberBorrowDTO> reservations = borrowService.getMemberReservations(username);
+
+        model.addAttribute("borrowingCount", currentBorrows.size());
+        model.addAttribute("reservationCount", reservations.size());
+
+        if ("reserved".equalsIgnoreCase(tab)) {
+            model.addAttribute("booksData", reservations);
+        } else if ("history".equalsIgnoreCase(tab)) {
+            model.addAttribute("booksData", borrowService.getMemberOneMonthHistory(username));
+        } else {
+            model.addAttribute("booksData", currentBorrows);
+        }
+
+        return "member/borrow";
+    }
+
     @GetMapping("/create")
-    public String showCreateRequestForm(@RequestParam(value = "bookId", required = false) Integer bookId, Model model, Principal principal,
+    public String showCreateRequestForm(@RequestParam(value = "bookId", required = false) Integer bookId,
+                                        Model model,
+                                        Principal principal,
                                         RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
 
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn sách trước khi gửi yêu cầu mượn.");
-            return "redirect:/member/dashboard";
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui long chon sach truoc khi gui yeu cau muon.");
+            return "redirect:/";
         }
 
         model.addAttribute("currentMemberName", principal.getName());
@@ -63,13 +96,12 @@ public class BorrowController {
             Book book = bookService.findBookById(bookId);
             model.addAttribute("selectedBook", book);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");
-            return "redirect:/member/dashboard";
+            redirectAttributes.addFlashAttribute("errorMessage", "Sach khong hop le. Vui long thu lai.");
+            return "redirect:/";
         }
         return "member/borrow-create";
     }
 
-    // UC-6.0: Xử lý submit đơn đăng ký mượn trực tuyến (Lưu trạng thái Pending vào bảng Borrows)
     @PostMapping("/request/submit")
     public String submitBorrowRequest(@RequestParam(value = "bookId", required = false) Integer bookId,
                                       @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
@@ -77,20 +109,19 @@ public class BorrowController {
                                       RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa chọn sách để gửi yêu cầu mượn.");
-            return "redirect:/member/dashboard";
+            redirectAttributes.addFlashAttribute("errorMessage", "Ban chua chon sach de gui yeu cau muon.");
+            return "redirect:/";
         }
         try {
             borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của bạn đã được gửi tới Thủ thư và đang chờ phê duyệt.");
-            return "redirect:/member/dashboard?success=borrow";
+            redirectAttributes.addFlashAttribute("successMessage", "Dang ky thanh cong! Yeu cau cua ban dang cho phe duyet.");
+            return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
-            return "redirect:/member/borrow/create?bookId=" + (bookId != null ? bookId : "") + "&error=borrow";
+            redirectAttributes.addFlashAttribute("errorMessage", "Khong the tao yeu cau muon: " + e.getMessage());
+            return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
         }
     }
 
-    // UC-6.2: Gọi xử lý đặt giữ chỗ sách trực tuyến (Reserve) -> Form trung gian
     @GetMapping("/reserve/form/{bookId}")
     public String showReserveForm(@PathVariable Integer bookId,
                                   Model model,
@@ -113,45 +144,44 @@ public class BorrowController {
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
             return "member/reserve-confirm";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hiển thị phiếu cọc: " + e.getMessage());
-            return "redirect:/member/dashboard";
+            redirectAttributes.addFlashAttribute("errorMessage", "Khong the hien thi phieu coc: " + e.getMessage());
+            return "redirect:/member/borrow/management?tab=reserved";
         }
     }
 
-    // FIX LỖI 1: Thực hiện gửi yêu cầu đặt chỗ lưu trực tiếp vào bảng Reservations (Không lỗi 500)
     @PostMapping("/reserve/{bookId}")
-    public String reserveBook(@PathVariable Integer bookId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String reserveBook(@PathVariable Integer bookId,
+                              Principal principal,
+                              RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
             memberFavoriteService.reserveBook(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt trước sách và thanh toán tiền cọc thành công.");
-            return "redirect:/member/dashboard?success=reserve";
+            redirectAttributes.addFlashAttribute("successMessage", "Dat truoc sach va thanh toan tien coc thanh cong.");
+            return "redirect:/member/borrow/management?tab=reserved";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể đặt trước sách: " + e.getMessage());
-            return "redirect:/member/dashboard?error=reserve";
+            redirectAttributes.addFlashAttribute("errorMessage", "Khong the dat truoc sach: " + e.getMessage());
+            return "redirect:/member/borrow/management?tab=reserved";
         }
     }
 
-    // UC-7.0: Độc giả gửi yêu cầu trả sách trực tuyến ra quầy
     @PostMapping("/return/{loanId}")
-    public String returnBook(@PathVariable("loanId") Integer loanId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String returnBook(@PathVariable("loanId") Integer loanId,
+                             Principal principal,
+                             RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
             borrowService.updateStatus(loanId, "Return_Pending");
-            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi đi! Vui lòng đợi thủ thư tiếp nhận vật lý tại quầy.");
-            return "redirect:/member/dashboard?success=return";
+            redirectAttributes.addFlashAttribute("successMessage", "Yeu cau tra sach da duoc gui di thanh cong!");
+            return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý trả sách: " + e.getMessage());
-            return "redirect:/member/dashboard";
+            redirectAttributes.addFlashAttribute("errorMessage", "Loi khi xu ly tra sach: " + e.getMessage());
+            return "redirect:/member/borrow/management?tab=borrowing";
         }
     }
 
     @GetMapping("/history")
-    public String viewBorrowingHistory(Principal principal, Model model) {
-        if (principal != null) {
-            model.addAttribute("historyBorrows", borrowService.getAllBorrowHistoryByMember(principal.getName()));
-        }
-        return "member/borrow-history";
+    public String viewBorrowingHistory() {
+        return "redirect:/member/borrow/management?tab=history";
     }
 
     @GetMapping("/reservations")
@@ -174,17 +204,21 @@ public class BorrowController {
     }
 
     @GetMapping("/current")
-    public String viewCurrentBorrows() { return "member/current-borrows"; }
+    public String viewCurrentBorrows() {
+        return "redirect:/member/borrow/management?tab=borrowing";
+    }
 
     @GetMapping("/returns")
-    public String viewPendingReturns() { return "member/pending-returns"; }
+    public String viewPendingReturns() {
+        return "redirect:/member/borrow/management?tab=borrowing";
+    }
 
     private Member getCurrentMember(Principal principal) {
         String usernameOrEmail = principal.getName();
         return memberRepository.findByUserEmail(usernameOrEmail)
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
                 .or(() -> memberRepository.findByAccountUsername(usernameOrEmail))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên hiện tại."));
+                .orElseThrow(() -> new RuntimeException("Khong tim thay thanh vien hien tai."));
     }
 
     private BigDecimal getDepositAmount() {
