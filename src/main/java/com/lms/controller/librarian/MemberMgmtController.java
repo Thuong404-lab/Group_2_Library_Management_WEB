@@ -33,6 +33,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Librarian member-management UC flows maintained by Pham Kien Quoc:
+ * UC-14.1, UC-14.3, UC-21.1, and wallet top-up desk integration.
+ */
 @Controller
 @RequestMapping("/librarian")
 public class MemberMgmtController {

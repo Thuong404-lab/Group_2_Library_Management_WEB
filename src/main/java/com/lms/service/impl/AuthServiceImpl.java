@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Password reset flow maintained by Pham Kien Quoc for UC-21.2.
+ */
 @Service
 public class AuthServiceImpl implements AuthService {
 

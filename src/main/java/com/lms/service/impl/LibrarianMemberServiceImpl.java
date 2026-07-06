@@ -27,6 +27,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Member account list, update, deactivate, and status changes maintained by
+ * Pham Kien Quoc for librarian account-management use cases.
+ */
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 

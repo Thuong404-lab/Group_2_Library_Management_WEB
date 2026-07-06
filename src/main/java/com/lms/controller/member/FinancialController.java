@@ -32,6 +32,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Member financial UC flows maintained by Pham Kien Quoc:
+ * UC-8.1, UC-8.2, UC-8.3, UC-8.4, UC-8.5.
+ */
 @Controller
 @RequestMapping("/member/financial")
 public class FinancialController {

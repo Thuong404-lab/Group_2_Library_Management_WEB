@@ -30,6 +30,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Financial transaction rules maintained by Pham Kien Quoc for member fees,
+ * fines, deposits, top-ups, and librarian transaction history.
+ */
 @Service
 public class FinancialServiceImpl implements FinancialService {
     private static final String BORROW_FEE_TYPE = "BORROW_FEE";
