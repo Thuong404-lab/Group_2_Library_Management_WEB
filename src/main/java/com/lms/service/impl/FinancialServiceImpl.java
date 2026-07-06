@@ -48,6 +48,8 @@ public class FinancialServiceImpl implements FinancialService {
     private static final BigDecimal DEFAULT_DEPOSIT_AMOUNT = BigDecimal.valueOf(50000);
     private static final int DEFAULT_BORROW_FEE_DAYS = 10;
     private static final BigDecimal DEFAULT_BORROW_FEE_PER_BOOK = BigDecimal.valueOf(5000);
+    private static final int MEMBER_TRANSACTION_PAGE_SIZE = 10;
+    private static final int LIBRARIAN_TRANSACTION_PAGE_SIZE = 12;
 
     private final TransactionRepository transactionRepository;
     private final WalletRepository walletRepository;
@@ -136,21 +138,12 @@ public class FinancialServiceImpl implements FinancialService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
 
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
-        if (currentBalance.compareTo(feeAmount) < 0) {
-            throw new RuntimeException("Số dư ví không đủ để thanh toán phí mượn.");
-        }
+        ensureSufficientBalance(currentBalance, feeAmount, "phí mượn");
 
         wallet.setBalance(currentBalance.subtract(feeAmount));
         walletRepository.save(wallet);
 
-        Transaction transaction = new Transaction();
-        transaction.setWallet(wallet);
-        transaction.setBorrow(borrow);
-        transaction.setTransactionType(BORROW_FEE_TYPE);
-        transaction.setAmount(feeAmount.negate());
-        transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setStatus(COMPLETED_STATUS);
-        transactionRepository.save(transaction);
+        saveWalletTransaction(wallet, borrow, BORROW_FEE_TYPE, feeAmount.negate(), COMPLETED_STATUS);
     }
 
     @Override
@@ -202,13 +195,7 @@ public class FinancialServiceImpl implements FinancialService {
         wallet.setBalance(currentBalance.subtract(depositAmount));
         walletRepository.save(wallet);
 
-        Transaction transaction = new Transaction();
-        transaction.setWallet(wallet);
-        transaction.setTransactionType(DEPOSIT_TYPE);
-        transaction.setAmount(depositAmount.negate());
-        transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setStatus(COMPLETED_STATUS);
-        transactionRepository.save(transaction);
+        saveWalletTransaction(wallet, null, DEPOSIT_TYPE, depositAmount.negate(), COMPLETED_STATUS);
 
         reservation.setStatus("Deposit_Paid");
         reservationRepository.save(reservation);
@@ -223,7 +210,7 @@ public class FinancialServiceImpl implements FinancialService {
     @Override
     @Transactional(readOnly = true)
     public Page<Transaction> getTransactionHistory(Integer memberId, int page, String type) {
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), 10);
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), MEMBER_TRANSACTION_PAGE_SIZE);
         if (type == null || type.trim().isEmpty()) {
             return transactionRepository.findByWalletMemberMemberIdOrderByTransactionDateDesc(memberId, pageable);
         }
@@ -242,13 +229,12 @@ public class FinancialServiceImpl implements FinancialService {
         var wallet = walletRepository.findByMemberMemberId(memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
 
-        Transaction transaction = new Transaction();
-        transaction.setWallet(wallet);
-        transaction.setTransactionType(FINE_TYPE);
-        transaction.setAmount(BigDecimal.valueOf(amount).abs().negate());
-        transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setStatus("Pending");
-        transactionRepository.save(transaction);
+        Transaction transaction = saveWalletTransaction(
+                wallet,
+                null,
+                FINE_TYPE,
+                BigDecimal.valueOf(amount).abs().negate(),
+                "Pending");
 
         Member member = wallet.getMember();
         createMemberNotification(
@@ -262,7 +248,7 @@ public class FinancialServiceImpl implements FinancialService {
     @Override
     @Transactional(readOnly = true)
     public Page<Transaction> getAllTransactions(int page, String type) {
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), 12);
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), LIBRARIAN_TRANSACTION_PAGE_SIZE);
         if (type == null || type.trim().isEmpty()) {
             return transactionRepository.findAllByOrderByTransactionDateDesc(pageable);
         }
@@ -289,13 +275,7 @@ public class FinancialServiceImpl implements FinancialService {
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
-        Transaction transaction = new Transaction();
-        transaction.setWallet(wallet);
-        transaction.setTransactionType(TOP_UP_TYPE);
-        transaction.setAmount(topUpAmount);
-        transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setStatus(COMPLETED_STATUS);
-        transactionRepository.save(transaction);
+        saveWalletTransaction(wallet, null, TOP_UP_TYPE, topUpAmount, COMPLETED_STATUS);
 
         createMemberNotification(
                 member,
@@ -341,6 +321,21 @@ public class FinancialServiceImpl implements FinancialService {
         wallet.setMember(member);
         wallet.setBalance(BigDecimal.ZERO);
         return walletRepository.save(wallet);
+    }
+
+    private Transaction saveWalletTransaction(Wallet wallet,
+                                              Borrow borrow,
+                                              String transactionType,
+                                              BigDecimal amount,
+                                              String status) {
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setBorrow(borrow);
+        transaction.setTransactionType(transactionType);
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setStatus(status);
+        return transactionRepository.save(transaction);
     }
 
     private void createMemberNotification(Member member, String title, String content) {

@@ -39,11 +39,11 @@ import java.util.List;
 @Controller
 @RequestMapping("/member/financial")
 public class FinancialController {
-    private static final int BORROW_FEE_DAYS = 10;
-    private static final String BORROW_FEE_TYPE = "BORROW_FEE";
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
-    private static final List<String> TOP_UP_NOTIFICATION_KEYWORDS = List.of("nap tien", "nạp tiền");
+    private static final String TOP_UP_NOTIFICATION_KEYWORD = "nạp tiền";
+    private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int MARK_ALL_READ_LIMIT = 1000;
 
     private final TransactionRepository transactionRepository;
     private final MemberNotificationRepository memberNotificationRepository;
@@ -93,31 +93,12 @@ public class FinancialController {
     @GetMapping("/fees")
     public String viewBorrowingFees(Principal principal, Model model) {
         Member member = getCurrentMember(principal);
-        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
-                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
-                .orElse(BigDecimal.ZERO);
-
         List<BorrowFeeViewData> pendingFees = new ArrayList<>();
         List<BorrowFeeViewData> payableFees = new ArrayList<>();
         List<BorrowFeeViewData> paidFees = new ArrayList<>();
+        loadBorrowingFeeGroups(member.getMemberId(), pendingFees, payableFees, paidFees);
 
-        List<Borrow> borrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(member.getMemberId());
-        for (Borrow borrow : borrows) {
-            BorrowFeeViewData feeViewData = buildBorrowFeeViewData(member.getMemberId(), borrow);
-            if (feeViewData == null) {
-                continue;
-            }
-
-            if ("Paid".equalsIgnoreCase(feeViewData.getPaymentStatus())) {
-                paidFees.add(feeViewData);
-            } else if ("Pending".equalsIgnoreCase(feeViewData.getBorrowStatus())) {
-                pendingFees.add(feeViewData);
-            } else if (feeViewData.isPayable()) {
-                payableFees.add(feeViewData);
-            }
-        }
-
-        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("walletBalance", getWalletBalance(member.getMemberId()));
         model.addAttribute("pendingFees", pendingFees);
         model.addAttribute("payableFees", payableFees);
         model.addAttribute("paidFees", paidFees);
@@ -165,21 +146,11 @@ public class FinancialController {
                                          Model model) {
         Member member = getCurrentMember(principal);
         Page<Transaction> transactionPage = financialService.getTransactionHistory(member.getMemberId(), page, type);
+        List<Transaction> unpaidFines = getUnpaidFines(member.getMemberId());
 
-        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
-                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
-                .orElse(BigDecimal.ZERO);
-        List<Transaction> unpaidFines = transactionRepository.findUnpaidFineTransactions(
-                member.getMemberId(), List.of(FINE_TYPE, DAMAGE_FEE_TYPE));
-        BigDecimal totalUnpaidFines = unpaidFines.stream()
-                .map(transaction -> transaction.getAmount() == null
-                        ? BigDecimal.ZERO
-                        : transaction.getAmount().abs())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("walletBalance", getWalletBalance(member.getMemberId()));
         model.addAttribute("unpaidFines", unpaidFines);
-        model.addAttribute("totalUnpaidFines", totalUnpaidFines);
+        model.addAttribute("totalUnpaidFines", totalAbsAmount(unpaidFines));
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("transactions", transactionPage.getContent());
         model.addAttribute("currentPage", page);
@@ -195,8 +166,8 @@ public class FinancialController {
         Member member = getCurrentMember(principal);
         Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
                 member.getMemberId(),
-                "nạp tiền",
-                PageRequest.of(Math.max(page, 0), 10));
+                TOP_UP_NOTIFICATION_KEYWORD,
+                pageRequest(page, DEFAULT_PAGE_SIZE));
 
         model.addAttribute("notificationPage", notificationPage);
         model.addAttribute("notifications", notificationPage.getContent());
@@ -228,8 +199,8 @@ public class FinancialController {
         Member member = getCurrentMember(principal);
         Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
                 member.getMemberId(),
-                "nạp tiền",
-                PageRequest.of(0, 1000));
+                TOP_UP_NOTIFICATION_KEYWORD,
+                pageRequest(0, MARK_ALL_READ_LIMIT));
 
         for (MemberNotification memberNotification : notificationPage.getContent()) {
             if (!Boolean.TRUE.equals(memberNotification.getIsRead())) {
@@ -241,6 +212,54 @@ public class FinancialController {
 
         redirectAttributes.addFlashAttribute("success", "Đã đánh dấu tất cả thông báo nạp tiền là đã đọc.");
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
+    }
+
+    private void loadBorrowingFeeGroups(Integer memberId,
+                                        List<BorrowFeeViewData> pendingFees,
+                                        List<BorrowFeeViewData> payableFees,
+                                        List<BorrowFeeViewData> paidFees) {
+        List<Borrow> borrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
+        for (Borrow borrow : borrows) {
+            BorrowFeeViewData feeViewData = buildBorrowFeeViewData(memberId, borrow);
+            if (feeViewData != null) {
+                addToFeeGroup(feeViewData, pendingFees, payableFees, paidFees);
+            }
+        }
+    }
+
+    private void addToFeeGroup(BorrowFeeViewData feeViewData,
+                               List<BorrowFeeViewData> pendingFees,
+                               List<BorrowFeeViewData> payableFees,
+                               List<BorrowFeeViewData> paidFees) {
+        if ("Paid".equalsIgnoreCase(feeViewData.getPaymentStatus())) {
+            paidFees.add(feeViewData);
+        } else if ("Pending".equalsIgnoreCase(feeViewData.getBorrowStatus())) {
+            pendingFees.add(feeViewData);
+        } else if (feeViewData.isPayable()) {
+            payableFees.add(feeViewData);
+        }
+    }
+
+    private BigDecimal getWalletBalance(Integer memberId) {
+        return walletRepository.findByMemberMemberId(memberId)
+                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private List<Transaction> getUnpaidFines(Integer memberId) {
+        return transactionRepository.findUnpaidFineTransactions(memberId, List.of(FINE_TYPE, DAMAGE_FEE_TYPE));
+    }
+
+    private BigDecimal totalAbsAmount(List<Transaction> transactions) {
+        return transactions.stream()
+                .map(transaction -> transaction.getAmount() == null
+                        ? BigDecimal.ZERO
+                        : transaction.getAmount().abs())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private PageRequest pageRequest(int page, int size) {
+        return PageRequest.of(Math.max(page, 0), size);
     }
 
     private BorrowFeeViewData buildBorrowFeeViewData(Integer memberId, Borrow borrow) {

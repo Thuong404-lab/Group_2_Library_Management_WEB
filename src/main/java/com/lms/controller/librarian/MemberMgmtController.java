@@ -41,6 +41,7 @@ import java.util.Map;
 @RequestMapping("/librarian")
 public class MemberMgmtController {
     private static final String TOP_UP_TYPE = "TOP_UP";
+    private static final int MEMBER_SEARCH_LIMIT = 5;
 
     private final LibrarianMemberService memberService;
     private final FinancialService financialService;
@@ -215,19 +216,7 @@ public class MemberMgmtController {
     public String showTopupDesk(Model model,
                                 @RequestParam(required = false, defaultValue = "") String memberKeyword,
                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
-        LocalDate today = LocalDate.now();
-        List<Transaction> todayTopups = transactionRepository.findByTransactionTypeAndDateRange(
-                TOP_UP_TYPE,
-                today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay());
-        BigDecimal todayTotal = transactionRepository.sumAmountByTransactionTypeAndDateRange(
-                TOP_UP_TYPE,
-                today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay());
-
-        model.addAttribute("todayTopups", todayTopups);
-        model.addAttribute("todayTopupCount", todayTopups.size());
-        model.addAttribute("todayTopupTotal", todayTotal == null ? BigDecimal.ZERO : todayTotal);
+        addTopupDeskStats(model);
         model.addAttribute("recentTopups", transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
         model.addAttribute("memberKeyword", memberKeyword);
         model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
@@ -250,6 +239,22 @@ public class MemberMgmtController {
         }
 
         return "redirect:/librarian/members/topup";
+    }
+
+    private void addTopupDeskStats(Model model) {
+        LocalDate today = LocalDate.now();
+        List<Transaction> todayTopups = transactionRepository.findByTransactionTypeAndDateRange(
+                TOP_UP_TYPE,
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay());
+        BigDecimal todayTotal = transactionRepository.sumAmountByTransactionTypeAndDateRange(
+                TOP_UP_TYPE,
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay());
+
+        model.addAttribute("todayTopups", todayTopups);
+        model.addAttribute("todayTopupCount", todayTopups.size());
+        model.addAttribute("todayTopupTotal", todayTotal == null ? BigDecimal.ZERO : todayTotal);
     }
 
     private Map<String, String> bindingErrors(BindingResult bindingResult) {
@@ -299,7 +304,7 @@ public class MemberMgmtController {
                         normalizedKeyword,
                         normalizedKeyword,
                         normalizedKeyword,
-                        PageRequest.of(0, 5))
+                        PageRequest.of(0, MEMBER_SEARCH_LIMIT))
                 .getContent()
                 .forEach(member -> memberMap.putIfAbsent(member.getMemberId(), member));
 
