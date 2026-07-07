@@ -9,6 +9,7 @@ import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.BookService;
 import com.lms.service.BorrowService;
+import com.lms.service.LoanService;
 import com.lms.service.MemberFavoriteService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,8 +29,9 @@ import java.util.List;
 public class BorrowController {
 
     private final BorrowService borrowService;
-    private final MemberFavoriteService memberFavoriteService;
     private final BookService bookService;
+    private final LoanService loanService;
+    private final MemberFavoriteService memberFavoriteService;
     private final MemberRepository memberRepository;
     private final ReservationRepository reservationRepository;
     private final WalletRepository walletRepository;
@@ -38,13 +40,15 @@ public class BorrowController {
     public BorrowController(BorrowService borrowService,
                             MemberFavoriteService memberFavoriteService,
                             BookService bookService,
+                            LoanService loanService,
                             MemberRepository memberRepository,
                             ReservationRepository reservationRepository,
                             WalletRepository walletRepository,
                             SystemSettingRepository systemSettingRepository) {
         this.borrowService = borrowService;
-        this.memberFavoriteService = memberFavoriteService;
         this.bookService = bookService;
+        this.loanService = loanService;
+        this.memberFavoriteService = memberFavoriteService;
         this.memberRepository = memberRepository;
         this.reservationRepository = reservationRepository;
         this.walletRepository = walletRepository;
@@ -149,6 +153,7 @@ public class BorrowController {
         }
     }
 
+    // FIX VẤN ĐỀ 4: Chuyển hướng xử lý qua borrowService.memberSubmitReservationRequest để validate chặt chẽ
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
                               Principal principal,
@@ -164,19 +169,44 @@ public class BorrowController {
         }
     }
 
+    // FIX VẤN ĐỀ 5: Thêm endpoint xử lý Hủy đặt trước sách từ Member
+    @PostMapping("/cancel-reservation/{reservationId}")
+    public String cancelReservation(@PathVariable Integer reservationId, Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            borrowService.memberCancelReservation(principal.getName(), reservationId);
+            redirectAttributes.addFlashAttribute("successMessage", "Hủy yêu cầu đặt giữ chỗ thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hủy đơn đặt chỗ: " + e.getMessage());
+        }
+        return "redirect:/member/borrow/management?tab=reserved";
+    }
+
     @PostMapping("/return/{loanId}")
     public String returnBook(@PathVariable("loanId") Integer loanId,
                              Principal principal,
                              RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            borrowService.updateStatus(loanId, "Return_Pending");
-            redirectAttributes.addFlashAttribute("successMessage", "Yeu cau tra sach da duoc gui di thanh cong!");
+            borrowService.memberSubmitReturnRequest(principal.getName(), loanId);
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi tới Thủ thư thành công.");
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Loi khi xu ly tra sach: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý gửi yêu cầu: " + e.getMessage());
             return "redirect:/member/borrow/management?tab=borrowing";
         }
+    }
+
+    @PostMapping("/renew/{borrowDetailId}")
+    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            loanService.processRenewal(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn thành công thêm 7 ngày!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gia hạn: " + e.getMessage());
+        }
+        return "redirect:/member/borrow";
     }
 
     @GetMapping("/history")

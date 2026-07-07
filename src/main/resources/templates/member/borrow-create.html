@@ -3,49 +3,120 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Xác nhận đăng ký mượn sách</title>
+    <title>Xac nhan dang ky muon sach</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f7f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card-classic {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+        .card-header-classic {
+            background-color: #8b5a2b !important;
+            color: #ffffff !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.2);
+        }
+        .font-playfair {
+            font-family: 'Playfair Display', serif;
+        }
+        .btn-classic-primary {
+            background: #8b5a2b !important;
+            border: 1px solid #8b5a2b !important;
+            color: #ffffff !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+            margin-right: 14px !important;
+        }
+        .btn-classic-primary:hover {
+            background: #74481f !important;
+            border-color: #74481f !important;
+            color: #ffffff !important;
+        }
+        .btn-classic-outline {
+            background: transparent !important;
+            border: 1px solid rgba(139, 90, 43, 0.4) !important;
+            color: #8b5a2b !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+            margin-right: 14px !important;
+        }
+        .btn-classic-outline:hover {
+            background: rgba(139, 90, 43, 0.08) !important;
+            border-color: #8b5a2b !important;
+            color: #74481f !important;
+        }
+    </style>
 </head>
 <body>
-<div layout:fragment="content" class="container py-4" style="max-width: 650px;">
-
+<div layout:fragment="content" class="container py-5" style="max-width: 650px;">
     <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Lỗi</span>
+        <span th:text="${errorMessage}">Loi</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
     <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Thành công</span>
+        <span th:text="${successMessage}">Thanh cong</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white py-3">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text-fill me-2"></i>Phiếu Đăng Ký Mượn Sách Trực Tuyến</h5>
+    <div class="card card-classic shadow-sm">
+        <div class="card-header card-header-classic py-3 text-center">
+            <h5 class="mb-0 fw-bold font-playfair">
+                <i class="bi bi-file-earmark-text me-2"></i>Phieu Dang Ky Muon Sach Truc Tuyen
+            </h5>
         </div>
-        <div class="card-body p-4">
+        <div class="card-body p-4" style="background-color: #fdfbf7;">
             <form th:action="@{/member/borrow/request/submit}" method="post">
                 <input type="hidden" name="bookId" th:value="${selectedBookId}" />
 
-                <div class="mb-3 bg-light p-3 rounded text-muted">
-                    <small class="d-block fw-bold text-uppercase">Tài khoản đăng ký:</small>
-                    <span class="text-dark fw-semibold" th:text="${currentMemberName}">Username</span>
+                <div class="mb-4 p-3 rounded-2 text-muted"
+                     style="background-color: rgba(139, 90, 43, 0.05); border: 1px dashed rgba(139, 90, 43, 0.3);">
+                    <small class="d-block fw-bold text-uppercase mb-1"
+                           style="color: #4a3b32; letter-spacing: 0.5px;">Tai khoan dang ky:</small>
+                    <span class="text-dark fw-semibold fs-5"
+                          style="font-family: 'Playfair Display', serif;"
+                          th:text="${currentMemberName}">Username</span>
+                </div>
+
+                <div class="mb-4" th:if="${selectedBook != null}">
+                    <label class="form-label fw-bold mb-2" style="color: #4a3b32;">Sach muon</label>
+                    <div class="p-3 rounded-2 bg-white border">
+                        <div class="fw-bold" th:text="${selectedBook.title}">Ten sach</div>
+                        <small class="text-muted" th:text="${selectedBook.isbn != null ? 'ISBN: ' + selectedBook.isbn : 'Chua co ISBN'}">ISBN</small>
+                    </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Thời gian mượn mong muốn</label>
-                    <select class="form-select" name="numberOfDays">
-                        <option value="7">Mượn ngắn hạn (7 ngày)</option>
-                        <option value="14" selected>Mượn tiêu chuẩn (14 ngày)</option>
-                        <option value="30">Mượn dài hạn (30 ngày - Chỉ dành cho VIP)</option>
+                    <label class="form-label fw-bold mb-2" style="color: #4a3b32;">Thoi gian muon mong muon</label>
+                    <select class="form-control" name="numberOfDays"
+                            style="border-radius: 6px; border: 1px solid #e2e8f0; height: calc(2.25rem + 10px);">
+                        <option value="7">Muon ngan han (7 ngay)</option>
+                        <option value="14" selected>Muon tieu chuan (14 ngay)</option>
+                        <option value="30">Muon dai han (30 ngay)</option>
                     </select>
-                    <div class="form-text text-muted">Sau khi gửi, phiếu sẽ ở trạng thái chờ duyệt. Vui lòng đợi thông báo từ thủ thư.</div>
+                    <div class="form-text text-muted mt-2 fst-italic" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Sau khi gui, phieu se o trang thai cho duyet. Vui long doi thong bao xac nhan tu thu thu.
+                    </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2 border-top pt-3">
-                    <a th:href="@{/member/dashboard}" class="btn btn-light px-4">Hủy bỏ</a>
-                    <button type="submit" class="btn btn-success px-4 fw-bold">Gửi yêu cầu phê duyệt</button>
+                <div class="d-flex justify-content-end border-top pt-4 mt-2">
+                    <a th:href="@{/member/dashboard}" class="btn btn-classic-outline">Huy bo</a>
+                    <button type="submit" class="btn btn-classic-primary fw-bold" style="margin-right: 0 !important;">
+                        Gui yeu cau phe duyet
+                    </button>
                 </div>
             </form>
         </div>

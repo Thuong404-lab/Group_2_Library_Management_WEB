@@ -288,13 +288,18 @@
             </a>
             <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Mượn sách</span>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list' || activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Danh sách phiếu mượn</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/renewals}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Gia hạn sách</span>
+                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Quầy mượn sách</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/loan/returns}" class="menu-link py-2" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Trả sách</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
@@ -339,15 +344,43 @@
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/members}" class="menu-link"
-               th:classappend="${activeMenu == 'members' || activeMenu == 'users'} ? 'active'">
-                <i class="bi bi-people-fill menu-icon"></i>
-                <span class="menu-text">Quản lý người dùng</span>
+            <a href="#userMenu" data-bs-toggle="collapse" class="menu-link"
+               th:classappend="${activeMenu == 'members' || activeMenu == 'librarians' || activeMenu == 'users'} ? 'active'"
+               style="display: flex; justify-content: space-between; align-items: center;">
+                <span>
+                    <i class="bi bi-people-fill menu-icon"></i>
+                    <span class="menu-text">Quản lý người dùng</span>
+                </span>
+                <i class="bi bi-chevron-down small"></i>
             </a>
+            <ul class="collapse list-unstyled ps-4" id="userMenu"
+                th:classappend="${activeMenu == 'members' || activeMenu == 'librarians' || activeMenu == 'users'} ? 'show'">
+                <li class="menu-item mb-1">
+                    <a th:href="@{/librarian/dashboard(section='users')}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'users'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <i class="bi bi-grid-1x2 me-2"></i> Tổng quan
+                    </a>
+                </li>
+                <li class="menu-item mb-1">
+                    <a th:href="@{/librarian/members}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'members'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <i class="bi bi-people me-2"></i> Danh sách thành viên
+                    </a>
+                </li>
+                <li class="menu-item mb-1">
+                    <a th:href="@{/librarian/librarians}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'librarians'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <i class="bi bi-person-badge me-2"></i> Danh sách thủ thư
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/dashboard(section='reports')}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
+            <a th:href="@{/librarian/statistics}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
                 <i class="bi bi-graph-up menu-icon"></i>
                 <span class="menu-text">Thống kê</span>
             </a>

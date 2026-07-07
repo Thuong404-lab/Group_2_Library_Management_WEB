@@ -4,6 +4,7 @@ import java.util.List;
 
 public class BorrowRequest {
     private String memberEmail;
+    private String memberIdentifier;
     private List<String> barcodes;
     private Integer numberOfDays;
 
@@ -13,6 +14,14 @@ public class BorrowRequest {
 
     public void setMemberEmail(String memberEmail) {
         this.memberEmail = memberEmail;
+    }
+
+    public String getMemberIdentifier() {
+        return memberIdentifier;
+    }
+
+    public void setMemberIdentifier(String memberIdentifier) {
+        this.memberIdentifier = memberIdentifier;
     }
 
     public List<String> getBarcodes() {

@@ -1,0 +1,70 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"> <!-- Kế thừa từ layout gốc -->
+<head>
+    <title>Yêu cầu trả sách trực tuyến - Thư viện LMW</title>
+</head>
+<body>
+<div layout:fragment="content" class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}" class="text-classic">Sảnh chính</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Yêu cầu trả sách</li>
+                </ol>
+            </nav>
+            <h2 class="font-weight-bold mb-3" style="color: #4a3b32;">Đơn yêu cầu trả sách trực tuyến</h2>
+            <p class="text-muted">Danh sách các đơn mượn bạn đã bấm xác nhận trả sách trực tuyến và đang chờ thủ thư kiểm tra tình trạng sách vật lý.</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="vertical-align: middle;">
+                    <thead style="background-color: #8b5a2b; color: #fdfbf7;">
+                    <tr>
+                        <th class="py-3 pl-4">Mã đơn mượn</th>
+                        <th class="py-3">Tên sách / Mã vạch</th>
+                        <th class="py-3">Ngày gửi yêu cầu trả</th>
+                        <th class="py-3">Trạng thái xử lý</th>
+                        <th class="py-3 pr-4 text-right">Ghi chú</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Lặp danh sách đơn mượn có trạng thái gửi yêu cầu trả từ Controller -->
+                    <tr th:each="loan : ${returnLoans}">
+                        <td class="py-4 pl-4 font-weight-bold" style="color: #4a3b32;" th:text="'#' + ${loan.borrowId}">#1024</td>
+                        <td class="py-4">
+                            <div th:each="detail : ${loanDetailsMap.get(loan.borrowId)}">
+                                <span class="d-block font-weight-bold mb-0" th:text="${detail.book.title}">Tên sách</span>
+                                <small class="text-muted d-block mb-1" th:text="'Mã vạch: ' + ${detail.bookItem != null ? detail.bookItem.barcode : 'N/A'}">Barcode</small>
+                            </div>
+                        </td>
+                        <td class="py-4 text-muted" th:text="${loan.borrowDate != null ? #temporals.format(loan.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026</td>
+                        <td class="py-4">
+                                    <span class="badge badge-warning px-3 py-2 rounded-pill">
+                                        <i class="bi bi-hourglass-split mr-1"></i> Chờ thủ thư duyệt trả
+                                    </span>
+                        </td>
+                        <td class="py-4 pr-4 text-right text-muted small">
+                            Vui lòng mang sách tới quầy để hoàn tất thủ tục hoàn trả.
+                        </td>
+                    </tr>
+                    <!-- Hiển thị khi không có đơn nào chờ trả -->
+                    <tr th:if="${returnLoans == null || returnLoans.isEmpty()}">
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-check2-circle d-block fs-1 mb-2" style="font-size: 2.5rem; color: #198754;"></i>
+                            Bạn hiện không có yêu cầu trả sách nào đang chờ xử lý.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

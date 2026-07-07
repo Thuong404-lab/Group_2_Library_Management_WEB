@@ -112,4 +112,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Page<Transaction> findByWalletMemberMemberIdOrderByTransactionDateDesc(
             Integer memberId,
             Pageable pageable);
+
+    List<Transaction> findByBorrow_BorrowId(Integer borrowId);
 }
