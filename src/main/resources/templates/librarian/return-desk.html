@@ -6,149 +6,125 @@
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='borrow-return'">
+
+    <!-- Khối Thông báo Alert hệ thống -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMessage}">Thông báo thành công</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMessage}">Thông báo lỗi</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139,90,43,0.2) !important;">
         <div>
             <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Bàn Trả Sách</h2>
-            <div class="text-muted">Xử lý trả sách và kiểm tra tình trạng</div>
+            <div class="text-muted">Xử lý phê duyệt các yêu cầu trả sách trực tuyến và quét mã vạch trực tiếp tại quầy</div>
         </div>
     </div>
 
-    <!-- Lookup form -->
-    <div class="bg-white rounded shadow-sm p-4 mb-4" style="border-left:4px solid #8b5a2b;">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;"><i class="bi bi-search me-2" style="color:#8b5a2b;"></i>Tra cứu phiếu mượn</h5>
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label fw-bold small text-muted text-uppercase">Mã phiếu mượn / Mã thẻ thành viên</label>
-                <input type="text" class="form-control form-control-lg" placeholder="BOR-2026-0042 hoặc MEM-0012" value="BOR-2026-0042">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted text-uppercase">Tình trạng sách</label>
-                <select class="form-select form-select-lg">
-                    <option value="good">Tốt - Không hư hỏng</option>
-                    <option value="minor">Hư nhẹ - Chấp nhận được</option>
-                    <option value="damaged">Hư nặng - Cần xử lý</option>
-                    <option value="lost">Mất sách</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-lg w-100 fw-bold text-white" style="background:#8b5a2b;">
-                    <i class="bi bi-search me-1"></i>Tra cứu
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Khối 1: DANH SÁCH CÁC YÊU CẦU TRẢ SÁCH ĐANG CHỜ DUYỆT TRỰC TUYẾN -->
+    <div class="bg-white rounded shadow-sm p-4 mb-4" style="border-top: 4px solid #8b5a2b;">
+        <h5 class="fw-bold mb-3" style="color:#4a3b32;">
+            <i class="bi bi-clock-history me-2" style="color:#8b5a2b;"></i>Yêu cầu trả sách chờ duyệt
+            <span class="badge rounded-pill bg-danger ms-2" th:text="${#lists.size(returnRequests)}">0</span>
+        </h5>
 
-    <!-- Result card (sau khi tra cứu) -->
-    <div class="bg-white rounded shadow-sm p-4 mb-4" style="border:2px solid #8b5a2b;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0" style="color:#4a3b32;"><i class="bi bi-file-earmark-text me-2" style="color:#8b5a2b;"></i>Thông tin phiếu mượn</h5>
-            <span class="badge px-3 py-2" style="background:#d1ecf1;color:#0c5460;border-radius:20px;font-size:0.9rem;">
-                <i class="bi bi-arrow-left-right me-1"></i>Đang mượn
-            </span>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <table class="table table-borderless table-sm mb-0">
-                    <tr>
-                        <td class="text-muted fw-bold" style="width:140px;">Mã phiếu:</td>
-                        <td class="fw-bold">BOR-2026-0042</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted fw-bold">Thành viên:</td>
-                        <td><strong>Nguyễn Văn An</strong> <span class="text-muted small">(MEM-0012)</span></td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted fw-bold">Tên sách:</td>
-                        <td class="fw-bold" style="color:#4a3b32;">Đắc Nhân Tâm</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted fw-bold">Mã sách:</td>
-                        <td>ISBN: 978-604-1-03820-2</td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <table class="table table-borderless table-sm mb-0">
-                    <tr>
-                        <td class="text-muted fw-bold" style="width:140px;">Ngày mượn:</td>
-                        <td>15/06/2026</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted fw-bold">Hạn trả:</td>
-                        <td class="fw-bold text-success">15/07/2026</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted fw-bold">Số ngày còn:</td>
-                        <td class="fw-bold text-success">17 ngày</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted fw-bold">Phí phạt:</td>
-                        <td class="fw-bold">0đ</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-        <hr style="border-color: rgba(139,90,43,0.2);">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
-                <div class="form-check me-3">
-                    <input class="form-check-input" type="radio" name="bookCondition" id="condGood" value="good" checked>
-                    <label class="form-check-label text-success fw-bold" for="condGood">Tốt</label>
-                </div>
-                <div class="form-check me-3">
-                    <input class="form-check-input" type="radio" name="bookCondition" id="condMinor" value="minor">
-                    <label class="form-check-label text-warning fw-bold" for="condMinor">Hư nhẹ</label>
-                </div>
-                <div class="form-check me-3">
-                    <input class="form-check-input" type="radio" name="bookCondition" id="condDamaged" value="damaged">
-                    <label class="form-check-label text-danger fw-bold" for="condDamaged">Hư nặng</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="bookCondition" id="condLost" value="lost">
-                    <label class="form-check-label text-danger fw-bold" for="condLost">Mất sách</label>
-                </div>
-            </div>
-            <button class="btn btn-success fw-bold px-4">
-                <i class="bi bi-check-circle me-1"></i> Xác nhận Trả sách
-            </button>
-        </div>
-    </div>
-
-    <!-- Trả sách hôm nay -->
-    <h5 class="fw-bold mb-3" style="color:#4a3b32;">Đã trả hôm nay <span class="badge badge-secondary ml-2">3</span></h5>
-    <div class="bg-white rounded shadow-sm">
-        <table class="table table-hover mb-0">
-            <thead style="background:#fdfbf7;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead style="background:#fdfbf7;">
                 <tr>
                     <th class="border-0 py-3 pl-4 text-muted small text-uppercase">Mã phiếu</th>
                     <th class="border-0 py-3 text-muted small text-uppercase">Thành viên</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Tên sách</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Giờ trả</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Tình trạng</th>
+                    <th class="border-0 py-3 text-muted small text-uppercase">Thông tin sách mượn</th>
+                    <th class="border-0 py-3 text-muted small text-uppercase">Ngày mượn</th>
+                    <th class="border-0 py-3 text-muted small text-uppercase">Thao tác xử lý</th>
                 </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(returnRequests)}">
+                    <td colspan="5" class="text-center py-4 text-muted fst-italic">Hiện tại không có yêu cầu xin trả sách trực tuyến nào cần duyệt.</td>
+                </tr>
+                <tr th:each="borrow : ${returnRequests}">
+                    <td class="pl-4 py-3 fw-bold">
+                        <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}" th:text="'BOR-' + ${borrow.borrowId}" class="fw-bold text-decoration-none" style="color: #8b5a2b;">BOR-2026-0042</a>
+                    </td>
+                    <td>
+                        <div class="fw-bold" th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'N/A'}">username</div>
+                        <small class="text-muted" th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.email : 'N/A'}">email@domain.com</small>
+                    </td>
+                    <td>
+                        <!-- Giả định mỗi phiếu mượn tương ứng có danh sách chi tiết -->
+                        <div th:each="detail : ${borrow.borrowDetails}">
+                            <span class="fw-semibold" style="color:#4a3b32;" th:text="${detail.book.title}">Tên sách</span>
+                            <small class="text-muted block d-block" th:text="'Mã vạch: ' + ${detail.bookItem != null ? detail.bookItem.barcode : 'N/A'}">Mã vạch</small>
+                        </div>
+                    </td>
+                    <td class="text-muted" th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">15/06/2026</td>
+                    <td>
+                        <!-- Biểu mẫu Phê duyệt trả sách tích hợp đổi trạng thái -->
+                        <form th:action="@{/librarian/loan/returns/approve/{borrowId}(borrowId=${borrow.borrowId})}" method="post" onsubmit="return confirm('Xác nhận sách đã về kho nguyên vẹn và phê duyệt phiếu trả này?')">
+                            <button type="submit" class="btn btn-sm text-white fw-bold" style="background:#8b5a2b;">
+                                <i class="bi bi-check2-square me-1"></i> Phê duyệt trả
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Khối 2: TRA CỨU / QUÉT MÃ VẠCH TRẢ TRỰC TIẾP TẠI QUẦY -->
+    <div class="bg-white rounded shadow-sm p-4 mb-4" style="border-left:4px solid #8b5a2b;">
+        <h5 class="fw-bold mb-3" style="color:#4a3b32;"><i class="bi bi-qr-code-scan me-2" style="color:#8b5a2b;"></i>Xử lý trả nhanh qua mã vạch (Quầy vật lý)</h5>
+        <form th:action="@{/librarian/loan/returns/scan}" method="post">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-7">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Nhập hoặc quét mã vạch (Barcode) của sách</label>
+                    <input type="text" name="barcode" class="form-control form-control-lg" placeholder="Ví dụ: BI-10023-01" required>
+                </div>
+                <div class="col-md-5">
+                    <button type="submit" class="btn btn-lg w-100 fw-bold text-white" style="background:#8b5a2b;">
+                        <i class="bi bi-lightning-fill me-1"></i> Xác nhận trả trực tiếp
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Khối 3: DANH SÁCH LỊCH SỬ ĐÃ HOÀN THÀNH TRONG NGÀY -->
+    <h5 class="fw-bold mb-3" style="color:#4a3b32;">Sách đã duyệt trả thành công hôm nay</h5>
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0">
+            <thead style="background:#fdfbf7;">
+            <tr>
+                <th class="border-0 py-3 pl-4 text-muted small text-uppercase">Mã phiếu</th>
+                <th class="border-0 py-3 text-muted small text-uppercase">Độc giả</th>
+                <th class="border-0 py-3 text-muted small text-uppercase">Tên sách</th>
+                <th class="border-0 py-3 text-muted small text-uppercase">Thời gian xử lý</th>
+                <th class="border-0 py-3 text-muted small text-uppercase">Trạng thái</th>
+            </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="pl-4 py-3 fw-bold">BOR-2026-0039</td>
-                    <td>Trần Thị Bình</td>
-                    <td>Nhà Giả Kim</td>
-                    <td>08:32</td>
-                    <td><span class="badge badge-success px-2">Tốt</span></td>
-                </tr>
-                <tr>
-                    <td class="pl-4 py-3 fw-bold">BOR-2026-0035</td>
-                    <td>Lê Minh Khoa</td>
-                    <td>Sapiens</td>
-                    <td>10:15</td>
-                    <td><span class="badge badge-warning px-2">Hư nhẹ</span></td>
-                </tr>
-                <tr>
-                    <td class="pl-4 py-3 fw-bold">BOR-2026-0028</td>
-                    <td>Phạm Thu Hà</td>
-                    <td>Atomic Habits</td>
-                    <td>14:45</td>
-                    <td><span class="badge badge-success px-2">Tốt</span></td>
-                </tr>
+            <!-- Mockup hiển thị hoặc bind dữ liệu tùy biến từ danh sách đã duyệt thành công -->
+            <tr>
+                <td class="pl-4 py-3 fw-bold">BOR-2026-0039</td>
+                <td>Trần Thị Bình</td>
+                <td>Nhà Giả Kim</td>
+                <td>08:32 AM</td>
+                <td><span class="badge bg-success text-white px-2 py-1">Returned (Đã trả)</span></td>
+            </tr>
+            <tr>
+                <td class="pl-4 py-3 fw-bold">BOR-2026-0035</td>
+                <td>Lê Minh Khoa</td>
+                <td>Sapiens: Lược Sử Loài Người</td>
+                <td>10:15 AM</td>
+                <td><span class="badge bg-success text-white px-2 py-1">Returned (Đã trả)</span></td>
+            </tr>
             </tbody>
         </table>
     </div>

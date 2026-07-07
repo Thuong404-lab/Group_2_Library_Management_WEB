@@ -1,134 +1,121 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"> <!-- Kế thừa từ layout gốc -->
 <head>
-    <title>Đặt trước sách</title>
+    <title>Danh sách đặt trước sách - Thư viện LMW</title>
 </head>
 <body>
-<div layout:fragment="content" class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <div>
-            <h2 class="font-weight-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-bookmark-fill mr-2" style="color:#8b5a2b;"></i>Sách Đã Đặt Trước
-            </h2>
-            <div class="text-muted">Danh sách các sách bạn đang đặt giữ chỗ</div>
-        </div>
-        <a href="/books" class="btn font-weight-bold" style="background:#8b5a2b;color:white;border-radius:8px;">
-            <i class="bi bi-plus-circle mr-1"></i>Đặt thêm sách
-        </a>
-    </div>
-
-    <!-- Alert info -->
-    <div class="alert d-flex align-items-center gap-2 mb-4" style="background:#fdf5ec;border-left:4px solid #8b5a2b;">
-        <i class="bi bi-info-circle-fill mr-2" style="color:#8b5a2b;font-size:1.1rem;"></i>
-        <span>Sách đặt trước sẽ được giữ trong <strong>3 ngày</strong> kể từ khi có sẵn. Sau đó sẽ tự hủy nếu bạn không đến nhận.</span>
-    </div>
-
-    <!-- Reservation 1 - Đang chờ (sách chưa có) -->
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #ffc107 !important;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#fff8e1;flex-shrink:0;">
-                            <i class="bi bi-hourglass-split" style="color:#ffc107;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Atomic Habits</div>
-                            <div class="text-muted small">James Clear</div>
-                            <div class="text-muted small">Vị trí hàng đợi: <strong class="text-warning">#2</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày đặt</div>
-                    <div class="font-weight-bold">20/06/2026</div>
-                    <div class="small text-muted mt-1">Dự kiến có sẵn</div>
-                    <div class="font-weight-bold text-warning">~05/07/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2" style="background:#fff3cd;color:#856404;font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-hourglass-split mr-1"></i>Đang chờ sách
-                    </span>
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Hủy đặt trước?')">
-                            <i class="bi bi-x-circle mr-1"></i>Hủy đặt
-                        </button>
-                    </div>
-                </div>
-            </div>
+<div layout:fragment="content" class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}" class="text-classic">Sảnh chính</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Sách đặt trước</li>
+                </ol>
+            </nav>
+            <h2 class="font-weight-bold mb-3" style="color: #4a3b32;">Danh sách sách đặt trước</h2>
+            <p class="text-muted">Nơi quản lý các yêu cầu đặt giữ sách khi sách hiện tại trong kho đã được mượn hết.</p>
         </div>
     </div>
 
-    <!-- Reservation 2 - Sách đã sẵn sàng, chờ đến lấy -->
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #198754 !important;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#d4edda;flex-shrink:0;">
-                            <i class="bi bi-bookmark-check-fill" style="color:#198754;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Cà Phê Cùng Tony</div>
-                            <div class="text-muted small">Tony Buổi Sáng</div>
-                            <div class="text-muted small">Mã đặt trước: <strong>RSV-2026-0015</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày đặt</div>
-                    <div class="font-weight-bold">25/06/2026</div>
-                    <div class="small text-muted mt-1">Hạn đến lấy</div>
-                    <div class="font-weight-bold text-success">28/06/2026</div>
-                    <div class="small text-danger font-weight-bold">⚠️ Còn 0 ngày!</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2" style="background:#d4edda;color:#155724;font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-check-circle mr-1"></i>Sẵn sàng lấy
-                    </span>
-                    <div class="mt-2 small text-muted">Đến quầy thư viện để nhận sách</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reservation 3 - Đã hết hạn -->
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #6c757d !important;opacity:0.75;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#e9ecef;flex-shrink:0;">
-                            <i class="bi bi-bookmark-x-fill" style="color:#6c757d;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#6c757d;font-size:1.05rem;">Người Giàu Có Nhất Thành Babylon</div>
-                            <div class="text-muted small">George S. Clason</div>
-                            <div class="text-muted small">Mã đặt trước: <strong>RSV-2026-0003</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày đặt</div>
-                    <div class="font-weight-bold text-muted">10/05/2026</div>
-                    <div class="small text-muted mt-1">Hết hạn</div>
-                    <div class="font-weight-bold text-muted">15/05/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2" style="background:#e9ecef;color:#495057;font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-x-circle mr-1"></i>Đã hủy / hết hạn
-                    </span>
-                    <div class="mt-2">
-                        <a href="/books/3" class="btn btn-sm btn-outline-secondary">Đặt lại</a>
-                    </div>
-                </div>
+    <div class="card border-0 shadow-sm rounded bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="vertical-align: middle;">
+                    <thead style="background-color: #4a3b32; color: #fdfbf7;">
+                    <tr>
+                        <th class="py-3 pl-4">Tên sách</th>
+                        <th class="py-3">Ngày đặt</th>
+                        <th class="py-3">Hạn giữ dự kiến</th>
+                        <th class="py-3">Trạng thái</th>
+                        <th class="py-3 pr-4 text-right">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Lặp danh sách đặt trước được gửi từ Controller -->
+                    <tr th:each="res : ${reservations}" th:id="'res-row-' + ${res.id}">
+                        <td class="py-4 pl-4 font-weight-bold" style="color: #4a3b32;">
+                            <span th:text="${res.bookTitle}">Tên cuốn sách</span>
+                            <small class="d-block text-muted font-weight-normal" th:text="${res.authorName}">Tác giả</small>
+                        </td>
+                        <td class="py-4 text-muted" th:text="${res.actionDate != null ? #temporals.format(res.actionDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026</td>
+                        <td class="py-4 text-muted" th:text="${res.dueDate != null ? #temporals.format(res.dueDate, 'dd/MM/yyyy') : 'N/A'}">04/01/2026</td>
+                        <td class="py-4">
+                                    <span class="badge px-3 py-2 rounded-pill"
+                                          th:classappend="${res.status == 'Pending' ? 'badge-warning' : (res.status == 'Approved' ? 'badge-success' : 'badge-secondary')}"
+                                          th:text="${res.status == 'Pending' ? 'Đang chờ xử lý' : (res.status == 'Approved' ? 'Sách đã sẵn sàng' : res.status)}">
+                                        Đang chờ
+                                    </span>
+                        </td>
+                        <td class="py-4 pr-4 text-right">
+                            <!-- Form hủy đặt trước chạy độc lập bằng AJAX bên dưới -->
+                            <form th:if="${res.status == 'Pending'}" class="cancel-reservation-form d-inline-block m-0"
+                                  th:action="@{/member/reservations/cancel/{id}(id=${res.id})}" method="POST" th:data-id="${res.id}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 font-weight-bold">
+                                    <i class="bi bi-trash mr-1"></i> Hủy đặt trước
+                                </button>
+                            </form>
+                            <span th:if="${res.status != 'Pending'}" class="text-muted small">-</span>
+                        </td>
+                    </tr>
+                    <!-- Hiển thị khi danh sách trống -->
+                    <tr th:if="${reservations == null || reservations.isEmpty()}">
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x d-block fs-1 mb-2" style="font-size: 2.5rem; color: #8b5a2b;"></i>
+                            Bạn hiện không có yêu cầu đặt trước cuốn sách nào.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Đoạn mã Script xử lý AJAX cục bộ nằm riêng trong fragment này -->
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".cancel-reservation-form").forEach(function (form) {
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    if (!confirm("Bạn có chắc chắn muốn hủy yêu cầu đặt trước cuốn sách này không?")) return;
+
+                    var button = form.querySelector("button[type='submit']");
+                    if (button) button.disabled = true;
+
+                    fetch(form.action, {
+                        method: "POST",
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    })
+                        .then(function (response) {
+                            if (!response.ok) throw new Error("Không thể thực hiện hủy đặt trước.");
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            if (typeof showToast === "function") {
+                                showToast(data.message || "Đã hủy đặt trước sách thành công.");
+                            } else {
+                                alert(data.message || "Đã hủy đặt trước sách thành công.");
+                            }
+                            var rowId = "res-row-" + form.dataset.id;
+                            var row = document.getElementById(rowId);
+                            if (row) row.remove();
+                        })
+                        .catch(function (error) {
+                            if (typeof showToast === "function") {
+                                showToast(error.message || "Có lỗi xảy ra khi hủy đặt trước.");
+                            } else {
+                                alert(error.message || "Có lỗi xảy ra khi hủy đặt trước.");
+                            }
+                            if (button) button.disabled = false;
+                        });
+                });
+            });
+        });
+    </script>
+</th:block>
 </body>
 </html>
