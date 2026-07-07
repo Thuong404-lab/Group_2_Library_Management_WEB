@@ -8,6 +8,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * LoanController - Quản lý Phiếu mượn (Phía Thủ thư)
@@ -74,16 +77,31 @@ public class LoanController {
     }
 
     // UC-13.3: Process Borrow Requests - Quầy mượn sách
+    @GetMapping("/borrow-schedule")
+    public String showBorrowSchedule(Model model) {
+        model.addAttribute("details", loanService.getAllBorrowDetails());
+        return "librarian/borrow-schedule";
+    }
+
     @GetMapping("/borrow-desk")
     public String showBorrowDesk(Model model) {
         return "librarian/borrow-desk";
     }
 
     @PostMapping("/borrow-desk/process")
-    public String processBorrowRequest(@RequestParam String memberPhone,
+    public String processBorrowRequest(@RequestParam String memberIdentifier,
                                         @RequestParam String barcodes,
-                                        Model model) {
-        return "redirect:/librarian/loan/borrow-desk?processed";
+                                        Principal principal,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            List<String> barcodeList = Arrays.asList(barcodes.split(","));
+            loanService.processBorrowDesk(memberIdentifier, barcodeList, principal.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo phiếu mượn thành công!");
+            return "redirect:/librarian/loan/borrow-desk";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/librarian/loan/borrow-desk";
+        }
     }
 
     // UC-13.4: Process Renewal Requests - Gia hạn mượn sách
@@ -95,6 +113,6 @@ public class LoanController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Gia hạn thất bại: " + e.getMessage());
         }
-        return "redirect:/librarian/borrow/list";
+        return "redirect:/librarian/loan/borrow-schedule";
     }
 }

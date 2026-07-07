@@ -161,14 +161,27 @@
                     </td>
 
                     <td class="text-end pe-4">
-                        <!-- Nút xử lý trả sách dành cho Đang mượn hoặc Quá hạn -->
-                        <form th:if="${detail.status == 'Borrowed' || detail.status == 'Overdue' || detail.status == 'Return_Pending'}"
-                              th:action="@{/librarian/return-requests/approve/{borrowId}(borrowId=${detail.borrow != null ? detail.borrow.borrowId : detail.id})}"
-                              method="post" class="d-inline-block m-0" onsubmit="return confirm('Xác nhận thu hồi sách và đóng phiếu mượn này?')">
-                            <button type="submit" class="btn btn-sm btn-outline-classic" title="Hoàn trả nhập kho">
-                                <i class="bi bi-arrow-return-left me-1"></i> Nhận trả
-                            </button>
-                        </form>
+                        <div class="d-flex justify-content-end gap-2">
+                            <!-- Nút gia hạn sách -->
+                            <form th:if="${detail.status == 'Borrowed'}" th:action="@{/librarian/loan/renew/{id}(id=${detail.borrowDetailId})}" method="post" class="m-0">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Gia hạn sách">
+                                    <i class="bi bi-clock-history"></i> Gia hạn
+                                </button>
+                            </form>
+                            
+                            <!-- Nút xử lý trả sách dành cho Đang mượn hoặc Quá hạn -->
+                            <form th:if="${detail.status == 'Borrowed' || detail.status == 'Overdue' || detail.status == 'Return_Pending'}"
+                                  th:action="@{/librarian/return-requests/approve/{borrowId}(borrowId=${detail.borrow != null ? detail.borrow.borrowId : detail.id})}"
+                                  method="post" class="m-0" onsubmit="return confirm('Xác nhận thu hồi sách và đóng phiếu mượn này?')">
+                                <button type="submit" class="btn btn-sm btn-outline-classic" title="Hoàn trả nhập kho">
+                                    <i class="bi bi-arrow-return-left me-1"></i> Nhận trả
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <span class="text-success small" th:if="${detail.status == 'Returned'}">
+                            <i class="bi bi-check-circle-fill"></i> Đã trả
+                        </span>
 
                         <!-- Nút xử lý phê duyệt cấp sách cho đơn đặt trước trực tuyến -->
                         <form th:if="${detail.status == 'Pending'}"

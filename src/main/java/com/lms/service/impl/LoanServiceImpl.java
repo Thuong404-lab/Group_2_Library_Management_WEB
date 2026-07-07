@@ -1,14 +1,15 @@
 package com.lms.service.impl;
 
-import com.lms.service.LoanService;
 import com.lms.entity.*;
 import com.lms.repository.*;
+import com.lms.service.LoanService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +21,8 @@ import java.util.Optional;
 public class LoanServiceImpl implements LoanService {
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
+    private final MemberRepository memberRepository;
+    private final StaffAccountRepository staffAccountRepository;
     private final BookItemRepository bookItemRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
@@ -30,6 +33,8 @@ public class LoanServiceImpl implements LoanService {
 
     public LoanServiceImpl(BorrowRepository borrowRepository,
                            BorrowDetailRepository borrowDetailRepository,
+                           MemberRepository memberRepository,
+                           StaffAccountRepository staffAccountRepository,
                            BookItemRepository bookItemRepository,
                            WalletRepository walletRepository,
                            TransactionRepository transactionRepository,
@@ -39,6 +44,8 @@ public class LoanServiceImpl implements LoanService {
                            ReservationRepository reservationRepository) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
+        this.memberRepository = memberRepository;
+        this.staffAccountRepository = staffAccountRepository;
         this.bookItemRepository = bookItemRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
@@ -121,7 +128,80 @@ public class LoanServiceImpl implements LoanService {
                 "Yêu cầu trả sách của phiếu mượn #" + borrowId + " đã được thủ thư phê duyệt.");
     }
 
-    // UC-13.3: Duyệt yêu cầu mượn
+    // UC-13.3: Quầy mượn sách
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void processBorrowDesk(String memberIdentifier, List<String> barcodes, String staffUsername) throws Exception {
+        Member member = null;
+        try {
+            if (memberIdentifier != null && memberIdentifier.contains("@")) {
+                member = memberRepository.findByUserEmail(memberIdentifier)
+                        .orElseThrow(() -> new Exception("Không tìm thấy thành viên với Email này!"));
+            } else {
+                member = memberRepository.findByUserPhone(memberIdentifier)
+                        .orElseThrow(() -> new Exception("Không tìm thấy thành viên với số điện thoại này!"));
+            }
+        } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+            throw new Exception("Có nhiều độc giả trùng thông tin này! Vui lòng liên hệ quản trị viên để xử lý dữ liệu trùng lặp.");
+        }
+
+        Staff staff = staffAccountRepository.findByUsername(staffUsername)
+                .map(StaffAccount::getStaff)
+                .orElseThrow(() -> new Exception("Không tìm thấy thông tin thủ thư!"));
+
+        List<BookItem> bookItemsToBorrow = new ArrayList<>();
+        for (String barcode : barcodes) {
+            String trimmedBarcode = barcode.trim();
+            if (trimmedBarcode.isEmpty()) continue;
+
+            BookItem item = null;
+            try {
+                item = bookItemRepository.findByBarcode(trimmedBarcode)
+                        .orElseThrow(() -> new Exception("Mã vạch " + trimmedBarcode + " không tồn tại!"));
+            } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+                throw new Exception("Lỗi CSDL: Có nhiều cuốn sách cùng sử dụng mã vạch " + trimmedBarcode + ". Vui lòng liên hệ Admin!");
+            }
+
+            if (!"Available".equalsIgnoreCase(item.getStatus())) {
+                throw new Exception("Sách có mã vạch " + trimmedBarcode + " hiện tại không sẵn sàng!");
+            }
+            bookItemsToBorrow.add(item);
+        }
+
+        if (bookItemsToBorrow.isEmpty()) {
+            throw new Exception("Vui lòng nhập ít nhất 1 mã vạch hợp lệ!");
+        }
+
+        long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
+        int maxLimit = member.getTier() != null ? member.getTier().getBorrowLimit() : 3;
+        int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
+
+        if (totalRequestedBooks > maxLimit) {
+            throw new Exception("Số lượng sách vượt quá giới hạn mượn của thành viên! (Tối đa " + maxLimit + " cuốn, đang mượn " + currentBorrowCount + " cuốn)");
+        }
+
+        Borrow borrow = new Borrow();
+        borrow.setMember(member);
+        borrow.setStaff(staff);
+        borrow.setBorrowDate(LocalDateTime.now());
+        borrow.setStatus("Active");
+        borrow = borrowRepository.save(borrow);
+
+        for (BookItem item : bookItemsToBorrow) {
+            BorrowDetail detail = new BorrowDetail();
+            detail.setBorrow(borrow);
+            detail.setBook(item.getBook());
+            detail.setBookItem(item);
+            detail.setDueDate(LocalDateTime.now().plusDays(14));
+            detail.setStatus("Borrowed");
+            detail.setRenewCount(0);
+            borrowDetailRepository.save(detail);
+
+            item.setStatus("Borrowed");
+            bookItemRepository.save(item);
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void processBorrowRequest(Integer borrowId) throws Exception {
@@ -182,6 +262,10 @@ public class LoanServiceImpl implements LoanService {
         borrowDetailRepository.save(detail);
     }
 
+    @Override
+    public java.util.List<com.lms.entity.BorrowDetail> getAllBorrowDetails() {
+        return borrowDetailRepository.findAll();
+    }
     // --- Private Helper Methods ---
 
     /**
@@ -282,9 +366,6 @@ public class LoanServiceImpl implements LoanService {
             MemberNotification mn = new MemberNotification();
             mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
             mn.setMember(member);
-            mn.setNotification(saved);
-            mn.setIsRead(false);
-            memberNotificationRepository.save(mn);
         } catch (Exception ignored) {}
     }
 }

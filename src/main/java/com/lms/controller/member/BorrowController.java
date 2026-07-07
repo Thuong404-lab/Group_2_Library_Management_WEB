@@ -18,11 +18,14 @@ public class BorrowController {
 
     private final BorrowService borrowService;
     private final BookService bookService;
+    private final com.lms.service.LoanService loanService;
 
     public BorrowController(BorrowService borrowService,
-                            BookService bookService) {
+                            BookService bookService,
+                            com.lms.service.LoanService loanService) {
         this.borrowService = borrowService;
         this.bookService = bookService;
+        this.loanService = loanService;
     }
 
     @GetMapping("/management")
@@ -146,6 +149,18 @@ public class BorrowController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý gửi yêu cầu: " + e.getMessage());
             return "redirect:/member/borrow/management?tab=borrowing";
         }
+    }
+
+    @PostMapping("/renew/{borrowDetailId}")
+    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            loanService.processRenewal(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn thành công thêm 7 ngày!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gia hạn: " + e.getMessage());
+        }
+        return "redirect:/member/borrow";
     }
 
     @GetMapping("/history")

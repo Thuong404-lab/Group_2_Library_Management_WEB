@@ -266,7 +266,9 @@
                                     <!-- Hiển thị nhãn khi đang chờ thủ thư xử lý -->
                                     <span th:if="${item.status == 'Return_Pending'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
 
-                                    <button th:if="${item.status == 'Borrowed'}" class="btn btn-classic-outline" onclick="alert('Chức năng gia hạn đang được phát triển!')"><i class="bi bi-clock-history me-1"></i>Gia hạn</button>
+                                    <form th:if="${item.status == 'Borrowed'}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-classic-outline" th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"><i class="bi bi-clock-history me-1"></i>Gia hạn</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

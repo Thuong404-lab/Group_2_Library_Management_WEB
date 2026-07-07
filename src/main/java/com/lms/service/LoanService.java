@@ -1,6 +1,8 @@
 package com.lms.service;
 
 import com.lms.entity.Borrow;
+import com.lms.entity.BorrowDetail;
+import java.util.List;
 
 /**
  * LoanService - Xử lý Logic Quản lý Phiếu mượn (Thủ thư)
@@ -17,10 +19,14 @@ public interface LoanService {
     // Phê duyệt yêu cầu trả sách trực tuyến từ độc giả
     void approveOnlineReturn(Integer borrowId) throws Exception;
 
+    // UC-13.3: Quầy mượn sách
+    void processBorrowDesk(String memberIdentifier, List<String> barcodes, String staffUsername) throws Exception;
+
     // UC-13.3: Duyệt yêu cầu mượn
     void processBorrowRequest(Integer borrowId) throws Exception;
 
     // UC-13.4: Gia hạn mượn
     void processRenewal(Integer borrowDetailId) throws Exception;
 
+    List<BorrowDetail> getAllBorrowDetails();
 }
