@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+
+<head>
+    <title>Chi Tiết Phiếu Mượn - Thủ thư</title>
+    <style>
+        .detail-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid rgba(139, 90, 43, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .detail-header {
+            background: linear-gradient(135deg, #4a3b32, #6b4c35);
+            color: #ffffff;
+            padding: 1.5rem 2rem;
+        }
+        .section-title {
+            color: #8b5a2b;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            border-bottom: 2px solid rgba(139, 90, 43, 0.15);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-uppercase: uppercase;
+        }
+        .info-value {
+            color: #2b2b2b;
+            font-weight: 500;
+        }
+        .avatar-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #8b5a2b;
+            color: #ffffff;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(139, 90, 43, 0.2);
+        }
+        .table-premium th {
+            background-color: #fdfbf7 !important;
+            color: #4a3b32;
+            font-weight: 700;
+            border-bottom: 2px solid rgba(139, 90, 43, 0.15);
+        }
+        .badge-status {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .badge-status-active {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border: 1px solid #bbdefb;
+        }
+        .badge-status-returned {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #c8e6c9;
+        }
+        .badge-status-overdue {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .badge-status-pending {
+            background-color: #fff8e1;
+            color: #f57f17;
+            border: 1px solid #ffe082;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" th:with="activeMenu='borrow-return'">
+    
+    <div class="mb-3">
+        <a th:href="@{/librarian/borrow/list}" class="btn btn-outline-secondary px-3 py-1 small rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <!-- Main Detail Layout -->
+    <div class="detail-card">
+        <div class="detail-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <span class="text-uppercase tracking-wider small opacity-75">Phiếu mượn thư viện</span>
+                <h3 class="fw-bold mb-0" th:text="'BOR-' + ${borrow.borrowId}">BOR-2026-0042</h3>
+            </div>
+            <div>
+                <span th:if="${borrow.status == 'Active'}" class="badge-status badge-status-active">Đang mượn</span>
+                <span th:if="${borrow.status == 'Returned'}" class="badge-status badge-status-returned">Đã hoàn thành</span>
+                <span th:if="${borrow.status == 'Overdue'}" class="badge-status badge-status-overdue">Quá hạn</span>
+                <span th:if="${borrow.status == 'Pending'}" class="badge-status badge-status-pending">Chờ phê duyệt</span>
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <div class="row g-5">
+                <!-- Left: Member Info -->
+                <div class="col-lg-4 border-end" style="border-color: rgba(139, 90, 43, 0.15) !important;">
+                    <h5 class="section-title"><i class="bi bi-person-fill me-2"></i>Thông tin độc giả</h5>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div th:if="${borrow.member?.user?.avatar == null}" class="avatar-box" 
+                             th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1).toUpperCase() : 'M'}">M</div>
+                        <img th:if="${borrow.member?.user?.avatar != null}" th:src="${borrow.member.user.avatar}" class="rounded-circle shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark" th:text="${borrow.member?.user?.fullName}">Họ tên độc giả</h5>
+                            <span class="badge" style="background-color: #8b5a2b;" th:text="${borrow.member?.tier != null ? borrow.member.tier.tierName : 'Tiêu chuẩn'}">Hạng thẻ</span>
+                        </div>
+                    </div>
+
+                    <div class="vstack gap-3 small">
+                        <div>
+                            <div class="info-label">Mã độc giả</div>
+                            <div class="info-value" th:text="'TV-' + ${borrow.member?.memberId}">TV1</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Địa chỉ Email</div>
+                            <div class="info-value" th:text="${borrow.member?.user?.email}">email@domain.com</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Số điện thoại</div>
+                            <div class="info-value" th:text="${borrow.member?.user?.phone}">0987654321</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Loan details -->
+                <div class="col-lg-8">
+                    <h5 class="section-title"><i class="bi bi-calendar-check-fill me-2"></i>Thông tin mượn trả</h5>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-sm-6">
+                            <div class="info-label">Ngày mượn</div>
+                            <div class="info-value fs-5 fw-bold" th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">15/06/2026 14:00</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="info-label">Thủ thư phụ trách</div>
+                            <div class="info-value fs-5 fw-bold" th:text="${borrow.staff != null && borrow.staff.user != null ? borrow.staff.user.fullName : 'Admin'}">Thủ thư</div>
+                        </div>
+                    </div>
+
+                    <!-- Book Table -->
+                    <h5 class="section-title mt-5"><i class="bi bi-book-half me-2"></i>Danh sách sách mượn</h5>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover align-middle table-premium mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tên sách</th>
+                                    <th>Mã vạch (Barcode)</th>
+                                    <th>Hạn trả</th>
+                                    <th>Ngày trả thực tế</th>
+                                    <th>Gia hạn</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="detail : ${details}">
+                                    <td>
+                                        <div class="fw-bold text-dark" th:text="${detail.book.title}">Tên sách</div>
+                                        <small class="text-muted" th:text="${detail.book.authors != null && !detail.book.authors.isEmpty() ? detail.book.authors[0].authorName : 'Tác giả'}">Tác giả</small>
+                                    </td>
+                                    <td class="font-monospace" th:text="${detail.bookItem != null ? detail.bookItem.barcode : 'N/A'}">BI-1002</td>
+                                    <td th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">30/06/2026</td>
+                                    <td th:text="${detail.returnDate != null ? #temporals.format(detail.returnDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                                    <td th:text="${detail.renewCount} + ' lần'">0 lần</td>
+                                    <td>
+                                        <span th:if="${detail.status == 'Borrowed'}" class="badge bg-primary text-white rounded-pill px-2 py-1">Đang mượn</span>
+                                        <span th:if="${detail.status == 'Returned'}" class="badge bg-success text-white rounded-pill px-2 py-1">Đã trả</span>
+                                        <span th:if="${detail.status == 'Overdue'}" class="badge bg-danger text-white rounded-pill px-2 py-1">Quá hạn</span>
+                                        <span th:if="${detail.status == 'Return_Pending'}" class="badge bg-warning text-dark rounded-pill px-2 py-1">Chờ duyệt trả</span>
+                                        <span th:if="${detail.status == 'Pending'}" class="badge bg-secondary text-white rounded-pill px-2 py-1">Chờ mượn</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Financial Transactions -->
+                    <h5 class="section-title mt-5"><i class="bi bi-wallet2 me-2"></i>Giao dịch liên quan</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-premium mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Mã GD</th>
+                                    <th>Loại giao dịch</th>
+                                    <th>Số tiền</th>
+                                    <th>Thời gian</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(transactions)}">
+                                    <td colspan="5" class="text-center py-4 text-muted fst-italic">Không có giao dịch tài chính phát sinh cho phiếu mượn này.</td>
+                                </tr>
+                                <tr th:each="tx : ${transactions}">
+                                    <td class="fw-bold text-dark font-monospace" th:text="'TX-' + ${tx.transactionId}">TX-1</td>
+                                    <td>
+                                        <span th:if="${tx.transactionType == 'Fine'}" class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Phạt quá hạn</span>
+                                        <span th:if="${tx.transactionType == 'Fee'}" class="text-primary fw-semibold"><i class="bi bi-credit-card-fill me-1"></i>Phí dịch vụ</span>
+                                        <span th:if="${tx.transactionType != 'Fine' && tx.transactionType != 'Fee'}" th:text="${tx.transactionType}">Loại GD</span>
+                                    </td>
+                                    <td class="fw-bold" th:text="${#numbers.formatDecimal(tx.amount, 0, 'POINT', 0, 'POINT')} + 'đ'">5,000đ</td>
+                                    <td class="text-muted" th:text="${#temporals.format(tx.transactionDate, 'dd/MM/yyyy HH:mm')}">15/06/2026</td>
+                                    <td>
+                                        <span class="badge bg-success text-white rounded-pill px-2 py-1" th:text="${tx.status}">Completed</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

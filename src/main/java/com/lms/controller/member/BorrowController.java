@@ -3,7 +3,6 @@ package com.lms.controller.member;
 import com.lms.dto.response.MemberBorrowDTO;
 import com.lms.entity.Book;
 import com.lms.service.BorrowService;
-import com.lms.service.MemberFavoriteService;
 import com.lms.service.BookService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,14 +17,11 @@ import java.util.List;
 public class BorrowController {
 
     private final BorrowService borrowService;
-    private final MemberFavoriteService memberFavoriteService;
     private final BookService bookService;
 
     public BorrowController(BorrowService borrowService,
-                            MemberFavoriteService memberFavoriteService,
                             BookService bookService) {
         this.borrowService = borrowService;
-        this.memberFavoriteService = memberFavoriteService;
         this.bookService = bookService;
     }
 
@@ -112,12 +108,13 @@ public class BorrowController {
         }
     }
 
+    // FIX VẤN ĐỀ 4: Chuyển hướng xử lý qua borrowService.memberSubmitReservationRequest để validate chặt chẽ
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            memberFavoriteService.reserveBook(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt giữ chỗ sách thành công!");
+            borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt giữ chỗ sách thành công! Vui lòng chờ Thủ thư phê duyệt.");
             return "redirect:/member/borrow/management?tab=reserved";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi đặt chỗ: " + e.getMessage());
@@ -125,15 +122,28 @@ public class BorrowController {
         }
     }
 
+    // FIX VẤN ĐỀ 5: Thêm endpoint xử lý Hủy đặt trước sách từ Member
+    @PostMapping("/cancel-reservation/{reservationId}")
+    public String cancelReservation(@PathVariable Integer reservationId, Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            borrowService.memberCancelReservation(principal.getName(), reservationId);
+            redirectAttributes.addFlashAttribute("successMessage", "Hủy yêu cầu đặt giữ chỗ thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hủy đơn đặt chỗ: " + e.getMessage());
+        }
+        return "redirect:/member/borrow/management?tab=reserved";
+    }
+
     @PostMapping("/return/{loanId}")
     public String returnBook(@PathVariable("loanId") Integer loanId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            borrowService.updateStatus(loanId, "Return_Pending");
-            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi đi thành công!");
+            borrowService.memberSubmitReturnRequest(principal.getName(), loanId);
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi tới Thủ thư thành công.");
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý trả sách: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý gửi yêu cầu: " + e.getMessage());
             return "redirect:/member/borrow/management?tab=borrowing";
         }
     }

@@ -4,184 +4,175 @@
 <head>
     <title>Lịch sử mượn sách</title>
     <style>
-        .status-badge-returned { background-color: #d4edda; color: #155724; }
-        .status-badge-borrowing { background-color: #d1ecf1; color: #0c5460; }
-        .status-badge-overdue { background-color: #f8d7da; color: #721c24; }
+        body {
+            background-color: #f8f7f5;
+        }
+        .status-badge-returned { background-color: #e6f4ea; color: #137333; border: 1px solid #98f5b4; }
+        .status-badge-borrowing { background-color: #e8f0fe; color: #1a73e8; border: 1px solid #adc1f9; }
+        .status-badge-overdue { background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
+        .status-badge-pending { background-color: #fef7e0; color: #b06000; border: 1px solid #fde293; }
         .timeline-dot { width: 12px; height: 12px; border-radius: 50%; background: #8b5a2b; display: inline-block; }
+
+        .nav-pills-classic .nav-link {
+            color: #8b5a2b !important;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            padding: 0.75rem 1.25rem;
+        }
+        .nav-pills-classic .nav-link.active {
+            background-color: transparent !important;
+            color: #4a3b32 !important;
+            border-bottom: 2px solid #8b5a2b !important;
+            font-weight: bold;
+        }
+        .card-history {
+            border-radius: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-history:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        }
     </style>
 </head>
 <body>
 <div layout:fragment="content" class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+
+    <!-- Header thông tin -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139,90,43,0.15) !important;">
         <div>
             <h2 class="font-weight-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-journal-check mr-2" style="color:#8b5a2b;"></i>Lịch sử Mượn Sách
+                <i class="bi bi-journal-check me-2" style="color:#8b5a2b;"></i>Lịch sử Mượn Sách
             </h2>
-            <div class="text-muted">Tất cả giao dịch mượn - trả của bạn</div>
+            <div class="text-muted">Tất cả biên bản và tiến trình mượn - trả của bạn</div>
         </div>
         <div>
-            <span class="badge badge-pill px-3 py-2" style="background:#fdf5ec;color:#8b5a2b;border:1px solid #8b5a2b;">
-                Tổng: <strong>5</strong> lần mượn
+            <span class="badge rounded-pill px-3 py-2" style="background:#fdf5ec; color:#8b5a2b; border:1px solid #8b5a2b; font-size: 0.9rem;">
+                Tổng cộng: <strong th:text="${totalBorrows != null ? totalBorrows : #lists.size(historyList)}">0</strong> lần mượn
             </span>
         </div>
     </div>
 
-    <!-- Filter tabs -->
-    <ul class="nav nav-pills mb-4" style="border-bottom: 2px solid rgba(139,90,43,0.15);">
+    <!-- Thanh chuyển Tab Bộ lọc (Động hóa bằng URL Parameter 'tab') -->
+    <ul class="nav nav-pills nav-pills-classic mb-4" style="border-bottom: 2px solid rgba(139,90,43,0.15);">
         <li class="nav-item">
-            <a class="nav-link active font-weight-bold" href="#" style="background-color:#8b5a2b;color:white;">Tất cả</a>
+            <a class="nav-link" th:classappend="${activeTab == 'all' || activeTab == null} ? 'active' : ''"
+               th:href="@{/member/borrow/history(tab='all')}">Tất cả</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" style="color:#8b5a2b;">Đang mượn</a>
+            <a class="nav-link" th:classappend="${activeTab == 'borrowing'} ? 'active' : ''"
+               th:href="@{/member/borrow/history(tab='borrowing')}">Đang mượn</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" style="color:#8b5a2b;">Đã trả</a>
+            <a class="nav-link" th:classappend="${activeTab == 'returned'} ? 'active' : ''"
+               th:href="@{/member/borrow/history(tab='returned')}">Đã trả</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-danger" href="#">Quá hạn</a>
+            <a class="nav-link text-danger" th:classappend="${activeTab == 'overdue'} ? 'active' : ''"
+               th:href="@{/member/borrow/history(tab='overdue')}">Quá hạn</a>
         </li>
     </ul>
 
-    <!-- Borrow 1 - Đang mượn -->
-    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #0d6efd !important; border-radius: 10px;">
+    <!-- Trường hợp danh sách rỗng -->
+    <div th:if="${#lists.isEmpty(historyList)}" class="text-center py-5 bg-white rounded shadow-sm">
+        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted fst-italic mt-2">Không tìm thấy bản ghi lịch sử mượn sách nào trong danh mục này.</p>
+        <a th:href="@{/}" class="btn text-white mt-2" style="background-color: #8b5a2b;"><i class="bi bi-search me-1"></i> Khám phá mượn sách ngay</a>
+    </div>
+
+    <!-- VÒNG LẶP DUYỆT DANH SÁCH LỊCH SỬ ĐỘNG -->
+    <div th:each="item : ${historyList}" class="card border-0 shadow-sm mb-3 card-history"
+         th:styleappend="${item.status == 'Borrowed'} ? 'border-left: 5px solid #1a73e8 !important;' :
+                        (${item.status == 'Overdue'} ? 'border-left: 5px solid #d93025 !important;' :
+                        (${item.status == 'Returned'} ? 'border-left: 5px solid #1e8e3e !important;' : 'border-left: 5px solid #718096 !important;'))">
         <div class="card-body p-4">
             <div class="row align-items-center">
+
+                <!-- Cột 1: Thông tin sách và ảnh bìa -->
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#e8f4fd;flex-shrink:0;">
-                            <i class="bi bi-book-fill" style="color:#0d6efd;font-size:1.4rem;"></i>
-                        </div>
+                        <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
+                             class="rounded me-3 border" alt="Book Cover" style="width: 46px; height: 64px; object-fit: cover; border-color: rgba(139,90,43,0.15)!important;">
                         <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Đắc Nhân Tâm</div>
-                            <div class="text-muted small">Dale Carnegie</div>
-                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0042</strong></div>
+                            <div class="font-weight-bold" style="color:#4a3b32; font-size:1.1rem; font-family:'Playfair Display',serif;" th:text="${item.bookTitle}">Tên sách mượn</div>
+                            <div class="text-muted small" th:text="${item.authorName}">Tác giả</div>
+                            <div class="text-muted small mt-1">Mã phiếu: <strong th:text="${item.borrowCode != null ? item.borrowCode : 'BOR-' + item.id}">BOR-2026-0042</strong></div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Cột 2: Dữ liệu mốc thời gian -->
                 <div class="col-md-3 text-md-center mt-2 mt-md-0">
                     <div class="small text-muted">Ngày mượn</div>
-                    <div class="font-weight-bold">15/06/2026</div>
-                    <div class="small text-muted mt-1">Hạn trả</div>
-                    <div class="font-weight-bold text-warning">15/07/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2 status-badge-borrowing" style="font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-arrow-left-right mr-1"></i>Đang mượn
-                    </span>
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-primary">Gia hạn</button>
+                    <div class="font-weight-bold text-dark" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">15/06/2026</div>
+
+                    <!-- Hiển thị Hạn trả nếu chưa trả sách thành công -->
+                    <div th:if="${item.status == 'Borrowed' || item.status == 'Overdue' || item.status == 'Return_Pending'}">
+                        <div class="small text-muted mt-2">Hạn trả</div>
+                        <div class="font-weight-bold text-danger" th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">15/07/2026</div>
                     </div>
+
+                    <!-- Hiển thị Ngày trả thực tế nếu sách đã được hoàn kho -->
+                    <div th:if="${item.status == 'Returned'}">
+                        <div class="small text-muted mt-2">Ngày trả thực tế</div>
+                        <div class="font-weight-bold text-success" th:text="${#temporals.format(item.returnDate, 'dd/MM/yyyy')}">05/07/2026</div>
+                    </div>
+                </div>
+
+                <!-- Cột 3: Trạng thái và Thao tác tương ứng -->
+                <div class="col-md-3 text-md-end text-start mt-2 mt-md-0">
+
+                    <!-- Nhóm Badge Trạng thái -->
+                    <div>
+                        <span th:if="${item.status == 'Borrowed'}" class="badge px-3 py-2 status-badge-borrowing" style="font-size:0.8rem; border-radius:20px;">
+                            <i class="bi bi-arrow-left-right me-1"></i>Đang mượn
+                        </span>
+                        <span th:if="${item.status == 'Overdue'}" class="badge px-3 py-2 status-badge-overdue" style="font-size:0.8rem; border-radius:20px;">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Quá hạn
+                        </span>
+                        <span th:if="${item.status == 'Returned'}" class="badge px-3 py-2 status-badge-returned" style="font-size:0.8rem; border-radius:20px;">
+                            <i class="bi bi-check-circle me-1"></i>Đã trả xong
+                        </span>
+                        <span th:if="${item.status == 'Return_Pending'}" class="badge px-3 py-2 status-badge-pending" style="font-size:0.8rem; border-radius:20px;">
+                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt trả
+                        </span>
+                    </div>
+
+                    <!-- Nhóm Hiển thị Phí phạt hoặc Nút tương tác -->
+                    <div class="mt-3">
+                        <!-- Quá hạn: Hiển thị số tiền phạt tích lũy -->
+                        <div th:if="${item.status == 'Overdue' && item.fineAmount > 0}" class="small text-danger font-weight-bold">
+                            <i class="bi bi-cash-coin me-1"></i>Phí phạt: <span th:text="${#numbers.formatDecimal(item.fineAmount, 0, 'POINT', 0, 'POINT')} + 'đ'">0đ</span>
+                        </div>
+
+                        <!-- Đang mượn: Cho phép bấm gửi yêu cầu trả nhanh hoặc gia hạn -->
+                        <div th:if="${item.status == 'Borrowed'}" class="d-flex justify-content-md-end gap-1">
+                            <form th:action="@{/borrow/return/{detailId}(detailId=${item.id})}" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;"><i class="bi bi-arrow-return-left"></i> Trả sách</button>
+                            </form>
+                        </div>
+
+                        <!-- Đã trả: Đã đánh giá nhận xét -->
+                        <div th:if="${item.status == 'Returned' && item.isReviewed}">
+                            <span class="text-warning small"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></span>
+                            <span class="text-muted small d-block" style="font-size: 0.75rem;">Đã gửi đánh giá</span>
+                        </div>
+
+                        <!-- Đã trả: Chưa đánh giá nhận xét -> Hiện nút viết bài -->
+                        <div th:if="${item.status == 'Returned' && !item.isReviewed}">
+                            <a th:href="@{/books/{id}(id=${item.bookId})}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; border-radius: 6px;">
+                                <i class="bi bi-star me-1"></i>Viết đánh giá
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Borrow 2 - Quá hạn -->
-    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #dc3545 !important; border-radius: 10px;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#fdecea;flex-shrink:0;">
-                            <i class="bi bi-book-fill" style="color:#dc3545;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Nhà Giả Kim</div>
-                            <div class="text-muted small">Paulo Coelho</div>
-                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0031</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày mượn</div>
-                    <div class="font-weight-bold">01/05/2026</div>
-                    <div class="small text-muted mt-1">Hạn trả</div>
-                    <div class="font-weight-bold text-danger">01/06/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2 status-badge-overdue" style="font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-exclamation-triangle mr-1"></i>Quá hạn 27 ngày
-                    </span>
-                    <div class="mt-2 small text-danger font-weight-bold">Phí phạt: 27.000đ</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Borrow 3 - Đã trả + có review -->
-    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #198754 !important; border-radius: 10px;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#d4edda;flex-shrink:0;">
-                            <i class="bi bi-book-fill" style="color:#198754;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Tư Duy Nhanh Và Chậm</div>
-                            <div class="text-muted small">Daniel Kahneman</div>
-                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0019</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày mượn</div>
-                    <div class="font-weight-bold">10/03/2026</div>
-                    <div class="small text-muted mt-1">Ngày trả</div>
-                    <div class="font-weight-bold text-success">05/04/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2 status-badge-returned" style="font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-check-circle mr-1"></i>Đã trả đúng hạn
-                    </span>
-                    <div class="mt-2">
-                        <span class="text-warning small">★★★★★</span>
-                        <span class="text-muted small">Đã đánh giá</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Borrow 4 - Đã trả, chưa review -->
-    <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #198754 !important; border-radius: 10px;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#d4edda;flex-shrink:0;">
-                            <i class="bi bi-book-fill" style="color:#198754;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Sapiens: Lược Sử Loài Người</div>
-                            <div class="text-muted small">Yuval Noah Harari</div>
-                            <div class="text-muted small">Mã phiếu: <strong>BOR-2026-0008</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày mượn</div>
-                    <div class="font-weight-bold">05/01/2026</div>
-                    <div class="small text-muted mt-1">Ngày trả</div>
-                    <div class="font-weight-bold text-success">20/01/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2 status-badge-returned" style="font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-check-circle mr-1"></i>Đã trả đúng hạn
-                    </span>
-                    <div class="mt-2">
-                        <a href="/books/4" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-star mr-1"></i>Viết đánh giá
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 </body>
 </html>
