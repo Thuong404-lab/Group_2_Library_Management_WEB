@@ -66,9 +66,20 @@
       .rating-picker.is-invalid .rating-star {
         color: #dc3545;
       }
+      .rating-picker.is-valid {
+        border: 1px solid #198754;
+        border-radius: 0.375rem;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+        padding: 0.2rem 0.35rem;
+      }
       .validate-field.is-invalid {
         border-color: #dc3545 !important;
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+        background-image: none !important;
+      }
+      .validate-field.is-valid {
+        border-color: #198754 !important;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
         background-image: none !important;
       }
       .book-option:hover {
@@ -418,6 +429,7 @@
 
 
         function setBookError(message) {
+          bookSearchInput.classList.remove("is-valid");
           bookSearchInput.classList.add("is-invalid");
           let feedback = document.getElementById("bookIdFeedback");
 
@@ -432,7 +444,7 @@
         }
 
         function clearBookError() {
-          bookSearchInput.classList.remove("is-invalid");
+          bookSearchInput.classList.remove("is-invalid", "is-valid");
           const feedback = document.getElementById("bookIdFeedback");
 
           if (feedback != null) {
@@ -487,6 +499,7 @@
         }
 
         function setRatingError(message) {
+          ratingPicker.classList.remove("is-valid");
           ratingPicker.classList.add("is-invalid");
           const feedback = document.getElementById("ratingFeedback");
 
@@ -496,7 +509,7 @@
         }
 
         function clearRatingError() {
-          ratingPicker.classList.remove("is-invalid");
+          ratingPicker.classList.remove("is-invalid", "is-valid");
           const feedback = document.getElementById("ratingFeedback");
 
           if (feedback != null) {
@@ -537,11 +550,15 @@
             if (selectedBookId.value.trim() === "") {
               setBookError("Vui lòng chọn sách.");
               isValid = false;
+            } else {
+              bookSearchInput.classList.add("is-valid");
             }
 
             if (ratingInput.value.trim() === "") {
               setRatingError("Vui lòng chọn đánh giá sao.");
               isValid = false;
+            } else {
+              ratingPicker.classList.add("is-valid");
             }
 
             if (!isValid) {

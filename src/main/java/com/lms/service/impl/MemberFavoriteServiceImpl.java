@@ -1,9 +1,11 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.enums.ActionType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
+import com.lms.service.AuditLogService;
 import com.lms.service.FinancialService;
 import com.lms.service.MemberFavoriteService;
 import org.springframework.stereotype.Service;
@@ -21,17 +23,20 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     private final FavoritesRepository favoritesRepository;
     private final ReservationRepository reservationRepository;
     private final FinancialService financialService;
+    private final AuditLogService auditLogService;
 
     public MemberFavoriteServiceImpl(MemberAccountRepository memberAccountRepository,
                                      BookRepository bookRepository,
                                      FavoritesRepository favoritesRepository,
                                      ReservationRepository reservationRepository,
-                                     FinancialService financialService) {
+                                     FinancialService financialService,
+                                     AuditLogService auditLogService) {
         this.memberAccountRepository = memberAccountRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
         this.reservationRepository = reservationRepository;
         this.financialService = financialService;
+        this.auditLogService = auditLogService;
     }
 
     private Member getMemberByUsername(String username) {
@@ -114,6 +119,9 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
         reservation = reservationRepository.saveAndFlush(reservation);
         financialService.payReservationDeposit(member.getMemberId(), reservation.getReservationId());
+        auditLogService.log(
+                ActionType.RESERVE_BOOK,
+                "Member " + username + " dat giu cho sach #" + book.getBookId() + " - " + book.getTitle() + ".");
 
         return reservation;
     }

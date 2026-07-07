@@ -78,6 +78,7 @@
                                         Email <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="email" type="email" required
+                                        pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                         placeholder="email@example.com" autocomplete="off"
                                         th:value="${formValues != null ? formValues['email'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['email'] != null} ? 'is-invalid'">
@@ -91,8 +92,9 @@
                                     <label class="form-label fw-bold small text-muted text-uppercase">
                                         Số điện thoại <span class="text-danger">*</span>
                                     </label>
-                                    <input class="form-control validate-field" name="phone" required pattern="0[0-9]{9}"
-                                        minlength="10" placeholder="09xxxxxxxx"
+                                    <input class="form-control validate-field" name="phone" required
+                                        pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
+                                        placeholder="0912345678"
                                         th:value="${formValues != null ? formValues['phone'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
@@ -166,12 +168,8 @@
                                     </label>
                                     <select class="form-select form-control validate-field" name="status" required
                                         th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
-                                        <option value="" disabled
-                                            th:selected="${formValues == null or #strings.isEmpty(formValues['status'])}">
-                                            -- Chọn trạng thái thành viên --
-                                        </option>
                                         <option value="Active"
-                                            th:selected="${formValues != null and formValues['status'] == 'Active'}">
+                                            th:selected="${formValues == null or #strings.isEmpty(formValues['status']) or formValues['status'] == 'Active'}">
                                             Active
                                         </option>
                                         <option value="Inactive"
@@ -242,6 +240,10 @@
                     return "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
                 }
 
+                if (field.name === "fullName") {
+                    return "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
+                }
+
                 if (field.name === "username") {
                     return "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
                 }
@@ -268,7 +270,14 @@
                     return false;
                 }
 
-                if (field.name === "phone" && !/^0[0-9]{9}$/.test(value)) {
+                if (field.name === "phone" && !/^(?!0{10}$)0[0-9]{9}$/.test(value)) {
+                    field.classList.remove("is-valid");
+                    field.classList.add("is-invalid");
+                    feedback.textContent = getErrorMessage(field);
+                    return false;
+                }
+
+                if (field.name === "fullName" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(value)) {
                     field.classList.remove("is-valid");
                     field.classList.add("is-invalid");
                     feedback.textContent = getErrorMessage(field);

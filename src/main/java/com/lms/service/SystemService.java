@@ -1,5 +1,12 @@
 package com.lms.service;
 
+import com.lms.entity.SystemLog;
+import com.lms.entity.SystemSetting;
+import com.lms.entity.MembershipTier;
+import org.springframework.data.domain.Page;
+
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,19 +15,27 @@ import java.util.Map;
  */
 public interface SystemService {
 
-    // UC-19.1: Backup data
-    void backupData();
-
-    // UC-19.2: Restore data
     void restoreData(String backupFilePath);
 
-    // UC-19.3: Lấy System Logs
-    void getSystemLogs(int page, String action);
+    Page<SystemLog> getSystemLogs(int page, String action, String keyword);
 
-    // UC-21.1: Cập nhật chính sách mượn/trả
-    void updateBorrowingPolicies(Integer maxBorrowDays, Integer maxRenewals,
-                                 Integer maxBooksPerMember, Double borrowFeePerBook);
+    List<SystemSetting> getAllSettings();
 
-    Map<String, String> getBorrowingPolicySettings();
+    Map<String, String> getSettingMap();
 
+    int getIntSetting(String settingKey, int defaultValue);
+
+    List<MembershipTier> getMembershipTiers();
+
+    void updateBorrowingPolicies(Integer maxBorrowDays,
+                                 Integer maxRenewalDays,
+                                 Map<Integer, Integer> tierBorrowLimits,
+                                 Map<Integer, BigDecimal> tierSpendingConditions,
+                                 BigDecimal borrowFeePerBook,
+                                 BigDecimal finePerDay,
+                                 BigDecimal damageCompensationAmount,
+                                 Integer damageCompensationThreshold,
+                                 Integer overdueViolationLockLimit,
+                                 Integer bookDisposalConditionThreshold,
+                                 BigDecimal depositAmount);
 }

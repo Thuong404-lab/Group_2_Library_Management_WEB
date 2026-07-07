@@ -4,6 +4,19 @@
 
 <head>
     <title>Quản lý tài khoản nhân sự</title>
+    <style>
+        .staff-update-form .form-control.is-invalid,
+        .staff-update-form .form-select.is-invalid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
+        .staff-update-form .form-control.is-valid,
+        .staff-update-form .form-select.is-valid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -46,7 +59,7 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}" placeholder="Tìm họ tên, email, SĐT hoặc loại nhân viên...">
+                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
                             <button class="btn btn-classic" type="submit">Tìm kiếm</button>
                         </div>
                     </div>
@@ -129,28 +142,29 @@
 
                                 <td class="text-end pe-3">
                                     <div th:if="${account != null}">
-                                        <a class="btn btn-sm btn-outline-classic"
-                                            th:href="${'#updateStaffModal' + account.accountId}"
-                                            onclick="document.body.appendChild(document.querySelector(this.getAttribute('href')));"
+                                        <button type="button" class="btn btn-sm btn-outline-classic"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="${'#updateStaffModal' + account.accountId}"
                                             aria-label="Cập nhật tài khoản">
                                             <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <a class="btn btn-sm btn-outline-danger ms-1"
-                                            th:href="${'#deleteStaffModal' + account.accountId}"
-                                            onclick="document.body.appendChild(document.querySelector(this.getAttribute('href')));"
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
                                             aria-label="Xóa tài khoản">
                                             <i class="bi bi-trash"></i>
-                                        </a>
+                                        </button>
 
                                         <!-- Update Modal -->
                                         <div class="modal fade text-start"
                                             th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
-                                            aria-hidden="true"
+                                            aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                             th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
                                             <div class="modal-dialog modal-dialog-centered modal-lg">
                                                 <div class="modal-content border-0 shadow">
-                                                    <form method="post" class="edit-account-form" novalidate
-                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
+                                                    <form method="post" class="staff-update-form" novalidate
+                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
+                                                        th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='staff')}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -163,23 +177,23 @@
                                                                     class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
                                                                 nhật tài khoản nhân sự
                                                             </h5>
-                                                            <button type="button" class="btn-close"
-                                                                aria-label="Close"
-                                                                onclick="window.location.hash = '';"></button>
                                                         </div>
 
                                                         <div class="modal-body p-4">
+                                                            <div class="alert alert-danger d-none staff-update-global-error"
+                                                                role="alert"></div>
                                                             <div class="row g-3">
                                                                 <div class="col-md-6 order-md-1">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Họ
                                                                         tên <span class="text-danger">*</span></label>
-                                                                    <input class="form-control edit-validate-field"
-                                                                        name="fullName" data-label="Họ tên"
+                                                                    <input class="form-control" name="fullName"
+                                                                        data-label="Họ tên"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (staff.user != null ? staff.user.fullName : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback"
+                                                                        data-error-for="fullName"
                                                                         data-default-message="Họ tên không được để trống."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
                                                                         Họ tên không được để trống.
@@ -190,12 +204,13 @@
                                                                         class="form-label fw-bold small text-muted text-uppercase">
                                                                         Email <span class="text-danger">*</span>
                                                                     </label>
-                                                                    <input class="form-control edit-validate-field"
-                                                                        name="email" type="email" data-label="Email"
+                                                                    <input class="form-control" name="email"
+                                                                        type="email" data-label="Email"
+                                                                        pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (staff.user != null ? staff.user.email : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                         required>
-                                                                    <div class="invalid-feedback"
+                                                                    <div class="invalid-feedback" data-error-for="email"
                                                                         data-default-message="Email không được để trống."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
                                                                         Email không hợp lệ.
@@ -206,13 +221,13 @@
                                                                         class="form-label fw-bold small text-muted text-uppercase">Số
                                                                         điện thoại <span class="text-danger">*</span>
                                                                     </label>
-                                                                    <input class="form-control edit-validate-field"
-                                                                        name="phone" data-label="Số điện thoại" required
-                                                                        pattern="[0-9]{10}" minlength="10"
-                                                                        maxlength="10" inputmode="numeric"
+                                                                    <input class="form-control" name="phone"
+                                                                        data-label="Số điện thoại" required
+                                                                        pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
+                                                                        inputmode="numeric"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (staff.user != null ? staff.user.phone : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
-                                                                    <div class="invalid-feedback"
+                                                                    <div class="invalid-feedback" data-error-for="phone"
                                                                         data-default-message="Số điện thoại không được để trống."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
                                                                         Số điện thoại không hợp lệ.
@@ -223,12 +238,14 @@
                                                                         class="form-label fw-bold small text-muted text-uppercase">
                                                                         Username <span class="text-danger">*</span>
                                                                     </label>
-                                                                    <input class="form-control edit-validate-field"
-                                                                        name="username" data-label="Username"
+                                                                    <input class="form-control" name="username"
+                                                                        data-label="Username"
+                                                                        pattern="[a-zA-Z0-9_]{3,20}"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback"
+                                                                        data-error-for="username"
                                                                         data-default-message="Username không được để trống."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
                                                                         Username không được để trống.
@@ -238,8 +255,7 @@
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Loại
                                                                         nhân viên</label>
-                                                                    <select
-                                                                        class="form-select form-control edit-validate-field"
+                                                                    <select class="form-select form-control"
                                                                         name="staffType" data-label="Loại nhân viên"
                                                                         required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
@@ -251,6 +267,7 @@
                                                                             Librarian</option>
                                                                     </select>
                                                                     <div class="invalid-feedback"
+                                                                        data-error-for="staffType"
                                                                         data-default-message="Vui lòng chọn loại nhân viên."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
                                                                         Vui lòng chọn loại nhân viên.
@@ -260,8 +277,7 @@
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Trạng
                                                                         thái <span class="text-danger">*</span></label>
-                                                                    <select
-                                                                        class="form-select form-control edit-validate-field"
+                                                                    <select class="form-select form-control"
                                                                         name="status" data-label="Trạng thái" required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                         <option value="Active"
@@ -275,6 +291,7 @@
                                                                             Blocked</option>
                                                                     </select>
                                                                     <div class="invalid-feedback"
+                                                                        data-error-for="status"
                                                                         data-default-message="Vui lòng chọn trạng thái."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
                                                                         Vui lòng chọn trạng thái.
@@ -284,7 +301,8 @@
                                                         </div>
 
                                                         <div class="modal-footer border-top bg-light">
-                                                            <a href="#" class="btn btn-secondary">Hủy bỏ</a>
+                                                            <button type="button" class="btn btn-secondary"
+                                                                data-bs-dismiss="modal">Hủy bỏ</button>
                                                             <button type="submit" class="btn btn-classic">Lưu thay
                                                                 đổi</button>
                                                         </div>
@@ -296,7 +314,7 @@
                                         <!-- Delete Modal -->
                                         <div class="modal fade text-start"
                                             th:id="${'deleteStaffModal' + account.accountId}" tabindex="-1"
-                                            aria-hidden="true">
+                                            aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                             <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post"
@@ -310,9 +328,6 @@
                                                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                                                 Xác nhận xóa tài khoản
                                                             </h5>
-                                                            <button type="button" class="btn-close"
-                                                                aria-label="Close"
-                                                                onclick="window.location.hash = '';"></button>
                                                         </div>
 
                                                         <div class="modal-body pb-0">
@@ -386,7 +401,8 @@
                                                         </div>
 
                                                         <div class="modal-footer border-top-0 pt-4">
-                                                            <a href="#" class="btn btn-light">Hủy</a>
+                                                            <button type="button" class="btn btn-light"
+                                                                data-bs-dismiss="modal">Hủy</button>
                                                             <button type="submit" class="btn btn-danger">Đồng ý
                                                                 xóa</button>
                                                         </div>
@@ -413,9 +429,18 @@
 
                 <!-- Pagination -->
                 <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
-                    th:if="${accounts.totalPages > 1}">
-                    <nav>
+                    th:if="${staffPage.totalPages > 1}"
+                    th:with="startPage=${staffPage.totalPages <= 10 ? 0 : (staffPage.number < 9 ? 0 : (staffPage.number - 8 > staffPage.totalPages - 10 ? staffPage.totalPages - 10 : staffPage.number - 8))}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < staffPage.totalPages ? startPage + 9 : staffPage.totalPages - 1}">
                         <ul class="pagination mb-0">
+                            <!-- First page -->
+                            <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/admin/staff(page=0, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                            </li>
+
+                            <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/admin/staff(page=${staffPage.number - 1}, keyword=${keyword})}"
@@ -424,7 +449,12 @@
                                 </a>
                             </li>
 
-                            <li class="page-item" th:each="i : ${#numbers.sequence(0, accounts.totalPages - 1)}"
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Sliding window: at most 10 page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
                                 <a class="page-link" th:href="@{/admin/staff(page=${i}, keyword=${keyword})}"
                                     th:text="${i + 1}"
@@ -433,6 +463,11 @@
                                 </a>
                             </li>
 
+                            <li class="page-item disabled" th:if="${endPage < staffPage.totalPages - 1}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/admin/staff(page=${staffPage.number + 1}, keyword=${keyword})}"
@@ -440,12 +475,181 @@
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
+
+                            <!-- Last page -->
+                            <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
             </div>
         </div>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".staff-update-form").forEach(function (form) {
+                    const modal = form.closest(".modal");
+                    const submitButton = form.querySelector("button[type='submit']");
+                    const globalError = form.querySelector(".staff-update-global-error");
+                    let lastFocusedField = null;
+
+                    form.querySelectorAll("input, select, textarea").forEach(function (field) {
+                        field.addEventListener("focus", function () {
+                            lastFocusedField = field;
+                        });
+                        field.addEventListener("input", function () {
+                            clearFieldError(field);
+                        });
+                        field.addEventListener("change", function () {
+                            clearFieldError(field);
+                        });
+                    });
+
+                    function clearErrors() {
+                        form.querySelectorAll(".is-invalid, .is-valid").forEach(function (field) {
+                            field.classList.remove("is-invalid", "is-valid");
+                        });
+                        form.querySelectorAll("[data-error-for]").forEach(function (feedback) {
+                            feedback.textContent = "";
+                        });
+                        globalError.textContent = "";
+                        globalError.classList.add("d-none");
+                    }
+
+                    function clearFieldError(field) {
+                        field.classList.remove("is-invalid", "is-valid");
+                        const feedback = form.querySelector(
+                            "[data-error-for='" + field.name + "']");
+                        if (feedback != null) {
+                            feedback.textContent = "";
+                        }
+                    }
+
+                    function showErrors(errors) {
+                        form.querySelectorAll("input:not([type='hidden']), select, textarea")
+                            .forEach(function (field) {
+                                field.classList.remove("is-invalid", "is-valid");
+                                field.classList.add(
+                                    Object.prototype.hasOwnProperty.call(errors, field.name)
+                                        ? "is-invalid"
+                                        : "is-valid");
+                            });
+
+                        Object.entries(errors).forEach(function (entry) {
+                            const fieldName = entry[0];
+                            const message = entry[1];
+
+                            if (fieldName === "_global") {
+                                globalError.textContent = message;
+                                globalError.classList.remove("d-none");
+                                return;
+                            }
+
+                            const field = form.elements.namedItem(fieldName);
+                            const feedback = form.querySelector("[data-error-for='" + fieldName + "']");
+                            if (field != null) {
+                                field.classList.add("is-invalid");
+                            }
+                            if (feedback != null) {
+                                feedback.textContent = message;
+                            }
+                        });
+
+                        if (lastFocusedField != null
+                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
+                            lastFocusedField.focus();
+                        }
+                    }
+
+                    function validateLocally() {
+                        const errors = {};
+                        const fullName = form.elements.fullName.value.trim();
+                        const username = form.elements.username.value.trim();
+                        const email = form.elements.email.value.trim();
+                        const phone = form.elements.phone.value.trim();
+
+                        if (fullName === "") {
+                            errors.fullName = "Họ tên không được để trống.";
+                        }
+                        if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
+                            errors.fullName = "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
+                        }
+                        if (username === "") {
+                            errors.username = "Username không được để trống.";
+                        } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                            errors.username = "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
+                        }
+                        if (email === "") {
+                            errors.email = "Email không được để trống.";
+                        } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
+                            errors.email = "Email không đúng định dạng.";
+                        }
+                        if (phone === "") {
+                            errors.phone = "Số điện thoại không được để trống.";
+                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
+                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
+                        }
+                        if (form.elements.staffType.value === "") {
+                            errors.staffType = "Loại nhân viên không hợp lệ.";
+                        }
+                        if (form.elements.status.value === "") {
+                            errors.status = "Trạng thái tài khoản không hợp lệ.";
+                        }
+                        return errors;
+                    }
+
+                    form.addEventListener("submit", async function (event) {
+                        event.preventDefault();
+                        clearErrors();
+
+                        const localErrors = validateLocally();
+                        submitButton.disabled = true;
+                        try {
+                            const params = new URLSearchParams();
+                            new FormData(form).forEach(function (value, key) {
+                                if (key !== "source" && !key.startsWith("_csrf")) {
+                                    params.append(key, value);
+                                }
+                            });
+
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
+                                headers: { "Accept": "application/json" }
+                            });
+                            if (!response.ok) {
+                                throw new Error("Validation request failed");
+                            }
+
+                            const serverErrors = await response.json();
+                            const errors = Object.assign({}, serverErrors, localErrors);
+                            if (Object.keys(errors).length > 0) {
+                                showErrors(errors);
+                                return;
+                            }
+
+                            form.submit();
+                        } catch (error) {
+                            showErrors(Object.assign({}, localErrors, {
+                                _global: "Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại."
+                            }));
+                        } finally {
+                            submitButton.disabled = false;
+                        }
+                    });
+
+                    modal.addEventListener("hidden.bs.modal", function () {
+                        form.reset();
+                        clearErrors();
+                    });
+                });
+            });
+        </script>
     </div>
 </body>
 

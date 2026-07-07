@@ -14,9 +14,22 @@ import java.util.Optional;
 public interface MemberAccountRepository extends JpaRepository<MemberAccount, Integer> {
     Optional<MemberAccount> findByUsername(String username);
     Optional<MemberAccount> findByMember_User_Email(String email);
+    Optional<MemberAccount> findByMember_User_Id(Integer userId);
     boolean existsByUsername(String username);
     boolean existsByUsernameAndIdNot(String username, Integer id);
 
-    @Query("SELECT m FROM MemberAccount m WHERE m.username LIKE %:keyword% OR m.member.user.fullName LIKE %:keyword%")
+    @Query("""
+            SELECT m
+            FROM MemberAccount m
+            LEFT JOIN m.member member
+            LEFT JOIN member.user user
+            LEFT JOIN member.tier tier
+            WHERE LOWER(m.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(m.status) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(tier.tierName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            """)
     Page<MemberAccount> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
 }

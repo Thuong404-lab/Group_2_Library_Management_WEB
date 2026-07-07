@@ -16,6 +16,7 @@ import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
 import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
+import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
@@ -27,6 +28,7 @@ import com.lms.repository.MemberRepository;
 import com.lms.repository.NotificationRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
+import com.lms.service.AuditLogService;
 import com.lms.service.BorrowService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final MemberAccountRepository memberAccountRepository;
     private final SystemSettingRepository systemSettingRepository;
     private final ReservationRepository reservationRepository;
+    private final AuditLogService auditLogService;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
 
@@ -59,6 +62,7 @@ public class BorrowServiceImpl implements BorrowService {
                              MemberAccountRepository memberAccountRepository,
                              SystemSettingRepository systemSettingRepository,
                              ReservationRepository reservationRepository,
+                             AuditLogService auditLogService,
                              NotificationRepository notificationRepository,
                              MemberNotificationRepository memberNotificationRepository) {
         this.memberRepository = memberRepository;
@@ -69,6 +73,7 @@ public class BorrowServiceImpl implements BorrowService {
         this.memberAccountRepository = memberAccountRepository;
         this.systemSettingRepository = systemSettingRepository;
         this.reservationRepository = reservationRepository;
+        this.auditLogService = auditLogService;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
     }
@@ -155,6 +160,11 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setStatus("Pending");
         detail.setRenewCount(0);
         borrowDetailRepository.save(detail);
+
+        auditLogService.log(
+                ActionType.REQUEST_BORROW,
+                "Member " + username + " gui yeu cau muon sach #" + book.getBookId()
+                        + " - " + book.getTitle() + " trong " + borrowDays + " ngay.");
         return borrow;
     }
 
@@ -198,6 +208,10 @@ public class BorrowServiceImpl implements BorrowService {
         Borrow parent = detail.getBorrow();
         parent.setStatus("Return_Pending");
         borrowRepository.save(parent);
+
+        auditLogService.log(
+                ActionType.REQUEST_RETURN,
+                "Member " + username + " gui yeu cau tra sach #" + parent.getBorrowId() + ".");
     }
 
     @Override
@@ -272,7 +286,12 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setBook(book);
         reservation.setReservationDate(LocalDateTime.now());
         reservation.setStatus("Pending");
-        return reservationRepository.save(reservation);
+        Reservation savedReservation = reservationRepository.save(reservation);
+        auditLogService.log(
+                ActionType.RESERVE_BOOK,
+                "Member " + username + " gui yeu cau dat truoc sach #" + book.getBookId()
+                        + " - " + book.getTitle() + ".");
+        return savedReservation;
     }
 
     @Override
