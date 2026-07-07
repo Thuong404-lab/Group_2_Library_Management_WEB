@@ -29,6 +29,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Member account list, update, deactivate, and status changes maintained by
+ * Pham Kien Quoc for librarian account-management use cases.
+ */
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
@@ -225,16 +229,32 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (account == null) {
             return false;
         }
-        account.setStatus("Inactive");
-        if (account.getMember().getUser() != null) {
-            account.getMember().getUser().setStatus(UserStatus.Inactive);
-        }
+        applyStatus(account, "Inactive");
         memberAccountRepository.save(account);
 
         auditLogService.log(
                 ActionType.DEACTIVATE_ACCOUNT,
                 "Vô hiệu hóa tài khoản thành viên." + account.getUsername());
         return true;
+    }
+
+    @Override
+    @Transactional
+    public void changeMemberStatus(Integer accountId, String status) {
+        if (!"Active".equals(status) && !"Inactive".equals(status) && !"Blocked".equals(status)) {
+            throw new IllegalArgumentException("Trạng thái tài khoản không hợp lệ.");
+        }
+        MemberAccount account = memberAccountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        applyStatus(account, status);
+        memberAccountRepository.save(account);
+    }
+
+    private void applyStatus(MemberAccount account, String status) {
+        account.setStatus(status);
+        if (account.getMember() != null && account.getMember().getUser() != null) {
+            account.getMember().getUser().setStatus(toUserStatus(status));
+        }
     }
 
     private String trim(String value) {
