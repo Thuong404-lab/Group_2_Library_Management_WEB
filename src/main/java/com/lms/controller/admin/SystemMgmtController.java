@@ -26,7 +26,6 @@ public class SystemMgmtController {
                                  Model model) {
 
         model.addAttribute("logs", systemService.getSystemLogs(page, action, keyword));
-        model.addAttribute("action", action);
         model.addAttribute("keyword", keyword);
 
         return "admin/system-logs";

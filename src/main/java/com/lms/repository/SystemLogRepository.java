@@ -24,29 +24,30 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
             SELECT log
             FROM SystemLog log
             LEFT JOIN log.user user
-            WHERE (:action IS NULL OR :action = '' OR LOWER(log.actionType) LIKE LOWER(CONCAT('%', :action, '%')))
-              AND (
-                    :keyword IS NULL OR :keyword = ''
-                    OR LOWER(log.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    OR LOWER(log.ipAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    OR EXISTS (
-                        SELECT memberAccount.id
-                        FROM MemberAccount memberAccount
-                        WHERE memberAccount.member.user = user
-                          AND LOWER(memberAccount.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    )
-                    OR EXISTS (
-                        SELECT staffAccount.id
-                        FROM StaffAccount staffAccount
-                        WHERE staffAccount.staff.user = user
-                          AND LOWER(staffAccount.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    )
-                  )
+            WHERE :keyword IS NULL OR :keyword = ''
+               OR LOWER(CAST(log.createdAt AS string)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(FUNCTION('FORMAT', log.createdAt, 'dd/MM/yyyy HH:mm:ss')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(FUNCTION('FORMAT', log.createdAt, 'd/M/yyyy HH:mm:ss')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(FUNCTION('FORMAT', log.createdAt, 'd/M/yyyy')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(FUNCTION('FORMAT', log.createdAt, 'd/M')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(log.actionType) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(log.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(log.ipAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR EXISTS (
+                    SELECT memberAccount.id
+                    FROM MemberAccount memberAccount
+                    WHERE memberAccount.member.user = user
+                      AND LOWER(memberAccount.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               )
+               OR EXISTS (
+                    SELECT staffAccount.id
+                    FROM StaffAccount staffAccount
+                    WHERE staffAccount.staff.user = user
+                      AND LOWER(staffAccount.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               )
             ORDER BY log.createdAt DESC
             """)
-    Page<SystemLog> searchLogs(@Param("action") String action,
-                               @Param("keyword") String keyword,
-                               Pageable pageable);
+    Page<SystemLog> searchLogs(@Param("keyword") String keyword, Pageable pageable);
 }

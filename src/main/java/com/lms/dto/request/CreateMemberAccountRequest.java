@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Pattern;
 public class CreateMemberAccountRequest {
 
     @NotBlank(message = "Họ tên không được để trống.")
+    @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
+            message = "Họ tên chỉ được chứa chữ cái và khoảng trắng.")
     private String fullName;
 
     @NotBlank(message = "Email không được để trống.")
@@ -42,7 +44,7 @@ public class CreateMemberAccountRequest {
     }
 
     public void setFullName(String fullName) {
-        this.fullName = fullName;
+        this.fullName = fullName == null ? null : fullName.trim();
     }
 
     public String getEmail() {

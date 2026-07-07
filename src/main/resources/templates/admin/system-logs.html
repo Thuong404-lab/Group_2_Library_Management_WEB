@@ -24,21 +24,13 @@
         <div class="card-classic shadow-sm mb-4">
             <div class="card-body p-4">
                 <form class="row g-3 align-items-end" method="get" th:action="@{/admin/system/logs}">
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold small text-muted text-uppercase">
-                            Loại hành động
-                        </label>
-                        <input type="text" name="action" class="form-control" placeholder="LOGIN, LOGOUT, CREATE..."
-                            th:value="${action}">
-                    </div>
-
-                    <div class="col-md-6">
+                    <div class="col-md-10">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             Từ khóa
                         </label>
                         <input type="text" name="keyword" class="form-control"
-                            placeholder="Username, họ tên, IP hoặc mô tả..." th:value="${keyword}">
+                            placeholder="Tìm thời gian, người thực hiện, hành động, IP hoặc mô tả..."
+                            th:value="${keyword}">
                     </div>
 
                     <div class="col-md-auto d-flex gap-2">
@@ -77,7 +69,7 @@
 
                         <tbody>
                             <tr th:if="${logs == null or logs.content.isEmpty()}">
-                                <td colspan="6" class="text-center text-muted py-5">
+                                <td colspan="5" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                     Không có nhật ký hệ thống.
                                 </td>
@@ -86,8 +78,8 @@
                             <tr th:each="log : ${logs.content}">
                                 <td>
                                     <span th:if="${log.createdAt != null}"
-                                        th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss')}">
-                                        01/07/2026 10:00:00
+                                        th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy · HH:mm:ss')}">
+                                        dd/MM/yyyy · HH:mm:ss
                                     </span>
                                     <span th:if="${log.createdAt == null}" class="text-muted">
                                         N/A
@@ -135,27 +127,23 @@
                 </div>
             </div>
 
-            <!-- Pagination -->
             <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
                 th:if="${logs != null and logs.totalPages > 1}"
                 th:with="startPage=${logs.totalPages <= 10 ? 0 : (logs.number < 9 ? 0 : (logs.number - 8 > logs.totalPages - 10 ? logs.totalPages - 10 : logs.number - 8))}">
                 <nav aria-label="Phân trang nhật ký hệ thống"
                     th:with="endPage=${startPage + 9 < logs.totalPages ? startPage + 9 : logs.totalPages - 1}">
                     <ul class="pagination mb-0">
-                        <!-- First page -->
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
-                            <a class="page-link"
-                                th:href="@{/admin/system/logs(page=0, action=${action}, keyword=${keyword})}"
+                            <a class="page-link" th:href="@{/admin/system/logs(page=0, keyword=${keyword})}"
                                 th:attr="aria-disabled=${logs.first}" aria-label="Trang đầu"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 Đầu
                             </a>
                         </li>
 
-                        <!-- Previous page -->
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link"
-                                th:href="@{/admin/system/logs(page=${logs.number - 1}, action=${action}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(page=${logs.number - 1}, keyword=${keyword})}"
                                 th:attr="aria-disabled=${logs.first}" aria-label="Trang trước"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 <i class="bi bi-chevron-left"></i>
@@ -167,11 +155,9 @@
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">…</span>
                         </li>
 
-                        <!-- Sliding window: at most 10 page numbers -->
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == logs.number} ? 'active'">
-                            <a class="page-link"
-                                th:href="@{/admin/system/logs(page=${i}, action=${action}, keyword=${keyword})}"
+                            <a class="page-link" th:href="@{/admin/system/logs(page=${i}, keyword=${keyword})}"
                                 th:text="${i + 1}" th:attr="aria-current=${i == logs.number ? 'page' : null}"
                                 th:style="${i == logs.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
                                 1
@@ -183,20 +169,18 @@
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">…</span>
                         </li>
 
-                        <!-- Next page -->
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link"
-                                th:href="@{/admin/system/logs(page=${logs.number + 1}, action=${action}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(page=${logs.number + 1}, keyword=${keyword})}"
                                 th:attr="aria-disabled=${logs.last}" aria-label="Trang sau"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>
 
-                        <!-- Last page -->
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link"
-                                th:href="@{/admin/system/logs(page=${logs.totalPages - 1}, action=${action}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(page=${logs.totalPages - 1}, keyword=${keyword})}"
                                 th:attr="aria-disabled=${logs.last}" aria-label="Trang cuối"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 Cuối

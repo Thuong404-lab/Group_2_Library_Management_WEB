@@ -47,6 +47,7 @@ public class AccountServiceImpl implements AccountService {
                     + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
     private static final String PHONE_PATTERN = "^(?!0{10}$)0\\d{9}$";
     private static final String USERNAME_PATTERN = "[a-zA-Z0-9_]{3,20}";
+    private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
 
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
@@ -379,6 +380,8 @@ public class AccountServiceImpl implements AccountService {
     private void validateFullName(String fullName, Map<String, String> errors) {
         if (fullName.isEmpty()) {
             errors.put("fullName", "Họ tên không được để trống.");
+        } else if (!fullName.matches(FULL_NAME_PATTERN)) {
+            errors.put("fullName", "Họ tên chỉ được chứa chữ cái và khoảng trắng.");
         }
     }
 

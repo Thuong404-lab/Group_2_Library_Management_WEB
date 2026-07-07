@@ -58,7 +58,7 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}" placeholder="Tìm username, họ tên hoặc email...">
+                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
                                 
                             <button class="btn btn-classic ms-2 rounded" type="submit">Tìm kiếm</button>
                         </div>
@@ -568,6 +568,9 @@
 
                         if (fullName === "") {
                             errors.fullName = "Họ tên không được để trống.";
+                        }
+                        if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
+                            errors.fullName = "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
                         }
                         if (username === "") {
                             errors.username = "Username không được để trống.";

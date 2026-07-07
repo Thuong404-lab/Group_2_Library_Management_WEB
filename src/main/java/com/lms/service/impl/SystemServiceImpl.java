@@ -61,9 +61,10 @@ public class SystemServiceImpl implements SystemService {
 
         String trimmedAction = action == null ? "" : action.trim();
         String trimmedKeyword = keyword == null ? "" : keyword.trim();
+        String searchKeyword = (trimmedAction + " " + trimmedKeyword).trim();
 
-        Page<SystemLog> logs = !trimmedAction.isEmpty() || !trimmedKeyword.isEmpty()
-                ? systemLogRepository.searchLogs(trimmedAction, trimmedKeyword, pageRequest)
+        Page<SystemLog> logs = !searchKeyword.isEmpty()
+                ? systemLogRepository.searchLogs(searchKeyword, pageRequest)
                 : systemLogRepository.findAllByOrderByCreatedAtDesc(pageRequest);
 
         logs.forEach(this::populateActorUsername);
