@@ -1,9 +1,11 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.enums.ActionType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
+import com.lms.service.AuditLogService;
 import com.lms.service.MemberFavoriteService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,15 +21,18 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     private final BookRepository bookRepository;
     private final FavoritesRepository favoritesRepository;
     private final ReservationRepository reservationRepository;
+    private final AuditLogService auditLogService;
 
     public MemberFavoriteServiceImpl(MemberAccountRepository memberAccountRepository,
                                      BookRepository bookRepository,
                                      FavoritesRepository favoritesRepository,
-                                     ReservationRepository reservationRepository) {
+                                     ReservationRepository reservationRepository,
+                                     AuditLogService auditLogService) {
         this.memberAccountRepository = memberAccountRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
         this.reservationRepository = reservationRepository;
+        this.auditLogService = auditLogService;
     }
 
     private Member getMemberByUsername(String username) {
@@ -104,6 +109,10 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         reservation.setStatus("Pending");
 
         reservationRepository.save(reservation);
+
+        auditLogService.log(
+                ActionType.RESERVE_BOOK,
+                "Member " + username + " dat giu cho sach #" + book.getBookId() + " - " + book.getTitle() + ".");
     }
 
     // TRIỂN KHAI BỔ SUNG: Trích xuất danh sách sách để hiển thị Đề Cử trên Dashboard

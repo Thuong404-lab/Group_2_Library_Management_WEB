@@ -45,6 +45,14 @@ public class MemberAccount {
         return id;
     }
 
+    /**
+     * Backward-compatible property used by existing admin/librarian views.
+     */
+    @Transient
+    public Integer getAccountId() {
+        return id;
+    }
+
     public void setId(Integer id) {
         this.id = id;
     }
@@ -55,6 +63,14 @@ public class MemberAccount {
 
     public void setMember(Member member) {
         this.member = member;
+    }
+
+    /**
+     * Exposes the user associated through the member profile to legacy views.
+     */
+    @Transient
+    public User getUser() {
+        return member != null ? member.getUser() : null;
     }
 
     public String getUsername() {

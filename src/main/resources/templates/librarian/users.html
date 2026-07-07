@@ -99,16 +99,29 @@
             </div>
 
             <!-- Pagination -->
-            <nav class="mt-4" th:if="${totalPages != null && totalPages > 1}">
+            <nav class="mt-4" th:if="${totalPages != null && totalPages > 1}"
+                th:with="startPage=${totalPages <= 10 ? 0 : (currentPage < 9 ? 0 : (currentPage - 8 > totalPages - 10 ? totalPages - 10 : currentPage - 8))}, endPage=${startPage + 9 < totalPages ? startPage + 9 : totalPages - 1}">
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
-                        <a class="page-link" th:href="@{/librarian/users(page=${currentPage - 1}, keyword=${keyword})}">&laquo;</a>
+                        <a class="page-link" th:href="@{/librarian/users(page=0, keyword=${keyword})}">Đầu</a>
                     </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage ? 'active' : ''}">
+                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/users(page=${currentPage - 1}, keyword=${keyword})}">&lsaquo;</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${startPage > 0}">
+                        <span class="page-link">…</span>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == currentPage ? 'active' : ''}">
                         <a class="page-link" th:href="@{/librarian/users(page=${i}, keyword=${keyword})}" th:text="${i + 1}">1</a>
                     </li>
+                    <li class="page-item disabled" th:if="${endPage < totalPages - 1}">
+                        <span class="page-link">…</span>
+                    </li>
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
-                        <a class="page-link" th:href="@{/librarian/users(page=${currentPage + 1}, keyword=${keyword})}">&raquo;</a>
+                        <a class="page-link" th:href="@{/librarian/users(page=${currentPage + 1}, keyword=${keyword})}">&rsaquo;</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/librarian/users(page=${totalPages - 1}, keyword=${keyword})}">Cuối</a>
                     </li>
                 </ul>
             </nav>
