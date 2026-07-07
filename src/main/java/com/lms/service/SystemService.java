@@ -23,6 +23,8 @@ public interface SystemService {
 
     Map<String, String> getSettingMap();
 
+    int getIntSetting(String settingKey, int defaultValue);
+
     List<MembershipTier> getMembershipTiers();
 
     void updateBorrowingPolicies(Integer maxBorrowDays,

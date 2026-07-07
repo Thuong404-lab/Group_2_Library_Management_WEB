@@ -102,6 +102,22 @@ public class SystemServiceImpl implements SystemService {
     }
 
     @Override
+    public int getIntSetting(String settingKey, int defaultValue) {
+        return systemSettingRepository.findBySettingKeyIgnoreCase(settingKey)
+                .map(SystemSetting::getSettingValue)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(value -> {
+                    try {
+                        return Integer.parseInt(value);
+                    } catch (NumberFormatException e) {
+                        return defaultValue;
+                    }
+                })
+                .orElse(defaultValue);
+    }
+
+    @Override
     public List<MembershipTier> getMembershipTiers() {
         return membershipTierRepository.findAll(Sort.by("tierId").ascending());
     }
