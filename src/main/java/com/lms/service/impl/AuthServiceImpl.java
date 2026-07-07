@@ -64,7 +64,8 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
         if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
-            throw new AuthException("Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
+            throw new AuthException(
+                    "Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
         }
 
         if (request.getPassword() == null || request.getPassword().length() < 6) {
@@ -75,7 +76,8 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Họ và tên không được để trống!");
         }
 
-        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+        if (request.getEmail() == null
+                || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new AuthException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
 
@@ -83,7 +85,8 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
         }
 
-        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent()
+                || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AuthException("Tên đăng nhập đã tồn tại!");
         }
 
@@ -135,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
 
         Member member = new Member();
         member.setUser(user);
-        
+
         membershipTierRepository.findAll(Sort.by("tierId").ascending())
                 .stream().findFirst().ifPresent(member::setTier);
 
@@ -146,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
         account.setPasswordHash(pass);
         account.setMember(member);
         account.setStatus("Active");
-        
+
         account = memberAccountRepository.save(account);
 
         Wallet wallet = new Wallet();
