@@ -76,7 +76,7 @@
                 Cài đặt Hệ thống
             </h2>
             <div class="text-muted">
-                Cấu hình chính sách mượn, trả, phạt và hạng thành viên
+                Cấu hình chính sách mượn, trả và phạt
             </div>
         </div>
     </div>
@@ -142,41 +142,6 @@
                            th:value="${settingMap['Max_Renewal_Days'] != null ? settingMap['Max_Renewal_Days'] : 7}">
                 </div>
 
-                <div class="col-12 mt-2">
-                    <div class="subsection-label">
-                        <i class="bi bi-gem me-1"></i>
-                        Cấu hình hạng thành viên
-                    </div>
-                    <div class="form-text">
-                        Thiết lập số sách được mượn và tổng chi tiêu tối thiểu để đạt từng hạng.
-                    </div>
-                </div>
-
-                <div class="col-md-3" th:each="tier : ${membershipTiers}">
-                    <div class="tier-limit-box">
-                        <input type="hidden" name="tierIds" th:value="${tier.tierId}">
-                        <label class="form-label fw-bold small text-uppercase"
-                               th:text="${tier.tierName}">
-                            Regular
-                        </label>
-                        <div class="form-text mb-1">Số sách tối đa</div>
-                        <input name="tierBorrowLimits"
-                               type="number"
-                               class="form-control"
-                               min="1"
-                               required
-                               th:value="${tier.borrowLimit != null ? tier.borrowLimit : 1}">
-                        <div class="form-text mt-3 mb-1">Mức chi tiêu tối thiểu</div>
-                        <input name="tierSpendingConditions"
-                               type="text"
-                               inputmode="numeric"
-                               class="form-control money-input"
-                               required
-                               th:value="${tier.condition != null ? tier.condition : 0}">
-                        <div class="form-text">VNĐ tổng chi tiêu</div>
-                    </div>
-                </div>
-
                 <div class="col-12 settings-section-title">
                     <h6 class="fw-bold text-classic mb-0">
                         <i class="bi bi-cash-coin me-1"></i>
@@ -233,7 +198,7 @@
                            class="form-control money-input"
                            required
                            th:value="${settingMap['Damage_Compensation_Amount'] != null ? settingMap['Damage_Compensation_Amount'] : 120000}">
-                    <div class="form-text">Theo BR: 120.000 VNĐ nếu sách hư hỏng nặng</div>
+                    <div class="form-text">Nếu sách hư hỏng nặng</div>
                 </div>
 
                 <div class="col-md-6">
