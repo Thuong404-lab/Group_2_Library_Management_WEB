@@ -6,125 +6,116 @@
 </head>
 <body>
 <div layout:fragment="content" class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom">
         <div>
             <h2 class="font-weight-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-bookmark-fill mr-2" style="color:#8b5a2b;"></i>Sách Đã Đặt Trước
+                <i class="bi bi-bookmark-fill mr-2" style="color:#8b5a2b;"></i>Sách đã đặt trước
             </h2>
-            <div class="text-muted">Danh sách các sách bạn đang đặt giữ chỗ</div>
+            <div class="text-muted">Theo dõi yêu cầu đặt trước và thanh toán tiền cọc giữ chỗ.</div>
         </div>
-        <a href="/books" class="btn font-weight-bold" style="background:#8b5a2b;color:white;border-radius:8px;">
+        <a th:href="@{/books}" class="btn font-weight-bold" style="background:#8b5a2b;color:white;border-radius:8px;">
             <i class="bi bi-plus-circle mr-1"></i>Đặt thêm sách
         </a>
     </div>
 
-    <!-- Alert info -->
+    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Số dư ví</div>
+                    <div class="h3 fw-bold text-success mb-0">
+                        <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                        <span class="fs-6">VND</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Tiền cọc mỗi lượt đặt trước</div>
+                    <div class="h3 fw-bold mb-0" style="color:#8b5a2b;">
+                        <span th:text="${depositAmount != null ? #numbers.formatDecimal(depositAmount, 0, 'COMMA', 0, 'POINT') : '50,000'}">50,000</span>
+                        <span class="fs-6">VND</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="alert d-flex align-items-center gap-2 mb-4" style="background:#fdf5ec;border-left:4px solid #8b5a2b;">
         <i class="bi bi-info-circle-fill mr-2" style="color:#8b5a2b;font-size:1.1rem;"></i>
-        <span>Sách đặt trước sẽ được giữ trong <strong>3 ngày</strong> kể từ khi có sẵn. Sau đó sẽ tự hủy nếu bạn không đến nhận.</span>
+        <span>Tiền cọc sẽ được trừ trực tiếp từ ví và ghi vào lịch sử giao dịch với loại <strong>DEPOSIT</strong>.</span>
     </div>
 
-    <!-- Reservation 1 - Đang chờ (sách chưa có) -->
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #ffc107 !important;">
+    <div th:if="${reservations == null or #lists.isEmpty(reservations)}" class="card border-0 shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-bookmark fs-1 d-block mb-2 opacity-50"></i>
+            Bạn chưa có yêu cầu đặt trước nào.
+        </div>
+    </div>
+
+    <div th:each="reservation : ${reservations}" class="card border-0 shadow-sm mb-3"
+         style="border-radius:10px;border-left:4px solid #8b5a2b !important;">
         <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-5">
                     <div class="d-flex align-items-center">
                         <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#fff8e1;flex-shrink:0;">
-                            <i class="bi bi-hourglass-split" style="color:#ffc107;font-size:1.4rem;"></i>
+                             style="width:52px;height:52px;background:#fdf5ec;flex-shrink:0;">
+                            <i class="bi bi-bookmark-check-fill" style="color:#8b5a2b;font-size:1.4rem;"></i>
                         </div>
                         <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Atomic Habits</div>
-                            <div class="text-muted small">James Clear</div>
-                            <div class="text-muted small">Vị trí hàng đợi: <strong class="text-warning">#2</strong></div>
+                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;"
+                                 th:text="${reservation.book != null ? reservation.book.title : 'Sách không rõ'}">
+                                Tên sách
+                            </div>
+                            <div class="text-muted small"
+                                 th:text="${reservation.book != null && reservation.book.isbn != null ? 'ISBN: ' + reservation.book.isbn : 'Chưa có ISBN'}">
+                                ISBN
+                            </div>
+                            <div class="text-muted small">
+                                Mã đặt trước:
+                                <strong th:text="|RSV-${reservation.reservationId}|">RSV-1</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
+
+                <div class="col-lg-3 text-lg-center">
                     <div class="small text-muted">Ngày đặt</div>
-                    <div class="font-weight-bold">20/06/2026</div>
-                    <div class="small text-muted mt-1">Dự kiến có sẵn</div>
-                    <div class="font-weight-bold text-warning">~05/07/2026</div>
+                    <div class="font-weight-bold"
+                         th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">
+                        -
+                    </div>
                 </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2" style="background:#fff3cd;color:#856404;font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-hourglass-split mr-1"></i>Đang chờ sách
+
+                <div class="col-lg-2 text-lg-center">
+                    <span class="badge px-3 py-2"
+                          th:classappend="${reservation.status == 'Deposit_Paid'} ? ' bg-success' : (${reservation.status == 'Canceled' || reservation.status == 'Cancelled'} ? ' bg-secondary' : ' bg-warning text-dark')"
+                          th:text="${reservation.status == 'Deposit_Paid' ? 'Đã cọc' : reservation.status}">
+                        Pending
                     </span>
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Hủy đặt trước?')">
-                            <i class="bi bi-x-circle mr-1"></i>Hủy đặt
+                </div>
+
+                <div class="col-lg-2 text-lg-right">
+                    <form method="post"
+                          th:if="${reservation.status != 'Deposit_Paid' && reservation.status != 'Completed' && reservation.status != 'Canceled' && reservation.status != 'Cancelled'}"
+                          th:action="@{/member/financial/deposit/{reservationId}(reservationId=${reservation.reservationId})}">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-sm btn-success rounded-pill"
+                                onclick="return confirm('Thanh toán tiền cọc cho yêu cầu đặt trước này?')">
+                            <i class="bi bi-credit-card mr-1"></i>Thanh toán cọc
                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reservation 2 - Sách đã sẵn sàng, chờ đến lấy -->
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #198754 !important;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#d4edda;flex-shrink:0;">
-                            <i class="bi bi-bookmark-check-fill" style="color:#198754;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#4a3b32;font-size:1.05rem;">Cà Phê Cùng Tony</div>
-                            <div class="text-muted small">Tony Buổi Sáng</div>
-                            <div class="text-muted small">Mã đặt trước: <strong>RSV-2026-0015</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày đặt</div>
-                    <div class="font-weight-bold">25/06/2026</div>
-                    <div class="small text-muted mt-1">Hạn đến lấy</div>
-                    <div class="font-weight-bold text-success">28/06/2026</div>
-                    <div class="small text-danger font-weight-bold">⚠️ Còn 0 ngày!</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2" style="background:#d4edda;color:#155724;font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-check-circle mr-1"></i>Sẵn sàng lấy
-                    </span>
-                    <div class="mt-2 small text-muted">Đến quầy thư viện để nhận sách</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reservation 3 - Đã hết hạn -->
-    <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:4px solid #6c757d !important;opacity:0.75;">
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded d-flex align-items-center justify-content-center mr-3"
-                             style="width:52px;height:52px;background:#e9ecef;flex-shrink:0;">
-                            <i class="bi bi-bookmark-x-fill" style="color:#6c757d;font-size:1.4rem;"></i>
-                        </div>
-                        <div>
-                            <div class="font-weight-bold" style="color:#6c757d;font-size:1.05rem;">Người Giàu Có Nhất Thành Babylon</div>
-                            <div class="text-muted small">George S. Clason</div>
-                            <div class="text-muted small">Mã đặt trước: <strong>RSV-2026-0003</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày đặt</div>
-                    <div class="font-weight-bold text-muted">10/05/2026</div>
-                    <div class="small text-muted mt-1">Hết hạn</div>
-                    <div class="font-weight-bold text-muted">15/05/2026</div>
-                </div>
-                <div class="col-md-3 text-md-right mt-2 mt-md-0">
-                    <span class="badge px-3 py-2" style="background:#e9ecef;color:#495057;font-size:0.85rem;border-radius:20px;">
-                        <i class="bi bi-x-circle mr-1"></i>Đã hủy / hết hạn
-                    </span>
-                    <div class="mt-2">
-                        <a href="/books/3" class="btn btn-sm btn-outline-secondary">Đặt lại</a>
-                    </div>
+                    </form>
+                    <a th:if="${reservation.status == 'Deposit_Paid'}"
+                       th:href="@{/member/financial/transactions(type='DEPOSIT')}"
+                       class="btn btn-sm btn-outline-success rounded-pill">
+                        Xem giao dịch
+                    </a>
                 </div>
             </div>
         </div>

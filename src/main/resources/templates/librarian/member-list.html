@@ -3,6 +3,7 @@
     layout:decorate="~{layout/librarian_base}">
 
 <head>
+    <!-- UC-14.1 and UC-21.1 UI maintained by Pham Kien Quoc. -->
     <title>Danh sách Thành viên</title>
     <style>
         .member-update-form .form-control.is-invalid {
@@ -88,26 +89,26 @@
                                     th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
                                 <td>
                                     <span class="fw-bold text-classic" th:text="${account.username}">username</span>
-                                    <div class="small text-muted" th:text="'ID: ' + ${account.accountId}">ID: 1</div>
+                                    <div class="small text-muted" th:text="'ID: ' + ${account.id}">ID: 1</div>
                                 </td>
                                 <td>
-                                    <div th:if="${account.user != null}">
-                                        <div class="fw-bold" th:text="${account.user.fullName}">Họ tên</div>
+                                    <div th:if="${account.member.user != null}">
+                                        <div class="fw-bold" th:text="${account.member.user.fullName}">Họ tên</div>
                                         <div class="small text-muted">
                                             <i class="bi bi-envelope me-1"> </i>
-                                            <span th:text="${account.user.email}">email</span>
+                                            <span th:text="${account.member.user.email}">email</span>
                                         </div>
-                                        <div class="small text-muted" th:if="${account.user.phone}">
+                                        <div class="small text-muted" th:if="${account.member.user.phone}">
                                             <i class="bi bi-telephone me-1"> </i>
-                                            <span th:text="${account.user.phone}">phone</span>
+                                            <span th:text="${account.member.user.phone}">phone</span>
                                         </div>
                                     </div>
-                                    <div th:unless="${account.user != null}" class="fst-italic text-muted small">
+                                    <div th:unless="${account.member.user != null}" class="fst-italic text-muted small">
                                         Chưa cập nhật thông tin
                                     </div>
                                 </td>
 
-                                <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                <td th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName}" th:style="${
@@ -137,26 +138,59 @@
                                 </td>
 
                                 <td class="text-end pe-3"
-                                    th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                    th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <button type="button" class="btn btn-sm btn-outline-classic" data-bs-toggle="modal"
-                                        th:data-bs-target="${'#updateMemberModal' + account.accountId}">
+                                        th:data-bs-target="${'#updateMemberModal' + account.id}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger ms-1"
                                         data-bs-toggle="modal"
-                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}">
+                                        th:data-bs-target="${'#deleteMemberModal' + account.id}">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status != 'Blocked'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.id}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Blocked">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning ms-1"
+                                            onclick="return confirm('Khóa tài khoản thành viên này?')">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status != 'Active'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.id}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Active">
+                                        <button type="submit" class="btn btn-sm btn-outline-success ms-1"
+                                            onclick="return confirm('Kích hoạt lại tài khoản thành viên này?')">
+                                            <i class="bi bi-unlock-fill"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status == 'Active'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.id}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Inactive">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary ms-1"
+                                            onclick="return confirm('Ngưng hoạt động tài khoản thành viên này?')">
+                                            <i class="bi bi-person-dash-fill"></i>
+                                        </button>
+                                    </form>
 
                                     <!-- Update Modal -->
                                     <div class="modal fade text-start"
-                                        th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                        th:id="${'updateMemberModal' + account.id}" tabindex="-1"
                                         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                         <div class="modal-dialog modal-dialog-centered modal-lg">
                                             <div class="modal-content border-0 shadow">
                                                 <form method="post" class="member-update-form" novalidate
-                                                    th:action="@{/librarian/members/edit/{id}(id=${account.accountId})}"
-                                                    th:attr="data-validation-url=@{/librarian/members/edit/{id}/validate(id=${account.accountId})}">
+                                                    th:action="@{/librarian/members/edit/{id}(id=${account.id})}"
+                                                    th:attr="data-validation-url=@{/librarian/members/edit/{id}/validate(id=${account.id})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
@@ -180,7 +214,7 @@
                                                                     Họ tên
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
-                                                                    th:value="${account.user != null ? account.user.fullName : ''}"
+                                                                    th:value="${account.member.user != null ? account.member.user.fullName : ''}"
                                                                     required>
                                                                 <div class="invalid-feedback"
                                                                     data-error-for="fullName"></div>
@@ -204,7 +238,7 @@
                                                                     Số điện thoại
                                                                 </label>
                                                                 <input class="form-control" name="phone"
-                                                                    th:value="${account.user != null ? account.user.phone : ''}"
+                                                                    th:value="${account.member.user != null ? account.member.user.phone : ''}"
                                                                     required pattern="0[0-9]{9}" minlength="10"
                                                                     title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0">
                                                                 <div class="invalid-feedback"
@@ -215,7 +249,7 @@
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">Email</label>
                                                                 <input class="form-control" name="email" type="email"
-                                                                    th:value="${account.user != null ? account.user.email : ''}"
+                                                                    th:value="${account.member.user != null ? account.member.user.email : ''}"
                                                                     required>
                                                                 <div class="invalid-feedback"
                                                                     data-error-for="email"></div>
@@ -280,12 +314,12 @@
 
                                     <!-- Delete Modal -->
                                     <div class="modal fade text-start"
-                                        th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
+                                        th:id="${'deleteMemberModal' + account.id}" tabindex="-1"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content border-0 shadow">
                                                 <form method="post"
-                                                    th:action="@{/librarian/members/delete/{id}(id=${account.accountId})}">
+                                                    th:action="@{/librarian/members/delete/{id}(id=${account.id})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
@@ -315,7 +349,7 @@
 
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Account ID: </div>
-                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                    <div class="fw-bold" th:text="${account.id}">
                                                                         id
                                                                     </div>
                                                                 </div>
@@ -323,7 +357,7 @@
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Họ tên: </div>
                                                                     <div class="fw-bold"
-                                                                        th:text="${account.user != null ? account.user.fullName : 'Không có họ tên'}">
+                                                                        th:text="${account.member.user != null ? account.member.user.fullName : 'Không có họ tên'}">
                                                                         họ và tên
                                                                     </div>
                                                                 </div>
@@ -333,7 +367,7 @@
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
                                                                         <span
-                                                                            th:text="${account.user != null ? account.user.email : 'Không có email'}">
+                                                                            th:text="${account.member.user != null ? account.member.user.email : 'Không có email'}">
                                                                             email
                                                                         </span>
                                                                     </div>
@@ -345,7 +379,7 @@
                                                                         <i
                                                                             class="bi bi-telephone me-1 text-classic"></i>
                                                                         <span
-                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : 'Không có SĐT'}">
+                                                                            th:text="${account.member.user != null && account.member.user.phone != null ? account.member.user.phone : 'Không có SĐT'}">
                                                                             phone
                                                                         </span>
                                                                     </div>

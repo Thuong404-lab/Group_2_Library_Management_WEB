@@ -340,7 +340,8 @@ public class FinancialController {
         }
 
         String usernameOrEmail = principal.getName();
-        return memberRepository.findByUserEmail(usernameOrEmail)
+        return memberRepository.findByAccountUsername(usernameOrEmail)
+                .or(() -> memberRepository.findByUserEmail(usernameOrEmail))
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin thành viên hiện tại"));
     }
