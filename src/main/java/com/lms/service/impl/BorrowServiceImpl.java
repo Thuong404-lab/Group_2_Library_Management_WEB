@@ -3,8 +3,10 @@ package com.lms.service.impl;
 import com.lms.dto.request.BorrowRequest;
 import com.lms.dto.response.MemberBorrowDTO;
 import com.lms.entity.*;
+import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
 import com.lms.repository.*;
+import com.lms.service.AuditLogService;
 import com.lms.service.BorrowService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +27,16 @@ public class BorrowServiceImpl implements BorrowService {
     private final BookRepository bookRepository;
     private final MemberAccountRepository memberAccountRepository;
     private final ReservationRepository reservationRepository;
+    private final AuditLogService auditLogService;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
-                             BookItemRepository bookItemRepository,
-                             BorrowRepository borrowRepository,
-                             BorrowDetailRepository borrowDetailRepository,
-                             BookRepository bookRepository,
-                             MemberAccountRepository memberAccountRepository,
-                             ReservationRepository reservationRepository) {
+            BookItemRepository bookItemRepository,
+            BorrowRepository borrowRepository,
+            BorrowDetailRepository borrowDetailRepository,
+            BookRepository bookRepository,
+            MemberAccountRepository memberAccountRepository,
+            ReservationRepository reservationRepository,
+            AuditLogService auditLogService) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -40,6 +44,7 @@ public class BorrowServiceImpl implements BorrowService {
         this.bookRepository = bookRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.reservationRepository = reservationRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -106,7 +111,8 @@ public class BorrowServiceImpl implements BorrowService {
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = member.getTier() != null ? member.getTier().getBorrowLimit() : 3;
         if (currentBorrowed >= maxLimit) {
-            throw new Exception("Yêu cầu bị từ chối! Bạn đã mượn chạm giới hạn tối đa cho phép (" + maxLimit + " cuốn).");
+            throw new Exception(
+                    "Yêu cầu bị từ chối! Bạn đã mượn chạm giới hạn tối đa cho phép (" + maxLimit + " cuốn).");
         }
 
         Borrow borrow = new Borrow();
@@ -123,6 +129,11 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setStatus("Pending");
         detail.setRenewCount(0);
         borrowDetailRepository.save(detail);
+
+        auditLogService.log(
+                ActionType.REQUEST_BORROW,
+                "Member " + username + " gửi yêu cầu mượn sách #" + book.getBookId()
+                        + " - " + book.getTitle() + " trong " + (numberOfDays != null ? numberOfDays : 14) + " ngày.");
 
         return borrow;
     }
@@ -151,7 +162,8 @@ public class BorrowServiceImpl implements BorrowService {
         borrowDetailRepository.save(activeDetail);
 
         List<BorrowDetail> sideDetails = borrowDetailRepository.findAll().stream()
-                .filter(d -> d.getBorrow() != null && d.getBorrow().getBorrowId().equals(activeDetail.getBorrow().getBorrowId()))
+                .filter(d -> d.getBorrow() != null
+                        && d.getBorrow().getBorrowId().equals(activeDetail.getBorrow().getBorrowId()))
                 .collect(Collectors.toList());
 
         boolean allReturned = sideDetails.stream().allMatch(d -> "Returned".equalsIgnoreCase(d.getStatus()));
@@ -165,13 +177,13 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getBorrowsByMemberAndStatus(String username, String status) {
-        // 🛠️ FIX: Gọi chuẩn thông qua getMember().getMemberId()
         Integer targetMemberId = memberAccountRepository.findByUsername(username)
                 .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
 
-        if (targetMemberId == null) return new ArrayList<>();
+        if (targetMemberId == null)
+            return new ArrayList<>();
 
         return borrowRepository.findAll().stream()
                 .filter(b -> b.getMember() != null
@@ -253,6 +265,12 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new Exception("Không tìm thấy đơn mượn/trả tương ứng!"));
         borrow.setStatus(status);
         borrowRepository.save(borrow);
+
+        if ("Return_Pending".equalsIgnoreCase(status)) {
+            auditLogService.log(
+                    ActionType.REQUEST_RETURN,
+                    "Member gửi yêu cầu trả sách #" + borrow.getBorrowId() + ".");
+        }
     }
 
     @Override
@@ -273,13 +291,13 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getAllBorrowHistoryByMember(String username) {
-        // 🛠️ FIX: Gọi chuẩn thông qua getMember().getMemberId()
         Integer targetMemberId = memberAccountRepository.findByUsername(username)
                 .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
                 .orElse(null);
 
-        if (targetMemberId == null) return new ArrayList<>();
+        if (targetMemberId == null)
+            return new ArrayList<>();
 
         return borrowRepository.findAll().stream()
                 .filter(b -> b.getMember() != null && targetMemberId.equals(b.getMember().getMemberId()))
@@ -294,7 +312,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(readOnly = true)
     public List<MemberBorrowDTO> getMemberCurrentBorrows(String username) {
         Integer memberId = getMemberIdByUsername(username);
-        if (memberId == null) return new ArrayList<>();
+        if (memberId == null)
+            return new ArrayList<>();
 
         List<BorrowDetail> details = borrowDetailRepository.findCurrentBorrowsByMemberId(memberId);
         List<MemberBorrowDTO> dtoList = new ArrayList<>();
@@ -313,7 +332,8 @@ public class BorrowServiceImpl implements BorrowService {
                 dto.setAuthorName("Chưa rõ tác giả");
             }
 
-            dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "BK-" + detail.getBook().getBookId());
+            dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode()
+                    : "BK-" + detail.getBook().getBookId());
             dto.setActionDate(detail.getBorrow().getBorrowDate());
             dto.setDueDate(detail.getDueDate());
             dto.setStatus(detail.getStatus());
@@ -336,9 +356,11 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(readOnly = true)
     public List<MemberBorrowDTO> getMemberReservations(String username) {
         Integer memberId = getMemberIdByUsername(username);
-        if (memberId == null) return new ArrayList<>();
+        if (memberId == null)
+            return new ArrayList<>();
 
-        List<Reservation> reservations = reservationRepository.findByMember_MemberIdOrderByReservationDateDesc(memberId);
+        List<Reservation> reservations = reservationRepository
+                .findByMember_MemberIdOrderByReservationDateDesc(memberId);
         List<MemberBorrowDTO> dtoList = new ArrayList<>();
 
         for (Reservation res : reservations) {
@@ -368,7 +390,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(readOnly = true)
     public List<MemberBorrowDTO> getMemberOneMonthHistory(String username) {
         Integer memberId = getMemberIdByUsername(username);
-        if (memberId == null) return new ArrayList<>();
+        if (memberId == null)
+            return new ArrayList<>();
 
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
         List<BorrowDetail> details = borrowDetailRepository.findBorrowHistoryInOneMonth(memberId, oneMonthAgo);
@@ -388,7 +411,8 @@ public class BorrowServiceImpl implements BorrowService {
                 dto.setAuthorName("Chưa rõ tác giả");
             }
 
-            dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "BK-" + detail.getBook().getBookId());
+            dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode()
+                    : "BK-" + detail.getBook().getBookId());
             dto.setActionDate(detail.getBorrow().getBorrowDate());
             dto.setReturnDate(detail.getReturnDate());
             dto.setStatus(detail.getStatus());
@@ -401,7 +425,6 @@ public class BorrowServiceImpl implements BorrowService {
     // PHƯƠNG THỨC HELPER ĐÃ ĐƯỢC BỔ SUNG ĐỂ SỬA LỖI CANNOT FIND SYMBOL
     // ==========================================
     private Integer getMemberIdByUsername(String username) {
-        // 🛠️ FIX: Map chuẩn qua getMember().getMemberId() theo đúng cấu trúc Entity mới cung cấp
         return memberAccountRepository.findByUsername(username)
                 .map(MemberAccount::getMember)
                 .map(Member::getMemberId)
