@@ -83,6 +83,10 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
         }
 
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new AuthException("Số điện thoại đã được sử dụng bởi tài khoản khác!");
+        }
+
         if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AuthException("Tên đăng nhập đã tồn tại!");
         }

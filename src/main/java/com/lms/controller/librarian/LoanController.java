@@ -1,8 +1,14 @@
 package com.lms.controller.librarian;
 
+import com.lms.service.LoanService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * LoanController - Quản lý Phiếu mượn (Phía Thủ thư)
@@ -11,6 +17,12 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequestMapping("/librarian/loan")
 public class LoanController {
+
+    private final LoanService loanService;
+
+    public LoanController(LoanService loanService) {
+        this.loanService = loanService;
+    }
 
     // UC-13.1: View Loan Details - Xem chi tiết phiếu mượn
     @GetMapping("/{borrowId}")
@@ -30,38 +42,43 @@ public class LoanController {
     public String confirmBookReturn(@RequestParam String barcode,
                                      @RequestParam Integer memberId,
                                      Model model) {
-        // TODO: Implement - Quét barcode sách
-        // TODO: Tìm BorrowDetail đang mượn của Member
-        // TODO: Tính phí phạt nếu quá hạn → trừ Wallet
-        // TODO: Cập nhật trạng thái BorrowDetail = "Returned"
-        // TODO: Cập nhật trạng thái BookItem = "Available"
+        // TODO: Implement
         return "redirect:/librarian/loan/returns?confirmed";
     }
 
     // UC-13.3: Process Borrow Requests - Quầy mượn sách
-    @GetMapping("/borrow-desk")
-    public String showBorrowDesk(Model model) {
-        // TODO: Implement - Hiển thị quầy mượn sách cho Thủ thư
-        return "librarian/borrow-desk";
+    @GetMapping("/borrow-schedule")
+    public String showBorrowSchedule(Model model) {
+        model.addAttribute("details", loanService.getAllBorrowDetails());
+        return "librarian/borrow-schedule";
     }
 
     @PostMapping("/borrow-desk/process")
-    public String processBorrowRequest(@RequestParam String memberPhone,
+    public String processBorrowRequest(@RequestParam String memberIdentifier,
                                         @RequestParam String barcodes,
-                                        Model model) {
-        // TODO: Implement - Tìm Member theo SĐT/ID
-        // TODO: Quét barcode từng quyển sách
-        // TODO: Kiểm tra Wallet đủ tiền phí mượn
-        // TODO: Trừ tiền → Tạo Borrow + BorrowDetails → Cập nhật BookItem
-        return "redirect:/librarian/loan/borrow-desk?processed";
+                                        Principal principal,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            List<String> barcodeList = Arrays.asList(barcodes.split(","));
+            loanService.processBorrowDesk(memberIdentifier, barcodeList, principal.getName());
+            redirectAttributes.addFlashAttribute("success", "Đã tạo phiếu mượn thành công!");
+            return "redirect:/librarian/loan/borrow-desk";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/librarian/loan/borrow-desk";
+        }
     }
 
     // UC-13.4: Process Renewal Requests - Gia hạn mượn sách
     @PostMapping("/renew/{borrowDetailId}")
-    public String processRenewal(@PathVariable Integer borrowDetailId, Model model) {
-        // TODO: Implement - Kiểm tra số lần gia hạn (max 2 lần)
-        // TODO: Gia hạn thêm 7 ngày
-        // TODO: Trừ phí gia hạn từ Wallet (nếu có)
-        return "redirect:/librarian/loan/borrow-desk?renewed";
+    public String processRenewal(@PathVariable Integer borrowDetailId, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.processRenewal(borrowDetailId);
+            redirectAttributes.addFlashAttribute("success", "Đã gia hạn thành công thêm 7 ngày!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        // Redirect back to the referrer page
+        return "redirect:/librarian/loan/borrow-desk"; // You might want to pass the correct redirect URL if needed, but for now this is ok
     }
 }

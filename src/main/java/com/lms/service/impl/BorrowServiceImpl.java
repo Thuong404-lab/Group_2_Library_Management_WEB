@@ -40,8 +40,13 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Borrow processBorrowing(BorrowRequest request, String librarianUsername) throws Exception {
-        Member member = memberRepository.findByUserEmail(request.getMemberEmail())
-                .orElseThrow(() -> new Exception("Không tìm thấy độc giả với email này!"));
+        String identifier = request.getMemberIdentifier();
+        Member member = memberRepository.findByUserEmail(identifier)
+                .orElseGet(() -> memberRepository.findByUserPhone(identifier).orElse(null));
+                
+        if (member == null) {
+            throw new Exception("Không tìm thấy độc giả với email hoặc số điện thoại này!");
+        }
 
         if (member.getUser() != null && member.getUser().getStatus() != UserStatus.Active) {
             throw new Exception("Tài khoản thành viên này đang bị khóa hoặc chưa kích hoạt!");

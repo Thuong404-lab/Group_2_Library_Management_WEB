@@ -116,9 +116,16 @@
                         </td>
 
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-classic" title="Hoàn trả sách" th:if="${detail.status != 'Returned'}">
-                                <i class="bi bi-arrow-return-left"></i> Trả sách
-                            </button>
+                            <div th:if="${detail.status != 'Returned'}" class="d-flex justify-content-end gap-2">
+                                <form th:action="@{/librarian/loan/renew/{id}(id=${detail.borrowDetailId})}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Gia hạn sách">
+                                        <i class="bi bi-clock-history"></i> Gia hạn
+                                    </button>
+                                </form>
+                                <button class="btn btn-sm btn-outline-classic" title="Hoàn trả sách">
+                                    <i class="bi bi-arrow-return-left"></i> Trả sách
+                                </button>
+                            </div>
                             <span class="text-success small" th:if="${detail.status == 'Returned'}">
                                 <i class="bi bi-check-circle-fill"></i> Đã trả
                             </span>

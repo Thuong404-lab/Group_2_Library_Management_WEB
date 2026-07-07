@@ -17,13 +17,16 @@ public class BorrowController {
     private final BorrowService borrowService;
     private final MemberFavoriteService memberFavoriteService;
     private final BookService bookService;
+    private final com.lms.service.LoanService loanService;
 
     public BorrowController(BorrowService borrowService,
                             MemberFavoriteService memberFavoriteService,
-                            BookService bookService) {
+                            BookService bookService,
+                            com.lms.service.LoanService loanService) {
         this.borrowService = borrowService;
         this.memberFavoriteService = memberFavoriteService;
         this.bookService = bookService;
+        this.loanService = loanService;
     }
 
     // UC-6.0: Hiển thị form tạo yêu cầu mượn sách trực tuyến
@@ -112,6 +115,18 @@ public class BorrowController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý trả sách: " + e.getMessage());
             return "redirect:/member/dashboard";
         }
+    }
+
+    @PostMapping("/renew/{borrowDetailId}")
+    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            loanService.processRenewal(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn thành công thêm 7 ngày!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gia hạn: " + e.getMessage());
+        }
+        return "redirect:/member/borrow";
     }
 
     @GetMapping("/history")

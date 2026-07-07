@@ -61,7 +61,7 @@
                 <div class="card border-0 shadow-sm rounded-3" th:if="${#authentication.principal.attributes == null}">
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-3" style="color: #4a3b32;"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Bảo mật tài khoản</h6>
-                        <button class="btn w-100 mb-2 fw-bold" style="border: 2px solid #8b5a2b; color: #8b5a2b;" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Đổi mật khẩu</button>
+                        <button class="btn w-100 mb-2 fw-bold" style="border: 2px solid #8b5a2b; color: #8b5a2b;" data-toggle="modal" data-target="#changePasswordModal">Đổi mật khẩu</button>
                     </div>
                 </div>
                 
@@ -87,7 +87,7 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Họ và Tên</label>
-                                    <input type="text" name="fullName" class="form-control" th:value="${member?.fullName}" required>
+                                    <input type="text" name="fullName" class="form-control" th:value="${member?.fullName}" pattern=".*\S+.*" title="Họ và tên không được để trống hoặc chỉ chứa khoảng trắng" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Tên đăng nhập (Username)</label>
@@ -99,7 +99,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small">Số điện thoại</label>
-                                    <input type="tel" name="phone" class="form-control" th:value="${member?.phone}" required>
+                                    <input type="tel" name="phone" class="form-control" th:value="${member?.phone}" pattern="^(0|\+84)[0-9]{9}$" title="Số điện thoại phải gồm 10 số và bắt đầu bằng 0 hoặc +84">
                                 </div>
                                 
                                 <div class="col-12 mt-4 text-end">
@@ -117,7 +117,9 @@
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header border-bottom-0 pb-0">
                         <h5 class="modal-title fw-bold" style="color: #4a3b32;"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi mật khẩu</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                     <form th:action="@{/member/change-password}" method="post">
                         <div class="modal-body">
@@ -135,7 +137,7 @@
                             </div>
                         </div>
                         <div class="modal-footer border-top-0 pt-0">
-                            <button type="button" class="btn btn-light rounded-pill fw-bold" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn btn-light rounded-pill fw-bold" data-dismiss="modal">Hủy</button>
                             <button type="submit" class="btn rounded-pill fw-bold text-white shadow-sm" style="background-color: #8b5a2b;">Cập nhật mật khẩu</button>
                         </div>
                     </form>
