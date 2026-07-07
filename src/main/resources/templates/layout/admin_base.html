@@ -196,15 +196,15 @@
             cursor: pointer;
         }
 
-        .admin-user-dropdown > summary {
+        .admin-user-dropdown>summary {
             list-style: none;
         }
 
-        .admin-user-dropdown > summary::-webkit-details-marker {
+        .admin-user-dropdown>summary::-webkit-details-marker {
             display: none;
         }
 
-        .admin-user-dropdown[open] > .dropdown-menu {
+        .admin-user-dropdown[open]>.dropdown-menu {
             display: block;
         }
 
@@ -310,6 +310,27 @@
             content: attr(data-default-message);
         }
 
+        .modal:target {
+            display: block;
+            opacity: 1;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        .modal:target .modal-dialog {
+            transform: none;
+        }
+
+        .modal:target .modal-content {
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+
+        .table-responsive:has(.modal:target) {
+            overflow: visible !important;
+        }
     </style>
 </head>
 
@@ -337,6 +358,13 @@
                     th:classappend="${activeMenu == 'accounts'} ? 'active'">
                     <i class="bi bi-people-fill menu-icon"></i>
                     <span class="menu-text">Thành viên</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a th:href="@{/admin/tiers}" class="menu-link" th:classappend="${activeMenu == 'tiers'} ? 'active'">
+                    <i class="bi bi-star-fill menu-icon text-warning"></i>
+                    <span class="menu-text">Hạng thành viên</span>
                 </a>
             </li>
 

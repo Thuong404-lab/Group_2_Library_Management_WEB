@@ -56,16 +56,22 @@ public class LibrarianProfileController {
     @PostMapping("/change-password")
     public String changePassword(@RequestParam String oldPassword,
                                  @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+            return "redirect:/librarian/profile";
+        }
+
         try {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", "Password changed successfully!");
+            redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu thành công!");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("passwordError", "System error, please try again.");
+            redirectAttributes.addFlashAttribute("passwordError", "Có lỗi hệ thống xảy ra, vui lòng thử lại.");
         }
         return "redirect:/librarian/profile";
     }
