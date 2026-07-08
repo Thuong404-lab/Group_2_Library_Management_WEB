@@ -36,6 +36,11 @@ public class LibrarianDashboardController {
         return "redirect:/librarian/dashboard?section=users";
     }
 
+    @GetMapping("/statistics")
+    public String viewStatistics() {
+        return "redirect:/librarian/dashboard?section=reports";
+    }
+
     @GetMapping("/librarians")
     public String viewLibrarianList(
             @RequestParam(defaultValue = "0") int page,

@@ -80,7 +80,7 @@
 <body>
     <div layout:fragment="content"
         th:with="currentSection=${param.section != null ? param.section[0] : 'overview'},
-                 activeMenu=${currentSection == 'users' ? 'users' : 'dashboard'}">
+                 activeMenu=${currentSection == 'users' ? 'users' : (currentSection == 'reports' ? 'statistics' : 'dashboard')}">
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
@@ -91,8 +91,9 @@
                     <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
                     <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
                     <span th:if="${currentSection == 'users'}">Quản lý người dùng</span>
+                    <span th:if="${currentSection == 'reports'}">Thống kê</span>
                     <span
-                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users'}">Tổng quan</span>
+                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users' || currentSection == 'reports'}">Tổng quan</span>
                 </h2>
                 <div class="text-muted" th:if="${currentSection == 'notifications'}">
                     Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
@@ -103,7 +104,10 @@
                 <div class="text-muted" th:if="${currentSection == 'acquisition'}">
                     Xem danh sách sách do độc giả đề xuất.
                 </div>
-                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">
+                <div class="text-muted" th:if="${currentSection == 'reports'}">
+                    Theo dõi nhanh các chỉ số mượn trả và doanh thu.
+                </div>
+                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports'}">
                     Cập nhật:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
