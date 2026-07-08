@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -87,7 +88,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        data.put("pendingReservations", reservationRepository.countByStatusIgnoreCase("Pending"));
+        data.put("pendingReservations",
+                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());

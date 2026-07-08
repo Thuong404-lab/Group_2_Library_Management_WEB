@@ -1,8 +1,16 @@
 package com.lms.controller.librarian;
 
+import com.lms.entity.Borrow;
+import com.lms.repository.TransactionRepository;
+import com.lms.service.BorrowService;
+import com.lms.service.LoanService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * LoanController - Quản lý Phiếu mượn (Phía Thủ thư)
@@ -12,56 +20,99 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/librarian/loan")
 public class LoanController {
 
+    private final LoanService loanService;
+    private final BorrowService borrowService;
+    private final TransactionRepository transactionRepository;
+
+    public LoanController(LoanService loanService, BorrowService borrowService, TransactionRepository transactionRepository) {
+        this.loanService = loanService;
+        this.borrowService = borrowService;
+        this.transactionRepository = transactionRepository;
+    }
+
     // UC-13.1: View Loan Details - Xem chi tiết phiếu mượn
     @GetMapping("/{borrowId}")
     public String viewLoanDetails(@PathVariable Integer borrowId, Model model) {
-        // TODO: Implement - Lấy Borrow + BorrowDetails + Member info
+        try {
+            Borrow borrow = loanService.getLoanDetails(borrowId);
+            model.addAttribute("borrow", borrow);
+            model.addAttribute("details", borrowService.getBorrowDetailsByBorrowId(borrowId));
+            model.addAttribute("transactions", transactionRepository.findByBorrow_BorrowId(borrowId));
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể lấy thông tin chi tiết phiếu mượn: " + e.getMessage());
+            return "error/500";
+        }
         return "librarian/loan-detail";
     }
 
-    // UC-13.2: Confirm Book Returns - Xác nhận trả sách
+    // UC-13.2: Confirm Book Returns - Hiển thị quầy trả sách
     @GetMapping("/returns")
     public String showReturnDesk(Model model) {
-        // TODO: Implement - Hiển thị quầy trả sách
+        model.addAttribute("returnRequests", borrowService.getAllReturnRequests());
         return "librarian/return-desk";
     }
 
-    @PostMapping("/returns/confirm")
-    public String confirmBookReturn(@RequestParam String barcode,
-                                     @RequestParam Integer memberId,
-                                     Model model) {
-        // TODO: Implement - Quét barcode sách
-        // TODO: Tìm BorrowDetail đang mượn của Member
-        // TODO: Tính phí phạt nếu quá hạn → trừ Wallet
-        // TODO: Cập nhật trạng thái BorrowDetail = "Returned"
-        // TODO: Cập nhật trạng thái BookItem = "Available"
-        return "redirect:/librarian/loan/returns?confirmed";
+    // Xác nhận trả sách trực tiếp tại quầy qua mã vạch
+    @PostMapping("/returns/scan")
+    public String confirmBookReturn(@RequestParam String barcode, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.confirmReturn(barcode);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận trả sách mã vạch '" + barcode + "' thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Trả sách thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/returns";
+    }
+
+    // Xác nhận phê duyệt yêu cầu trả sách online
+    @PostMapping("/returns/approve/{borrowId}")
+    public String approveOnlineReturn(@PathVariable Integer borrowId, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.approveOnlineReturn(borrowId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã phê duyệt yêu cầu trả sách online cho phiếu mượn #" + borrowId + " thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Phê duyệt trả sách thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/returns";
     }
 
     // UC-13.3: Process Borrow Requests - Quầy mượn sách
+    @GetMapping("/borrow-schedule")
+    public String showBorrowSchedule(Model model) {
+        model.addAttribute("details", loanService.getAllBorrowDetails());
+        return "librarian/borrow-schedule";
+    }
+
     @GetMapping("/borrow-desk")
     public String showBorrowDesk(Model model) {
-        // TODO: Implement - Hiển thị quầy mượn sách cho Thủ thư
         return "librarian/borrow-desk";
     }
 
     @PostMapping("/borrow-desk/process")
-    public String processBorrowRequest(@RequestParam String memberPhone,
+    public String processBorrowRequest(@RequestParam String memberIdentifier,
                                         @RequestParam String barcodes,
-                                        Model model) {
-        // TODO: Implement - Tìm Member theo SĐT/ID
-        // TODO: Quét barcode từng quyển sách
-        // TODO: Kiểm tra Wallet đủ tiền phí mượn
-        // TODO: Trừ tiền → Tạo Borrow + BorrowDetails → Cập nhật BookItem
-        return "redirect:/librarian/loan/borrow-desk?processed";
+                                        Principal principal,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            List<String> barcodeList = Arrays.asList(barcodes.split(","));
+            loanService.processBorrowDesk(memberIdentifier, barcodeList, principal.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo phiếu mượn thành công!");
+            return "redirect:/librarian/loan/borrow-desk";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/librarian/loan/borrow-desk";
+        }
     }
 
     // UC-13.4: Process Renewal Requests - Gia hạn mượn sách
     @PostMapping("/renew/{borrowDetailId}")
-    public String processRenewal(@PathVariable Integer borrowDetailId, Model model) {
-        // TODO: Implement - Kiểm tra số lần gia hạn (max 2 lần)
-        // TODO: Gia hạn thêm 7 ngày
-        // TODO: Trừ phí gia hạn từ Wallet (nếu có)
-        return "redirect:/librarian/loan/borrow-desk?renewed";
+    public String processRenewal(@PathVariable Integer borrowDetailId, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.processRenewal(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn sách thành công thêm 7 ngày!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Gia hạn thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/borrow-schedule";
     }
 }

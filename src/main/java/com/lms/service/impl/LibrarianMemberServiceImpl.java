@@ -8,12 +8,14 @@ import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import com.lms.entity.Role;
 import com.lms.entity.User;
+import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
 import com.lms.repository.UserRepository;
+import com.lms.service.AuditLogService;
 import com.lms.service.LibrarianMemberService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +29,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Member account list, update, deactivate, and status changes maintained by
+ * Pham Kien Quoc for librarian account-management use cases.
+ */
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
@@ -36,6 +42,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     public LibrarianMemberServiceImpl(
             MemberAccountRepository memberAccountRepository,
@@ -43,19 +50,21 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             MembershipTierRepository membershipTierRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AuditLogService auditLogService) {
         this.memberAccountRepository = memberAccountRepository;
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
     }
 
     @Override
     @Transactional(readOnly = true)
     public MemberListViewData getMemberList(int page, String keyword) {
-        PageRequest pageable = PageRequest.of(page, 10, Sort.by("accountId").ascending());
+        PageRequest pageable = PageRequest.of(page, 10, Sort.by("id").ascending());
         String normalizedKeyword = trim(keyword);
         Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
                 ? memberAccountRepository.findAll(pageable)
@@ -137,6 +146,10 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         account.setStatus(request.getStatus());
         account.getRoles().add(memberRole);
         memberAccountRepository.save(account);
+
+        auditLogService.log(
+                ActionType.CREATE_ACCOUNT,
+                "Tạo tài khoản thành viên." + account.getUsername());
     }
 
     @Override
@@ -203,6 +216,10 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         userRepository.save(user);
         memberAccountRepository.save(account);
         memberRepository.save(member);
+
+        auditLogService.log(
+                ActionType.UPDATE_ACCOUNT,
+                "Cập nhật tài khoản thành viên." + account.getUsername());
     }
 
     @Override
@@ -212,12 +229,32 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (account == null) {
             return false;
         }
-        account.setStatus("Inactive");
-        if (account.getMember().getUser() != null) {
-            account.getMember().getUser().setStatus(UserStatus.Inactive);
-        }
+        applyStatus(account, "Inactive");
         memberAccountRepository.save(account);
+
+        auditLogService.log(
+                ActionType.DEACTIVATE_ACCOUNT,
+                "Vô hiệu hóa tài khoản thành viên." + account.getUsername());
         return true;
+    }
+
+    @Override
+    @Transactional
+    public void changeMemberStatus(Integer accountId, String status) {
+        if (!"Active".equals(status) && !"Inactive".equals(status) && !"Blocked".equals(status)) {
+            throw new IllegalArgumentException("Trạng thái tài khoản không hợp lệ.");
+        }
+        MemberAccount account = memberAccountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        applyStatus(account, status);
+        memberAccountRepository.save(account);
+    }
+
+    private void applyStatus(MemberAccount account, String status) {
+        account.setStatus(status);
+        if (account.getMember() != null && account.getMember().getUser() != null) {
+            account.getMember().getUser().setStatus(toUserStatus(status));
+        }
     }
 
     private String trim(String value) {

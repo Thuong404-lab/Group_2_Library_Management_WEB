@@ -1,26 +1,343 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_base}">
+
 <head>
     <title>Cài đặt</title>
+    <style>
+        .settings-form {
+            row-gap: 1.75rem;
+        }
+
+        .settings-form .form-label {
+            color: #4a3b32 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.55rem;
+        }
+
+        .settings-form .form-text {
+            color: #91877f !important;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            margin-top: 0.45rem;
+        }
+
+        .settings-section-title {
+            padding-top: 0.5rem;
+            margin-top: 0.35rem;
+            border-top: 1px solid rgba(139, 90, 43, 0.18);
+        }
+
+        .settings-section-title:first-of-type {
+            border-top: 0;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        .settings-section-title h6 {
+            color: #6b4423 !important;
+            font-size: 1.05rem;
+        }
+
+        .setting-field {
+            height: 100%;
+        }
+
+        .tier-limit-box {
+            height: 100%;
+            padding: 1rem;
+            border: 1px solid rgba(139, 90, 43, 0.18);
+            border-radius: 8px;
+            background: #fdfbf7;
+        }
+
+        .subsection-label {
+            color: #4a3b32;
+            font-weight: 700;
+        }
+
+        .money-input {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
 </head>
+
 <body>
 <div layout:fragment="content" th:with="activeMenu='settings'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+         style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Cài đặt Hệ thống</h2>
+            <h2 class="fw-bold mb-1"
+                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                Cài đặt Hệ thống
+            </h2>
             <div class="text-muted">
-                Cấu hình các tham số hệ thống
+                Cấu hình chính sách mượn, trả và phạt
             </div>
         </div>
     </div>
 
+    <div class="alert alert-success shadow-sm border-0" th:if="${success}">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${success}">Cập nhật thành công.</span>
+    </div>
+
+    <div class="alert alert-danger shadow-sm border-0" th:if="${error}">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${error}">Có lỗi xảy ra.</span>
+    </div>
+
     <div class="card-classic shadow-sm">
-        <div class="card-body p-5 text-center">
-            <i class="bi bi-tools text-muted mb-3" style="font-size: 3rem;"></i>
-            <h4 class="fw-bold text-classic">Đang phát triển</h4>
-            <p class="text-muted">Tính năng cài đặt hệ thống đang được xây dựng.</p>
+        <div class="card-header bg-white border-bottom border-color p-4">
+            <h5 class="fw-bold mb-0"
+                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                <i class="bi bi-sliders me-2 text-classic"></i>
+                Cấu hình chính sách mượn/trả
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form th:action="@{/admin/settings/policies}"
+                  method="post"
+                  class="row g-4 settings-form"
+                  id="policySettingsForm">
+
+                <input type="hidden"
+                       th:if="${_csrf != null}"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}">
+
+                <div class="col-12 settings-section-title">
+                    <h6 class="fw-bold text-classic mb-0">
+                        <i class="bi bi-book me-1"></i>
+                        Chính sách mượn sách
+                    </h6>
+                </div>
+
+                <div class="col-md-6 setting-field">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Số ngày mượn tối đa
+                    </label>
+                    <input name="maxBorrowDays"
+                           type="number"
+                           class="form-control"
+                           min="1"
+                           required
+                           th:value="${settingMap['Max_Borrow_Days'] != null ? settingMap['Max_Borrow_Days'] : 14}">
+                </div>
+
+                <div class="col-md-6 setting-field">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Số ngày gia hạn tối đa
+                    </label>
+                    <input name="maxRenewalDays"
+                           type="number"
+                           class="form-control"
+                           min="1"
+                           required
+                           th:value="${settingMap['Max_Renewal_Days'] != null ? settingMap['Max_Renewal_Days'] : 7}">
+                </div>
+
+                <div class="col-12 settings-section-title">
+                    <h6 class="fw-bold text-classic mb-0">
+                        <i class="bi bi-cash-coin me-1"></i>
+                        Bảng giá và phí phạt
+                    </h6>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Phí mượn tiêu chuẩn
+                    </label>
+                    <input name="borrowFeePerBook"
+                           type="text"
+                           inputmode="numeric"
+                           class="form-control money-input"
+                           required
+                           th:value="${settingMap['Borrow_Fee_Per_Book'] != null ? settingMap['Borrow_Fee_Per_Book'] : 5000}">
+                    <div class="form-text">VNĐ / quyển / ngày</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Phí phạt quá hạn
+                    </label>
+                    <input name="finePerDay"
+                           type="text"
+                           inputmode="numeric"
+                           class="form-control money-input"
+                           required
+                           th:value="${settingMap['Fine_Per_Day'] != null ? settingMap['Fine_Per_Day'] : 5000}">
+                    <div class="form-text">VNĐ / quyển / ngày quá hạn</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Tiền cọc đặt trước
+                    </label>
+                    <input name="depositAmount"
+                           type="text"
+                           inputmode="numeric"
+                           class="form-control money-input"
+                           required
+                           th:value="${settingMap['Deposit_Amount'] != null ? settingMap['Deposit_Amount'] : 50000}">
+                    <div class="form-text">VNĐ / quyển</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Phí bồi thường sách hư hỏng
+                    </label>
+                    <input name="damageCompensationAmount"
+                           type="text"
+                           inputmode="numeric"
+                           class="form-control money-input"
+                           required
+                           th:value="${settingMap['Damage_Compensation_Amount'] != null ? settingMap['Damage_Compensation_Amount'] : 120000}">
+                    <div class="form-text">Nếu sách hư hỏng nặng</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Ngưỡng hư hỏng để bồi thường
+                    </label>
+                    <div class="input-group">
+                        <input name="damageCompensationThreshold"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               max="100"
+                               step="1"
+                               required
+                               th:value="${settingMap['Damage_Compensation_Threshold'] != null ? settingMap['Damage_Compensation_Threshold'] : 50}">
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="form-text">Nếu mức độ hư hỏng lớn hơn giá trị này thì tính phí bồi thường</div>
+                </div>
+
+                <div class="col-12 settings-section-title">
+                    <h6 class="fw-bold text-classic mb-0">
+                        <i class="bi bi-shield-lock me-1"></i>
+                        Quy định khóa tài khoản và thanh lý sách
+                    </h6>
+                </div>
+
+                <div class="col-md-6 setting-field">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Số lần quá hạn trước khi khóa tài khoản
+                    </label>
+                    <input name="overdueViolationLockLimit"
+                           type="number"
+                           class="form-control"
+                           min="0"
+                           required
+                           th:value="${settingMap['Overdue_Violation_Lock_Limit'] != null ? settingMap['Overdue_Violation_Lock_Limit'] : 3}">
+                </div>
+
+                <div class="col-md-6 setting-field">
+                    <label class="form-label fw-bold small text-muted text-uppercase">
+                        Ngưỡng tình trạng sách được thanh lý
+                    </label>
+                    <div class="input-group">
+                        <input name="bookDisposalConditionThreshold"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               max="100"
+                               step="1"
+                               required
+                               th:value="${settingMap['Book_Disposal_Condition_Threshold'] != null ? settingMap['Book_Disposal_Condition_Threshold'] : 40}">
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="form-text">Dưới giá trị này thì thủ thư được phép thanh lý sách</div>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
+                </div>
+
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-classic px-4">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Lưu cấu hình
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("policySettingsForm");
+            const moneyInputs = document.querySelectorAll(".money-input");
+            function initialDigits(value) {
+                const trimmed = value.trim();
+                if (/^\d+(?:\.0{1,2})?$/.test(trimmed)) {
+                    return trimmed.replace(/\.0{1,2}$/, "");
+                }
+                return trimmed.replace(/\D/g, "");
+            }
+
+            function groupDigits(digits) {
+                return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
+
+            function normalizeDigits(value, initialLoad) {
+                let digits = initialLoad ? initialDigits(value) : value.replace(/\D/g, "");
+                digits = digits.replace(/^0+(?=\d)/, "");
+                return digits;
+            }
+
+            function showFormattedMoney(input, initialLoad) {
+                const digits = normalizeDigits(input.value, initialLoad);
+                input.value = digits === "" ? "" : groupDigits(digits);
+            }
+
+            function showRawMoney(input) {
+                const oldCaret = input.selectionStart == null ? input.value.length : input.selectionStart;
+                const digitsBeforeCaret = input.value.slice(0, oldCaret).replace(/\D/g, "").length;
+                input.value = normalizeDigits(input.value, true);
+                const newCaret = Math.min(digitsBeforeCaret, input.value.length);
+                input.setSelectionRange(newCaret, newCaret);
+            }
+
+            function keepDigitsOnly(input) {
+                const oldCaret = input.selectionStart == null ? input.value.length : input.selectionStart;
+                const digitsBeforeCaret = input.value.slice(0, oldCaret).replace(/\D/g, "").length;
+                const digits = normalizeDigits(input.value, false);
+
+                if (input.value !== digits) {
+                    input.value = digits;
+                    const newCaret = Math.min(digitsBeforeCaret, digits.length);
+                    input.setSelectionRange(newCaret, newCaret);
+                }
+            }
+
+            moneyInputs.forEach(function (input) {
+                showFormattedMoney(input, true);
+                input.addEventListener("focus", function () {
+                    showRawMoney(input);
+                });
+                input.addEventListener("input", function () {
+                    keepDigitsOnly(input);
+                });
+                input.addEventListener("blur", function () {
+                    showFormattedMoney(input, false);
+                });
+            });
+
+            form.addEventListener("submit", function () {
+                moneyInputs.forEach(function (input) {
+                    input.value = normalizeDigits(input.value, false);
+                });
+            });
+        });
+    </script>
+
 </div>
 </body>
 </html>

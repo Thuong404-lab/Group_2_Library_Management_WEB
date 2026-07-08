@@ -1,9 +1,12 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.enums.ActionType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
+import com.lms.service.AuditLogService;
+import com.lms.service.FinancialService;
 import com.lms.service.MemberFavoriteService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,15 +24,21 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     private final BookRepository bookRepository;
     private final FavoritesRepository favoritesRepository;
     private final ReservationRepository reservationRepository;
+    private final FinancialService financialService;
+    private final AuditLogService auditLogService;
 
     public MemberFavoriteServiceImpl(MemberAccountRepository memberAccountRepository,
                                      BookRepository bookRepository,
                                      FavoritesRepository favoritesRepository,
-                                     ReservationRepository reservationRepository) {
+                                     ReservationRepository reservationRepository,
+                                     FinancialService financialService,
+                                     AuditLogService auditLogService) {
         this.memberAccountRepository = memberAccountRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
         this.reservationRepository = reservationRepository;
+        this.financialService = financialService;
+        this.auditLogService = auditLogService;
     }
 
     private Member getMemberByUsername(String username) {
@@ -101,11 +110,16 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void reserveBook(String username, Integer bookId) throws Exception {
+    public Reservation reserveBook(String username, Integer bookId) throws Exception {
         Member member = getMemberByUsername(username);
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sách không tồn tại"));
+
+        if (reservationRepository.existsActiveReservationForMemberAndBook(
+                member.getMemberId(), book.getBookId(), List.of("PENDING", "DEPOSIT_PAID", "READY"))) {
+            throw new ValidationException("Bạn đã có yêu cầu đặt trước đang hoạt động cho sách này.");
+        }
 
         Reservation reservation = new Reservation();
         reservation.setMember(member);
@@ -113,7 +127,13 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         reservation.setReservationDate(java.time.LocalDateTime.now());
         reservation.setStatus("Pending");
 
-        reservationRepository.save(reservation);
+        reservation = reservationRepository.saveAndFlush(reservation);
+        financialService.payReservationDeposit(member.getMemberId(), reservation.getReservationId());
+        auditLogService.log(
+                ActionType.RESERVE_BOOK,
+                "Member " + username + " dat giu cho sach #" + book.getBookId() + " - " + book.getTitle() + ".");
+
+        return reservation;
     }
 
     // TRIỂN KHAI BỔ SUNG: Trích xuất danh sách sách để hiển thị Đề Cử trên Dashboard

@@ -34,6 +34,9 @@ public class SystemLog {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Transient
+    private String actorUsername;
+
     public SystemLog() {
     }
 
@@ -99,5 +102,13 @@ public class SystemLog {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getActorUsername() {
+        return actorUsername;
+    }
+
+    public void setActorUsername(String actorUsername) {
+        this.actorUsername = actorUsername;
     }
 }

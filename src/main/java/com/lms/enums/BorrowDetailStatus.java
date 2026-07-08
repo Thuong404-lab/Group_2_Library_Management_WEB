@@ -1,2 +1,8 @@
 package com.lms.enums;
-public enum BorrowDetailStatus { Borrowed, Returned, Overdue, Lost }
+
+public enum BorrowDetailStatus {
+    BORROWED,
+    RETURN_PENDING, // Thêm trạng thái này cho việc chờ duyệt trả
+    RETURNED,
+    OVERDUE
+}

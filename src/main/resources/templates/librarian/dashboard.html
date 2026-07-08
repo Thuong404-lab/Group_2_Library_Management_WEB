@@ -67,12 +67,20 @@
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
             background-image: none !important;
         }
+
+        .validate-field.is-valid,
+        .validate-group.is-valid {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
+            background-image: none !important;
+        }
     </style>
 </head>
 
 <body>
     <div layout:fragment="content"
-        th:with="activeMenu='dashboard', currentSection=${param.section != null ? param.section[0] : 'overview'}">
+        th:with="currentSection=${param.section != null ? param.section[0] : 'overview'},
+                 activeMenu=${currentSection == 'users' ? 'users' : 'dashboard'}">
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
@@ -1315,6 +1323,7 @@
                     return;
                 }
 
+                element.classList.remove("is-valid");
                 element.classList.add("is-invalid");
                 const feedback = element.parentElement.querySelector(".invalid-feedback");
                 if (feedback != null) {
@@ -1327,7 +1336,20 @@
                     return;
                 }
 
+                element.classList.remove("is-invalid", "is-valid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function setInlineValid(element) {
+                if (element == null) {
+                    return;
+                }
+
                 element.classList.remove("is-invalid");
+                element.classList.add("is-valid");
                 const feedback = element.parentElement.querySelector(".invalid-feedback");
                 if (feedback != null) {
                     feedback.textContent = "";
@@ -1358,21 +1380,29 @@
                         && (recipientSelected == null || !recipientSelected.checked)) {
                     setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
                     isValid = false;
+                } else {
+                    setInlineValid(recipientTypeGroup);
                 }
 
                 if (recipientSelected != null && recipientSelected.checked && selectedMembers.length === 0) {
                     setInlineError(memberIdsGroup, "Vui lòng chọn ít nhất một Member.");
                     isValid = false;
+                } else if (recipientSelected != null && recipientSelected.checked) {
+                    setInlineValid(memberIdsGroup);
                 }
 
                 if (titleInput != null && titleInput.value.trim() === "") {
                     setInlineError(titleInput, "Tiêu đề không được để trống.");
                     isValid = false;
+                } else {
+                    setInlineValid(titleInput);
                 }
 
                 if (contentInput != null && contentInput.value.trim() === "") {
                     setInlineError(contentInput, "Nội dung không được để trống.");
                     isValid = false;
+                } else {
+                    setInlineValid(contentInput);
                 }
 
                 if (!isValid) {
@@ -1391,6 +1421,8 @@
                             setInlineError(response, "Nội dung phản hồi không được để trống.");
                             event.preventDefault();
                             event.stopPropagation();
+                        } else {
+                            setInlineValid(response);
                         }
                     });
                 });
