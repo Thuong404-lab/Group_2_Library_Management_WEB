@@ -23,8 +23,10 @@ public class LibrarianDashboardController {
     @GetMapping("/dashboard")
     public String viewDashboard(
             Model model,
+            @RequestParam(defaultValue = "0") int reviewPage,
+            @RequestParam(defaultValue = "0") int requestPage,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAllAttributes(dashboardService.getDashboardData());
+        model.addAllAttributes(dashboardService.getDashboardData(reviewPage, requestPage));
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
     }
@@ -32,6 +34,11 @@ public class LibrarianDashboardController {
     @GetMapping("/users")
     public String viewUserManagement() {
         return "redirect:/librarian/dashboard?section=users";
+    }
+
+    @GetMapping("/statistics")
+    public String viewStatistics() {
+        return "redirect:/librarian/dashboard?section=reports";
     }
 
     @GetMapping("/librarians")

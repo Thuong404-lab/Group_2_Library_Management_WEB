@@ -80,7 +80,7 @@
 <body>
     <div layout:fragment="content"
         th:with="currentSection=${param.section != null ? param.section[0] : 'overview'},
-                 activeMenu=${currentSection == 'users' ? 'users' : 'dashboard'}">
+                 activeMenu=${currentSection == 'users' ? 'users' : (currentSection == 'reports' ? 'statistics' : 'dashboard')}">
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
@@ -91,8 +91,9 @@
                     <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
                     <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
                     <span th:if="${currentSection == 'users'}">Quản lý người dùng</span>
+                    <span th:if="${currentSection == 'reports'}">Thống kê</span>
                     <span
-                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users'}">Tổng quan</span>
+                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users' || currentSection == 'reports'}">Tổng quan</span>
                 </h2>
                 <div class="text-muted" th:if="${currentSection == 'notifications'}">
                     Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
@@ -103,7 +104,10 @@
                 <div class="text-muted" th:if="${currentSection == 'acquisition'}">
                     Xem danh sách sách do độc giả đề xuất.
                 </div>
-                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">
+                <div class="text-muted" th:if="${currentSection == 'reports'}">
+                    Theo dõi nhanh các chỉ số mượn trả và doanh thu.
+                </div>
+                <div class="text-muted" th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports'}">
                     Cập nhật:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
@@ -303,7 +307,7 @@
                         </div>
                         <div class="card-footer bg-white border-top text-center p-3 border-color"
                             th:if="${!#lists.isEmpty(recentBorrows)}">
-                            <a th:href="@{/admin/reports}" class="text-decoration-none fw-bold text-classic">Xem tất cả
+                            <a th:href="@{/librarian/reports}" class="text-decoration-none fw-bold text-classic">Xem tất cả
                                 hoạt động <i class="bi bi-arrow-right"></i></a>
                         </div>
                     </div>
@@ -441,11 +445,14 @@
                                             class="fw-semibold" th:text="${review.librarianResponse}">
                                             Phản hồi
                                         </div>
-                                        <span th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
+                                        <span th:if="${review.status == 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
+                                            class="text-muted">Member đã xoá</span>
+                                        <span th:if="${review.status != 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
                                             class="text-muted">Chưa phản hồi</span>
                                     </td>
                                     <td class="pe-3 table-fixed-action">
                                         <form
+                                            th:if="${review.status != 'DELETED_BY_MEMBER'}"
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                                             method="post" class="review-reply-box mb-2" novalidate>
                                             <input type="hidden" th:if="${_csrf != null}"
@@ -462,6 +469,10 @@
                                                 Phản hồi
                                             </button>
                                         </form>
+                                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                                            class="text-muted small mb-2">
+                                            Member đã xoá đánh giá này, không thể phản hồi.
+                                        </div>
 
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
@@ -487,6 +498,29 @@
                             </tbody>
                         </table>
                     </div>
+                    <nav th:if="${reviews != null && reviews.totalPages > 1}" class="mt-3">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number - 1},requestPage=${requests != null ? requests.number : 0})}">
+                                    Trước
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Trang <span th:text="${reviews.number + 1}">1</span>
+                                    /
+                                    <span th:text="${reviews.totalPages}">1</span>
+                                </span>
+                            </li>
+                            <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number + 1},requestPage=${requests != null ? requests.number : 0})}">
+                                    Sau
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </section>
@@ -508,7 +542,7 @@
                                 </tr>
                             </thead>
 
-                            <tbody th:if="${requests != null}">
+                            <tbody th:if="${requests != null && requests.totalElements > 0}">
                                 <tr th:each="request : ${requests.content}">
                                     <td class="ps-3 fw-bold" th:text="${request.requestId}">1</td>
                                     <td th:text="${request.title}">Tên sách</td>
@@ -532,6 +566,29 @@
                             </tbody>
                         </table>
                     </div>
+                    <nav th:if="${requests != null && requests.totalPages > 1}" class="mt-3">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.number - 1})}">
+                                    Trước
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Trang <span th:text="${requests.number + 1}">1</span>
+                                    /
+                                    <span th:text="${requests.totalPages}">1</span>
+                                </span>
+                            </li>
+                            <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.number + 1})}">
+                                    Sau
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </section>

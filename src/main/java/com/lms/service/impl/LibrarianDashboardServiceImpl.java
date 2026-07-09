@@ -33,6 +33,8 @@ import java.util.Map;
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
+    private static final int DASHBOARD_PAGE_SIZE = 5;
+
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final ReservationRepository reservationRepository;
@@ -76,6 +78,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData() {
+        return getDashboardData(0, 0);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int reviewPage, int requestPage) {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> data = new LinkedHashMap<>();
 
@@ -92,11 +100,11 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
                         "Borrowed", now, now.plusDays(7)));
         data.put("reviews", interactionService.getReviewsForModeration(
-                null, PageRequest.of(0, 20, Sort.by("createdDate").descending())));
+                null, PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
-                PageRequest.of(0, 20, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
         data.put("shelves", storageService.getAllStorageLocations());
         data.put("books", bookRepository.findAll());
         data.put("categories", categoryRepository.findAll());
