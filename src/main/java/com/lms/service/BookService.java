@@ -1,5 +1,11 @@
 package com.lms.service;
 
+import com.lms.entity.Book;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
 /**
  * BookService - Xử lý Logic Sách
  * Liên quan: Member 1 (Thương) + Member 2 (Khanh)
@@ -7,15 +13,15 @@ package com.lms.service;
 public interface BookService {
 
     // UC-1: Tìm kiếm sách
-    org.springframework.data.domain.Page<com.lms.entity.Book> searchBooks(String keyword, Integer genreId, String status, org.springframework.data.domain.Pageable pageable);
+    Page<Book> searchBooks(String keyword, Integer genreId, String status, Pageable pageable);
 
     // UC-3: Xem danh sách sách
-    org.springframework.data.domain.Page<com.lms.entity.Book> findAllBooks(org.springframework.data.domain.Pageable pageable);
+    Page<Book> findAllBooks(Pageable pageable);
 
     // Lấy sách mới nhất cho trang chủ
-    java.util.List<com.lms.entity.Book> getRecentBooks(int limit);
+    List<Book> getRecentBooks(int limit);
 
     // UC-3: Xem chi tiết sách
-    com.lms.entity.Book findBookById(Integer id);
+    Book findBookById(Integer id);
 
 }

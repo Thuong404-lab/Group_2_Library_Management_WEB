@@ -135,7 +135,7 @@ public class GuestController {
             map.put("authorName", authorNames);
             map.put("thumbnailUrl", "https://picsum.photos/seed/" + book.getBookId() + "/60/80");
             return map;
-        }).collect(Collectors.toList());
+        }).toList();
         
         return org.springframework.http.ResponseEntity.ok(suggestions);
     }

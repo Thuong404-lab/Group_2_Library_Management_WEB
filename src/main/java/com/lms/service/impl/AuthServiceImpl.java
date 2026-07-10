@@ -57,13 +57,16 @@ public class AuthServiceImpl implements AuthService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
         this.systemLogRepository = systemLogRepository;
-        this.applicationBaseUrl = applicationBaseUrl.replaceAll("/+$", "");
+        while (applicationBaseUrl.endsWith("/")) {
+            applicationBaseUrl = applicationBaseUrl.substring(0, applicationBaseUrl.length() - 1);
+        }
+        this.applicationBaseUrl = applicationBaseUrl;
     }
 
     @Override
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
-        if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
+        if (request.getUsername() == null || !request.getUsername().matches("^\\w{3,20}$")) {
             throw new AuthException("Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
         }
 
@@ -75,11 +78,11 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Họ và tên không được để trống!");
         }
 
-        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+        if (request.getEmail() == null || !request.getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new AuthException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
 
-        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)[0-9]{9}$")) {
+        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)\\d{9}$")) {
             throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
         }
 
@@ -165,7 +168,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void requestPasswordReset(String email) throws Exception {
+    public void requestPasswordReset(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email.trim());
 
         if (userOptional.isEmpty()) {
@@ -202,35 +205,35 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void validatePasswordResetToken(String token) throws Exception {
+    public void validatePasswordResetToken(String token) {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+            throw new AuthException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new Exception("Token đặt lại mật khẩu đã hết hạn.");
+            throw new AuthException("Token đặt lại mật khẩu đã hết hạn.");
         }
     }
 
     @Override
     @Transactional
-    public void resetPassword(String token, String newPassword) throws Exception {
+    public void resetPassword(String token, String newPassword) {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+            throw new AuthException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new Exception("Token đặt lại mật khẩu đã hết hạn.");
+            throw new AuthException("Token đặt lại mật khẩu đã hết hạn.");
         }
 
         User user = resetToken.getUser();
@@ -247,7 +250,7 @@ public class AuthServiceImpl implements AuthService {
                 staffAccount.setPasswordHash(passwordEncoder.encode(newPassword));
                 staffAccountRepository.save(staffAccount);
             } else {
-                throw new Exception("Không tìm thấy tài khoản liên kết với người dùng.");
+                throw new AuthException("Không tìm thấy tài khoản liên kết với người dùng.");
             }
         }
 

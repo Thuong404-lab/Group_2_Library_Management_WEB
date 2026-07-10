@@ -6,7 +6,6 @@ import com.lms.entity.Category;
 import com.lms.entity.Genre;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
-import com.lms.repository.BookDisposalRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.service.InventoryService;
@@ -23,22 +22,26 @@ import java.util.UUID;
  */
 @Service
 public class InventoryServiceImpl implements InventoryService {
+    private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_BORROWED = "Borrowed";
+    private static final String STATUS_LOST = "Lost";
+    private static final String STATUS_DAMAGED = "Damaged";
+    private static final String STATUS_DISPOSED = "Disposed";
+    private static final String STATUS_ACTIVE = "Active";
+
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final BookItemRepository bookItemRepository;
-    private final BookDisposalRepository bookDisposalRepository;
 
     public InventoryServiceImpl(BookRepository bookRepository,
                                 CategoryRepository categoryRepository,
                                 GenreRepository genreRepository,
-                                BookItemRepository bookItemRepository,
-                                BookDisposalRepository bookDisposalRepository) {
+                                BookItemRepository bookItemRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.bookItemRepository = bookItemRepository;
-        this.bookDisposalRepository = bookDisposalRepository;
     }
 
     @Override
@@ -74,11 +77,11 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public Map<String, Long> getInventoryStatusCounts() {
         Map<String, Long> counts = new HashMap<>();
-        counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
-        counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
-        counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
-        counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
-        counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));
+        counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
+        counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
+        counts.put(STATUS_LOST, bookItemRepository.countByStatusIgnoreCase(STATUS_LOST));
+        counts.put(STATUS_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_DAMAGED));
+        counts.put(STATUS_DISPOSED, bookItemRepository.countByStatusIgnoreCase(STATUS_DISPOSED));
         return counts;
     }
 
@@ -108,7 +111,7 @@ public class InventoryServiceImpl implements InventoryService {
         book.setTitle(title.trim());
         book.setIsbn(isbn.trim());
         book.setGenre(genre);
-        book.setStatus("Active");
+        book.setStatus(STATUS_ACTIVE);
         bookRepository.save(book);
 
         int copies = quantity != null && quantity > 0 ? quantity : 1;
@@ -117,7 +120,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setBook(book);
             item.setShelf(null);
             item.setBarcode(UUID.randomUUID().toString());
-            item.setStatus("Available");
+            item.setStatus(STATUS_AVAILABLE);
             bookItemRepository.save(item);
         }
     }
@@ -155,11 +158,11 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void removeBook(Integer bookId) {
         Book book = findBookById(bookId);
-        book.setStatus("Disposed");
+        book.setStatus(STATUS_DISPOSED);
         bookRepository.save(book);
         List<BookItem> copies = bookItemRepository.findByBook_BookId(bookId);
         for (BookItem item : copies) {
-            item.setStatus("Disposed");
+            item.setStatus(STATUS_DISPOSED);
         }
         bookItemRepository.saveAll(copies);
     }

@@ -32,6 +32,10 @@ import java.util.Map;
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
+    private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_BORROWED = "Borrowed";
+    private static final String ROLE_LIBRARIAN = "Librarian";
+
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final ReservationRepository reservationRepository;
@@ -81,14 +85,14 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
         data.put("pendingReservations", reservationRepository.countByStatusIgnoreCase("Pending"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
-        data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
+        data.put("availableItems", bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
         data.put("totalMembers", memberRepository.count());
-        data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
+        data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase(ROLE_LIBRARIAN));
         data.put("currentDate", LocalDate.now());
         data.put("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
         data.put("dueSoonDetails",
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
-                        "Borrowed", now, now.plusDays(7)));
+                        STATUS_BORROWED, now, now.plusDays(7)));
         data.put("reviews", interactionService.getReviewsForModeration(
                 null, PageRequest.of(0, 20, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
@@ -112,9 +116,9 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("staffId").ascending());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
         Page<Staff> staffPage = normalizedKeyword.isEmpty()
-                ? staffRepository.findByStaffTypeIgnoreCase("Librarian", pageable)
+                ? staffRepository.findByStaffTypeIgnoreCase(ROLE_LIBRARIAN, pageable)
                 : staffRepository.searchByStaffTypeAndKeyword(
-                        "Librarian", normalizedKeyword, pageable);
+                        ROLE_LIBRARIAN, normalizedKeyword, pageable);
 
         Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
         for (Staff staff : staffPage.getContent()) {
@@ -128,8 +132,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     private Map<String, Long> inventoryStatusCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
-        counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
+        counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
+        counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
         counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
         counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
         counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));

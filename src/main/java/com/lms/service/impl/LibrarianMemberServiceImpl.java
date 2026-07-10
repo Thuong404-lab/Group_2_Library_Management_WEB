@@ -3,17 +3,9 @@ package com.lms.service.impl;
 import com.lms.dto.request.CreateMemberAccountRequest;
 import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.dto.response.MemberListViewData;
-import com.lms.entity.MemberAccount;
-import com.lms.entity.Member;
-import com.lms.entity.MembershipTier;
-import com.lms.entity.Role;
-import com.lms.entity.User;
+import com.lms.entity.*;
 import com.lms.enums.UserStatus;
-import com.lms.repository.MemberAccountRepository;
-import com.lms.repository.MemberRepository;
-import com.lms.repository.MembershipTierRepository;
-import com.lms.repository.RoleRepository;
-import com.lms.repository.UserRepository;
+import com.lms.repository.*;
 import com.lms.service.LibrarianMemberService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +21,10 @@ import java.util.Map;
 
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
+
+    private static final String STATUS_INACTIVE = "Inactive";
+    private static final String FIELD_TIER_ID = "tierId";
+    private static final String ERR_INVALID_TIER = "Hạng thành viên không hợp lệ.";
 
     private final MemberAccountRepository memberAccountRepository;
     private final MemberRepository memberRepository;
@@ -72,13 +68,11 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<MembershipTier> getMembershipTiers() {
-        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
+        return membershipTierRepository.findAll(Sort.by(FIELD_TIER_ID).ascending());
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Map<String, String> validateCreate(CreateMemberAccountRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
         String email = trim(request.getEmail());
@@ -95,11 +89,11 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             errors.put("username", "Username đã tồn tại.");
         }
         if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
-            errors.put("tierId", "Hạng thành viên không hợp lệ.");
+            errors.put(FIELD_TIER_ID, ERR_INVALID_TIER);
         }
         if (request.getStatus() != null
                 && !"Active".equals(request.getStatus())
-                && !"Inactive".equals(request.getStatus())) {
+                && !STATUS_INACTIVE.equals(request.getStatus())) {
             errors.put("status", "Trạng thái thành viên không hợp lệ.");
         }
         return errors;
@@ -114,7 +108,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         }
 
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
+                .orElseThrow(() -> new IllegalArgumentException(ERR_INVALID_TIER));
         Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy role MEMBER trong database."));
 
@@ -140,7 +134,6 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Map<String, String> validateUpdate(Integer accountId, UpdateMemberAccountRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
         MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
@@ -164,11 +157,11 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             errors.put("phone", "Số điện thoại đã được sử dụng.");
         }
         if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
-            errors.put("tierId", "Hạng thành viên không hợp lệ.");
+            errors.put(FIELD_TIER_ID, ERR_INVALID_TIER);
         }
         if (request.getStatus() != null
                 && !"Active".equals(request.getStatus())
-                && !"Inactive".equals(request.getStatus())
+                && !STATUS_INACTIVE.equals(request.getStatus())
                 && !"Blocked".equals(request.getStatus())) {
             errors.put("status", "Trạng thái tài khoản không hợp lệ.");
         }
@@ -186,7 +179,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
+                .orElseThrow(() -> new IllegalArgumentException(ERR_INVALID_TIER));
         User user = account.getMember().getUser();
 
         user.setFullName(trim(request.getFullName()));
@@ -212,7 +205,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (account == null) {
             return false;
         }
-        account.setStatus("Inactive");
+        account.setStatus(STATUS_INACTIVE);
         if (account.getMember().getUser() != null) {
             account.getMember().getUser().setStatus(UserStatus.Inactive);
         }
