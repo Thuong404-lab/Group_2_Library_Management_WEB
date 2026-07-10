@@ -2,7 +2,11 @@ package com.lms.repository;
 
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,4 +28,18 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
     List<MemberNotification> findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
             Integer memberId,
             String content);
+
+    @Query("""
+            select mn
+            from MemberNotification mn
+            where mn.member.memberId = :memberId
+              and (
+                    lower(mn.notification.title) like lower(concat('%', :keyword, '%'))
+                 or lower(mn.notification.content) like lower(concat('%', :keyword, '%'))
+              )
+            order by mn.notification.createdDate desc
+            """)
+    Page<MemberNotification> findTopupNotifications(@Param("memberId") Integer memberId,
+                                                    @Param("keyword") String keyword,
+                                                    Pageable pageable);
 }

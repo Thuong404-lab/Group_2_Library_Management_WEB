@@ -19,6 +19,8 @@ import java.util.List;
 @Service
 public class LibrarianInteractionServiceImpl implements LibrarianInteractionService {
 
+    private static final String DELETED_BY_MEMBER_STATUS = "DELETED_BY_MEMBER";
+
     private final FeedbackRepository feedbackRepository;
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
@@ -65,6 +67,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     public void replyReview(Integer feedbackId, LibrarianReviewReplyRequest request) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
+
+        if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
+            throw new ValidationException("Đánh giá này đã được member xoá nên không thể phản hồi.");
+        }
 
         if (request.getResponse() == null || request.getResponse().trim().isEmpty()) {
             throw new ValidationException("Nội dung phản hồi không được để trống");

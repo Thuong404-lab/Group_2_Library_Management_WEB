@@ -3,9 +3,17 @@
     layout:decorate="~{layout/librarian_base}">
 
 <head>
+    <!-- UC-14.1 and UC-21.1 UI maintained by Pham Kien Quoc. -->
     <title>Danh sách Thành viên</title>
     <style>
-        .member-update-form .form-control.is-invalid {
+        .member-update-form .form-control.is-invalid,
+        .member-update-form .form-select.is-invalid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
+        .member-update-form .form-control.is-valid,
+        .member-update-form .form-select.is-valid {
             background-image: none !important;
             padding-right: 0.75rem !important;
         }
@@ -50,7 +58,7 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}" placeholder="Tìm username, họ tên hoặc email...">
+                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
                             <button class="btn btn-classic ms-2 rounded text-nowrap" type="submit">
                                 Tìm kiếm
                             </button>
@@ -88,26 +96,26 @@
                                     th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
                                 <td>
                                     <span class="fw-bold text-classic" th:text="${account.username}">username</span>
-                                    <div class="small text-muted" th:text="'ID: ' + ${account.accountId}">ID: 1</div>
+                                    <div class="small text-muted" th:text="'ID: ' + ${account.id}">ID: 1</div>
                                 </td>
                                 <td>
-                                    <div th:if="${account.user != null}">
-                                        <div class="fw-bold" th:text="${account.user.fullName}">Họ tên</div>
+                                    <div th:if="${account.member.user != null}">
+                                        <div class="fw-bold" th:text="${account.member.user.fullName}">Họ tên</div>
                                         <div class="small text-muted">
                                             <i class="bi bi-envelope me-1"> </i>
-                                            <span th:text="${account.user.email}">email</span>
+                                            <span th:text="${account.member.user.email}">email</span>
                                         </div>
-                                        <div class="small text-muted" th:if="${account.user.phone}">
+                                        <div class="small text-muted" th:if="${account.member.user.phone}">
                                             <i class="bi bi-telephone me-1"> </i>
-                                            <span th:text="${account.user.phone}">phone</span>
+                                            <span th:text="${account.member.user.phone}">phone</span>
                                         </div>
                                     </div>
-                                    <div th:unless="${account.user != null}" class="fst-italic text-muted small">
+                                    <div th:unless="${account.member.user != null}" class="fst-italic text-muted small">
                                         Chưa cập nhật thông tin
                                     </div>
                                 </td>
 
-                                <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                <td th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName}" th:style="${
@@ -137,26 +145,59 @@
                                 </td>
 
                                 <td class="text-end pe-3"
-                                    th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                    th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <button type="button" class="btn btn-sm btn-outline-classic" data-bs-toggle="modal"
-                                        th:data-bs-target="${'#updateMemberModal' + account.accountId}">
+                                        th:data-bs-target="${'#updateMemberModal' + account.id}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger ms-1"
                                         data-bs-toggle="modal"
-                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}">
+                                        th:data-bs-target="${'#deleteMemberModal' + account.id}">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status != 'Blocked'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.id}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Blocked">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning ms-1"
+                                            onclick="return confirm('Khóa tài khoản thành viên này?')">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status != 'Active'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.id}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Active">
+                                        <button type="submit" class="btn btn-sm btn-outline-success ms-1"
+                                            onclick="return confirm('Kích hoạt lại tài khoản thành viên này?')">
+                                            <i class="bi bi-unlock-fill"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline"
+                                        th:if="${account.status == 'Active'}"
+                                        th:action="@{/librarian/members/status/{id}(id=${account.id}, page=${accounts.number}, keyword=${keyword})}">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="status" value="Inactive">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary ms-1"
+                                            onclick="return confirm('Ngưng hoạt động tài khoản thành viên này?')">
+                                            <i class="bi bi-person-dash-fill"></i>
+                                        </button>
+                                    </form>
 
                                     <!-- Update Modal -->
                                     <div class="modal fade text-start"
-                                        th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                        th:id="${'updateMemberModal' + account.id}" tabindex="-1"
                                         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                         <div class="modal-dialog modal-dialog-centered modal-lg">
                                             <div class="modal-content border-0 shadow">
                                                 <form method="post" class="member-update-form" novalidate
-                                                    th:action="@{/librarian/members/edit/{id}(id=${account.accountId})}"
-                                                    th:attr="data-validation-url=@{/librarian/members/edit/{id}/validate(id=${account.accountId})}">
+                                                    th:action="@{/librarian/members/edit/{id}(id=${account.id})}"
+                                                    th:attr="data-validation-url=@{/librarian/members/edit/{id}/validate(id=${account.id})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
@@ -177,48 +218,59 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên
+                                                                    Họ tên <span class="text-danger">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
+                                                                    data-label="Họ tên"
                                                                     th:value="${account.user != null ? account.user.fullName : ''}"
                                                                     required>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="fullName"></div>
+                                                                <div class="invalid-feedback" data-error-for="fullName">
+                                                                    Họ tên không được để trống.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username
+                                                                    Username <span class="text-danger">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
-                                                                    th:value="${account.username}" required
-                                                                    pattern="[a-zA-Z0-9_]{3,20}">
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="username"></div>
+                                                                    data-label="Username"
+                                                                    pattern="[a-zA-Z0-9_]{3,20}"
+                                                                    th:value="${account.username}" required>
+                                                                <div class="invalid-feedback" data-error-for="username">
+                                                                    Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại
+                                                                    Số điện thoại <span class="text-danger">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
+                                                                    data-label="Số điện thoại"
                                                                     th:value="${account.user != null ? account.user.phone : ''}"
-                                                                    required pattern="0[0-9]{9}" minlength="10"
-                                                                    title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0">
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="phone"></div>
+                                                                    required pattern="^(?!0{10}$)0[0-9]{9}$"
+                                                                    minlength="10" inputmode="numeric">
+                                                                <div class="invalid-feedback" data-error-for="phone">
+                                                                    Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
-                                                                    class="form-label fw-bold small text-muted text-uppercase">Email</label>
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    Email <span class="text-danger">*</span>
+                                                                </label>
                                                                 <input class="form-control" name="email" type="email"
+                                                                    data-label="Email"
+                                                                    pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${account.user != null ? account.user.email : ''}"
                                                                     required>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="email"></div>
+                                                                <div class="invalid-feedback" data-error-for="email">
+                                                                    Email không đúng định dạng.
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-md-6">
@@ -235,10 +287,10 @@
                                                                         Standard Member
                                                                     </option>
                                                                 </select>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="tierId"></div>
+                                                                <div class="invalid-feedback" data-error-for="tierId">
+                                                                    Vui lòng chọn hạng thành viên.
+                                                                </div>
                                                             </div>
-
 
                                                             <div class="col-md-6">
                                                                 <label
@@ -260,8 +312,9 @@
                                                                         Blocked
                                                                     </option>
                                                                 </select>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="status"></div>
+                                                                <div class="invalid-feedback" data-error-for="status">
+                                                                    Trạng thái tài khoản không hợp lệ.
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -280,12 +333,12 @@
 
                                     <!-- Delete Modal -->
                                     <div class="modal fade text-start"
-                                        th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
+                                        th:id="${'deleteMemberModal' + account.id}" tabindex="-1"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content border-0 shadow">
                                                 <form method="post"
-                                                    th:action="@{/librarian/members/delete/{id}(id=${account.accountId})}">
+                                                    th:action="@{/librarian/members/delete/{id}(id=${account.id})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
@@ -315,7 +368,7 @@
 
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Account ID: </div>
-                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                    <div class="fw-bold" th:text="${account.id}">
                                                                         id
                                                                     </div>
                                                                 </div>
@@ -323,7 +376,7 @@
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Họ tên: </div>
                                                                     <div class="fw-bold"
-                                                                        th:text="${account.user != null ? account.user.fullName : 'Không có họ tên'}">
+                                                                        th:text="${account.member.user != null ? account.member.user.fullName : 'Không có họ tên'}">
                                                                         họ và tên
                                                                     </div>
                                                                 </div>
@@ -333,7 +386,7 @@
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
                                                                         <span
-                                                                            th:text="${account.user != null ? account.user.email : 'Không có email'}">
+                                                                            th:text="${account.member.user != null ? account.member.user.email : 'Không có email'}">
                                                                             email
                                                                         </span>
                                                                     </div>
@@ -345,7 +398,7 @@
                                                                         <i
                                                                             class="bi bi-telephone me-1 text-classic"></i>
                                                                         <span
-                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : 'Không có SĐT'}">
+                                                                            th:text="${account.member.user != null && account.member.user.phone != null ? account.member.user.phone : 'Không có SĐT'}">
                                                                             phone
                                                                         </span>
                                                                     </div>
@@ -400,26 +453,54 @@
 
                 <!-- Pagination -->
                 <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
-                    th:if="${accounts.totalPages > 1}">
-                    <nav>
+                    th:if="${accounts.totalPages > 1}"
+                    th:with="startPage=${accounts.totalPages <= 10 ? 0 : (accounts.number < 9 ? 0 : (accounts.number - 8 > accounts.totalPages - 10 ? accounts.totalPages - 10 : accounts.number - 8))}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
                         <ul class="pagination mb-0">
+                            <!-- First page -->
+                            <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/librarian/members(page=0, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                            </li>
+
+                            <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
-                            <li class="page-item" th:each="i : ${#numbers.sequence(0, accounts.totalPages - 1)}"
+
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Sliding window: at most 10 page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == accounts.number ? 'active' : ''}">
                                 <a class="page-link" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}"
                                     th:text="${i + 1}"
                                     th:style="${i == accounts.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
                             </li>
+
+                            <li class="page-item disabled" th:if="${endPage < accounts.totalPages - 1}">
+                                <span class="page-link">…</span>
+                            </li>
+
+                            <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}"
                                     style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
                                         class="bi bi-chevron-right"></i></a>
+                            </li>
+
+                            <!-- Last page -->
+                            <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
+                                <a class="page-link"
+                                    th:href="@{/librarian/members(page=${accounts.totalPages - 1}, keyword=${keyword})}"
+                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
                             </li>
                         </ul>
                     </nav>
@@ -447,8 +528,8 @@
                     });
 
                     function clearErrors() {
-                        form.querySelectorAll(".is-invalid").forEach(function (field) {
-                            field.classList.remove("is-invalid");
+                        form.querySelectorAll(".is-invalid, .is-valid").forEach(function (field) {
+                            field.classList.remove("is-invalid", "is-valid");
                         });
                         form.querySelectorAll("[data-error-for]").forEach(function (feedback) {
                             feedback.textContent = "";
@@ -458,7 +539,7 @@
                     }
 
                     function clearFieldError(field) {
-                        field.classList.remove("is-invalid");
+                        field.classList.remove("is-invalid", "is-valid");
                         const feedback = form.querySelector(
                             "[data-error-for='" + field.name + "']");
                         if (feedback != null) {
@@ -467,6 +548,15 @@
                     }
 
                     function showErrors(errors) {
+                        form.querySelectorAll("input:not([type='hidden']), select, textarea")
+                            .forEach(function (field) {
+                                field.classList.remove("is-invalid", "is-valid");
+                                field.classList.add(
+                                    Object.prototype.hasOwnProperty.call(errors, field.name)
+                                        ? "is-invalid"
+                                        : "is-valid");
+                            });
+
                         Object.entries(errors).forEach(function (entry) {
                             const fieldName = entry[0];
                             const message = entry[1];
@@ -488,7 +578,7 @@
                         });
 
                         if (lastFocusedField != null
-                                && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
+                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
                             lastFocusedField.focus();
                         }
                     }
@@ -503,6 +593,9 @@
                         if (fullName === "") {
                             errors.fullName = "Họ tên không được để trống.";
                         }
+                        if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
+                            errors.fullName = "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
+                        }
                         if (username === "") {
                             errors.username = "Username không được để trống.";
                         } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
@@ -510,13 +603,13 @@
                         }
                         if (email === "") {
                             errors.email = "Email không được để trống.";
-                        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
                             errors.email = "Email không đúng định dạng.";
                         }
                         if (phone === "") {
                             errors.phone = "Số điện thoại không được để trống.";
-                        } else if (!/^0\d{9}$/.test(phone)) {
-                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
+                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
+                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
                         }
                         if (form.elements.tierId.value === "") {
                             errors.tierId = "Hạng thành viên không hợp lệ.";
@@ -545,7 +638,11 @@
                                     params.append(key, value);
                                 }
                             });
-                            const response = await fetch(form.dataset.validationUrl + "?" + params.toString(), {
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
                                 headers: { "Accept": "application/json" }
                             });
                             if (!response.ok) {

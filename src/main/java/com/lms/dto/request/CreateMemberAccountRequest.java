@@ -8,13 +8,21 @@ import jakarta.validation.constraints.Pattern;
 public class CreateMemberAccountRequest {
 
     @NotBlank(message = "Họ tên không được để trống.")
+    @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
+            message = "Họ tên chỉ được chứa chữ cái và khoảng trắng.")
     private String fullName;
 
     @NotBlank(message = "Email không được để trống.")
+    @Email(message = "Email không đúng định dạng.")
+    @Pattern(
+            regexp = "^[A-Za-z0-9]+(?:[._%+\\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
+            message = "Email không đúng định dạng.")
     private String email;
 
     @NotBlank(message = "Số điện thoại không được để trống.")
-    @Pattern(regexp = "^(?:|0[0-9]{9}|\\+84[0-9]{9})$", message = "Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!")
+    @Pattern(
+            regexp = "^(?!0{10}$)0\\d{9}$",
+            message = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.")
     private String phone;
 
     @NotBlank(message = "Username không được để trống.")
@@ -36,7 +44,7 @@ public class CreateMemberAccountRequest {
     }
 
     public void setFullName(String fullName) {
-        this.fullName = fullName;
+        this.fullName = fullName == null ? null : fullName.trim();
     }
 
     public String getEmail() {

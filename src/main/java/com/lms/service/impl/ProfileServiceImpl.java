@@ -60,22 +60,32 @@ public class ProfileServiceImpl implements ProfileService {
         if (fullName == null || fullName.trim().isEmpty()) {
             throw new IllegalArgumentException("Họ và tên không được để trống!");
         }
-
-        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new IllegalArgumentException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
-        }
-
-        if (phone != null && !phone.isEmpty() && !phone.matches("^(0|\\+84)[0-9]{9}$")) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
-        }
-
-        if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
-            throw new IllegalArgumentException("Email đã được sử dụng bởi người dùng khác!");
-        }
-
         user.setFullName(fullName);
-        user.setEmail(email);
-        user.setPhone(phone);
+
+        if (email == null || !email.trim().isEmpty()) {
+            // Check regex
+            if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                throw new IllegalArgumentException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
+            }
+            if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
+                throw new IllegalArgumentException("Email đã được sử dụng bởi người dùng khác!");
+            }
+            user.setEmail(email);
+        } else {
+            throw new IllegalArgumentException("Email không được để trống!");
+        }
+
+        if (phone != null && !phone.trim().isEmpty()) {
+            if (!phone.matches("^(0|\\+84)[0-9]{9}$")) {
+                throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
+            }
+            if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
+                throw new IllegalArgumentException("Số điện thoại đã được sử dụng bởi người dùng khác!");
+            }
+            user.setPhone(phone);
+        } else if (phone != null && phone.trim().isEmpty()) {
+            user.setPhone("");
+        }
         
         if (avatarFile != null && !avatarFile.isEmpty()) {
             String avatarUrl = fileUploadService.storeFile(avatarFile);
@@ -88,14 +98,18 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 6 ký tự!");
+        }
+        
         Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
         if (memberAccount.isPresent()) {
             MemberAccount account = memberAccount.get();
             if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new IllegalArgumentException("Incorrect old password");
+                throw new IllegalArgumentException("Mật khẩu cũ không chính xác!");
             }
             if (oldPassword.equals(newPassword)) {
-                throw new IllegalArgumentException("New password cannot be identical to the old one");
+                throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu cũ!");
             }
             account.setPasswordHash(passwordEncoder.encode(newPassword));
             memberAccountRepository.save(account);
@@ -106,16 +120,16 @@ public class ProfileServiceImpl implements ProfileService {
         if (staffAccount.isPresent()) {
             StaffAccount account = staffAccount.get();
             if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new IllegalArgumentException("Incorrect old password");
+                throw new IllegalArgumentException("Mật khẩu cũ không chính xác!");
             }
             if (oldPassword.equals(newPassword)) {
-                throw new IllegalArgumentException("New password cannot be identical to the old one");
+                throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu cũ!");
             }
             account.setPasswordHash(passwordEncoder.encode(newPassword));
             staffAccountRepository.save(account);
             return;
         }
 
-        throw new RuntimeException("Account not found");
+        throw new RuntimeException("Không tìm thấy tài khoản!");
     }
 }

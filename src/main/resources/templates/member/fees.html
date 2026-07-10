@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+    <!-- UC-8.2 UI maintained by Pham Kien Quoc. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Phí mượn sách</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Phí mượn sách</h2>
+            <div class="text-muted small">Phí sẽ được trừ từ ví khi thủ thư duyệt phiếu mượn.</div>
+        </div>
+        <div class="text-muted">
+            Số dư ví:
+            <span class="fw-bold"
+                  th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+            VNĐ
+        </div>
+    </div>
+
+    <div th:if="${message != null}" class="alert alert-success" role="alert" th:text="${message}"></div>
+    <div th:if="${error != null}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="fw-bold mb-0">Phiếu đang chờ duyệt</h5>
+                <span class="badge text-bg-secondary" th:text="${pendingFees != null ? #lists.size(pendingFees) : 0}">0</span>
+            </div>
+
+            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="text-center text-muted py-4">
+                Không có phiếu mượn đang chờ duyệt.
+            </div>
+
+            <div class="table-responsive" th:if="${pendingFees != null and !#lists.isEmpty(pendingFees)}">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Mã phiếu mượn</th>
+                        <th>Số quyển</th>
+                        <th>Số ngày tính phí</th>
+                        <th>Phí dự kiến</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fee : ${pendingFees}">
+                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${fee.quantity}">1</td>
+                        <td th:text="${fee.days}">10</td>
+                        <td class="fw-bold">
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </td>
+                        <td>
+                            <span class="badge text-bg-warning">Chờ thủ thư duyệt</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="fw-bold mb-0">Phí cần thanh toán</h5>
+                <span class="badge text-bg-primary" th:text="${payableFees != null ? #lists.size(payableFees) : 0}">0</span>
+            </div>
+
+            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="text-center text-muted py-4">
+                Không có phí mượn cần thanh toán.
+            </div>
+
+            <div class="table-responsive" th:if="${payableFees != null and !#lists.isEmpty(payableFees)}">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Mã phiếu mượn</th>
+                        <th>Số quyển</th>
+                        <th>Số ngày tính phí</th>
+                        <th>Tổng phí</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fee : ${payableFees}">
+                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${fee.quantity}">1</td>
+                        <td th:text="${fee.days}">10</td>
+                        <td class="fw-bold">
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </td>
+                        <td>
+                            <span class="badge text-bg-danger">Chưa thanh toán</span>
+                        </td>
+                        <td class="text-end">
+                            <form th:if="${fee.payable}" method="post"
+                                  th:action="@{/member/financial/fees/pay/{borrowId}(borrowId=${fee.borrowId})}"
+                                  class="d-inline">
+                                <button type="submit" class="btn btn-primary btn-sm rounded-pill">
+                                    Thanh toán
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="fw-bold mb-0">Phí đã thanh toán</h5>
+                <span class="badge text-bg-success" th:text="${paidFees != null ? #lists.size(paidFees) : 0}">0</span>
+            </div>
+
+            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="text-center text-muted py-4">
+                Chưa có phí mượn nào đã thanh toán.
+            </div>
+
+            <div class="table-responsive" th:if="${paidFees != null and !#lists.isEmpty(paidFees)}">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Mã phiếu mượn</th>
+                        <th>Mã giao dịch</th>
+                        <th>Số quyển</th>
+                        <th>Tổng phí</th>
+                        <th>Ngày thanh toán</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fee : ${paidFees}">
+                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${fee.transactionId != null ? fee.transactionId : '-'}">10</td>
+                        <td th:text="${fee.quantity}">1</td>
+                        <td class="fw-bold">
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </td>
+                        <td th:text="${fee.paymentDate != null ? #temporals.format(fee.paymentDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                        <td>
+                            <span class="badge text-bg-success">Đã thanh toán</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

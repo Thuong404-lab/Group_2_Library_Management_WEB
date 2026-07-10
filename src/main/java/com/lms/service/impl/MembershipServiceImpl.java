@@ -81,4 +81,38 @@ public class MembershipServiceImpl implements MembershipService {
                 .limit(5)
                 .toList();
     }
+
+    // --- UC-22.3: Membership Tier Management (Admin) ---
+
+    @Override
+    public MembershipTier getTierById(Integer id) throws Exception {
+        return membershipTierRepository.findById(id)
+                .orElseThrow(() -> new Exception("Không tìm thấy Hạng thành viên!"));
+    }
+
+    @Override
+    public void saveTier(MembershipTier tier) throws Exception {
+        if (tier.getTierName() == null || tier.getTierName().trim().isEmpty()) {
+            throw new Exception("Tên hạng thành viên không được để trống!");
+        }
+        if (tier.getDiscountPercent() != null && (tier.getDiscountPercent().doubleValue() < 0 || tier.getDiscountPercent().doubleValue() > 100)) {
+            throw new Exception("Phần trăm giảm giá phải từ 0 đến 100!");
+        }
+        membershipTierRepository.save(tier);
+    }
+
+    @Override
+    public void deleteTier(Integer id) throws Exception {
+        MembershipTier tier = getTierById(id);
+        
+        // Kiểm tra xem có member nào đang dùng tier này không
+        boolean isInUse = memberRepository.findAll().stream()
+                .anyMatch(m -> m.getTier() != null && m.getTier().getTierId().equals(id));
+                
+        if (isInUse) {
+            throw new Exception("Không thể xóa hạng thành viên đang được sử dụng bởi người dùng!");
+        }
+        
+        membershipTierRepository.delete(tier);
+    }
 }

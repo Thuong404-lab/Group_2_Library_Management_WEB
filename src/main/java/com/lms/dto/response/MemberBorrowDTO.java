@@ -14,6 +14,7 @@ public class MemberBorrowDTO {
     private String status;
     private long daysLeft;
     private int progressPercentage;   // Dành cho thanh tiến trình ở Tab Đang mượn
+    private int renewCount;
 
     public MemberBorrowDTO() {}
 
@@ -39,4 +40,6 @@ public class MemberBorrowDTO {
     public void setDaysLeft(long daysLeft) { this.daysLeft = daysLeft; }
     public int getProgressPercentage() { return progressPercentage; }
     public void setProgressPercentage(int progressPercentage) { this.progressPercentage = progressPercentage; }
+    public int getRenewCount() { return renewCount; }
+    public void setRenewCount(int renewCount) { this.renewCount = renewCount; }
 }

@@ -17,12 +17,12 @@ public interface AuthService {
     /**
      * Ghi log khi đăng nhập
      */
-    void logLoginAction(Integer userId, String ipAddress, String userAgent, String sessionId);
+    void logLoginAction(Integer userId, String ipAddress, String userAgent);
 
     /**
      * Ghi log khi đăng xuất
      */
-    void logLogoutAction(Integer userId, String ipAddress, String userAgent, String sessionId);
+    void logLogoutAction(Integer userId, String ipAddress, String userAgent);
 
     /**
      * Tạo user, account, member, wallet cơ bản
