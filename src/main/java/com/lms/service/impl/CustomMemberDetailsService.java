@@ -3,6 +3,7 @@ package com.lms.service.impl;
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.MemberAccount;
 import com.lms.repository.MemberAccountRepository;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 
+// check db xem tai khoan ton tai khong
 @Service
 public class CustomMemberDetailsService implements UserDetailsService {
 
@@ -28,7 +30,7 @@ public class CustomMemberDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản thành viên: " + username));
 
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new org.springframework.security.authentication.DisabledException("Tài khoản đã bị khóa hoặc chưa kích hoạt.");
+            throw new DisabledException("Tài khoản đã bị khóa hoặc chưa kích hoạt.");
         }
 
         List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_MEMBER"));

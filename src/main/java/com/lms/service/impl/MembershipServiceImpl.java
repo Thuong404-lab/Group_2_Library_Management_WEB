@@ -2,13 +2,14 @@ package com.lms.service.impl;
 
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
-import com.lms.repository.MemberAccountRepository;
 import com.lms.service.MembershipService;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,24 +86,24 @@ public class MembershipServiceImpl implements MembershipService {
     // --- UC-22.3: Membership Tier Management (Admin) ---
 
     @Override
-    public MembershipTier getTierById(Integer id) throws Exception {
+    public MembershipTier getTierById(Integer id) {
         return membershipTierRepository.findById(id)
-                .orElseThrow(() -> new Exception("Không tìm thấy Hạng thành viên!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Hạng thành viên!"));
     }
 
     @Override
-    public void saveTier(MembershipTier tier) throws Exception {
+    public void saveTier(MembershipTier tier) {
         if (tier.getTierName() == null || tier.getTierName().trim().isEmpty()) {
-            throw new Exception("Tên hạng thành viên không được để trống!");
+            throw new ValidationException("Tên hạng thành viên không được để trống!");
         }
         if (tier.getDiscountPercent() != null && (tier.getDiscountPercent().doubleValue() < 0 || tier.getDiscountPercent().doubleValue() > 100)) {
-            throw new Exception("Phần trăm giảm giá phải từ 0 đến 100!");
+            throw new ValidationException("Phần trăm giảm giá phải từ 0 đến 100!");
         }
         membershipTierRepository.save(tier);
     }
 
     @Override
-    public void deleteTier(Integer id) throws Exception {
+    public void deleteTier(Integer id) {
         MembershipTier tier = getTierById(id);
         
         // Kiểm tra xem có member nào đang dùng tier này không
@@ -110,7 +111,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .anyMatch(m -> m.getTier() != null && m.getTier().getTierId().equals(id));
                 
         if (isInUse) {
-            throw new Exception("Không thể xóa hạng thành viên đang được sử dụng bởi người dùng!");
+            throw new ValidationException("Không thể xóa hạng thành viên đang được sử dụng bởi người dùng!");
         }
         
         membershipTierRepository.delete(tier);

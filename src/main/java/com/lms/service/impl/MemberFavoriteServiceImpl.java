@@ -40,7 +40,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         this.financialService = financialService;
         this.auditLogService = auditLogService;
     }
-
+    //lấy ra thông tin cá nhân của một Độc giả (Member) dựa trên tên đăng nhập (username) của người đó.
     private Member getMemberByUsername(String username) {
         MemberAccount account = memberAccountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
@@ -103,7 +103,8 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     @Override
     @Transactional(readOnly = true)
     public Set<Integer> getMyFavoriteBookIds(String username) {
-        return getMyFavorites(username).stream()
+        Member member = getMemberByUsername(username);
+        return favoritesRepository.findByMember_MemberId(member.getMemberId()).stream()
                 .map(favorite -> favorite.getBook().getBookId())
                 .collect(Collectors.toSet());
     }
@@ -140,8 +141,9 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     @Override
     @Transactional(readOnly = true)
     public List<Book> getFavoriteBooksByMember(String username) {
-        return getMyFavorites(username).stream()
+        Member member = getMemberByUsername(username);
+        return favoritesRepository.findByMember_MemberId(member.getMemberId()).stream()
                 .map(Favorites::getBook)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.lms.config.CustomUserDetails;
 
 /**
  * LibrarianProfileController - Chỉ dành riêng cho vai trò LIBRARIAN
@@ -46,6 +49,19 @@ public class LibrarianProfileController {
         try {
             String currentUsername = principal.getName();
             profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+                CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+                User sessionUser = customUserDetails.getUser();
+                User updatedUser = profileService.getProfile(currentUsername);
+                
+                sessionUser.setFullName(updatedUser.getFullName());
+                sessionUser.setAvatar(updatedUser.getAvatar());
+                sessionUser.setEmail(updatedUser.getEmail());
+                sessionUser.setPhone(updatedUser.getPhone());
+            }
+
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());

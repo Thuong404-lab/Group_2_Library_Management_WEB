@@ -83,10 +83,7 @@ public class LoanController {
         return "librarian/borrow-schedule";
     }
 
-    @GetMapping("/borrow-desk")
-    public String showBorrowDesk(Model model) {
-        return "librarian/borrow-desk";
-    }
+
 
     @PostMapping("/borrow-desk/process")
     public String processBorrowRequest(@RequestParam String memberIdentifier,
@@ -97,10 +94,10 @@ public class LoanController {
             List<String> barcodeList = Arrays.asList(barcodes.split(","));
             loanService.processBorrowDesk(memberIdentifier, barcodeList, principal.getName());
             redirectAttributes.addFlashAttribute("successMessage", "Đã tạo phiếu mượn thành công!");
-            return "redirect:/librarian/loan/borrow-desk";
+            return "redirect:/librarian/borrow/create";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/librarian/loan/borrow-desk";
+            return "redirect:/librarian/borrow/create";
         }
     }
 

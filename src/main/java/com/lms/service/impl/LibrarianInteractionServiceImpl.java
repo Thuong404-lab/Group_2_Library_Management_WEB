@@ -23,20 +23,17 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     private final FeedbackRepository feedbackRepository;
     private final MemberRepository memberRepository;
-    private final BookRepository bookRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
-                                           BookRepository bookRepository,
                                            NotificationRepository notificationRepository,
                                            MemberNotificationRepository memberNotificationRepository,
                                            BookAcquisitionRequestRepository bookAcquisitionRequestRepository) {
         this.feedbackRepository = feedbackRepository;
         this.memberRepository = memberRepository;
-        this.bookRepository = bookRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;

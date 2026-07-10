@@ -2,6 +2,7 @@ package com.lms.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.lms.exception.FileStorageException;
 import com.lms.service.FileUploadService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,13 +27,14 @@ public class FileUploadServiceImpl implements FileUploadService {
 
         try {
             // Upload ảnh lên Cloudinary
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
 
             // Trả về đường dẫn bảo mật (HTTPS) của ảnh trên Cloudinary
             return uploadResult.get("secure_url").toString();
 
         } catch (IOException ex) {
-            throw new RuntimeException("Không thể tải ảnh lên Cloudinary. Vui lòng thử lại!", ex);
+            throw new FileStorageException("Không thể tải ảnh lên Cloudinary. Vui lòng thử lại!", ex);
         }
     }
 }
