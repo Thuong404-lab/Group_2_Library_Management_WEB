@@ -27,14 +27,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
-    private static final String STATUS_AVAILABLE = "Available";
-    private static final String STATUS_BORROWED = "Borrowed";
-    private static final String ROLE_LIBRARIAN = "Librarian";
+    private static final int DASHBOARD_PAGE_SIZE = 5;
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -79,26 +78,33 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData() {
+        return getDashboardData(0, 0);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int reviewPage, int requestPage) {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        data.put("pendingReservations", reservationRepository.countByStatusIgnoreCase("Pending"));
+        data.put("pendingReservations",
+                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
-        data.put("availableItems", bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
+        data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
-        data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase(ROLE_LIBRARIAN));
+        data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
         data.put("currentDate", LocalDate.now());
         data.put("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
         data.put("dueSoonDetails",
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
-                        STATUS_BORROWED, now, now.plusDays(7)));
+                        "Borrowed", now, now.plusDays(7)));
         data.put("reviews", interactionService.getReviewsForModeration(
-                null, PageRequest.of(0, 20, Sort.by("createdDate").descending())));
+                null, PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
-                PageRequest.of(0, 20, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
         data.put("shelves", storageService.getAllStorageLocations());
         data.put("books", bookRepository.findAll());
         data.put("categories", categoryRepository.findAll());
@@ -116,9 +122,9 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("staffId").ascending());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
         Page<Staff> staffPage = normalizedKeyword.isEmpty()
-                ? staffRepository.findByStaffTypeIgnoreCase(ROLE_LIBRARIAN, pageable)
+                ? staffRepository.findByStaffTypeIgnoreCase("Librarian", pageable)
                 : staffRepository.searchByStaffTypeAndKeyword(
-                        ROLE_LIBRARIAN, normalizedKeyword, pageable);
+                        "Librarian", normalizedKeyword, pageable);
 
         Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
         for (Staff staff : staffPage.getContent()) {
@@ -132,8 +138,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     private Map<String, Long> inventoryStatusCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
-        counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
+        counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
+        counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
         counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
         counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
         counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));

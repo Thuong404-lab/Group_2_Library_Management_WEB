@@ -24,7 +24,7 @@
             </thead>
 
             <tbody>
-            <tr th:each="review : ${reviews}">
+            <tr th:each="review : ${reviews.content}">
                 <td th:text="${review.bookTitle}">Tên sách</td>
                 <td th:text="${review.memberName}">Tên độc giả</td>
                 <td>
@@ -41,7 +41,11 @@
                         </small>
                     </div>
 
-                    <div th:if="${review.librarianResponse == null}">
+                    <div th:if="${review.status == 'DELETED_BY_MEMBER' && review.librarianResponse == null}">
+                        <span class="text-muted">Member đã xoá</span>
+                    </div>
+
+                    <div th:if="${review.status != 'DELETED_BY_MEMBER' && review.librarianResponse == null}">
                         <span class="text-muted">Chưa phản hồi</span>
                     </div>
                 </td>
@@ -49,7 +53,8 @@
                 <td>
                     <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                           method="post"
-                          class="mb-2">
+                          class="mb-2"
+                          th:if="${review.status != 'DELETED_BY_MEMBER'}">
                 <textarea name="response"
                           class="form-control form-control-sm mb-1"
                           rows="2"
@@ -58,6 +63,10 @@
                             Phản hồi
                         </button>
                     </form>
+                    <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                         class="text-muted small mb-2">
+                        Member đã xoá đánh giá này, không thể phản hồi.
+                    </div>
 
                     <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                           method="post"
@@ -74,6 +83,32 @@
             </tr>
             </tbody>
         </table>
+
+        <nav th:if="${reviews != null && reviews.totalPages > 1}">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/librarian/interaction/reviews(page=${reviews.number - 1})}">
+                        Trước
+                    </a>
+                </li>
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Trang <span th:text="${reviews.number + 1}">1</span>
+                        /
+                        <span th:text="${reviews.totalPages}">1</span>
+                    </span>
+                </li>
+
+                <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/librarian/interaction/reviews(page=${reviews.number + 1})}">
+                        Sau
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </main>
 </body>

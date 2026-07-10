@@ -45,6 +45,14 @@ public class StaffAccount {
         return id;
     }
 
+    /**
+     * Backward-compatible property used by existing admin views.
+     */
+    @Transient
+    public Integer getAccountId() {
+        return id;
+    }
+
     public void setId(Integer id) {
         this.id = id;
     }
@@ -55,6 +63,14 @@ public class StaffAccount {
 
     public void setStaff(Staff staff) {
         this.staff = staff;
+    }
+
+    /**
+     * Exposes the user associated through the staff profile to legacy views.
+     */
+    @Transient
+    public User getUser() {
+        return staff != null ? staff.getUser() : null;
     }
 
     public String getUsername() {

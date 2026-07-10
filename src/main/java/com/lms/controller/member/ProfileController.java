@@ -3,6 +3,7 @@ package com.lms.controller.member;
 import com.lms.entity.User;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.ProfileService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,8 @@ import java.security.Principal;
 @Controller
 @RequestMapping("/member")
 public class ProfileController {
+
+    private static final int PAGE_SIZE = 5;
 
     private final ProfileService profileService;
     private final MemberFavoriteService memberFavoriteService;
@@ -102,12 +105,15 @@ public class ProfileController {
 
     // UC-4.4: View Favorites List
     @GetMapping("/favorites")
-    public String viewFavorites(Principal principal, Model model) {
+    public String viewFavorites(Principal principal,
+                                Model model,
+                                @RequestParam(defaultValue = "0") int page) {
         if (principal == null) {
             return "redirect:/login";
         }
 
-        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(principal.getName()));
+        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/favorites";
     }

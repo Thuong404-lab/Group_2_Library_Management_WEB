@@ -8,5 +8,7 @@ public interface LibrarianDashboardService {
 
     Map<String, Object> getDashboardData();
 
+    Map<String, Object> getDashboardData(int reviewPage, int requestPage);
+
     LibrarianListViewData getLibrarianList(int page, String keyword);
 }

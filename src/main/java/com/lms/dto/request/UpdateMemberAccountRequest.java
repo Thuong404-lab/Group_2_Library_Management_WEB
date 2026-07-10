@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Pattern;
 public class UpdateMemberAccountRequest {
 
     @NotBlank(message = "Họ tên không được để trống.")
+    @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
+            message = "Họ tên chỉ được chứa chữ cái và khoảng trắng.")
     private String fullName;
 
     @NotBlank(message = "Username không được để trống.")
@@ -21,8 +23,8 @@ public class UpdateMemberAccountRequest {
     private String email;
 
     @NotBlank(message = "Số điện thoại không được để trống.")
-    @Pattern(regexp = "0\\d{9}",
-            message = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.")
+    @Pattern(regexp = "^(?!0{10}$)0\\d{9}$",
+            message = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.")
     private String phone;
 
     @NotNull(message = "Hạng thành viên không hợp lệ.")
@@ -32,7 +34,7 @@ public class UpdateMemberAccountRequest {
     private String status;
 
     public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName == null ? null : fullName.trim(); }
     public String getUsername() { return username; }
     public void setUsername(String username) {
         this.username = username == null ? null : username.trim();

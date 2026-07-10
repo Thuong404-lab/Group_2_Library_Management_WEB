@@ -83,7 +83,7 @@ public class MemberController {
 
     @GetMapping("/wallet")
     public String wallet() {
-        return "member/wallet";
+        return "redirect:/member/financial/transactions";
     }
 
     @GetMapping("/notifications")
