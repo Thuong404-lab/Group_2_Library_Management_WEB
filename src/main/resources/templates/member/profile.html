@@ -107,18 +107,31 @@
             color: #74481f !important;
         }
 
-        /* Nút đổi ảnh đại diện tinh tế, bớt chói chang */
+        /* KHUNG CHỨA AVATAR CỐ ĐỊNH KÍCH THƯỚC CHUẨN */
+        .avatar-container-classic {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto;
+        }
+
+        /* Nút đổi ảnh đại diện tinh tế - SỬA LẠI ĐỊNH VỊ GÓC DƯỚI BÊN PHẢI ĐƯỜNG CONG */
         .btn-camera-classic {
-            width: 34px;
-            height: 34px;
-            background-color: #4a3b32;
-            color: #ffffff;
-            border: 2px solid #ffffff;
+            position: absolute !important;
+            bottom: 4px !important;
+            right: 14px !important;
+            width: 32px;
+            height: 32px;
+            background-color: #4a3b32 !important;
+            color: #ffffff !important;
+            border: 2px solid #ffffff !important;
             cursor: pointer;
-            transition: background-color 0.2s;
+            z-index: 5;
+            transition: all 0.2s ease;
         }
         .btn-camera-classic:hover {
-            background-color: #8b5a2b;
+            background-color: #8b5a2b !important;
+            transform: scale(1.05);
         }
 
         /* --- MODAL DIỆN MẠO MỚI --- */
@@ -138,7 +151,7 @@
 
 <body>
 <div layout:fragment="content" class="container mt-4 mb-5">
-    <h2 class="page-title mb-4"><i class="bi bi-person-lines-fill me-2" style="color: #8b5a2b;"></i>Hồ Sơ Cá Nhân</h2>
+    <h2 class="page-title mb-4">Hồ Sơ Cá Nhân</h2>
 
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm" style="background-color: #f0fff4; color: #2f855a;" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
@@ -161,14 +174,14 @@
         <div class="col-lg-4">
             <div class="card card-profile-classic mb-4">
                 <div class="card-body text-center p-4" style="background-color: #fdfbf7;">
-                    <div class="position-relative d-inline-block mb-3">
-                        <div th:if="${member?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center mx-auto border border-3 border-white shadow"
-                             style="width: 120px; height: 120px; background-color: #8b5a2b; color: white; font-size: 3rem; font-family: 'Playfair Display', serif;"
+                    <div class="avatar-container-classic mb-3">
+                        <div th:if="${member?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100"
+                             style="background-color: #8b5a2b; font-size: 3rem; font-family: 'Playfair Display', serif;"
                              th:text="${member != null ? #strings.substring(member.fullName, 0, 1).toUpperCase() : 'M'}">M</div>
-                        <img th:if="${member?.avatar != null}" id="avatarPreview" th:src="${member.avatar}" class="rounded-circle mx-auto border border-3 border-white shadow" style="width: 120px; height: 120px; object-fit: cover;">
-                        <img th:if="${member?.avatar == null}" id="avatarPreview" src="" class="rounded-circle mx-auto border border-3 border-white shadow d-none" style="width: 120px; height: 120px; object-fit: cover;">
+                        <img th:if="${member?.avatar != null}" id="avatarPreview" th:src="${member.avatar}" class="rounded-circle border border-3 border-white shadow w-100 h-100" style="object-fit: cover;">
+                        <img th:if="${member?.avatar == null}" id="avatarPreview" src="" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100" style="object-fit: cover;">
 
-                        <label for="avatarUpload" class="btn btn-camera-classic position-absolute bottom-0 end-0 rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" title="Đổi ảnh đại diện">
+                        <label for="avatarUpload" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" title="Đổi ảnh đại diện">
                             <i class="bi bi-camera-fill" style="font-size: 0.85rem;"></i>
                         </label>
                     </div>
@@ -191,8 +204,8 @@
 
             <div class="card card-profile-classic" th:if="${#authentication.principal.attributes == null}">
                 <div class="card-body p-4" style="background-color: #fdfbf7;">
-                    <h6 class="fw-bold mb-3 font-playfair" style="color: #4a3b32;"><i class="bi bi-shield-lock text-muted me-2"></i>Bảo mật tài khoản</h6>
-                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal"><i class="bi bi-key me-1"></i>Thay đổi mật khẩu</button>
+                    <h6 class="fw-bold mb-3 font-playfair" style="color: #4a3b32;">Bảo mật tài khoản</h6>
+                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal">Thay đổi mật khẩu</button>
                 </div>
             </div>
 
@@ -208,7 +221,7 @@
         <div class="col-lg-8">
             <div class="card card-profile-classic h-100">
                 <div class="card-header-classic px-4">
-                    <h5 class="fw-bold mb-0 font-playfair" style="color: #4a3b32;"><i class="bi bi-pencil-square me-2" style="color: #8b5a2b;"></i>Thông tin chi tiết tài khoản</h5>
+                    <h5 class="fw-bold mb-0 font-playfair" style="color: #4a3b32;">Thông tin chi tiết tài khoản</h5>
                 </div>
                 <div class="card-body-classic">
                     <form th:action="@{/member/profile/update}" method="post" enctype="multipart/form-data">
@@ -232,7 +245,7 @@
                             </div>
 
                             <div class="col-12 mt-3 text-end">
-                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>Lưu thay đổi</button>
+                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm">Lưu thay đổi</button>
                             </div>
                         </div>
                     </form>

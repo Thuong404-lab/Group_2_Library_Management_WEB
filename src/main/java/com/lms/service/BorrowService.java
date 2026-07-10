@@ -11,10 +11,10 @@ import java.util.List;
 
 public interface BorrowService {
     // Luồng mượn trực tiếp tại quầy
-    void processBorrowing(BorrowRequest request, String librarianUsername);
+    Borrow processBorrowing(BorrowRequest request, String librarianUsername);
 
     // Luồng đăng ký mượn trực tuyến (Chờ duyệt)
-    void memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
+    Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, String staffUsername);
 
     // Luồng YÊU CẦU TRẢ SÁCH (Mới nâng cấp)
@@ -23,7 +23,7 @@ public interface BorrowService {
     void processReturnBook(String barcode); // Trả trực tiếp qua quét mã vạch
 
     // Luồng ĐẶT TRƯỚC SÁCH - RESERVATION (Mới nâng cấp)
-    void memberSubmitReservationRequest(String username, Integer bookId);
+    Reservation memberSubmitReservationRequest(String username, Integer bookId);
     void approveReservationRequest(Integer reservationId, String staffUsername);
     void memberCancelReservation(String username, Integer reservationId);
 
