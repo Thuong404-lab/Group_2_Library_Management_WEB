@@ -201,12 +201,12 @@ public class BorrowController {
     public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            loanService.processRenewal(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn thành công thêm 7 ngày!");
+            borrowService.memberSubmitRenewRequest(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu gia hạn tới thủ thư. Vui lòng chờ phê duyệt!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gửi yêu cầu gia hạn: " + e.getMessage());
         }
-        return "redirect:/member/borrow";
+        return "redirect:/member/borrow/management?tab=borrowing";
     }
 
     @GetMapping("/history")
