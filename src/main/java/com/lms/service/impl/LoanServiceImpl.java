@@ -232,6 +232,7 @@ public class LoanServiceImpl implements LoanService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void processRenewal(Integer borrowDetailId) {
+        // ... kept for compatibility if needed, but not used by member anymore ...
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
 
@@ -264,6 +265,114 @@ public class LoanServiceImpl implements LoanService {
         detail.setDueDate(detail.getDueDate().plusDays(renewDays));
         detail.setRenewCount(detail.getRenewCount() + 1);
         borrowDetailRepository.save(detail);
+
+        try {
+            Member member = detail.getBorrow().getMember();
+            if (member != null && member.getMemberId() != null) {
+                Notification notif = new Notification();
+                notif.setTitle("Gia hạn sách thành công");
+                notif.setContent("Cuốn sách '" + detail.getBook().getTitle() + "' đã được gia hạn thêm " + renewDays + " ngày. Hạn trả mới của bạn là: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
+                notif.setCreatedDate(LocalDateTime.now());
+                notif.setStatus("Active");
+                Notification saved = notificationRepository.save(notif);
+
+                MemberNotification mn = new MemberNotification();
+                mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
+                mn.setMember(member);
+                mn.setNotification(saved);
+                mn.setIsRead(false);
+                memberNotificationRepository.save(mn);
+            }
+        } catch (Exception e) {
+            // Log if needed
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void approveRenewal(Integer borrowDetailId, String staffUsername) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
+
+        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+            throw new IllegalArgumentException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
+        }
+
+        int renewDays = 7;
+        Optional<SystemSetting> renewDaysSetting = systemSettingRepository.findBySettingKey("RENEW_DAYS");
+        if (renewDaysSetting.isPresent()) {
+            try {
+                renewDays = Integer.parseInt(renewDaysSetting.get().getSettingValue());
+            } catch (Exception ignored) { }
+        }
+
+        detail.setDueDate(detail.getDueDate().plusDays(renewDays));
+        detail.setRenewCount(detail.getRenewCount() + 1);
+        detail.setStatus(STATUS_BORROWED); // Trở về trạng thái đang mượn
+        borrowDetailRepository.save(detail);
+
+        try {
+            Member member = detail.getBorrow().getMember();
+            if (member != null && member.getMemberId() != null) {
+                Notification notif = new Notification();
+                notif.setTitle("Phê duyệt gia hạn thành công");
+                notif.setContent("Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã được thủ thư phê duyệt. Hạn trả mới: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                notif.setCreatedDate(LocalDateTime.now());
+                notif.setStatus("Active");
+                Notification saved = notificationRepository.save(notif);
+
+                MemberNotification mn = new MemberNotification();
+                mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
+                mn.setMember(member);
+                mn.setIsRead(false);
+                memberNotificationRepository.save(mn);
+            }
+        } catch (Exception e) {}
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void rejectRenewal(Integer borrowDetailId, String staffUsername) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
+
+        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+            throw new IllegalArgumentException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
+        }
+
+        // Trả về trạng thái cũ: Kiểm tra nếu đã quá hạn thực tế chưa
+        if (detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now())) {
+            detail.setStatus("Overdue");
+        } else {
+            detail.setStatus(STATUS_BORROWED);
+        }
+        borrowDetailRepository.save(detail);
+
+        try {
+            Member member = detail.getBorrow().getMember();
+            if (member != null && member.getMemberId() != null) {
+                Notification notif = new Notification();
+                notif.setTitle("Từ chối gia hạn sách");
+                notif.setContent("Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã bị từ chối. Vui lòng trả sách đúng hạn: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                notif.setCreatedDate(LocalDateTime.now());
+                notif.setStatus("Active");
+                Notification saved = notificationRepository.save(notif);
+
+                MemberNotification mn = new MemberNotification();
+                mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
+                mn.setMember(member);
+                mn.setIsRead(false);
+                memberNotificationRepository.save(mn);
+            }
+        } catch (Exception e) {}
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getAllPendingRenewals() {
+        return borrowDetailRepository.findAll().stream()
+                .filter(d -> "Renew_Pending".equalsIgnoreCase(d.getStatus()))
+                .toList();
     }
 
     @Override
