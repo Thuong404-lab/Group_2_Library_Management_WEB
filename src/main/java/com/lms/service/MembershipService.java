@@ -17,7 +17,7 @@ public interface MembershipService {
     List<Member> getTopMembersBySpending(); // Lấy danh sách thành viên chi tiêu nhiều nhất làm bảng xếp hạng
 
     // UC-22.3: Membership Tier Management (Admin)
-    MembershipTier getTierById(Integer id) throws Exception;
-    void saveTier(MembershipTier tier) throws Exception;
-    void deleteTier(Integer id) throws Exception;
+    MembershipTier getTierById(Integer id);
+    void saveTier(MembershipTier tier);
+    void deleteTier(Integer id);
 }

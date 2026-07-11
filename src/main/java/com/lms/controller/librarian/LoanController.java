@@ -45,6 +45,35 @@ public class LoanController {
         return "librarian/loan-detail";
     }
 
+    // Yêu cầu gia hạn
+    @GetMapping("/renewals")
+    public String showRenewals(Model model) {
+        model.addAttribute("renewalDetails", loanService.getAllPendingRenewals());
+        return "librarian/renewals";
+    }
+
+    @PostMapping("/renewals/approve/{id}")
+    public String approveRenewal(@PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.approveRenewal(id, principal.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt gia hạn thành công.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi duyệt gia hạn: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/renewals";
+    }
+
+    @PostMapping("/renewals/reject/{id}")
+    public String rejectRenewal(@PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.rejectRenewal(id, principal.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối gia hạn sách.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi từ chối gia hạn: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/renewals";
+    }
+
     // UC-13.2: Confirm Book Returns - Hiển thị quầy trả sách
     @GetMapping("/returns")
     public String showReturnDesk(Model model) {
@@ -83,10 +112,7 @@ public class LoanController {
         return "librarian/borrow-schedule";
     }
 
-    @GetMapping("/borrow-desk")
-    public String showBorrowDesk(Model model) {
-        return "librarian/borrow-desk";
-    }
+
 
     @PostMapping("/borrow-desk/process")
     public String processBorrowRequest(@RequestParam String memberIdentifier,
@@ -97,10 +123,10 @@ public class LoanController {
             List<String> barcodeList = Arrays.asList(barcodes.split(","));
             loanService.processBorrowDesk(memberIdentifier, barcodeList, principal.getName());
             redirectAttributes.addFlashAttribute("successMessage", "Đã tạo phiếu mượn thành công!");
-            return "redirect:/librarian/loan/borrow-desk";
+            return "redirect:/librarian/borrow/create";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/librarian/loan/borrow-desk";
+            return "redirect:/librarian/borrow/create";
         }
     }
 

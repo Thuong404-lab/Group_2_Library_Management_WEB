@@ -18,6 +18,17 @@
             background-color: #74481f !important;
             border-color: #74481f !important;
         }
+        .btn-outline-classic {
+            color: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+            background-color: transparent !important;
+            transition: all 0.2s ease;
+        }
+        .btn-outline-classic:hover, .btn-outline-classic.active {
+            color: #ffffff !important;
+            background-color: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+        }
         .rating-picker {
             display: inline-flex;
             align-items: center;
@@ -139,26 +150,25 @@
                 <hr style="border-color: rgba(139,90,43,0.2);">
 
                 <!-- Action Buttons -->
-                <!-- Mới chỉ sửa cho Yêu thích -->
-                <div class="d-flex gap-2 mt-3 flex-wrap">
+                <div class="d-flex mt-3 flex-wrap">
                     <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
                           method="post"
-                          class="flex-grow-1 favorite-form"
+                          class="flex-grow-1 favorite-form mr-2 mb-2"
                           th:data-book-id="${book.bookId}">
                         <button type="submit"
-                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-danger w-100 py-2 js-favorite-button active' : 'btn btn-outline-danger w-100 py-2 js-favorite-button'}">
+                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
                             <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
                             <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
                         </button>
                     </form>
 
-                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1">
-                        <button type="submit" class="btn btn-outline-primary w-100 py-2">
+                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2">
                             <i class="bi bi-bookmark me-1"></i> Đặt trước
                         </button>
                     </form>
 
-                    <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1">
+                    <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
                         <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold">
                             <i class="bi bi-book me-1"></i> Yêu cầu mượn

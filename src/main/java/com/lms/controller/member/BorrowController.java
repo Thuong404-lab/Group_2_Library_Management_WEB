@@ -89,7 +89,7 @@ public class BorrowController {
         if (principal == null) return "redirect:/login";
 
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui long chon sach truoc khi gui yeu cau muon.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn sách trước khi gửi yêu cầu mượn.");
             return "redirect:/";
         }
 
@@ -100,7 +100,7 @@ public class BorrowController {
             Book book = bookService.findBookById(bookId);
             model.addAttribute("selectedBook", book);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Sach khong hop le. Vui long thu lai.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");
             return "redirect:/";
         }
         return "member/borrow-create";
@@ -113,15 +113,15 @@ public class BorrowController {
                                       RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Ban chua chon sach de gui yeu cau muon.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa chọn sách để gửi yêu cầu mượn.");
             return "redirect:/";
         }
         try {
             borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            redirectAttributes.addFlashAttribute("successMessage", "Dang ky thanh cong! Yeu cau cua ban dang cho phe duyet.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của ban đang chờ phê duyệt.");
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Khong the tao yeu cau muon: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
             return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
         }
     }
@@ -148,28 +148,27 @@ public class BorrowController {
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
             return "member/reserve-confirm";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Khong the hien thi phieu coc: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hiển thị phiếu cọc: " + e.getMessage());
             return "redirect:/member/borrow/management?tab=reserved";
         }
     }
 
-    // FIX VẤN ĐỀ 4: Chuyển hướng xử lý qua borrowService.memberSubmitReservationRequest để validate chặt chẽ
+    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
                               Principal principal,
                               RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            memberFavoriteService.reserveBook(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute("successMessage", "Dat truoc sach va thanh toan tien coc thanh cong.");
-            return "redirect:/member/borrow/management?tab=reserved";
+            // Chuyển đổi từ memberFavoriteService sang borrowService để chạy đúng nghiệp vụ Quản lý đặt sách
+            borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt trước sách thành công! Đơn của bạn đang chờ thủ thư xử lý.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Khong the dat truoc sach: " + e.getMessage());
-            return "redirect:/member/borrow/management?tab=reserved";
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể đặt trước sách: " + e.getMessage());
         }
+        return "redirect:/member/borrow/management?tab=reserved";
     }
 
-    // FIX VẤN ĐỀ 5: Thêm endpoint xử lý Hủy đặt trước sách từ Member
     @PostMapping("/cancel-reservation/{reservationId}")
     public String cancelReservation(@PathVariable Integer reservationId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
@@ -201,12 +200,12 @@ public class BorrowController {
     public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            loanService.processRenewal(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn thành công thêm 7 ngày!");
+            borrowService.memberSubmitRenewRequest(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu gia hạn tới thủ thư. Vui lòng chờ phê duyệt!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gửi yêu cầu gia hạn: " + e.getMessage());
         }
-        return "redirect:/member/borrow";
+        return "redirect:/member/borrow/management?tab=borrowing";
     }
 
     @GetMapping("/history")
@@ -248,7 +247,7 @@ public class BorrowController {
         return memberRepository.findByUserEmail(usernameOrEmail)
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
                 .or(() -> memberRepository.findByAccountUsername(usernameOrEmail))
-                .orElseThrow(() -> new RuntimeException("Khong tim thay thanh vien hien tai."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên hiện tại."));
     }
 
     private BigDecimal getDepositAmount() {

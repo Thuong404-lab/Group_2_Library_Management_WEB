@@ -407,8 +407,9 @@
         <div class="topbar-right">
             <div class="dropdown">
                 <div class="user-dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="user-avatar">
-                        <i class="bi bi-person"></i>
+                    <div class="user-avatar p-0 overflow-hidden" style="border: 2px solid #8b5a2b;">
+                        <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0" style="background-color: #8b5a2b; color: white;"></i>
+                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0" style="object-fit: cover;">
                     </div>
                     <span sec:authorize="isAuthenticated()" sec:authentication="name">Librarian</span>
                     <i class="bi bi-chevron-down ms-1" style="font-size: 0.8rem; color: #8b5a2b;"></i>

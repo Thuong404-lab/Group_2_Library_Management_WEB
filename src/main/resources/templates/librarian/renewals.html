@@ -74,20 +74,24 @@
 
                         <td>
                             <span class="badge rounded-pill px-3 py-2"
-                                  th:classappend="${detail.status == 'Pending' ? 'bg-warning bg-opacity-10 text-dark border border-warning' : detail.status == 'Approved' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-danger bg-opacity-10 text-danger border border-danger'}"
-                                  th:text="${detail.status}">
+                                  th:classappend="${detail.status == 'Renew_Pending' ? 'bg-warning bg-opacity-10 text-dark border border-warning' : (detail.status == 'Borrowed' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-danger bg-opacity-10 text-danger border border-danger')}"
+                                  th:text="${detail.status == 'Renew_Pending' ? 'Chờ duyệt' : detail.status}">
                                 Chờ duyệt
                             </span>
                         </td>
 
                         <td class="text-end pe-4">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-success" title="Duyệt gia hạn">
-                                    <i class="bi bi-check-lg"></i> Duyệt
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" title="Từ chối">
-                                    <i class="bi bi-x-lg"></i> Từ chối
-                                </button>
+                            <div class="d-flex justify-content-end gap-2">
+                                <form th:action="@{/librarian/loan/renewals/approve/{id}(id=${detail.borrowDetailId})}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Duyệt gia hạn">
+                                        <i class="bi bi-check-lg"></i> Duyệt
+                                    </button>
+                                </form>
+                                <form th:action="@{/librarian/loan/renewals/reject/{id}(id=${detail.borrowDetailId})}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối">
+                                        <i class="bi bi-x-lg"></i> Từ chối
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>

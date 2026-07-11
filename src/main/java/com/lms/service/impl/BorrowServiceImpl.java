@@ -80,24 +80,24 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Borrow processBorrowing(BorrowRequest request, String librarianUsername) throws Exception {
+    public Borrow processBorrowing(BorrowRequest request, String librarianUsername) {
         String identifier = request.getMemberIdentifier() != null && !request.getMemberIdentifier().isBlank()
                 ? request.getMemberIdentifier().trim()
                 : request.getMemberEmail();
         Member member = memberRepository.findByUserEmail(identifier)
                 .or(() -> memberRepository.findByUserPhone(identifier))
-                .orElseThrow(() -> new Exception("Khong tim thay doc gia voi email hoac so dien thoai nay!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay doc gia voi email hoac so dien thoai nay!"));
 
         if (member.getUser() != null && member.getUser().getStatus() != UserStatus.Active) {
-            throw new Exception("Tai khoan thanh vien nay dang bi khoa hoac chua kich hoat!");
+            throw new IllegalArgumentException("Tai khoan thanh vien nay dang bi khoa hoac chua kich hoat!");
         }
 
         List<BookItem> bookItemsToBorrow = new ArrayList<>();
         for (String barcode : request.getBarcodes()) {
             BookItem item = bookItemRepository.findByBarcode(barcode)
-                    .orElseThrow(() -> new Exception("Ma vach " + barcode + " khong ton tai!"));
+                    .orElseThrow(() -> new IllegalArgumentException("Ma vach " + barcode + " khong ton tai!"));
             if (!"Available".equalsIgnoreCase(item.getStatus())) {
-                throw new Exception("Sach co ma vach " + barcode + " hien tai khong san sang!");
+                throw new IllegalArgumentException("Sach co ma vach " + barcode + " hien tai khong san sang!");
             }
             bookItemsToBorrow.add(item);
         }
@@ -105,7 +105,7 @@ public class BorrowServiceImpl implements BorrowService {
         long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowCount + bookItemsToBorrow.size() > maxLimit) {
-            throw new Exception("So luong sach vuot qua gioi han muon cua hang thanh vien!");
+            throw new IllegalArgumentException("So luong sach vuot qua gioi han muon cua hang thanh vien!");
         }
 
         int borrowDays = normalizeBorrowDays(request.getNumberOfDays());
@@ -133,16 +133,16 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) throws Exception {
+    public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) {
         Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new Exception("Khong tim thay thong tin doc gia!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay thong tin doc gia!"));
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new Exception("Sach yeu cau muon khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Sach yeu cau muon khong ton tai!"));
 
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowed >= maxLimit) {
-            throw new Exception("Yeu cau bi tu choi! Ban da muon cham gioi han toi da cho phep (" + maxLimit + " cuon).");
+            throw new IllegalArgumentException("Yeu cau bi tu choi! Ban da muon cham gioi han toi da cho phep (" + maxLimit + " cuon).");
         }
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
@@ -170,9 +170,9 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approvePendingRequest(Integer borrowId, String staffUsername) throws Exception {
+    public void approvePendingRequest(Integer borrowId, String staffUsername) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new Exception("Khong tim thay don yeu cau muon!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau muon!"));
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
 
@@ -190,16 +190,16 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void memberSubmitReturnRequest(String username, Integer borrowDetailId) throws Exception {
+    public void memberSubmitReturnRequest(String username, Integer borrowDetailId) {
         Integer memberId = getMemberIdByUsername(username);
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new Exception("Khong tim thay chi tiet phieu muon tuong ung!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon tuong ung!"));
         if (memberId == null || detail.getBorrow() == null || detail.getBorrow().getMember() == null
                 || !memberId.equals(detail.getBorrow().getMember().getMemberId())) {
-            throw new Exception("Ban khong co quyen gui yeu cau tra sach nay!");
+            throw new IllegalArgumentException("Ban khong co quyen gui yeu cau tra sach nay!");
         }
         if (!"Borrowed".equalsIgnoreCase(detail.getStatus()) && !"Overdue".equalsIgnoreCase(detail.getStatus())) {
-            throw new Exception("Trang thai sach hien tai khong hop le de gui yeu cau tra!");
+            throw new IllegalArgumentException("Trang thai sach hien tai khong hop le de gui yeu cau tra!");
         }
 
         detail.setStatus("Return_Pending");
@@ -216,9 +216,28 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approveReturnRequest(Integer borrowId) throws Exception {
+    public void memberSubmitRenewRequest(Integer borrowDetailId) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon!"));
+
+        if (!"Borrowed".equalsIgnoreCase(detail.getStatus())) {
+            throw new IllegalArgumentException("Chi sach dang o trang thai 'Dang muon' moi duoc phep yeu cau gia han!");
+        }
+
+        int maxRenewals = getPositiveIntSetting("MAX_RENEWALS", 2);
+        if (detail.getRenewCount() != null && detail.getRenewCount() >= maxRenewals) {
+            throw new IllegalArgumentException("Sach nay da duoc gia han toi da " + maxRenewals + " lan!");
+        }
+
+        detail.setStatus("Renew_Pending");
+        borrowDetailRepository.save(detail);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void approveReturnRequest(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new Exception("Khong tim thay don yeu cau tra!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau tra!"));
         borrow.setStatus("Returned");
         borrowRepository.save(borrow);
 
@@ -239,16 +258,16 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void processReturnBook(String barcode) throws Exception {
+    public void processReturnBook(String barcode) {
         BookItem item = bookItemRepository.findByBarcode(barcode)
-                .orElseThrow(() -> new Exception("Ma vach sach vat ly khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Ma vach sach vat ly khong ton tai!"));
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
                         && ("Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
                         || "Return_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
-                .orElseThrow(() -> new Exception("Khong tim thay lich su muon hop le ung voi ma vach sach nay!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay lich su muon hop le ung voi ma vach sach nay!"));
 
         item.setStatus("Available");
         bookItemRepository.save(item);
@@ -266,11 +285,11 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Reservation memberSubmitReservationRequest(String username, Integer bookId) throws Exception {
+    public Reservation memberSubmitReservationRequest(String username, Integer bookId) {
         Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new Exception("Tai khoan doc gia khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Tai khoan doc gia khong ton tai!"));
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new Exception("Sach yeu cau dat truoc khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Sach yeu cau dat truoc khong ton tai!"));
 
         boolean alreadyReserved = reservationRepository.findByMember_MemberIdOrderByReservationDateDesc(member.getMemberId())
                 .stream()
@@ -278,7 +297,7 @@ public class BorrowServiceImpl implements BorrowService {
                         && r.getBook().getBookId().equals(bookId)
                         && ("Pending".equalsIgnoreCase(r.getStatus()) || "Active".equalsIgnoreCase(r.getStatus())));
         if (alreadyReserved) {
-            throw new Exception("Ban da co mot yeu cau dat truoc cuon sach nay va dang cho xu ly!");
+            throw new IllegalArgumentException("Ban da co mot yeu cau dat truoc cuon sach nay va dang cho xu ly!");
         }
 
         Reservation reservation = new Reservation();
@@ -296,11 +315,11 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approveReservationRequest(Integer reservationId, String staffUsername) throws Exception {
+    public void approveReservationRequest(Integer reservationId, String staffUsername) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new Exception("Khong tim thay don yeu cau dat truoc!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau dat truoc!"));
         if (!"Pending".equalsIgnoreCase(reservation.getStatus())) {
-            throw new Exception("Don dat truoc nay da duoc xu ly tu truoc!");
+            throw new IllegalArgumentException("Don dat truoc nay da duoc xu ly tu truoc!");
         }
 
         reservation.setStatus("Active");
@@ -311,12 +330,12 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void memberCancelReservation(String username, Integer reservationId) throws Exception {
+    public void memberCancelReservation(String username, Integer reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new Exception("Don dat truoc khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Don dat truoc khong ton tai!"));
         Integer currentMemberId = getMemberIdByUsername(username);
         if (currentMemberId == null || !reservation.getMember().getMemberId().equals(currentMemberId)) {
-            throw new Exception("Ban khong co quyen huy don dat truoc cua nguoi khac!");
+            throw new IllegalArgumentException("Ban khong co quyen huy don dat truoc cua nguoi khac!");
         }
         reservation.setStatus("Canceled");
         reservationRepository.save(reservation);
@@ -338,7 +357,7 @@ public class BorrowServiceImpl implements BorrowService {
                             bd.getBookItem() != null ? bd.getBookItem().getBarcode() : "N/A",
                             bd.getBorrow().getBorrowDate());
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -346,7 +365,7 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Reservation> getAllPendingReservations() {
         return reservationRepository.findAll().stream()
                 .filter(r -> "Pending".equalsIgnoreCase(r.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -359,7 +378,7 @@ public class BorrowServiceImpl implements BorrowService {
                         r.getBook().getTitle(),
                         r.getReservationDate(),
                         1))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -368,7 +387,7 @@ public class BorrowServiceImpl implements BorrowService {
         Integer id = getMemberIdByUsername(username);
         return id == null ? new ArrayList<>() : borrowRepository.findAll().stream()
                 .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()) && status.equalsIgnoreCase(b.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -376,7 +395,7 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getAllPendingRequests() {
         return borrowRepository.findAll().stream()
                 .filter(b -> "Pending".equalsIgnoreCase(b.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -384,7 +403,7 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getAllReturnRequests() {
         return borrowRepository.findAll().stream()
                 .filter(b -> "Return_Pending".equalsIgnoreCase(b.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -392,23 +411,23 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getAllActiveLoans() {
         return borrowRepository.findAll().stream()
                 .filter(b -> "Active".equalsIgnoreCase(b.getStatus()) || "Borrowing".equalsIgnoreCase(b.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateStatus(Integer loanId, String status) throws Exception {
+    public void updateStatus(Integer loanId, String status) {
         Borrow borrow = borrowRepository.findById(loanId)
-                .orElseThrow(() -> new Exception("Khong tim thay don muon/tra tuong ung!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don muon/tra tuong ung!"));
         borrow.setStatus(status);
         borrowRepository.save(borrow);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Borrow getBorrowById(Integer borrowId) throws Exception {
+    public Borrow getBorrowById(Integer borrowId) {
         return borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new Exception("Khong tim thay don muon!"));
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don muon!"));
     }
 
     @Override
@@ -416,7 +435,7 @@ public class BorrowServiceImpl implements BorrowService {
     public List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId) {
         return borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBorrow() != null && d.getBorrow().getBorrowId().equals(borrowId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -425,7 +444,7 @@ public class BorrowServiceImpl implements BorrowService {
         Integer id = getMemberIdByUsername(username);
         return id == null ? new ArrayList<>() : borrowRepository.findAll().stream()
                 .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -437,9 +456,10 @@ public class BorrowServiceImpl implements BorrowService {
                 .filter(d -> "Pending".equalsIgnoreCase(d.getStatus())
                         || "Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
-                        || "Return_Pending".equalsIgnoreCase(d.getStatus()))
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus())
+                        || "Renew_Pending".equalsIgnoreCase(d.getStatus()))
                 .map(this::toMemberBorrowDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -477,7 +497,7 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowDetailRepository.findBorrowHistoryInOneMonth(memberId, oneMonthAgo).stream()
                 .filter(d -> "Returned".equalsIgnoreCase(d.getStatus()))
                 .map(this::toMemberBorrowDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private MemberBorrowDTO toMemberBorrowDTO(BorrowDetail detail) {

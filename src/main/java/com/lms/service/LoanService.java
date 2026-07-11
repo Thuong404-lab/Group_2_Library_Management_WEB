@@ -11,22 +11,25 @@ import java.util.List;
 public interface LoanService {
 
     // UC-13.1: Xem chi tiết phiếu mượn
-    Borrow getLoanDetails(Integer borrowId) throws Exception;
+    Borrow getLoanDetails(Integer borrowId) ;
 
     // UC-13.2: Xác nhận trả sách vật lý qua quét barcode
-    void confirmReturn(String barcode) throws Exception;
+    void confirmReturn(String barcode) ;
 
     // Phê duyệt yêu cầu trả sách trực tuyến từ độc giả
-    void approveOnlineReturn(Integer borrowId) throws Exception;
+    void approveOnlineReturn(Integer borrowId) ;
 
     // UC-13.3: Quầy mượn sách
-    void processBorrowDesk(String memberIdentifier, List<String> barcodes, String staffUsername) throws Exception;
+    void processBorrowDesk(String memberIdentifier, List<String> barcodes, String staffUsername) ;
 
     // UC-13.3: Duyệt yêu cầu mượn
-    void processBorrowRequest(Integer borrowId) throws Exception;
+    void processBorrowRequest(Integer borrowId) ;
 
     // UC-13.4: Gia hạn mượn
-    void processRenewal(Integer borrowDetailId) throws Exception;
+    void processRenewal(Integer borrowDetailId) ;
+    void approveRenewal(Integer borrowDetailId, String staffUsername);
+    void rejectRenewal(Integer borrowDetailId, String staffUsername);
+    List<BorrowDetail> getAllPendingRenewals();
 
     List<BorrowDetail> getAllBorrowDetails();
 }
