@@ -23,49 +23,53 @@ public class StorageController {
 
     @GetMapping
     public String listStorageLocations() {
-        return "redirect:/librarian/dashboard?section=storage";
+        return "redirect:/librarian/dashboard?section=books&subsection=storage";
     }
 
     @GetMapping("/add")
     public String showAddStorageLocation() {
-        return "redirect:/librarian/dashboard?section=storage";
+        return "librarian/storage-form";
     }
 
     @PostMapping("/add")
     public String addStorageLocation(@RequestParam String shelfName,
-                                     @RequestParam(required = false) String location,
-                                     RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String location,
+            RedirectAttributes redirectAttributes) {
         try {
             storageService.addStorageLocation(shelfName, location);
             redirectAttributes.addFlashAttribute("success", "Thêm vị trí lưu trữ thành công.");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=storage";
+        return "redirect:/librarian/dashboard?section=books&subsection=storage";
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditStorageLocation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+    public String showEditStorageLocation(@PathVariable Integer id, RedirectAttributes redirectAttributes,
+            Model model) {
         return storageService.getStorageLocationById(id)
-                .map(shelf -> "redirect:/librarian/dashboard?section=storage")
+                .map(shelf -> {
+                    model.addAttribute("shelf", shelf);
+                    return "librarian/storage-form";
+                })
                 .orElseGet(() -> {
                     redirectAttributes.addFlashAttribute("error", "Không tìm thấy vị trí lưu trữ.");
-                    return "redirect:/librarian/dashboard?section=storage";
+                    return "redirect:/librarian/dashboard?section=books&subsection=storage";
                 });
     }
 
     @PostMapping("/update/{id}")
     public String updateStorageLocation(@PathVariable Integer id,
-                                        @RequestParam String shelfName,
-                                        @RequestParam(required = false) String location,
-                                        RedirectAttributes redirectAttributes) {
+            @RequestParam String shelfName,
+            @RequestParam(required = false) String location,
+            RedirectAttributes redirectAttributes) {
         try {
             storageService.updateStorageLocation(id, shelfName, location);
             redirectAttributes.addFlashAttribute("success", "Cập nhật vị trí lưu trữ thành công.");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=storage";
+        return "redirect:/librarian/dashboard?section=books&subsection=storage";
     }
 
     @PostMapping("/delete/{id}")
@@ -76,6 +80,6 @@ public class StorageController {
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=storage";
+        return "redirect:/librarian/dashboard?section=books&subsection=storage";
     }
 }
