@@ -16,6 +16,8 @@ public class Book {
     private String isbn;
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
+    @Column(length = 500)
+    private String coverImageUrl;
     @Column(length = 50)
     private String status = "Active";
     
@@ -30,12 +32,13 @@ public class Book {
     public Book() {
     }
 
-    public Book(Integer bookId, Genre genre, String title, String isbn, String description, String status, Set<Author> authors) {
+    public Book(Integer bookId, Genre genre, String title, String isbn, String description, String coverImageUrl, String status, Set<Author> authors) {
         this.bookId = bookId;
         this.genre = genre;
         this.title = title;
         this.isbn = isbn;
         this.description = description;
+        this.coverImageUrl = coverImageUrl;
         this.status = status;
         this.authors = authors;
     }
@@ -50,6 +53,8 @@ public class Book {
     public void setIsbn(String isbn) { this.isbn = isbn; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getCoverImageUrl() { return coverImageUrl; }
+    public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public Set<Author> getAuthors() { return authors; }

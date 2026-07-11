@@ -1,8 +1,10 @@
 package com.lms.controller.librarian;
 
+import com.lms.service.FileUploadService;
 import com.lms.service.InventoryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -14,50 +16,65 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class InventoryController {
 
     private final InventoryService inventoryService;
+    private final FileUploadService fileUploadService;
 
-    public InventoryController(InventoryService inventoryService) {
+    public InventoryController(InventoryService inventoryService, FileUploadService fileUploadService) {
         this.inventoryService = inventoryService;
+        this.fileUploadService = fileUploadService;
     }
 
     @GetMapping
     public String listBooks() {
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @GetMapping("/add")
     public String showAddBookForm() {
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
-    @PostMapping("/add")
+    @PostMapping(value = "/add", consumes = "multipart/form-data")
     public String addNewBook(@RequestParam String title,
                              @RequestParam String isbn,
                              @RequestParam Integer genreId,
                              @RequestParam(defaultValue = "1") Integer quantity,
+                             @RequestParam(required = false) String description,
+                             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
+                             @RequestParam(required = false) Integer shelfId,
                              RedirectAttributes redirectAttributes) {
         try {
-            inventoryService.addNewBook(title, isbn, genreId, quantity);
+            String coverImageUrl = null;
+            if (coverImage != null && !coverImage.isEmpty()) {
+                coverImageUrl = fileUploadService.storeFile(coverImage);
+            }
+            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId);
             redirectAttributes.addFlashAttribute("success", "Thêm sách mới thành công.");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
-    @PostMapping("/edit/{id}")
+    @PostMapping(value = "/edit/{id}", consumes = "multipart/form-data")
     public String updateBook(@PathVariable Integer id,
                              @RequestParam String title,
                              @RequestParam String isbn,
                              @RequestParam Integer genreId,
                              @RequestParam String status,
+                             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
+                             @RequestParam(required = false) Integer shelfId,
                              RedirectAttributes redirectAttributes) {
         try {
-            inventoryService.updateBook(id, title, isbn, genreId, status);
+            String coverImageUrl = null;
+            if (coverImage != null && !coverImage.isEmpty()) {
+                coverImageUrl = fileUploadService.storeFile(coverImage);
+            }
+            inventoryService.updateBook(id, title, isbn, genreId, status, coverImageUrl, shelfId);
             redirectAttributes.addFlashAttribute("success", "Cập nhật sách thành công.");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @PostMapping("/delete/{id}")
@@ -68,7 +85,7 @@ public class InventoryController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @PostMapping("/status/{id}")
@@ -81,12 +98,12 @@ public class InventoryController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @GetMapping("/categories")
     public String manageCategories() {
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @PostMapping("/categories/add")
@@ -105,12 +122,12 @@ public class InventoryController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @GetMapping("/audit")
     public String showInventoryAudit() {
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @PostMapping("/audit")
@@ -127,6 +144,6 @@ public class InventoryController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 }
