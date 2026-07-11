@@ -25,17 +25,20 @@ public class MemberController {
     private final BorrowService borrowService;
     private final MemberFavoriteService memberFavoriteService;
     private final BookService bookService;
+    private final com.lms.repository.ReservationRepository reservationRepository;
 
     public MemberController(MembershipService membershipService,
                             BorrowDetailRepository borrowDetailRepository,
                             BorrowService borrowService,
                             MemberFavoriteService memberFavoriteService,
-                            BookService bookService) {
+                            BookService bookService,
+                            com.lms.repository.ReservationRepository reservationRepository) {
         this.membershipService = membershipService;
         this.borrowDetailRepository = borrowDetailRepository;
         this.borrowService = borrowService;
         this.memberFavoriteService = memberFavoriteService;
         this.bookService = bookService;
+        this.reservationRepository = reservationRepository;
     }
 
     @GetMapping("/dashboard")
@@ -67,13 +70,20 @@ public class MemberController {
     }
 
     @GetMapping("/borrow")
-    public String borrow() {
+    public String borrow(Principal principal, Model model) {
+        if (principal == null) return "redirect:/login";
+        String username = principal.getName();
+        
+        model.addAttribute("activeBorrows", borrowDetailRepository.findActiveBorrowDetailsByUsername(username));
+        model.addAttribute("reservations", reservationRepository.findReservationsByUsername(username));
+        model.addAttribute("historyBorrows", borrowDetailRepository.findReturnedBorrowDetailsByUsername(username));
+        
         return "member/borrow";
     }
 
     @GetMapping("/wallet")
     public String wallet() {
-        return "member/wallet";
+        return "redirect:/member/financial/transactions";
     }
 
     @GetMapping("/notifications")

@@ -134,6 +134,21 @@
             font-weight: 600;
         }
 
+        #financeMenu .menu-link {
+            color: #e6dfd7 !important;
+            font-weight: 400;
+        }
+
+        #financeMenu .menu-link:hover {
+            color: #fdfbf7 !important;
+            background-color: var(--sidebar-hover);
+        }
+
+        #financeMenu .menu-link.active-submenu {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
         .menu-icon {
             font-size: 1.1rem;
             min-width: 30px;
@@ -273,13 +288,18 @@
             </a>
             <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Mượn sách</span>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list' || activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Danh sách phiếu mượn</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/renewals}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Gia hạn sách</span>
+                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Quầy mượn sách</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/loan/returns}" class="menu-link py-2" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Trả sách</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
@@ -336,6 +356,41 @@
                 <span class="menu-text">Thống kê</span>
             </a>
         </li>
+        <li class="menu-item">
+            <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link"
+               th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'active'"
+               style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <i class="bi bi-wallet2 menu-icon"></i>
+                    <span class="menu-text">Tài chính</span>
+                </div>
+                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+            </a>
+            <ul class="collapse list-unstyled ps-4" id="financeMenu"
+                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'show'">
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/topup}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'topup'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Nạp tiền</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/transactions}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'transactions'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Lịch sử giao dịch</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/fines}" class="menu-link py-2"
+                       th:classappend="${activeMenu == 'fines'} ? 'active-submenu' : ''"
+                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Phí phạt</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
     </ul>
 </aside>
 
@@ -352,8 +407,9 @@
         <div class="topbar-right">
             <div class="dropdown">
                 <div class="user-dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="user-avatar">
-                        <i class="bi bi-person"></i>
+                    <div class="user-avatar p-0 overflow-hidden" style="border: 2px solid #8b5a2b;">
+                        <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0" style="background-color: #8b5a2b; color: white;"></i>
+                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0" style="object-fit: cover;">
                     </div>
                     <span sec:authorize="isAuthenticated()" sec:authentication="name">Librarian</span>
                     <i class="bi bi-chevron-down ms-1" style="font-size: 0.8rem; color: #8b5a2b;"></i>
@@ -374,7 +430,7 @@
 </div>
 
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script>
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.body.classList.toggle('sidebar-collapsed');

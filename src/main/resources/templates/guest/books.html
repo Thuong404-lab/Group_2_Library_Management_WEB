@@ -170,7 +170,7 @@
                 <div class="col-lg-9 col-md-8">
                     <!-- Compact Search Bar (Shopee Style) -->
                     <div class="mb-4 position-relative" id="booksSearchContainer">
-                        <form action="/books" method="GET" class="input-group shadow-sm" style="position: relative; z-index: 1050; border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 90, 43, 0.3);">
+                        <form action="/books" method="GET" class="input-group shadow-sm" style="position: relative; z-index: 1020; border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 90, 43, 0.3);">
                             <input type="hidden" name="genreId" th:if="${selectedGenreId != null}" th:value="${selectedGenreId}">
                             <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}">
                             <input type="hidden" name="sort" th:if="${sort != null}" th:value="${sort}">
@@ -181,7 +181,7 @@
                         </form>
                         
                         <!-- Dropdown Overlay -->
-                        <div id="booksSearchDropdown" class="dropdown-menu w-100 shadow border-0 mt-1 p-0" style="border-radius: 8px; display: none; position: absolute; z-index: 1040; overflow: hidden; top: 100%;">
+                        <div id="booksSearchDropdown" class="dropdown-menu w-100 shadow border-0 mt-1 p-0" style="border-radius: 8px; display: none; position: absolute; z-index: 1010; overflow: hidden; top: 100%;">
                             <div id="booksLiveSearchSuggestions" class="bg-white">
                                 <div class="list-group list-group-flush" id="booksSuggestionList">
                                 </div>
@@ -337,24 +337,43 @@
                     </div>
 
                     <!-- Pagination below grid -->
-                    <nav class="mt-5 mb-5" th:if="${bookPage != null && bookPage.totalPages > 1}">
+                    <nav class="mt-5 mb-5" th:if="${bookPage != null && bookPage.totalPages > 1}"
+                        th:with="startPage=${bookPage.totalPages <= 10 ? 0 : (bookPage.number < 9 ? 0 : (bookPage.number - 8 > bookPage.totalPages - 10 ? bookPage.totalPages - 10 : bookPage.number - 8))}, endPage=${startPage + 9 < bookPage.totalPages ? startPage + 9 : bookPage.totalPages - 1}">
                         <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
+                                <a class="page-link border-0 shadow-sm rounded-pill mx-1 px-3 py-2 text-dark"
+                                    th:href="@{/books(page=0, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
+                                    Đầu
+                                </a>
+                            </li>
                             <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
                                 <a class="page-link border-0 shadow-sm rounded-circle mx-1 px-3 py-2 text-dark"
                                     th:href="@{/books(page=${bookPage.number - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
-                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, bookPage.totalPages - 1)}">
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link border-0 bg-transparent px-2 py-2">…</span>
+                            </li>
+                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(startPage, endPage)}">
                                 <a class="page-link border-0 shadow-sm rounded-circle mx-1 px-3 py-2"
                                     th:classappend="${pageNum == bookPage.number ? 'bg-primary text-white fw-bold' : 'text-dark'}"
                                     th:href="@{/books(page=${pageNum}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}"
                                     th:text="${pageNum + 1}">1</a>
                             </li>
+                            <li class="page-item disabled" th:if="${endPage < bookPage.totalPages - 1}">
+                                <span class="page-link border-0 bg-transparent px-2 py-2">…</span>
+                            </li>
                             <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
                                 <a class="page-link border-0 shadow-sm rounded-circle mx-1 px-3 py-2 text-dark"
                                     th:href="@{/books(page=${bookPage.number + 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
                                     <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
+                                <a class="page-link border-0 shadow-sm rounded-pill mx-1 px-3 py-2 text-dark"
+                                    th:href="@{/books(page=${bookPage.totalPages - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
+                                    Cuối
                                 </a>
                             </li>
                         </ul>

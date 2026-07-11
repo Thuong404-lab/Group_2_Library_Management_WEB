@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Password reset flow maintained by Pham Kien Quoc for UC-21.2.
+ */
 @Service
 public class AuthServiceImpl implements AuthService {
 
@@ -64,7 +67,8 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
         if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
-            throw new AuthException("Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
+            throw new AuthException(
+                    "Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
         }
 
         if (request.getPassword() == null || request.getPassword().length() < 6) {
@@ -75,12 +79,18 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Họ và tên không được để trống!");
         }
 
-        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+        if (request.getEmail() == null
+                || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new AuthException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
 
         if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)[0-9]{9}$")) {
             throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
+        }
+
+
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new AuthException("Số điện thoại đã được sử dụng bởi tài khoản khác!");
         }
 
         if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -115,15 +125,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logLoginAction(Integer userId, String ipAddress, String userAgent, String sessionId) {
-        String description = "Đăng nhập thành công. Session ID: " + sessionId;
-        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, description);
+    public void logLoginAction(Integer userId, String ipAddress, String userAgent) {
+        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, "Đăng nhập thành công.");
     }
 
     @Override
-    public void logLogoutAction(Integer userId, String ipAddress, String userAgent, String sessionId) {
-        String description = "Đăng xuất thành công. Session ID: " + sessionId;
-        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, description);
+    public void logLogoutAction(Integer userId, String ipAddress, String userAgent) {
+        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, "Đăng xuất thành công.");
     }
 
     @Override
@@ -137,7 +145,7 @@ public class AuthServiceImpl implements AuthService {
 
         Member member = new Member();
         member.setUser(user);
-        
+
         membershipTierRepository.findAll(Sort.by("tierId").ascending())
                 .stream().findFirst().ifPresent(member::setTier);
 
@@ -148,7 +156,7 @@ public class AuthServiceImpl implements AuthService {
         account.setPasswordHash(pass);
         account.setMember(member);
         account.setStatus("Active");
-        
+
         account = memberAccountRepository.save(account);
 
         Wallet wallet = new Wallet();

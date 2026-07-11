@@ -23,7 +23,13 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
                         "AND (" +
                         "LOWER(s.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(s.user.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                        "OR LOWER(s.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))" +
+                        "OR LOWER(s.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                        "OR EXISTS (" +
+                        "SELECT account.id FROM StaffAccount account " +
+                        "WHERE account.staff = s " +
+                        "AND (LOWER(account.username) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                        "OR LOWER(account.status) LIKE LOWER(CONCAT('%', :keyword, '%')))" +
+                        ")" +
                         ")")
         Page<Staff> searchByStaffTypeAndKeyword(@Param("staffType") String staffType,
                         @Param("keyword") String keyword,
@@ -34,6 +40,12 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
                         "WHERE LOWER(s.staffType) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(s.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(s.user.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                        "OR LOWER(s.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+                        "OR LOWER(s.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                        "OR EXISTS (" +
+                        "SELECT account.id FROM StaffAccount account " +
+                        "WHERE account.staff = s " +
+                        "AND (LOWER(account.username) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                        "OR LOWER(account.status) LIKE LOWER(CONCAT('%', :keyword, '%')))" +
+                        ")")
         Page<Staff> searchStaffByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

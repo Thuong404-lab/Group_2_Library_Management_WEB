@@ -13,8 +13,15 @@ import java.util.List;
 public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
     Page<Feedback> findAll(Pageable pageable);
 
-    boolean existsByMember_MemberIdAndBook_BookId(Integer memberId, Integer bookId);
+    boolean existsByMember_MemberIdAndBook_BookIdAndStatusNot(Integer memberId, Integer bookId, String status);
 
     @EntityGraph(attributePaths = {"book", "book.authors"})
-    List<Feedback> findByMember_MemberIdOrderByCreatedDateDesc(Integer memberId);
+    List<Feedback> findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(Integer memberId, String status);
+
+    @EntityGraph(attributePaths = {"book", "book.authors"})
+    Page<Feedback> findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
+            Integer memberId, String status, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"member", "member.user"})
+    List<Feedback> findByBook_BookIdAndStatusOrderByCreatedDateDesc(Integer bookId, String status);
 }

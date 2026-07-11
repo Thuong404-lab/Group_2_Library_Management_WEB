@@ -3,12 +3,16 @@ package com.lms.controller.member;
 import com.lms.entity.User;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.ProfileService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.lms.config.CustomUserDetails;
 
 /**
  * ProfileController - Quản lý Hồ sơ Thành viên
@@ -17,6 +21,8 @@ import java.security.Principal;
 @Controller
 @RequestMapping("/member")
 public class ProfileController {
+
+    private static final int PAGE_SIZE = 5;
 
     private final ProfileService profileService;
     private final MemberFavoriteService memberFavoriteService;
@@ -62,6 +68,20 @@ public class ProfileController {
         try {
             String currentUsername = principal.getName();
             profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            
+            // Cập nhật lại thông tin trong phiên đăng nhập (Session/SecurityContext) để thanh điều hướng đồng bộ ngay lập tức
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+                CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+                User sessionUser = customUserDetails.getUser();
+                User updatedUser = profileService.getProfile(currentUsername);
+                
+                sessionUser.setFullName(updatedUser.getFullName());
+                sessionUser.setAvatar(updatedUser.getAvatar());
+                sessionUser.setEmail(updatedUser.getEmail());
+                sessionUser.setPhone(updatedUser.getPhone());
+            }
+            
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
             return "redirect:/member/profile?updated";
         } catch (Exception e) {
@@ -102,12 +122,15 @@ public class ProfileController {
 
     // UC-4.4: View Favorites List
     @GetMapping("/favorites")
-    public String viewFavorites(Principal principal, Model model) {
+    public String viewFavorites(Principal principal,
+                                Model model,
+                                @RequestParam(defaultValue = "0") int page) {
         if (principal == null) {
             return "redirect:/login";
         }
 
-        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(principal.getName()));
+        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/favorites";
     }

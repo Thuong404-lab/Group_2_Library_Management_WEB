@@ -3,102 +3,270 @@
 
 <head>
     <title>Hồ sơ cá nhân - Thủ thư</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f7f5; /* Nền giấy beige sáng đồng bộ */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .font-playfair {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .page-title {
+            color: #4a3b32;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+
+        /* --- CẤU TRÚC KHUNG CARD CLASSIC --- */
+        .card-profile-classic {
+            border: none !important;
+            border-radius: 10px !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+            overflow: hidden;
+        }
+
+        .card-header-classic {
+            background-color: #ffffff !important;
+            border-bottom: 2px solid #4a3b32 !important; /* Đường kẻ tối giản đậm nét cổ điển */
+            padding-top: 20px;
+            padding-bottom: 12px;
+        }
+
+        .card-body-classic {
+            background-color: #fdfbf7 !important; /* Màu nền kem giấy */
+            padding: 1.75rem;
+        }
+
+        /* --- BADGES TRẠNG THÁI CLASSIC --- */
+        .badge-classic-status {
+            background-color: rgba(139, 90, 43, 0.1);
+            color: #8b5a2b;
+            border: 1px solid rgba(139, 90, 43, 0.3);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* --- INPUT FORM CONTROL STYLE CLASSIC --- */
+        .form-control-classic {
+            border: 1px solid rgba(139, 90, 43, 0.2) !important;
+            color: #4a3b32 !important;
+            background-color: #fdfbf7 !important;
+            border-radius: 6px !important;
+        }
+        .form-control-classic:focus {
+            border-color: #8b5a2b !important;
+            box-shadow: 0 0 0 0.2rem rgba(139, 90, 43, 0.15) !important;
+            background-color: #ffffff !important;
+        }
+
+        /* --- HỆ THỐNG NÚT BẤM CỔ ĐIỂN --- */
+        .btn-classic-primary {
+            background: #8b5a2b !important;
+            border: 1px solid #8b5a2b !important;
+            color: #ffffff !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-primary:hover {
+            background: #74481f !important;
+            border-color: #74481f !important;
+            color: #ffffff !important;
+        }
+
+        .btn-classic-outline {
+            background: transparent !important;
+            border: 2px solid #8b5a2b !important;
+            color: #8b5a2b !important;
+            font-weight: 600;
+            border-radius: 6px !important;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-outline:hover {
+            background: rgba(139, 90, 43, 0.08) !important;
+            color: #74481f !important;
+        }
+
+        /* KHUNG CHỨA AVATAR CỐ ĐỊNH KÍCH THƯỚC CHUẨN */
+        .avatar-container-classic {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto;
+        }
+
+        /* Nút đổi ảnh đại diện tinh tế - SỬA LẠI ĐỊNH VỊ GÓC DƯỚI BÊN PHẢI ĐƯỜNG CONG */
+        .btn-camera-classic {
+            position: absolute !important;
+            bottom: 4px !important;
+            right: 14px !important;
+            width: 32px;
+            height: 32px;
+            background-color: #4a3b32 !important;
+            color: #ffffff !important;
+            border: 2px solid #ffffff !important;
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.2s ease;
+        }
+        .btn-camera-classic:hover {
+            background-color: #8b5a2b !important;
+            transform: scale(1.05);
+        }
+
+        /* Modal diện mạo cổ điển đồng bộ */
+        .modal-content-classic {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .modal-header-classic {
+            border-bottom: 2px solid #4a3b32;
+            background-color: #ffffff;
+            padding: 1.25rem 1.5rem;
+        }
+    </style>
 </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu='profile'">
+<div layout:fragment="content" th:with="activeMenu='profile'" class="container mt-4 mb-5">
+
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Hồ sơ Cá nhân</h2>
-            <div class="text-muted">Quản lý thông tin tài khoản và bảo mật hệ thống</div>
+            <h2 class="fw-bold mb-1 page-title"><i class="bi bi-person-badge-fill me-2" style="color: #8b5a2b;"></i>Hồ sơ Cá nhân</h2>
+            <div class="text-muted small">Quản lý thông tin tài khoản và bảo mật hệ thống nhân sự thư viện.</div>
         </div>
     </div>
 
-    <!-- Alerts -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${passwordSuccess}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-        <i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${passwordError}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-        <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3 d-flex justify-content-between align-items-center" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+        <div><i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span></div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close" style="color: #2f855a; filter: invert(37%) sepia(43%) saturate(518%) hue-rotate(97deg) brightness(93%) contrast(85%);"></button>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-xl-7">
-            <!-- Profile Card -->
-            <div class="card-classic border-0 shadow-sm mb-4">
-                <div class="card-header bg-white p-4 border-bottom text-center" style="border-color: rgba(139, 90, 43, 0.1) !important;">
-                    <div class="position-relative mx-auto mb-3" style="width: 80px; height: 80px;">
-                        <div th:if="${librarian?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm w-100 h-100" 
-                             style="background-color: #8b5a2b; font-size: 2rem; font-family: 'Playfair Display', serif;"
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3 d-flex justify-content-between align-items-center" style="background-color: #fff5f5; color: #c53030;" role="alert">
+        <div><i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span></div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close" style="color: #c53030; filter: invert(24%) sepia(74%) saturate(3015%) hue-rotate(338deg) brightness(88%) contrast(92%);"></button>
+    </div>
+
+    <div th:if="${passwordSuccess}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3 d-flex justify-content-between align-items-center" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+        <div><i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span></div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close" style="color: #2f855a; filter: invert(37%) sepia(43%) saturate(518%) hue-rotate(97deg) brightness(93%) contrast(85%);"></button>
+    </div>
+
+    <div th:if="${passwordError}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3 d-flex justify-content-between align-items-center" style="background-color: #fff5f5; color: #c53030;" role="alert">
+        <div><i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span></div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close" style="color: #c53030; filter: invert(24%) sepia(74%) saturate(3015%) hue-rotate(338deg) brightness(88%) contrast(92%);"></button>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-4">
+            <div class="card card-profile-classic mb-4">
+                <div class="card-body text-center p-4" style="background-color: #fdfbf7;">
+
+                    <div class="avatar-container-classic mb-3">
+                        <div th:if="${librarian?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100"
+                             style="background-color: #8b5a2b; font-size: 3rem; font-family: 'Playfair Display', serif;"
                              th:text="${librarian != null ? #strings.substring(librarian.fullName, 0, 1).toUpperCase() : 'L'}">L</div>
-                        <img th:if="${librarian?.avatar != null}" id="avatarPreview" th:src="${librarian.avatar}" class="rounded-circle shadow-sm w-100 h-100" style="object-fit: cover;">
-                        <img th:if="${librarian?.avatar == null}" id="avatarPreview" src="" class="rounded-circle shadow-sm w-100 h-100 d-none" style="object-fit: cover;">
-                        
-                        <label for="avatarUploadLibrarian" class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; cursor: pointer; color: #8b5a2b;" title="Đổi ảnh đại diện">
-                            <i class="bi bi-camera-fill" style="font-size: 0.8rem;"></i>
+
+                        <img th:if="${librarian?.avatar != null}" id="avatarPreview" th:src="${librarian.avatar}" class="rounded-circle border border-3 border-white shadow w-100 h-100" style="object-fit: cover;">
+                        <img th:if="${librarian?.avatar == null}" id="avatarPreview" src="" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100" style="object-fit: cover;">
+
+                        <label for="avatarUploadLibrarian" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" title="Đổi ảnh đại diện">
+                            <i class="bi bi-camera-fill" style="font-size: 0.85rem;"></i>
                         </label>
                     </div>
-                    <h4 class="fw-bold mb-1" style="color: #4a3b32;" th:text="${librarian?.fullName}">Thủ thư</h4>
-                    <span class="badge bg-secondary text-uppercase px-3 py-1 mt-2 shadow-sm"><i class="bi bi-person-badge me-1"></i>Official Staff</span>
-                </div>
-                
-                <div class="card-body p-4">
-                    <h6 class="fw-bold text-uppercase mb-4" style="color: #8b5a2b; font-size: 0.85rem;"><i class="bi bi-person-lines-fill me-2"></i>Thông tin tài khoản</h6>
-                    <form th:action="@{/librarian/profile/update}" method="post" enctype="multipart/form-data">
-                        <input type="file" id="avatarUploadLibrarian" name="avatarFile" accept="image/*" class="d-none">
-                        <div class="row g-4 mb-4">
-                            <div class="col-12">
-                                <label class="form-label fw-bold text-muted small">Họ và Tên</label>
-                                <input type="text" name="fullName" class="form-control bg-light border-0" th:value="${librarian?.fullName}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Địa chỉ Email</label>
-                                <input type="email" name="email" class="form-control bg-light border-0" th:value="${librarian?.email}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Số Điện thoại</label>
-                                <input type="text" name="phone" class="form-control bg-light border-0" th:value="${librarian?.phone}">
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-classic px-4">Lưu thay đổi</button>
-                        </div>
-                    </form>
+
+                    <h4 class="fw-bold mb-1 font-playfair mt-3" style="color: #2c1e16;" th:text="${librarian?.fullName}">Thủ thư</h4>
+                    <p class="text-muted small mb-3" th:text="${librarian?.email}">lib01@library.vn</p>
+
+                    <div class="d-flex justify-content-center gap-2 mb-2">
+                        <span class="badge badge-classic-status text-uppercase font-playfair fw-bold" style="letter-spacing: 0.3px;"><i class="bi bi-patch-check-fill me-1"></i>Official Staff</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Security Card -->
-            <div class="card-classic border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold text-uppercase mb-4 text-danger" style="font-size: 0.85rem;"><i class="bi bi-shield-lock-fill me-2"></i>Bảo mật hệ thống</h6>
-                    <form th:action="@{/librarian/profile/change-password}" method="post">
-                        <div class="row g-4 mb-4">
-                            <div class="col-12">
-                                <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>
-                                <input type="password" name="oldPassword" class="form-control bg-light border-0" placeholder="Nhập mật khẩu hiện tại" required>
+            <div class="card card-profile-classic">
+                <div class="card-body p-4" style="background-color: #fdfbf7;">
+                    <h6 class="fw-bold mb-3 font-playfair" style="color: #4a3b32;">Bảo mật tài khoản</h6>
+                    <button class="btn btn-classic-outline w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Thay đổi mật khẩu</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card card-profile-classic h-100">
+                <div class="card-header-classic px-4">
+                    <h5 class="fw-bold mb-0 font-playfair" style="color: #4a3b32;">Thông tin chi tiết tài khoản</h5>
+                </div>
+                <div class="card-body-classic">
+                    <form th:action="@{/librarian/profile/update}" method="post" enctype="multipart/form-data" class="m-0">
+                        <input type="file" id="avatarUploadLibrarian" name="avatarFile" accept="image/*" class="d-none">
+                        <div class="row g-3">
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold text-muted small">Họ và Tên thành viên ban quản trị</label>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${librarian?.fullName}" required>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold text-muted small">Mật khẩu mới</label>
-                                <input type="password" name="newPassword" class="form-control bg-light border-0" placeholder="Nhập mật khẩu mới an toàn" required>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted small">Địa chỉ Email công vụ</label>
+                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${librarian?.email}" required>
                             </div>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-outline-danger px-4">Đổi mật khẩu</button>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted small">Số điện thoại nội bộ</label>
+                                <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${librarian?.phone}">
+                            </div>
+
+                            <div class="col-12 mt-3 text-end">
+                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm">Lưu thay đổi</button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content modal-content-classic shadow-lg">
+                    <div class="modal-header modal-header-classic d-flex justify-content-between align-items-center">
+                        <h5 class="modal-title fw-bold font-playfair mb-0" style="color: #4a3b32;">Thay đổi mật khẩu tài khoản điều hành</h5>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/librarian/profile/change-password}" method="post" class="m-0">
+                        <div class="modal-body p-4" style="background-color: #fdfbf7;">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>
+                                <input type="password" name="oldPassword" class="form-control form-control-classic py-2" placeholder="Nhập mật khẩu hiện tại" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Mật khẩu mới</label>
+                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" placeholder="Tối thiểu 6 ký tự" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" placeholder="Xác nhận lại mật khẩu mới" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 p-3" style="background-color: #fdfbf7;">
+                            <button type="button" class="btn btn-sm fw-bold px-3 py-2" style="background-color: #e2e8f0; color: #4a3b32; border-radius: 6px;" data-bs-dismiss="modal">Hủy bỏ</button>
+                            <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm">Cập nhật mật khẩu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 

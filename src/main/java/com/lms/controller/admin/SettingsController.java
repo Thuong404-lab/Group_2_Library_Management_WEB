@@ -1,33 +1,86 @@
 package com.lms.controller.admin;
 
+import com.lms.service.SystemService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SettingsController - Cấu hình Hệ thống
  * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
  */
+
 @Controller
 @RequestMapping("/admin/settings")
 public class SettingsController {
 
-    // UC-21.1: Manage Borrowing/Return Policies
+    private final SystemService systemService;
+
+    public SettingsController(SystemService systemService) {
+        this.systemService = systemService;
+    }
+
+    // UC-22.1: Manage Borrowing and Return Policies
     @GetMapping
     public String showSettings(Model model) {
-        // TODO: Implement - Hiển thị trang cấu hình chính sách
-        // TODO: Lấy các SystemSettings hiện tại từ DB
+        model.addAttribute("settingMap", systemService.getSettingMap());
+        model.addAttribute("membershipTiers", systemService.getMembershipTiers());
         return "admin/settings";
     }
 
     @PostMapping("/policies")
     public String updateBorrowingPolicies(@RequestParam Integer maxBorrowDays,
-                                           @RequestParam Integer maxRenewals,
-                                           @RequestParam Integer maxBooksPerMember,
-                                           @RequestParam Double borrowFeePerBook,
-                                           Model model) {
-        // TODO: Implement - Cập nhật SystemSettings
-        // TODO: Ghi log thay đổi vào SystemLogs
-        return "redirect:/admin/settings?updated";
+            @RequestParam Integer maxRenewalDays,
+            @RequestParam List<Integer> tierIds,
+            @RequestParam List<Integer> tierBorrowLimits,
+            @RequestParam List<BigDecimal> tierSpendingConditions,
+            @RequestParam BigDecimal borrowFeePerBook,
+            @RequestParam BigDecimal finePerDay,
+            @RequestParam BigDecimal damageCompensationAmount,
+            @RequestParam Integer damageCompensationThreshold,
+            @RequestParam Integer overdueViolationLockLimit,
+            @RequestParam Integer bookDisposalConditionThreshold,
+            @RequestParam BigDecimal depositAmount,
+            RedirectAttributes redirectAttributes) {
+        try {
+            if (tierIds.size() != tierBorrowLimits.size()
+                    || tierIds.size() != tierSpendingConditions.size()) {
+                throw new IllegalArgumentException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
+            }
+
+            Map<Integer, Integer> borrowLimitsByTier = new LinkedHashMap<>();
+            Map<Integer, BigDecimal> spendingConditionsByTier = new LinkedHashMap<>();
+            for (int i = 0; i < tierIds.size(); i++) {
+                borrowLimitsByTier.put(tierIds.get(i), tierBorrowLimits.get(i));
+                spendingConditionsByTier.put(tierIds.get(i), tierSpendingConditions.get(i));
+            }
+
+            systemService.updateBorrowingPolicies(
+                    maxBorrowDays,
+                    maxRenewalDays,
+                    borrowLimitsByTier,
+                    spendingConditionsByTier,
+                    borrowFeePerBook,
+                    finePerDay,
+                    damageCompensationAmount,
+                    damageCompensationThreshold,
+                    overdueViolationLockLimit,
+                    bookDisposalConditionThreshold,
+                    depositAmount);
+
+            redirectAttributes.addFlashAttribute("success", "Cập nhật cấu hình thành công.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Cập nhật cấu hình thất bại.");
+        }
+
+        return "redirect:/admin/settings";
     }
 }

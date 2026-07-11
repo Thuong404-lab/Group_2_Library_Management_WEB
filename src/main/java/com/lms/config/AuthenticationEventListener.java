@@ -28,8 +28,7 @@ public class AuthenticationEventListener {
                 HttpServletRequest request = attributes.getRequest();
                 String ipAddress = request.getRemoteAddr();
                 String userAgent = request.getHeader("User-Agent");
-                String sessionId = request.getSession().getId();
-                authService.logLoginAction(userId, ipAddress, userAgent, sessionId);
+                authService.logLoginAction(userId, ipAddress, userAgent);
             }
         }
     }
@@ -46,8 +45,7 @@ public class AuthenticationEventListener {
                 HttpServletRequest request = attributes.getRequest();
                 String ipAddress = request.getRemoteAddr();
                 String userAgent = request.getHeader("User-Agent");
-                String sessionId = request.getSession().getId();
-                authService.logLogoutAction(userId, ipAddress, userAgent, sessionId);
+                authService.logLogoutAction(userId, ipAddress, userAgent);
             }
         }
     }

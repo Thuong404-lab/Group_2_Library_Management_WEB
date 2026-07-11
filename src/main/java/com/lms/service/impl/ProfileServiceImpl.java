@@ -8,6 +8,7 @@ import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.service.FileUploadService;
 import com.lms.service.ProfileService;
+import com.lms.exception.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ public class ProfileServiceImpl implements ProfileService {
         if (staffAccount.isPresent()) {
             return staffAccount.get().getStaff().getUser();
         }
-        throw new RuntimeException("Account not found for: " + username);
+        throw new ResourceNotFoundException("Account not found for: " + username);
     }
 
     @Override
@@ -60,22 +61,10 @@ public class ProfileServiceImpl implements ProfileService {
         if (fullName == null || fullName.trim().isEmpty()) {
             throw new IllegalArgumentException("Họ và tên không được để trống!");
         }
-
-        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new IllegalArgumentException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
-        }
-
-        if (phone != null && !phone.isEmpty() && !phone.matches("^(0|\\+84)[0-9]{9}$")) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
-        }
-
-        if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
-            throw new IllegalArgumentException("Email đã được sử dụng bởi người dùng khác!");
-        }
-
         user.setFullName(fullName);
-        user.setEmail(email);
-        user.setPhone(phone);
+
+        validateAndSetEmail(user, email);
+        validateAndSetPhone(user, phone);
         
         if (avatarFile != null && !avatarFile.isEmpty()) {
             String avatarUrl = fileUploadService.storeFile(avatarFile);
@@ -85,17 +74,48 @@ public class ProfileServiceImpl implements ProfileService {
         userRepository.save(user);
     }
 
+    private void validateAndSetEmail(User user, String email) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email không được để trống!");
+        }
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new IllegalArgumentException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
+        }
+        if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
+            throw new IllegalArgumentException("Email đã được sử dụng bởi người dùng khác!");
+        }
+        user.setEmail(email);
+    }
+
+    private void validateAndSetPhone(User user, String phone) {
+        if (phone != null && !phone.trim().isEmpty()) {
+            if (!phone.matches("^(0|\\+84)\\d{9}$")) {
+                throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
+            }
+            if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
+                throw new IllegalArgumentException("Số điện thoại đã được sử dụng bởi người dùng khác!");
+            }
+            user.setPhone(phone);
+        } else if (phone != null) {
+            user.setPhone("");
+        }
+    }
+
     @Override
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 6 ký tự!");
+        }
+        
         Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
         if (memberAccount.isPresent()) {
             MemberAccount account = memberAccount.get();
             if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new IllegalArgumentException("Incorrect old password");
+                throw new IllegalArgumentException("Mật khẩu cũ không chính xác!");
             }
             if (oldPassword.equals(newPassword)) {
-                throw new IllegalArgumentException("New password cannot be identical to the old one");
+                throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu cũ!");
             }
             account.setPasswordHash(passwordEncoder.encode(newPassword));
             memberAccountRepository.save(account);
@@ -106,16 +126,16 @@ public class ProfileServiceImpl implements ProfileService {
         if (staffAccount.isPresent()) {
             StaffAccount account = staffAccount.get();
             if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new IllegalArgumentException("Incorrect old password");
+                throw new IllegalArgumentException("Mật khẩu cũ không chính xác!");
             }
             if (oldPassword.equals(newPassword)) {
-                throw new IllegalArgumentException("New password cannot be identical to the old one");
+                throw new IllegalArgumentException("Mật khẩu mới không được trùng với mật khẩu cũ!");
             }
             account.setPasswordHash(passwordEncoder.encode(newPassword));
             staffAccountRepository.save(account);
             return;
         }
 
-        throw new RuntimeException("Account not found");
+        throw new ResourceNotFoundException("Không tìm thấy tài khoản!");
     }
 }

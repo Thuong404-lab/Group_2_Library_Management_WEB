@@ -123,7 +123,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="favorite : ${favorites}">
+                        <tr th:each="favorite : ${favorites.content}">
                             <td class="ps-3 py-3">
                                 <div class="d-flex align-items-center">
                                     <img th:src="@{'https://picsum.photos/seed/' + ${favorite.book.bookId} + '/100/150'}"
@@ -185,7 +185,7 @@
                             </td>
                         </tr>
 
-                        <tr th:if="${favorites == null || favorites.isEmpty()}">
+                        <tr th:if="${favorites == null || favorites.totalElements == 0}">
                             <td colspan="4" class="text-center text-muted py-5">
                                 <i class="bi bi-heart fs-2 d-block mb-2" style="color:#8b5a2b;"></i>
                                 Bạn chưa có sách yêu thích nào.
@@ -194,6 +194,27 @@
                         </tbody>
                     </table>
                 </div>
+                <nav th:if="${favorites != null && favorites.totalPages > 1}" class="mt-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item" th:classappend="${favorites.first} ? 'disabled'">
+                            <a class="page-link" th:href="@{/member/favorites(page=${favorites.number - 1})}">
+                                Trước
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Trang <span th:text="${favorites.number + 1}">1</span>
+                                /
+                                <span th:text="${favorites.totalPages}">1</span>
+                            </span>
+                        </li>
+                        <li class="page-item" th:classappend="${favorites.last} ? 'disabled'">
+                            <a class="page-link" th:href="@{/member/favorites(page=${favorites.number + 1})}">
+                                Sau
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>

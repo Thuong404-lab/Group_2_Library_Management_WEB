@@ -27,10 +27,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
+
+    private static final int DASHBOARD_PAGE_SIZE = 5;
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -74,12 +77,25 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getDashboardData(int bookPage) {
+    public Map<String, Object> getDashboardData() {
+        return getDashboardData(0, 0, 0);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int reviewPage, int requestPage) {
+        return getDashboardData(0, reviewPage, requestPage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int bookPage, int reviewPage, int requestPage) {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        data.put("pendingReservations", reservationRepository.countByStatusIgnoreCase("Pending"));
+        data.put("pendingReservations",
+                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
@@ -90,11 +106,11 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
                         "Borrowed", now, now.plusDays(7)));
         data.put("reviews", interactionService.getReviewsForModeration(
-                null, PageRequest.of(0, 20, Sort.by("createdDate").descending())));
+                null, PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
-                PageRequest.of(0, 20, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
         data.put("shelves", storageService.getAllStorageLocations());
         data.put("books", bookRepository.findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").descending())));
         data.put("categories", categoryRepository.findAll());

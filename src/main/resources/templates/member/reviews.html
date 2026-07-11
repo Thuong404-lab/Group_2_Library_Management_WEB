@@ -23,98 +23,51 @@
       .review-card:hover {
         box-shadow: 0 4px 16px rgba(139, 90, 43, 0.12) !important;
       }
-      .star-option {
-        color: #ffc107;
-        letter-spacing: 1px;
-      }
-      .rating-picker {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-      }
-      .rating-star {
-        width: 2.4rem;
-        height: 2.4rem;
-        border: 0;
-        background: transparent;
-        color: #adb5bd;
-        cursor: pointer;
-        font-size: 1.85rem;
-        line-height: 1;
-        padding: 0;
-        transition:
-          color 0.15s ease,
-          transform 0.15s ease;
-      }
-      .rating-star:hover,
-      .rating-star.active {
-        color: #ffc107;
-      }
-      .rating-star:hover {
-        transform: translateY(-1px) scale(1.08);
-      }
-      .rating-star:focus,
-      .rating-star:focus-visible {
-        outline: none;
-        box-shadow: none;
-      }
-      .book-option {
-        transition:
-          background-color 0.15s ease,
-          font-weight 0.15s ease;
-      }
-      .rating-picker.is-invalid .rating-star {
-        color: #dc3545;
-      }
-      .validate-field.is-invalid {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-        background-image: none !important;
-      }
-      .book-option:hover {
-        background-color: rgba(139, 90, 43, 0.08);
-        font-weight: 600;
-      }
       .sent-review-card {
         background: #fffdfa;
         border: 1px solid rgba(139, 90, 43, 0.14);
         border-left: 4px solid #8b5a2b;
         border-radius: 8px;
         box-shadow: 0 4px 14px rgba(74, 59, 50, 0.07) !important;
-        transition:
-          box-shadow 0.2s ease,
-          transform 0.2s ease;
       }
-      .sent-review-card:hover {
-        box-shadow: 0 10px 24px rgba(74, 59, 50, 0.12) !important;
-        transform: translateY(-1px);
+      .review-table thead th {
+        background: #fdfbf7;
+        color: #4a3b32;
+        border-bottom: 1px solid rgba(139, 90, 43, 0.18);
+        font-weight: 700;
       }
-      .sent-review-cover {
-        width: 60px;
-        height: 84px;
+      .review-table tbody td {
+        border-color: rgba(139, 90, 43, 0.1);
+      }
+      .review-table .review-main-row td {
+        border-bottom: 0;
+      }
+      .review-table .review-detail-row td {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .review-cover {
+        width: 56px;
+        height: 78px;
         object-fit: cover;
         border-radius: 6px;
         border: 1px solid rgba(139, 90, 43, 0.12);
+        margin-right: 1.5rem;
       }
       .sent-review-title {
         color: #2c1e16;
         font-family: 'Playfair Display', serif;
       }
+      .genre-badge {
+        background: #eee4d6;
+        color: #5f4736;
+        border: 1px solid rgba(139, 90, 43, 0.15);
+        font-weight: 600;
+      }
       .sent-review-rating {
         color: #c8942d;
         font-weight: 700;
         letter-spacing: 1px;
-      }
-      .sent-review-status {
-        background: #edf5ed;
-        color: #3f6f45;
-        border: 1px solid rgba(63, 111, 69, 0.22);
-        font-weight: 700;
-      }
-      .sent-review-status.pending {
-        background: #f5eadf;
-        color: #8b5a2b;
-        border-color: rgba(139, 90, 43, 0.2);
       }
       .sent-review-comment {
         background: #fbf6ee;
@@ -141,6 +94,15 @@
         border-color: #74481f;
         color: #fff;
       }
+      .review-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+      .review-actions .btn {
+        width: 110px;
+      }
     </style>
   </head>
 
@@ -157,7 +119,7 @@
             của tôi
           </h2>
           <div class="text-muted">
-            <span th:text="${myReviews != null ? myReviews.size() : 0}">0</span>
+            <span th:text="${myReviews != null ? myReviews.totalElements : 0}">0</span>
             đánh giá bạn đã gửi
           </div>
         </div>
@@ -170,151 +132,6 @@
       ></div>
       <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-      <div class="bg-white rounded shadow-sm p-4 mb-5 review-card">
-        <h5 class="fw-bold mb-4" style="color: #4a3b32">
-          <i class="bi bi-pencil-square me-2" style="color: #8b5a2b"></i>Gửi
-          đánh giá sách
-        </h5>
-
-        <form
-          th:action="@{/member/interaction/reviews}"
-          th:object="${reviewRequest}"
-          method="post"
-          id="memberReviewForm"
-          novalidate
-        >
-          <div class="mb-3">
-            <label class="form-label fw-bold">Sách</label>
-            <input
-              type="text"
-              id="bookSearchInput"
-              class="form-control validate-field"
-              th:classappend="${#fields.hasErrors('bookId')} ? 'is-invalid'"
-              placeholder="Nhập tên sách để tìm..."
-              autocomplete="off"
-            />
-
-            <input type="hidden" th:field="*{bookId}" id="selectedBookId" />
-
-            <div
-              id="bookList"
-              class="border rounded mt-2 bg-white"
-              style="max-height: 220px; overflow-y: auto"
-            >
-              <div
-                th:each="book : ${books}"
-                class="book-option px-3 py-2"
-                style="cursor: pointer"
-                th:data-id="${book.bookId}"
-                th:data-title="${book.title}"
-                th:text="${book.title}"
-              >
-                Tên sách
-              </div>
-            </div>
-            <div
-              id="bookIdFeedback"
-              class="invalid-feedback d-block"
-              th:if="${#fields.hasErrors('bookId')}"
-              th:errors="*{bookId}"
-            ></div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Số sao</label>
-            <input type="hidden" th:field="*{rating}" id="ratingValue" />
-            <div class="d-flex align-items-center flex-wrap gap-2">
-              <div
-                class="rating-picker"
-                id="memberRatingPicker"
-                role="radiogroup"
-                aria-label="Chon so sao"
-              >
-                <button
-                  type="button"
-                  class="rating-star"
-                  data-value="1"
-                  role="radio"
-                  aria-label="1 sao"
-                  aria-checked="false"
-                >
-                  <i class="bi bi-star-fill"></i>
-                </button>
-                <button
-                  type="button"
-                  class="rating-star"
-                  data-value="2"
-                  role="radio"
-                  aria-label="2 sao"
-                  aria-checked="false"
-                >
-                  <i class="bi bi-star-fill"></i>
-                </button>
-                <button
-                  type="button"
-                  class="rating-star"
-                  data-value="3"
-                  role="radio"
-                  aria-label="3 sao"
-                  aria-checked="false"
-                >
-                  <i class="bi bi-star-fill"></i>
-                </button>
-                <button
-                  type="button"
-                  class="rating-star"
-                  data-value="4"
-                  role="radio"
-                  aria-label="4 sao"
-                  aria-checked="false"
-                >
-                  <i class="bi bi-star-fill"></i>
-                </button>
-                <button
-                  type="button"
-                  class="rating-star"
-                  data-value="5"
-                  role="radio"
-                  aria-label="5 sao"
-                  aria-checked="false"
-                >
-                  <i class="bi bi-star-fill"></i>
-                </button>
-              </div>
-            </div>
-            <div
-              id="ratingFeedback"
-              class="invalid-feedback d-block"
-              th:text="${#fields.hasErrors('rating') ? #fields.errors('rating')[0] : ''}"
-            ></div>
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label fw-bold">Bình luận</label>
-            <textarea
-              class="form-control"
-              rows="5"
-              th:field="*{comment}"
-              maxlength="1000"
-              placeholder="Nhập nội dung đánh giá"
-            ></textarea>
-            <div
-              class="text-danger small mt-1"
-              th:if="${#fields.hasErrors('comment')}"
-              th:errors="*{comment}"
-            ></div>
-          </div>
-
-          <button
-            type="submit"
-            class="btn text-white px-4"
-            style="background: #8b5a2b"
-          >
-            Gửi đánh giá
-          </button>
-        </form>
-      </div>
-
       <div class="mb-3">
         <h5 class="fw-bold" style="color: #4a3b32">
           <i class="bi bi-list-stars me-2" style="color: #8b5a2b"></i>Đánh giá
@@ -322,235 +139,143 @@
         </h5>
       </div>
 
-      <div
-        th:if="${myReviews == null || myReviews.isEmpty()}"
-        class="bg-white rounded shadow-sm p-4 text-center text-muted"
-      >
-        Bạn chưa gửi đánh giá nào.
-      </div>
+      <div class="card sent-review-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="table-responsive">
+            <table class="table review-table align-middle">
+              <thead>
+                <tr>
+                  <th class="ps-3 py-3" style="width: 42%;">Tên sách</th>
+                  <th class="py-3" style="width: 24%;">Tác giả</th>
+                  <th class="py-3" style="width: 14%;">Đánh giá</th>
+                  <th class="text-end pe-3 py-3" style="width: 20%;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${myReviews == null || myReviews.totalElements == 0}">
+                  <td colspan="4" class="text-center text-muted py-5">
+                    <i class="bi bi-list-stars fs-2 d-block mb-2" style="color:#8b5a2b;"></i>
+                    Bạn chưa gửi đánh giá nào.
+                  </td>
+                </tr>
 
-      <div
-        th:each="review : ${myReviews}"
-        class="p-4 mb-4 sent-review-card"
-      >
-        <div class="d-flex justify-content-between align-items-start mb-3">
-          <div class="d-flex align-items-center gap-3">
-            <img
-              th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
-              class="sent-review-cover shadow-sm"
-              alt="Book"
-            />
-            <div>
-              <div class="fw-bold fs-5 sent-review-title" th:text="${review.book.title}">
-                Tên sách
-              </div>
-              <div class="small text-muted">
-                <span
-                  th:if="${review.book.authors != null && !review.book.authors.isEmpty()}"
-                  th:text="${review.book.authors.iterator().next().authorName}"
-                >
-                  Tác giả
+                <th:block th:each="review : ${myReviews.content}">
+                  <tr class="review-main-row">
+                    <td class="ps-3 py-3">
+                      <div class="d-flex align-items-center">
+                        <img
+                          th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
+                          class="review-cover shadow-sm"
+                          alt="Book"
+                        />
+                        <div>
+                          <h6 class="mb-2 fw-bold sent-review-title" th:text="${review.book.title}">
+                            Tên sách
+                          </h6>
+                          <span
+                            class="badge genre-badge"
+                            th:text="${review.book.genre != null ? review.book.genre.genreName : 'Chưa phân loại'}"
+                          >
+                            Thể loại
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span
+                        th:if="${review.book.authors != null && !review.book.authors.isEmpty()}"
+                        th:text="${review.book.authors.iterator().next().authorName}"
+                      >
+                        Tác giả
+                      </span>
+                      <span th:unless="${review.book.authors != null && !review.book.authors.isEmpty()}">
+                        Chưa rõ
+                      </span>
+                    </td>
+
+                    <td>
+                      <div class="sent-review-rating mb-1">
+                        <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
+                        <span class="text-muted small" th:text="${review.rating + '/5'}">5/5</span>
+                      </div>
+                      <div
+                        class="small text-muted"
+                        th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}"
+                      >
+                        Ngày
+                      </div>
+                    </td>
+
+                    <td class="text-end pe-3">
+                      <div class="review-actions">
+                        <a
+                          th:href="@{'/books/' + ${review.book.bookId}}"
+                          class="btn btn-sm btn-review-classic"
+                        >
+                          Xem sách
+                        </a>
+                        <form
+                          th:action="@{'/member/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                          method="post"
+                          class="m-0"
+                        >
+                          <button type="submit" class="btn btn-sm btn-outline-danger">
+                            Xóa
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="review-detail-row">
+                    <td colspan="4" class="ps-3 pe-3 pb-4">
+                      <div
+                        class="p-3 rounded mb-3 lh-lg sent-review-comment"
+                        th:text="${review.comment}"
+                      >
+                        Nội dung đánh giá
+                      </div>
+
+                      <div
+                        class="p-3 rounded librarian-response-box"
+                        th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
+                      >
+                        <div class="fw-bold mb-1 librarian-response-title">
+                          Phản hồi của thủ thư
+                        </div>
+                        <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
+                      </div>
+                    </td>
+                  </tr>
+                </th:block>
+              </tbody>
+            </table>
+          </div>
+          <nav th:if="${myReviews != null && myReviews.totalPages > 1}" class="mt-3">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}">
+                  Trước
+                </a>
+              </li>
+              <li class="page-item disabled">
+                <span class="page-link">
+                  Trang <span th:text="${myReviews.number + 1}">1</span>
+                  /
+                  <span th:text="${myReviews.totalPages}">1</span>
                 </span>
-                <span
-                  th:unless="${review.book.authors != null && !review.book.authors.isEmpty()}"
-                  >Chưa rõ tác giả</span
-                >
-              </div>
-            </div>
-          </div>
-          <div class="text-end">
-            <div class="sent-review-rating fs-5 mb-1">
-              <span th:each="i : ${#numbers.sequence(1, review.rating)}"
-                >★</span
-              >
-              <span class="text-muted small" th:text="${review.rating + '/5'}"
-                >5/5</span
-              >
-            </div>
-            <div
-              class="small text-muted"
-              th:text="${review.createdDate != null ? 'Đánh giá ngày ' + #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}"
-            >
-              Đánh giá ngày
-            </div>
-            <span
-              class="badge sent-review-status mt-2"
-              th:if="${review.status == 'APPROVED'}"
-              >Đã duyệt</span
-            >
-            <span
-              class="badge sent-review-status pending mt-2"
-              th:if="${review.status == 'PENDING'}"
-              >Chờ duyệt</span
-            >
-          </div>
+              </li>
+              <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}">
+                  Sau
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
-
-        <div
-          class="p-3 rounded mb-3 lh-lg sent-review-comment"
-          th:text="${review.comment}"
-        >
-          Nội dung đánh giá
-        </div>
-
-        <div
-          class="p-3 rounded mb-3 librarian-response-box"
-          th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
-        >
-          <div class="fw-bold mb-1 librarian-response-title">
-            Phản hồi của thủ thư
-          </div>
-          <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
-        </div>
-
-        <a
-          th:href="@{'/books/' + ${review.book.bookId}}"
-          class="btn btn-sm btn-review-classic"
-        >
-          Xem sách
-        </a>
       </div>
 
-      <script>
-        const bookSearchInput = document.getElementById("bookSearchInput");
-        const bookList = document.getElementById("bookList");
-        const selectedBookId = document.getElementById("selectedBookId");
-
-
-        function setBookError(message) {
-          bookSearchInput.classList.add("is-invalid");
-          let feedback = document.getElementById("bookIdFeedback");
-
-          if (feedback == null) {
-            feedback = document.createElement("div");
-            feedback.id = "bookIdFeedback";
-            feedback.className = "invalid-feedback d-block";
-            selectedBookId.insertAdjacentElement("afterend", feedback);
-          }
-
-          feedback.textContent = message;
-        }
-
-        function clearBookError() {
-          bookSearchInput.classList.remove("is-invalid");
-          const feedback = document.getElementById("bookIdFeedback");
-
-          if (feedback != null) {
-            feedback.textContent = "";
-          }
-        }
-        const originalBookOptions = Array.from(
-          document.querySelectorAll(".book-option"),
-        );
-
-        bookSearchInput.addEventListener("input", function () {
-          const keyword = this.value.trim().toLowerCase();
-          selectedBookId.value = "";
-          clearBookError();
-
-          bookList.innerHTML = "";
-
-          const matchedBooks = originalBookOptions.filter((option) =>
-            option.dataset.title.toLowerCase().includes(keyword),
-          );
-
-          const booksToShow =
-            keyword === "" ? originalBookOptions : matchedBooks;
-
-          booksToShow.forEach((option) => {
-            bookList.appendChild(option);
-            option.style.display = "block";
-          });
-        });
-
-        originalBookOptions.forEach((option) => {
-          option.addEventListener("click", function () {
-            bookSearchInput.value = this.dataset.title;
-            selectedBookId.value = this.dataset.id;
-            clearBookError();
-          });
-        });
-
-        const ratingPicker = document.getElementById("memberRatingPicker");
-        const ratingStars = Array.from(
-          document.querySelectorAll("#memberRatingPicker .rating-star"),
-        );
-        const ratingInput = document.getElementById("ratingValue");
-
-        function updateRatingStars(value) {
-          ratingStars.forEach((star) => {
-            const starValue = Number(star.dataset.value);
-            const isActive = starValue <= value;
-            star.classList.toggle("active", isActive);
-            star.setAttribute("aria-checked", String(starValue === value));
-          });
-        }
-
-        function setRatingError(message) {
-          ratingPicker.classList.add("is-invalid");
-          const feedback = document.getElementById("ratingFeedback");
-
-          if (feedback != null) {
-            feedback.textContent = message;
-          }
-        }
-
-        function clearRatingError() {
-          ratingPicker.classList.remove("is-invalid");
-          const feedback = document.getElementById("ratingFeedback");
-
-          if (feedback != null) {
-            feedback.textContent = "";
-          }
-        }
-
-        function setRating(value) {
-          ratingInput.value = value || "";
-          updateRatingStars(value);
-          clearRatingError();
-        }
-
-        ratingStars.forEach((star) => {
-          star.addEventListener("click", function () {
-            setRating(Number(this.dataset.value));
-          });
-
-          star.addEventListener("mouseenter", function () {
-            updateRatingStars(Number(this.dataset.value));
-          });
-        });
-
-        ratingPicker.addEventListener("mouseleave", function () {
-          updateRatingStars(Number(ratingInput.value) || 0);
-        });
-
-        setRating(Number(ratingInput.value) || 0);
-        const reviewForm = document.getElementById("memberReviewForm");
-
-        if (reviewForm != null) {
-          reviewForm.addEventListener("submit", function (event) {
-            let isValid = true;
-
-            clearBookError();
-            clearRatingError();
-
-            if (selectedBookId.value.trim() === "") {
-              setBookError("Vui lòng chọn sách.");
-              isValid = false;
-            }
-
-            if (ratingInput.value.trim() === "") {
-              setRatingError("Vui lòng chọn đánh giá sao.");
-              isValid = false;
-            }
-
-            if (!isValid) {
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          });
-        }
-      </script>
     </div>
   </body>
 </html>

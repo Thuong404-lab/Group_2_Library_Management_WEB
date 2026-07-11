@@ -67,6 +67,13 @@
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
             background-image: none !important;
         }
+
+        .validate-field.is-valid,
+        .validate-group.is-valid {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
+            background-image: none !important;
+        }
     </style>
 </head>
 
@@ -86,8 +93,9 @@
                     <span th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">Quản lý kho sách</span>
                     <span th:if="${currentSection == 'books' && currentSubSection == 'storage'}">Quản lý kệ sách</span>
                     <span th:if="${currentSection == 'books' && (currentSubSection == '' || currentSubSection == null)}">Quản lý sách</span>
+                    <span th:if="${currentSection == 'reports'}">Thống kê</span>
                     <span
-                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users' || currentSection == 'books'}">Tổng
+                        th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users' || currentSection == 'books' || currentSection == 'reports'}">Tổng
                         quan</span>
                 </h2>
                 <div class="text-muted" th:if="${currentSection == 'notifications'}">
@@ -99,8 +107,11 @@
                 <div class="text-muted" th:if="${currentSection == 'acquisition'}">
                     Xem danh sách sách do độc giả đề xuất.
                 </div>
+                <div class="text-muted" th:if="${currentSection == 'reports'}">
+                    Theo dõi nhanh các chỉ số mượn trả và doanh thu.
+                </div>
                 <div class="text-muted"
-                    th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition'}">
+                    th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports'}">
                     Cập nhật:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
@@ -300,7 +311,7 @@
                         </div>
                         <div class="card-footer bg-white border-top text-center p-3 border-color"
                             th:if="${!#lists.isEmpty(recentBorrows)}">
-                            <a th:href="@{/admin/reports}" class="text-decoration-none fw-bold text-classic">Xem tất cả
+                            <a th:href="@{/librarian/reports}" class="text-decoration-none fw-bold text-classic">Xem tất cả
                                 hoạt động <i class="bi bi-arrow-right"></i></a>
                         </div>
                     </div>
@@ -439,12 +450,14 @@
                                             class="fw-semibold" th:text="${review.librarianResponse}">
                                             Phản hồi
                                         </div>
-                                        <span
-                                            th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
+                                        <span th:if="${review.status == 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
+                                            class="text-muted">Member đã xoá</span>
+                                        <span th:if="${review.status != 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
                                             class="text-muted">Chưa phản hồi</span>
                                     </td>
                                     <td class="pe-3 table-fixed-action">
                                         <form
+                                            th:if="${review.status != 'DELETED_BY_MEMBER'}"
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                                             method="post" class="review-reply-box mb-2" novalidate>
                                             <input type="hidden" th:if="${_csrf != null}"
@@ -461,6 +474,10 @@
                                                 Phản hồi
                                             </button>
                                         </form>
+                                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                                            class="text-muted small mb-2">
+                                            Member đã xoá đánh giá này, không thể phản hồi.
+                                        </div>
 
                                         <form
                                             th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
@@ -486,6 +503,29 @@
                             </tbody>
                         </table>
                     </div>
+                    <nav th:if="${reviews != null && reviews.totalPages > 1}" class="mt-3">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number - 1},requestPage=${requests != null ? requests.number : 0})}">
+                                    Trước
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Trang <span th:text="${reviews.number + 1}">1</span>
+                                    /
+                                    <span th:text="${reviews.totalPages}">1</span>
+                                </span>
+                            </li>
+                            <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number + 1},requestPage=${requests != null ? requests.number : 0})}">
+                                    Sau
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </section>
@@ -507,7 +547,7 @@
                                 </tr>
                             </thead>
 
-                            <tbody th:if="${requests != null}">
+                            <tbody th:if="${requests != null && requests.totalElements > 0}">
                                 <tr th:each="request : ${requests.content}">
                                     <td class="ps-3 fw-bold" th:text="${request.requestId}">1</td>
                                     <td th:text="${request.title}">Tên sách</td>
@@ -531,6 +571,29 @@
                             </tbody>
                         </table>
                     </div>
+                    <nav th:if="${requests != null && requests.totalPages > 1}" class="mt-3">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.number - 1})}">
+                                    Trước
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Trang <span th:text="${requests.number + 1}">1</span>
+                                    /
+                                    <span th:text="${requests.totalPages}">1</span>
+                                </span>
+                            </li>
+                            <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
+                                <a class="page-link"
+                                    th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.number + 1})}">
+                                    Sau
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </section>
@@ -1496,6 +1559,7 @@
                     return;
                 }
 
+                element.classList.remove("is-valid");
                 element.classList.add("is-invalid");
                 const feedback = element.parentElement.querySelector(".invalid-feedback");
                 if (feedback != null) {
@@ -1508,7 +1572,20 @@
                     return;
                 }
 
+                element.classList.remove("is-invalid", "is-valid");
+                const feedback = element.parentElement.querySelector(".invalid-feedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function setInlineValid(element) {
+                if (element == null) {
+                    return;
+                }
+
                 element.classList.remove("is-invalid");
+                element.classList.add("is-valid");
                 const feedback = element.parentElement.querySelector(".invalid-feedback");
                 if (feedback != null) {
                     feedback.textContent = "";
@@ -1539,21 +1616,29 @@
                     && (recipientSelected == null || !recipientSelected.checked)) {
                     setInlineError(recipientTypeGroup, "Vui lòng chọn đối tượng nhận thông báo.");
                     isValid = false;
+                } else {
+                    setInlineValid(recipientTypeGroup);
                 }
 
                 if (recipientSelected != null && recipientSelected.checked && selectedMembers.length === 0) {
                     setInlineError(memberIdsGroup, "Vui lòng chọn ít nhất một Member.");
                     isValid = false;
+                } else if (recipientSelected != null && recipientSelected.checked) {
+                    setInlineValid(memberIdsGroup);
                 }
 
                 if (titleInput != null && titleInput.value.trim() === "") {
                     setInlineError(titleInput, "Tiêu đề không được để trống.");
                     isValid = false;
+                } else {
+                    setInlineValid(titleInput);
                 }
 
                 if (contentInput != null && contentInput.value.trim() === "") {
                     setInlineError(contentInput, "Nội dung không được để trống.");
                     isValid = false;
+                } else {
+                    setInlineValid(contentInput);
                 }
 
                 if (!isValid) {
@@ -1572,6 +1657,8 @@
                             setInlineError(response, "Nội dung phản hồi không được để trống.");
                             event.preventDefault();
                             event.stopPropagation();
+                        } else {
+                            setInlineValid(response);
                         }
                     });
                 });

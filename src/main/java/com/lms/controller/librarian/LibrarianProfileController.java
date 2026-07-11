@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.lms.config.CustomUserDetails;
 
 /**
  * LibrarianProfileController - Chỉ dành riêng cho vai trò LIBRARIAN
@@ -46,6 +49,19 @@ public class LibrarianProfileController {
         try {
             String currentUsername = principal.getName();
             profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+                CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+                User sessionUser = customUserDetails.getUser();
+                User updatedUser = profileService.getProfile(currentUsername);
+                
+                sessionUser.setFullName(updatedUser.getFullName());
+                sessionUser.setAvatar(updatedUser.getAvatar());
+                sessionUser.setEmail(updatedUser.getEmail());
+                sessionUser.setPhone(updatedUser.getPhone());
+            }
+
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());
@@ -56,16 +72,22 @@ public class LibrarianProfileController {
     @PostMapping("/change-password")
     public String changePassword(@RequestParam String oldPassword,
                                  @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+            return "redirect:/librarian/profile";
+        }
+
         try {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", "Password changed successfully!");
+            redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu thành công!");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("passwordError", "System error, please try again.");
+            redirectAttributes.addFlashAttribute("passwordError", "Có lỗi hệ thống xảy ra, vui lòng thử lại.");
         }
         return "redirect:/librarian/profile";
     }

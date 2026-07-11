@@ -71,7 +71,7 @@ public class DashboardController {
     public String viewDashboard(Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         long activeBorrows = borrowRepository.countByStatusIgnoreCase("Active");
-        long pendingReservations = reservationRepository.countByStatusIgnoreCase("Pending");
+        long pendingReservations = reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY"));
         long overdueDetails = borrowDetailRepository.countByStatusIgnoreCase("Overdue");
         long totalMembers = memberRepository.count();
         long totalBooks = bookRepository.countByStatusIgnoreCase("Active");

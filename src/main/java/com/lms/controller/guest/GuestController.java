@@ -7,14 +7,16 @@ import org.springframework.web.bind.annotation.*;
 import com.lms.service.BookService;
 import com.lms.repository.GenreRepository;
 import com.lms.service.MemberFavoriteService;
+import com.lms.service.MemberReviewService;
 
 import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.lms.entity.Book;
+import com.lms.entity.Feedback;
+import com.lms.dto.request.MemberReviewSubmitRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,11 +31,16 @@ public class GuestController {
     private final BookService bookService;
     private final GenreRepository genreRepository;
     private final MemberFavoriteService memberFavoriteService;
+    private final MemberReviewService memberReviewService;
 
-    public GuestController(BookService bookService, GenreRepository genreRepository, MemberFavoriteService memberFavoriteService) {
+    public GuestController(BookService bookService,
+                           GenreRepository genreRepository,
+                           MemberFavoriteService memberFavoriteService,
+                           MemberReviewService memberReviewService) {
         this.bookService = bookService;
         this.genreRepository = genreRepository;
         this.memberFavoriteService = memberFavoriteService;
+        this.memberReviewService = memberReviewService;
     }
 
     // Trang chủ
@@ -91,7 +98,23 @@ public class GuestController {
     @GetMapping("/books/{id}")
     public String viewBookDetail(@PathVariable Integer id, Model model, Principal principal) {
         Book book = bookService.findBookById(id);
+        List<Feedback> bookReviews = memberReviewService.getApprovedReviewsByBookId(id);
+        double averageRating = bookReviews.stream()
+                .map(Feedback::getRating)
+                .filter(rating -> rating != null)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+
         model.addAttribute("book", book);
+        model.addAttribute("bookReviews", bookReviews);
+        model.addAttribute("reviewCount", bookReviews.size());
+        model.addAttribute("averageRating", averageRating);
+        if (!model.containsAttribute("reviewRequest")) {
+            MemberReviewSubmitRequest reviewRequest = new MemberReviewSubmitRequest();
+            reviewRequest.setBookId(id);
+            model.addAttribute("reviewRequest", reviewRequest);
+        }
         addFavoriteBookIds(model, principal);
         return "guest/book-detail";
     }
@@ -135,7 +158,7 @@ public class GuestController {
             map.put("authorName", authorNames);
             map.put("thumbnailUrl", book.getCoverImageUrl() != null && !book.getCoverImageUrl().trim().isEmpty() ? book.getCoverImageUrl() : "https://picsum.photos/seed/" + book.getBookId() + "/600/800");
             return map;
-        }).collect(Collectors.toList());
+        }).toList();
         
         return org.springframework.http.ResponseEntity.ok(suggestions);
     }
