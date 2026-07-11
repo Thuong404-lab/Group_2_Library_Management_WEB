@@ -6,9 +6,11 @@ import java.util.Map;
 
 public interface LibrarianDashboardService {
 
-    Map<String, Object> getDashboardData(int bookPage);
+    Map<String, Object> getDashboardData();
 
     Map<String, Object> getDashboardData(int reviewPage, int requestPage);
+
+    Map<String, Object> getDashboardData(int bookPage, int reviewPage, int requestPage);
 
     LibrarianListViewData getLibrarianList(int page, String keyword);
 }
