@@ -18,4 +18,7 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
 
     List<BookItem> findByBook_BookId(Integer bookId);
+
+    Optional<BookItem> findFirstByBook_BookIdAndStatus(Integer bookId, String status);
+    
 }

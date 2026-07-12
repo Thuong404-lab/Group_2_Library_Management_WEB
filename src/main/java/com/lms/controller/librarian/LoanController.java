@@ -1,16 +1,16 @@
 package com.lms.controller.librarian;
 
+import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
+import com.lms.entity.Transaction;
 import com.lms.service.LoanService;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -23,83 +23,75 @@ public class LoanController {
         this.loanService = loanService;
     }
 
-    /**
-     * GET: /librarian/loan/returns
-     * Màn hình mặc định của Bàn Trả Sách - Tự động nạp danh sách sách đã được trả thành công hôm nay.
-     */
+    // 1. Mở trang Bàn trả sách
     @GetMapping("/returns")
-    public String showReturnDesk(Model model) {
-        model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
-        model.addAttribute("defaultReturnDate", LocalDate.now());
+    public String showReturnDesk() {
         return "librarian/return-desk";
     }
 
-    /**
-     * GET: /librarian/loan/returns/search
-     * Xử lý tìm kiếm lượt mượn hoạt động (Borrowed/Overdue/Return_Pending) của mã Barcode vừa quét.
-     */
+    // 2. Xử lý tìm kiếm (Đã thêm kiểm tra an toàn)
     @GetMapping("/returns/search")
-    public String searchActiveReturnLoans(@RequestParam("barcode") String barcode, Model model) {
-        String trimmedBarcode = (barcode != null) ? barcode.trim() : "";
+    public String searchActiveReturnLoans(@RequestParam(value = "barcode", required = false) String barcode, Model model) {
+        // Kiểm tra an toàn: Nếu barcode là null hoặc rỗng thì không tìm kiếm
+        if (barcode == null || barcode.trim().isEmpty()) {
+            model.addAttribute("searchResults", Collections.emptyList());
+            return "librarian/return-desk";
+        }
+
+        String trimmedBarcode = barcode.trim();
         List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedBarcode);
 
         model.addAttribute("searchResults", searchResults);
-        model.addAttribute("searchedBarcode", trimmedBarcode);
-        model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
-        model.addAttribute("defaultReturnDate", LocalDate.now());
+        model.addAttribute("barcode", trimmedBarcode); // Lưu lại barcode vào Model để hiển thị trong ô input
 
         if (searchResults.isEmpty()) {
-            model.addAttribute("errorMessage", "Không tìm thấy cuốn sách nào chưa trả ứng với mã vạch: " + trimmedBarcode);
-        } else {
-            model.addAttribute("successMessage", "Tìm thấy thông tin! Vui lòng nhấn nút xử lý để tiếp nhận thẩm định ngoại quan.");
+            model.addAttribute("errorMessage", "Không tìm thấy lượt mượn nào với mã vạch: " + trimmedBarcode);
         }
         return "librarian/return-desk";
     }
 
-    /**
-     * POST: /librarian/loan/returns/confirm
-     * Tiếp nhận dữ liệu từ Modal gửi lên: cập nhật ngày trả thực tế, tình trạng vật lý, ghi chú, tính phạt quá hạn.
-     */
-    @PostMapping("/returns/confirm")
-    public String confirmReturnBookWithDetails(@RequestParam("barcode") String barcode,
-                                               @RequestParam("returnDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate returnDate,
-                                               @RequestParam("conditionNote") String conditionNote,
-                                               @RequestParam(value = "conditionNoteAdditional", required = false) String conditionNoteAdditional,
-                                               Principal principal,
-                                               RedirectAttributes redirectAttributes) {
+    // 3. Xác nhận trả sách
+    @PostMapping("/returns/confirm/{id}")
+    public String confirmReturnBook(@PathVariable("id") Integer borrowDetailId,
+                                    @RequestParam("conditionNote") String conditionNote,
+                                    RedirectAttributes redirectAttributes) {
         try {
-            if (barcode == null || barcode.trim().isEmpty()) {
-                throw new IllegalArgumentException("Mã vạch cuốn sách hoàn trả không hợp lệ.");
-            }
-
-            String staffUsername = (principal != null) ? principal.getName() : "admin";
-
-            // Hợp nhất nội dung lựa chọn và ghi chú bổ sung của Thủ thư làm chuỗi lưu vết tình trạng sách
-            String fullConditionLog = conditionNote;
-            if (conditionNoteAdditional != null && !conditionNoteAdditional.trim().isEmpty()) {
-                fullConditionLog += " | Chi tiết: " + conditionNoteAdditional.trim();
-            }
-
-            // Chuyển LocalDate sang LocalDateTime (giữ nguyên giờ, phút, giây hiện hành của ngày làm việc)
-            LocalDateTime actualReturnDateTime = returnDate.atTime(LocalDateTime.now().toLocalTime());
-
-            // Thực thi nghiệp vụ lõi trong LoanService
-            loanService.confirmReturnWithDetails(barcode.trim(), actualReturnDateTime, fullConditionLog, staffUsername);
-
-            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận nhận sách trả và cập nhật kho thành công!");
+            loanService.confirmBookReturn(borrowDetailId, conditionNote);
+            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận nhận trả sách thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Xử lý trả sách thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
         return "redirect:/librarian/loan/returns";
     }
 
-    /**
-     * GET: /librarian/loan/borrow-schedule
-     * Tích hợp điều hướng tab xem danh sách lịch mượn trả chi tiết.
-     */
     @GetMapping("/borrow-schedule")
-    public String showBorrowSchedule(Model model) {
-        model.addAttribute("details", loanService.getAllBorrowDetails());
-        return "librarian/borrow-schedule";
+    public String viewBorrowSchedule(
+            @RequestParam(required = false) String borrowDate,
+            @RequestParam(required = false) String returnDate,
+            @RequestParam(required = false) String keyword,
+            Model model) {
+
+        // Gọi service để lấy danh sách chi tiết (Bạn cần đảm bảo hàm này tồn tại trong LoanService)
+        List<BorrowDetail> details = loanService.getBorrowSchedule(borrowDate, returnDate, keyword);
+        model.addAttribute("details", details);
+
+        return "librarian/borrow-schedule"; // Tên file .html của bạn
     }
+
+    // 4. Xem chi tiết phiếu mượn
+    @GetMapping("/{id}")
+    public String showLoanDetail(@PathVariable("id") Integer borrowId, Model model) {
+        try {
+            Borrow borrow = loanService.getLoanDetails(borrowId);
+            model.addAttribute("borrow", borrow);
+            model.addAttribute("details", loanService.getBorrowDetailsByBorrowId(borrowId));
+            model.addAttribute("transactions", loanService.getTransactionsByBorrowId(borrowId));
+            return "librarian/loan-detail";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể hiển thị chi tiết: " + e.getMessage());
+            return "redirect:/librarian/borrow/list";
+        }
+    }
+    // Đảm bảo URL này khớp với th:href trong file HTML của bạn
+
 }

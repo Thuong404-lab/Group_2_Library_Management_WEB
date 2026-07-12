@@ -535,7 +535,55 @@ public class LoanServiceImpl implements LoanService {
             MemberNotification mn = new MemberNotification();
             mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
             mn.setMember(member);
+            mn.setNotification(saved);
+            mn.setIsRead(false);
             memberNotificationRepository.save(mn);
         } catch (Exception ignored) { /* Ignored by design */ }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmBookReturn(Integer borrowDetailId, String conditionNote) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn"));
+
+        // Lấy barcode an toàn từ detail
+        BookItem item = detail.getBookItem();
+        if (item == null) {
+            throw new IllegalArgumentException("Lượt mượn này không liên kết với cuốn sách vật lý nào!");
+        }
+        String barcode = item.getBarcode();
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Sách vật lý liên kết không có mã vạch hợp lệ!");
+        }
+        confirmReturnWithDetails(barcode, LocalDateTime.now(), conditionNote, "admin");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId) {
+        return borrowDetailRepository.findByBorrowId(borrowId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Transaction> getTransactionsByBorrowId(Integer borrowId) {
+        return transactionRepository.findByBorrow_BorrowId(borrowId);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getBorrowSchedule(String borrowDate, String returnDate, String keyword) {
+        // Nếu bạn có repository riêng để lọc thì dùng, nếu không dùng cách lọc qua list tất cả
+        List<BorrowDetail> all = borrowDetailRepository.findAll();
+
+        // Ví dụ lọc đơn giản (bạn có thể thay thế bằng query JPA tối ưu hơn sau)
+        return all.stream().filter(d -> {
+            boolean match = true;
+            if (keyword != null && !keyword.isEmpty()) {
+                match = (d.getBook() != null && d.getBook().getTitle().toLowerCase().contains(keyword.toLowerCase()))
+                        || (d.getBookItem() != null && d.getBookItem().getBarcode().contains(keyword));
+            }
+            return match;
+        }).toList();
     }
 }

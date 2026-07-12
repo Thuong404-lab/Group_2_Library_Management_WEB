@@ -36,4 +36,8 @@ public interface LoanService {
     java.util.List<com.lms.entity.BorrowDetail> findActiveLoansByBarcode(String barcode);
     void confirmReturnWithDetails(String barcode, java.time.LocalDateTime returnDate, String conditionNote, String staffUsername);
     java.util.List<com.lms.entity.BorrowDetail> getTodayReturnedBooks();
+    void confirmBookReturn(Integer borrowDetailId, String conditionNote);
+    java.util.List<com.lms.entity.BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId);
+    java.util.List<com.lms.entity.Transaction> getTransactionsByBorrowId(Integer borrowId);
+    List<BorrowDetail> getBorrowSchedule(String borrowDate, String returnDate, String keyword);
 }

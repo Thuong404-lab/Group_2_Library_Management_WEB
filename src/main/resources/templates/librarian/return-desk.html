@@ -8,85 +8,69 @@
     <style>
         body { background-color: #f8f7f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .text-classic { color: #8b5a2b !important; }
-        .btn-classic { background-color: #8b5a2b !important; border-color: #8b5a2b !important; color: #ffffff !important; transition: all 0.2s ease; }
-        .btn-classic:hover { background-color: #74481f !important; border-color: #74481f !important; color: #ffffff !important; }
-        .classic-card { border: none !important; border-radius: 10px !important; background-color: #ffffff !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; }
-        .classic-card .card-header { background: #ffffff !important; border-bottom: 2px solid #4a3b32 !important; padding-top: 1.25rem; padding-bottom: 1.25rem; }
-        .classic-table th { background: rgba(139, 90, 43, 0.04) !important; color: #4a3b32 !important; border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
-        .classic-table tbody tr { background-color: #fdfbf7 !important; border-bottom: 1px dashed rgba(139, 90, 43, 0.15) !important; }
+        .btn-classic {
+            background-color: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+            color: #ffffff !important;
+        }
+        .btn-classic:hover {
+            background-color: #74481f !important;
+            color: #ffffff !important;
+        }
+        .card-classic {
+            background-color: #ffffff;
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-return'">
+<div layout:fragment="content" th:with="activeMenu='borrow-desk'">
 
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Thành công</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Lỗi</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
-        <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bàn Tiếp Nhận Trả Sách</h2>
-            <div class="text-muted small">Thực hiện nhận sách nhập kho trực tiếp tại quầy thư viện và đánh giá tình trạng sách vật lý.</div>
-        </div>
+    <div class="mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quầy Tiếp Nhận Trả Sách</h2>
+        <div class="text-muted small">Quét mã vạch đơn vị sách vật lý để tiến hành kiểm tra, phạt quá hạn và nhận sách hoàn trả lại kho.</div>
     </div>
 
-    <div class="card classic-card shadow-sm mb-4" style="border-left: 4px solid #8b5a2b !important;">
-        <div class="card-header">
-            <h5 class="fw-bold mb-0" style="color: #4a3b32;"><i class="bi bi-qr-code-scan me-2 text-classic"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
-        </div>
-        <div class="card-body p-4" style="background-color: #fdfbf7;">
-            <form th:action="@{/librarian/loan/returns/search}" method="get" class="row g-3 align-items-end">
-                <div class="col-md-9">
-                    <label class="form-label small fw-bold text-muted text-uppercase">Mã vạch (Barcode) của cuốn sách</label>
-                    <input type="text" name="barcode" th:value="${searchedBarcode}" class="form-control form-control-lg border" placeholder="Ví dụ: BI-1002 hoặc quét trực tiếp bằng thiết bị..." autofocus required autocomplete="off" />
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-lg w-100 fw-bold btn-classic"><i class="bi bi-search me-1"></i>Tìm đơn mượn</button>
-                </div>
-            </form>
-        </div>
+    <div class="card-classic p-4 mb-4">
+        <form method="get" th:action="@{/librarian/loan/returns/search}">
+            <input type="text" class="form-control" name="barcode" th:value="${barcode}" placeholder="Nhập mã vạch..." required>
+            <button type="submit" class="btn btn-primary">Tìm đơn mượn</button>
+        </form>
     </div>
 
-    <div class="card classic-card shadow-sm mb-4" th:if="${searchResults != null}">
-        <div class="card-header bg-light">
-            <h5 class="fw-bold mb-0 text-dark">Kết quả tra cứu cho mã sách: <span class="text-classic font-monospace" th:text="${searchedBarcode}">BI-1002</span></h5>
-        </div>
+    <div class="card-classic overflow-hidden" th:if="${searchResults != null && !searchResults.isEmpty()}">
+        <div class="p-3 bg-light border-bottom fw-bold text-dark">Thông tin đơn mượn hiện hành của sách</div>
         <div class="table-responsive">
-            <table class="table align-middle mb-0 classic-table">
+            <table class="table" th:if="${searchResults != null && !searchResults.isEmpty()}">
                 <thead>
                 <tr>
-                    <th class="ps-4">Mã Đơn Cha</th>
-                    <th>Thông tin Độc giả</th>
-                    <th>Nhan đề sách đang giữ</th>
-                    <th>Hạn trả quy định</th>
-                    <th class="text-end pe-4">Hành động xử lý</th>
+                    <th>Tên Sách</th>
+                    <th>Độc giả</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="detail : ${searchResults}">
-                    <td class="ps-4 font-monospace fw-bold text-classic" th:text="'BOR-' + ${detail.borrow.borrowId}">BOR-1</td>
+                    <td th:text="${detail.book.title}">Tên sách</td>
+                    <td th:text="${detail.borrow.member.user.fullName}">Tên độc giả</td>
+                    <td><span class="badge bg-warning" th:text="${detail.status}"></span></td>
                     <td>
-                        <div class="fw-bold text-dark" th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
-                        <small class="text-muted" th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
-                    </td>
-                    <td>
-                        <div class="fw-bold text-dark" th:text="${detail.book.title}">Tên cuốn sách</div>
-                        <small class="text-muted" th:text="'Số lần gia hạn: ' + ${detail.renewCount}"></small>
-                    </td>
-                    <td>
-                        <span class="fw-bold text-dark" th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
-                        <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}" class="badge bg-danger ms-1 text-white">Quá hạn</span>
-                    </td>
-                    <td class="text-end pe-4">
-                        <button type="button" class="btn btn-sm btn-success text-white px-3 py-1.5" data-bs-toggle="modal" data-bs-target="#confirmReturnModal">
-                            <i class="bi bi-check2-square me-1"></i> Tiếp nhận trả sách
+                        <button class="btn btn-success" data-bs-toggle="modal" th:data-bs-target="'#modal' + ${detail.borrowDetailId}">
+                            Nhận trả
                         </button>
                     </td>
                 </tr>
@@ -95,89 +79,36 @@
         </div>
     </div>
 
-    <div class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true" th:if="${searchResults != null && !searchResults.isEmpty()}">
-        <div class="modal-dialog modal-dialog-centered">
-            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content">
-                <input type="hidden" name="barcode" th:value="${searchedBarcode}">
+    <div class="card-classic p-5 text-center text-muted" th:if="${barcode != null && !barcode.isEmpty() && (searchResults == null || searchResults.isEmpty())}">
+        <i class="bi bi-search-heart fs-1 d-block mb-2 text-classic"></i>
+        Không tìm thấy lượt mượn nào chưa trả ứng với mã vạch <strong th:text="${barcode}"></strong> này.
+    </div>
 
-                <div class="modal-header btn-classic text-white">
-                    <h5 class="modal-title fw-bold" id="confirmReturnModalLabel"><i class="bi bi-clipboard-check me-2"></i>Biên bản đánh giá hoàn sách nhập kho</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Ngày trả thực tế <span class="text-danger">*</span></label>
-                        <input type="date" name="returnDate" th:value="${defaultReturnDate}" class="form-control" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
-                        <select name="conditionNote" class="form-select" required>
-                            <option value="Tốt - Sách nguyên vẹn, sạch đẹp">Tốt / Nguyên vẹn sạch đẹp</option>
-                            <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ">Hư hỏng nhẹ (Quăn mép, sờn bìa, vết rách nhỏ)</option>
-                            <option value="Mất hoặc Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng">Mất hoặc hư hỏng nặng (Cần bồi thường vật lý)</option>
+    <div th:each="detail : ${searchResults}" class="modal fade" th:id="'modal' + ${detail.borrowDetailId}">
+        <div class="modal-dialog">
+            <form method="post" th:action="@{/librarian/loan/returns/confirm/{id}(id=${detail.borrowDetailId})}">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <label>Tình trạng sách:</label>
+                        <select name="conditionNote" class="form-select">
+                            <option value="Bình thường">Bình thường</option>
+                            <option value="Hư hại">Hư hại</option>
                         </select>
                     </div>
-
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Ghi chú chi tiết thêm (Tùy chọn)</label>
-                        <textarea class="form-control" name="conditionNoteAdditional" rows="3" placeholder="Nhập thêm mô tả cụ thể về hư hỏng nếu có..."></textarea>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Xác nhận nhập kho</button>
                     </div>
-                </div>
-                <div class="modal-footer bg-light p-3">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-classic px-4 fw-bold">Xác nhận & Hoàn kho</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
-        <h5 class="fw-bold mb-0" style="color: #4a3b32;"><i class="bi bi-clock-history me-2 text-classic"></i>Nhật ký sách đã tiếp nhận hoàn trả thành công hôm nay</h5>
-        <span class="badge bg-secondary px-3 py-2 text-white fw-bold" th:text="${#lists.size(todayReturned)} + ' cuốn sách'">0 cuốn sách</span>
-    </div>
-
-    <div class="card classic-card shadow-sm overflow-hidden">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0 classic-table">
-                <thead>
-                <tr>
-                    <th class="ps-4" style="width: 140px;">Mã Chi Tiết</th>
-                    <th>Độc giả hoàn trả</th>
-                    <th>Thông tin cuốn sách</th>
-                    <th>Mốc thời gian xử lý</th>
-                    <th class="pe-4">Tình trạng vật lý ghi nhận</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="record : ${todayReturned}">
-                    <td class="ps-4 font-monospace fw-bold text-dark" th:text="'DTL-' + ${record.borrowDetailId}">DTL-1</td>
-                    <td>
-                        <div class="fw-bold text-dark" th:text="${record.borrow?.member?.user?.fullName}">Trần Thị Bình</div>
-                        <small class="text-muted" th:text="${record.borrow?.member?.user?.email}">binh@example.com</small>
-                    </td>
-                    <td>
-                        <div class="fw-bold text-dark" th:text="${record.book?.title}">Tên Sách</div>
-                        <span class="badge bg-secondary font-monospace py-0.5 px-2" style="font-size: 11px;" th:text="${record.bookItem?.barcode}">BI-1002</span>
-                    </td>
-                    <td class="small text-muted" th:text="${#temporals.format(record.returnDate, 'dd/MM/yyyy HH:mm:ss')}">12/07/2026 14:30:15</td>
-                    <td class="pe-4">
-                        <span class="badge text-white"
-                              th:classappend="${#strings.contains(record.conditionNote, 'Tốt')} ? 'bg-success' : (#strings.contains(record.conditionNote, 'nhẹ') ? 'bg-warning text-dark' : 'bg-danger')"
-                              th:text="${record.conditionNote}">Tốt</span>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(todayReturned)}">
-                    <td colspan="5" class="text-center py-5 text-muted small fst-italic">
-                        <i class="bi bi-calendar-x d-block fs-2 mb-2 text-classic opacity-50"></i>
-                        Hôm nay quầy chưa ghi nhận giao dịch tiếp nhận hoàn trả sách vật lý nào.
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            const input = document.querySelector('input[name="barcode"]');
+            if (input) input.focus();
+        });
+    </script>
 </div>
 </body>
 </html>

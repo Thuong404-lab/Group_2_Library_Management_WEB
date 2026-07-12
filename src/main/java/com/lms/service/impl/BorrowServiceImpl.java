@@ -155,7 +155,16 @@ public class BorrowServiceImpl implements BorrowService {
         BorrowDetail detail = new BorrowDetail();
         detail.setBorrow(borrow);
         detail.setBook(book);
-        detail.setBookItem(null);
+        
+        List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+        BookItem availableItem = items.stream()
+                .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Đầu sách này hiện tại không còn bản sách vật lý nào sẵn sàng!"));
+        detail.setBookItem(availableItem);
+        availableItem.setStatus("Pending");
+        bookItemRepository.save(availableItem);
+
         detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
         detail.setStatus("Pending");
         detail.setRenewCount(0);
@@ -179,12 +188,21 @@ public class BorrowServiceImpl implements BorrowService {
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
         for (BorrowDetail detail : details) {
             detail.setStatus("Borrowed");
-            borrowDetailRepository.save(detail);
-            if (detail.getBookItem() != null) {
+            if (detail.getBookItem() == null) {
+                List<BookItem> items = bookItemRepository.findByBook_BookId(detail.getBook().getBookId());
+                BookItem availableItem = items.stream()
+                        .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("Không còn bản sách vật lý nào sẵn sàng cho cuốn sách: " + detail.getBook().getTitle()));
+                detail.setBookItem(availableItem);
+                availableItem.setStatus("Borrowed");
+                bookItemRepository.save(availableItem);
+            } else {
                 BookItem item = detail.getBookItem();
                 item.setStatus("Borrowed");
                 bookItemRepository.save(item);
             }
+            borrowDetailRepository.save(detail);
         }
     }
 
@@ -421,6 +439,17 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don muon/tra tuong ung!"));
         borrow.setStatus(status);
         borrowRepository.save(borrow);
+
+        List<BorrowDetail> details = getBorrowDetailsByBorrowId(loanId);
+        for (BorrowDetail detail : details) {
+            detail.setStatus(status);
+            borrowDetailRepository.save(detail);
+            if (detail.getBookItem() != null && "Rejected".equalsIgnoreCase(status)) {
+                BookItem item = detail.getBookItem();
+                item.setStatus("Available");
+                bookItemRepository.save(item);
+            }
+        }
     }
 
     @Override
@@ -582,6 +611,39 @@ public class BorrowServiceImpl implements BorrowService {
                     .orElse(defaultValue);
         } catch (Exception ignored) {
             return defaultValue;
+        }
+    }
+
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    @Transactional(rollbackFor = Exception.class)
+    public void repairExistingData() {
+        try {
+            List<BorrowDetail> nullItemDetails = borrowDetailRepository.findAll().stream()
+                    .filter(d -> d.getBookItem() == null && 
+                            ("Borrowed".equalsIgnoreCase(d.getStatus()) 
+                             || "Overdue".equalsIgnoreCase(d.getStatus()) 
+                             || "Return_Pending".equalsIgnoreCase(d.getStatus())
+                             || "Pending".equalsIgnoreCase(d.getStatus())))
+                    .toList();
+            for (BorrowDetail detail : nullItemDetails) {
+                List<BookItem> items = bookItemRepository.findByBook_BookId(detail.getBook().getBookId());
+                BookItem availableItem = items.stream()
+                        .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
+                        .findFirst()
+                        .orElse(null);
+                if (availableItem != null) {
+                    detail.setBookItem(availableItem);
+                    if ("Pending".equalsIgnoreCase(detail.getStatus())) {
+                        availableItem.setStatus("Pending");
+                    } else {
+                        availableItem.setStatus("Borrowed");
+                    }
+                    bookItemRepository.save(availableItem);
+                    borrowDetailRepository.save(detail);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to repair existing data: " + e.getMessage());
         }
     }
 }

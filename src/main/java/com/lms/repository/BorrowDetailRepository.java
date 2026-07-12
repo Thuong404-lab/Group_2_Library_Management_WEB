@@ -17,7 +17,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "from BorrowDetail bd " +
             "where bd.borrow.borrowDate >= :startDate and bd.borrow.borrowDate < :endDate")
     long countBorrowedItemsByBorrowDateRange(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+                                             @Param("endDate") LocalDateTime endDate);
 
     @Query("select count(bd) " +
             "from BorrowDetail bd " +
@@ -25,7 +25,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "and bd.returnDate >= :startDate and bd.returnDate < :endDate " +
             "and bd.returnDate <= bd.dueDate")
     long countOnTimeReturnsByDateRange(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+                                       @Param("endDate") LocalDateTime endDate);
 
     @Query("select count(bd) " +
             "from BorrowDetail bd " +
@@ -33,7 +33,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "and bd.returnDate >= :startDate and bd.returnDate < :endDate " +
             "and bd.returnDate > bd.dueDate")
     long countLateReturnsByDateRange(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+                                     @Param("endDate") LocalDateTime endDate);
 
     @Query("select bd.book.title, coalesce(bd.book.isbn, ''), count(bd) " +
             "from BorrowDetail bd " +
@@ -41,8 +41,8 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "group by bd.book.bookId, bd.book.title, bd.book.isbn " +
             "order by count(bd) desc")
     List<Object[]> findTopBorrowedBooks(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            Pageable pageable);
+                                        @Param("endDate") LocalDateTime endDate,
+                                        Pageable pageable);
 
     @Query("select bd.borrow.member.user.fullName, bd.borrow.member.user.email, count(bd) " +
             "from BorrowDetail bd " +
@@ -50,8 +50,8 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "group by bd.borrow.member.memberId, bd.borrow.member.user.fullName, bd.borrow.member.user.email " +
             "order by count(bd) desc")
     List<Object[]> findTopBorrowingMembers(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            Pageable pageable);
+                                           @Param("endDate") LocalDateTime endDate,
+                                           Pageable pageable);
 
     List<BorrowDetail> findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
             String status, LocalDateTime startDate, LocalDateTime endDate);
@@ -77,6 +77,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
             "AND bd.borrow.borrowDate >= :oneMonthAgo ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findBorrowHistoryInOneMonth(@Param("memberId") Integer memberId, @Param("oneMonthAgo") LocalDateTime oneMonthAgo);
+
     List<BorrowDetail> findByStatus(String status);
 
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.bookItem.barcode = :barcode " +
@@ -88,4 +89,9 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "AND bd.returnDate >= :startOfDay AND bd.returnDate <= :endOfDay ORDER BY bd.returnDate DESC")
     List<BorrowDetail> findReturnedBooksToday(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
 
+    // =========================================================================
+    // CHỨC NĂNG MỚI BỔ SUNG: Tìm kiếm chi tiết mượn dựa trên mã vạch sách và tập hợp các trạng thái chưa trả
+    // Giải quyết triệt để lỗi biên dịch ở tầng Service (Vấn đề 2)
+    // =========================================================================
+    List<BorrowDetail> findByBookItemBarcodeAndStatusIn(String barcode, List<String> statuses);
 }
