@@ -4,6 +4,8 @@ import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.response.LibrarianListViewData;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
+import com.lms.entity.Book;
+import com.lms.entity.BookItem;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
@@ -106,13 +108,45 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
                         "Borrowed", now, now.plusDays(7)));
         data.put("reviews", interactionService.getReviewsForModeration(
-                null, PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
+                null,
+                PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
         data.put("shelves", storageService.getAllStorageLocations());
-        data.put("books", bookRepository.findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").descending())));
+        Page<Book> booksPage = bookRepository
+                .findAllWithAuthors(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+        data.put("books", booksPage);
+
+        Map<Integer, Integer> bookShelves = new HashMap<>();
+        Map<Integer, Integer> bookTotalQuantities = new HashMap<>();
+        Map<Integer, Integer> bookBorrowedQuantities = new HashMap<>();
+        Map<Integer, Integer> bookAvailableQuantities = new HashMap<>();
+        Map<Integer, List<BookItem>> bookItemsByBookId = new HashMap<>();
+        for (Book book : booksPage.getContent()) {
+            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+            bookItemsByBookId.put(book.getBookId(), items != null ? items : List.of());
+            if (items != null && !items.isEmpty()) {
+                if (items.get(0).getShelf() != null) {
+                    bookShelves.put(book.getBookId(), items.get(0).getShelf().getShelfId());
+                }
+                bookTotalQuantities.put(book.getBookId(), items.size());
+                int borrowed = (int) items.stream().filter(i -> "Borrowed".equalsIgnoreCase(i.getStatus())).count();
+                bookBorrowedQuantities.put(book.getBookId(), borrowed);
+                int available = (int) items.stream().filter(i -> "Available".equalsIgnoreCase(i.getStatus())).count();
+                bookAvailableQuantities.put(book.getBookId(), available);
+            } else {
+                bookTotalQuantities.put(book.getBookId(), 0);
+                bookBorrowedQuantities.put(book.getBookId(), 0);
+                bookAvailableQuantities.put(book.getBookId(), 0);
+            }
+        }
+        data.put("bookShelves", bookShelves);
+        data.put("bookTotalQuantities", bookTotalQuantities);
+        data.put("bookBorrowedQuantities", bookBorrowedQuantities);
+        data.put("bookAvailableQuantities", bookAvailableQuantities);
+        data.put("bookItemsByBookId", bookItemsByBookId);
         data.put("categories", categoryRepository.findAll());
         data.put("genres", genreRepository.findAll());
         data.put("totalBookCount", bookRepository.count());
