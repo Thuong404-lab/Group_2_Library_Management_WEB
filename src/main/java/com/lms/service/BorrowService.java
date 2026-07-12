@@ -17,8 +17,9 @@ public interface BorrowService {
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, String staffUsername);
 
-    // Luồng YÊU CẦU TRẢ SÁCH (Mới nâng cấp)
+    // Luồng YÊU CẦU TRẢ SÁCH VÀ GIA HẠN
     void memberSubmitReturnRequest(String username, Integer borrowDetailId);
+    void memberSubmitRenewRequest(Integer borrowDetailId);
     void approveReturnRequest(Integer borrowId);
     void processReturnBook(String barcode); // Trả trực tiếp qua quét mã vạch
 

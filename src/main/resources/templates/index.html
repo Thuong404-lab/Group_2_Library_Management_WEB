@@ -231,7 +231,7 @@
                                                     item.className = 'list-group-item list-group-item-action d-flex align-items-center border-0 py-2 px-3 suggestion-item';
                                                     item.style.transition = 'background-color 0.2s';
                                                     item.innerHTML = `
-                                                        <img src="${book.thumbnailUrl}" class="rounded me-3 shadow-sm" style="width: 40px; height: 55px; object-fit: cover;">
+                                                        <img src="${book.thumbnailUrl}" style="width: 45px; height: 60px; object-fit: cover;" class="me-3 rounded shadow-sm" alt="Book cover">
                                                         <div class="flex-grow-1 overflow-hidden">
                                                             <h6 class="mb-1 text-truncate fw-bold" style="color: #2c1e16; font-size: 0.95rem;">${book.title}</h6>
                                                             <small class="text-muted text-truncate d-block"><i class="bi bi-pen me-1"></i> ${book.authorName}</small>
@@ -344,7 +344,7 @@
                     <a th:href="@{'/books/' + ${book.bookId}}" class="text-decoration-none text-dark">
                         <div class="card h-100 border-0 bg-transparent classic-book-card">
                             <div class="position-relative shadow-sm mb-2 rounded-1" style="height: 240px; border-left: 4px solid #8b5a2b; overflow: hidden; transition: 0.3s;">
-                                <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
                                 <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 10%, rgba(255,255,255,0) 90%, rgba(0,0,0,0.1) 100%);"></div>
                             </div>
                             <div class="text-center">
@@ -376,7 +376,7 @@
                         <div class="card h-100 border-0 bg-transparent classic-book-card">
                             <div class="position-relative shadow-sm mb-2 rounded-1" style="height: 240px; border-left: 4px solid #8b5a2b; overflow: hidden; transition: 0.3s;">
                                 <!-- Dùng ảnh động theo ID sách -->
-                                <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="w-100 h-100" style="object-fit: cover;" alt="Book cover">
                                 <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 10%, rgba(255,255,255,0) 90%, rgba(0,0,0,0.1) 100%);"></div>
                                 <span class="position-absolute top-0 end-0 m-1 badge badge-danger fw-bold shadow-sm">🔥 HOT</span>
                             </div>

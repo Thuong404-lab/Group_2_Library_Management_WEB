@@ -246,10 +246,12 @@
                                     <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger">Quá hạn</span>
                                     <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt mượn</span>
                                     <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status" style="background-color: #edf2f7; color: #4a5568; border-color: #cbd5e0;">Chờ duyệt trả</span>
+                                    <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">Chờ duyệt gia hạn</span>
 
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="'(Còn ' + ${item.daysLeft} + ' ngày)'"></small>
                                 </div>
-                                <div class="progress progress-classic mt-2">
+                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending'}" 
+                                     th:title="'Thời gian mượn: Đã qua ' + ${item.progressPercentage} + '%'" data-bs-toggle="tooltip">
                                     <div class="progress-bar" role="progressbar"
                                          th:style="'width: ' + ${item.progressPercentage} + '%'"
                                          th:classappend="${item.daysLeft <= 2 || item.status == 'Overdue'} ? 'bg-danger' : 'bg-classic-progress'"
@@ -259,15 +261,23 @@
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
                                     <!-- Nút gửi yêu cầu trả sách -->
-                                    <form th:action="@{/member/borrow/return/{detailId}(detailId=${item.id})}" method="post" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm btn-warning">Trả sách</button>
+                                    <form th:if="${item.status == 'Borrowed' or item.status == 'Overdue'}" th:id="'returnForm_' + ${item.id}" th:action="@{/member/borrow/return/{detailId}(detailId=${item.id})}" method="post" class="d-inline">
+                                        <button type="button" class="btn btn-sm btn-warning btn-return-action" th:attr="data-form-id='returnForm_' + ${item.id}">
+                                            <i class="bi bi-box-arrow-in-right me-1"></i> Trả sách
+                                        </button>
                                     </form>
 
                                     <!-- Hiển thị nhãn khi đang chờ thủ thư xử lý -->
-                                    <span th:if="${item.status == 'Return_Pending'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
+                                    <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
 
-                                    <form th:if="${item.status == 'Borrowed'}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-classic-outline" th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"><i class="bi bi-clock-history me-1"></i>Gia hạn</button>
+                                    <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action" 
+                                                th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"
+                                                th:title="${item.renewCount >= 2 ? 'Đã hết lượt gia hạn (tối đa 2 lần)' : (item.status == 'Overdue' ? 'Không thể gia hạn sách quá hạn' : 'Gia hạn sách thêm 7 ngày')}"
+                                                th:attr="data-form-id='renewForm_' + ${item.id}">
+                                            <i class="bi bi-clock-history me-1"></i>
+                                            <span th:text="${item.renewCount >= 2 ? 'Hết lượt gia hạn' : 'Gia hạn'}">Gia hạn</span>
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -366,6 +376,122 @@
             </div>
         </div>
     </div>
+    <!-- Modal Xác Nhận Gia Hạn (Vanilla JS) -->
+    <div class="modal fade" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(139, 90, 43, 0.15);">
+                <div class="modal-header" style="background-color: rgba(139, 90, 43, 0.05); border-bottom: 1px solid rgba(139, 90, 43, 0.1); border-radius: 12px 12px 0 0;">
+                    <h5 class="modal-title font-playfair" id="renewConfirmModalLabel" style="color: #8b5a2b; font-weight: 700;"><i class="bi bi-question-circle me-2"></i>Xác nhận gia hạn</h5>
+                    <button type="button" class="close" onclick="hideRenewModal()" aria-label="Close" style="color: #8b5a2b; opacity: 1;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-clock-history mb-3" style="font-size: 3.5rem; color: #8b5a2b; opacity: 0.9;"></i>
+                    <p class="mb-1 mt-2" style="color: #4a3b32; font-size: 1.15rem; font-weight: 500;">Bạn có chắc chắn muốn gia hạn sách này?</p>
+                    <p class="text-muted mb-0" style="font-size: 0.95rem;">Hạn trả sách sẽ được cộng thêm <strong style="color: #8b5a2b;">7 ngày</strong>.</p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(139, 90, 43, 0.1); justify-content: center; gap: 10px;">
+                    <button type="button" class="btn btn-light px-4" onclick="hideRenewModal()" style="border-radius: 6px; font-weight: 500;">Hủy bỏ</button>
+                    <button type="button" class="btn btn-classic-primary px-4" id="confirmRenewBtn">Đồng ý gia hạn</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Trả Sách (Vanilla JS) -->
+    <div class="modal fade" id="returnConfirmModal" tabindex="-1" role="dialog" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(139, 90, 43, 0.15);">
+                <div class="modal-header" style="background-color: rgba(139, 90, 43, 0.05); border-bottom: 1px solid rgba(139, 90, 43, 0.1); border-radius: 12px 12px 0 0;">
+                    <h5 class="modal-title font-playfair" style="color: #8b5a2b; font-weight: 700;"><i class="bi bi-question-circle me-2"></i>Xác nhận trả sách</h5>
+                    <button type="button" class="close" onclick="hideReturnModal()" aria-label="Close" style="color: #8b5a2b; opacity: 1;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-box-arrow-in-right mb-3" style="font-size: 3.5rem; color: #ffc107; opacity: 0.9;"></i>
+                    <p class="mb-1 mt-2" style="color: #4a3b32; font-size: 1.15rem; font-weight: 500;">Bạn muốn gửi yêu cầu trả cuốn sách này?</p>
+                    <p class="text-muted mb-0" style="font-size: 0.95rem;">Yêu cầu sẽ được gửi tới thủ thư để chờ xác nhận.</p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(139, 90, 43, 0.1); justify-content: center; gap: 10px;">
+                    <button type="button" class="btn btn-light px-4" onclick="hideReturnModal()" style="border-radius: 6px; font-weight: 500;">Hủy bỏ</button>
+                    <button type="button" class="btn btn-warning px-4" id="confirmReturnBtn">Đồng ý trả sách</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var currentRenewFormId = null;
+        var currentReturnFormId = null;
+
+        document.addEventListener('click', function(e) {
+            // Xử lý nút Gia hạn
+            var renewBtn = e.target.closest('.btn-renew-action');
+            if (renewBtn && !renewBtn.disabled) {
+                e.preventDefault();
+                currentRenewFormId = renewBtn.getAttribute('data-form-id');
+                var modal = document.getElementById('renewConfirmModal');
+                if (modal) {
+                    modal.style.display = 'block';
+                    setTimeout(function() { modal.classList.add('show'); }, 10);
+                }
+                return;
+            }
+
+            // Xử lý nút Trả sách
+            var returnBtn = e.target.closest('.btn-return-action');
+            if (returnBtn && !returnBtn.disabled) {
+                e.preventDefault();
+                currentReturnFormId = returnBtn.getAttribute('data-form-id');
+                var modal = document.getElementById('returnConfirmModal');
+                if (modal) {
+                    modal.style.display = 'block';
+                    setTimeout(function() { modal.classList.add('show'); }, 10);
+                }
+                return;
+            }
+            
+            // Xử lý nút đóng Modal Gia hạn
+            if (e.target.closest('#renewConfirmModal .close') || e.target.closest('#renewConfirmModal .btn-light')) {
+                var modal = document.getElementById('renewConfirmModal');
+                modal.classList.remove('show');
+                setTimeout(function() { modal.style.display = 'none'; }, 300);
+                currentRenewFormId = null;
+            }
+
+            // Xử lý nút đóng Modal Trả sách
+            if (e.target.closest('#returnConfirmModal .close') || e.target.closest('#returnConfirmModal .btn-light')) {
+                var modal = document.getElementById('returnConfirmModal');
+                modal.classList.remove('show');
+                setTimeout(function() { modal.style.display = 'none'; }, 300);
+                currentReturnFormId = null;
+            }
+            
+            // Xử lý nút Đồng ý Gia hạn
+            if (e.target.closest('#confirmRenewBtn')) {
+                if (currentRenewFormId) {
+                    var btn = e.target.closest('#confirmRenewBtn');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
+                    var form = document.getElementById(currentRenewFormId);
+                    if (form) form.submit();
+                }
+            }
+
+            // Xử lý nút Đồng ý Trả sách
+            if (e.target.closest('#confirmReturnBtn')) {
+                if (currentReturnFormId) {
+                    var btn = e.target.closest('#confirmReturnBtn');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
+                    var form = document.getElementById(currentReturnFormId);
+                    if (form) form.submit();
+                }
+            }
+        });
+    </script>
 </div>
 </body>
 </html>

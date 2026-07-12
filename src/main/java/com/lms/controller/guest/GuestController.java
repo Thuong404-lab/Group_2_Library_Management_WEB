@@ -156,7 +156,7 @@ public class GuestController {
                 authorNames = "Nhiều tác giả";
             }
             map.put("authorName", authorNames);
-            map.put("thumbnailUrl", "https://picsum.photos/seed/" + book.getBookId() + "/60/80");
+            map.put("thumbnailUrl", book.getCoverImageUrl() != null && !book.getCoverImageUrl().trim().isEmpty() ? book.getCoverImageUrl() : "https://picsum.photos/seed/" + book.getBookId() + "/600/800");
             return map;
         }).toList();
         

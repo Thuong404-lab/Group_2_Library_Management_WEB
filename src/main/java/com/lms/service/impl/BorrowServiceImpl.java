@@ -216,6 +216,25 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void memberSubmitRenewRequest(Integer borrowDetailId) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon!"));
+
+        if (!"Borrowed".equalsIgnoreCase(detail.getStatus())) {
+            throw new IllegalArgumentException("Chi sach dang o trang thai 'Dang muon' moi duoc phep yeu cau gia han!");
+        }
+
+        int maxRenewals = getPositiveIntSetting("MAX_RENEWALS", 2);
+        if (detail.getRenewCount() != null && detail.getRenewCount() >= maxRenewals) {
+            throw new IllegalArgumentException("Sach nay da duoc gia han toi da " + maxRenewals + " lan!");
+        }
+
+        detail.setStatus("Renew_Pending");
+        borrowDetailRepository.save(detail);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void approveReturnRequest(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau tra!"));
@@ -437,7 +456,8 @@ public class BorrowServiceImpl implements BorrowService {
                 .filter(d -> "Pending".equalsIgnoreCase(d.getStatus())
                         || "Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
-                        || "Return_Pending".equalsIgnoreCase(d.getStatus()))
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus())
+                        || "Renew_Pending".equalsIgnoreCase(d.getStatus()))
                 .map(this::toMemberBorrowDTO)
                 .toList();
     }
