@@ -3,7 +3,7 @@
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Quản lý tài khoản nhân sự</title>
+    <title>Quản lý tài khoản thủ thư</title>
     <style>
         .staff-update-form .form-control.is-invalid,
         .staff-update-form .form-select.is-invalid {
@@ -25,10 +25,10 @@
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
                 <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý tài
-                    khoản nhân sự
+                    khoản thủ thư
                 </h2>
                 <div class="text-muted">
-                    Danh sách và thông tin tài khoản nhân viên thư viện
+                    Danh sách và thông tin tài khoản thủ thư
                 </div>
             </div>
             <div>
@@ -59,7 +59,7 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
+                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, loại thủ thư hoặc trạng thái...">
                             <button class="btn btn-classic" type="submit">Tìm kiếm</button>
                         </div>
                     </div>
@@ -76,8 +76,8 @@
                             <tr>
                                 <th class="ps-3">STT</th>
                                 <th>Usename</th>
-                                <th>Thông tin nhân viên</th>
-                                <th>Loại nhân viên</th>
+                                <th>Thông tin thủ thư</th>
+                                <th>Loại thủ thư</th>
                                 <th>Trạng thái</th>
                                 <th class="text-end pe-3">Hành động</th>
                             </tr>
@@ -100,7 +100,7 @@
 
                                 <td>
                                     <div th:if="${staff.user != null}">
-                                        <div class="fw-bold" th:text="${staff.user.fullName}">Tên nhân viên</div>
+                                        <div class="fw-bold" th:text="${staff.user.fullName}">Tên thủ thư</div>
                                         <div class="small text-muted">
                                             <i class="bi bi-envelope me-1"></i>
                                             <span th:text="${staff.user.email}">email</span>
@@ -175,7 +175,7 @@
                                                                 style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                                                                 <i
                                                                     class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
-                                                                nhật tài khoản nhân sự
+                                                                nhật tài khoản thủ thư
                                                             </h5>
                                                         </div>
 
@@ -254,9 +254,9 @@
                                                                 <div class="col-md-6 order-md-5">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Loại
-                                                                        nhân viên</label>
+                                                                        thủ thư</label>
                                                                     <select class="form-select form-control"
-                                                                        name="staffType" data-label="Loại nhân viên"
+                                                                        name="staffType" data-label="Loại thủ thư"
                                                                         required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
                                                                         <option value="Admin"
@@ -268,9 +268,9 @@
                                                                     </select>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="staffType"
-                                                                        data-default-message="Vui lòng chọn loại nhân viên."
+                                                                        data-default-message="Vui lòng chọn loại thủ thư."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
-                                                                        Vui lòng chọn loại nhân viên.
+                                                                        Vui lòng chọn loại thủ thư.
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-6">
@@ -387,7 +387,7 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Loại nhân viên
+                                                                        <div class="small text-muted">Loại thủ thư
                                                                         </div>
                                                                         <span
                                                                             class="badge rounded-pill px-3 py-2 text-white"
@@ -420,7 +420,7 @@
                             <tr th:if="${#lists.isEmpty(staffPage.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-person-badge fs-2 d-block mb-2"></i>
-                                    Không có nhân sự nào.
+                                    Không có thủ thư nào.
                                 </td>
                             </tr>
                         </tbody>
@@ -593,7 +593,7 @@
                             errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
                         }
                         if (form.elements.staffType.value === "") {
-                            errors.staffType = "Loại nhân viên không hợp lệ.";
+                            errors.staffType = "Loại thủ thư không hợp lệ.";
                         }
                         if (form.elements.status.value === "") {
                             errors.status = "Trạng thái tài khoản không hợp lệ.";

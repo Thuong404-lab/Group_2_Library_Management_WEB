@@ -156,7 +156,7 @@ public class AccountController {
 
         if ("staff".equalsIgnoreCase(source)) {
             model.addAttribute("source", "staff");
-            model.addAttribute("backText", "← Về danh sách nhân viên");
+            model.addAttribute("backText", "← Về danh sách thủ thư");
             model.addAttribute("backUrl", "/admin/staff");
         } else {
             model.addAttribute("source", "members");
