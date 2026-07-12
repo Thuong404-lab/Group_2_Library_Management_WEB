@@ -216,6 +216,11 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
+                                            <label class="form-label">Tác giả</label>
+                                            <input type="text" name="author" class="form-control"
+                                                placeholder="Nhập tên tác giả" required>
+                                        </div>
+                                        <div class="col-md-6">
                                             <label class="form-label">Thể loại</label>
                                             <select name="genreId" class="form-select" required>
                                                 <option value="" disabled selected>Chọn thể loại</option>
@@ -235,6 +240,15 @@
                                                 <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
                                                     th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
                                                     Kệ sách</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tình trạng sách</label>
+                                            <select name="bookCondition" class="form-select" required>
+                                                <option value="Mới" selected>Mới</option>
+                                                <option value="Tốt">Tốt</option>
+                                                <option value="Khá">Khá</option>
+                                                <option value="Cũ">Cũ</option>
                                             </select>
                                         </div>
                                         <div class="col-12">
@@ -403,6 +417,12 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
+                                                <label class="form-label">Tác giả</label>
+                                                <input type="text" name="author" class="form-control"
+                                                    th:value="${book.authors != null and !book.authors.isEmpty() ? book.authors.iterator().next().authorName : ''}"
+                                                    required>
+                                            </div>
+                                            <div class="col-md-6">
                                                 <label class="form-label">Thể loại</label>
                                                 <select name="genreId" class="form-select" required>
                                                     <option value="" disabled>Chọn thể loại</option>
@@ -428,6 +448,11 @@
                                                         th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
                                                         Kệ sách</option>
                                                 </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Mô tả</label>
+                                                <textarea name="description" class="form-control" rows="3"
+                                                    th:text="${book.description}"></textarea>
                                             </div>
                                             <div class="col-12">
                                                 <label class="form-label">Ảnh bìa sách</label>
