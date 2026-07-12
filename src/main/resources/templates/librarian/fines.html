@@ -4,25 +4,23 @@
 <head>
     <!-- Librarian fine management UI maintained by Pham Kien Quoc. -->
     <title>Quản lý phạt vi phạm</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
 </head>
 <body>
-<div layout:fragment="content" th:with="activeMenu='fines'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+<div layout:fragment="content" th:with="activeMenu='fines'" class="finance-page">
+    <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
          style="border-color: rgba(139,90,43,0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Quản lý phạt vi phạm</h2>
+            <h2 class="fw-bold mb-1">Quản lý phạt vi phạm</h2>
             <div class="text-muted">Tra cứu thành viên, tạo khoản phạt và theo dõi các vi phạm của độc giả.</div>
         </div>
-        <a th:href="@{/librarian/members/transactions(type='FINE')}" class="btn btn-outline-classic">
-            <i class="bi bi-receipt me-1"></i>Lịch sử phạt
-        </a>
     </div>
 
     <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
 
-    <div class="card-classic p-4 mb-4">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;">
+    <div class="card-classic finance-card p-4 mb-4">
+        <h5 class="section-title fw-bold mb-3">
             <i class="bi bi-search me-2 text-classic"></i>Tra cứu thành viên
         </h5>
         <form method="get" th:action="@{/librarian/members/fines}" class="row g-2 align-items-end mb-3">
@@ -70,8 +68,8 @@
         </div>
     </div>
 
-    <div class="card-classic p-4 mb-4">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;">
+    <div class="card-classic finance-card p-4 mb-4">
+        <h5 class="section-title fw-bold mb-3">
             <i class="bi bi-plus-circle me-2 text-classic"></i>Tạo khoản phạt mới
         </h5>
         <form method="post" th:action="@{/librarian/members/fines/create}" class="row g-3">
@@ -100,7 +98,7 @@
         </form>
     </div>
 
-    <div class="card-classic border-0 shadow-sm p-5 text-center">
+    <div class="card-classic finance-card info-panel p-5 text-center">
         <i class="bi bi-info-circle fs-1 d-block mb-3 text-classic opacity-75"></i>
         <h5 class="fw-bold">Khoản phạt được lưu vào lịch sử giao dịch</h5>
         <p class="text-muted mb-3">

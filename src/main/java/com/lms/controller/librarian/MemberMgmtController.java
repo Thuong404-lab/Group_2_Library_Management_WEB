@@ -74,15 +74,6 @@ public class MemberMgmtController {
         return "librarian/member-list";
     }
 
-    @GetMapping("/members/create")
-    public String showCreateMemberForm(
-            Model model,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAttribute("tiers", memberService.getMembershipTiers());
-        addCurrentUser(model, userDetails);
-        return "librarian/create-member";
-    }
-
     @PostMapping("/members/create")
     public String createMemberAccount(
             @Valid @ModelAttribute CreateMemberAccountRequest request,
@@ -94,11 +85,10 @@ public class MemberMgmtController {
         Map<String, String> errors = bindingErrors(bindingResult);
         mergeErrors(errors, memberService.validateCreate(request));
         if (!errors.isEmpty()) {
-            model.addAttribute("fieldErrors", errors);
-            model.addAttribute("formValues", createFormValues(request));
-            model.addAttribute("tiers", memberService.getMembershipTiers());
-            addCurrentUser(model, userDetails);
-            return "librarian/create-member";
+            redirectAttributes.addFlashAttribute("fieldErrors", errors);
+            redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
+            redirectAttributes.addFlashAttribute("openCreateModal", true);
+            return "redirect:/librarian/members";
         }
 
         memberService.createMember(request);
