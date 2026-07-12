@@ -26,7 +26,7 @@ public class LibrarianBorrowController {
         this.borrowRepository = borrowRepository;
     }
 
-    // Xem danh sách toàn cục các phiếu mượn trả
+    // Xem danh sách toàn cục các phiếu mượn trả - Đã bổ sung chuẩn hóa đối sánh chuỗi bộ lọc
     @GetMapping("/librarian/borrow/list")
     public String listAllBorrows(@RequestParam(value = "page", defaultValue = "0") int page,
                                  @RequestParam(value = "size", defaultValue = "10") int size,
@@ -37,15 +37,19 @@ public class LibrarianBorrowController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("borrowDate").descending());
         Page<Borrow> borrowPage;
 
+        // Chuẩn hóa loại bỏ khoảng trắng để tránh lỗi đối sánh SQL
+        String activeStatus = (status != null && !status.trim().isEmpty()) ? status.trim() : null;
+        String activeKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+
         // Xử lý bộ lọc dữ liệu kết hợp điều kiện tìm kiếm động từ Repository
-        if (status != null && !status.trim().isEmpty()) {
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                borrowPage = borrowRepository.findByStatusAndKeyword(status.trim(), keyword.trim(), pageable);
+        if (activeStatus != null) {
+            if (activeKeyword != null) {
+                borrowPage = borrowRepository.findByStatusAndKeyword(activeStatus, activeKeyword, pageable);
             } else {
-                borrowPage = borrowRepository.findByStatus(status.trim(), pageable);
+                borrowPage = borrowRepository.findByStatus(activeStatus, pageable);
             }
-        } else if (keyword != null && !keyword.trim().isEmpty()) {
-            borrowPage = borrowRepository.findByKeyword(keyword.trim(), pageable);
+        } else if (activeKeyword != null) {
+            borrowPage = borrowRepository.findByKeyword(activeKeyword, pageable);
         } else {
             borrowPage = borrowRepository.findAll(pageable);
         }
@@ -56,7 +60,7 @@ public class LibrarianBorrowController {
         model.addAttribute("totalPages", borrowPage.getTotalPages());
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("status", status);
+        model.addAttribute("status", status); // Đảm bảo trả về view để dropdown select giữ đúng trạng thái vừa chọn
 
         return "librarian/borrow-list";
     }
@@ -144,10 +148,6 @@ public class LibrarianBorrowController {
         }
         return "redirect:/librarian/borrow/create";
     }
-
-    // ==========================================
-    // ĐÃ XÓA PHƯƠNG THỨC memberRequestReturn BỊ TRÙNG MAPPING TẠI ĐÂY
-    // ==========================================
 
     // ĐỒNG BỘ ENDPOINT THEO FORM HTML PHẦN 2: Phê duyệt đặt giữ chỗ trước từ Thủ thư
     @PostMapping("/librarian/reservations/approve/{reservationId}")
