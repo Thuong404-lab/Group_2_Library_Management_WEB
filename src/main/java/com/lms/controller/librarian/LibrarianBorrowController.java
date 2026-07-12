@@ -2,7 +2,12 @@ package com.lms.controller.librarian;
 
 import com.lms.dto.request.BorrowRequest;
 import com.lms.entity.Borrow;
+import com.lms.repository.BorrowRepository;
 import com.lms.service.BorrowService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -14,17 +19,45 @@ import java.util.Arrays;
 public class LibrarianBorrowController {
 
     private final BorrowService borrowService;
+    private final BorrowRepository borrowRepository; // Khai báo thêm Repository để dùng phân trang Jpa
 
-    public LibrarianBorrowController(BorrowService borrowService) {
+    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository) {
         this.borrowService = borrowService;
+        this.borrowRepository = borrowRepository;
     }
 
     // Xem danh sách toàn cục các phiếu mượn trả
     @GetMapping("/librarian/borrow/list")
-    public String listAllBorrows(Model model) {
-        model.addAttribute("pendingRequests", borrowService.getAllPendingRequests());
-        model.addAttribute("returnRequests", borrowService.getAllReturnRequests());
-        model.addAttribute("activeLoans", borrowService.getAllActiveLoans());
+    public String listAllBorrows(@RequestParam(value = "page", defaultValue = "0") int page,
+                                 @RequestParam(value = "size", defaultValue = "10") int size,
+                                 @RequestParam(value = "status", required = false) String status,
+                                 @RequestParam(value = "keyword", required = false) String keyword,
+                                 Model model) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("borrowDate").descending());
+        Page<Borrow> borrowPage;
+
+        // Xử lý bộ lọc dữ liệu kết hợp điều kiện tìm kiếm động từ Repository
+        if (status != null && !status.trim().isEmpty()) {
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                borrowPage = borrowRepository.findByStatusAndKeyword(status.trim(), keyword.trim(), pageable);
+            } else {
+                borrowPage = borrowRepository.findByStatus(status.trim(), pageable);
+            }
+        } else if (keyword != null && !keyword.trim().isEmpty()) {
+            borrowPage = borrowRepository.findByKeyword(keyword.trim(), pageable);
+        } else {
+            borrowPage = borrowRepository.findAll(pageable);
+        }
+
+        // Đổ toàn bộ tham số đồng bộ ra view borrow-list.html
+        model.addAttribute("borrows", borrowPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", borrowPage.getTotalPages());
+        model.addAttribute("totalItems", borrowPage.getTotalElements());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("status", status);
+
         return "librarian/borrow-list";
     }
 
