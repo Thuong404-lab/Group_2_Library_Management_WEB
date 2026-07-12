@@ -47,7 +47,9 @@ public class GuestController {
     @GetMapping("/")
     public String homePage(Model model, Principal principal) {
         List<Book> books = bookService.getRecentBooks(6);
+        List<Book> trendingBooks = bookService.getTrendingBooks(6);
         model.addAttribute("books", books);
+        model.addAttribute("trendingBooks", trendingBooks);
         addFavoriteBookIds(model, principal);
         return "index";
     }

@@ -86,18 +86,18 @@ public class BorrowServiceImpl implements BorrowService {
                 : request.getMemberEmail();
         Member member = memberRepository.findByUserEmail(identifier)
                 .or(() -> memberRepository.findByUserPhone(identifier))
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay doc gia voi email hoac so dien thoai nay!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy độc giả với email hoặc số điện thoại này!"));
 
         if (member.getUser() != null && member.getUser().getStatus() != UserStatus.Active) {
-            throw new IllegalArgumentException("Tai khoan thanh vien nay dang bi khoa hoac chua kich hoat!");
+            throw new IllegalArgumentException("Tài khoản thành viên này đang bị khóa hoặc chưa kích hoạt!");
         }
 
         List<BookItem> bookItemsToBorrow = new ArrayList<>();
         for (String barcode : request.getBarcodes()) {
             BookItem item = bookItemRepository.findByBarcode(barcode)
-                    .orElseThrow(() -> new IllegalArgumentException("Ma vach " + barcode + " khong ton tai!"));
+                    .orElseThrow(() -> new IllegalArgumentException("Mã vạch " + barcode + " không tồn tại!"));
             if (!"Available".equalsIgnoreCase(item.getStatus())) {
-                throw new IllegalArgumentException("Sach co ma vach " + barcode + " hien tai khong san sang!");
+                throw new IllegalArgumentException("Sách có mã vạch " + barcode + " hiện tại không sẵn sàng!");
             }
             bookItemsToBorrow.add(item);
         }
@@ -128,6 +128,11 @@ public class BorrowServiceImpl implements BorrowService {
             item.setStatus("Borrowed");
             bookItemRepository.save(item);
         }
+        
+        // Gửi thông báo trực tiếp cho độc giả khi tạo phiếu mượn thành công tại quầy
+        sendInternalNotification(member, "Mượn sách thành công", 
+                "Phiếu mượn của bạn đã được tạo thành công với " + bookItemsToBorrow.size() + " cuốn sách. Hạn trả: " + borrowDays + " ngày.");
+
         return borrow;
     }
 
@@ -135,9 +140,9 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) {
         Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay thong tin doc gia!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin độc giả!"));
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Sach yeu cau muon khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Sách yêu cầu mượn không tồn tại!"));
 
         if ("Inactive".equalsIgnoreCase(book.getStatus())) {
             throw new IllegalArgumentException("Sách này hiện không có sẵn để mượn!");
@@ -146,7 +151,7 @@ public class BorrowServiceImpl implements BorrowService {
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowed >= maxLimit) {
-            throw new IllegalArgumentException("Yeu cau bi tu choi! Ban da muon cham gioi han toi da cho phep (" + maxLimit + " cuon).");
+            throw new IllegalArgumentException("Yêu cầu bị từ chối! Bạn đã mượn chạm giới hạn tối đa cho phép (" + maxLimit + " cuốn).");
         }
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
@@ -167,7 +172,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         auditLogService.log(
                 ActionType.REQUEST_BORROW,
-                "Member " + username + " gui yeu cau muon sach #" + book.getBookId()
+                "Thành viên " + username + " gửi yêu cầu mượn sách #" + book.getBookId()
                         + " - " + book.getTitle() + " trong " + borrowDays + " ngay.");
         return borrow;
     }
@@ -176,7 +181,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public void approvePendingRequest(Integer borrowId, String staffUsername) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau muon!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn yêu cầu mượn!"));
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
 
@@ -196,15 +201,15 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public void memberSubmitRenewRequest(Integer borrowDetailId) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
 
         if (!"Borrowed".equalsIgnoreCase(detail.getStatus())) {
-            throw new IllegalArgumentException("Chi sach dang o trang thai 'Dang muon' moi duoc phep yeu cau gia han!");
+            throw new IllegalArgumentException("Chỉ sách đang ở trạng thái 'Đang mượn' mới được phép yêu cầu gia hạn!");
         }
 
         int maxRenewals = getPositiveIntSetting("MAX_RENEWALS", 2);
         if (detail.getRenewCount() != null && detail.getRenewCount() >= maxRenewals) {
-            throw new IllegalArgumentException("Sach nay da duoc gia han toi da " + maxRenewals + " lan!");
+            throw new IllegalArgumentException("Sách này đã được gia hạn tối đa " + maxRenewals + " lần!");
         }
 
         detail.setStatus("Renew_Pending");
@@ -216,14 +221,14 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public void processReturnBook(String barcode) {
         BookItem item = bookItemRepository.findByBarcode(barcode)
-                .orElseThrow(() -> new IllegalArgumentException("Ma vach sach vat ly khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Mã vạch sách vật lý không tồn tại!"));
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
                         && ("Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
                         || "Return_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay lich su muon hop le ung voi ma vach sach nay!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lịch sử mượn hợp lệ ứng với mã vạch sách này!"));
 
         item.setStatus("Available");
         bookItemRepository.save(item);
@@ -243,13 +248,11 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public Reservation memberSubmitReservationRequest(String username, Integer bookId) {
         Member member = memberRepository.findByAccountUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Tai khoan doc gia khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Tài khoản độc giả không tồn tại!"));
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Sach yeu cau dat truoc khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Sách yêu cầu đặt trước không tồn tại!"));
 
-        if ("Inactive".equalsIgnoreCase(book.getStatus())) {
-            throw new IllegalArgumentException("Sách này hiện không có sẵn để đặt trước!");
-        }
+
 
         boolean alreadyReserved = reservationRepository.findByMember_MemberIdOrderByReservationDateDesc(member.getMemberId())
                 .stream()
@@ -257,7 +260,7 @@ public class BorrowServiceImpl implements BorrowService {
                         && r.getBook().getBookId().equals(bookId)
                         && ("Pending".equalsIgnoreCase(r.getStatus()) || "Active".equalsIgnoreCase(r.getStatus())));
         if (alreadyReserved) {
-            throw new IllegalArgumentException("Ban da co mot yeu cau dat truoc cuon sach nay va dang cho xu ly!");
+            throw new IllegalArgumentException("Bạn đã có một yêu cầu đặt trước cuốn sách này và đang chờ xử lý!");
         }
 
         Reservation reservation = new Reservation();
@@ -277,25 +280,45 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public void approveReservationRequest(Integer reservationId, String staffUsername) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau dat truoc!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn yêu cầu đặt trước!"));
         if (!"Pending".equalsIgnoreCase(reservation.getStatus())) {
-            throw new IllegalArgumentException("Don dat truoc nay da duoc xu ly tu truoc!");
+            throw new IllegalArgumentException("Đơn đặt trước này đã được xử lý từ trước!");
         }
 
         reservation.setStatus("Active");
         reservationRepository.save(reservation);
-        sendInternalNotification(reservation.getMember(), "Yeu cau dat truoc duoc phe duyet",
-                "Cuon sach '" + reservation.getBook().getTitle() + "' da duoc dat giu thanh cong.");
+        sendInternalNotification(reservation.getMember(), "Yêu cầu đặt trước được phê duyệt",
+                "Cuốn sách '" + reservation.getBook().getTitle() + "' đã được đặt giữ thành công.");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void rejectReservationRequest(Integer reservationId, String staffUsername) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn yêu cầu đặt trước!"));
+        if (!"Pending".equalsIgnoreCase(reservation.getStatus())) {
+            throw new IllegalArgumentException("Đơn đặt trước này đã được xử lý từ trước!");
+        }
+
+        reservation.setStatus("Rejected");
+        reservationRepository.save(reservation);
+        sendInternalNotification(reservation.getMember(), "Yêu cầu đặt trước bị từ chối",
+                "Yêu cầu đặt trước cuốn sách '" + reservation.getBook().getTitle() + "' đã bị từ chối.");
+    }
+
+    @Override
+    public Reservation getReservationById(Integer reservationId) {
+        return reservationRepository.findById(reservationId).orElse(null);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void memberCancelReservation(String username, Integer reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Don dat truoc khong ton tai!"));
+                .orElseThrow(() -> new IllegalArgumentException("Đơn đặt trước không tồn tại!"));
         Integer currentMemberId = getMemberIdByUsername(username);
         if (currentMemberId == null || !reservation.getMember().getMemberId().equals(currentMemberId)) {
-            throw new IllegalArgumentException("Ban khong co quyen huy don dat truoc cua nguoi khac!");
+            throw new IllegalArgumentException("Bạn không có quyền hủy đơn đặt trước của người khác!");
         }
         reservation.setStatus("Canceled");
         reservationRepository.save(reservation);
@@ -378,7 +401,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Integer loanId, String status) {
         Borrow borrow = borrowRepository.findById(loanId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don muon/tra tuong ung!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn mượn/trả tương ứng!"));
         borrow.setStatus(status);
         borrowRepository.save(borrow);
     }
@@ -387,7 +410,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(readOnly = true)
     public Borrow getBorrowById(Integer borrowId) {
         return borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don muon!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn mượn!"));
     }
 
     @Override
@@ -529,6 +552,21 @@ public class BorrowServiceImpl implements BorrowService {
         int maxBorrowDays = getPositiveIntSetting("MAX_BORROW_DAYS", 14);
         int safeRequestedDays = requestedDays == null || requestedDays <= 0 ? maxBorrowDays : requestedDays;
         return Math.min(safeRequestedDays, maxBorrowDays);
+    }
+
+    @Override
+    public List<BorrowDetail> getPendingRenewalRequests() {
+        return borrowDetailRepository.findByStatus("Renew_Pending");
+    }
+
+    @Override
+    public BorrowDetail getBorrowDetailById(Integer borrowDetailId) {
+        return borrowDetailRepository.findById(borrowDetailId).orElse(null);
+    }
+
+    @Override
+    public int getMaxBorrowDays() {
+        return getPositiveIntSetting("MAX_BORROW_DAYS", 14);
     }
 
     private int getPositiveIntSetting(String key, int defaultValue) {

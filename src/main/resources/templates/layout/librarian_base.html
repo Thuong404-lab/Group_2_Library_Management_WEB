@@ -84,6 +84,11 @@
             list-style: none;
             margin: 0;
             padding-left: 0;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        .sidebar-menu::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
         }
 
         .menu-item {
@@ -280,7 +285,7 @@
 
         <li class="menu-item">
             <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
+                <div class="d-flex align-items-center">
                     <i class="bi bi-journal-bookmark-fill menu-icon"></i>
                     <span class="menu-text">Quản lý mượn, trả</span>
                 </div>
@@ -288,30 +293,19 @@
             </a>
             <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list' || activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Danh sách phiếu mượn</span>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Lịch mượn trả chi tiết</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Quầy mượn sách</span>
+                        <span class="menu-text" style="font-size: 0.95rem;">Xử lý yêu cầu mượn</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/loan/returns}" class="menu-link py-2" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Trả sách</span>
+                        <span class="menu-text" style="font-size: 0.95rem;">Xác nhận trả sách</span>
                     </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/in-library-reading}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-onsite'} ? 'text-white fw-bold' : 'text-white'" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Bạn đọc tại chỗ</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/violations}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-fines'} ? 'text-white fw-bold' : 'text-white'" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Phạt vi phạm</span>
-                    </a>
-                </li>
             </ul>
         </li>
 
@@ -360,7 +354,7 @@
             <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link"
                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'active'"
                style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
+                <div class="d-flex align-items-center">
                     <i class="bi bi-wallet2 menu-icon"></i>
                     <span class="menu-text">Tài chính</span>
                 </div>

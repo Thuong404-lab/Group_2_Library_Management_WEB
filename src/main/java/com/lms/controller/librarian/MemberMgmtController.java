@@ -316,4 +316,42 @@ public class MemberMgmtController {
             model.addAttribute("currentUser", userDetails.getUser());
         }
     }
+    @GetMapping("/api/member-info")
+    @ResponseBody
+    public Map<String, Object> getMemberInfo(@RequestParam("identifier") String identifier) {
+        Map<String, Object> data = new HashMap<>();
+        try {
+            Member member = memberRepository.findByUserEmail(identifier.trim())
+                    .or(() -> memberRepository.findByUserPhone(identifier.trim()))
+                    .orElse(null);
+            
+            if (member == null || member.getUser() == null) {
+                data.put("found", false);
+                return data;
+            }
+            
+            data.put("found", true);
+            data.put("name", member.getUser().getFullName());
+            data.put("email", member.getUser().getEmail());
+            data.put("phone", member.getUser().getPhone());
+            
+            String rawStatus = member.getUser().getStatus().toString();
+            String vnStatus = "Hoạt động";
+            if ("Inactive".equalsIgnoreCase(rawStatus)) vnStatus = "Khóa";
+            else if ("Banned".equalsIgnoreCase(rawStatus)) vnStatus = "Cấm mượn";
+            data.put("status", vnStatus);
+            data.put("rawStatus", rawStatus);
+            
+            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Tiêu chuẩn";
+            if ("Standard".equalsIgnoreCase(tierName)) tierName = "Hạng Tiêu Chuẩn";
+            else if ("Premium".equalsIgnoreCase(tierName)) tierName = "Hạng Cao Cấp";
+            else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
+            data.put("tier", tierName);
+            
+        } catch (Exception e) {
+            data.put("found", false);
+            data.put("error", e.getMessage());
+        }
+        return data;
+    }
 }
