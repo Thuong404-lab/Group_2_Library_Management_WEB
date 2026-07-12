@@ -21,6 +21,9 @@ public interface BookService {
     // Lấy sách mới nhất cho trang chủ
     List<Book> getRecentBooks(int limit);
 
+    // Lấy sách thịnh hành (được mượn nhiều nhất)
+    List<Book> getTrendingBooks(int limit);
+
     // UC-3: Xem chi tiết sách
     Book findBookById(Integer id);
 

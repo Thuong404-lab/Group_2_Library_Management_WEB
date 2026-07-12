@@ -1,7 +1,10 @@
 package com.lms.controller.member;
 
 import com.lms.entity.User;
+import com.lms.entity.Member;
+import com.lms.repository.BorrowDetailRepository;
 import com.lms.service.MemberFavoriteService;
+import com.lms.service.MembershipService;
 import com.lms.service.ProfileService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -26,12 +29,18 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final MemberFavoriteService memberFavoriteService;
+    private final MembershipService membershipService;
+    private final BorrowDetailRepository borrowDetailRepository;
 
     // Inject ProfileService xử lý logic cốt lõi giống như bên Thủ thư
     public ProfileController(ProfileService profileService,
-                             MemberFavoriteService memberFavoriteService) {
+                             MemberFavoriteService memberFavoriteService,
+                             MembershipService membershipService,
+                             BorrowDetailRepository borrowDetailRepository) {
         this.profileService = profileService;
         this.memberFavoriteService = memberFavoriteService;
+        this.membershipService = membershipService;
+        this.borrowDetailRepository = borrowDetailRepository;
     }
 
     // UC-4.1: View Profile
@@ -45,6 +54,10 @@ public class ProfileController {
         try {
             User member = profileService.getProfile(username);
             model.addAttribute("member", member);
+            Member membership = membershipService.getMemberByUsername(username);
+            model.addAttribute("membership", membership);
+            model.addAttribute("activeBorrowsCount",
+                    borrowDetailRepository.countActiveBorrowedBooks(membership.getMemberId()));
             // Thông tin Account và Wallet có thể lấy trực tiếp thông qua liên kết thực thể member.getAccount() / member.getWallet() ở giao diện Thymeleaf
             return "member/profile";
         } catch (Exception e) {

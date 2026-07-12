@@ -5,14 +5,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 import java.util.List;
 
 @Repository
-public interface BookRepository extends JpaRepository<Book, Integer> {
+public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecificationExecutor<Book> {
     long countByStatusIgnoreCase(String status);
     
     boolean existsByGenre_GenreId(Integer genreId);
@@ -30,4 +32,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
                            @Param("genreId") Integer genreId,
                            @Param("status") String status,
                            Pageable pageable);
+
+    @Query("SELECT d.book FROM BorrowDetail d GROUP BY d.book ORDER BY COUNT(d) DESC")
+    List<Book> findTrendingBooks(Pageable pageable);
 }

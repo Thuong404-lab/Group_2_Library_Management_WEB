@@ -10,6 +10,7 @@ import com.lms.dto.response.LibrarianRevenueReportData;
 import com.lms.dto.response.ReportExport;
 import com.lms.dto.response.ReportMetric;
 import com.lms.dto.response.ReportViewData;
+import com.lms.exception.ValidationException;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -391,6 +392,11 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private LocalDate[] normalizeDateRange(LocalDate fromDate, LocalDate toDate) {
+        LocalDate today = LocalDate.now();
+        if ((fromDate != null && fromDate.isAfter(today))
+                || (toDate != null && toDate.isAfter(today))) {
+            throw new ValidationException("Ngày báo cáo không được lớn hơn ngày hiện tại.");
+        }
         LocalDate normalizedToDate = toDate == null ? LocalDate.now() : toDate;
         LocalDate normalizedFromDate = fromDate == null ? normalizedToDate.minusDays(29) : fromDate;
         if (normalizedFromDate.isAfter(normalizedToDate)) {

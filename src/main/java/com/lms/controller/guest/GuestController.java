@@ -47,7 +47,9 @@ public class GuestController {
     @GetMapping("/")
     public String homePage(Model model, Principal principal) {
         List<Book> books = bookService.getRecentBooks(6);
+        List<Book> trendingBooks = bookService.getTrendingBooks(6);
         model.addAttribute("books", books);
+        model.addAttribute("trendingBooks", trendingBooks);
         addFavoriteBookIds(model, principal);
         return "index";
     }
@@ -141,7 +143,7 @@ public class GuestController {
         }
         
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5, org.springframework.data.domain.Sort.by("title").ascending());
-        org.springframework.data.domain.Page<Book> bookPage = bookService.searchBooks(keyword, null, "Active", pageable);
+        org.springframework.data.domain.Page<Book> bookPage = bookService.searchBooks(keyword, null, null, pageable);
         
         List<Map<String, Object>> suggestions = bookPage.getContent().stream().map(book -> {
             Map<String, Object> map = new java.util.HashMap<>();

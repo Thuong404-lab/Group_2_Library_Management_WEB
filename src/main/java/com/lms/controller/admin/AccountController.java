@@ -55,13 +55,6 @@ public class AccountController {
         return listAccounts(page, keyword, model);
     }
 
-    @GetMapping("/create")
-    public String showCreateForm(@RequestParam(required = false, defaultValue = "members") String source,
-            Model model) {
-        prepareCreateAccountPage(model, source);
-        return "admin/create-account";
-    }
-
     @PostMapping("/create")
     public String createAccount(@RequestParam String fullName,
             @RequestParam String email,
@@ -77,16 +70,15 @@ public class AccountController {
 
         AdminAccountCreateRequest request = new AdminAccountCreateRequest(
                 fullName, email, phone, username, password, accountType, tierId, status);
-        model.addAttribute("formValues", createFormValues(request));
-
         try {
             accountService.createAccount(request);
             redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công.");
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
-            model.addAttribute("fieldErrors", e.getFieldErrors());
-            prepareCreateAccountPage(model, source);
-            return "admin/create-account";
+            redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
+            redirectAttributes.addFlashAttribute("fieldErrors", e.getFieldErrors());
+            redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
+            return redirectBySource(source);
         }
     }
 
@@ -156,7 +148,7 @@ public class AccountController {
 
         if ("staff".equalsIgnoreCase(source)) {
             model.addAttribute("source", "staff");
-            model.addAttribute("backText", "← Về danh sách nhân viên");
+            model.addAttribute("backText", "← Về danh sách thủ thư");
             model.addAttribute("backUrl", "/admin/staff");
         } else {
             model.addAttribute("source", "members");

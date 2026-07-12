@@ -98,6 +98,10 @@ public class BorrowController {
 
         try {
             Book book = bookService.findBookById(bookId);
+            if ("Inactive".equalsIgnoreCase(book.getStatus())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không có sẵn để mượn!");
+                return "redirect:/";
+            }
             model.addAttribute("selectedBook", book);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");
@@ -179,21 +183,6 @@ public class BorrowController {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể hủy đơn đặt chỗ: " + e.getMessage());
         }
         return "redirect:/member/borrow/management?tab=reserved";
-    }
-
-    @PostMapping("/return/{loanId}")
-    public String returnBook(@PathVariable("loanId") Integer loanId,
-                             Principal principal,
-                             RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
-        try {
-            borrowService.memberSubmitReturnRequest(principal.getName(), loanId);
-            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi tới Thủ thư thành công.");
-            return "redirect:/member/borrow/management?tab=borrowing";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý gửi yêu cầu: " + e.getMessage());
-            return "redirect:/member/borrow/management?tab=borrowing";
-        }
     }
 
     @PostMapping("/renew/{borrowDetailId}")
