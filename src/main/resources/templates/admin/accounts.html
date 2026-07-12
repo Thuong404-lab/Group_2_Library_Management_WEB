@@ -5,6 +5,14 @@
 <head>
     <title>Quản lý tài khoản thành viên</title>
     <style>
+        #createAccountForm .form-control.is-invalid,
+        #createAccountForm .form-select.is-invalid,
+        #createAccountForm .form-control.is-valid,
+        #createAccountForm .form-select.is-valid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
         .member-update-form .form-control.is-invalid,
         .member-update-form .form-select.is-invalid {
             background-image: none !important;
@@ -15,6 +23,24 @@
         .member-update-form .form-select.is-valid {
             background-image: none !important;
             padding-right: 0.75rem !important;
+        }
+
+        .update-account-tooltip .tooltip-inner {
+            background-color: #8b5a2b !important;
+            color: #ffffff !important;
+        }
+
+        .delete-account-tooltip .tooltip-inner {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+
+        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #8b5a2b !important;
+        }
+
+        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #dc3545 !important;
         }
     </style>
 </head>
@@ -31,11 +57,37 @@
                 </div>
             </div>
             <div>
-                <a class="btn btn-classic" th:href="@{/admin/accounts/create(source='members')}">
+                <button type="button" class="btn btn-classic" data-bs-toggle="modal"
+                    data-bs-target="#createMemberAccountModal">
                     <i class="bi bi-person-plus me-1"></i> Tạo tài khoản mới
-                </a>
+                </button>
             </div>
         </div>
+
+        <div class="modal fade text-start" id="createMemberAccountModal" tabindex="-1"
+            aria-labelledby="createMemberAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-white border-bottom p-4">
+                        <h5 class="modal-title fw-bold" id="createMemberAccountModalLabel"
+                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản thành viên
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <th:block th:replace="~{admin/create-account :: createAccountForm('members', true)}"></th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <th:block th:replace="~{admin/create-account :: createAccountValidation}"></th:block>
+        <script th:if="${openCreateAccountModal}">
+            document.addEventListener("DOMContentLoaded", function () {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById("createMemberAccountModal")).show();
+            });
+        </script>
 
         <!-- Alerts -->
         <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
@@ -58,8 +110,9 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
-                                
+                                th:value="${keyword}"
+                                placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
+
                             <button class="btn btn-classic ms-2 rounded" type="submit">Tìm kiếm</button>
                         </div>
                     </div>
@@ -139,21 +192,18 @@
 
                                 <td class="text-end pe-3"
                                     th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                    <button type="button" class="btn btn-sm btn-outline-classic" data-bs-toggle="modal"
-                                        th:data-bs-target="${'#updateMemberModal' + account.accountId}">
+                                    <button type="button" class="btn btn-sm btn-outline-classic account-action-tooltip"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="${'#updateMemberModal' + account.accountId}"
+                                        data-bs-title="Cập nhật tài khoản" data-bs-custom-class="update-account-tooltip"
+                                        aria-label="Cập nhật">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger ms-1"
-                                        data-bs-toggle="modal"
-                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-
                                     <!-- Update Modal -->
-                                        <div class="modal fade text-start"
-                                            th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
-                                            aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
-                                            th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
+                                    <div class="modal fade text-start"
+                                        th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                        aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
+                                        th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
                                         <div class="modal-dialog modal-dialog-centered modal-lg">
                                             <div class="modal-content border-0 shadow">
                                                 <form method="post" class="member-update-form" novalidate
@@ -170,6 +220,8 @@
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                                             Cập nhật tài khoản
                                                         </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
                                                     </div>
 
                                                     <div class="modal-body p-4">
@@ -181,8 +233,8 @@
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     Họ tên <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control"
-                                                                    name="fullName" data-label="Họ tên"
+                                                                <input class="form-control" name="fullName"
+                                                                    data-label="Họ tên"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (account.user != null ? account.user.fullName : '')}"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                     required>
@@ -192,14 +244,13 @@
                                                                 </div>
                                                             </div>
 
-                                                             <div class="col-md-6">
+                                                            <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     Username <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control"
-                                                                    name="username" data-label="Username"
-                                                                    pattern="[a-zA-Z0-9_]{3,20}"
+                                                                <input class="form-control" name="username"
+                                                                    data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                     required>
@@ -214,8 +265,8 @@
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     Số điện thoại <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control"
-                                                                    name="phone" data-label="Số điện thoại" required
+                                                                <input class="form-control" name="phone"
+                                                                    data-label="Số điện thoại" required
                                                                     pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
                                                                     inputmode="numeric"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
@@ -231,8 +282,8 @@
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     Email <span class="text-danger">*</span>
                                                                 </label>
-                                                                <input class="form-control"
-                                                                    name="email" type="email" data-label="Email"
+                                                                <input class="form-control" name="email" type="email"
+                                                                    data-label="Email"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
@@ -244,12 +295,12 @@
                                                             </div>
 
                                                             <div class="col-md-6">
-                                                                <label class="form-label fw-bold small text-muted text-uppercase">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
                                                                     Hạng thành viên
                                                                 </label>
-                                                                <select
-                                                                    class="form-select form-control"
-                                                                    name="tierId" data-label="Hạng thành viên" required
+                                                                <select class="form-select form-control" name="tierId"
+                                                                    data-label="Hạng thành viên" required
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['tierId'] != null} ? 'is-invalid'">
                                                                     <option th:each="tier : ${tiers}"
                                                                         th:value="${tier.tierId}"
@@ -263,14 +314,15 @@
                                                                     Vui lòng chọn hạng thành viên.
                                                                 </div>
                                                             </div>
-                                                            
+
 
                                                             <div class="col-md-6">
-                                                                <label class="form-label fw-bold small text-muted text-uppercase">
+                                                                <label
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
                                                                     Trạng thái
                                                                 </label>
-                                                                <select class="form-select form-control"
-                                                                    name="status" required>
+                                                                <select class="form-select form-control" name="status"
+                                                                    required>
                                                                     <option value="Active"
                                                                         th:selected="${account.status == 'Active'}">
                                                                         Active
@@ -284,8 +336,8 @@
                                                                         Blocked
                                                                     </option>
                                                                 </select>
-                                                                <div class="invalid-feedback"
-                                                                    data-error-for="status"></div>
+                                                                <div class="invalid-feedback" data-error-for="status">
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -302,6 +354,14 @@
                                         </div>
                                     </div>
 
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
+                                        data-bs-title="Xóa tài khoản" data-bs-custom-class="delete-account-tooltip"
+                                        aria-label="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                     <!-- Delete Modal -->
                                     <div class="modal fade text-start"
                                         th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
@@ -426,7 +486,8 @@
                 <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
                     th:if="${accounts.totalPages > 1}"
                     th:with="startPage=${accounts.totalPages <= 10 ? 0 : (accounts.number < 9 ? 0 : (accounts.number - 8 > accounts.totalPages - 10 ? accounts.totalPages - 10 : accounts.number - 8))}">
-                    <nav th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
                         <ul class="pagination mb-0">
 
                             <!-- First page -->
@@ -483,6 +544,18 @@
             </div>
         </div>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
+                    const tooltip = new bootstrap.Tooltip(button, {
+                        trigger: "hover"
+                    });
+                    button.addEventListener("click", function () {
+                        tooltip.hide();
+                    });
+                });
+            });
+        </script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".member-update-form").forEach(function (form) {
@@ -554,7 +627,7 @@
                         });
 
                         if (lastFocusedField != null
-                                && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
+                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
                             lastFocusedField.focus();
                         }
                     }
