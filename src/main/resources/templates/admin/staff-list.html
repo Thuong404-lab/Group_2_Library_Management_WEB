@@ -24,6 +24,24 @@
             background-image: none !important;
             padding-right: 0.75rem !important;
         }
+
+        .update-account-tooltip .tooltip-inner {
+            background-color: #8b5a2b !important;
+            color: #ffffff !important;
+        }
+
+        .delete-account-tooltip .tooltip-inner {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+
+        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #8b5a2b !important;
+        }
+
+        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #dc3545 !important;
+        }
     </style>
 </head>
 
@@ -177,15 +195,21 @@
 
                                 <td class="text-end pe-3">
                                     <div th:if="${account != null}">
-                                        <button type="button" class="btn btn-sm btn-outline-classic"
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-classic account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#updateStaffModal' + account.accountId}"
+                                            data-bs-title="Cập nhật tài khoản"
+                                            data-bs-custom-class="update-account-tooltip"
                                             aria-label="Cập nhật tài khoản">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
+                                            data-bs-title="Xóa tài khoản"
+                                            data-bs-custom-class="delete-account-tooltip"
                                             aria-label="Xóa tài khoản">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -527,6 +551,18 @@
             </div>
         </div>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
+                    const tooltip = new bootstrap.Tooltip(button, {
+                        trigger: "hover"
+                    });
+                    button.addEventListener("click", function () {
+                        tooltip.hide();
+                    });
+                });
+            });
+        </script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".staff-update-form").forEach(function (form) {
