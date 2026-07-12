@@ -33,7 +33,7 @@ import java.util.Map;
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
-    private static final int DASHBOARD_PAGE_SIZE = 5;
+    private static final int DASHBOARD_PAGE_SIZE = 10;
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;

@@ -252,24 +252,38 @@
               </tbody>
             </table>
           </div>
-          <nav th:if="${myReviews != null && myReviews.totalPages > 1}" class="mt-3">
+          <nav th:if="${myReviews != null && myReviews.totalPages > 1}" class="mt-3"
+            th:with="startPage=${myReviews.totalPages <= 10 ? 0 : (myReviews.number < 9 ? 0 : (myReviews.number - 8 > myReviews.totalPages - 10 ? myReviews.totalPages - 10 : myReviews.number - 8))}, endPage=${startPage + 9 < myReviews.totalPages ? startPage + 9 : myReviews.totalPages - 1}">
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}">
-                  Trước
-                </a>
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=0)}"
+                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
               </li>
-              <li class="page-item disabled">
-                <span class="page-link">
-                  Trang <span th:text="${myReviews.number + 1}">1</span>
-                  /
-                  <span th:text="${myReviews.totalPages}">1</span>
-                </span>
+              <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
+                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
+              </li>
+              <li class="page-item disabled" th:if="${startPage > 0}">
+                <span class="page-link">…</span>
+              </li>
+              <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                th:classappend="${i == myReviews.number ? 'active' : ''}">
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=${i})}"
+                  th:text="${i + 1}"
+                  th:style="${i == myReviews.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+              </li>
+              <li class="page-item disabled" th:if="${endPage < myReviews.totalPages - 1}">
+                <span class="page-link">…</span>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}">
-                  Sau
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
+                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                  <i class="bi bi-chevron-right"></i>
                 </a>
+              </li>
+              <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
+                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
               </li>
             </ul>
           </nav>

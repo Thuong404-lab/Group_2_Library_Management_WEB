@@ -52,7 +52,14 @@
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 stable-table-layout">
+                        <colgroup>
+                            <col style="width: 24%">
+                            <col style="width: 21%">
+                            <col style="width: 14%">
+                            <col style="width: 17%">
+                            <col style="width: 24%">
+                        </colgroup>
                         <thead style="background-color: #f7f1e8;">
                             <tr>
                                 <th>Thời gian</th>
@@ -101,8 +108,20 @@
                                             #strings.startsWith(log.actionType, 'CREATE') ? 'bg-primary' :
                                             #strings.startsWith(log.actionType, 'UPDATE') ? 'bg-warning text-dark' :
                                             'bg-secondary'}"
-                                        th:text="${log.actionType}">
-                                        LOGIN
+                                        th:text="${log.actionType == 'LOGIN' ? 'Đăng nhập' :
+                                            (log.actionType == 'LOGOUT' ? 'Đăng xuất' :
+                                            (log.actionType == 'CREATE_BOOK' ? 'Thêm sách' :
+                                            (log.actionType == 'UPDATE_BOOK' ? 'Cập nhật sách' :
+                                            (log.actionType == 'DELETE_BOOK' ? 'Xóa sách' :
+                                            (log.actionType == 'CREATE_ACCOUNT' ? 'Tạo tài khoản' :
+                                            (log.actionType == 'UPDATE_ACCOUNT' ? 'Cập nhật tài khoản' :
+                                            (log.actionType == 'DEACTIVATE_ACCOUNT' ? 'Vô hiệu hóa tài khoản' :
+                                            (log.actionType == 'UPDATE_SETTINGS' ? 'Cập nhật cài đặt' :
+                                            (log.actionType == 'REQUEST_BORROW' ? 'Yêu cầu mượn sách' :
+                                            (log.actionType == 'REQUEST_RETURN' ? 'Yêu cầu trả sách' :
+                                            (log.actionType == 'RESERVE_BOOK' ? 'Đặt trước sách' :
+                                            (log.actionType == 'GOOGLE' ? 'Đăng nhập Google' : log.actionType))))))))))))}">
+                                        Đăng nhập
                                     </span>
                                 </td>
 
@@ -131,7 +150,7 @@
                     <ul class="pagination mb-0">
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link" th:href="@{/admin/system/logs(page=0, keyword=${keyword})}"
-                                th:attr="aria-disabled=${logs.first}" aria-label="Trang đầu"
+                                aria-label="Trang đầu"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 Đầu
                             </a>
@@ -140,35 +159,33 @@
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link"
                                 th:href="@{/admin/system/logs(page=${logs.number - 1}, keyword=${keyword})}"
-                                th:attr="aria-disabled=${logs.first}" aria-label="Trang trước"
+                                aria-label="Trang trước"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
 
                         <li class="page-item disabled" th:if="${startPage > 0}">
-                            <span class="page-link"
-                                style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">…</span>
+                            <span class="page-link">…</span>
                         </li>
 
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == logs.number} ? 'active'">
                             <a class="page-link" th:href="@{/admin/system/logs(page=${i}, keyword=${keyword})}"
-                                th:text="${i + 1}" th:attr="aria-current=${i == logs.number ? 'page' : null}"
+                                th:text="${i + 1}"
                                 th:style="${i == logs.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
                                 1
                             </a>
                         </li>
 
                         <li class="page-item disabled" th:if="${endPage < logs.totalPages - 1}">
-                            <span class="page-link"
-                                style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">…</span>
+                            <span class="page-link">…</span>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link"
                                 th:href="@{/admin/system/logs(page=${logs.number + 1}, keyword=${keyword})}"
-                                th:attr="aria-disabled=${logs.last}" aria-label="Trang sau"
+                                aria-label="Trang sau"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
@@ -177,7 +194,7 @@
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link"
                                 th:href="@{/admin/system/logs(page=${logs.totalPages - 1}, keyword=${keyword})}"
-                                th:attr="aria-disabled=${logs.last}" aria-label="Trang cuối"
+                                aria-label="Trang cuối"
                                 style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
                                 Cuối
                             </a>
