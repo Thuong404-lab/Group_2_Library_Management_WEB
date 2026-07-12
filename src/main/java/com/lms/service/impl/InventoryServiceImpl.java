@@ -8,13 +8,14 @@ import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
+import com.lms.repository.ShelfRepository;
+import com.lms.entity.Shelf;
 import com.lms.service.InventoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * InventoryService - Xử lý Logic Quản lý Kho Sách
@@ -33,15 +34,18 @@ public class InventoryServiceImpl implements InventoryService {
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final BookItemRepository bookItemRepository;
+    private final ShelfRepository shelfRepository;
 
     public InventoryServiceImpl(BookRepository bookRepository,
                                 CategoryRepository categoryRepository,
                                 GenreRepository genreRepository,
-                                BookItemRepository bookItemRepository) {
+                                BookItemRepository bookItemRepository,
+                                ShelfRepository shelfRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.bookItemRepository = bookItemRepository;
+        this.shelfRepository = shelfRepository;
     }
 
     @Override
@@ -97,7 +101,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void addNewBook(String title, String isbn, Integer genreId, Integer quantity) {
+    public void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description, String coverImageUrl, Integer shelfId) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Tên sách không được để trống.");
         }
@@ -112,21 +116,37 @@ public class InventoryServiceImpl implements InventoryService {
         book.setIsbn(isbn.trim());
         book.setGenre(genre);
         book.setStatus(STATUS_ACTIVE);
-        bookRepository.save(book);
+        if (description != null && !description.trim().isEmpty()) {
+            book.setDescription(description.trim());
+        }
+        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+            book.setCoverImageUrl(coverImageUrl.trim());
+        }
+        book = bookRepository.save(book);
+
+        Shelf shelf = shelfId != null ? shelfRepository.findById(shelfId).orElse(null) : null;
 
         int copies = quantity != null && quantity > 0 ? quantity : 1;
-        for (int i = 0; i < copies; i++) {
+
+        for (int i = 1; i <= copies; i++) {
             BookItem item = new BookItem();
             item.setBook(book);
-            item.setShelf(null);
-            item.setBarcode(UUID.randomUUID().toString());
+            item.setShelf(shelf);
+            item.setBarcode(
+                    String.format(
+                            "BC%03d-%03d",
+                            book.getBookId(),
+                            i
+                    )
+            );
             item.setStatus(STATUS_AVAILABLE);
+
             bookItemRepository.save(item);
         }
     }
 
     @Override
-    public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status) {
+    public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status, String coverImageUrl, Integer shelfId) {
         Book book = findBookById(bookId);
         if (title != null && !title.trim().isEmpty()) {
             book.setTitle(title.trim());
@@ -142,7 +162,20 @@ public class InventoryServiceImpl implements InventoryService {
         if (status != null && !status.trim().isEmpty()) {
             book.setStatus(status.trim());
         }
+        // Chỉ cập nhật ảnh nếu có ảnh mới được upload
+        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+            book.setCoverImageUrl(coverImageUrl.trim());
+        }
         bookRepository.save(book);
+        
+        if (shelfId != null) {
+            Shelf shelf = shelfRepository.findById(shelfId).orElse(null);
+            List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
+            for (BookItem item : items) {
+                item.setShelf(shelf);
+                bookItemRepository.save(item);
+            }
+        }
     }
 
     @Override
@@ -160,11 +193,15 @@ public class InventoryServiceImpl implements InventoryService {
         Book book = findBookById(bookId);
         book.setStatus(STATUS_DISPOSED);
         bookRepository.save(book);
-        List<BookItem> copies = bookItemRepository.findByBook_BookId(bookId);
-        for (BookItem item : copies) {
+        List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
+        for (BookItem item : items) {
             item.setStatus(STATUS_DISPOSED);
+            bookItemRepository.save(item);
         }
-        bookItemRepository.saveAll(copies);
+        // Xóa tất cả BookItems
+        bookItemRepository.deleteAll(items);
+        // Xóa sách
+        bookRepository.delete(book);
     }
 
     @Override

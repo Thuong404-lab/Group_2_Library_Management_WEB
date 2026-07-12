@@ -38,6 +38,7 @@ public class ReportController {
         model.addAttribute("report", report);
         model.addAttribute("fromDate", report.getFromDate());
         model.addAttribute("toDate", report.getToDate());
+        model.addAttribute("maxDate", LocalDate.now());
         return "librarian/revenue-report";
     }
 
@@ -54,6 +55,7 @@ public class ReportController {
         model.addAttribute("report", report);
         model.addAttribute("fromDate", report.getFromDate());
         model.addAttribute("toDate", report.getToDate());
+        model.addAttribute("maxDate", LocalDate.now());
         return "librarian/revenue-report";
     }
 

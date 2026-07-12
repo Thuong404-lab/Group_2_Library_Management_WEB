@@ -22,11 +22,12 @@ public class LibrarianDashboardController {
 
     @GetMapping("/dashboard")
     public String viewDashboard(
+            @RequestParam(defaultValue = "0") int bookPage,
             Model model,
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAllAttributes(dashboardService.getDashboardData(reviewPage, requestPage));
+        model.addAllAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
     }

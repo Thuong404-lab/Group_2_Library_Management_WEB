@@ -30,9 +30,9 @@ public interface InventoryService {
 
     Book findBookById(Integer bookId);
 
-    void addNewBook(String title, String isbn, Integer genreId, Integer quantity);
+    void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description, String coverImageUrl, Integer shelfId);
 
-    void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status);
+    void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status, String coverImageUrl, Integer shelfId);
 
     void updateBookStatus(Integer bookId, String status);
 
