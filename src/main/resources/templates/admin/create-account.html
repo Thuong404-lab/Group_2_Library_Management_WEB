@@ -147,7 +147,7 @@
                                             -- Chọn hạng thành viên --
                                         </option>
                                         <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
-                                            th:text="${tier.tierName}"
+                                            th:text="${tier.tierName == 'Regular' ? 'Thường' : (tier.tierName == 'Silver' ? 'Bạc' : (tier.tierName == 'Gold' ? 'Vàng' : (tier.tierName == 'Diamond' ? 'Kim cương' : tier.tierName)))}"
                                             th:selected="${formValues != null and formValues['tierId'] == tier.tierId}">
                                             Standard Member
                                         </option>
@@ -192,11 +192,11 @@
                                         th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
                                         <option value="Active"
                                             th:selected="${formValues == null or #strings.isEmpty(formValues['status']) or formValues['status'] == 'Active'}">
-                                            Active
+                                            Hoạt động
                                         </option>
                                         <option value="Inactive"
                                             th:selected="${formValues != null and formValues['status'] == 'Inactive'}">
-                                            Inactive
+                                            Ngừng hoạt động
                                         </option>
                                     </select>
                                     <div class="invalid-feedback"

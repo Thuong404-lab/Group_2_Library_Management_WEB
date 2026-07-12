@@ -78,7 +78,12 @@
                                   (${transaction.transactionType == 'FINE'} ? ' type-fine' :
                                   (${transaction.transactionType == 'DAMAGE_FEE'} ? ' type-damage-fee' :
                                   (${transaction.transactionType == 'REFUND'} ? ' type-refund' : ' type-default')))))"
-                              th:text="${transaction.transactionType}">TYPE</span>
+                              th:text="${transaction.transactionType == 'TOP_UP' ? 'Nạp tiền' :
+                                  (transaction.transactionType == 'BORROW_FEE' ? 'Phí mượn' :
+                                  (transaction.transactionType == 'DEPOSIT' ? 'Tiền cọc' :
+                                  (transaction.transactionType == 'FINE' ? 'Phí phạt' :
+                                  (transaction.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng' :
+                                  (transaction.transactionType == 'REFUND' ? 'Hoàn tiền' : transaction.transactionType)))))}">Loại giao dịch</span>
                     </td>
                     <td class="fw-bold"
                         th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
@@ -87,9 +92,9 @@
                         VNĐ
                     </td>
                     <td>
-                        <span class="badge transaction-status"
-                              th:classappend="${transaction.status == 'Completed'} ? ' status-completed' : ' status-pending'"
-                              th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : transaction.status}">Hoàn tất</span>
+                        <span class="status-badge"
+                              th:classappend="${transaction.status == 'Completed' ? 'status-completed' : (transaction.status == 'Failed' ? 'status-rejected' : (transaction.status == 'Canceled' ? 'status-canceled' : 'status-pending'))}"
+                              th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : (transaction.status == 'Pending' ? 'Chờ xử lý' : (transaction.status == 'Failed' ? 'Thất bại' : (transaction.status == 'Canceled' ? 'Đã hủy' : transaction.status)))}">Hoàn tất</span>
                     </td>
                 </tr>
                 </tbody>

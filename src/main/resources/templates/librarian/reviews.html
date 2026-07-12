@@ -43,9 +43,6 @@
                         <option value="hidden">Đã ẩn</option>
                     </select>
                 </div>
-                <div class="col-md-1 text-end">
-                    <a class="btn btn-light border w-100" href="?"><i class="bi bi-arrow-clockwise"></i></a>
-                </div>
             </form>
         </div>
     </div>
@@ -82,9 +79,9 @@
                             </td>
                             <td th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy')}">01/01/2026</td>
                             <td>
-                                <span class="badge rounded-pill bg-success" th:if="${review.status == 'approved'}">Đã duyệt</span>
-                                <span class="badge rounded-pill bg-warning text-dark" th:if="${review.status == 'pending'}">Chờ duyệt</span>
-                                <span class="badge rounded-pill bg-secondary" th:if="${review.status == 'hidden'}">Đã ẩn</span>
+                                <span class="status-badge status-approved" th:if="${review.status == 'approved'}">Đã duyệt</span>
+                                <span class="status-badge status-pending" th:if="${review.status == 'pending'}">Chờ duyệt</span>
+                                <span class="status-badge status-hidden" th:if="${review.status == 'hidden'}">Đã ẩn</span>
                             </td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-success me-1"><i class="bi bi-check-circle"></i> Duyệt</button>

@@ -3,21 +3,19 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Bàn Tiếp Nhận Trả Sách</title>
+    <title>Bàn tiếp nhận trả sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f8f7f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
         .classic-card {
-            border: none !important;
+            border: 1px solid rgba(139, 90, 43, 0.18) !important;
             border-radius: 10px !important;
             background-color: #ffffff !important;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
             overflow: hidden;
         }
         .classic-card .card-header {
             background: #ffffff !important;
-            border-bottom: 2px solid #4a3b32 !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.18) !important;
             padding-top: 1.25rem;
             padding-bottom: 1.25rem;
         }
@@ -37,8 +35,8 @@
             letter-spacing: 0.3px;
         }
         .classic-table tbody tr {
-            background-color: #fdfbf7 !important;
-            border-bottom: 1px dashed rgba(139, 90, 43, 0.15) !important;
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #dee2e6 !important;
         }
         .btn-classic-primary {
             background: #8b5a2b !important;
@@ -66,9 +64,9 @@
             border-color: #8b5a2b !important;
         }
         .scan-input {
-            border: 2px solid rgba(139, 90, 43, 0.25);
-            border-radius: 8px;
-            background-color: #fdfbf7;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background-color: #ffffff;
             color: #4a3b32;
             font-size: 1.05rem;
             transition: all 0.2s ease;
@@ -99,8 +97,8 @@
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bàn Tiếp Nhận Trả Sách</h2>
-            <div class="text-muted small">Thực hiện nhận sách nhập kho trực tiếp tại quầy thư viện và đánh giá tình trạng sách vật lý.</div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bàn tiếp nhận trả sách</h2>
+            <div class="text-muted">Tiếp nhận sách hoàn trả và đánh giá tình trạng sách tại quầy thư viện.</div>
         </div>
     </div>
 
@@ -109,7 +107,7 @@
         <div class="card-header">
             <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2" style="color: #8b5a2b;"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
         </div>
-        <div class="card-body p-4" style="background-color: #fdfbf7;">
+        <div class="card-body p-4 bg-white">
             <form th:action="@{/librarian/loan/returns/search}" method="get" class="row g-3 align-items-end">
                 <div class="col-md-9">
                     <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Mã vạch (Barcode) của cuốn sách</label>
@@ -137,7 +135,7 @@
             </h5>
         </div>
         <div class="table-responsive">
-            <table class="table align-middle mb-0 classic-table">
+            <table class="table table-hover align-middle mb-0 classic-table">
                 <thead>
                 <tr>
                     <th class="ps-4">Mã Đơn Cha</th>
@@ -163,7 +161,7 @@
                     <td>
                         <span class="fw-bold text-dark" th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
                         <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}"
-                              class="badge ms-1 text-white" style="background-color: #dc3545; font-size: 0.7rem;">Quá hạn</span>
+                              class="status-badge status-overdue ms-1">Quá hạn</span>
                     </td>
                     <td class="text-end pe-4">
                         <button type="button" class="btn btn-classic-outline px-3 py-1"

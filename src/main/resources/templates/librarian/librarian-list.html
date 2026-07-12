@@ -60,9 +60,6 @@
                                 Tìm kiếm
                             </button>
                         </div>
-                        <a class="btn btn-light border shadow-sm text-nowrap" th:href="@{/librarian/librarians}">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
-                        </a>
                     </form>
 
                     <!-- Back Button -->
@@ -133,22 +130,23 @@
 
                                 <td>
                                     <span class="badge rounded-pill px-3 py-2 text-white"
-                                        style="background-color: #5bc0de;" th:text="${staff.staffType}">
-                                        Librarian
+                                        style="background-color: #b87936; border: 1px solid #9a622a;"
+                                        th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
+                                        Thủ thư
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                    <span class="status-badge"
                                         th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
-                              staff.user.status.name() == 'Active' ? 'bg-success' :
-                              staff.user.status.name() == 'Blocked' ? 'bg-danger' :
-                              'bg-secondary'
-                          }" th:text="${staff.user.status}">
-                                        Active
+                              staff.user.status.name() == 'Active' ? 'status-active' :
+                              staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+                              'status-inactive'
+                          }" th:text="${staff.user.status.name() == 'Active' ? 'Hoạt động' : (staff.user.status.name() == 'Inactive' ? 'Ngừng hoạt động' : (staff.user.status.name() == 'Blocked' ? 'Bị khóa' : staff.user.status))}">
+                                        Hoạt động
                                     </span>
 
-                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                    <span class="status-badge status-unknown"
                                         th:if="${staff.user == null || staff.user.status == null}">
                                         N/A
                                     </span>
@@ -246,18 +244,18 @@
                                                                 Trạng thái
                                                             </div>
 
-                                                            <span class="badge rounded-pill px-3 py-2 text-white"
+                                                            <span class="status-badge"
                                                                 th:if="${staff.user != null && staff.user.status != null}"
                                                                 th:classappend="${
-                                                      staff.user.status.name() == 'Active' ? 'bg-success' :
-                                                      staff.user.status.name() == 'Blocked' ? 'bg-danger' :
-                                                      'bg-secondary'
-                                                  }" th:text="${staff.user.status}">
-                                                                Active
+                                                      staff.user.status.name() == 'Active' ? 'status-active' :
+                                                      staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+                                                      'status-inactive'
+                                                  }" th:text="${staff.user.status.name() == 'Active' ? 'Hoạt động' : (staff.user.status.name() == 'Inactive' ? 'Ngừng hoạt động' : (staff.user.status.name() == 'Blocked' ? 'Bị khóa' : staff.user.status))}">
+                                                                Hoạt động
                                                             </span>
 
                                                             <span
-                                                                class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                                class="status-badge status-unknown"
                                                                 th:if="${staff.user == null || staff.user.status == null}">
                                                                 N/A
                                                             </span>
@@ -268,9 +266,9 @@
                                                                 Loại nhân viên
                                                             </div>
                                                             <span class="badge rounded-pill px-3 py-2 text-white"
-                                                                style="background-color: #5bc0de;"
-                                                                th:text="${staff.staffType}">
-                                                                Librarian
+                                                                style="background-color: #b87936; border: 1px solid #9a622a;"
+                                                                th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
+                                                                Thủ thư
                                                             </span>
                                                         </div>
                                                     </div>

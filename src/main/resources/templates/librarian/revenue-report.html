@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Báo cáo doanh thu</title>
+    <title>Báo cáo và thống kê</title>
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='statistics'">
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Báo cáo doanh thu</h2>
-            <div class="text-muted">Theo dõi doanh thu từ các giao dịch đã hoàn tất</div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Báo cáo và thống kê</h2>
+            <div class="text-muted">Theo dõi các chỉ số mượn trả, thành viên và doanh thu thư viện</div>
         </div>
         <div class="d-flex align-items-center" style="gap: 1.5rem;">
             <a class="btn btn-outline-classic"
@@ -19,6 +19,58 @@
                th:href="@{/librarian/reports/export(format='pdf', fromDate=${fromDate}, toDate=${toDate})}">
                 <i class="bi bi-file-earmark-pdf me-1"></i> PDF
             </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm"
+                 style="border-left: 4px solid #587442 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Đang mượn</div>
+                <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm"
+                 style="border-left: 4px solid #b87936 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Chờ đặt trước</div>
+                <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm"
+                 style="border-left: 4px solid #b44336 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Quá hạn</div>
+                <h3 class="fw-bold mb-0" style="color: #b44336;" th:text="${overdueDetails}">0</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm"
+                 style="border-left: 4px solid #8b5a2b !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Thành viên</div>
+                <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #8b5a2b !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Tổng doanh thu</div>
+                <h3 class="fw-bold mb-0 text-classic" th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #198754 !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Số giao dịch</div>
+                <h3 class="fw-bold mb-0 text-success" th:text="${report.totalTransactions}">0</h3>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card-classic h-100 p-4 border-0 shadow-sm" style="border-left: 4px solid #0d6efd !important;">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Trung bình / giao dịch</div>
+                <h3 class="fw-bold mb-0 text-primary" th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</h3>
+            </div>
         </div>
     </div>
 
@@ -37,30 +89,6 @@
                     <i class="bi bi-funnel me-1"></i> Xem báo cáo
                 </button>
             </form>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card-classic p-4 h-100" style="border-left: 4px solid #8b5a2b !important;">
-                <div class="text-muted small text-uppercase fw-bold mb-2">Tổng doanh thu</div>
-                <h3 class="fw-bold mb-1 text-classic" th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</h3>
-                <div class="small text-muted">Giao dịch trạng thái Completed</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card-classic p-4 h-100" style="border-left: 4px solid #198754 !important;">
-                <div class="text-muted small text-uppercase fw-bold mb-2">Số giao dịch</div>
-                <h3 class="fw-bold mb-1 text-success" th:text="${report.totalTransactions}">0</h3>
-                <div class="small text-muted">Trong kỳ báo cáo</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card-classic p-4 h-100" style="border-left: 4px solid #0d6efd !important;">
-                <div class="text-muted small text-uppercase fw-bold mb-2">Trung bình / giao dịch</div>
-                <h3 class="fw-bold mb-1 text-primary" th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</h3>
-                <div class="small text-muted" th:text="|Từ ${fromDate} đến ${toDate}|">Khoảng thời gian</div>
-            </div>
         </div>
     </div>
 

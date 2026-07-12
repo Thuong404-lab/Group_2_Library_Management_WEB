@@ -124,6 +124,18 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     @Override
     @Transactional(readOnly = true)
+    public Map<String, Object> getStatisticsData() {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
+        data.put("pendingReservations",
+                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
+        data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
+        data.put("totalMembers", memberRepository.count());
+        return data;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public LibrarianListViewData getLibrarianList(int page, String keyword) {
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("staffId").ascending());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
