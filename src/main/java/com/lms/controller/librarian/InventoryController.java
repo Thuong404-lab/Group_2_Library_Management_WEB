@@ -35,19 +35,22 @@ public class InventoryController {
 
     @PostMapping(value = "/add", consumes = "multipart/form-data")
     public String addNewBook(@RequestParam String title,
-                             @RequestParam String isbn,
-                             @RequestParam Integer genreId,
-                             @RequestParam(defaultValue = "1") Integer quantity,
-                             @RequestParam(required = false) String description,
-                             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
-                             @RequestParam(required = false) Integer shelfId,
-                             RedirectAttributes redirectAttributes) {
+            @RequestParam String isbn,
+            @RequestParam Integer genreId,
+            @RequestParam(defaultValue = "1") Integer quantity,
+            @RequestParam(required = false) String description,
+            @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
+            @RequestParam(required = false) Integer shelfId,
+            @RequestParam(defaultValue = "Mới") String bookCondition,
+            @RequestParam String author,
+            RedirectAttributes redirectAttributes) {
         try {
             String coverImageUrl = null;
             if (coverImage != null && !coverImage.isEmpty()) {
                 coverImageUrl = fileUploadService.storeFile(coverImage);
             }
-            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId);
+            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId,
+                    bookCondition, author);
             redirectAttributes.addFlashAttribute("success", "Thêm sách mới thành công.");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -57,19 +60,22 @@ public class InventoryController {
 
     @PostMapping(value = "/edit/{id}", consumes = "multipart/form-data")
     public String updateBook(@PathVariable Integer id,
-                             @RequestParam String title,
-                             @RequestParam String isbn,
-                             @RequestParam Integer genreId,
-                             @RequestParam String status,
-                             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
-                             @RequestParam(required = false) Integer shelfId,
-                             RedirectAttributes redirectAttributes) {
+            @RequestParam String title,
+            @RequestParam String isbn,
+            @RequestParam Integer genreId,
+            @RequestParam String status,
+            @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
+            @RequestParam(required = false) Integer shelfId,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String author,
+            RedirectAttributes redirectAttributes) {
         try {
             String coverImageUrl = null;
             if (coverImage != null && !coverImage.isEmpty()) {
                 coverImageUrl = fileUploadService.storeFile(coverImage);
             }
-            inventoryService.updateBook(id, title, isbn, genreId, status, coverImageUrl, shelfId);
+            inventoryService.updateBook(id, title, isbn, genreId, status, coverImageUrl, shelfId,
+                    description, author);
             redirectAttributes.addFlashAttribute("success", "Cập nhật sách thành công.");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -84,14 +90,16 @@ public class InventoryController {
             redirectAttributes.addFlashAttribute("success", "Xóa sách thành công.");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Không thể xóa sách này vì có bản sách đang được mượn hoặc sách đã có lịch sử mượn trả trong hệ thống.");
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
     @PostMapping("/status/{id}")
     public String updateBookStatus(@PathVariable Integer id,
-                                   @RequestParam String status,
-                                   RedirectAttributes redirectAttributes) {
+            @RequestParam String status,
+            RedirectAttributes redirectAttributes) {
         try {
             inventoryService.updateBookStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sách thành công.");
@@ -108,9 +116,9 @@ public class InventoryController {
 
     @PostMapping("/categories/add")
     public String addCategory(@RequestParam String type,
-                              @RequestParam(required = false) Integer categoryId,
-                              @RequestParam String name,
-                              RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam String name,
+            RedirectAttributes redirectAttributes) {
         try {
             if ("genre".equals(type)) {
                 inventoryService.addGenre(categoryId, name);
@@ -122,7 +130,56 @@ public class InventoryController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+    }
+
+    @PostMapping("/categories/edit/{id}")
+    public String editCategory(@PathVariable Integer id,
+            @RequestParam String name,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateCategory(id, name);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật danh mục thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+    }
+
+    @PostMapping("/genres/edit/{id}")
+    public String editGenre(@PathVariable Integer id,
+            @RequestParam String name,
+            @RequestParam(required = false) Integer categoryId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateGenre(id, name, categoryId);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật thể loại thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+    }
+
+    @PostMapping("/genres/delete/{id}")
+    public String deleteGenre(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteGenre(id);
+            redirectAttributes.addFlashAttribute("success", "Xóa thể loại thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+    }
+
+    @PostMapping("/categories/delete/{id}")
+    public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteCategory(id);
+            redirectAttributes.addFlashAttribute("success", "Xóa danh mục thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
     }
 
     @GetMapping("/audit")
