@@ -143,6 +143,20 @@ public class AccountController {
         return redirectBySource(source);
     }
 
+    private void prepareCreateAccountPage(Model model, String source) {
+        model.addAttribute("tiers", accountService.getMembershipTiers());
+
+        if ("staff".equalsIgnoreCase(source)) {
+            model.addAttribute("source", "staff");
+            model.addAttribute("backText", "← Về danh sách thủ thư");
+            model.addAttribute("backUrl", "/admin/staff");
+        } else {
+            model.addAttribute("source", "members");
+            model.addAttribute("backText", "← Về danh sách thành viên");
+            model.addAttribute("backUrl", "/admin/accounts");
+        }
+    }
+
     private Map<String, Object> createFormValues(AdminAccountCreateRequest request) {
         Map<String, Object> formValues = new HashMap<>();
         formValues.put("fullName", trim(request.getFullName()));

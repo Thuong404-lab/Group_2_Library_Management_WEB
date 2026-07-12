@@ -21,6 +21,29 @@
             font-weight: 700;
         }
 
+        .card-stat-classic {
+            border: none;
+            border-left: 4px solid #8b5a2b;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .card-stat-classic:hover {
+            transform: translateY(-2px);
+        }
+        .stat-label {
+            color: #718096;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            color: #2c1e16;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+
         /* --- CẤU TRÚC KHUNG CARD CLASSIC --- */
         .card-profile-classic {
             border: none;
@@ -170,6 +193,42 @@
         <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: #c53030;"><span aria-hidden="true">&times;</span></button>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card card-stat-classic p-3 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase stat-label mb-1 d-block">Sách Đang Mượn</span>
+                        <h2 class="mb-0 stat-value" th:text="${activeBorrowsCount}">0</h2>
+                    </div>
+                    <i class="bi bi-book fs-1" style="color: rgba(139, 90, 43, 0.25);"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card card-stat-classic p-3 h-100" style="border-left-color: #4a3b32;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase stat-label mb-1 d-block">Hạng Thành Viên</span>
+                        <h2 class="mb-0 stat-value" style="font-size: 1.5rem;" th:text="${membership.tier != null ? membership.tier.tierName : 'Standard'}">Standard</h2>
+                    </div>
+                    <i class="bi bi-person-badge fs-1" style="color: rgba(74, 59, 50, 0.25);"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card card-stat-classic p-3 h-100" style="border-left-color: #d97706;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase stat-label mb-1 d-block">Giới Hạn Mượn</span>
+                        <h2 class="mb-0 stat-value" th:text="${membership.tier != null ? membership.tier.borrowLimit + ' cuốn' : '3 cuốn'}">3 cuốn</h2>
+                    </div>
+                    <i class="bi bi-exclamation-circle fs-1" style="color: rgba(217, 119, 6, 0.25);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4">
         <div class="col-lg-4">
             <div class="card card-profile-classic mb-4">
@@ -197,7 +256,8 @@
 
                     <div class="d-flex justify-content-between text-start small mt-2 px-1">
                         <span class="text-muted fw-medium">Hạng độc giả:</span>
-                        <span class="fw-bold font-playfair" style="color: #8b5a2b; font-size: 0.95rem;">Tiêu chuẩn</span>
+                        <span class="fw-bold font-playfair" style="color: #8b5a2b; font-size: 0.95rem;"
+                              th:text="${membership.tier != null ? membership.tier.tierName : 'Standard'}">Standard</span>
                     </div>
                 </div>
             </div>
