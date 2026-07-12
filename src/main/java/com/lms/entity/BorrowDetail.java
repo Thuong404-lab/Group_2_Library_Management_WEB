@@ -21,6 +21,8 @@ public class BorrowDetail {
     private Integer renewCount = 0;
     @Column(length = 50)
     private String status = "Borrowed";
+    @Column(name = "condition_note", length = 255)
+    private String conditionNote;
 
     public BorrowDetail() {
     }
@@ -52,4 +54,6 @@ public class BorrowDetail {
     public void setRenewCount(Integer renewCount) { this.renewCount = renewCount; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getConditionNote() { return conditionNote; }
+    public void setConditionNote(String conditionNote) { this.conditionNote = conditionNote; }
 }

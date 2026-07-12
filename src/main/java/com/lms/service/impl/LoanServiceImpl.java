@@ -288,6 +288,62 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
+    // Thêm 3 phương thức này vào thân lớp LoanServiceImpl.java
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> findActiveLoansByBarcode(String barcode) {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String conditionNote, String staffUsername) {
+        List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
+        if (activeLoans.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy lượt mượn nào chưa trả ứng với mã vạch: " + barcode);
+        }
+
+        // Xử lý lượt mượn tìm thấy hợp lệ
+        BorrowDetail detail = activeLoans.get(0);
+        BookItem item = detail.getBookItem();
+
+        // 1. Cập nhật trạng thái sách vật lý về Available
+        if (item != null) {
+            item.setStatus(STATUS_AVAILABLE);
+            bookItemRepository.save(item);
+        }
+
+        // 2. Lưu thông tin ngày trả, ghi chú tình trạng ngoại quan và cập nhật status
+        detail.setReturnDate(returnDate);
+        detail.setConditionNote(conditionNote);
+        detail.setStatus(STATUS_RETURNED);
+        borrowDetailRepository.save(detail);
+
+        // 3. Kế thừa hàm tính phạt quá hạn có sẵn của nhóm bạn nếu ngày trả thực tế vượt hạn
+        if (returnDate.isAfter(detail.getDueDate())) {
+            processOverdueFine(detail);
+        }
+
+        // 4. Cập nhật trạng thái của phiếu mượn tổng cha (Borrow)
+        updateParentBorrowStatus(detail.getBorrow());
+
+        // 5. Gửi thông báo đến độc giả về việc trả sách tại quầy thành công
+        sendInternalNotification(detail.getBorrow().getMember(), "Xác nhận hoàn trả sách tại quầy thành công",
+                "Cuốn sách '" + detail.getBook().getTitle() + "' đã được thủ thư tiếp nhận nhập kho tại quầy.");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getTodayReturnedBooks() {
+        LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = java.time.LocalDate.now().atTime(java.time.LocalTime.MAX);
+        return borrowDetailRepository.findReturnedBooksToday(startOfDay, endOfDay);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
