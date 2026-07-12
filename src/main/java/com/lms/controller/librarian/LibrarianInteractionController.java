@@ -23,7 +23,7 @@ import java.util.Map;
 @RequestMapping("/librarian/interaction")
 public class LibrarianInteractionController {
 
-    private static final int PAGE_SIZE = 5;
+    private static final int PAGE_SIZE = 10;
 
     private final LibrarianInteractionService librarianInteractionService;
 

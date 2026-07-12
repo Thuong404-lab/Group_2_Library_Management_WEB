@@ -93,10 +93,8 @@
                     <span th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">Quản lý kho
                         sách</span>
                     <span th:if="${currentSection == 'books' && currentSubSection == 'storage'}">Quản lý kệ sách</span>
-                    <span
-                        th:if="${currentSection == 'books' && (currentSubSection == '' || currentSubSection == null)}">Quản
-                        lý sách</span>
-                    <span th:if="${currentSection == 'reports'}">Thống kê</span>
+                    <span th:if="${currentSection == 'books' && (currentSubSection == '' || currentSubSection == null)}">Quản lý sách</span>
+                    <span th:if="${currentSection == 'reports'}">Báo cáo và thống kê</span>
                     <span
                         th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users' || currentSection == 'books' || currentSection == 'reports'}">Tổng
                         quan</span>
@@ -111,7 +109,7 @@
                     Xem danh sách sách do độc giả đề xuất.
                 </div>
                 <div class="text-muted" th:if="${currentSection == 'reports'}">
-                    Theo dõi nhanh các chỉ số mượn trả và doanh thu.
+                    Theo dõi các chỉ số mượn trả, thành viên và doanh thu thư viện.
                 </div>
                 <div class="text-muted"
                     th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports'}">
@@ -435,7 +433,15 @@
             <div class="card-classic shadow-sm mb-4">
                 <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle stable-table-layout">
+                            <colgroup>
+                                <col style="width: 27%">
+                                <col style="width: 9%">
+                                <col style="width: 8%">
+                                <col style="width: 9%">
+                                <col style="width: 17%">
+                                <col style="width: 30%">
+                            </colgroup>
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
                                     <th class="ps-3">Sách</th>
@@ -565,7 +571,14 @@
             <div class="card-classic shadow-sm mb-4">
                 <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle stable-table-layout">
+                            <colgroup>
+                                <col style="width: 6%">
+                                <col style="width: 25%">
+                                <col style="width: 20%">
+                                <col style="width: 25%">
+                                <col style="width: 24%">
+                            </colgroup>
                             <thead class="table-light text-uppercase small text-muted">
                                 <tr>
                                     <th class="ps-3">Mã</th>
@@ -645,30 +658,66 @@
         <!-- Books -->
         <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
 
-            <div class="row g-3 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}">
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #8b5a2b !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Tổng đầu sách</div>
-                        <h4 class="fw-bold mb-0 text-classic" th:text="${totalBookCount}">0</h4>
+            <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}">
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0"
+                        style="border-left: 4px solid #8b5a2b !important;">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style="width: 48px; height: 48px; background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b;">
+                                <i class="bi bi-book fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1 text-center">
+                                <div class="text-muted small text-uppercase fw-bold mb-0">Tổng đầu sách</div>
+                                <h3 class="fw-bold mb-0 fs-4 text-classic" th:text="${totalBookCount}">0</h3>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #198754 !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Danh mục</div>
-                        <h4 class="fw-bold mb-0 text-success" th:text="${totalCategories}">0</h4>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0"
+                        style="border-left: 4px solid #198754 !important;">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
+                                <i class="bi bi-collection fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1 text-center">
+                                <div class="text-muted small text-uppercase fw-bold mb-0">Danh mục</div>
+                                <h3 class="fw-bold mb-0 fs-4 text-success" th:text="${totalCategories}">0</h3>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #0d6efd !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Thể loại</div>
-                        <h4 class="fw-bold mb-0" style="color: #0d6efd;" th:text="${totalGenres}">0</h4>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0"
+                        style="border-left: 4px solid #0d6efd !important;">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                                <i class="bi bi-tags fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1 text-center">
+                                <div class="text-muted small text-uppercase fw-bold mb-0">Thể loại</div>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #0d6efd;" th:text="${totalGenres}">0</h3>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0" style="border-left: 4px solid #fd7e14 !important;">
-                        <div class="text-muted small text-uppercase fw-bold mb-1">Sẵn sàng</div>
-                        <h4 class="fw-bold mb-0 text-warning" th:text="${inventoryStatusCounts['Available']} ?: 0">0
-                        </h4>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0"
+                        style="border-left: 4px solid #fd7e14 !important;">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
+                                <i class="bi bi-check-circle fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1 text-center">
+                                <div class="text-muted small text-uppercase fw-bold mb-0">Sẵn sàng</div>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #fd7e14;"
+                                    th:text="${inventoryStatusCounts['Available']} ?: 0">0</h3>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -737,6 +786,68 @@
                             </button>
                         </div>
 
+                        <!-- Legacy duplicate table retained only in merge history; the functional table is below.
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-uppercase small text-muted">
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Ảnh</th>
+                                        <th>Sách</th>
+                                        <th>ISBN</th>
+                                        <th>Trạng thái</th>
+                                        <th class="text-end">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="book, iterStat : ${books.content}">
+                                        <td class="ps-3 fw-bold"
+                                            th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
+                                        <td>
+                                            <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
+                                                th:src="${book.coverImageUrl}" alt="Bìa sách" class="rounded border"
+                                                style="width: 40px; height: 56px; object-fit: cover;">
+                                            <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
+                                                class="bg-light rounded border d-flex align-items-center justify-content-center text-muted"
+                                                style="width: 40px; height: 56px;">
+                                                <i class="bi bi-book"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-classic" th:text="${book.title}">Tên sách</div>
+                                            <div class="small text-muted"
+                                                th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">
+                                                Thể loại</div>
+                                        </td>
+                                        <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                                        <td>
+                                            <span class="status-badge"
+                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
+                                                th:text="${book.status}">Active</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-classic me-1"
+                                                data-bs-toggle="modal"
+                                                th:data-bs-target="${'#editBookModal' + book.bookId}">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal"
+                                                th:data-bs-target="${'#deleteBookModal' + book.bookId}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${books == null || books.totalElements == 0}">
+                                        <td colspan="6" class="text-center text-muted py-5">
+                                            <i class="bi bi-book fs-2 d-block mb-2"></i>
+                                            Chưa có sách trong kho.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        -->
                         <div class="tab-content" id="inventory-tabContent">
                             <div class="tab-pane fade show active" id="nav-books" role="tabpanel"
                                 aria-labelledby="nav-books-tab" tabindex="0">
@@ -759,6 +870,7 @@
                                                 <th>Sách</th>
                                                 <th>ISBN</th>
                                                 <th>Mô tả</th>
+                                                <th>Trạng thái</th>
                                                 <th class="text-end">Thao tác</th>
                                             </tr>
                                         </thead>
@@ -789,6 +901,11 @@
                                                     th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}"
                                                     th:title="${book.description}">Mô tả
                                                 </td>
+                                                <td>
+                                                    <span class="status-badge"
+                                                        th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
+                                                        th:text="${book.status}">Active</span>
+                                                </td>
                                                 <td class="text-end">
                                                     <button type="button" class="btn btn-sm btn-outline-info me-1"
                                                         data-bs-toggle="modal"
@@ -809,7 +926,7 @@
                                                 </td>
                                             </tr>
                                             <tr th:if="${books == null || books.totalElements == 0}">
-                                                <td colspan="6" class="text-center text-muted py-5">
+                                                <td colspan="7" class="text-center text-muted py-5">
                                                     <i class="bi bi-book fs-2 d-block mb-2"></i>
                                                     Chưa có sách trong kho.
                                                 </td>
@@ -1885,15 +2002,6 @@
                 </div>
             </div>
 
-            <div class="card-classic shadow-sm p-4">
-                <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                    <i class="bi bi-bar-chart me-2 text-classic"></i>Báo cáo thư viện
-                </h5>
-                <p class="text-muted mb-3">Xem báo cáo tổng quan hoạt động thư viện.</p>
-                <a class="btn btn-outline-classic btn-sm" th:href="@{/librarian/reports}">
-                    Mở trang <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
         </section>
 
         <script>

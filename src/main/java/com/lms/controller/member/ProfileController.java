@@ -25,7 +25,7 @@ import com.lms.config.CustomUserDetails;
 @RequestMapping("/member")
 public class ProfileController {
 
-    private static final int PAGE_SIZE = 5;
+    private static final int PAGE_SIZE = 10;
 
     private final ProfileService profileService;
     private final MemberFavoriteService memberFavoriteService;

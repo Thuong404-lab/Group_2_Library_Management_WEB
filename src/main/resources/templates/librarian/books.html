@@ -84,6 +84,7 @@
                                         <th>SÃ¡ch</th>
                                         <th>ISBN</th>
                                         <th>Mô tả</th>
+                                        <th>Trạng thái</th>
                                         <th class="text-end">Thao tÃ¡c</th>
                                     </tr>
                                 </thead>
@@ -109,6 +110,11 @@
                                         </td>
                                         <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
                                         <td class="small text-muted text-truncate" style="max-width: 250px;" th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}" th:title="${book.description}">Mô tả</td>
+                                        <td>
+                                            <span class="status-badge"
+                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
+                                                th:text="${book.status}">Active</span>
+                                        </td>
                                         <td class="text-end">
                                             <button type="button" class="btn btn-sm btn-outline-classic me-1"
                                                 data-bs-toggle="modal"
@@ -123,7 +129,7 @@
                                         </td>
                                     </tr>
                                     <tr th:if="${books == null || books.totalElements == 0}">
-                                        <td colspan="6" class="text-center text-muted py-5">
+                                        <td colspan="7" class="text-center text-muted py-5">
                                             <i class="bi bi-book fs-2 d-block mb-2"></i>
                                             ChÆ°a cÃ³ sÃ¡ch trong kho.
                                         </td>

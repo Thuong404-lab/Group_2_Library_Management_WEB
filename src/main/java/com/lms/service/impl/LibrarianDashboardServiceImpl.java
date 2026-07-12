@@ -35,7 +35,7 @@ import java.util.Map;
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
-    private static final int DASHBOARD_PAGE_SIZE = 5;
+    private static final int DASHBOARD_PAGE_SIZE = 10;
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -153,6 +153,18 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("totalCategories", categoryRepository.count());
         data.put("totalGenres", genreRepository.count());
         data.put("inventoryStatusCounts", inventoryStatusCounts());
+        return data;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getStatisticsData() {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
+        data.put("pendingReservations",
+                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
+        data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
+        data.put("totalMembers", memberRepository.count());
         return data;
     }
 

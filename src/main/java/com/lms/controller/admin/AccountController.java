@@ -1,5 +1,6 @@
 package com.lms.controller.admin;
 
+import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.AdminAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.entity.Member;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -109,10 +111,22 @@ public class AccountController {
             @RequestParam(required = false) String staffType,
             @RequestParam(defaultValue = "Active") String status,
             @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
 
         AdminAccountUpdateRequest request = new AdminAccountUpdateRequest(
                 id, fullName, email, phone, username, tierId, staffType, status, source);
+
+        if ("staff".equalsIgnoreCase(source)
+                && currentUser != null
+                && id.equals(currentUser.getAccountId())
+                && !"Active".equalsIgnoreCase(status)) {
+            redirectAttributes.addFlashAttribute("editAccountId", id);
+            redirectAttributes.addFlashAttribute("editFormValues", createEditFormValues(request));
+            redirectAttributes.addFlashAttribute("editFieldErrors",
+                    Map.of("status", "Bạn không thể khóa hoặc vô hiệu hóa tài khoản đang đăng nhập."));
+            return redirectBySource(source) + "#updateStaffModal" + id;
+        }
 
         try {
             accountService.updateAccount(request);
