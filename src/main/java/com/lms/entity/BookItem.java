@@ -15,16 +15,20 @@ public class BookItem {
     private String barcode;
     @Column(length = 50)
     private String status = "Available";
+    
+    @Column(columnDefinition = "NVARCHAR(50)")
+    private String bookCondition = "Mới";
 
     public BookItem() {
     }
 
-    public BookItem(Integer bookItemId, Book book, Shelf shelf, String barcode, String status) {
+    public BookItem(Integer bookItemId, Book book, Shelf shelf, String barcode, String status, String bookCondition) {
         this.bookItemId = bookItemId;
         this.book = book;
         this.shelf = shelf;
         this.barcode = barcode;
         this.status = status;
+        this.bookCondition = bookCondition;
     }
 
     public Integer getBookItemId() { return bookItemId; }
@@ -37,4 +41,6 @@ public class BookItem {
     public void setBarcode(String barcode) { this.barcode = barcode; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getBookCondition() { return bookCondition; }
+    public void setBookCondition(String bookCondition) { this.bookCondition = bookCondition; }
 }

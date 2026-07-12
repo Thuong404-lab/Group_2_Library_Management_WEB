@@ -20,7 +20,8 @@ public class Book {
     private String coverImageUrl;
     @Column(length = 50)
     private String status = "Active";
-    
+
+
     @ManyToMany
     @JoinTable(
         name = "`BookAuthors`",
@@ -57,6 +58,7 @@ public class Book {
     public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
     public Set<Author> getAuthors() { return authors; }
     public void setAuthors(Set<Author> authors) { this.authors = authors; }
 }
