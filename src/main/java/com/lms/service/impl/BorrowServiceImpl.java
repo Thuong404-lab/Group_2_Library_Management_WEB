@@ -139,6 +139,10 @@ public class BorrowServiceImpl implements BorrowService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Sach yeu cau muon khong ton tai!"));
 
+        if ("Inactive".equalsIgnoreCase(book.getStatus())) {
+            throw new IllegalArgumentException("Sách này hiện không có sẵn để mượn!");
+        }
+
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowed >= maxLimit) {
@@ -290,6 +294,10 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new IllegalArgumentException("Tai khoan doc gia khong ton tai!"));
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Sach yeu cau dat truoc khong ton tai!"));
+
+        if ("Inactive".equalsIgnoreCase(book.getStatus())) {
+            throw new IllegalArgumentException("Sách này hiện không có sẵn để đặt trước!");
+        }
 
         boolean alreadyReserved = reservationRepository.findByMember_MemberIdOrderByReservationDateDesc(member.getMemberId())
                 .stream()

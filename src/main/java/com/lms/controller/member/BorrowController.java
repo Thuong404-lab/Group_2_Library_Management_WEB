@@ -98,6 +98,10 @@ public class BorrowController {
 
         try {
             Book book = bookService.findBookById(bookId);
+            if ("Inactive".equalsIgnoreCase(book.getStatus())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không có sẵn để mượn!");
+                return "redirect:/";
+            }
             model.addAttribute("selectedBook", book);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");

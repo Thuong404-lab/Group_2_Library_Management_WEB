@@ -165,14 +165,14 @@
                     </form>
 
                     <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
-                        <button type="submit" class="btn btn-outline-classic w-100 py-2">
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? 'Sách hiện không có sẵn' : ''}">
                             <i class="bi bi-bookmark me-1"></i> Đặt trước
                         </button>
                     </form>
 
                     <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold">
+                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? 'Sách hiện không có sẵn' : ''}">
                             <i class="bi bi-book me-1"></i> Yêu cầu mượn
                         </button>
                     </form>
