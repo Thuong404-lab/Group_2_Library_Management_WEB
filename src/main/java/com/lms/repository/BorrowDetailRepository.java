@@ -78,4 +78,28 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "AND bd.borrow.borrowDate >= :oneMonthAgo ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findBorrowHistoryInOneMonth(@Param("memberId") Integer memberId, @Param("oneMonthAgo") LocalDateTime oneMonthAgo);
     List<BorrowDetail> findByStatus(String status);
+
+    @Query("SELECT bd FROM BorrowDetail bd WHERE bd.bookItem.barcode = :barcode " +
+            "AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending')")
+    List<BorrowDetail> findActiveLoansByBarcode(@Param("barcode") String barcode);
+
+    // THÊM QUERY 2: Lấy danh sách sách đã được trả thành công trong ngày hôm nay
+    @Query("SELECT bd FROM BorrowDetail bd WHERE bd.status = 'Returned' " +
+            "AND bd.returnDate >= :startOfDay AND bd.returnDate <= :endOfDay ORDER BY bd.returnDate DESC")
+    List<BorrowDetail> findReturnedBooksToday(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT bd FROM BorrowDetail bd ORDER BY bd.borrow.borrowDate DESC")
+    List<BorrowDetail> findRecentActivities(Pageable pageable);
+
+    @Query("SELECT bd FROM BorrowDetail bd " +
+           "JOIN FETCH bd.borrow b " +
+           "JOIN FETCH b.member m " +
+           "JOIN FETCH m.user mu " +
+           "LEFT JOIN FETCH b.staff s " +
+           "LEFT JOIN FETCH s.user su " +
+           "LEFT JOIN FETCH bd.book bk " +
+           "LEFT JOIN FETCH bd.bookItem bi " +
+           "ORDER BY bd.borrowDetailId DESC")
+    List<BorrowDetail> findAllBorrowDetailsWithRelationships();
+
 }

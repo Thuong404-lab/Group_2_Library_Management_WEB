@@ -1,42 +1,101 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
-
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Quản lý lịch mượn trả</title>
+    <title>Lịch mượn trả chi tiết</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .text-classic { color: #8b5a2b !important; }
-        .btn-classic {
+        .classic-card {
+            border: 1px solid rgba(139, 90, 43, 0.18) !important;
+            border-radius: 10px !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
+            overflow: hidden;
+        }
+        .classic-card .card-header {
+            background: #ffffff !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.18) !important;
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+        .btn-classic-primary {
             background-color: #8b5a2b !important;
             border-color: #8b5a2b !important;
             color: #ffffff !important;
+            font-weight: 500;
+            border-radius: 6px !important;
             transition: all 0.2s ease;
         }
-        .btn-classic:hover {
+        .btn-classic-primary:hover {
             background-color: #74481f !important;
             border-color: #74481f !important;
             color: #ffffff !important;
         }
-        .btn-outline-classic {
+        .btn-classic-outline {
             color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
+            border: 1px solid rgba(139, 90, 43, 0.5) !important;
             background-color: transparent;
+            font-weight: 500;
+            border-radius: 6px !important;
+            transition: all 0.2s ease;
         }
-        .btn-outline-classic:hover {
-            background-color: #8b5a2b !important;
-            color: #ffffff !important;
+        .btn-classic-outline:hover {
+            background-color: rgba(139, 90, 43, 0.08) !important;
+            border-color: #8b5a2b !important;
         }
-        .card-classic {
+        .classic-table thead th {
+            background: rgba(139, 90, 43, 0.04) !important;
+            color: #4a3b32 !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .classic-table tbody tr {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #dee2e6 !important;
+            transition: background 0.15s;
+        }
+        .classic-table tbody tr:hover {
+            background-color: rgba(139, 90, 43, 0.03) !important;
+        }
+        .filter-input {
+            border: 1px solid rgba(139, 90, 43, 0.2);
+            border-radius: 6px;
             background-color: #ffffff;
-            border-radius: 10px;
+            color: #4a3b32;
+            font-size: 0.9rem;
+        }
+        .filter-input:focus {
+            border-color: #8b5a2b;
+            box-shadow: 0 0 0 0.15rem rgba(139, 90, 43, 0.15);
+            background-color: #fff;
+        }
+        .input-group-text.classic-addon {
+            background-color: #ffffff;
+            border: 1px solid rgba(139, 90, 43, 0.2);
+            border-right: none;
+            color: #8b5a2b;
+        }
+        .filter-input.addon-right {
+            border-left: none;
+        }
+        /* Badge trạng thái */
+        .badge-status {
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            white-space: nowrap;
         }
     </style>
 </head>
-
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+<div layout:fragment="content" th:with="activeMenu='borrow-schedule'">
 
-    <!-- Thông báo Alert hệ thống -->
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Thông báo thành công</span>
@@ -48,169 +107,148 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
+    <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Lịch Mượn/Trả</h2>
-            <div class="text-muted">Chi tiết các đơn sách đang lưu hành, yêu cầu đặt giữ chỗ trực tuyến và tiến trình hoàn trả</div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Lịch mượn trả chi tiết</h2>
+            <div class="text-muted">Theo dõi tiến độ lưu hành và nhật ký hoàn trả của từng cuốn sách.</div>
         </div>
-        <a th:href="@{/librarian/borrow/create}" class="btn btn-classic shadow-sm">
-            <i class="bi bi-journal-plus me-2"></i>Tạo phiếu mượn mới
-        </a>
     </div>
 
-    <!-- Nav tabs điều hướng điều kiện -->
-    <ul class="nav nav-tabs mb-4 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
-        <li class="nav-item">
-            <a class="nav-link text-muted border-0" th:href="@{/librarian/borrow/create}">Danh sách phiếu mượn</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link active fw-bold border-0 border-bottom border-3 bg-transparent"
-               style="color: #8b5a2b; border-color: #8b5a2b !important;" th:href="@{/librarian/loan/borrow-schedule}">Lịch mượn trả chi tiết</a>
-        </li>
-    </ul>
-
-    <!-- Thanh công cụ tìm kiếm lọc nâng cao -->
-    <div class="card-classic mb-4 border-0 shadow-sm p-3">
-        <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/loan/borrow-schedule}">
+    <!-- Filter Bar -->
+    <div class="classic-card mb-4 p-4">
+        <form class="row g-2 align-items-center" method="get" th:action="@{/librarian/loan/borrow-schedule}">
             <div class="col-md-2">
-                <input type="date" class="form-control text-muted" name="borrowDate" th:value="${param.borrowDate}" title="Ngày giao">
+                <input type="date" class="form-control filter-input" name="borrowDate" th:value="${param.borrowDate}" title="Ngày giao mượn">
             </div>
             <div class="col-md-2">
-                <input type="date" class="form-control text-muted" name="returnDate" th:value="${param.returnDate}" title="Ngày trả">
+                <input type="date" class="form-control filter-input" name="returnDate" th:value="${param.returnDate}" title="Ngày hoàn trả">
             </div>
             <div class="col-md-5">
                 <div class="input-group">
-                    <span class="input-group-text bg-white text-classic border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0" name="keyword" th:value="${param.keyword}" placeholder="Số phiếu mượn, tên bạn đọc, nhan đề sách...">
+                    <span class="input-group-text classic-addon"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control filter-input addon-right" name="keyword"
+                           th:value="${param.keyword}"
+                           placeholder="Mã phiếu, tên bạn đọc, nhan đề sách hoặc mã vạch...">
                 </div>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-classic px-4">Tìm kiếm</button>
-                <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-light border ms-2">Làm mới</a>
+            <div class="col-auto d-flex gap-2">
+                <button type="submit" class="btn btn-classic-primary px-4">Tìm kiếm</button>
             </div>
         </form>
     </div>
 
-    <!-- Bảng danh sách chi tiết động -->
-    <div class="card-classic border-0 shadow-sm overflow-hidden">
+    <!-- Main Table -->
+    <div class="classic-card">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+            <table class="table table-hover align-middle mb-0 classic-table">
+                <thead>
                 <tr>
-                    <th class="ps-4" style="width: 40px;">STT</th>
-                    <th>Mã Phiếu</th>
+                    <th class="ps-4" style="width: 45px;">STT</th>
+                    <th style="width: 90px;">Mã Phiếu</th>
                     <th>Thông tin Độc giả</th>
-                    <th>Thông tin Sách</th>
-                    <th>Mốc thời gian quy định</th>
-                    <th>Trạng thái lưu hành</th>
-                    <th class="text-end pe-4">Hành động xử lý</th>
+                    <th>Tên Sách</th>
+                    <th>Thời gian trả</th>
+                    <th>Nhật Ký Duyệt</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center pe-4" style="width: 110px;">Hành động</th>
                 </tr>
                 </thead>
-
                 <tbody>
                 <tr th:each="detail, iter : ${details}">
-                    <td class="ps-4 text-muted" th:text="${iter.index + 1}">1</td>
+                    <td class="ps-4 text-muted small" th:text="${iter.index + 1}">1</td>
                     <td>
-                        <!-- Liên kết hoặc hiển thị mã biên bản chi tiết -->
-                        <div class="fw-bold" style="color: #4a3b32;" th:text="${detail.borrow != null ? 'BOR-' + detail.borrow.borrowId : 'RES-' + detail.id}">BOR-1001</div>
+                        <span class="font-monospace fw-bold" style="color: #8b5a2b; font-size: 0.85rem;"
+                              th:text="${detail.borrow != null ? 'BOR-' + detail.borrow.borrowId : 'N/A'}">BOR-1001</span>
                     </td>
 
                     <td>
                         <div th:if="${detail.borrow != null && detail.borrow.member != null}">
-                            <div class="fw-bold" th:text="${detail.borrow.member.memberAccount != null ? detail.borrow.member.memberAccount.username : 'Bạn đọc'}">Nguyễn Văn An</div>
+                            <div class="fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif; font-size: 0.9rem;"
+                                 th:text="${detail.borrow.member.user != null ? detail.borrow.member.user.fullName : 'Bạn đọc'}">Nguyễn Văn An</div>
                             <div class="small text-muted">Mã thẻ: <span th:text="'MEM-' + ${detail.borrow.member.memberId}">MEM-0012</span></div>
-                            <div class="small text-muted" th:if="${detail.borrow.member.userEmail}"><i class="bi bi-envelope text-classic me-1"></i> <span th:text="${detail.borrow.member.userEmail}">email@domain.com</span></div>
-                        </div>
-                        <!-- Trường hợp là đơn đặt trước độc lập chưa lấy sách -->
-                        <div th:if="${detail.borrow == null && detail.member != null}">
-                            <div class="fw-bold" th:text="${detail.member.memberAccount != null ? detail.member.memberAccount.username : 'Bạn đọc'}">Độc giả đặt trước</div>
-                            <div class="small text-muted">Mã thẻ: <span th:text="'MEM-' + ${detail.member.memberId}">MEM-0012</span></div>
+                            <div class="small text-muted" th:if="${detail.borrow.member.user?.email}">
+                                <i class="bi bi-envelope me-1" style="color: #8b5a2b;"></i>
+                                <span th:text="${detail.borrow.member.user.email}">email@domain.com</span>
+                            </div>
                         </div>
                     </td>
 
                     <td>
-                        <div>
-                            <div class="fw-bold text-wrap" style="max-width: 220px;" th:text="${detail.bookTitle != null ? detail.bookTitle : (detail.book != null ? detail.book.title : 'N/A')}">Nhan đề sách</div>
-                            <div class="small text-muted" th:if="${detail.bookIdStr}">ID: <span th:text="${detail.bookIdStr}">BK-1001</span></div>
+                        <div class="fw-semibold text-dark text-wrap" style="max-width: 200px; font-size: 0.9rem;"
+                             th:text="${detail.book != null ? detail.book.title : 'N/A'}">Nhan đề sách</div>
+                        <div class="small text-muted mt-1" th:if="${detail.bookItem != null}">
+                            <span class="font-monospace" style="background: rgba(139,90,43,0.08); color: #8b5a2b; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;"
+                                  th:text="${detail.bookItem.barcode}">BK-1001</span>
                         </div>
                     </td>
 
                     <td>
                         <div class="small">
-                            <span class="text-muted">Hạn trả/giữ:</span>
-                            <span class="fw-bold text-dark" th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : '-'}">15/07/2026</span>
+                            <span class="text-muted">Hạn trả:</span>
+                            <span class="fw-bold ms-1" style="color: #9d4e4e;"
+                                  th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : '-'}">15/07/2026</span>
                         </div>
-                        <div class="small mt-1" th:if="${detail.actionDate != null}">
-                            <span class="text-muted">Ngày kích hoạt:</span>
-                            <span th:text="${#temporals.format(detail.actionDate, 'dd/MM/yyyy')}">-</span>
-                        </div>
-                        <div class="small mt-1" th:if="${detail.returnDate != null}">
-                            <span class="text-muted">Thực tế trả:</span>
-                            <span class="text-success fw-bold" th:text="${#temporals.format(detail.returnDate, 'dd/MM/yyyy HH:mm')}">-</span>
+                        <div class="small mt-1" th:if="${detail.renewCount > 0}">
+                            <span class="text-muted">Gia hạn:</span>
+                            <span class="ms-1" style="background: rgba(139,90,43,0.1); color: #8b5a2b; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;"
+                                  th:text="${detail.renewCount} + ' lần'">0</span>
                         </div>
                     </td>
 
                     <td>
-                        <!-- Đồng bộ hệ thống nhãn màu sắc trạng thái chuẩn chỉ -->
-                        <span th:if="${detail.status == 'Borrowed'}" class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2">Đang mượn</span>
-                        <span th:if="${detail.status == 'Overdue'}" class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">Quá hạn</span>
-                        <span th:if="${detail.status == 'Returned'}" class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">Đã trả xong</span>
-                        <span th:if="${detail.status == 'Return_Pending'}" class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill px-3 py-2">Độc giả xin trả</span>
-                        <span th:if="${detail.status == 'Pending'}" class="badge bg-warning bg-opacity-10 text-warning text-dark border border-warning rounded-pill px-3 py-2">Đặt trước chờ duyệt</span>
-                        <span th:if="${detail.status == 'Active' || detail.status == 'Ready'}" class="badge bg-success bg-opacity-10 text-dark border border-success rounded-pill px-3 py-2">Chờ độc giả lấy</span>
+                        <div class="small">
+                            <i class="bi bi-calendar-check me-1" style="color: #5d7b5d;"></i>
+                            <span class="text-muted">Duyệt mượn:</span>
+                            <span class="fw-medium text-dark ms-1"
+                                  th:text="${detail.borrow != null && detail.borrow.borrowDate != null ? #temporals.format(detail.borrow.borrowDate, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                        </div>
+                        <div class="small mt-1">
+                            <i class="bi bi-calendar-x me-1" style="color: #4f6d7a;"></i>
+                            <span class="text-muted">Duyệt trả:</span>
+                            <span class="fw-bold ms-1"
+                                  th:style="${detail.returnDate != null ? 'color: #5d7b5d;' : ''}"
+                                  th:classappend="${detail.returnDate == null ? 'text-muted fst-italic' : ''}"
+                                  th:text="${detail.returnDate != null ? #temporals.format(detail.returnDate, 'dd/MM/yyyy HH:mm') : 'Chưa trả'}">-</span>
+                        </div>
                     </td>
 
-                    <td class="text-end pe-4">
-                        <div class="d-flex justify-content-end gap-2">
-                            <!-- Nút gia hạn sách -->
-                            <form th:if="${detail.status == 'Borrowed'}" th:action="@{/librarian/loan/renew/{id}(id=${detail.borrowDetailId})}" method="post" class="m-0">
-                                <button type="submit" class="btn btn-sm btn-outline-success" title="Gia hạn sách">
-                                    <i class="bi bi-clock-history"></i> Gia hạn
-                                </button>
-                            </form>
-                            
-                            <!-- Nút xử lý trả sách dành cho Đang mượn hoặc Quá hạn -->
-                            <form th:if="${detail.status == 'Borrowed' || detail.status == 'Overdue' || detail.status == 'Return_Pending'}"
-                                  th:action="@{/librarian/return-requests/approve/{borrowId}(borrowId=${detail.borrow != null ? detail.borrow.borrowId : detail.id})}"
-                                  method="post" class="m-0" onsubmit="return confirm('Xác nhận thu hồi sách và đóng phiếu mượn này?')">
-                                <button type="submit" class="btn btn-sm btn-outline-classic" title="Hoàn trả nhập kho">
-                                    <i class="bi bi-arrow-return-left me-1"></i> Nhận trả
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <span class="text-success small" th:if="${detail.status == 'Returned'}">
-                            <i class="bi bi-check-circle-fill"></i> Đã trả
-                        </span>
+                    <td>
+                        <th:block th:with="stat=${detail.status != null ? #strings.toUpperCase(#strings.trim(detail.status)) : 'UNKNOWN'}">
+                            <span th:if="${stat == 'BORROWED'}" class="status-badge status-borrowed">Đang mượn</span>
+                            <span th:if="${stat == 'OVERDUE'}" class="status-badge status-overdue">Quá hạn</span>
+                            <span th:if="${stat == 'RETURNED'}" class="status-badge status-returned">Đã hoàn trả</span>
+                            <span th:if="${stat == 'RETURN_PENDING'}" class="status-badge status-return-pending">Xin trả sách</span>
+                            <span th:if="${stat == 'PENDING'}" class="status-badge status-pending">Chờ duyệt</span>
+                            <span th:if="${stat == 'RENEW_PENDING'}" class="status-badge status-renew-pending">Chờ gia hạn</span>
+                            <span th:if="${stat == 'CANCELED'}" class="status-badge status-canceled">Đã hủy</span>
+                            <span th:if="${stat == 'REJECTED'}" class="status-badge status-rejected">Đã từ chối</span>
+                            <span th:if="${stat != 'BORROWED' and stat != 'OVERDUE' and stat != 'RETURNED' and stat != 'RETURN_PENDING' and stat != 'PENDING' and stat != 'RENEW_PENDING' and stat != 'CANCELED' and stat != 'REJECTED'}"
+                                  class="status-badge status-unknown">Chưa rõ</span>
+                        </th:block>
+                    </td>
 
-                        <!-- Nút xử lý phê duyệt cấp sách cho đơn đặt trước trực tuyến -->
-                        <form th:if="${detail.status == 'Pending'}"
-                              th:action="@{/librarian/reservations/approve/{id}(id=${detail.id})}"
-                              method="post" class="d-inline-block m-0" onsubmit="return confirm('Phê duyệt yêu cầu giữ sách này và chuyển trạng thái sang Chờ lấy?')">
-                            <button type="submit" class="btn btn-sm btn-success text-white" title="Phê duyệt chuẩn bị sách">
-                                <i class="bi bi-check2-circle me-1"></i> Duyệt giữ
-                            </button>
-                        </form>
-
-                        <span class="text-success small fw-medium" th:if="${detail.status == 'Returned'}">
-                                <i class="bi bi-check-circle-fill"></i> Sách đã ở trong kho
-                            </span>
+                    <td class="text-center pe-4">
+                        <a th:href="@{/librarian/loan/borrow-schedule/detail-preview}"
+                           class="btn btn-classic-outline btn-sm px-2 py-1"
+                           style="font-size: 0.78rem;">
+                            <i class="bi bi-eye me-1"></i>Chi tiết
+                        </a>
                     </td>
                 </tr>
-
-                <!-- Trạng thái trống dữ liệu -->
                 <tr th:if="${#lists.isEmpty(details)}">
-                    <td colspan="7" class="text-center py-5">
-                        <div class="text-muted fst-italic">
-                            <i class="bi bi-calendar-x fs-1 d-block mb-3" style="color: #8b5a2b;"></i>
-                            Không tìm thấy dữ liệu lịch mượn trả nào phù hợp với bộ lọc.
-                        </div>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-50" style="color: #8b5a2b;"></i>
+                        <div class="text-muted fst-italic small">Không tìm thấy dữ liệu tiến độ lịch mượn trả chi tiết nào phù hợp.</div>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    </div>
+
 </div>
 </body>
 </html>

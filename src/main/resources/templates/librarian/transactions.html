@@ -4,23 +4,21 @@
 <head>
     <!-- UC-14.3 UI maintained by Pham Kien Quoc. -->
     <title>Lịch sử giao dịch</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
 </head>
 <body>
-<div layout:fragment="content" th:with="activeMenu='transactions'">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
+<div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page">
+    <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
          style="border-color: rgba(139,90,43,0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Lịch sử giao dịch</h2>
+            <h2 class="fw-bold mb-1">Lịch sử giao dịch</h2>
             <div class="text-muted">Theo dõi giao dịch ví, phí mượn, phí phạt và nạp tiền trong hệ thống.</div>
         </div>
-        <a th:href="@{/librarian/members/topup}" class="btn btn-classic">
-            <i class="bi bi-wallet2 me-1"></i>Nạp tiền
-        </a>
     </div>
 
-    <div class="card-classic p-3 mb-4">
-        <form method="get" th:action="@{/librarian/members/transactions}" class="row g-3 align-items-center">
-            <div class="col-md-4">
+    <div class="card-classic finance-card p-4 mb-4">
+        <form method="get" th:action="@{/librarian/members/transactions}" class="row g-3 align-items-end">
+            <div class="col-md-4 transaction-type-filter">
                 <select name="type" class="form-select">
                     <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao dịch</option>
                     <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
@@ -31,16 +29,17 @@
                     <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
                 </select>
             </div>
-            <div class="col-auto">
+                
+            <div class="col-auto transaction-filter-submit">
                 <button type="submit" class="btn btn-classic px-4">Lọc</button>
             </div>
-            <div class="col-auto">
+            <div class="col-auto transaction-reset-filter">
                 <a th:href="@{/librarian/members/transactions}" class="btn btn-outline-secondary">Xóa lọc</a>
             </div>
         </form>
     </div>
 
-    <div class="card-classic border-0 shadow-sm overflow-hidden">
+    <div class="card-classic finance-card overflow-hidden">
         <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="text-center text-muted py-5">
             Chưa có giao dịch nào.
         </div>
@@ -59,7 +58,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="transaction : ${transactions}">
-                    <td class="ps-4 fw-bold text-primary" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</td>
+                    <td class="transaction-code ps-4 fw-bold" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</td>
                     <td>
                         <div class="fw-bold"
                              th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Không rõ'}">
@@ -72,7 +71,19 @@
                     </td>
                     <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
                     <td>
-                        <span class="badge bg-secondary" th:text="${transaction.transactionType}">TYPE</span>
+                        <span class="badge transaction-type"
+                              th:classappend="${transaction.transactionType == 'TOP_UP'} ? ' type-topup' :
+                                  (${transaction.transactionType == 'BORROW_FEE'} ? ' type-borrow-fee' :
+                                  (${transaction.transactionType == 'DEPOSIT'} ? ' type-deposit' :
+                                  (${transaction.transactionType == 'FINE'} ? ' type-fine' :
+                                  (${transaction.transactionType == 'DAMAGE_FEE'} ? ' type-damage-fee' :
+                                  (${transaction.transactionType == 'REFUND'} ? ' type-refund' : ' type-default')))))"
+                              th:text="${transaction.transactionType == 'TOP_UP' ? 'Nạp tiền' :
+                                  (transaction.transactionType == 'BORROW_FEE' ? 'Phí mượn' :
+                                  (transaction.transactionType == 'DEPOSIT' ? 'Tiền cọc' :
+                                  (transaction.transactionType == 'FINE' ? 'Phí phạt' :
+                                  (transaction.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng' :
+                                  (transaction.transactionType == 'REFUND' ? 'Hoàn tiền' : transaction.transactionType)))))}">Loại giao dịch</span>
                     </td>
                     <td class="fw-bold"
                         th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
@@ -81,9 +92,9 @@
                         VNĐ
                     </td>
                     <td>
-                        <span class="badge"
-                              th:classappend="${transaction.status == 'Completed'} ? ' bg-success' : ' bg-warning text-dark'"
-                              th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : transaction.status}">Hoàn tất</span>
+                        <span class="status-badge"
+                              th:classappend="${transaction.status == 'Completed' ? 'status-completed' : (transaction.status == 'Failed' ? 'status-rejected' : (transaction.status == 'Canceled' ? 'status-canceled' : 'status-pending'))}"
+                              th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : (transaction.status == 'Pending' ? 'Chờ xử lý' : (transaction.status == 'Failed' ? 'Thất bại' : (transaction.status == 'Canceled' ? 'Đã hủy' : transaction.status)))}">Hoàn tất</span>
                     </td>
                 </tr>
                 </tbody>

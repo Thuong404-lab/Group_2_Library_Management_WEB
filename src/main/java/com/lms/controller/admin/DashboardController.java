@@ -83,7 +83,7 @@ public class DashboardController {
         model.addAttribute("totalMembers", totalMembers);
         model.addAttribute("totalBooks", totalBooks);
         model.addAttribute("availableItems", availableItems);
-        model.addAttribute("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
+        model.addAttribute("recentBorrows", borrowDetailRepository.findRecentActivities(org.springframework.data.domain.PageRequest.of(0, 5)));
         model.addAttribute("monthStats", getLastSixMonthStats());
         model.addAttribute("currentDate", LocalDate.now());
         if (userDetails != null && userDetails.getUser() != null) {

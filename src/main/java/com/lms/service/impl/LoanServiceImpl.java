@@ -288,6 +288,62 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
+    // Thêm 3 phương thức này vào thân lớp LoanServiceImpl.java
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> findActiveLoansByBarcode(String barcode) {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String conditionNote, String staffUsername) {
+        List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
+        if (activeLoans.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy lượt mượn nào chưa trả ứng với mã vạch: " + barcode);
+        }
+
+        // Xử lý lượt mượn tìm thấy hợp lệ
+        BorrowDetail detail = activeLoans.get(0);
+        BookItem item = detail.getBookItem();
+
+        // 1. Cập nhật trạng thái sách vật lý về Available
+        if (item != null) {
+            item.setStatus(STATUS_AVAILABLE);
+            bookItemRepository.save(item);
+        }
+
+        // 2. Lưu thông tin ngày trả, ghi chú tình trạng ngoại quan và cập nhật status
+        detail.setReturnDate(returnDate);
+        detail.setConditionNote(conditionNote);
+        detail.setStatus(STATUS_RETURNED);
+        borrowDetailRepository.save(detail);
+
+        // 3. Kế thừa hàm tính phạt quá hạn có sẵn của nhóm bạn nếu ngày trả thực tế vượt hạn
+        if (returnDate.isAfter(detail.getDueDate())) {
+            processOverdueFine(detail);
+        }
+
+        // 4. Cập nhật trạng thái của phiếu mượn tổng cha (Borrow)
+        updateParentBorrowStatus(detail.getBorrow());
+
+        // 5. Gửi thông báo đến độc giả về việc trả sách tại quầy thành công
+        sendInternalNotification(detail.getBorrow().getMember(), "Xác nhận hoàn trả sách tại quầy thành công",
+                "Cuốn sách '" + detail.getBook().getTitle() + "' đã được thủ thư tiếp nhận nhập kho tại quầy.");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getTodayReturnedBooks() {
+        LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = java.time.LocalDate.now().atTime(java.time.LocalTime.MAX);
+        return borrowDetailRepository.findReturnedBooksToday(startOfDay, endOfDay);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
@@ -311,23 +367,11 @@ public class LoanServiceImpl implements LoanService {
         detail.setStatus(STATUS_BORROWED); // Trở về trạng thái đang mượn
         borrowDetailRepository.save(detail);
 
-        try {
-            Member member = detail.getBorrow().getMember();
-            if (member != null && member.getMemberId() != null) {
-                Notification notif = new Notification();
-                notif.setTitle("Phê duyệt gia hạn thành công");
-                notif.setContent("Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã được thủ thư phê duyệt. Hạn trả mới: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                notif.setCreatedDate(LocalDateTime.now());
-                notif.setStatus("Active");
-                Notification saved = notificationRepository.save(notif);
-
-                MemberNotification mn = new MemberNotification();
-                mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
-                mn.setMember(member);
-                mn.setIsRead(false);
-                memberNotificationRepository.save(mn);
-            }
-        } catch (Exception e) {}
+        if (detail.getBorrow().getMember() != null) {
+            sendInternalNotification(detail.getBorrow().getMember(),
+                    "Phê duyệt gia hạn thành công",
+                    "Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã được thủ thư phê duyệt. Hạn trả mới: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        }
     }
 
     @Override
@@ -348,23 +392,11 @@ public class LoanServiceImpl implements LoanService {
         }
         borrowDetailRepository.save(detail);
 
-        try {
-            Member member = detail.getBorrow().getMember();
-            if (member != null && member.getMemberId() != null) {
-                Notification notif = new Notification();
-                notif.setTitle("Từ chối gia hạn sách");
-                notif.setContent("Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã bị từ chối. Vui lòng trả sách đúng hạn: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                notif.setCreatedDate(LocalDateTime.now());
-                notif.setStatus("Active");
-                Notification saved = notificationRepository.save(notif);
-
-                MemberNotification mn = new MemberNotification();
-                mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
-                mn.setMember(member);
-                mn.setIsRead(false);
-                memberNotificationRepository.save(mn);
-            }
-        } catch (Exception e) {}
+        if (detail.getBorrow().getMember() != null) {
+            sendInternalNotification(detail.getBorrow().getMember(),
+                    "Từ chối gia hạn sách",
+                    "Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã bị từ chối. Vui lòng trả sách đúng hạn: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        }
     }
 
     @Override
@@ -377,7 +409,7 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public java.util.List<com.lms.entity.BorrowDetail> getAllBorrowDetails() {
-        return borrowDetailRepository.findAll();
+        return borrowDetailRepository.findAllBorrowDetailsWithRelationships();
     }
     // --- Private Helper Methods ---
 
@@ -479,6 +511,8 @@ public class LoanServiceImpl implements LoanService {
             MemberNotification mn = new MemberNotification();
             mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
             mn.setMember(member);
+            mn.setNotification(saved);
+            mn.setIsRead(false);
             memberNotificationRepository.save(mn);
         } catch (Exception ignored) { /* Ignored by design */ }
     }

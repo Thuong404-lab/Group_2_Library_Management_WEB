@@ -1,20 +1,25 @@
 package com.lms.service.impl;
 
+import com.lms.entity.Author;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
 import com.lms.entity.Category;
 import com.lms.entity.Genre;
+import com.lms.entity.Shelf;
+import com.lms.repository.AuthorRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
+import com.lms.repository.ShelfRepository;
 import com.lms.service.InventoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 
 /**
  * InventoryService - Xử lý Logic Quản lý Kho Sách
@@ -33,15 +38,21 @@ public class InventoryServiceImpl implements InventoryService {
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final BookItemRepository bookItemRepository;
+    private final ShelfRepository shelfRepository;
+    private final AuthorRepository authorRepository;
 
     public InventoryServiceImpl(BookRepository bookRepository,
-                                CategoryRepository categoryRepository,
-                                GenreRepository genreRepository,
-                                BookItemRepository bookItemRepository) {
+            CategoryRepository categoryRepository,
+            GenreRepository genreRepository,
+            BookItemRepository bookItemRepository,
+            ShelfRepository shelfRepository,
+            AuthorRepository authorRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.bookItemRepository = bookItemRepository;
+        this.shelfRepository = shelfRepository;
+        this.authorRepository = authorRepository;
     }
 
     @Override
@@ -97,7 +108,8 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void addNewBook(String title, String isbn, Integer genreId, Integer quantity) {
+    public void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description,
+            String coverImageUrl, Integer shelfId, String bookCondition, String authorName) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Tên sách không được để trống.");
         }
@@ -112,21 +124,54 @@ public class InventoryServiceImpl implements InventoryService {
         book.setIsbn(isbn.trim());
         book.setGenre(genre);
         book.setStatus(STATUS_ACTIVE);
-        bookRepository.save(book);
+        if (description != null && !description.trim().isEmpty()) {
+            book.setDescription(description.trim());
+        }
+        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+            book.setCoverImageUrl(coverImageUrl.trim());
+        }
+
+        // Handle author
+        if (authorName != null && !authorName.trim().isEmpty()) {
+            String finalAuthorName = authorName.trim();
+            Author author = authorRepository.findByAuthorNameIgnoreCase(finalAuthorName)
+                    .orElseGet(() -> {
+                        Author newAuthor = new Author();
+                        newAuthor.setAuthorName(finalAuthorName);
+                        return authorRepository.save(newAuthor);
+                    });
+            Set<Author> authors = new HashSet<>();
+            authors.add(author);
+            book.setAuthors(authors);
+        }
+
+        book = bookRepository.save(book);
+
+        Shelf shelf = shelfId != null ? shelfRepository.findById(shelfId).orElse(null) : null;
 
         int copies = quantity != null && quantity > 0 ? quantity : 1;
-        for (int i = 0; i < copies; i++) {
+
+        for (int i = 1; i <= copies; i++) {
             BookItem item = new BookItem();
             item.setBook(book);
-            item.setShelf(null);
-            item.setBarcode(UUID.randomUUID().toString());
+            item.setShelf(shelf);
+            item.setBarcode(
+                    String.format(
+                            "BC%03d-%03d",
+                            book.getBookId(),
+                            i));
             item.setStatus(STATUS_AVAILABLE);
+            if (bookCondition != null && !bookCondition.trim().isEmpty()) {
+                item.setBookCondition(bookCondition.trim());
+            }
+
             bookItemRepository.save(item);
         }
     }
 
     @Override
-    public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status) {
+    public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status,
+            String coverImageUrl, Integer shelfId, String description, String authorName) {
         Book book = findBookById(bookId);
         if (title != null && !title.trim().isEmpty()) {
             book.setTitle(title.trim());
@@ -142,7 +187,38 @@ public class InventoryServiceImpl implements InventoryService {
         if (status != null && !status.trim().isEmpty()) {
             book.setStatus(status.trim());
         }
+        // Chỉ cập nhật ảnh nếu có ảnh mới được upload
+        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+            book.setCoverImageUrl(coverImageUrl.trim());
+        }
+        if (description != null && !description.trim().isEmpty()) {
+            book.setDescription(description.trim());
+        }
+
+        // Handle author
+        if (authorName != null && !authorName.trim().isEmpty()) {
+            String finalAuthorName = authorName.trim();
+            Author author = authorRepository.findByAuthorNameIgnoreCase(finalAuthorName)
+                    .orElseGet(() -> {
+                        Author newAuthor = new Author();
+                        newAuthor.setAuthorName(finalAuthorName);
+                        return authorRepository.save(newAuthor);
+                    });
+            Set<Author> authors = new HashSet<>();
+            authors.add(author);
+            book.setAuthors(authors);
+        }
+
         bookRepository.save(book);
+
+        if (shelfId != null) {
+            Shelf shelf = shelfRepository.findById(shelfId).orElse(null);
+            List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
+            for (BookItem item : items) {
+                item.setShelf(shelf);
+                bookItemRepository.save(item);
+            }
+        }
     }
 
     @Override
@@ -156,15 +232,23 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void removeBook(Integer bookId) {
         Book book = findBookById(bookId);
-        book.setStatus(STATUS_DISPOSED);
-        bookRepository.save(book);
-        List<BookItem> copies = bookItemRepository.findByBook_BookId(bookId);
-        for (BookItem item : copies) {
-            item.setStatus(STATUS_DISPOSED);
+        List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
+        for (BookItem item : items) {
+            if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
+                throw new IllegalArgumentException("Không thể xóa sách vì có bản sách đang được mượn.");
+            }
         }
-        bookItemRepository.saveAll(copies);
+        try {
+            // Xóa tất cả BookItems
+            bookItemRepository.deleteAll(items);
+            // Xóa sách
+            bookRepository.delete(book);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Không thể xóa sách này vì sách đã từng có lịch sử giao dịch (mượn/trả) trong hệ thống.");
+        }
     }
 
     @Override
@@ -179,14 +263,70 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void addGenre(Integer categoryId, String name) {
+        if (categoryId == null) {
+            throw new IllegalArgumentException("Vui lòng chọn danh mục.");
+        }
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Tên thể loại không được để trống.");
         }
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Chọn danh mục hợp lệ."));
+                .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại."));
+
         Genre genre = new Genre();
         genre.setCategory(category);
         genre.setGenreName(name.trim());
         genreRepository.save(genre);
+    }
+
+    @Override
+    public void updateCategory(Integer categoryId, String newName) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên danh mục không được để trống.");
+        }
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục."));
+        category.setCategoryName(newName.trim());
+        categoryRepository.save(category);
+    }
+
+    @Override
+    public void updateGenre(Integer genreId, String newName, Integer newCategoryId) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên thể loại không được để trống.");
+        }
+        Genre genre = genreRepository.findById(genreId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thể loại."));
+
+        if (newCategoryId != null) {
+            Category category = categoryRepository.findById(newCategoryId)
+                    .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại."));
+            genre.setCategory(category);
+        }
+
+        genre.setGenreName(newName.trim());
+        genreRepository.save(genre);
+    }
+
+    @Override
+    public void deleteGenre(Integer genreId) {
+        Genre genre = genreRepository.findById(genreId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thể loại."));
+
+        if (bookRepository.existsByGenre_GenreId(genreId)) {
+            throw new IllegalArgumentException("Không thể xóa thể loại vì đang có sách thuộc thể loại này.");
+        }
+
+        genreRepository.delete(genre);
+    }
+
+    @Override
+    public void deleteCategory(Integer categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục."));
+        
+        if (genreRepository.existsByCategory_CategoryId(categoryId)) {
+            throw new IllegalArgumentException("Không thể xóa danh mục vì đang có thể loại thuộc danh mục này.");
+        }
+        categoryRepository.delete(category);
     }
 }

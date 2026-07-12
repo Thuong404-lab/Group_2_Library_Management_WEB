@@ -1,5 +1,6 @@
 package com.lms.controller.admin;
 
+import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.AdminAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.entity.Member;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,13 +57,6 @@ public class AccountController {
         return listAccounts(page, keyword, model);
     }
 
-    @GetMapping("/create")
-    public String showCreateForm(@RequestParam(required = false, defaultValue = "members") String source,
-            Model model) {
-        prepareCreateAccountPage(model, source);
-        return "admin/create-account";
-    }
-
     @PostMapping("/create")
     public String createAccount(@RequestParam String fullName,
             @RequestParam String email,
@@ -77,16 +72,15 @@ public class AccountController {
 
         AdminAccountCreateRequest request = new AdminAccountCreateRequest(
                 fullName, email, phone, username, password, accountType, tierId, status);
-        model.addAttribute("formValues", createFormValues(request));
-
         try {
             accountService.createAccount(request);
             redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công.");
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
-            model.addAttribute("fieldErrors", e.getFieldErrors());
-            prepareCreateAccountPage(model, source);
-            return "admin/create-account";
+            redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
+            redirectAttributes.addFlashAttribute("fieldErrors", e.getFieldErrors());
+            redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
+            return redirectBySource(source);
         }
     }
 
@@ -117,10 +111,22 @@ public class AccountController {
             @RequestParam(required = false) String staffType,
             @RequestParam(defaultValue = "Active") String status,
             @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
 
         AdminAccountUpdateRequest request = new AdminAccountUpdateRequest(
                 id, fullName, email, phone, username, tierId, staffType, status, source);
+
+        if ("staff".equalsIgnoreCase(source)
+                && currentUser != null
+                && id.equals(currentUser.getAccountId())
+                && !"Active".equalsIgnoreCase(status)) {
+            redirectAttributes.addFlashAttribute("editAccountId", id);
+            redirectAttributes.addFlashAttribute("editFormValues", createEditFormValues(request));
+            redirectAttributes.addFlashAttribute("editFieldErrors",
+                    Map.of("status", "Bạn không thể khóa hoặc vô hiệu hóa tài khoản đang đăng nhập."));
+            return redirectBySource(source) + "#updateStaffModal" + id;
+        }
 
         try {
             accountService.updateAccount(request);
@@ -156,7 +162,7 @@ public class AccountController {
 
         if ("staff".equalsIgnoreCase(source)) {
             model.addAttribute("source", "staff");
-            model.addAttribute("backText", "← Về danh sách nhân viên");
+            model.addAttribute("backText", "← Về danh sách thủ thư");
             model.addAttribute("backUrl", "/admin/staff");
         } else {
             model.addAttribute("source", "members");

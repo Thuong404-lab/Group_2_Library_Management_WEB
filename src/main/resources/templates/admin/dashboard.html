@@ -187,28 +187,27 @@
                         <div class="card-body p-4">
                             <div th:if="${#lists.isEmpty(recentBorrows)}" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                Chưa có hoạt động mượn sách nào.
-                            </div>
-
-                            <div class="d-flex mb-3 pb-3 border-bottom" th:each="borrow, iterStat : ${recentBorrows}"
-                                style="border-color: rgba(139, 90, 43, 0.1) !important;">
-                                <div class="flex-shrink-0">
-                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center"
-                                        style="width: 40px; height: 40px; font-weight: bold;"
-                                        th:styleappend="${iterStat.index % 4 == 0 ? 'background-color: #0d6efd;' : iterStat.index % 4 == 1 ? 'background-color: #198754;' : iterStat.index % 4 == 2 ? 'background-color: #6f42c1;' : 'background-color: #fd7e14;'}"
-                                        th:text="${borrow.member != null && borrow.member.user != null ? #strings.substring(borrow.member.user.fullName, 0, 1) : 'N'}">
-                                        N
+                                <div class="d-flex mb-3 pb-3 border-bottom" th:each="borrow, iterStat : ${recentBorrows}"
+                                     style="border-color: rgba(139,90,43,0.1) !important;">
+                                    <div class="flex-shrink-0">
+                                        <img th:if="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}" 
+                                             th:src="${borrow.borrow.member.user.avatar}" 
+                                             class="rounded-circle border" 
+                                             style="width: 40px; height: 40px; object-fit: cover;" 
+                                             alt="Avatar">
+                                        <div th:unless="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
+                                             class="rounded-circle text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px; font-weight: bold; background-color: #8b5a2b;"
+                                             th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? #strings.substring(borrow.borrow.member.user.fullName, 0, 1) : 'N'}">
+                                            N
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 fw-bold"
-                                        th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'Người dùng ẩn danh'}">
-                                        Người dùng</h6>
-                                    <div class="text-muted small">
-                                        <i class="bi bi-box-arrow-right me-1"></i> Đã mượn sách ·
-                                        <span
-                                            th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Hôm
-                                            nay</span>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1 fw-bold" th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? borrow.borrow.member.user.fullName : 'Người dùng ẩn danh'}">Người dùng</h6>
+                                        <div class="text-muted small">
+                                            <i class="bi bi-box-arrow-right me-1"></i> Đã mượn: <span th:text="${borrow.book.title}">Sách</span> · 
+                                            <span th:text="${borrow.borrow.borrowDate != null ? #temporals.format(borrow.borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Hôm nay</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

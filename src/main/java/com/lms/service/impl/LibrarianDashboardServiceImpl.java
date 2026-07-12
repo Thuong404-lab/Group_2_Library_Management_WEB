@@ -4,6 +4,8 @@ import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.response.LibrarianListViewData;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
+import com.lms.entity.Book;
+import com.lms.entity.BookItem;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
@@ -33,7 +35,7 @@ import java.util.Map;
 @Service
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
-    private static final int DASHBOARD_PAGE_SIZE = 5;
+    private static final int DASHBOARD_PAGE_SIZE = 10;
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -78,12 +80,18 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData() {
-        return getDashboardData(0, 0);
+        return getDashboardData(0, 0, 0);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData(int reviewPage, int requestPage) {
+        return getDashboardData(0, reviewPage, requestPage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int bookPage, int reviewPage, int requestPage) {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> data = new LinkedHashMap<>();
 
@@ -95,24 +103,68 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("totalMembers", memberRepository.count());
         data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
         data.put("currentDate", LocalDate.now());
-        data.put("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
+        data.put("recentBorrows", borrowDetailRepository.findRecentActivities(PageRequest.of(0, 5)));
         data.put("dueSoonDetails",
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
                         "Borrowed", now, now.plusDays(7)));
         data.put("reviews", interactionService.getReviewsForModeration(
-                null, PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
+                null,
+                PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
         data.put("shelves", storageService.getAllStorageLocations());
-        data.put("books", bookRepository.findAll());
+        Page<Book> booksPage = bookRepository
+                .findAllWithAuthors(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+        data.put("books", booksPage);
+
+        Map<Integer, Integer> bookShelves = new HashMap<>();
+        Map<Integer, Integer> bookTotalQuantities = new HashMap<>();
+        Map<Integer, Integer> bookBorrowedQuantities = new HashMap<>();
+        Map<Integer, Integer> bookAvailableQuantities = new HashMap<>();
+        Map<Integer, List<BookItem>> bookItemsByBookId = new HashMap<>();
+        for (Book book : booksPage.getContent()) {
+            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+            bookItemsByBookId.put(book.getBookId(), items != null ? items : List.of());
+            if (items != null && !items.isEmpty()) {
+                if (items.get(0).getShelf() != null) {
+                    bookShelves.put(book.getBookId(), items.get(0).getShelf().getShelfId());
+                }
+                bookTotalQuantities.put(book.getBookId(), items.size());
+                int borrowed = (int) items.stream().filter(i -> "Borrowed".equalsIgnoreCase(i.getStatus())).count();
+                bookBorrowedQuantities.put(book.getBookId(), borrowed);
+                int available = (int) items.stream().filter(i -> "Available".equalsIgnoreCase(i.getStatus())).count();
+                bookAvailableQuantities.put(book.getBookId(), available);
+            } else {
+                bookTotalQuantities.put(book.getBookId(), 0);
+                bookBorrowedQuantities.put(book.getBookId(), 0);
+                bookAvailableQuantities.put(book.getBookId(), 0);
+            }
+        }
+        data.put("bookShelves", bookShelves);
+        data.put("bookTotalQuantities", bookTotalQuantities);
+        data.put("bookBorrowedQuantities", bookBorrowedQuantities);
+        data.put("bookAvailableQuantities", bookAvailableQuantities);
+        data.put("bookItemsByBookId", bookItemsByBookId);
         data.put("categories", categoryRepository.findAll());
         data.put("genres", genreRepository.findAll());
         data.put("totalBookCount", bookRepository.count());
         data.put("totalCategories", categoryRepository.count());
         data.put("totalGenres", genreRepository.count());
         data.put("inventoryStatusCounts", inventoryStatusCounts());
+        return data;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getStatisticsData() {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
+        data.put("pendingReservations",
+                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
+        data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
+        data.put("totalMembers", memberRepository.count());
         return data;
     }
 

@@ -1,76 +1,197 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Bàn Trả Sách</title>
+    <title>Bàn tiếp nhận trả sách</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .classic-card {
+            border: 1px solid rgba(139, 90, 43, 0.18) !important;
+            border-radius: 10px !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
+            overflow: hidden;
+        }
+        .classic-card .card-header {
+            background: #ffffff !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.18) !important;
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+        .card-title-custom {
+            color: #4a3b32;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .classic-table thead th {
+            background: rgba(139, 90, 43, 0.04) !important;
+            color: #4a3b32 !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+        .classic-table tbody tr {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #dee2e6 !important;
+        }
+        .btn-classic-primary {
+            background: #8b5a2b !important;
+            border: 1px solid #8b5a2b !important;
+            color: #ffffff !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-primary:hover {
+            background: #74481f !important;
+            border-color: #74481f !important;
+            color: #ffffff !important;
+        }
+        .btn-classic-outline {
+            background: transparent !important;
+            border: 1px solid rgba(139, 90, 43, 0.5) !important;
+            color: #8b5a2b !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-outline:hover {
+            background: rgba(139, 90, 43, 0.08) !important;
+            border-color: #8b5a2b !important;
+        }
+        .scan-input {
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #4a3b32;
+            font-size: 1.05rem;
+            transition: all 0.2s ease;
+        }
+        .scan-input:focus {
+            border-color: #8b5a2b;
+            box-shadow: 0 0 0 0.2rem rgba(139, 90, 43, 0.15);
+            background-color: #fff;
+        }
+        .badge-classic { background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.3); border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; }
+        .result-card { border-left: 4px solid #8b5a2b !important; }
+    </style>
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='borrow-return'">
 
-    <!-- Khối Thông báo Alert hệ thống -->
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Thông báo thành công</span>
+        <span th:text="${successMessage}">Thành công</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Thông báo lỗi</span>
+        <span th:text="${errorMessage}">Lỗi</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139,90,43,0.2) !important;">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color:#4a3b32; font-family:'Playfair Display',serif;">Bàn Trả Sách</h2>
-            <div class="text-muted">Xử lý phê duyệt các yêu cầu trả sách trực tuyến và quét mã vạch trực tiếp tại quầy</div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bàn tiếp nhận trả sách</h2>
+            <div class="text-muted">Tiếp nhận sách hoàn trả và đánh giá tình trạng sách tại quầy thư viện.</div>
         </div>
     </div>
 
-    <!-- Khối 1: DANH SÁCH CÁC YÊU CẦU TRẢ SÁCH ĐANG CHỜ DUYỆT TRỰC TUYẾN -->
-    <div class="bg-white rounded shadow-sm p-4 mb-4" style="border-top: 4px solid #8b5a2b;">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;">
-            <i class="bi bi-clock-history me-2" style="color:#8b5a2b;"></i>Yêu cầu trả sách chờ duyệt
-            <span class="badge rounded-pill bg-danger ms-2" th:text="${#lists.size(returnRequests)}">0</span>
-        </h5>
+    <!-- Barcode Search Card -->
+    <div class="card classic-card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2" style="color: #8b5a2b;"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
+        </div>
+        <div class="card-body p-4 bg-white">
+            <form th:action="@{/librarian/loan/returns/search}" method="get" class="row g-3 align-items-end">
+                <div class="col-md-9">
+                    <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Mã vạch (Barcode) của cuốn sách</label>
+                    <input type="text" name="barcode" th:value="${searchedBarcode}"
+                           class="form-control scan-input"
+                           placeholder="Ví dụ: BI-1002 hoặc quét trực tiếp bằng thiết bị..."
+                           autofocus required autocomplete="off" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn w-100 fw-bold btn-classic-primary" style="padding: 0.5rem 1rem;">
+                        <i class="bi bi-search me-1"></i>Tìm đơn mượn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
+    <!-- Search Results Card -->
+    <div class="card classic-card shadow-sm mb-4 result-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title-custom mb-0">
+                <i class="bi bi-file-earmark-text me-2" style="color: #8b5a2b;"></i>
+                Kết quả tra cứu cho mã sách:
+                <span class="font-monospace ms-1" style="color: #8b5a2b;" th:text="${searchedBarcode}">BI-1002</span>
+            </h5>
+        </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead style="background:#fdfbf7;">
+            <table class="table table-hover align-middle mb-0 classic-table">
+                <thead>
                 <tr>
-                    <th class="border-0 py-3 pl-4 text-muted small text-uppercase">Mã phiếu</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Thành viên</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Thông tin sách mượn</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Ngày mượn</th>
-                    <th class="border-0 py-3 text-muted small text-uppercase">Thao tác xử lý</th>
+                    <th class="ps-4">Mã Đơn Cha</th>
+                    <th>Thông tin Độc giả</th>
+                    <th>Nhan đề sách đang giữ</th>
+                    <th>Hạn trả quy định</th>
+                    <th class="text-end pe-4">Hành động xử lý</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${#lists.isEmpty(returnRequests)}">
-                    <td colspan="5" class="text-center py-4 text-muted fst-italic">Hiện tại không có yêu cầu xin trả sách trực tuyến nào cần duyệt.</td>
+                <tr th:each="detail : ${searchResults}">
+                    <td class="ps-4">
+                        <span class="font-monospace fw-bold" style="color: #8b5a2b;" th:text="'BOR-' + ${detail.borrow.borrowId}">BOR-1</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif;" th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
+                        <small class="text-muted" th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark" th:text="${detail.book.title}">Tên cuốn sách</div>
+                        <small class="text-muted" th:text="'Gia hạn: ' + ${detail.renewCount} + ' lần'"></small>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark" th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
+                        <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}"
+                              class="status-badge status-overdue ms-1">Quá hạn</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button type="button" class="btn btn-classic-outline px-3 py-1"
+                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
+                                style="font-size: 0.85rem;">
+                            Tiếp nhận trả sách
+                        </button>
+                    </td>
                 </tr>
-                <tr th:each="borrow : ${returnRequests}">
-                    <td class="pl-4 py-3 fw-bold">
-                        <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}" th:text="'BOR-' + ${borrow.borrowId}" class="fw-bold text-decoration-none" style="color: #8b5a2b;">BOR-2026-0042</a>
+                <tr th:if="${searchResults == null or #lists.isEmpty(searchResults)}">
+                    <td class="ps-4">
+                        <span class="font-monospace fw-bold" style="color: #8b5a2b;">BOR-1002</span>
                     </td>
                     <td>
-                        <div class="fw-bold" th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.fullName : 'N/A'}">username</div>
-                        <small class="text-muted" th:text="${borrow.member != null && borrow.member.user != null ? borrow.member.user.email : 'N/A'}">email@domain.com</small>
+                        <div class="fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif;">Nguyễn Văn A</div>
+                        <small class="text-muted">nva@gmail.com</small>
                     </td>
                     <td>
-                        <!-- Giả định mỗi phiếu mượn tương ứng có danh sách chi tiết -->
-                        <div th:each="detail : ${borrow.borrowDetails}">
-                            <span class="fw-semibold" style="color:#4a3b32;" th:text="${detail.book.title}">Tên sách</span>
-                            <small class="text-muted block d-block" th:text="'Mã vạch: ' + ${detail.bookItem != null ? detail.bookItem.barcode : 'N/A'}">Mã vạch</small>
-                        </div>
+                        <div class="fw-semibold text-dark">Nhà Giả Kim (Bản Đặc Biệt)</div>
+                        <small class="text-muted">Gia hạn: 0 lần</small>
                     </td>
-                    <td class="text-muted" th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">15/06/2026</td>
                     <td>
-                        <!-- Biểu mẫu Phê duyệt trả sách tích hợp đổi trạng thái -->
-                        <form th:action="@{/librarian/loan/returns/approve/{borrowId}(borrowId=${borrow.borrowId})}" method="post" onsubmit="return confirm('Xác nhận sách đã về kho nguyên vẹn và phê duyệt phiếu trả này?')">
-                            <button type="submit" class="btn btn-sm text-white fw-bold" style="background:#8b5a2b;">
-                                <i class="bi bi-check2-square me-1"></i> Phê duyệt trả
-                            </button>
-                        </form>
+                        <span class="fw-bold text-dark">20/07/2026</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button type="button" class="btn btn-classic-outline px-3 py-1"
+                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
+                                style="font-size: 0.85rem;">
+                            Tiếp nhận trả sách
+                        </button>
                     </td>
                 </tr>
                 </tbody>
@@ -78,56 +199,47 @@
         </div>
     </div>
 
-    <!-- Khối 2: TRA CỨU / QUÉT MÃ VẠCH TRẢ TRỰC TIẾP TẠI QUẦY -->
-    <div class="bg-white rounded shadow-sm p-4 mb-4" style="border-left:4px solid #8b5a2b;">
-        <h5 class="fw-bold mb-3" style="color:#4a3b32;"><i class="bi bi-qr-code-scan me-2" style="color:#8b5a2b;"></i>Xử lý trả nhanh qua mã vạch (Quầy vật lý)</h5>
-        <form th:action="@{/librarian/loan/returns/scan}" method="post">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-7">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Nhập hoặc quét mã vạch (Barcode) của sách</label>
-                    <input type="text" name="barcode" class="form-control form-control-lg" placeholder="Ví dụ: BI-10023-01" required>
+    <!-- Confirm Return Modal -->
+    <div class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
+                <input type="hidden" name="barcode" th:value="${searchedBarcode}">
+                <div class="modal-header" style="background-color: #fdfbf7; border-bottom: 1px dashed rgba(139, 90, 43, 0.2);">
+                    <h5 class="modal-title fw-bold" id="confirmReturnModalLabel" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        Biên bản đánh giá hoàn sách nhập kho
+                    </h5>
                 </div>
-                <div class="col-md-5">
-                    <button type="submit" class="btn btn-lg w-100 fw-bold text-white" style="background:#8b5a2b;">
-                        <i class="bi bi-lightning-fill me-1"></i> Xác nhận trả trực tiếp
+                <div class="modal-body p-4" style="background-color: #fdfbf7;">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Ngày trả thực tế <span class="text-danger">*</span></label>
+                        <input type="date" name="returnDate" th:value="${defaultReturnDate}"
+                               class="form-control scan-input" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
+                        <select name="conditionNote" class="form-select scan-input" required>
+                            <option value="Tốt - Sách nguyên vẹn, sạch đẹp">Tốt / Nguyên vẹn, sạch đẹp</option>
+                            <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ">Hư hỏng nhẹ (Quăn mép, sờn bìa, vết rách nhỏ)</option>
+                            <option value="Mất hoặc Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng">Mất hoặc hư hỏng nặng (Cần bồi thường)</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Ghi chú chi tiết thêm (Tùy chọn)</label>
+                        <textarea class="form-control scan-input" name="conditionNoteAdditional" rows="3" placeholder="Nhập thêm mô tả cụ thể về hư hỏng nếu có..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #fdfbf7; border-top: 1px dashed rgba(139, 90, 43, 0.2);">
+                    <button type="button" class="btn btn-classic-outline px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-classic-primary px-4 fw-bold" style="margin-right: 0 !important;">
+                        Xác nhận &amp; Hoàn kho
                     </button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
-    <!-- Khối 3: DANH SÁCH LỊCH SỬ ĐÃ HOÀN THÀNH TRONG NGÀY -->
-    <h5 class="fw-bold mb-3" style="color:#4a3b32;">Sách đã duyệt trả thành công hôm nay</h5>
-    <div class="bg-white rounded shadow-sm">
-        <table class="table table-hover mb-0">
-            <thead style="background:#fdfbf7;">
-            <tr>
-                <th class="border-0 py-3 pl-4 text-muted small text-uppercase">Mã phiếu</th>
-                <th class="border-0 py-3 text-muted small text-uppercase">Độc giả</th>
-                <th class="border-0 py-3 text-muted small text-uppercase">Tên sách</th>
-                <th class="border-0 py-3 text-muted small text-uppercase">Thời gian xử lý</th>
-                <th class="border-0 py-3 text-muted small text-uppercase">Trạng thái</th>
-            </tr>
-            </thead>
-            <tbody>
-            <!-- Mockup hiển thị hoặc bind dữ liệu tùy biến từ danh sách đã duyệt thành công -->
-            <tr>
-                <td class="pl-4 py-3 fw-bold">BOR-2026-0039</td>
-                <td>Trần Thị Bình</td>
-                <td>Nhà Giả Kim</td>
-                <td>08:32 AM</td>
-                <td><span class="badge bg-success text-white px-2 py-1">Returned (Đã trả)</span></td>
-            </tr>
-            <tr>
-                <td class="pl-4 py-3 fw-bold">BOR-2026-0035</td>
-                <td>Lê Minh Khoa</td>
-                <td>Sapiens: Lược Sử Loài Người</td>
-                <td>10:15 AM</td>
-                <td><span class="badge bg-success text-white px-2 py-1">Returned (Đã trả)</span></td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+
+
 </div>
 </body>
 </html>
