@@ -18,9 +18,7 @@ public interface BorrowService {
     void approvePendingRequest(Integer borrowId, String staffUsername);
 
     // Luồng YÊU CẦU TRẢ SÁCH VÀ GIA HẠN
-    void memberSubmitReturnRequest(String username, Integer borrowDetailId);
     void memberSubmitRenewRequest(Integer borrowDetailId);
-    void approveReturnRequest(Integer borrowId);
     void processReturnBook(String barcode); // Trả trực tiếp qua quét mã vạch
 
     // Luồng ĐẶT TRƯỚC SÁCH - RESERVATION (Mới nâng cấp)

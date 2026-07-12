@@ -194,32 +194,6 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void memberSubmitReturnRequest(String username, Integer borrowDetailId) {
-        Integer memberId = getMemberIdByUsername(username);
-        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon tuong ung!"));
-        if (memberId == null || detail.getBorrow() == null || detail.getBorrow().getMember() == null
-                || !memberId.equals(detail.getBorrow().getMember().getMemberId())) {
-            throw new IllegalArgumentException("Ban khong co quyen gui yeu cau tra sach nay!");
-        }
-        if (!"Borrowed".equalsIgnoreCase(detail.getStatus()) && !"Overdue".equalsIgnoreCase(detail.getStatus())) {
-            throw new IllegalArgumentException("Trang thai sach hien tai khong hop le de gui yeu cau tra!");
-        }
-
-        detail.setStatus("Return_Pending");
-        borrowDetailRepository.save(detail);
-
-        Borrow parent = detail.getBorrow();
-        parent.setStatus("Return_Pending");
-        borrowRepository.save(parent);
-
-        auditLogService.log(
-                ActionType.REQUEST_RETURN,
-                "Member " + username + " gui yeu cau tra sach #" + parent.getBorrowId() + ".");
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public void memberSubmitRenewRequest(Integer borrowDetailId) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon!"));
@@ -237,28 +211,6 @@ public class BorrowServiceImpl implements BorrowService {
         borrowDetailRepository.save(detail);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void approveReturnRequest(Integer borrowId) {
-        Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau tra!"));
-        borrow.setStatus("Returned");
-        borrowRepository.save(borrow);
-
-        for (BorrowDetail detail : getBorrowDetailsByBorrowId(borrowId)) {
-            detail.setStatus("Returned");
-            detail.setReturnDate(LocalDateTime.now());
-            borrowDetailRepository.save(detail);
-            if (detail.getBookItem() != null) {
-                BookItem item = detail.getBookItem();
-                item.setStatus("Available");
-                bookItemRepository.save(item);
-            }
-        }
-
-        sendInternalNotification(borrow.getMember(), "Xac nhan tra sach thanh cong",
-                "Yeu cau tra sach cua phieu muon #" + borrowId + " da duoc thu thu phe duyet.");
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

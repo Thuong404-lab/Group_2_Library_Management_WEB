@@ -114,17 +114,7 @@ public class LibrarianBorrowController {
         return "redirect:/librarian/borrow/create";
     }
 
-    // ĐỒNG BỘ ENDPOINT THEO FORM HTML PHẦN 2: Nhận sách trả từ độc giả gửi online
-    @PostMapping("/librarian/borrow/approve-return/{borrowId}")
-    public String approveReturnRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
-        try {
-            borrowService.approveReturnRequest(borrowId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận nhận lại sách vật lý nhập kho thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Xác nhận trả sách thất bại: " + e.getMessage());
-        }
-        return "redirect:/librarian/borrow/create"; // Quay lại trang quầy mượn trực tiếp
-    }
+
 
     // Xử lý tạo phiếu mượn trực tiếp bằng mã vạch (Barcode) quét tại quầy
     @PostMapping("/librarian/borrow/create")

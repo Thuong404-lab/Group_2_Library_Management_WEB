@@ -185,21 +185,6 @@ public class BorrowController {
         return "redirect:/member/borrow/management?tab=reserved";
     }
 
-    @PostMapping("/return/{loanId}")
-    public String returnBook(@PathVariable("loanId") Integer loanId,
-                             Principal principal,
-                             RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
-        try {
-            borrowService.memberSubmitReturnRequest(principal.getName(), loanId);
-            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu trả sách đã được gửi tới Thủ thư thành công.");
-            return "redirect:/member/borrow/management?tab=borrowing";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xử lý gửi yêu cầu: " + e.getMessage());
-            return "redirect:/member/borrow/management?tab=borrowing";
-        }
-    }
-
     @PostMapping("/renew/{borrowDetailId}")
     public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
