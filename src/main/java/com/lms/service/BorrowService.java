@@ -18,15 +18,15 @@ public interface BorrowService {
     void approvePendingRequest(Integer borrowId, String staffUsername);
 
     // Luồng YÊU CẦU TRẢ SÁCH VÀ GIA HẠN
-    void memberSubmitReturnRequest(String username, Integer borrowDetailId);
     void memberSubmitRenewRequest(Integer borrowDetailId);
-    void approveReturnRequest(Integer borrowId);
     void processReturnBook(String barcode); // Trả trực tiếp qua quét mã vạch
 
     // Luồng ĐẶT TRƯỚC SÁCH - RESERVATION (Mới nâng cấp)
     Reservation memberSubmitReservationRequest(String username, Integer bookId);
     void approveReservationRequest(Integer reservationId, String staffUsername);
+    void rejectReservationRequest(Integer reservationId, String staffUsername);
     void memberCancelReservation(String username, Integer reservationId);
+    Reservation getReservationById(Integer reservationId);
 
     // FIX: Thêm phương thức này để đồng bộ với BorrowServiceImpl
     List<Reservation> getAllPendingReservations();
@@ -40,6 +40,8 @@ public interface BorrowService {
     List<Borrow> getAllBorrowHistoryByMember(String username);
     Borrow getBorrowById(Integer borrowId);
     List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId);
+    List<BorrowDetail> getPendingRenewalRequests();
+    BorrowDetail getBorrowDetailById(Integer borrowDetailId);
 
     // Dữ liệu đồng bộ ra các Tab hiển thị trên Front-end
     List<MemberBorrowDTO> getMemberCurrentBorrows(String username);
@@ -49,4 +51,7 @@ public interface BorrowService {
     // Thêm vào interface BorrowService
     List<ReturnRequestDTO> getPendingReturnRequestDTOs();
     List<ReservationRequestDTO> getPendingReservationDTOs();
+
+    // Dữ liệu cấu hình hệ thống
+    int getMaxBorrowDays();
 }

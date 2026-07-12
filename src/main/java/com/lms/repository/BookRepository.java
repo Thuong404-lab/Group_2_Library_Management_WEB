@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecificationExecutor<Book> {
@@ -22,4 +23,7 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
                            @Param("genreId") Integer genreId,
                            @Param("status") String status,
                            Pageable pageable);
+
+    @Query("SELECT d.book FROM BorrowDetail d GROUP BY d.book ORDER BY COUNT(d) DESC")
+    List<Book> findTrendingBooks(Pageable pageable);
 }

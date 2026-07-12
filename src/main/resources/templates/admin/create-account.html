@@ -53,7 +53,7 @@
                     </div>
                     <div class="card-body px-4 pb-4 pt-2">
                         <form method="post" th:action="@{/admin/accounts/create}" autocomplete="off"
-                            id="createAccountForm" novalidate>
+                            id="createAccountForm" novalidate th:fragment="createAccountForm(source, modalMode)">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                 th:value="${_csrf.token}">
                             <input type="hidden" name="source" th:value="${source}">
@@ -209,9 +209,11 @@
 
                             <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
                             <div class="d-flex justify-content-end" style="gap: 12px;">
-                                <a class="btn btn-light border shadow-sm" th:href="${backUrl}">
+                                <a class="btn btn-light border shadow-sm" th:if="${modalMode != true}" th:href="${backUrl}">
                                     Hủy bỏ
                                 </a>
+                                <button class="btn btn-light border shadow-sm" th:if="${modalMode == true}" type="button"
+                                    data-bs-dismiss="modal">Hủy bỏ</button>
                                 <button class="btn btn-classic px-4" type="submit">
                                     Tạo tài khoản
                                 </button>
@@ -222,7 +224,7 @@
             </div>
         </div>
 
-        <script>
+        <script th:fragment="createAccountValidation">
             document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("createAccountForm");
 

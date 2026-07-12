@@ -101,7 +101,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("totalMembers", memberRepository.count());
         data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
         data.put("currentDate", LocalDate.now());
-        data.put("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
+        data.put("recentBorrows", borrowDetailRepository.findRecentActivities(PageRequest.of(0, 5)));
         data.put("dueSoonDetails",
                 borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
                         "Borrowed", now, now.plusDays(7)));

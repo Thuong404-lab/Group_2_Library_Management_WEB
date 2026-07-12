@@ -102,4 +102,60 @@ public class LoanController {
         model.addAttribute("details", loanService.getAllBorrowDetails());
         return "librarian/borrow-schedule";
     }
+
+    /**
+     * GET: /librarian/loan/borrow-schedule/detail-preview
+     * Giao diện UI cứng xem trước chi tiết (Preview).
+     */
+    @GetMapping("/borrow-schedule/detail-preview")
+    public String showBorrowScheduleDetailPreview() {
+        return "librarian/borrow-schedule-detail";
+    }
+
+    /**
+     * POST: /librarian/loan/renew/{id}
+     * Gia hạn thủ công bởi thủ thư.
+     */
+    @PostMapping("/renew/{id}")
+    public String manualRenew(@PathVariable("id") Integer borrowDetailId, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.processRenewal(borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn sách thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Gia hạn thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/borrow-schedule";
+    }
+
+    /**
+     * POST: /librarian/loan/renew/approve/{id}
+     * Duyệt yêu cầu gia hạn từ độc giả.
+     */
+    @PostMapping("/renew/approve/{id}")
+    public String approveRenewal(@PathVariable("id") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            String staffUsername = (principal != null) ? principal.getName() : "admin";
+            loanService.approveRenewal(borrowDetailId, staffUsername);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu gia hạn!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi duyệt gia hạn: " + e.getMessage());
+        }
+        return "redirect:/librarian/borrow/create";
+    }
+
+    /**
+     * POST: /librarian/loan/renew/reject/{id}
+     * Từ chối yêu cầu gia hạn từ độc giả.
+     */
+    @PostMapping("/renew/reject/{id}")
+    public String rejectRenewal(@PathVariable("id") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            String staffUsername = (principal != null) ? principal.getName() : "admin";
+            loanService.rejectRenewal(borrowDetailId, staffUsername);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu gia hạn!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi từ chối gia hạn: " + e.getMessage());
+        }
+        return "redirect:/librarian/borrow/create";
+    }
 }

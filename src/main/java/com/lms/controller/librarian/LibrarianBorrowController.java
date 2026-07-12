@@ -3,6 +3,7 @@ package com.lms.controller.librarian;
 import com.lms.dto.request.BorrowRequest;
 import com.lms.entity.Borrow;
 import com.lms.repository.BorrowRepository;
+import com.lms.repository.MemberRepository;
 import com.lms.service.BorrowService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,11 +20,15 @@ import java.util.Arrays;
 public class LibrarianBorrowController {
 
     private final BorrowService borrowService;
-    private final BorrowRepository borrowRepository; // Khai báo thêm Repository để dùng phân trang Jpa
+    private final BorrowRepository borrowRepository;
+    private final MemberRepository memberRepository;
+    private final com.lms.repository.BookItemRepository bookItemRepository;
 
-    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository) {
+    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository) {
         this.borrowService = borrowService;
         this.borrowRepository = borrowRepository;
+        this.memberRepository = memberRepository;
+        this.bookItemRepository = bookItemRepository;
     }
 
     // Xem danh sách toàn cục các phiếu mượn trả
@@ -63,11 +68,18 @@ public class LibrarianBorrowController {
 
     // Quầy mượn sách tích hợp đồng bộ danh sách online (Master-Detail) đúng mô hình chia đôi màn hình
     @GetMapping("/librarian/borrow/create")
-    public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId, Model model) {
+    public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
+                                       @RequestParam(value = "renewId", required = false) Integer renewId,
+                                       @RequestParam(value = "reservationId", required = false) Integer reservationId,
+                                       Model model) {
         model.addAttribute("borrowRequest", new BorrowRequest());
+        model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
         // Bước 1: Lấy danh sách thành viên gửi đơn mượn trực tuyến đang chờ phê duyệt (Hiện ở cột trái)
         model.addAttribute("pendingRequests", borrowService.getAllPendingRequests());
+        
+        // Lấy danh sách yêu cầu gia hạn chờ duyệt
+        model.addAttribute("pendingRenewals", borrowService.getPendingRenewalRequests());
 
         // Đổi tên thuộc tính từ 'returnRequests' -> 'pendingReturnRequests' và bọc qua DTO phù hợp với template
         model.addAttribute("pendingReturnRequests", borrowService.getPendingReturnRequestDTOs());
@@ -83,6 +95,22 @@ public class LibrarianBorrowController {
                 model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
             } catch (Exception e) {
                 model.addAttribute("errorMessage", "Không thể lấy thông tin chi tiết: " + e.getMessage());
+            }
+        }
+        
+        if (renewId != null) {
+            try {
+                model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
+            } catch (Exception e) {
+                model.addAttribute("errorMessage", "Không thể lấy thông tin gia hạn: " + e.getMessage());
+            }
+        }
+
+        if (reservationId != null) {
+            try {
+                model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
+            } catch (Exception e) {
+                model.addAttribute("errorMessage", "Không thể lấy thông tin đặt trước: " + e.getMessage());
             }
         }
 
@@ -114,22 +142,91 @@ public class LibrarianBorrowController {
         return "redirect:/librarian/borrow/create";
     }
 
-    // ĐỒNG BỘ ENDPOINT THEO FORM HTML PHẦN 2: Nhận sách trả từ độc giả gửi online
-    @PostMapping("/librarian/borrow/approve-return/{borrowId}")
-    public String approveReturnRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
+
+    // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
+    @PostMapping("/librarian/reservations/reject/{id}")
+    public String rejectReservationRequest(@PathVariable("id") Integer id, Principal principal, RedirectAttributes redirectAttributes) {
         try {
-            borrowService.approveReturnRequest(borrowId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận nhận lại sách vật lý nhập kho thành công!");
+            String staffUsername = (principal != null) ? principal.getName() : "admin";
+            borrowService.rejectReservationRequest(id, staffUsername);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối đơn đặt trước thành công.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Xác nhận trả sách thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thất bại: " + e.getMessage());
         }
-        return "redirect:/librarian/borrow/create"; // Quay lại trang quầy mượn trực tiếp
+        return "redirect:/librarian/borrow/create";
     }
 
-    // Xử lý tạo phiếu mượn trực tiếp bằng mã vạch (Barcode) quét tại quầy
+
+
+    // Xem trước thông tin phiếu mượn (Review Bill)
+    @PostMapping("/librarian/borrow/review")
+    public String reviewCreateBorrow(@RequestParam("memberIdentifier") String memberIdentifier,
+                                     @RequestParam("numberOfDays") Integer numberOfDays,
+                                     @RequestParam("rawBarcodes") String rawBarcodes,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            // 1. Tìm thành viên
+            java.util.Optional<com.lms.entity.Member> optMember = memberRepository.findByUserEmail(memberIdentifier.trim());
+            if (optMember.isEmpty()) {
+                optMember = memberRepository.findByUserPhone(memberIdentifier.trim());
+            }
+            if (optMember.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thành viên với SĐT/Email này!");
+                return "redirect:/librarian/borrow/create";
+            }
+            com.lms.entity.Member member = optMember.get();
+            if (member.getUser().getStatus() != com.lms.enums.UserStatus.Active) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản thành viên này đang bị khóa hoặc không hoạt động!");
+                return "redirect:/librarian/borrow/create";
+            }
+
+            // 2. Kiểm tra mã vạch
+            if (rawBarcodes == null || rawBarcodes.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng nhập ít nhất một mã vạch!");
+                return "redirect:/librarian/borrow/create";
+            }
+            java.util.List<String> barcodeList = java.util.Arrays.asList(rawBarcodes.split("\\s*,\\s*"));
+            java.util.List<com.lms.entity.BookItem> validItems = new java.util.ArrayList<>();
+            
+            for (String barcode : barcodeList) {
+                barcode = barcode.trim();
+                if (barcode.isEmpty()) continue;
+                java.util.Optional<com.lms.entity.BookItem> optItem = bookItemRepository.findByBarcode(barcode);
+                if (optItem.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy sách có mã vạch: " + barcode);
+                    return "redirect:/librarian/borrow/create";
+                }
+                com.lms.entity.BookItem item = optItem.get();
+                if (!"Available".equalsIgnoreCase(item.getStatus())) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Sách có mã vạch " + barcode + " hiện không sẵn sàng (Trạng thái: " + item.getStatus() + ")");
+                    return "redirect:/librarian/borrow/create";
+                }
+                validItems.add(item);
+            }
+            
+            if (validItems.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không có mã vạch hợp lệ nào được nhập!");
+                return "redirect:/librarian/borrow/create";
+            }
+
+            // 3. Truyền dữ liệu sang giao diện popup
+            redirectAttributes.addFlashAttribute("showBillPopup", true);
+            redirectAttributes.addFlashAttribute("billMember", member);
+            redirectAttributes.addFlashAttribute("billBookItems", validItems);
+            redirectAttributes.addFlashAttribute("billDays", numberOfDays != null ? numberOfDays : 14);
+            redirectAttributes.addFlashAttribute("billRawBarcodes", rawBarcodes);
+            redirectAttributes.addFlashAttribute("billMemberIdentifier", memberIdentifier);
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kiểm tra thông tin: " + e.getMessage());
+        }
+        return "redirect:/librarian/borrow/create";
+    }
+
+    // Xử lý tạo phiếu mượn trực tiếp bằng mã vạch (Barcode) quét tại quầy sau khi xác nhận Bill
     @PostMapping("/librarian/borrow/create")
     public String processCreateBorrow(@ModelAttribute("borrowRequest") BorrowRequest request,
-                                      @RequestParam("rawBarcodes") String rawBarcodes,
+                                      @RequestParam(value = "rawBarcodes", required = false) String rawBarcodes,
                                       Principal principal,
                                       RedirectAttributes redirectAttributes) {
         try {
@@ -160,5 +257,43 @@ public class LibrarianBorrowController {
             redirectAttributes.addFlashAttribute("errorMessage", "Duyệt thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";
+    }
+
+    @GetMapping("/librarian/api/book-lookup")
+    @ResponseBody
+    public java.util.List<java.util.Map<String, Object>> lookupBooks(@RequestParam("barcodes") String barcodes) {
+        java.util.List<java.util.Map<String, Object>> results = new java.util.ArrayList<>();
+        if (barcodes == null || barcodes.trim().isEmpty()) {
+            return results;
+        }
+        
+        String[] barcodeArray = barcodes.split(",");
+        for (String bc : barcodeArray) {
+            String cleanBc = bc.trim();
+            if (cleanBc.isEmpty()) continue;
+            
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("barcode", cleanBc);
+            
+            java.util.Optional<com.lms.entity.BookItem> itemOpt = bookItemRepository.findByBarcode(cleanBc);
+            if (itemOpt.isPresent()) {
+                com.lms.entity.BookItem item = itemOpt.get();
+                data.put("found", true);
+                data.put("title", item.getBook().getTitle());
+                String rawStatus = item.getStatus();
+                String vnStatus = "Có sẵn";
+                if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = "Đang mượn";
+                else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = "Bị mất";
+                else if ("Maintenance".equalsIgnoreCase(rawStatus)) vnStatus = "Bảo trì";
+                
+                data.put("status", vnStatus);
+                data.put("rawStatus", rawStatus);
+            } else {
+                data.put("found", false);
+                data.put("error", "Không tồn tại");
+            }
+            results.add(data);
+        }
+        return results;
     }
 }

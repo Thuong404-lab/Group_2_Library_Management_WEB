@@ -5,6 +5,14 @@
 <head>
     <title>Quản lý tài khoản thủ thư</title>
     <style>
+        #createAccountForm .form-control.is-invalid,
+        #createAccountForm .form-select.is-invalid,
+        #createAccountForm .form-control.is-valid,
+        #createAccountForm .form-select.is-valid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
         .staff-update-form .form-control.is-invalid,
         .staff-update-form .form-select.is-invalid {
             background-image: none !important;
@@ -15,6 +23,24 @@
         .staff-update-form .form-select.is-valid {
             background-image: none !important;
             padding-right: 0.75rem !important;
+        }
+
+        .update-account-tooltip .tooltip-inner {
+            background-color: #8b5a2b !important;
+            color: #ffffff !important;
+        }
+
+        .delete-account-tooltip .tooltip-inner {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+
+        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #8b5a2b !important;
+        }
+
+        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #dc3545 !important;
         }
     </style>
 </head>
@@ -32,11 +58,37 @@
                 </div>
             </div>
             <div>
-                <a class="btn btn-classic" th:href="@{/admin/accounts/create(source='staff')}">
+                <button type="button" class="btn btn-classic" data-bs-toggle="modal"
+                    data-bs-target="#createStaffAccountModal">
                     <i class="bi bi-person-plus me-1"></i> Tạo tài khoản mới
-                </a>
+                </button>
             </div>
         </div>
+
+        <div class="modal fade text-start" id="createStaffAccountModal" tabindex="-1"
+            aria-labelledby="createStaffAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-white border-bottom p-4">
+                        <h5 class="modal-title fw-bold" id="createStaffAccountModalLabel"
+                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản nhân sự
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <th:block th:replace="~{admin/create-account :: createAccountForm('staff', true)}"></th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <th:block th:replace="~{admin/create-account :: createAccountValidation}"></th:block>
+        <script th:if="${openCreateAccountModal}">
+            document.addEventListener("DOMContentLoaded", function () {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById("createStaffAccountModal")).show();
+            });
+        </script>
 
         <!-- Alerts -->
         <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
@@ -60,6 +112,8 @@
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
                                 th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, loại thủ thư hoặc trạng thái...">
+                                th:value="${keyword}"
+                                placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
                             <button class="btn btn-classic" type="submit">Tìm kiếm</button>
                         </div>
                     </div>
@@ -142,15 +196,21 @@
 
                                 <td class="text-end pe-3">
                                     <div th:if="${account != null}">
-                                        <button type="button" class="btn btn-sm btn-outline-classic"
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-classic account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#updateStaffModal' + account.accountId}"
+                                            data-bs-title="Cập nhật tài khoản"
+                                            data-bs-custom-class="update-account-tooltip"
                                             aria-label="Cập nhật tài khoản">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
+                                            data-bs-title="Xóa tài khoản"
+                                            data-bs-custom-class="delete-account-tooltip"
                                             aria-label="Xóa tài khoản">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -177,6 +237,8 @@
                                                                     class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
                                                                 nhật tài khoản thủ thư
                                                             </h5>
+                                                            <button type="button" class="btn-close"
+                                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
 
                                                         <div class="modal-body p-4">
@@ -328,6 +390,8 @@
                                                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                                                 Xác nhận xóa tài khoản
                                                             </h5>
+                                                            <button type="button" class="btn-close"
+                                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
 
                                                         <div class="modal-body pb-0">
@@ -488,6 +552,18 @@
             </div>
         </div>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
+                    const tooltip = new bootstrap.Tooltip(button, {
+                        trigger: "hover"
+                    });
+                    button.addEventListener("click", function () {
+                        tooltip.hide();
+                    });
+                });
+            });
+        </script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".staff-update-form").forEach(function (form) {
