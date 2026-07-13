@@ -165,8 +165,7 @@ public class MemberMgmtController {
     public String manageFines(@RequestParam(required = false, defaultValue = "") String memberKeyword,
                               Model model,
                               @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAttribute("memberKeyword", memberKeyword);
-        model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
+        model.addAttribute("fineMembers", memberRepository.findAll());
         addCurrentUser(model, userDetails);
         return "librarian/fines";
     }
@@ -208,8 +207,7 @@ public class MemberMgmtController {
                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
         addTopupDeskStats(model);
         model.addAttribute("recentTopups", transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
-        model.addAttribute("memberKeyword", memberKeyword);
-        model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
+        model.addAttribute("topupMembers", memberRepository.findAll());
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
     }

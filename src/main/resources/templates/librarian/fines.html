@@ -21,78 +21,51 @@
 
     <div class="card-classic finance-card p-4 mb-4">
         <h5 class="section-title fw-bold mb-3">
-            <i class="bi bi-search me-2 text-classic"></i>Tra cứu thành viên
+            Tạo khoản phạt mới
         </h5>
-        <form method="get" th:action="@{/librarian/members/fines}" class="row g-2 align-items-end mb-3">
-            <div class="col-md-9">
-                <label class="form-label fw-bold small text-muted text-uppercase">Tên / email / số điện thoại / mã thành viên</label>
-                <input type="text" class="form-control" name="memberKeyword"
-                       th:value="${memberKeyword}" placeholder="Nhập thông tin cần tra cứu">
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-classic w-100">Tra cứu</button>
-            </div>
-        </form>
-
-        <div th:if="${memberKeyword != null and !#strings.isEmpty(memberKeyword) and #lists.isEmpty(memberSearchResults)}"
-             class="text-muted text-center py-3">
-            Không tìm thấy thành viên phù hợp.
-        </div>
-
-        <div th:if="${memberSearchResults != null and !#lists.isEmpty(memberSearchResults)}" class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th>Mã TV</th>
-                    <th>Thành viên</th>
-                    <th>Email</th>
-                    <th>SĐT</th>
-                    <th class="text-end">Chọn</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="member : ${memberSearchResults}">
-                    <td class="fw-bold" th:text="${member.memberId}">1</td>
-                    <td th:text="${member.user != null ? member.user.fullName : 'Không rõ'}">Thành viên</td>
-                    <td th:text="${member.user != null ? member.user.email : '-'}">email</td>
-                    <td th:text="${member.user != null ? member.user.phone : '-'}">phone</td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-classic"
-                                th:attr="data-member-id=${member.memberId}">
-                            Chọn
-                        </button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="card-classic finance-card p-4 mb-4">
-        <h5 class="section-title fw-bold mb-3">
-            <i class="bi bi-plus-circle me-2 text-classic"></i>Tạo khoản phạt mới
-        </h5>
-        <form method="post" th:action="@{/librarian/members/fines/create}" class="row g-3">
+        <form method="post" th:action="@{/librarian/members/fines/create}" id="fineForm" class="row g-3">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted text-uppercase">Mã thành viên</label>
-                <input type="number" class="form-control" id="fineMemberId" name="memberId" min="1"
-                       placeholder="Bấm chọn ở bảng trên" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted text-uppercase">Số tiền phạt</label>
-                <div class="input-group">
-                    <input type="number" class="form-control" name="amount" min="1000" step="1000" required>
-                    <span class="input-group-text">VNĐ</span>
+            <div class="col-12">
+                <label class="form-label fw-bold">Chọn thành viên</label>
+                <input type="text" id="fineMemberSearch" class="form-control mb-2"
+                       placeholder="Nhập tên thành viên, email, số điện thoại hoặc ID để tìm..." autocomplete="off">
+                <div class="topup-member-list border rounded-3 p-3" id="fineMemberList">
+                    <label th:each="member : ${fineMembers}" class="form-check topup-member-item fine-member-item mb-2"
+                           th:attr="data-search=${#strings.toLowerCase((member.user != null ? member.user.fullName : '') + ' ' + (member.user != null ? member.user.email : '') + ' ' + (member.user != null ? member.user.phone : '') + ' ' + member.memberId)}">
+                        <input class="form-check-input fine-member-checkbox" type="checkbox" name="memberId"
+                               th:value="${member.memberId}" autocomplete="off">
+                        <span class="form-check-label"
+                              th:text="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - ID: ' + member.memberId}">
+                            Thành viên - ID: 1
+                        </span>
+                    </label>
+                    <div th:if="${fineMembers == null or #lists.isEmpty(fineMembers)}"
+                         class="text-center text-muted py-3">Chưa có thành viên nào trong hệ thống.</div>
+                    <div id="fineMemberEmpty" class="text-center text-muted py-3 d-none">
+                        Không tìm thấy thành viên phù hợp.
+                    </div>
                 </div>
+                <small class="text-muted d-block mt-2">Chọn một thành viên để tạo khoản phạt.</small>
+                <div id="fineMemberRequired" class="invalid-feedback">Vui lòng chọn một thành viên.</div>
             </div>
             <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted text-uppercase">Số tiền phạt</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" name="amount" id="fineAmount"
+                           min="1000" step="1000">
+                    <span class="input-group-text">VNĐ</span>
+                </div>
+                <div id="fineAmountRequired" class="invalid-feedback">Số tiền phạt không được để trống.</div>
+            </div>
+            <div class="col-md-6">
                 <label class="form-label fw-bold small text-muted text-uppercase">Lý do</label>
-                <input type="text" class="form-control" name="reason" placeholder="Quá hạn, mất sách, hư hỏng..." required>
+                <input type="text" class="form-control" name="reason" id="fineReason"
+                       placeholder="Quá hạn, mất sách, hư hỏng...">
+                <div id="fineReasonRequired" class="invalid-feedback">Lý do phạt không được để trống.</div>
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-classic w-100">
-                    <i class="bi bi-check-circle me-1"></i>Tạo phạt
+                    Tạo phạt
                 </button>
             </div>
         </form>
@@ -110,13 +83,72 @@
     </div>
 
     <script>
-        document.querySelectorAll("[data-member-id]").forEach(function (button) {
-            button.addEventListener("click", function () {
-                const input = document.getElementById("fineMemberId");
-                if (input != null) {
-                    input.value = button.getAttribute("data-member-id");
-                    input.focus();
+        const fineMemberSearch = document.getElementById("fineMemberSearch");
+        if (fineMemberSearch != null) {
+            fineMemberSearch.addEventListener("input", function () {
+                const keyword = fineMemberSearch.value.trim().toLocaleLowerCase("vi");
+                let visibleCount = 0;
+                document.querySelectorAll(".fine-member-item").forEach(function (item) {
+                    const isVisible = (item.getAttribute("data-search") || "").includes(keyword);
+                    item.classList.toggle("d-none", !isVisible);
+                    if (isVisible) visibleCount++;
+                });
+                document.getElementById("fineMemberEmpty")?.classList.toggle("d-none", visibleCount !== 0);
+            });
+        }
+
+        const fineMemberCheckboxes = document.querySelectorAll(".fine-member-checkbox");
+        fineMemberCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener("change", function () {
+                if (checkbox.checked) {
+                    fineMemberCheckboxes.forEach(function (otherCheckbox) {
+                        if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
+                    });
                 }
+                document.getElementById("fineMemberList")?.classList.remove("is-invalid");
+                document.getElementById("fineMemberRequired")?.classList.remove("d-block");
+            });
+        });
+
+        const fineForm = document.getElementById("fineForm");
+        if (fineForm != null) {
+            fineForm.addEventListener("submit", function (event) {
+                let isValid = true;
+                if (!document.querySelector(".fine-member-checkbox:checked")) {
+                    document.getElementById("fineMemberList")?.classList.add("is-invalid");
+                    document.getElementById("fineMemberRequired")?.classList.add("d-block");
+                    isValid = false;
+                }
+
+                const fineAmount = document.getElementById("fineAmount");
+                if (fineAmount != null && fineAmount.value.trim() === "") {
+                    fineAmount.classList.add("is-invalid");
+                    document.getElementById("fineAmountRequired")?.classList.add("d-block");
+                    isValid = false;
+                }
+
+                const fineReason = document.getElementById("fineReason");
+                if (fineReason != null && fineReason.value.trim() === "") {
+                    fineReason.classList.add("is-invalid");
+                    document.getElementById("fineReasonRequired")?.classList.add("d-block");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    fineForm.querySelector(".is-invalid")?.focus();
+                }
+            });
+        }
+
+        [
+            ["fineAmount", "fineAmountRequired"],
+            ["fineReason", "fineReasonRequired"]
+        ].forEach(function (field) {
+            const input = document.getElementById(field[0]);
+            input?.addEventListener("input", function () {
+                input.classList.remove("is-invalid");
+                document.getElementById(field[1])?.classList.remove("d-block");
             });
         });
     </script>
