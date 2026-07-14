@@ -111,8 +111,19 @@
                 <div class="text-muted" th:if="${currentSection == 'reports'}">
                     Theo dõi các chỉ số mượn trả, thành viên và doanh thu thư viện.
                 </div>
+                <div class="text-muted" th:if="${currentSection == 'users'}">
+                    Theo dõi và quản lý tài khoản thành viên, thủ thư trong hệ thống.
+                </div>
                 <div class="text-muted"
-                    th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports'}">
+                    th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">
+                    Thêm, cập nhật và quản lý đầu sách, bản sách trong kho thư viện.
+                </div>
+                <div class="text-muted"
+                    th:if="${currentSection == 'books' && currentSubSection == 'storage'}">
+                    Tạo mới, cập nhật và quản lý các vị trí lưu trữ sách.
+                </div>
+                <div class="text-muted"
+                    th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports' || currentSection == 'users' || (currentSection == 'books' && (currentSubSection == 'inventory' || currentSubSection == 'storage'))}">
                     Cập nhật:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
@@ -669,7 +680,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Tổng đầu sách</div>
-                                <h3 class="fw-bold mb-0 fs-4 text-classic" th:text="${totalBookCount}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalBookCount}">0</h3>
                             </div>
                         </div>
                     </div>
@@ -684,7 +695,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Danh mục</div>
-                                <h3 class="fw-bold mb-0 fs-4 text-success" th:text="${totalCategories}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalCategories}">0</h3>
                             </div>
                         </div>
                     </div>
@@ -699,7 +710,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Thể loại</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #0d6efd;" th:text="${totalGenres}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalGenres}">0</h3>
                             </div>
                         </div>
                     </div>
@@ -714,7 +725,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Sẵn sàng</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #fd7e14;"
+                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;"
                                     th:text="${inventoryStatusCounts['Available']} ?: 0">0</h3>
                             </div>
                         </div>
@@ -726,8 +737,7 @@
             <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}"
                 id="bookSubSectionCards">
                 <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4"
-                        style="transition: all 0.2s; border-left: 4px solid #8b5a2b !important; background-color: rgba(139, 90, 43, 0.05);">
+                    <div class="card-classic h-100 shadow-sm p-4">
                         <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                             <i class="bi bi-book me-2 text-classic"></i> Quản lý kho sách
                         </h5>
@@ -740,8 +750,7 @@
                 </div>
 
                 <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4"
-                        style="transition: all 0.2s; border-left: 4px solid #6c757d !important; background-color: rgba(108, 117, 125, 0.04);">
+                    <div class="card-classic h-100 shadow-sm p-4">
                         <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                             <i class="bi bi-bookshelf me-2 text-classic"></i> Quản lý kệ sách
                         </h5>
@@ -754,25 +763,19 @@
                 </div>
             </div>
 
-            <!-- Nút quay lại khi đang ở subsection -->
-            <div th:if="${currentSubSection == 'inventory' || currentSubSection == 'storage'}" class="mb-3">
-                <a th:href="@{/librarian/dashboard(section='books')}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i> Quay lại Quản lý sách
-                </a>
-            </div>
-
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
             <div class="card-classic shadow-sm mb-4" th:if="${currentSubSection == 'inventory'}">
                 <div class="card-body p-4">
                     <div id="bookInventoryPanel">
-                        <div class="nav d-flex flex-wrap gap-3 mb-4" id="inventory-tab" role="tablist">
-                            <button class="nav-link btn btn-classic btn-sm active text-white me-2" id="nav-books-tab"
+                        <div class="nav d-flex flex-wrap mb-4" id="inventory-tab" role="tablist"
+                            style="gap: 12px;">
+                            <button class="nav-link btn btn-classic btn-sm active text-white" id="nav-books-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-books" type="button" role="tab"
                                 aria-controls="nav-books" aria-selected="true"
                                 onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-categories-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-categories-tab').classList.remove('text-white'); document.getElementById('nav-audit-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-audit-tab').classList.remove('text-white');">
                                 <i class="bi bi-book me-1"></i>Kho sách
                             </button>
-                            <button class="nav-link btn btn-outline-classic btn-sm me-2" id="nav-categories-tab"
+                            <button class="nav-link btn btn-outline-classic btn-sm" id="nav-categories-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-categories" type="button" role="tab"
                                 aria-controls="nav-categories" aria-selected="false"
                                 onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-books-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-books-tab').classList.remove('text-white'); document.getElementById('nav-audit-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-audit-tab').classList.remove('text-white');">
@@ -857,12 +860,21 @@
                                         đầu sách</h5>
                                     <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                         data-bs-target="#addBookModal">
-                                        <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
+                                        Thêm sách mới
                                     </button>
                                 </div>
 
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
+                                    <table class="table table-hover align-middle mb-0 stable-table-layout">
+                                        <colgroup>
+                                            <col style="width: 5%">
+                                            <col style="width: 7%">
+                                            <col style="width: 25%">
+                                            <col style="width: 12%">
+                                            <col style="width: 23%">
+                                            <col style="width: 10%">
+                                            <col style="width: 18%">
+                                        </colgroup>
                                         <thead class="table-light text-uppercase small text-muted">
                                             <tr>
                                                 <th>STT</th>
@@ -998,14 +1010,14 @@
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i>Danh sách
                                         thể loại và danh mục</h5>
-                                    <div>
-                                        <button type="button" class="btn btn-classic btn-sm me-2" data-bs-toggle="modal"
+                                    <div class="d-flex" style="gap: 12px;">
+                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                             data-bs-target="#addCategoryModal">
-                                            <i class="bi bi-folder-plus me-1"></i>Thêm danh mục
+                                            Thêm danh mục
                                         </button>
                                         <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
                                             data-bs-target="#addGenreModal">
-                                            <i class="bi bi-bookmark-plus me-1"></i>Thêm thể loại
+                                            Thêm thể loại
                                         </button>
                                     </div>
                                 </div>
@@ -1748,16 +1760,28 @@
 
 
             <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
-                <div class="card-classic shadow-sm">
-                    <div class="card-header bg-white border-bottom p-4 border-color">
-                        <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
-                        </h5>
-                        <div class="text-muted small">Quản lý vị trí lưu trữ</div>
+                <div class="card-classic shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom p-4 border-color d-flex justify-content-between align-items-center gap-3">
+                        <div>
+                            <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                <i class="bi bi-archive me-2 text-classic"></i>Danh sách kệ sách
+                            </h5>
+                            <div class="text-muted small">Quản lý vị trí lưu trữ</div>
+                        </div>
+                        <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal"
+                            data-bs-target="#addStorageModal">
+                            Thêm vị trí mới
+                        </button>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0 stable-table-layout">
+                                <colgroup>
+                                    <col style="width: 8%">
+                                    <col style="width: 28%">
+                                    <col style="width: 28%">
+                                    <col style="width: 36%">
+                                </colgroup>
                                 <thead class="table-light text-uppercase small text-muted">
                                     <tr>
                                         <th>STT</th>
@@ -1859,12 +1883,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card-footer bg-white border-top p-4 border-color text-end">
-                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#addStorageModal">
-                            Thêm vị trí mới
-                        </button>
                     </div>
                 </div>
 
