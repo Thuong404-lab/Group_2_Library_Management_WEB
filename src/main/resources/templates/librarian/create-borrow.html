@@ -429,16 +429,16 @@
                         </table>
                     </div>
 
-                    <div class="d-flex justify-content-end align-items-center pt-3 border-top mt-2">
-                        <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="m-0">
+                    <div class="d-flex justify-content-end align-items-center gap-3 pt-3 border-top mt-2">
+                        <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="m-0" style="margin-right: 16px !important;">
                             <button type="button" class="btn btn-classic-danger-outline" onclick="showConfirmModal('Bạn chắc chắn muốn Từ chối duyệt đơn mượn này?', this)">
-                                <i class="bi bi-x-circle me-1"></i>Từ chối đơn
+                                Từ chối đơn
                             </button>
                         </form>
 
                         <form th:action="@{/librarian/borrow/approve/{id}(id=${selectedRequest.borrowId})}" method="post" class="m-0">
                             <button type="button" class="btn btn-classic-primary fw-bold" style="margin-right: 0px !important;" onclick="showConfirmModal('Xác nhận phê duyệt cấp sách vật lý tại quầy cho độc giả?', this)">
-                                <i class="bi bi-check2-circle me-1"></i>Phê duyệt cấp sách
+                                Phê duyệt cấp sách
                             </button>
                         </form>
                     </div>
@@ -571,6 +571,24 @@
     </div>
 
     <script th:inline="javascript">
+
+        var confirmTargetForm = null;
+
+        function showConfirmModal(message, button) {
+            confirmTargetForm = button.closest('form');
+            document.getElementById('confirmModalMessage').textContent = message;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('classicConfirmModal')).show();
+        }
+
+        function submitConfirmModal() {
+            if (!confirmTargetForm) {
+                return;
+            }
+            var form = confirmTargetForm;
+            confirmTargetForm = null;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('classicConfirmModal')).hide();
+            form.requestSubmit();
+        }
 
         // --- LOGIC GHI NHỚ TAB ACTIVE BẰNG SESSION STORAGE ---
         document.addEventListener('DOMContentLoaded', function() {
