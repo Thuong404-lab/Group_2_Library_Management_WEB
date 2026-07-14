@@ -182,19 +182,33 @@ public class BorrowServiceImpl implements BorrowService {
     public void approvePendingRequest(Integer borrowId, String staffUsername) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn yêu cầu mượn!"));
-        borrow.setStatus("Active");
-        borrowRepository.save(borrow);
+        if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
+            throw new IllegalArgumentException("Đơn mượn không còn ở trạng thái chờ phê duyệt.");
+        }
 
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
         for (BorrowDetail detail : details) {
+            BookItem item = detail.getBookItem();
+            if (item == null) {
+                item = bookItemRepository
+                        .findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(
+                                detail.getBook().getBookId(), "Available")
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Không còn bản sách khả dụng cho: " + detail.getBook().getTitle()));
+                detail.setBookItem(item);
+            } else if (!"Available".equalsIgnoreCase(item.getStatus())) {
+                throw new IllegalArgumentException(
+                        "Bản sách " + item.getBarcode() + " không còn khả dụng.");
+            }
+
+            item.setStatus("Borrowed");
+            bookItemRepository.save(item);
             detail.setStatus("Borrowed");
             borrowDetailRepository.save(detail);
-            if (detail.getBookItem() != null) {
-                BookItem item = detail.getBookItem();
-                item.setStatus("Borrowed");
-                bookItemRepository.save(item);
-            }
         }
+
+        borrow.setStatus("Active");
+        borrowRepository.save(borrow);
     }
 
     @Override

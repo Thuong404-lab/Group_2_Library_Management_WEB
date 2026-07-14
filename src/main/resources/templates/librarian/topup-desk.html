@@ -23,86 +23,58 @@
 
         <div class="row g-4">
             <div class="col-lg-7">
-                <div class="card-classic finance-card p-4 mb-4">
-                    <h5 class="section-title fw-bold mb-3">
-                        <i class="bi bi-search me-2" style="color:#8b5a2b;"></i>Tra cứu thành viên
-                    </h5>
-                    <form method="get" th:action="@{/librarian/members/topup}" class="row g-2 align-items-end mb-3">
-                        <div class="col-md-9">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Tên / email / số điện
-                                thoại / mã thành viên</label>
-                            <input type="text" class="form-control" name="memberKeyword" th:value="${memberKeyword}"
-                                placeholder="Nhập thông tin cần tra cứu">
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-classic w-100">Tra cứu</button>
-                        </div>
-                    </form>
-
-                    <div th:if="${memberKeyword != null and !#strings.isEmpty(memberKeyword) and #lists.isEmpty(memberSearchResults)}"
-                        class="text-muted text-center py-3">
-                        Không tìm thấy thành viên phù hợp.
-                    </div>
-
-                    <div th:if="${memberSearchResults != null and !#lists.isEmpty(memberSearchResults)}"
-                        class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Mã TV</th>
-                                    <th>Thành viên</th>
-                                    <th>Email</th>
-                                    <th>SĐT</th>
-                                    <th class="text-end">Chọn</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="member : ${memberSearchResults}">
-                                    <td class="fw-bold" th:text="${member.memberId}">1</td>
-                                    <td th:text="${member.user != null ? member.user.fullName : 'Không rõ'}">Thành viên
-                                    </td>
-                                    <td th:text="${member.user != null ? member.user.email : '-'}">email</td>
-                                    <td th:text="${member.user != null ? member.user.phone : '-'}">phone</td>
-                                    <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-classic"
-                                            th:attr="data-member-id=${member.memberId}">
-                                            Chọn
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <form method="post" th:action="@{/librarian/members/topup}" class="card-classic finance-card p-4 mb-4">
+                <form method="post" th:action="@{/librarian/members/topup}" id="topupForm"
+                    class="card-classic finance-card p-4 mb-4">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
 
                     <h5 class="section-title fw-bold mb-4">
-                        <i class="bi bi-wallet2 me-2 text-classic"></i>Nạp tiền cho thành viên
+                        Nạp tiền cho thành viên
                     </h5>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Mã thành viên / email / số
-                            điện thoại</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="bi bi-person-badge"></i></span>
-                            <input type="text" class="form-control" name="memberPhone" id="topupMemberLookup"
-                                th:value="${memberPhone != null ? memberPhone : ''}"
-                                placeholder="Bấm chọn từ kết quả tra cứu hoặc nhập trực tiếp" required>
+                        <label class="form-label fw-bold">Chọn thành viên</label>
+                        <input type="text" id="topupMemberSearch" class="form-control mb-2"
+                            placeholder="Nhập tên thành viên, email, số điện thoại hoặc ID để tìm..."
+                            autocomplete="off">
+
+                        <div class="topup-member-list border rounded-3 p-3" id="topupMemberList">
+                            <label th:each="member : ${topupMembers}" class="form-check topup-member-item mb-2"
+                                th:attr="data-search=${#strings.toLowerCase((member.user != null ? member.user.fullName : '') + ' ' + (member.user != null ? member.user.email : '') + ' ' + (member.user != null ? member.user.phone : '') + ' ' + member.memberId)}">
+                                <input class="form-check-input topup-member-checkbox" type="checkbox" name="memberPhone"
+                                    th:value="${member.memberId}"
+                                    th:checked="${memberPhone != null and #strings.equals(memberPhone, #strings.toString(member.memberId))}"
+                                    autocomplete="off">
+                                <span class="form-check-label"
+                                    th:text="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - ID: ' + member.memberId}">
+                                    Thành viên - ID: 1
+                                </span>
+                            </label>
+
+                            <div th:if="${topupMembers == null or #lists.isEmpty(topupMembers)}"
+                                class="text-center text-muted py-3">Chưa có thành viên nào trong hệ thống.</div>
+                            <div id="topupMemberEmpty" class="text-center text-muted py-3 d-none">
+                                Không tìm thấy thành viên phù hợp.
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-2">Chọn một thành viên để thực hiện nạp tiền.</small>
+                        <div id="topupMemberRequired" class="invalid-feedback">
+                            Vui lòng chọn một thành viên.
                         </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold small text-muted text-uppercase">Số tiền nạp</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" name="amount"
+                            <input type="number" class="form-control" name="amount" id="topupAmount"
                                 th:value="${amount != null ? amount : ''}" placeholder="Nhập số tiền" min="10000"
-                                step="10000" required>
+                                step="10000">
                             <span class="input-group-text fw-bold" style="background:#fdf5ec;color:#8b5a2b;">VNĐ</span>
                         </div>
-                        <div class="mt-2 d-flex flex-wrap gap-2">
+                        <div id="topupAmountRequired" class="invalid-feedback">
+                            Số tiền nạp không được để trống.
+                        </div>
+                        <div class="quick-amount-options mt-2 d-flex flex-wrap">
                             <button type="button" class="btn btn-sm btn-outline-secondary"
                                 data-amount="50000">50.000</button>
                             <button type="button" class="btn btn-sm btn-outline-secondary"
@@ -216,18 +188,69 @@
                     const input = document.querySelector("input[name='amount']");
                     if (input != null) {
                         input.value = button.getAttribute("data-amount");
+                        input.dispatchEvent(new Event("input"));
                     }
                 });
             });
 
-            document.querySelectorAll("[data-member-id]").forEach(function (button) {
-                button.addEventListener("click", function () {
-                    const input = document.getElementById("topupMemberLookup");
-                    if (input != null) {
-                        input.value = button.getAttribute("data-member-id");
-                        input.focus();
+            const memberSearch = document.getElementById("topupMemberSearch");
+            if (memberSearch != null) {
+                memberSearch.addEventListener("input", function () {
+                    const keyword = memberSearch.value.trim().toLocaleLowerCase("vi");
+                    let visibleCount = 0;
+                    document.querySelectorAll(".topup-member-item").forEach(function (item) {
+                        const isVisible = (item.getAttribute("data-search") || "").includes(keyword);
+                        item.classList.toggle("d-none", !isVisible);
+                        if (isVisible) visibleCount++;
+                    });
+                    const emptyState = document.getElementById("topupMemberEmpty");
+                    if (emptyState != null) {
+                        emptyState.classList.toggle("d-none", visibleCount !== 0);
                     }
                 });
+            }
+
+            const memberCheckboxes = document.querySelectorAll(".topup-member-checkbox");
+            memberCheckboxes.forEach(function (checkbox) {
+                checkbox.addEventListener("change", function () {
+                    if (checkbox.checked) {
+                        memberCheckboxes.forEach(function (otherCheckbox) {
+                            if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
+                        });
+                    }
+                    document.getElementById("topupMemberList")?.classList.remove("is-invalid");
+                    document.getElementById("topupMemberRequired")?.classList.remove("d-block");
+                });
+            });
+
+            const topupForm = document.getElementById("topupForm");
+            if (topupForm != null) {
+                topupForm.addEventListener("submit", function (event) {
+                    let isValid = true;
+                    if (!document.querySelector(".topup-member-checkbox:checked")) {
+                        document.getElementById("topupMemberList")?.classList.add("is-invalid");
+                        document.getElementById("topupMemberRequired")?.classList.add("d-block");
+                        isValid = false;
+                    }
+
+                    const amountInput = document.getElementById("topupAmount");
+                    if (amountInput != null && amountInput.value.trim() === "") {
+                        amountInput.classList.add("is-invalid");
+                        document.getElementById("topupAmountRequired")?.classList.add("d-block");
+                        isValid = false;
+                    }
+
+                    if (!isValid) {
+                        event.preventDefault();
+                        topupForm.querySelector(".is-invalid")?.focus();
+                    }
+                });
+            }
+
+            const topupAmount = document.getElementById("topupAmount");
+            topupAmount?.addEventListener("input", function () {
+                topupAmount.classList.remove("is-invalid");
+                document.getElementById("topupAmountRequired")?.classList.remove("d-block");
             });
         </script>
     </div>
