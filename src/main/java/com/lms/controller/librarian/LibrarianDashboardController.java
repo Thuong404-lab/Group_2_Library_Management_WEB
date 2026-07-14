@@ -39,7 +39,7 @@ public class LibrarianDashboardController {
 
     @GetMapping("/statistics")
     public String viewStatistics() {
-        return "redirect:/librarian/dashboard?section=reports";
+        return "redirect:/librarian/reports";
     }
 
     @GetMapping("/librarians")

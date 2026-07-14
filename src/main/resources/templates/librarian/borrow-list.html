@@ -119,20 +119,9 @@
             <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Lịch Mượn/Trả</h2>
             <div class="text-muted small">Quản lý toàn bộ các phiếu mượn sách lưu hành của độc giả và điều phối phân trang hệ thống.</div>
         </div>
-        <a th:href="@{/librarian/borrow/create}" class="btn btn-classic shadow-sm">
-            <i class="bi bi-journal-plus me-2"></i>Tạo phiếu mượn mới
-        </a>
     </div>
 
-    <ul class="nav nav-tabs mb-4 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
-        <li class="nav-item">
-            <a class="nav-link active fw-bold border-0 border-bottom border-3 bg-transparent"
-               style="color: #8b5a2b; border-color: #8b5a2b !important;" th:href="@{/librarian/borrow/list}">Danh sách phiếu mượn</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-muted border-0" th:href="@{/librarian/loan/borrow-schedule}">Lịch mượn trả chi tiết</a>
-        </li>
-    </ul>
+
 
     <div class="card-classic mb-4 p-3">
         <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/borrow/list}">
@@ -154,8 +143,7 @@
                 </div>
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-classic w-50">Tìm kiếm</button>
-                <a th:href="@{/librarian/borrow/list}" class="btn btn-light border w-50">Làm mới</a>
+                <button type="submit" class="btn btn-classic w-100">Tìm kiếm</button>
             </div>
         </form>
     </div>
@@ -187,12 +175,12 @@
                     </td>
                     <td th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">12/07/2026 10:00</td>
                     <td>
-                        <span th:if="${borrow.status == 'Active'}" class="badge-status badge-status-active">Đang mượn</span>
-                        <span th:if="${borrow.status == 'Returned'}" class="badge-status badge-status-returned">Đã hoàn thành</span>
-                        <span th:if="${borrow.status == 'Overdue'}" class="badge-status badge-status-overdue">Quá hạn</span>
-                        <span th:if="${borrow.status == 'Pending'}" class="badge-status badge-status-pending">Chờ phê duyệt</span>
-                        <span th:if="${borrow.status == 'Rejected'}" class="badge-status badge-status-rejected">Đã từ chối</span>
-                        <span th:if="${borrow.status == 'Return_Pending'}" class="badge-status badge-status-return-pending">Độc giả xin trả</span>
+                        <span th:if="${borrow.status == 'Active'}" class="status-badge status-active">Đang mượn</span>
+                        <span th:if="${borrow.status == 'Returned'}" class="status-badge status-returned">Đã hoàn thành</span>
+                        <span th:if="${borrow.status == 'Overdue'}" class="status-badge status-overdue">Quá hạn</span>
+                        <span th:if="${borrow.status == 'Pending'}" class="status-badge status-pending">Chờ phê duyệt</span>
+                        <span th:if="${borrow.status == 'Rejected'}" class="status-badge status-rejected">Đã từ chối</span>
+                        <span th:if="${borrow.status == 'Return_Pending'}" class="status-badge status-return-pending">Độc giả xin trả</span>
                     </td>
                     <td class="text-end pe-4">
                         <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}" class="btn btn-sm btn-outline-classic">

@@ -174,7 +174,7 @@
                                                     -- Chọn hạng thành viên --
                                                 </option>
                                                 <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
-                                                    th:text="${tier.tierName}"
+                                                    th:text="${tier.tierName == 'Regular' ? 'Thường' : (tier.tierName == 'Silver' ? 'Bạc' : (tier.tierName == 'Gold' ? 'Vàng' : (tier.tierName == 'Diamond' ? 'Kim cương' : tier.tierName)))}"
                                                     th:selected="${formValues != null and formValues['tierId'] == tier.tierId}">
                                                     Standard Member
                                                 </option>
@@ -194,11 +194,11 @@
                                                 th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
                                                 <option value="Active"
                                                     th:selected="${formValues == null or #strings.isEmpty(formValues['status']) or formValues['status'] == 'Active'}">
-                                                    Active
+                                                    Hoạt động
                                                 </option>
                                                 <option value="Inactive"
                                                     th:selected="${formValues != null and formValues['status'] == 'Inactive'}">
-                                                    Inactive
+                                                    Ngừng hoạt động
                                                 </option>
                                             </select>
                                             <div class="invalid-feedback"
@@ -261,9 +261,6 @@
                                 Tìm kiếm
                             </button>
                         </div>
-                        <a class="btn btn-light border shadow-sm text-nowrap" th:href="@{/librarian/members}">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
-                        </a>
                     </form>
 
                     <!-- Back Button -->
@@ -276,11 +273,19 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle stable-table-layout">
+                        <colgroup>
+                            <col style="width: 7%">
+                            <col style="width: 15%">
+                            <col style="width: 25%">
+                            <col style="width: 20%">
+                            <col style="width: 17%">
+                            <col style="width: 16%">
+                        </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
                                 <th class="ps-3">STT</th>
-                                <th>Username</th>
+                                <th>Tên đăng nhập</th>
                                 <th>Thông tin người dùng</th>
                                 <th>Hạng thành viên</th>
                                 <th>Trạng thái</th>
@@ -317,7 +322,8 @@
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
-                                        th:text="${member.tier.tierName}" th:style="${
+                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
+                                        th:style="${
               member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
               member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
               member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
@@ -334,12 +340,12 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white" th:classappend="${
-              account.status == 'Active' ? 'bg-success' :
-              account.status == 'Blocked' ? 'bg-danger' :
-              'bg-secondary'
-          }" th:text="${account.status}">
-                                        Active
+                                    <span class="status-badge" th:classappend="${
+              account.status == 'Active' ? 'status-active' :
+              account.status == 'Blocked' ? 'status-blocked' :
+              'status-inactive'
+          }" th:text="${account.status == 'Active' ? 'Hoạt động' : (account.status == 'Inactive' ? 'Ngừng hoạt động' : (account.status == 'Blocked' ? 'Bị khóa' : account.status))}">
+                                        Hoạt động
                                     </span>
                                 </td>
 
@@ -450,7 +456,7 @@
                                                                     <option th:each="tier : ${tiers}"
                                                                         th:value="${tier.tierId}"
                                                                         th:selected="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
-                                                                        th:text="${tier.tierName}">
+                                                                        th:text="${tier.tierName == 'Regular' ? 'Thường' : (tier.tierName == 'Silver' ? 'Bạc' : (tier.tierName == 'Gold' ? 'Vàng' : (tier.tierName == 'Diamond' ? 'Kim cương' : tier.tierName)))}">
                                                                         Standard Member
                                                                     </option>
                                                                 </select>
@@ -468,15 +474,15 @@
                                                                     required>
                                                                     <option value="Active"
                                                                         th:selected="${account.status == 'Active'}">
-                                                                        Active
+                                                                        Hoạt động
                                                                     </option>
                                                                     <option value="Inactive"
                                                                         th:selected="${account.status == 'Inactive'}">
-                                                                        Inactive
+                                                                        Ngừng hoạt động
                                                                     </option>
                                                                     <option value="Blocked"
                                                                         th:selected="${account.status == 'Blocked'}">
-                                                                        Blocked
+                                                                        Bị khóa
                                                                     </option>
                                                                 </select>
                                                                 <div class="invalid-feedback" data-error-for="status">
@@ -583,7 +589,8 @@
                                                                     <span
                                                                         class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
-                                                                        th:text="${member.tier.tierName}" th:style="${
+                                                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
+                                                                        th:style="${
                                           member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
                                           member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
                                           member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :

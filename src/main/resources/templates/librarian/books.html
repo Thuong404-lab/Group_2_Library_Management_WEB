@@ -83,7 +83,8 @@
                                         <th>áº¢nh</th>
                                         <th>SÃ¡ch</th>
                                         <th>ISBN</th>
-                                        <th>Tráº¡ng thÃ¡i</th>
+                                        <th>Mô tả</th>
+                                        <th>Trạng thái</th>
                                         <th class="text-end">Thao tÃ¡c</th>
                                     </tr>
                                 </thead>
@@ -108,9 +109,10 @@
                                                 Thá»ƒ loáº¡i</div>
                                         </td>
                                         <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                                        <td class="small text-muted text-truncate" style="max-width: 250px;" th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}" th:title="${book.description}">Mô tả</td>
                                         <td>
-                                            <span class="badge rounded-pill"
-                                                th:classappend="${book.status == 'Disposed'} ? ' bg-danger' : ' bg-success'"
+                                            <span class="status-badge"
+                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
                                                 th:text="${book.status}">Active</span>
                                         </td>
                                         <td class="text-end">
@@ -127,7 +129,7 @@
                                         </td>
                                     </tr>
                                     <tr th:if="${books == null || books.totalElements == 0}">
-                                        <td colspan="6" class="text-center text-muted py-5">
+                                        <td colspan="7" class="text-center text-muted py-5">
                                             <i class="bi bi-book fs-2 d-block mb-2"></i>
                                             ChÆ°a cÃ³ sÃ¡ch trong kho.
                                         </td>
@@ -137,19 +139,58 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="mt-4 d-flex justify-content-center" th:if="${books != null && books.totalPages > 1}">
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                    <a class="page-link" th:href="@{/librarian/dashboard(section='books', bookPage=${books.number - 1})}"><i class="bi bi-chevron-left"></i></a>
-                                </li>
-                                <li class="page-item" th:each="i : ${#numbers.sequence(0, books.totalPages - 1)}"
-                                    th:classappend="${i == books.number ? 'active' : ''}">
-                                    <a class="page-link" th:href="@{/librarian/dashboard(section='books', bookPage=${i})}" th:text="${i + 1}">1</a>
-                                </li>
-                                <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                    <a class="page-link" th:href="@{/librarian/dashboard(section='books', bookPage=${books.number + 1})}"><i class="bi bi-chevron-right"></i></a>
-                                </li>
-                            </ul>
+                        <div class="mt-4 d-flex justify-content-center"
+                            th:if="${books != null && books.totalPages > 1}"
+                            th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}">
+                            <nav th:with="endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
+                                <ul class="pagination mb-0">
+                                    <!-- First page -->
+                                    <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
+                                        <a class="page-link" th:href="@{/librarian/dashboard(section='books', bookPage=0)}"
+                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                    </li>
+
+                                    <!-- Previous page -->
+                                    <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
+                                        <a class="page-link"
+                                            th:href="@{/librarian/dashboard(section='books', bookPage=${books.number - 1})}"
+                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                                class="bi bi-chevron-left"></i></a>
+                                    </li>
+
+                                    <li class="page-item disabled" th:if="${startPage > 0}">
+                                        <span class="page-link">…</span>
+                                    </li>
+
+                                    <!-- Sliding window: at most 10 page numbers -->
+                                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                        th:classappend="${i == books.number ? 'active' : ''}">
+                                        <a class="page-link"
+                                            th:href="@{/librarian/dashboard(section='books', bookPage=${i})}"
+                                            th:text="${i + 1}"
+                                            th:style="${i == books.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                    </li>
+
+                                    <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
+                                        <span class="page-link">…</span>
+                                    </li>
+
+                                    <!-- Next page -->
+                                    <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
+                                        <a class="page-link"
+                                            th:href="@{/librarian/dashboard(section='books', bookPage=${books.number + 1})}"
+                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                                class="bi bi-chevron-right"></i></a>
+                                    </li>
+
+                                    <!-- Last page -->
+                                    <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
+                                        <a class="page-link"
+                                            th:href="@{/librarian/dashboard(section='books', bookPage=${books.totalPages - 1})}"
+                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                    </li>
+                                </ul>
+                            </nav>
                         </div>
                     </div>
                 </div>

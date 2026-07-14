@@ -30,9 +30,9 @@ public interface InventoryService {
 
     Book findBookById(Integer bookId);
 
-    void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description, String coverImageUrl, Integer shelfId);
+    void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description, String coverImageUrl, Integer shelfId, String bookCondition, String authorName);
 
-    void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status, String coverImageUrl, Integer shelfId);
+    void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status, String coverImageUrl, Integer shelfId, String description, String author);
 
     void updateBookStatus(Integer bookId, String status);
 
@@ -41,4 +41,12 @@ public interface InventoryService {
     void addCategory(String name);
 
     void addGenre(Integer categoryId, String name);
+
+    void updateCategory(Integer categoryId, String newName);
+
+    void updateGenre(Integer genreId, String newName, Integer newCategoryId);
+
+    void deleteGenre(Integer genreId);
+
+    void deleteCategory(Integer categoryId);
 }

@@ -2,6 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.dto.request.AdminAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
+import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.entity.Member;
 import com.lms.entity.MemberAccount;
 import com.lms.entity.MembershipTier;
@@ -23,7 +24,7 @@ import com.lms.service.AccountService;
 import com.lms.service.AuditLogService;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,9 +43,8 @@ import java.util.Map;
  */
 @Service
 public class AccountServiceImpl implements AccountService {
-    private static final String EMAIL_PATTERN =
-            "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
-                    + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
+    private static final String EMAIL_PATTERN = "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
+            + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
     private static final String PHONE_PATTERN = "^(?!0{10}$)0\\d{9}$";
     private static final String USERNAME_PATTERN = "[a-zA-Z0-9_]{3,20}";
     private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
@@ -80,28 +80,20 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Page<MemberAccount> getMemberAccounts(String keyword, Pageable pageable) {
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            return memberAccountRepository.searchMemberAccounts(keyword.trim(), pageable);
-        }
-
-        return memberAccountRepository.findAll(pageable);
-    }
-
-    @Override
-    public Map<Integer, Member> getMemberByUserId(Page<MemberAccount> accounts) {
+    public AdminAccountListViewData getMemberAccountList(int page, String keyword) {
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), 10, Sort.by("id").ascending());
+        String normalizedKeyword = trim(keyword);
+        Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
+                ? memberAccountRepository.findAll(pageable)
+                : memberAccountRepository.searchMemberAccounts(normalizedKeyword, pageable);
         Map<Integer, Member> memberByUserId = new HashMap<>();
         for (MemberAccount account : accounts.getContent()) {
             if (account.getMember() != null && account.getMember().getUser() != null) {
                 memberByUserId.put(account.getMember().getUser().getId(), account.getMember());
             }
         }
-        return memberByUserId;
-    }
-
-    @Override
-    public List<MembershipTier> getMembershipTiers() {
-        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
+        List<MembershipTier> tiers = membershipTierRepository.findAll(Sort.by("tierId").ascending());
+        return new AdminAccountListViewData(accounts, memberByUserId, tiers);
     }
 
     @Override
@@ -149,8 +141,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void updateAccount(AdminAccountUpdateRequest request) {
-        Map<String, String> errors = validateAccountUpdate(request);
+    public void updateAccount(AdminAccountUpdateRequest request, Integer currentAccountId) {
+        Map<String, String> errors = validateAccountUpdate(request, currentAccountId);
         if (!errors.isEmpty()) {
             throw new AccountFormValidationException(errors);
         }
@@ -163,7 +155,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Map<String, String> validateAccountUpdate(AdminAccountUpdateRequest request) {
+    public Map<String, String> validateAccountUpdate(AdminAccountUpdateRequest request, Integer currentAccountId) {
         Map<String, String> errors = new LinkedHashMap<>();
         boolean staffSource = isStaffSource(request.getSource());
         Integer accountId = request.getAccountId();
@@ -187,14 +179,20 @@ public class AccountServiceImpl implements AccountService {
         validateEmailForUpdate(email, user.getId(), errors);
         validatePhoneForUpdate(phone, user.getId(), errors);
 
-        if (!staffSource && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
+        if (!staffSource
+                && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
             errors.put("tierId", "Hạng thành viên không hợp lệ.");
-        } else if (staffSource && !"Admin".equals(request.getStaffType()) && !"Librarian".equals(request.getStaffType())) {
+        } else if (staffSource && !"Admin".equals(request.getStaffType())
+                && !"Librarian".equals(request.getStaffType())) {
             errors.put("staffType", "Loại nhân viên không hợp lệ.");
         }
 
         if (!isValidStatus(request.getStatus())) {
             errors.put("status", "Trạng thái tài khoản không hợp lệ.");
+        } else if (staffSource
+                && accountId.equals(currentAccountId)
+                && !"Active".equalsIgnoreCase(request.getStatus())) {
+            errors.put("status", "Bạn không thể khóa hoặc vô hiệu hóa tài khoản đang đăng nhập.");
         }
 
         return errors;
@@ -202,8 +200,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void deleteAccount(Integer accountId, String source) {
+    public void deleteAccount(Integer accountId, String source, Integer currentAccountId) {
         if (isStaffSource(source)) {
+            if (accountId != null && accountId.equals(currentAccountId)) {
+                throw new AccountFormValidationException(
+                        Map.of("status", "Bạn không thể vô hiệu hóa tài khoản đang đăng nhập."));
+            }
             StaffAccount account = staffAccountRepository.findById(accountId)
                     .orElseThrow(() -> new AccountFormValidationException(
                             Map.of("_global", "Không tìm thấy tài khoản.")));

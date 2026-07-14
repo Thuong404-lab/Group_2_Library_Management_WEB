@@ -70,7 +70,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         data.put("totalMembers", memberRepository.count());
         data.put("totalBooks", bookRepository.countByStatusIgnoreCase("Active"));
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
-        data.put("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
+        data.put("recentBorrows", borrowDetailRepository.findRecentActivities(PageRequest.of(0, 5)));
         data.put("monthStats", getLastSixMonthStats());
         data.put("currentDate", LocalDate.now());
         return data;
