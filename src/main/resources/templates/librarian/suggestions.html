@@ -64,13 +64,17 @@
                         <option value="rejected">Từ chối</option>
                     </select>
                 </div>
-                <div class="col-md-3 text-end">
-                    <a class="btn btn-light border" href="?"><i class="bi bi-arrow-clockwise me-1"></i>Tải lại</a>
-                </div>
             </form>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle stable-table-layout">
+                        <colgroup>
+                            <col style="width: 6%">
+                            <col style="width: 25%">
+                            <col style="width: 20%">
+                            <col style="width: 25%">
+                            <col style="width: 24%">
+                        </colgroup>
                     <thead class="table-light text-uppercase small text-muted">
                         <tr>
                             <th class="ps-3">STT</th>
@@ -97,9 +101,9 @@
                                 <span class="text-truncate d-inline-block" style="max-width: 150px;" th:text="${suggestion.reason}">Lý do</span>
                             </td>
                             <td>
-                                <span class="badge rounded-pill bg-warning text-dark" th:if="${suggestion.status == 'pending'}">Chờ duyệt</span>
-                                <span class="badge rounded-pill bg-success" th:if="${suggestion.status == 'approved'}">Đã duyệt</span>
-                                <span class="badge rounded-pill bg-danger" th:if="${suggestion.status == 'rejected'}">Từ chối</span>
+                                <span class="status-badge status-pending" th:if="${suggestion.status == 'pending'}">Chờ duyệt</span>
+                                <span class="status-badge status-approved" th:if="${suggestion.status == 'approved'}">Đã duyệt</span>
+                                <span class="status-badge status-rejected" th:if="${suggestion.status == 'rejected'}">Từ chối</span>
                             </td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-success me-1"><i class="bi bi-check-lg"></i> Duyệt</button>

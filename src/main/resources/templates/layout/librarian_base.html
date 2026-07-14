@@ -84,6 +84,11 @@
             list-style: none;
             margin: 0;
             padding-left: 0;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        .sidebar-menu::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
         }
 
         .menu-item {
@@ -258,6 +263,95 @@
         .text-classic {
             color: #8b5a2b !important;
         }
+
+        /* Shared semantic status palette. Keep identical states identical everywhere. */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: auto;
+            min-width: 0;
+            height: auto;
+            padding: 0.5rem 1rem;
+            box-sizing: border-box;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            color: #ffffff !important;
+            font-size: 0.75em;
+            font-weight: 600;
+            line-height: 1;
+            vertical-align: baseline;
+            white-space: nowrap;
+        }
+
+        .status-active,
+        .status-approved,
+        .status-completed,
+        .status-returned {
+            background-color: #587442 !important;
+            border-color: #476036 !important;
+        }
+
+        .status-blocked,
+        .status-overdue,
+        .status-rejected {
+            background-color: #b44336 !important;
+            border-color: #96362c !important;
+        }
+
+        .status-inactive,
+        .status-canceled,
+        .status-disposed,
+        .status-hidden,
+        .status-unknown {
+            background-color: #77716c !important;
+            border-color: #625d59 !important;
+        }
+
+        .status-pending,
+        .status-renew-pending {
+            background-color: #b98532 !important;
+            border-color: #9b6e28 !important;
+        }
+
+        .status-borrowed {
+            background-color: #4f6d7a !important;
+            border-color: #405b67 !important;
+        }
+
+        .status-return-pending {
+            background-color: #6f8f91 !important;
+            border-color: #5b7779 !important;
+        }
+        /* Shared pagination: keep page numbers and navigation controls aligned. */
+        .pagination {
+            align-items: center;
+        }
+
+        .pagination .page-link {
+            min-width: 42px;
+            height: 42px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            color: #8b5a2b;
+            border-color: rgba(139, 90, 43, 0.2);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #8b5a2b;
+            border-color: #8b5a2b;
+            color: #fff;
+        }
+
+
+        /* Prevent table columns from shifting when changing pages. */
+        .stable-table-layout {
+            width: 100%;
+            table-layout: fixed;
+        }
     </style>
 </head>
 <body>
@@ -280,7 +374,7 @@
 
         <li class="menu-item">
             <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
+                <div class="d-flex align-items-center">
                     <i class="bi bi-journal-bookmark-fill menu-icon"></i>
                     <span class="menu-text">Quản lý mượn, trả</span>
                 </div>
@@ -288,30 +382,19 @@
             </a>
             <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/list}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-list' || activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Danh sách phiếu mượn</span>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
+                        <span class="menu-text" style="font-size: 0.95rem;">Lịch mượn trả chi tiết</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Quầy mượn sách</span>
+                        <span class="menu-text" style="font-size: 0.95rem;">Xử lý yêu cầu mượn</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/loan/returns}" class="menu-link py-2" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Trả sách</span>
+                        <span class="menu-text" style="font-size: 0.95rem;">Xác nhận trả sách</span>
                     </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/in-library-reading}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-onsite'} ? 'text-white fw-bold' : 'text-white'" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Bạn đọc tại chỗ</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/violations}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-fines'} ? 'text-white fw-bold' : 'text-white'" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Phạt vi phạm</span>
-                    </a>
-                </li>
             </ul>
         </li>
 
@@ -351,16 +434,16 @@
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/dashboard(section='reports')}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
+            <a th:href="@{/librarian/reports}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
                 <i class="bi bi-graph-up menu-icon"></i>
-                <span class="menu-text">Thống kê</span>
+                <span class="menu-text">Báo cáo và thống kê</span>
             </a>
         </li>
         <li class="menu-item">
             <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link"
                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'active'"
                style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
+                <div class="d-flex align-items-center">
                     <i class="bi bi-wallet2 menu-icon"></i>
                     <span class="menu-text">Tài chính</span>
                 </div>

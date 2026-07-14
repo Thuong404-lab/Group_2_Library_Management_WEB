@@ -1,6 +1,7 @@
 package com.lms.controller.admin;
 
 import com.lms.config.CustomUserDetails;
+import com.lms.entity.BorrowDetail;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
 import com.lms.repository.StaffAccountRepository;
@@ -14,6 +15,7 @@ import com.lms.repository.StaffRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -83,7 +85,7 @@ public class DashboardController {
         model.addAttribute("totalMembers", totalMembers);
         model.addAttribute("totalBooks", totalBooks);
         model.addAttribute("availableItems", availableItems);
-        model.addAttribute("recentBorrows", borrowRepository.findTop5ByOrderByBorrowDateDesc());
+        model.addAttribute("recentBorrows", borrowDetailRepository.findRecentActivities(org.springframework.data.domain.PageRequest.of(0, 5)));
         model.addAttribute("monthStats", getLastSixMonthStats());
         model.addAttribute("currentDate", LocalDate.now());
         if (userDetails != null && userDetails.getUser() != null) {
@@ -132,6 +134,8 @@ public class DashboardController {
         return (int) Math.max(8, count * 120 / maxCount);
     }
 
+
+
     @GetMapping("/staff")
     public String viewStaffList(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
@@ -162,4 +166,6 @@ public class DashboardController {
             Model model) {
         return "admin/system-logs";
     }
+
+
 }

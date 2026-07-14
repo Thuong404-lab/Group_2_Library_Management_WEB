@@ -94,4 +94,10 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     // Giải quyết triệt để lỗi biên dịch ở tầng Service (Vấn đề 2)
     // =========================================================================
     List<BorrowDetail> findByBookItemBarcodeAndStatusIn(String barcode, List<String> statuses);
+
+    // =========================================================================
+    // FIX: Thêm phương thức truy vấn danh sách hoạt động gần đây cho DashboardController
+    // =========================================================================
+    @Query("SELECT bd FROM BorrowDetail bd ORDER BY bd.borrow.borrowDate DESC")
+    List<BorrowDetail> findRecentActivities(Pageable pageable);
 }

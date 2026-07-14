@@ -646,4 +646,47 @@ public class BorrowServiceImpl implements BorrowService {
             System.err.println("Failed to repair existing data: " + e.getMessage());
         }
     }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void rejectReservationRequest(Integer reservationId, String staffUsername) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don dat truoc de tu choi!"));
+        if (!"Pending".equalsIgnoreCase(reservation.getStatus())) {
+            throw new IllegalArgumentException("Don dat truoc nay da duoc xu ly, khong the tu choi!");
+        }
+        reservation.setStatus("Rejected");
+        reservationRepository.save(reservation);
+
+        sendInternalNotification(reservation.getMember(), "Yeu cau dat truoc bi tu choi",
+                "Yeu cau dat truoc cuon sach '" + reservation.getBook().getTitle() + "' da bi tu choi.");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Reservation getReservationById(Integer reservationId) {
+        return reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don dat truoc voi ID: " + reservationId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getPendingRenewalRequests() {
+        // Lay tat ca cac chi tiet phieu muon dang o trang thai cho gia han
+        return borrowDetailRepository.findAll().stream()
+                .filter(d -> "Renew_Pending".equalsIgnoreCase(d.getStatus()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BorrowDetail getBorrowDetailById(Integer borrowDetailId) {
+        return borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay chi tiet phieu muon voi ID: " + borrowDetailId));
+    }
+
+    @Override
+    public int getMaxBorrowDays() {
+        // Goi lai ham doc cau hinh he thong san co cua ban
+        return getPositiveIntSetting("MAX_BORROW_DAYS", 14);
+    }
 }

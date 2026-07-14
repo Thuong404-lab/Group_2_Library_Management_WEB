@@ -34,12 +34,12 @@ public class LibrarianDashboardController {
 
     @GetMapping("/users")
     public String viewUserManagement() {
-        return "redirect:/librarian/dashboard?section=users";
+        return "redirect:/librarian/members";
     }
 
     @GetMapping("/statistics")
     public String viewStatistics() {
-        return "redirect:/librarian/dashboard?section=reports";
+        return "redirect:/librarian/reports";
     }
 
     @GetMapping("/librarians")

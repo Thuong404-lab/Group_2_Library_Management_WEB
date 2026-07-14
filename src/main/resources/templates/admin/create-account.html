@@ -3,7 +3,7 @@
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title th:text="${source == 'staff' ? 'Tạo tài khoản nhân viên' : 'Tạo tài khoản thành viên'}">
+    <title th:text="${source == 'staff' ? 'Tạo tài khoản thủ thư' : 'Tạo tài khoản thành viên'}">
         Tạo tài khoản
     </title>
     <style>
@@ -27,11 +27,11 @@
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
                 <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;"
-                    th:text="${source == 'staff' ? 'Tạo Tài Khoản Nhân Sự' : 'Tạo Tài Khoản Thành Viên'}">
+                    th:text="${source == 'staff' ? 'Tạo Tài Khoản Thủ Thư' : 'Tạo Tài Khoản Thành Viên'}">
                     Tạo Tài Khoản Mới
                 </h2>
                 <div class="text-muted"
-                    th:text="${source == 'staff' ? 'Thêm một tài khoản nhân viên mới vào hệ thống' : 'Thêm một tài khoản thành viên mới vào hệ thống'}">
+                    th:text="${source == 'staff' ? 'Thêm một tài khoản thủ thư mới vào hệ thống' : 'Thêm một tài khoản thành viên mới vào hệ thống'}">
                     Thêm một tài khoản mới vào hệ thống
                 </div>
             </div>
@@ -53,7 +53,7 @@
                     </div>
                     <div class="card-body px-4 pb-4 pt-2">
                         <form method="post" th:action="@{/admin/accounts/create}" autocomplete="off"
-                            id="createAccountForm" novalidate>
+                            id="createAccountForm" novalidate th:fragment="createAccountForm(source, modalMode)">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                 th:value="${_csrf.token}">
                             <input type="hidden" name="source" th:value="${source}">
@@ -130,7 +130,7 @@
                                 style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                                 <i class="bi bi-card-heading me-2 text-classic"></i>
                                 <span
-                                    th:text="${source == 'staff' ? 'Thiết lập Tài khoản Nhân viên' : 'Thiết lập Thẻ Thư viện'}">
+                                    th:text="${source == 'staff' ? 'Thiết lập Tài khoản Thủ thư' : 'Thiết lập Thẻ Thư viện'}">
                                     Thiết lập tài khoản
                                 </span>
                             </h5>
@@ -147,7 +147,7 @@
                                             -- Chọn hạng thành viên --
                                         </option>
                                         <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
-                                            th:text="${tier.tierName}"
+                                            th:text="${tier.tierName == 'Regular' ? 'Thường' : (tier.tierName == 'Silver' ? 'Bạc' : (tier.tierName == 'Gold' ? 'Vàng' : (tier.tierName == 'Diamond' ? 'Kim cương' : tier.tierName)))}"
                                             th:selected="${formValues != null and formValues['tierId'] == tier.tierId}">
                                             Standard Member
                                         </option>
@@ -192,11 +192,11 @@
                                         th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
                                         <option value="Active"
                                             th:selected="${formValues == null or #strings.isEmpty(formValues['status']) or formValues['status'] == 'Active'}">
-                                            Active
+                                            Hoạt động
                                         </option>
                                         <option value="Inactive"
                                             th:selected="${formValues != null and formValues['status'] == 'Inactive'}">
-                                            Inactive
+                                            Ngừng hoạt động
                                         </option>
                                     </select>
                                     <div class="invalid-feedback"
@@ -209,9 +209,11 @@
 
                             <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
                             <div class="d-flex justify-content-end" style="gap: 12px;">
-                                <a class="btn btn-light border shadow-sm" th:href="${backUrl}">
+                                <a class="btn btn-light border shadow-sm" th:if="${modalMode != true}" th:href="${backUrl}">
                                     Hủy bỏ
                                 </a>
+                                <button class="btn btn-light border shadow-sm" th:if="${modalMode == true}" type="button"
+                                    data-bs-dismiss="modal">Hủy bỏ</button>
                                 <button class="btn btn-classic px-4" type="submit">
                                     Tạo tài khoản
                                 </button>
@@ -222,7 +224,7 @@
             </div>
         </div>
 
-        <script>
+        <script th:fragment="createAccountValidation">
             document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("createAccountForm");
 

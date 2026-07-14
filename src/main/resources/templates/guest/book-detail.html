@@ -172,7 +172,7 @@
 
                     <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold">
+                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? 'Sách hiện không có sẵn' : ''}">
                             <i class="bi bi-book me-1"></i> Yêu cầu mượn
                         </button>
                     </form>

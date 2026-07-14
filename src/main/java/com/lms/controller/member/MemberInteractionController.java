@@ -26,7 +26,7 @@ import com.lms.service.MemberBookAcquisitionService;
 @RequestMapping("/member/interaction")
 public class MemberInteractionController {
 
-    private static final int PAGE_SIZE = 5;
+    private static final int PAGE_SIZE = 10;
 
     private final MemberNotificationService memberNotificationService;
     private final MemberReviewService memberReviewService;

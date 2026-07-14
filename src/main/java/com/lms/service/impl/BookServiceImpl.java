@@ -93,6 +93,17 @@ public class BookServiceImpl implements BookService {
         return bookRepository.findAll(pageable).getContent();
     }
 
+    @Override
+    public List<Book> getTrendingBooks(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Book> trending = bookRepository.findTrendingBooks(pageable);
+        if (trending.isEmpty()) {
+            // Fallback to recent books if no books have been borrowed yet
+            return getRecentBooks(limit);
+        }
+        return trending;
+    }
+
     // UC-3: Xem chi tiết sách
     @Override
     public Book findBookById(Integer id) {

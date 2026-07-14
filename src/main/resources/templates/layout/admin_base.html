@@ -331,6 +331,49 @@
         .table-responsive:has(.modal:target) {
             overflow: visible !important;
         }
+
+        #settingsMenu .menu-link {
+            min-height: auto;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: 58px;
+            background: transparent;
+            border-left: 0;
+            font-size: 0.95rem;
+        }
+
+        #settingsMenu .menu-link.active-submenu {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        /* Shared pagination: keep page numbers and navigation controls aligned. */
+        .pagination {
+            align-items: center;
+        }
+
+        .pagination .page-link {
+            min-width: 42px;
+            height: 42px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            color: #8b5a2b;
+            border-color: rgba(139, 90, 43, 0.2);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #8b5a2b;
+            border-color: #8b5a2b;
+            color: #fff;
+        }
+
+        /* Prevent table columns from shifting when changing pages. */
+        .stable-table-layout {
+            width: 100%;
+            table-layout: fixed;
+        }
     </style>
 </head>
 
@@ -362,16 +405,9 @@
             </li>
 
             <li class="menu-item">
-                <a th:href="@{/admin/tiers}" class="menu-link" th:classappend="${activeMenu == 'tiers'} ? 'active'">
-                    <i class="bi bi-star-fill menu-icon text-warning"></i>
-                    <span class="menu-text">Hạng thành viên</span>
-                </a>
-            </li>
-
-            <li class="menu-item">
                 <a th:href="@{/admin/staff}" class="menu-link" th:classappend="${activeMenu == 'staff'} ? 'active'">
                     <i class="bi bi-person-badge-fill menu-icon"></i>
-                    <span class="menu-text">Nhân sự</span>
+                    <span class="menu-text">Thủ thư</span>
                 </a>
             </li>
 
@@ -379,14 +415,6 @@
                 <a th:href="@{/admin/books}" class="menu-link" th:classappend="${activeMenu == 'books'} ? 'active'">
                     <i class="bi bi-book-half menu-icon"></i>
                     <span class="menu-text">Sách</span>
-                </a>
-            </li>
-
-            <li class="menu-item">
-                <a th:href="@{/admin/categories}" class="menu-link"
-                    th:classappend="${activeMenu == 'categories'} ? 'active'">
-                    <i class="bi bi-tags-fill menu-icon"></i>
-                    <span class="menu-text">Danh mục</span>
                 </a>
             </li>
 
@@ -401,16 +429,35 @@
                 <a th:href="@{/admin/system/logs}" class="menu-link"
                     th:classappend="${activeMenu == 'logs'} ? 'active'">
                     <i class="bi bi-journal-text menu-icon"></i>
-                    <span class="menu-text">Nhật ký</span>
+                    <span class="menu-text">Nhật ký hệ thống</span>
                 </a>
             </li>
 
             <li class="menu-item">
-                <a th:href="@{/admin/settings}" class="menu-link"
-                    th:classappend="${activeMenu == 'settings'} ? 'active'">
-                    <i class="bi bi-gear-fill menu-icon"></i>
-                    <span class="menu-text">Cài đặt</span>
+                <a href="#settingsMenu" data-bs-toggle="collapse" class="menu-link"
+                    th:classappend="${activeMenu == 'settings' || activeMenu == 'tiers'} ? 'active'"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>
+                        <i class="bi bi-gear-fill menu-icon"></i>
+                        <span class="menu-text">Cài đặt</span>
+                    </span>
+                    <i class="bi bi-chevron-down menu-text" style="font-size: 0.75rem;"></i>
                 </a>
+                <ul class="collapse list-unstyled mb-0" id="settingsMenu"
+                    th:classappend="${activeMenu == 'settings' || activeMenu == 'tiers'} ? 'show'">
+                    <li>
+                        <a th:href="@{/admin/settings}" class="menu-link"
+                            th:classappend="${activeMenu == 'settings'} ? 'active-submenu'">
+                            <span class="menu-text">Cấu hình hệ thống</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/admin/tiers}" class="menu-link"
+                            th:classappend="${activeMenu == 'tiers'} ? 'active-submenu'">
+                            <span class="menu-text">Hạng thành viên</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
         </ul>
     </aside>

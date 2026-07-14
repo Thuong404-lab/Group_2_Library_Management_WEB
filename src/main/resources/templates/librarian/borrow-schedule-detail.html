@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Chi tiết Phiếu Mượn</title>
+    <style>
+        .section-title {
+            color: #8b5a2b;
+            font-family: 'Playfair Display', serif;
+            font-weight: bold;
+            font-size: 1.25rem;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.2);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .section-title i {
+            margin-right: 0.5rem;
+        }
+        .avatar-circle {
+            width: 65px;
+            height: 65px;
+            background-color: #8b5a2b;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-family: 'Playfair Display', serif;
+            margin-right: 15px;
+            box-shadow: 0 4px 6px rgba(139, 90, 43, 0.2);
+        }
+        .classic-table th {
+            background-color: rgba(139, 90, 43, 0.08) !important;
+            color: #4a3b32;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
+            padding: 12px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .classic-table td {
+            vertical-align: middle;
+            background-color: transparent !important;
+            border-bottom: 1px dashed rgba(139, 90, 43, 0.2) !important;
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='borrow-schedule'">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Chi Tiết Mượn Trả</h2>
+            <div class="text-muted small">Xem chi tiết thông tin phiếu mượn và các giao dịch liên quan.</div>
+        </div>
+        <div>
+            <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-classic-outline px-4 py-2" style="border-radius: 6px; font-weight: 500;">
+                <i class="bi bi-arrow-left me-2"></i>Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-5 mt-2">
+        <!-- Left Column -->
+        <div class="col-lg-4">
+            <h5 class="section-title"><i class="bi bi-person-fill"></i>Thông tin độc giả</h5>
+            <div class="d-flex align-items-center mb-4">
+                <div class="avatar-circle">R</div>
+                <div>
+                    <div class="fw-bold fs-5" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Ridotoji Jikika</div>
+                    <span class="badge text-white mt-1" style="background-color: #8b5a2b; font-weight: normal; padding: 4px 10px;">Regular</span>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted d-block" style="font-size: 0.85rem;">Mã độc giả</small>
+                <div class="text-dark">TV-22</div>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted d-block" style="font-size: 0.85rem;">Địa chỉ Email</small>
+                <div class="text-dark">jikikaridotoji@gmail.com</div>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted d-block" style="font-size: 0.85rem;">Số điện thoại</small>
+                <div class="text-dark fst-italic text-muted">Chưa cập nhật</div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-lg-8">
+            <h5 class="section-title"><i class="bi bi-calendar2-check-fill"></i>Thông tin mượn trả</h5>
+            <div class="row mb-5">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <small class="text-muted d-block" style="font-size: 0.85rem;">Ngày mượn</small>
+                    <div class="text-dark">12/07/2026 18:49</div>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted d-block" style="font-size: 0.85rem;">Thủ thư phụ trách</small>
+                    <div class="text-dark">Admin</div>
+                </div>
+            </div>
+            
+            <h5 class="section-title"><i class="bi bi-book-half"></i>Danh sách sách mượn</h5>
+            <div class="table-responsive mb-5">
+                <table class="table classic-table mb-0 text-center">
+                    <thead>
+                        <tr>
+                            <th class="text-start">Tên sách</th>
+                            <th>Mã vạch (Barcode)</th>
+                            <th>Hạn trả</th>
+                            <th>Ngày trả thực tế</th>
+                            <th>Gia hạn</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start">
+                                <div class="fw-bold" style="color: #4a3b32;">Cho Tôi Xin Một Vé Đi Tuổi Thơ</div>
+                                <small class="text-muted">Nguyễn Nhật Ánh</small>
+                            </td>
+                            <td><span class="font-monospace" style="color: #8b5a2b; font-size: 0.9rem;">BC014-001</span></td>
+                            <td>26/07/2026</td>
+                            <td>12/07/2026<br><small class="text-muted">18:50</small></td>
+                            <td>0 lần</td>
+                            <td><span class="status-badge status-returned">Đã trả</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h5 class="section-title"><i class="bi bi-wallet2"></i>Giao dịch liên quan</h5>
+            <div class="table-responsive mb-4">
+                <table class="table classic-table mb-0 text-center">
+                    <thead>
+                        <tr>
+                            <th>Mã GD</th>
+                            <th>Loại giao dịch</th>
+                            <th>Số tiền</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="py-4 text-muted" style="font-size: 0.9rem;">Không có giao dịch tài chính phát sinh cho phiếu mượn này.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

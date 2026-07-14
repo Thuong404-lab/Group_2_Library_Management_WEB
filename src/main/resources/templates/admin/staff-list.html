@@ -3,8 +3,16 @@
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Quản lý tài khoản nhân sự</title>
+    <title>Quản lý tài khoản thủ thư</title>
     <style>
+        #createAccountForm .form-control.is-invalid,
+        #createAccountForm .form-select.is-invalid,
+        #createAccountForm .form-control.is-valid,
+        #createAccountForm .form-select.is-valid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
         .staff-update-form .form-control.is-invalid,
         .staff-update-form .form-select.is-invalid {
             background-image: none !important;
@@ -16,6 +24,70 @@
             background-image: none !important;
             padding-right: 0.75rem !important;
         }
+
+        .update-account-tooltip .tooltip-inner {
+            background-color: #8b5a2b !important;
+            color: #ffffff !important;
+        }
+
+        .delete-account-tooltip .tooltip-inner {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+
+        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #8b5a2b !important;
+        }
+
+        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #dc3545 !important;
+        }
+
+        .staff-type-badge {
+            border: 1px solid transparent;
+            font-weight: 600;
+        }
+
+        .staff-type-admin {
+            background-color: #6b4630;
+            border-color: #593824;
+            color: #fff8ee;
+        }
+
+        .staff-type-librarian {
+            background-color: #b87936;
+            border-color: #9a622a;
+            color: #fffaf2;
+        }
+
+        .staff-type-other {
+            background-color: #7a7068;
+            border-color: #665d56;
+            color: #ffffff;
+        }
+
+        .staff-status-badge {
+            border: 1px solid transparent;
+            font-weight: 600;
+        }
+
+        .staff-status-active {
+            background-color: #587442;
+            border-color: #476036;
+            color: #ffffff;
+        }
+
+        .staff-status-blocked {
+            background-color: #b44336;
+            border-color: #96362c;
+            color: #ffffff;
+        }
+
+        .staff-status-other {
+            background-color: #77716c;
+            border-color: #625d59;
+            color: #ffffff;
+        }
     </style>
 </head>
 
@@ -25,18 +97,44 @@
             style="border-color: rgba(139, 90, 43, 0.2) !important;">
             <div>
                 <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý tài
-                    khoản nhân sự
+                    khoản thủ thư
                 </h2>
                 <div class="text-muted">
-                    Danh sách và thông tin tài khoản nhân viên thư viện
+                    Danh sách và thông tin tài khoản thủ thư
                 </div>
             </div>
             <div>
-                <a class="btn btn-classic" th:href="@{/admin/accounts/create(source='staff')}">
+                <button type="button" class="btn btn-classic" data-bs-toggle="modal"
+                    data-bs-target="#createStaffAccountModal">
                     <i class="bi bi-person-plus me-1"></i> Tạo tài khoản mới
-                </a>
+                </button>
             </div>
         </div>
+
+        <div class="modal fade text-start" id="createStaffAccountModal" tabindex="-1"
+            aria-labelledby="createStaffAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-white border-bottom p-4">
+                        <h5 class="modal-title fw-bold" id="createStaffAccountModalLabel"
+                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản nhân sự
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <th:block th:replace="~{admin/create-account :: createAccountForm('staff', true)}"></th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <th:block th:replace="~{admin/create-account :: createAccountValidation}"></th:block>
+        <script th:if="${openCreateAccountModal}">
+            document.addEventListener("DOMContentLoaded", function () {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById("createStaffAccountModal")).show();
+            });
+        </script>
 
         <!-- Alerts -->
         <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
@@ -59,14 +157,9 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
+                                th:value="${keyword}" placeholder="Tìm username, thông tin người dùng, loại thủ thư hoặc trạng thái...">
                             <button class="btn btn-classic" type="submit">Tìm kiếm</button>
                         </div>
-                    </div>
-                    <div class="col-md-4 col-lg-6 text-md-end">
-                        <a class="btn btn-light border shadow-sm" th:href="@{/admin/staff}">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
-                        </a>
                     </div>
                 </form>
 
@@ -76,8 +169,8 @@
                             <tr>
                                 <th class="ps-3">STT</th>
                                 <th>Usename</th>
-                                <th>Thông tin nhân viên</th>
-                                <th>Loại nhân viên</th>
+                                <th>Thông tin thủ thư</th>
+                                <th>Loại thủ thư</th>
                                 <th>Trạng thái</th>
                                 <th class="text-end pe-3">Hành động</th>
                             </tr>
@@ -100,7 +193,7 @@
 
                                 <td>
                                     <div th:if="${staff.user != null}">
-                                        <div class="fw-bold" th:text="${staff.user.fullName}">Tên nhân viên</div>
+                                        <div class="fw-bold" th:text="${staff.user.fullName}">Tên thủ thư</div>
                                         <div class="small text-muted">
                                             <i class="bi bi-envelope me-1"></i>
                                             <span th:text="${staff.user.email}">email</span>
@@ -115,26 +208,23 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white" th:text="${staff.staffType}"
-                                        th:style="${
-          staff.staffType == 'Admin' ? 'background-color: #0d6efd;' :
-          staff.staffType == 'Librarian' ? 'background-color: #5bc0de;' :
-          'background-color: #6c757d;'
-      }">
+                                    <span class="badge rounded-pill px-3 py-2 staff-type-badge"
+                                        th:text="${staff.staffType}"
+                                        th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                         Librarian
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                    <span class="badge rounded-pill px-3 py-2 staff-status-badge"
                                         th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
-          staff.user.status.name() == 'Active' ? 'bg-success' :
-          staff.user.status.name() == 'Blocked' ? 'bg-danger' :
-          'bg-secondary'
+          staff.user.status.name() == 'Active' ? 'staff-status-active' :
+          staff.user.status.name() == 'Blocked' ? 'staff-status-blocked' :
+          'staff-status-other'
       }" th:text="${staff.user.status}">
                                         Active
                                     </span>
-                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                    <span class="badge rounded-pill px-3 py-2 staff-status-badge staff-status-other"
                                         th:if="${staff.user == null || staff.user.status == null}">
                                         N/A
                                     </span>
@@ -142,15 +232,21 @@
 
                                 <td class="text-end pe-3">
                                     <div th:if="${account != null}">
-                                        <button type="button" class="btn btn-sm btn-outline-classic"
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-classic account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#updateStaffModal' + account.accountId}"
+                                            data-bs-title="Cập nhật tài khoản"
+                                            data-bs-custom-class="update-account-tooltip"
                                             aria-label="Cập nhật tài khoản">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
+                                            data-bs-title="Xóa tài khoản"
+                                            data-bs-custom-class="delete-account-tooltip"
                                             aria-label="Xóa tài khoản">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -163,8 +259,7 @@
                                             <div class="modal-dialog modal-dialog-centered modal-lg">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post" class="staff-update-form" novalidate
-                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
-                                                        th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='staff')}">
+                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -175,8 +270,10 @@
                                                                 style="color: #4a3b32; font-family: 'Playfair Display', serif;">
                                                                 <i
                                                                     class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
-                                                                nhật tài khoản nhân sự
+                                                                nhật tài khoản thủ thư
                                                             </h5>
+                                                            <button type="button" class="btn-close"
+                                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
 
                                                         <div class="modal-body p-4">
@@ -254,9 +351,9 @@
                                                                 <div class="col-md-6 order-md-5">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">Loại
-                                                                        nhân viên</label>
+                                                                        thủ thư</label>
                                                                     <select class="form-select form-control"
-                                                                        name="staffType" data-label="Loại nhân viên"
+                                                                        name="staffType" data-label="Loại thủ thư"
                                                                         required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
                                                                         <option value="Admin"
@@ -268,9 +365,9 @@
                                                                     </select>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="staffType"
-                                                                        data-default-message="Vui lòng chọn loại nhân viên."
+                                                                        data-default-message="Vui lòng chọn loại thủ thư."
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
-                                                                        Vui lòng chọn loại nhân viên.
+                                                                        Vui lòng chọn loại thủ thư.
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-6">
@@ -328,6 +425,8 @@
                                                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                                                 Xác nhận xóa tài khoản
                                                             </h5>
+                                                            <button type="button" class="btn-close"
+                                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
 
                                                         <div class="modal-body pb-0">
@@ -387,12 +486,12 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Loại nhân viên
+                                                                        <div class="small text-muted">Loại thủ thư
                                                                         </div>
                                                                         <span
-                                                                            class="badge rounded-pill px-3 py-2 text-white"
+                                                                            class="badge rounded-pill px-3 py-2 staff-type-badge"
                                                                             th:text="${staff.staffType}"
-                                                                            th:style="${staff.staffType == 'Admin' ? 'background-color: #0d6efd;' : staff.staffType == 'Librarian' ? 'background-color: #5bc0de;' : 'background-color: #6c757d;'}">
+                                                                            th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                                                             Librarian
                                                                         </span>
                                                                     </div>
@@ -420,7 +519,7 @@
                             <tr th:if="${#lists.isEmpty(staffPage.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-person-badge fs-2 d-block mb-2"></i>
-                                    Không có nhân sự nào.
+                                    Không có thủ thư nào.
                                 </td>
                             </tr>
                         </tbody>
@@ -488,6 +587,18 @@
             </div>
         </div>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
+                    const tooltip = new bootstrap.Tooltip(button, {
+                        trigger: "hover"
+                    });
+                    button.addEventListener("click", function () {
+                        tooltip.hide();
+                    });
+                });
+            });
+        </script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".staff-update-form").forEach(function (form) {
@@ -593,7 +704,7 @@
                             errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
                         }
                         if (form.elements.staffType.value === "") {
-                            errors.staffType = "Loại nhân viên không hợp lệ.";
+                            errors.staffType = "Loại thủ thư không hợp lệ.";
                         }
                         if (form.elements.status.value === "") {
                             errors.status = "Trạng thái tài khoản không hợp lệ.";
@@ -601,46 +712,18 @@
                         return errors;
                     }
 
-                    form.addEventListener("submit", async function (event) {
+                    form.addEventListener("submit", function (event) {
                         event.preventDefault();
                         clearErrors();
 
                         const localErrors = validateLocally();
-                        submitButton.disabled = true;
-                        try {
-                            const params = new URLSearchParams();
-                            new FormData(form).forEach(function (value, key) {
-                                if (key !== "source" && !key.startsWith("_csrf")) {
-                                    params.append(key, value);
-                                }
-                            });
-
-                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
-                            params.forEach(function (value, key) {
-                                validationUrl.searchParams.append(key, value);
-                            });
-                            const response = await fetch(validationUrl.toString(), {
-                                headers: { "Accept": "application/json" }
-                            });
-                            if (!response.ok) {
-                                throw new Error("Validation request failed");
-                            }
-
-                            const serverErrors = await response.json();
-                            const errors = Object.assign({}, serverErrors, localErrors);
-                            if (Object.keys(errors).length > 0) {
-                                showErrors(errors);
-                                return;
-                            }
-
-                            form.submit();
-                        } catch (error) {
-                            showErrors(Object.assign({}, localErrors, {
-                                _global: "Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại."
-                            }));
-                        } finally {
-                            submitButton.disabled = false;
+                        if (Object.keys(localErrors).length > 0) {
+                            showErrors(localErrors);
+                            return;
                         }
+
+                        submitButton.disabled = true;
+                        form.submit();
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
