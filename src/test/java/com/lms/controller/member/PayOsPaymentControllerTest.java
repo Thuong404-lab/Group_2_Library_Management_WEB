@@ -7,6 +7,9 @@ import com.lms.service.PayOsPaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
+import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
+import java.awt.image.BufferedImage;
 import java.security.Principal;
 import java.util.Optional;
 
@@ -37,5 +40,17 @@ class PayOsPaymentControllerTest {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getHeaders().getContentType().toString()).isEqualTo("image/png");
         assertThat(response.getBody()).startsWith((byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47);
+
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(response.getBody()));
+        boolean containsSystemBrown = false;
+        for (int x = 0; x < image.getWidth() && !containsSystemBrown; x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                if ((image.getRGB(x, y) & 0xFFFFFF) == 0x4A3B32) {
+                    containsSystemBrown = true;
+                    break;
+                }
+            }
+        }
+        assertThat(containsSystemBrown).isTrue();
     }
 }

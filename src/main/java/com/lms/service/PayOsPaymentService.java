@@ -25,6 +25,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -39,6 +41,8 @@ public class PayOsPaymentService {
     private static final AtomicLong ORDER_CODES = new AtomicLong(System.currentTimeMillis() * 1000L);
     private static final BigDecimal MIN_TOP_UP = BigDecimal.valueOf(10_000);
     private static final BigDecimal MAX_PAYMENT = BigDecimal.valueOf(500_000_000);
+    private static final int MAX_DESCRIPTION_LENGTH = 25;
+    public static final int PAYMENT_EXPIRY_MINUTES = 5;
 
     private final PayOsPaymentRepository paymentRepository;
     private final PayOsPaymentFineItemRepository fineItemRepository;
@@ -82,7 +86,8 @@ public class PayOsPaymentService {
         if (validAmount.compareTo(MIN_TOP_UP) < 0) {
             throw new RuntimeException("Số tiền nạp tối thiểu là 10.000 VNĐ.");
         }
-        return createPayment(member, TOP_UP, null, validAmount, "LMS NAP VI",
+        return createPayment(member, TOP_UP, null, validAmount,
+                descriptionWithId("LMW NAP VI ID", "LMW NAP ID", member.getMemberId()),
                 "/member/payments/payos/return");
     }
 
@@ -92,7 +97,8 @@ public class PayOsPaymentService {
         if (validAmount.compareTo(MIN_TOP_UP) < 0) {
             throw new RuntimeException("Số tiền nạp tối thiểu là 10.000 VNĐ.");
         }
-        return createPayment(member, TOP_UP, null, validAmount, "LMS NAP QUAY",
+        return createPayment(member, TOP_UP, null, validAmount,
+                descriptionWithId("LMW NOP TAI QUAY ID", "LMW NOP QUAY ID", member.getMemberId()),
                 "/librarian/payments/payos/return");
     }
 
@@ -115,29 +121,37 @@ public class PayOsPaymentService {
         if (activePayment != null) {
             return activePayment;
         }
-        return createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()), "LMS PHAT",
+        return createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()),
+                descriptionWithId("LMW NOP PHAT ID", "LMW PHAT ID", fineId),
                 "/member/payments/payos/return");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment createFineBatchPayment(Member member) {
-        PayOsPayment activePayment = paymentRepository
-                .findFirstByMemberMemberIdAndPurposeAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
-                        member.getMemberId(), FINE_BATCH, PENDING, LocalDateTime.now().minusMinutes(15))
-                .orElse(null);
-        if (activePayment != null) {
-            return activePayment;
-        }
         List<Transaction> fines = transactionRepository.findUnpaidFineTransactions(
                 member.getMemberId(), List.of(FINE, "DAMAGE_FEE"));
         if (fines.isEmpty()) {
             throw new RuntimeException("Không có khoản phạt nào cần thanh toán.");
         }
+
+        PayOsPayment activePayment = paymentRepository
+                .findFirstByMemberMemberIdAndPurposeAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
+                        member.getMemberId(), FINE_BATCH, PENDING,
+                        LocalDateTime.now().minusMinutes(PAYMENT_EXPIRY_MINUTES))
+                .orElse(null);
+        if (activePayment != null) {
+            if (sameFineSnapshot(activePayment, fines)) {
+                return activePayment;
+            }
+            cancelStaleBatchPayment(activePayment);
+        }
+
         BigDecimal total = fines.stream()
                 .map(fine -> fine.getAmount() == null ? BigDecimal.ZERO : fine.getAmount().abs())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         PayOsPayment payment = createPayment(member, FINE_BATCH, null, requireWholeVnd(total),
-                "LMS TONG PHAT", "/member/payments/payos/return");
+                descriptionWithId("LMW NOP PHAT ID", "LMW PHAT ID", member.getMemberId()),
+                "/member/payments/payos/return");
         for (Transaction fine : fines) {
             PayOsPaymentFineItem item = new PayOsPaymentFineItem();
             item.setPayment(payment);
@@ -146,6 +160,43 @@ public class PayOsPaymentService {
             fineItemRepository.save(item);
         }
         return payment;
+    }
+
+    boolean sameFineSnapshot(PayOsPayment payment, List<Transaction> currentFines) {
+        List<PayOsPaymentFineItem> savedItems = fineItemRepository
+                .findByPaymentPaymentIdOrderByFineTransactionTransactionId(payment.getPaymentId());
+        if (savedItems.size() != currentFines.size()) {
+            return false;
+        }
+
+        Map<Integer, BigDecimal> currentAmounts = new HashMap<>();
+        for (Transaction fine : currentFines) {
+            if (fine.getTransactionId() == null || fine.getAmount() == null) {
+                return false;
+            }
+            currentAmounts.put(fine.getTransactionId(), fine.getAmount().abs());
+        }
+        for (PayOsPaymentFineItem item : savedItems) {
+            if (item.getFineTransaction() == null || item.getAmountSnapshot() == null) {
+                return false;
+            }
+            BigDecimal currentAmount = currentAmounts.remove(item.getFineTransaction().getTransactionId());
+            if (currentAmount == null || currentAmount.compareTo(item.getAmountSnapshot().abs()) != 0) {
+                return false;
+            }
+        }
+        return currentAmounts.isEmpty();
+    }
+
+    private void cancelStaleBatchPayment(PayOsPayment payment) {
+        try {
+            client().paymentRequests().cancel(payment.getOrderCode(), "Danh sach phi phat da thay doi");
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Danh sách phí phạt đã thay đổi nhưng chưa thể hủy mã QR cũ. Vui lòng thử lại.");
+        }
+        payment.setStatus("CANCELLED");
+        paymentRepository.save(payment);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -167,7 +218,8 @@ public class PayOsPaymentService {
             return activePayment;
         }
         BigDecimal amount = requireWholeVnd(financialService.calculateBorrowingFeeAmount(borrowId));
-        return createPayment(member, BORROW_FEE, borrowId, amount, "LMS PHI MUON",
+        return createPayment(member, BORROW_FEE, borrowId, amount,
+                descriptionWithId("LMW NOP PHI MUON ID", "LMW MUON ID", borrowId),
                 "/member/payments/payos/return");
     }
 
@@ -181,6 +233,23 @@ public class PayOsPaymentService {
     public PayOsPayment getForStaff(Long orderCode) {
         return paymentRepository.findByOrderCode(orderCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thanh toán."));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PayOsPaymentFineItem> getFineItems(PayOsPayment payment) {
+        if (payment == null || !FINE_BATCH.equals(payment.getPurpose()) || payment.getPaymentId() == null) {
+            return List.of();
+        }
+        return fineItemRepository.findByPaymentPaymentIdOrderByFineTransactionTransactionId(payment.getPaymentId());
+    }
+
+    public long getExpiryEpochMillis(PayOsPayment payment) {
+        if (payment == null || payment.getCreatedAt() == null) {
+            return 0L;
+        }
+        return payment.getCreatedAt().plusMinutes(PAYMENT_EXPIRY_MINUTES)
+                .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh"))
+                .toInstant().toEpochMilli();
     }
 
     /**
@@ -201,7 +270,7 @@ public class PayOsPaymentService {
         PayOsPayment current = expectedMemberId == null
                 ? getForStaff(orderCode)
                 : getForMember(orderCode, expectedMemberId);
-        if (!PENDING.equalsIgnoreCase(current.getStatus()) || payOS == null) {
+        if (payOS == null || (PAID.equalsIgnoreCase(current.getStatus()) && current.getTransaction() != null)) {
             return current;
         }
 
@@ -218,7 +287,7 @@ public class PayOsPaymentService {
         PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thanh toán."));
         if ((expectedMemberId != null && !expectedMemberId.equals(payment.getMember().getMemberId()))
-                || PAID.equalsIgnoreCase(payment.getStatus())) {
+                || (PAID.equalsIgnoreCase(payment.getStatus()) && payment.getTransaction() != null)) {
             return payment;
         }
 
@@ -246,7 +315,7 @@ public class PayOsPaymentService {
 
         PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(data.getOrderCode()).orElse(null);
         // payOS sends a sample payload while confirming the webhook URL.
-        if (payment == null || PAID.equalsIgnoreCase(payment.getStatus())) {
+        if (payment == null || (PAID.equalsIgnoreCase(payment.getStatus()) && payment.getTransaction() != null)) {
             return;
         }
         if (data.getAmount() == null || payment.getAmount().compareTo(BigDecimal.valueOf(data.getAmount())) != 0) {
@@ -266,7 +335,7 @@ public class PayOsPaymentService {
     }
 
     private PayOsPayment createPayment(Member member, String purpose, Integer referenceId,
-                                       BigDecimal amount, String descriptionPrefix, String returnPath) {
+                                       BigDecimal amount, String description, String returnPath) {
         requireConfigured();
         if (member == null || member.getMemberId() == null) {
             throw new RuntimeException("Không tìm thấy thành viên hiện tại.");
@@ -285,14 +354,13 @@ public class PayOsPaymentService {
 
         String returnUrl = baseUrl + returnPath;
         String cancelUrl = baseUrl + returnPath + "?cancel=true";
-        String description = descriptionPrefix + " " + member.getMemberId();
         CreatePaymentLinkRequest request = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount.longValueExact())
                 .description(description)
                 .returnUrl(returnUrl)
                 .cancelUrl(cancelUrl)
-                .expiredAt(LocalDateTime.now().plusMinutes(15)
+                .expiredAt(LocalDateTime.now().plusMinutes(PAYMENT_EXPIRY_MINUTES)
                         .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond())
                 .build();
         CreatePaymentLinkResponse response = client().paymentRequests().create(request);
@@ -302,10 +370,25 @@ public class PayOsPaymentService {
         return paymentRepository.save(payment);
     }
 
+    private String descriptionWithId(String preferredPrefix, String compactPrefix, Integer id) {
+        String suffix = id == null ? "" : String.valueOf(id);
+        String preferred = preferredPrefix + suffix;
+        if (preferred.length() <= MAX_DESCRIPTION_LENGTH) {
+            return preferred;
+        }
+        String compact = compactPrefix + suffix;
+        if (compact.length() <= MAX_DESCRIPTION_LENGTH) {
+            return compact;
+        }
+        int suffixLength = Math.min(suffix.length(), MAX_DESCRIPTION_LENGTH - 1);
+        return "I" + suffix.substring(suffix.length() - suffixLength);
+    }
+
     private PayOsPayment findActivePayment(Integer memberId, String purpose, Integer referenceId) {
         return paymentRepository
                 .findFirstByMemberMemberIdAndPurposeAndReferenceIdAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
-                        memberId, purpose, referenceId, PENDING, LocalDateTime.now().minusMinutes(15))
+                        memberId, purpose, referenceId, PENDING,
+                        LocalDateTime.now().minusMinutes(PAYMENT_EXPIRY_MINUTES))
                 .orElse(null);
     }
 
@@ -314,11 +397,11 @@ public class PayOsPaymentService {
         if (remote.getOrderCode() == null || !payment.getOrderCode().equals(remote.getOrderCode())
                 || remote.getAmount() == null || expected.compareTo(BigDecimal.valueOf(remote.getAmount())) != 0
                 || remote.getAmountPaid() == null || expected.compareTo(BigDecimal.valueOf(remote.getAmountPaid())) != 0) {
-            throw new RuntimeException("Thông tin thanh toán PayOS không khớp với đơn hàng.");
+            throw new RuntimeException("Thông tin thanh toán KQPay không khớp với đơn hàng.");
         }
         if (payment.getPaymentLinkId() != null && remote.getId() != null
                 && !payment.getPaymentLinkId().equals(remote.getId())) {
-            throw new RuntimeException("Mã liên kết PayOS không khớp.");
+            throw new RuntimeException("Mã liên kết KQPay không khớp.");
         }
     }
 
@@ -328,7 +411,7 @@ public class PayOsPaymentService {
 
     private void requireConfigured() {
         if (clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) {
-            throw new RuntimeException("PayOS chưa được cấu hình. Hãy thiết lập PAYOS_CLIENT_ID, PAYOS_API_KEY và PAYOS_CHECKSUM_KEY.");
+            throw new RuntimeException("KQPay chưa được cấu hình. Hãy thiết lập PAYOS_CLIENT_ID, PAYOS_API_KEY và PAYOS_CHECKSUM_KEY.");
         }
     }
 

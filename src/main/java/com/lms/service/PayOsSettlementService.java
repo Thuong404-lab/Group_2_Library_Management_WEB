@@ -51,7 +51,7 @@ public class PayOsSettlementService {
             case PayOsPaymentService.FINE -> settleFine(payment);
             case PayOsPaymentService.FINE_BATCH -> settleFineBatch(payment);
             case PayOsPaymentService.BORROW_FEE -> settleBorrowFee(payment);
-            default -> throw new RuntimeException("Loại thanh toán PayOS không được hỗ trợ.");
+            default -> throw new RuntimeException("Loại thanh toán KQPay không được hỗ trợ.");
         };
     }
 
@@ -65,7 +65,7 @@ public class PayOsSettlementService {
         walletRepository.save(wallet);
 
         Transaction transaction = saveTransaction(wallet, null, "TOP_UP", amount);
-        createNotification(member, "Nạp tiền qua PayOS thành công",
+        createNotification(member, "Nạp tiền qua KQPay thành công",
                 "Ví của bạn đã được nạp " + formatMoney(amount)
                         + ". Số dư hiện tại: " + formatMoney(newBalance) + ".");
         return transaction;
@@ -124,7 +124,7 @@ public class PayOsSettlementService {
             }
         }
         if (total.compareTo(payment.getAmount()) != 0) {
-            throw new RuntimeException("Tổng tiền phạt không khớp với đơn PayOS.");
+            throw new RuntimeException("Tổng tiền phạt không khớp với đơn KQPay.");
         }
         return first;
     }
@@ -197,7 +197,7 @@ public class PayOsSettlementService {
     private BigDecimal requirePositiveWholeVnd(BigDecimal amount) {
         BigDecimal value = amount == null ? BigDecimal.ZERO : amount.stripTrailingZeros();
         if (value.signum() <= 0 || value.scale() > 0) {
-            throw new RuntimeException("Số tiền PayOS không hợp lệ.");
+            throw new RuntimeException("Số tiền KQPay không hợp lệ.");
         }
         return value;
     }

@@ -452,7 +452,7 @@
                             <div class="fine-payment-method">
                                 <div class="form-check mb-0">
                                     <input class="form-check-input" type="radio" name="finePayMethod" id="finePayPayOs" value="payos">
-                                    <label class="form-check-label fw-bold" for="finePayPayOs">Chuyển khoản PayOS</label>
+                                    <label class="form-check-label fw-bold" for="finePayPayOs">Chuyển khoản KQPay</label>
                                 </div>
                             </div>
                             </div>
@@ -473,7 +473,7 @@
                     <div class="modal-header text-white border-0 px-4 py-3" style="background:linear-gradient(135deg,#55351d,#9a693a);">
                         <div>
                             <h5 class="modal-title fw-bold" id="memberTopUpModalLabel">Nạp tiền vào ví</h5>
-                            <div class="small opacity-75">Thanh toán bằng mã QR PayOS</div>
+                            <div class="small opacity-75">Thanh toán bằng mã QR KQPay</div>
                         </div>
                         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Đóng">
                             <span aria-hidden="true">&times;</span>
@@ -531,11 +531,13 @@
             </div>
 
             <div class="card-body">
-                <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="text-center text-muted py-5">
+                <div th:if="${historyRows == null or #lists.isEmpty(historyRows)}"
+                     class="text-center text-muted py-5">
                     Chưa có giao dịch nào.
                 </div>
 
-                <div class="table-responsive" th:if="${transactions != null and !#lists.isEmpty(transactions)}">
+                <div class="table-responsive"
+                     th:if="${historyRows != null and !#lists.isEmpty(historyRows)}">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
@@ -547,34 +549,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="transaction : ${transactions}">
+                            <tr th:each="row : ${historyRows}">
                                 <td>
-                                    <span class="transaction-code fw-bold" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</span>
+                                    <span class="transaction-code fw-bold" th:text="${row.code}">#TXN-1</span>
                                 </td>
-                                <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                                <td th:text="${row.occurredAt != null ? #temporals.format(row.occurredAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">
                                     01/01/2026 08:00
                                 </td>
-                                <td>
-                                    <span th:switch="${transaction.transactionType}">
-                                        <span th:case="'TOP_UP'">Nạp tiền vào ví</span>
-                                        <span th:case="'BORROW_FEE'">Phí mượn sách</span>
-                                        <span th:case="'DEPOSIT'">Tiền cọc đặt trước</span>
-                                        <span th:case="'FINE'">Phí phạt</span>
-                                        <span th:case="'DAMAGE_FEE'">Phí hư hỏng</span>
-                                        <span th:case="'REFUND'">Hoàn tiền</span>
-                                        <span th:case="*" th:text="${transaction.transactionType}">Khác</span>
-                                    </span>
-                                </td>
+                                <td th:text="${row.typeLabel}">Loại giao dịch</td>
                                 <td class="fw-bold"
-                                    th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
-                                    <span th:text="${transaction.amount != null and transaction.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
-                                    <span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                                    th:classappend="${row.amount != null and row.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
+                                    <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
+                                    <span th:text="${row.amount != null ? #numbers.formatDecimal(row.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                     <span> đ</span>
                                 </td>
                                 <td>
                                     <span class="badge"
-                                          th:classappend="${transaction.status == 'Completed'} ? ' bg-success' : ' bg-secondary'"
-                                          th:text="${transaction.status}">Completed</span>
+                                          th:classappend="${row.completed} ? ' bg-success' : ' bg-secondary'"
+                                          th:text="${row.statusLabel}">Hoàn tất</span>
                                 </td>
                             </tr>
                         </tbody>
