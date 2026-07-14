@@ -5,12 +5,114 @@
 <head>
     <!-- UC-8.1 and UC-8.4 UI maintained by Pham Kien Quoc. -->
     <title>Ví & Lịch sử giao dịch</title>
+    <style>
+        body { background-color: #f8f7f5; }
+        .wallet-page { color: #4a3b32; }
+        .wallet-page .page-title {
+            color: #4a3b32;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+        .wallet-page .classic-card {
+            overflow: hidden;
+            border: 1px solid rgba(139, 90, 43, 0.14) !important;
+            border-radius: 10px !important;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(74, 59, 50, 0.07) !important;
+        }
+        .wallet-page .balance-card {
+            border: 0 !important;
+            border-radius: 10px !important;
+            background: linear-gradient(135deg, #4a3b32 0%, #8b5a2b 100%) !important;
+            box-shadow: 0 5px 14px rgba(74, 59, 50, 0.18) !important;
+        }
+        .wallet-page .balance-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .wallet-page .balance-value { font-family: 'Playfair Display', serif; }
+        .wallet-page .btn-wallet-light,
+        .wallet-page .btn-wallet-outline,
+        .wallet-page .btn-classic {
+            border-radius: 6px !important;
+            font-weight: 600;
+        }
+        .wallet-page .btn-wallet-light {
+            color: #4a3b32;
+            background: #fdfbf7;
+            border: 1px solid #fdfbf7;
+        }
+        .wallet-page .btn-wallet-outline {
+            color: #fff;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,.75);
+        }
+        .wallet-page .btn-wallet-outline:hover { color: #4a3b32; background: #fff; }
+        .wallet-page .btn-classic {
+            color: #fff;
+            background: #8b5a2b;
+            border-color: #8b5a2b;
+        }
+        .wallet-page .btn-classic:hover { color: #fff; background: #6f451f; border-color: #6f451f; }
+        .wallet-page .section-title {
+            color: #4a3b32;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+        .wallet-page .fine-summary {
+            border-left: 4px solid #c53030 !important;
+        }
+        .wallet-page .fine-item {
+            background: #fdfbf7 !important;
+            border: 1px solid rgba(197, 48, 48, 0.16);
+            border-left: 4px solid #c53030 !important;
+            border-radius: 6px !important;
+        }
+        .wallet-page .btn-pay-fine {
+            color: #fff;
+            background: #c53030;
+            border-color: #c53030;
+            border-radius: 6px !important;
+        }
+        .wallet-page .classic-card-header {
+            padding: 1.25rem 1.5rem;
+            background: #fff;
+            border-bottom: 2px solid #4a3b32 !important;
+        }
+        .wallet-page .form-select:focus {
+            border-color: #8b5a2b;
+            box-shadow: 0 0 0 .2rem rgba(139,90,43,.15);
+        }
+        .wallet-page .transaction-filter {
+            gap: 0.75rem;
+        }
+        .wallet-page .balance-actions {
+            gap: 0.75rem;
+        }
+        .wallet-page .table thead th {
+            color: #6c625c;
+            background: #f8f5f1;
+            border-bottom: 1px solid rgba(139,90,43,.16);
+            font-size: .76rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+        .wallet-page .transaction-code { color: #8b5a2b !important; }
+        .wallet-page .pagination .page-link { color: #8b5a2b; border-color: rgba(139,90,43,.2); }
+        .wallet-page .pagination .page-item.active .page-link {
+            color: #fff;
+            background: #8b5a2b;
+            border-color: #8b5a2b;
+        }
+    </style>
 </head>
 
 <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
+    <div layout:fragment="content" class="container wallet-page mt-4 mb-5">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-            <h2 class="fw-bold mb-0">Ví & Phí Phạt</h2>
+            <h2 class="page-title mb-0">Ví & Phí Phạt</h2>
         </div>
 
         <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
@@ -18,24 +120,23 @@
 
         <div class="row g-4 mb-4">
             <div class="col-lg-5">
-                <div class="card border-0 shadow-sm rounded-3 h-100 text-white"
-                     style="background: linear-gradient(135deg, #0d6efd 0%, #20c997 100%);">
+                <div class="card balance-card h-100 text-white">
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
                         <div class="d-flex justify-content-between align-items-start mb-4">
                             <div>
-                                <h5 class="opacity-75 mb-1">Số dư hiện tại</h5>
-                                <h1 class="display-5 fw-bold mb-0">
+                                <div class="balance-label opacity-75 mb-1">Số dư hiện tại</div>
+                                <h1 class="balance-value display-5 fw-bold mb-0">
                                     <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                     <span class="fs-4">VNĐ</span>
                                 </h1>
                             </div>
                             <i class="bi bi-wallet2 display-6 opacity-50"></i>
                         </div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn btn-light fw-bold px-4 rounded-pill">
+                        <div class="balance-actions d-flex flex-wrap">
+                            <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn btn-wallet-light px-4">
                                 <i class="bi bi-clock-history me-1"></i> Lịch sử nạp
                             </a>
-                            <a th:href="@{/member/financial/transactions}" class="btn btn-outline-light rounded-pill px-4">
+                            <a th:href="@{/member/financial/transactions}" class="btn btn-wallet-outline px-4">
                                 Tất cả giao dịch
                             </a>
                         </div>
@@ -44,11 +145,11 @@
             </div>
 
             <div class="col-lg-7">
-                <div class="card border-0 shadow-sm rounded-3 h-100 bg-white">
+                <div class="card classic-card fine-summary h-100">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                             <div>
-                                <h5 class="fw-bold text-danger mb-1">
+                                <h5 class="section-title text-danger mb-1">
                                     <i class="bi bi-exclamation-triangle-fill me-2"></i>Phí phạt chưa thanh toán
                                 </h5>
                                 <div class="text-muted small">Các khoản phạt quá hạn hoặc hư hỏng đang chờ xử lý.</div>
@@ -67,7 +168,7 @@
                         </div>
 
                         <div th:each="fine : ${unpaidFines}"
-                             class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 bg-light rounded mb-3 border-start border-danger border-4">
+                             class="fine-item d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 mb-3">
                             <div>
                                 <h6 class="mb-1 fw-bold"
                                     th:text="${fine.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng sách' : 'Phí phạt quá hạn'}">
@@ -85,7 +186,7 @@
                                 </h5>
                                 <form method="post" th:action="@{/member/financial/fines/pay/{fineId}(fineId=${fine.transactionId})}">
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                    <button type="submit" class="btn btn-danger btn-sm rounded-pill">Thanh toán</button>
+                                    <button type="submit" class="btn btn-pay-fine btn-sm px-3">Thanh toán</button>
                                 </form>
                             </div>
                         </div>
@@ -94,11 +195,11 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-3 mt-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
+        <div class="card classic-card mt-4">
+            <div class="card-header classic-card-header">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <h5 class="fw-bold mb-0">Lịch sử giao dịch</h5>
-                    <form method="get" th:action="@{/member/financial/transactions}" class="d-flex gap-2">
+                    <h5 class="section-title mb-0">Lịch sử giao dịch</h5>
+                    <form method="get" th:action="@{/member/financial/transactions}" class="transaction-filter d-flex">
                         <select name="type" class="form-select" aria-label="Lọc loại giao dịch">
                             <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả</option>
                             <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
@@ -108,7 +209,7 @@
                             <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}">Phí hư hỏng</option>
                             <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
                         </select>
-                        <button type="submit" class="btn btn-primary">Lọc</button>
+                        <button type="submit" class="btn btn-classic px-4">Lọc</button>
                     </form>
                 </div>
             </div>
@@ -132,7 +233,7 @@
                         <tbody>
                             <tr th:each="transaction : ${transactions}">
                                 <td>
-                                    <span class="text-primary fw-bold" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</span>
+                                    <span class="transaction-code fw-bold" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</span>
                                 </td>
                                 <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
                                     01/01/2026 08:00
