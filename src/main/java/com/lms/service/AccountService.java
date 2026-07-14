@@ -39,4 +39,7 @@ public interface AccountService {
 
     // UC-20.3: Xóa tài khoản (soft delete)
     void deleteAccount(Integer accountId, String source);
+
+    // Lấy email hiện tại của tài khoản thành viên để gửi liên kết đặt lại mật khẩu.
+    String getMemberEmail(Integer accountId);
 }

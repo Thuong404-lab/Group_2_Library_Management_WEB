@@ -171,7 +171,17 @@
                         </button>
                     </td>
                 </tr>
-                <tr th:if="${searchResults == null or #lists.isEmpty(searchResults)}">
+                <tr th:if="${searchResults == null}">
+                    <td colspan="5" class="py-4 text-center text-muted">
+                        Quét hoặc nhập mã vạch để tìm phiếu mượn cần hoàn trả.
+                    </td>
+                </tr>
+                <tr th:if="${searchResults != null and #lists.isEmpty(searchResults)}">
+                    <td colspan="5" class="py-4 text-center text-muted">
+                        Không có phiếu mượn đang hoạt động cho mã vạch này.
+                    </td>
+                </tr>
+                <tr th:if="${false}">
                     <td class="ps-4">
                         <span class="font-monospace fw-bold" style="color: #8b5a2b;">BOR-1002</span>
                     </td>
@@ -200,7 +210,8 @@
     </div>
 
     <!-- Confirm Return Modal -->
-    <div class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
+    <div th:if="${searchResults != null and !#lists.isEmpty(searchResults)}"
+         class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
                 <input type="hidden" name="barcode" th:value="${searchedBarcode}">
