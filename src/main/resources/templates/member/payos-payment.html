@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Phiếu thanh toán PayOS</title>
+    <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
+</head>
+<body>
+<div layout:fragment="content" class="container py-5">
+    <section class="payos-receipt">
+        <header class="payos-receipt-header">
+            <h2>Phiếu Thanh Toán PayOS</h2>
+        </header>
+
+        <div class="payos-receipt-body">
+            <div class="payos-customer-box">
+                <span class="payos-customer-label">Tài khoản thanh toán:</span>
+                <p class="payos-customer-value"
+                   th:text="${payment.member.user != null ? payment.member.user.email : 'Thành viên'}">
+                    member@example.com
+                </p>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="payos-section-title">Thông tin thanh toán</h3>
+                <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending">Đang chờ thanh toán</span>
+                <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid">Đã thanh toán</span>
+                <span th:if="${payment.status != 'PENDING' and payment.status != 'PAID'}"
+                      class="payos-status payos-status-failed"
+                      th:text="${payment.status == 'EXPIRED' ? 'Mã QR đã hết hạn' : (payment.status == 'CANCELLED' ? 'Đã hủy thanh toán' : 'Thanh toán không thành công')}">
+                    Thanh toán không thành công
+                </span>
+            </div>
+
+            <div class="payos-receipt-grid" th:classappend="${payment.status != 'PENDING'} ? ' no-qr' : ''">
+                <div class="payos-detail-card">
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Loại thanh toán</span>
+                        <span class="payos-detail-value"
+                              th:text="${payment.purpose == 'TOP_UP' ? 'Nạp tiền vào ví' : (payment.purpose == 'BORROW_FEE' ? 'Phí mượn sách' : 'Phí phạt')}">
+                            Phí phạt
+                        </span>
+                    </div>
+                    <div class="payos-detail-row" th:if="${payment.referenceId != null}">
+                        <span class="payos-detail-label"
+                              th:text="${payment.purpose == 'BORROW_FEE' ? 'Mã phiếu mượn' : 'Mã khoản phạt'}">Mã khoản phạt</span>
+                        <span class="payos-detail-value" th:text="${'#' + payment.referenceId}">#1</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Mã đơn PayOS</span>
+                        <span class="payos-detail-value" th:text="${payment.orderCode}">1</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Thời gian tạo</span>
+                        <span class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Tổng thanh toán</span>
+                        <span class="payos-detail-value payos-total">
+                            <span th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </span>
+                    </div>
+                </div>
+
+                <div class="payos-qr-card" th:if="${payment.status == 'PENDING'}">
+                    <img th:src="@{/member/payments/payos/{orderCode}/qr.png(orderCode=${payment.orderCode})}"
+                         alt="Mã QR thanh toán PayOS"/>
+                    <div class="payos-qr-title">Quét mã VietQR để thanh toán</div>
+                    <div class="payos-qr-note">Không thay đổi số tiền hoặc nội dung chuyển khoản.</div>
+                </div>
+            </div>
+
+            <p class="payos-help">ⓘ Phiếu sẽ tự cập nhật sau khi PayOS xác nhận giao dịch. Vui lòng giữ trang này mở trong lúc thanh toán.</p>
+
+            <div th:if="${payment.status == 'PAID'}" class="payos-success">
+                Thanh toán đã được ghi nhận thành công.
+                <span th:if="${payment.transaction != null}">Mã giao dịch: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
+            </div>
+
+            <div class="payos-receipt-actions">
+                <a th:if="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/fees}" class="payos-btn-secondary">Quay lại phí mượn</a>
+                <a th:unless="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/transactions}" class="payos-btn-secondary">Quay lại ví</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script th:if="${payment.status == 'PENDING'}" th:inline="javascript">
+        (() => {
+            const statusUrl = /*[[@{/member/payments/payos/{orderCode}/status(orderCode=${payment.orderCode})}]]*/ '';
+            let attempts = 0;
+            const timer = setInterval(async () => {
+                if (++attempts > 180) { clearInterval(timer); return; }
+                try {
+                    const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}});
+                    if (response.ok) {
+                        const status = (await response.json()).status;
+                        if (status !== 'PENDING') {
+                            clearInterval(timer);
+                            window.location.reload();
+                        }
+                    }
+                } catch (_) { /* retry while the page is open */ }
+            }, 5000);
+        })();
+    </script>
+</th:block>
+</body>
+</html>
