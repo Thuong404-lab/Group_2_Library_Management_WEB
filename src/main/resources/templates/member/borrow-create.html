@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Xac nhan dang ky muon sach</title>
+    <title>Xác nhận đăng ký mượn sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
@@ -61,7 +61,7 @@
 <div layout:fragment="content" class="container py-5" style="max-width: 650px;">
     <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Loi</span>
+        <span th:text="${errorMessage}">Lỗi</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
@@ -113,8 +113,8 @@
                 </div>
 
                 <div class="d-flex justify-content-end border-top pt-4 mt-2">
+                    <a th:href="@{'/books/' + ${selectedBookId}}" class="btn btn-classic-outline">Hủy bỏ</a>
 
-                    <a th:href="@{/member/dashboard}" class="btn btn-classic-outline">Hủy bỏ</a>
                     <button type="submit" class="btn btn-classic-primary fw-bold" style="margin-right: 0 !important;">
                         Gửi yêu cầu phê duyệt
                     </button>

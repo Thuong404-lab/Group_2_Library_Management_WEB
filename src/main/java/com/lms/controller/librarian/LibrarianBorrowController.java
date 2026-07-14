@@ -2,9 +2,17 @@ package com.lms.controller.librarian;
 
 import com.lms.dto.request.BorrowRequest;
 import com.lms.entity.Borrow;
+import com.lms.entity.Member;
+import com.lms.entity.BorrowDetail;
+import com.lms.entity.Transaction;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.BorrowDetailRepository;
+import com.lms.repository.TransactionRepository;
+import com.lms.repository.WalletRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.service.BorrowService;
+import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 public class LibrarianBorrowController {
@@ -23,47 +34,104 @@ public class LibrarianBorrowController {
     private final BorrowRepository borrowRepository;
     private final MemberRepository memberRepository;
     private final com.lms.repository.BookItemRepository bookItemRepository;
+    private final BorrowDetailRepository borrowDetailRepository;
+    private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
+    private final MemberAccountRepository memberAccountRepository;
 
-    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository) {
+    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository,
+                                     MemberRepository memberRepository,
+                                     com.lms.repository.BookItemRepository bookItemRepository,
+                                     BorrowDetailRepository borrowDetailRepository,
+                                     TransactionRepository transactionRepository,
+                                     WalletRepository walletRepository,
+                                     MemberAccountRepository memberAccountRepository) {
         this.borrowService = borrowService;
         this.borrowRepository = borrowRepository;
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
+        this.transactionRepository = transactionRepository;
+        this.walletRepository = walletRepository;
+        this.memberAccountRepository = memberAccountRepository;
     }
 
-    // Xem danh sách toàn cục các phiếu mượn trả
     @GetMapping("/librarian/borrow/list")
     public String listAllBorrows(@RequestParam(value = "page", defaultValue = "0") int page,
-                                 @RequestParam(value = "size", defaultValue = "10") int size,
-                                 @RequestParam(value = "status", required = false) String status,
+                                 @RequestParam(value = "size", defaultValue = "50") int size,
                                  @RequestParam(value = "keyword", required = false) String keyword,
                                  Model model) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("borrowDate").descending());
-        Page<Borrow> borrowPage;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("memberId").ascending());
+        Page<Member> memberPage;
 
-        // Xử lý bộ lọc dữ liệu kết hợp điều kiện tìm kiếm động từ Repository
-        if (status != null && !status.trim().isEmpty()) {
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                borrowPage = borrowRepository.findByStatusAndKeyword(status.trim(), keyword.trim(), pageable);
-            } else {
-                borrowPage = borrowRepository.findByStatus(status.trim(), pageable);
-            }
-        } else if (keyword != null && !keyword.trim().isEmpty()) {
-            borrowPage = borrowRepository.findByKeyword(keyword.trim(), pageable);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim();
+            memberPage = memberRepository.findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(kw, kw, kw, pageable);
         } else {
-            borrowPage = borrowRepository.findAll(pageable);
+            memberPage = memberRepository.findAll(pageable);
         }
 
         // Đổ toàn bộ tham số đồng bộ ra view borrow-list.html
-        model.addAttribute("borrows", borrowPage.getContent());
+        model.addAttribute("members", memberPage.getContent());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", borrowPage.getTotalPages());
-        model.addAttribute("totalItems", borrowPage.getTotalElements());
+        model.addAttribute("totalPages", memberPage.getTotalPages());
+        model.addAttribute("totalItems", memberPage.getTotalElements());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("status", status);
 
         return "librarian/borrow-list";
+    }
+
+    // Xem chi tiết lịch sử mượn trả & giao dịch tài chính của thành viên cụ thể
+    @GetMapping("/librarian/borrow/member/{memberId}")
+    public String viewMemberHistory(@PathVariable("memberId") Integer memberId, Model model) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy độc giả với ID: " + memberId));
+
+        // Lấy danh sách phiếu mượn của thành viên
+        List<Borrow> borrowHistory = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
+
+        // Lưu bản đồ các chi tiết sách và giao dịch theo từng phiếu mượn để Thymeleaf dễ lặp
+        Map<Integer, List<BorrowDetail>> detailsByBorrowId = new HashMap<>();
+        Map<Integer, List<Transaction>> transactionsByBorrowId = new HashMap<>();
+
+        for (Borrow borrow : borrowHistory) {
+            List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
+            detailsByBorrowId.put(borrow.getBorrowId(), details);
+
+            List<Transaction> transactions = transactionRepository.findByBorrow_BorrowId(borrow.getBorrowId());
+            transactionsByBorrowId.put(borrow.getBorrowId(), transactions);
+        }
+
+        // Lấy số dư ví thành viên
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(memberId)
+                .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
+                .orElse(BigDecimal.ZERO);
+
+        // Lấy tên đăng nhập tài khoản thành viên
+        String accountUsername = memberAccountRepository
+                .findByMember_User_Id(member.getUser().getId())
+                .map(acc -> acc.getUsername())
+                .orElse("N/A");
+        String accountStatus = memberAccountRepository
+                .findByMember_User_Id(member.getUser().getId())
+                .map(acc -> acc.getStatus())
+                .orElse("N/A");
+
+        model.addAttribute("member", member);
+        model.addAttribute("borrows", borrowHistory);
+        model.addAttribute("detailsByBorrowId", detailsByBorrowId);
+        model.addAttribute("transactionsByBorrowId", transactionsByBorrowId);
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("accountUsername", accountUsername);
+        model.addAttribute("accountStatus", accountStatus);
+        model.addAttribute("totalBorrows", borrowHistory.size());
+        model.addAttribute("completedBorrows", borrowHistory.stream()
+                .filter(b -> "Returned".equalsIgnoreCase(b.getStatus())).count());
+        model.addAttribute("activeBorrows", borrowHistory.stream()
+                .filter(b -> !"Returned".equalsIgnoreCase(b.getStatus())).count());
+
+        return "librarian/borrow-member-detail";
     }
 
     // Quầy mượn sách tích hợp đồng bộ danh sách online (Master-Detail) đúng mô hình chia đôi màn hình

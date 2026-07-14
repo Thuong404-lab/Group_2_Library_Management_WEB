@@ -7,6 +7,8 @@ import com.lms.dto.response.ReturnRequestDTO;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Reservation;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface BorrowService {
@@ -56,4 +58,9 @@ public interface BorrowService {
     int getMaxBorrowDays();
     void memberSubmitReturnRequest(String username, Integer borrowDetailId);
     void approveReturnRequest(Integer borrowId);
+    // Đăng ký mượn nhiều cuốn trực tuyến
+    Borrow memberSubmitMultiBookBorrowRequest(String username, List<Integer> bookIds, Integer numberOfDays);
+
+    // Tính toán xem trước phí mượn
+    BigDecimal calculateBorrowFeePreview(String username, List<Integer> bookIds, Integer numberOfDays);
 }

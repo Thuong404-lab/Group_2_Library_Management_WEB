@@ -8,6 +8,69 @@
     <style>
         .review-card { border-left: 3px solid #8b5a2b; }
         .write-review-box { border-left: 4px solid #8b5a2b; }
+
+        /* --- STYLE CỔ ĐIỂN MỚI BỔ SUNG --- */
+        .btn-classic-primary {
+            background-color: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+            color: #ffffff !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-primary:hover {
+            background-color: #74481f !important;
+            border-color: #74481f !important;
+            color: #ffffff !important;
+        }
+        .btn-classic-outline {
+            color: #8b5a2b !important;
+            border: 1px solid rgba(139, 90, 43, 0.5) !important;
+            background-color: transparent !important;
+            font-weight: 500;
+            border-radius: 6px !important;
+            transition: all 0.2s ease;
+        }
+        .btn-classic-outline:hover, .btn-classic-outline.active {
+            background-color: rgba(139, 90, 43, 0.08) !important;
+            border-color: #8b5a2b !important;
+            color: #8b5a2b !important;
+        }
+        .card-classic {
+            border: 1px solid rgba(139, 90, 43, 0.18) !important;
+            border-radius: 10px !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
+            overflow: hidden;
+        }
+        .card-header-classic {
+            background: rgba(139, 90, 43, 0.04) !important;
+            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
+            color: #4a3b32 !important;
+        }
+        .font-playfair {
+            font-family: 'Playfair Display', serif !important;
+        }
+        /* -------------------------------- */
+
+        /* ẨN NÚT TRÒN RADIO HOÀN TOÀN */
+        .btn-check {
+            position: absolute !important;
+            clip: rect(0,0,0,0) !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* TỰ ĐỘNG TÔ ĐẬM NÚT KHI ĐƯỢC CHỌN (CHECKED) */
+        .btn-check:checked + .btn-classic-outline {
+            background-color: #8b5a2b !important;
+            border-color: #8b5a2b !important;
+            color: #ffffff !important;
+        }
+
         .btn-classic-borrow {
             background-color: #8b5a2b !important;
             border-color: #8b5a2b !important;
@@ -65,357 +128,580 @@
 </head>
 
 <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
-        
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4 pt-3">
-            <ol class="breadcrumb bg-transparent p-0 mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none" style="color: #8b5a2b;"><i
-                            class="bi bi-house-door"></i> Sảnh chính</a></li>
-                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none" style="color: #8b5a2b;">Khám phá sách</a></li>
-                <li class="breadcrumb-item active fw-bold" aria-current="page" style="color: #4a3b32;" th:text="${book.title}">Tên sách</li>
-            </ol>
-        </nav>
+<div layout:fragment="content" class="container mt-4 mb-5">
 
+    <!-- Breadcrumb điều hướng -->
+    <nav aria-label="breadcrumb" class="mb-2 pt-3">
+        <ol class="breadcrumb bg-transparent p-0 mb-0">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none" style="color: #8b5a2b;">
+                    <i class="bi bi-house-door"></i> Sảnh chính
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/books" class="text-decoration-none" style="color: #8b5a2b;">Khám phá sách</a>
+            </li>
+            <li class="breadcrumb-item active fw-bold" aria-current="page" style="color: #4a3b32;" th:text="${book.title}">Tên sách</li>
+        </ol>
+    </nav>
 
-        <!-- Book Info -->
-        <div class="row mt-3 bg-white p-4 rounded shadow-sm">
-            <!-- Book Cover -->
-            <div class="col-md-4 text-center mb-4 mb-md-0">
-                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
-                     class="img-fluid rounded shadow" th:alt="${book.title}" style="max-height: 380px; object-fit: cover;">
-                <div class="mt-3">
+    <!-- Hộp thoại thông báo Hệ thống -->
+    <div class="mt-2 mb-3">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${successMessage}">Thông báo thành công</span>
+            <button type="button" class="close ml-auto" data-dismiss="alert" aria-label="Close" style="outline: none;">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" style="background-color: #fff5f5; color: #c53030;" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${errorMessage}">Thông báo lỗi</span>
+            <button type="button" class="close ml-auto" data-dismiss="alert" aria-label="Close" style="outline: none;">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
 
-                    <span th:class="${book.status == 'Active' ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
-                          th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}">Có sẵn</span>
+    <!-- Khối Chi tiết Sách -->
+    <div class="row mt-3 bg-white p-4 rounded shadow-sm">
+        <!-- Cột bên trái: Ảnh bìa & Trạng thái có sẵn -->
+        <div class="col-md-4 text-center mb-4 mb-md-0">
+            <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
+                 class="img-fluid rounded shadow" th:alt="${book.title}" style="max-height: 380px; object-fit: cover;">
+            <div class="mt-3">
+                <span th:class="${#strings.equalsIgnoreCase(book.status, 'Active') ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
+                      th:text="${#strings.equalsIgnoreCase(book.status, 'Active') ? 'Có sẵn' : 'Không có sẵn'}">Có sẵn</span>
+            </div>
+        </div>
+
+        <!-- Cột bên phải: Tông tin chi tiết -->
+        <div class="col-md-8">
+            <div class="badge mb-2" style="background:#8b5a2b;color:white;" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
+            <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;" th:text="${book.title}">Tên sách</h2>
+
+            <p class="text-muted fs-5 mb-3">
+                <span th:if="${book.authors != null && !book.authors.isEmpty()}" th:each="author, iterStat : ${book.authors}">
+                    <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
+                </span>
+                <span th:if="${book.authors == null || book.authors.isEmpty()}">Khuyết danh</span>
+            </p>
+
+            <!-- Chỉ số thống kê nhanh -->
+            <div class="d-flex gap-4 mb-4">
+                <div class="text-center mr-4">
+                    <div class="fw-bold fs-4" style="color:#ffc107;"
+                         th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' ★' : 'Chưa có'}">Chưa có</div>
+                    <div class="small text-muted">Điểm TB</div>
+                </div>
+                <div class="text-center mr-4">
+                    <div class="fw-bold fs-4" style="color:#8b5a2b;">320</div>
+                    <div class="small text-muted">Trang</div>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-4" style="color:#198754;">42</div>
+                    <div class="small text-muted">Lượt mượn</div>
                 </div>
             </div>
 
-            <!-- Book Details -->
-            <div class="col-md-8">
-                <div class="badge mb-2" style="background:#8b5a2b;color:white;" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
-                <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;" th:text="${book.title}">Tên sách</h2>
-                <p class="text-muted fs-5 mb-3">
-                    <span th:if="${book.authors != null && !book.authors.isEmpty()}"
-                          th:each="author, iterStat : ${book.authors}">
-                        <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
-                    </span>
-                    <span th:if="${book.authors == null || book.authors.isEmpty()}">Khuyết danh</span>
+            <div class="row mb-4">
+                <div class="col-sm-6">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></li>
+                        <li class="mb-2"><strong>Ngôn ngữ:</strong> Tiếng Việt</li>
+                        <li class="mb-2"><strong>Kho:</strong> Kho mượn đọc</li>
+                        <li class="mb-2"><strong>Vị trí:</strong> Kệ A - Ngăn 3</li>
+                    </ul>
+                </div>
+                <div class="col-sm-6">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Thể loại:</strong> <span th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}"></span></li>
+                        <li class="mb-2"><strong>Trạng thái:</strong> <span th:class="${#strings.equalsIgnoreCase(book.status, 'Active') ? 'badge bg-success' : 'badge bg-danger'}" th:text="${#strings.equalsIgnoreCase(book.status, 'Active') ? 'Có sẵn' : 'Không có sẵn'}"></span></li>
+                        <li class="mb-2">
+                            <strong>Đánh giá:</strong>
+                            <span class="text-warning">★</span>
+                            <span class="text-muted" th:text="${reviewCount > 0 ? '(' + #numbers.formatDecimal(averageRating, 1, 1) + ' / 5)' : '(Chưa có đánh giá)'}">(Chưa có đánh giá)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="fw-bold">Mô tả sách</h5>
+                <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : 'Đang cập nhật mô tả cho cuốn sách này...'}">
+                    Mô tả sách...
                 </p>
+            </div>
 
-                <!-- Stats -->
-                <div class="d-flex gap-4 mb-4">
-                    <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#ffc107;"
-                             th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' ★' : 'Chưa có'}">Chưa có</div>
-                        <div class="small text-muted">Điểm TB</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#8b5a2b;">320</div>
-                        <div class="small text-muted">Trang</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#198754;">42</div>
-                        <div class="small text-muted">Lượt mượn</div>
-                    </div>
-                </div>
+            <hr style="border-color: rgba(139,90,43,0.2);">
 
-                <div class="row mb-4">
-                    <div class="col-sm-6">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></li>
-                            <li class="mb-2"><strong>Ngôn ngữ:</strong> Tiếng Việt</li>
-                            <li class="mb-2"><strong>Kho:</strong> Kho mượn đọc</li>
-                            <li class="mb-2"><strong>Vị trí:</strong> Kệ A - Ngăn 3</li>
-                        </ul>
-                    </div>
-                    <div class="col-sm-6">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong>Thể loại:</strong> <span th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}"></span></li>
-                            <li class="mb-2"><strong>Trạng thái:</strong> <span th:class="${book.status == 'Active' ? 'badge bg-success' : 'badge bg-danger'}" th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}"></span></li>
-                            <li class="mb-2">
-                                <strong>Đánh giá:</strong>
-                                <span class="text-warning">★</span>
-                                <span class="text-muted" th:text="${reviewCount > 0 ? '(' + #numbers.formatDecimal(averageRating, 1, 1) + ' / 5)' : '(Chưa có đánh giá)'}">(Chưa có đánh giá)</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+            <!-- KHU VỰC CÁC NÚT HÀNH ĐỘNG (Đã sửa lỗi đóng thẻ, lặp thẻ) -->
+            <div class="d-flex mt-3 flex-wrap">
+                <!-- Nút yêu thích độc lập -->
+                <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
+                      method="post" class="mr-2 mb-2" style="flex: 1; min-width: 150px;" th:data-book-id="${book.bookId}">
+                    <button type="submit" th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
+                        <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
+                        <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                    </button>
+                </form>
 
-                <div class="mb-4">
-                    <h5 class="fw-bold">Mô tả sách</h5>
-                    <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : 'Đang cập nhật mô tả cho cuốn sách này...'}">
-                        Mô tả sách...
-                    </p>
-                </div>
-
-                <hr style="border-color: rgba(139,90,43,0.2);">
-
-                <!-- Action Buttons -->
-                <div class="d-flex mt-3 flex-wrap">
-                    <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
-                          method="post"
-                          class="flex-grow-1 favorite-form mr-2 mb-2"
-                          th:data-book-id="${book.bookId}">
-                        <button type="submit"
-                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
-                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
-                            <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                <!-- Nút thêm vào giỏ hàng cho Member -->
+                <div sec:authorize="hasRole('MEMBER')" class="mr-2 mb-2" style="flex: 1; min-width: 150px;">
+                    <form th:action="@{/member/cart/add}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.bookId}">
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2" th:disabled="${!#strings.equalsIgnoreCase(book.status, 'Active')}">
+                            <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
                         </button>
                     </form>
+                </div>
 
-                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
+                <!-- Nút thêm vào giỏ hàng cho Guest (Chuyển hướng đến đăng nhập) -->
+                <div sec:authorize="!hasRole('MEMBER')" class="mr-2 mb-2" style="flex: 1; min-width: 150px;">
+                    <form th:action="@{/login}" method="get">
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2" th:disabled="${!#strings.equalsIgnoreCase(book.status, 'Active')}" th:title="'Yêu cầu đăng nhập để thêm vào giỏ'">
+                            <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Nút đặt trước cho Member -->
+                <div sec:authorize="hasRole('MEMBER')" class="mr-2 mb-2" style="flex: 1; min-width: 150px;">
+                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post">
                         <button type="submit" class="btn btn-outline-classic w-100 py-2">
                             <i class="bi bi-bookmark me-1"></i> Đặt trước
                         </button>
                     </form>
+                </div>
 
-                    <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
-                        <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? 'Sách hiện không có sẵn' : ''}">
-                            <i class="bi bi-book me-1"></i> Yêu cầu mượn
+                <!-- Nút đặt trước cho Guest (Chuyển hướng đến đăng nhập) -->
+                <div sec:authorize="!hasRole('MEMBER')" class="mr-2 mb-2" style="flex: 1; min-width: 150px;">
+                    <form th:action="@{/login}" method="get">
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2" th:title="'Yêu cầu đăng nhập để đặt trước'">
+                            <i class="bi bi-bookmark me-1"></i> Đặt trước
                         </button>
                     </form>
                 </div>
+
+                <!-- Nút đăng ký mượn sách -->
+                <div class="mb-2" style="flex: 1.5; min-width: 180px;">
+                    <!-- Đăng ký mượn với tư cách thành viên đăng nhập -->
+                    <div sec:authorize="hasRole('MEMBER')">
+                        <button type="button"
+                                class="btn btn-classic-borrow w-100 py-2 fw-bold text-white"
+                                id="openBorrowModalBtn"
+                                style="background-color: #8b5a2b;"
+                                th:disabled="${!#strings.equalsIgnoreCase(book.status, 'Active')}"
+                                th:title="${!#strings.equalsIgnoreCase(book.status, 'Active') ? 'Sách hiện không có sẵn' : 'Đăng ký mượn sách trực tuyến'}">
+                            <i class="bi bi-book me-1"></i> Yêu cầu mượn
+                        </button>
+                    </div>
+
+                    <!-- Yêu cầu đăng nhập khi chưa là thành viên -->
+                    <div sec:authorize="!hasRole('MEMBER')">
+                        <form th:action="@{/login}" method="get">
+                            <button type="submit"
+                                    class="btn btn-classic-borrow w-100 py-2 fw-bold text-white"
+                                    style="background-color: #8b5a2b;"
+                                    th:disabled="${!#strings.equalsIgnoreCase(book.status, 'Active')}"
+                                    th:title="${!#strings.equalsIgnoreCase(book.status, 'Active') ? 'Sách hiện không có sẵn' : 'Yêu cầu đăng nhập để đăng ký mượn'}">
+                                <i class="bi bi-book me-1"></i> Yêu cầu mượn
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phần Bình Luận và Đánh Giá Sách -->
+    <div class="mt-5">
+        <h4 class="fw-bold mb-4" style="font-family:'Playfair Display',serif; color:#4a3b32;">
+            <i class="bi bi-chat-square-quote-fill me-2" style="color:#8b5a2b;"></i>
+            Đánh giá từ bạn đọc
+            <span class="badge bg-secondary ms-2 fs-6 text-white" th:text="${reviewCount}">0</span>
+        </h4>
+
+        <!-- Khung viết đánh giá cho Member -->
+        <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')">
+            <h5 class="fw-bold mb-4" style="color:#4a3b32;">
+                <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Gửi đánh giá sách
+            </h5>
+            <form id="bookDetailReviewForm"
+                  th:action="@{'/member/interaction/books/' + ${book.bookId} + '/reviews'}"
+                  th:object="${reviewRequest}"
+                  method="post"
+                  novalidate>
+                <input type="hidden" th:field="*{bookId}" th:value="${book.bookId}">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Số sao</label>
+                    <input type="hidden" th:field="*{rating}" id="ratingValue">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div class="rating-picker" id="memberRatingPicker" role="radiogroup" aria-label="Chon so sao">
+                            <button type="button" class="rating-star" data-value="1" role="radio" aria-label="1 sao" aria-checked="false" style="background:none; border:none; color:#ccc; font-size:1.5rem;"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="2" role="radio" aria-label="2 sao" aria-checked="false" style="background:none; border:none; color:#ccc; font-size:1.5rem;"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="3" role="radio" aria-label="3 sao" aria-checked="false" style="background:none; border:none; color:#ccc; font-size:1.5rem;"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="4" role="radio" aria-label="4 sao" aria-checked="false" style="background:none; border:none; color:#ccc; font-size:1.5rem;"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="5" role="radio" aria-label="5 sao" aria-checked="false" style="background:none; border:none; color:#ccc; font-size:1.5rem;"><i class="bi bi-star-fill"></i></button>
+                        </div>
+                    </div>
+                    <div id="ratingFeedback" class="text-danger small mt-1"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Bình luận</label>
+                    <textarea class="form-control" rows="5" th:field="*{comment}" maxlength="1000" placeholder="Nhập nội dung đánh giá của bạn về cuốn sách này..."></textarea>
+                    <div class="text-danger small mt-1" th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}"></div>
+                </div>
+
+                <button type="submit" class="btn text-white px-4" style="background:#8b5a2b">Gửi đánh giá</button>
+            </form>
+        </div>
+
+        <!-- Yêu cầu đăng nhập khi chưa có Role Member để Review -->
+        <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="!hasRole('MEMBER')">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h5 class="fw-bold mb-1" style="color:#4a3b32;">Viết đánh giá của bạn</h5>
+                    <div class="text-muted">Vui lòng đăng nhập bằng tài khoản độc giả để chia sẻ trải nghiệm đọc cuốn sách này.</div>
+                </div>
+                <a th:href="@{/login}" class="btn text-white px-4" style="background-color:#8b5a2b;">Đăng nhập</a>
             </div>
         </div>
 
-        <!-- ====================== REVIEWS SECTION ====================== -->
-        <div class="mt-5">
-            <h4 class="fw-bold mb-4" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-chat-square-quote-fill me-2" style="color:#8b5a2b;"></i>
-                Đánh giá từ bạn đọc
-                <span class="badge bg-secondary ms-2 fs-6" th:text="${reviewCount}">0</span>
-            </h4>
+        <!-- Danh sách Đánh giá có sẵn -->
+        <div th:if="${bookReviews == null || bookReviews.isEmpty()}" class="bg-white rounded shadow-sm p-4 text-center text-muted">
+            Chưa có đánh giá nào cho cuốn sách này. Hãy là người đầu tiên chia sẻ cảm xúc!
+        </div>
 
-            <!-- Form viết review cho member -->
-            <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
-            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+        <div th:each="review : ${bookReviews}" class="bg-white rounded shadow-sm p-4 mb-3 review-card">
+            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                         style="width:44px;height:44px;background:#8b5a2b;font-size:1.1rem;"
+                         th:text="${review.member != null && review.member.user != null && !#strings.isEmpty(review.member.user.fullName) ? #strings.substring(review.member.user.fullName, 0, 1) : '?'}">N</div>
+                    <div>
+                        <div class="fw-bold" th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : 'Bạn đọc'}">Bạn đọc</div>
+                        <div class="small text-muted" th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}">15/06/2026</div>
+                    </div>
+                </div>
+                <div class="text-warning fs-5">
+                    <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
+                    <span class="text-muted small ms-1" th:text="${review.rating + '/5'}">5/5</span>
+                </div>
+            </div>
+            <p class="mb-0 text-muted lh-lg" th:text="${review.comment}">
+                Nội dung bình luận...
+            </p>
+        </div>
+    </div>
 
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')">
-                <h5 class="fw-bold mb-4" style="color:#4a3b32;">
-                    <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Gửi đánh giá sách
-                </h5>
-                <form id="bookDetailReviewForm"
-                      th:action="@{'/member/interaction/books/' + ${book.bookId} + '/reviews'}"
-                      th:object="${reviewRequest}"
-                      method="post"
-                      novalidate>
-                    <input type="hidden" th:field="*{bookId}" th:value="${book.bookId}">
+    <!-- MODAL ĐĂNG KÝ PHIẾU MƯỢN TRỰC TUYẾN (Đã cập nhật giao diện tài chính trực quan) -->
+    <div sec:authorize="hasRole('MEMBER')" class="modal fade" id="borrowModal" tabindex="-1" aria-labelledby="borrowModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius:15px; overflow:hidden;">
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Số sao</label>
-                        <input type="hidden" th:field="*{rating}" id="ratingValue">
-                        <div class="d-flex align-items-center flex-wrap gap-2">
-                            <div class="rating-picker"
-                                 id="memberRatingPicker"
-                                 role="radiogroup"
-                                 aria-label="Chon so sao">
-                                <button type="button" class="rating-star" data-value="1" role="radio" aria-label="1 sao" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="2" role="radio" aria-label="2 sao" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="3" role="radio" aria-label="3 sao" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="4" role="radio" aria-label="4 sao" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="5" role="radio" aria-label="5 sao" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
+                <div class="modal-header text-white p-4" style="background: linear-gradient(135deg, #4a3b32 0%, #8b5a2b 100%);">
+                    <h5 class="modal-title font-playfair fw-bold mb-0" id="borrowModalLabel">
+                        <i class="bi bi-journal-bookmark-fill me-2"></i>Phiếu Đăng Ký Mượn Sách
+                    </h5>
+                    <button type="button" class="close text-white" id="closeHeaderBtn" style="outline: none; font-size:1.5rem; background:none; border:none;">&times;</button>
+                </div>
+
+                <form th:action="@{/member/borrow/request/submit}" method="post" id="borrowRequestForm">
+                    <input type="hidden" name="bookId" th:value="${book.bookId}" />
+
+                    <div class="modal-body p-4" style="background-color: #fdfbf7;">
+
+                        <!-- 1. Tên Đăng Ký -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase" style="letter-spacing: 0.5px;">Tài khoản độc giả</label>
+                            <div class="input-group">
+                                <span class="input-group-text border-end-0 bg-white text-muted"><i class="bi bi-person-fill"></i></span>
+                                <input type="text" class="form-control border-start-0 bg-white text-dark fw-semibold" th:value="${#authentication.name}" readonly />
                             </div>
                         </div>
-                        <div id="ratingFeedback" class="invalid-feedback d-block"></div>
-                    </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Bình luận</label>
-                        <textarea class="form-control"
-                                  rows="5"
-                                  th:field="*{comment}"
-                                  maxlength="1000"
-                                  placeholder="Nhập nội dung đánh giá"></textarea>
-                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}"></div>
-                    </div>
+                        <!-- 2. Thông Tin Sách Được Mượn -->
+                        <div class="mb-3 p-3 rounded-3 bg-white shadow-sm border" style="border-color: rgba(139, 90, 43, 0.15) !important;">
+                            <label class="form-label fw-bold small text-muted text-uppercase d-block mb-1" style="letter-spacing: 0.5px;">Ấn phẩm lựa chọn</label>
+                            <span class="fw-bold d-block text-dark fs-6" th:text="${book.title}">Tên sách</span>
+                            <span class="small text-muted d-block mt-1">
+                                <strong class="text-dark">ISBN:</strong> <span class="font-monospace" th:text="${book.isbn}">ISBN</span>
+                            </span>
+                        </div>
 
-                    <button type="submit" class="btn text-white px-4" style="background:#8b5a2b">
-                        Gửi đánh giá
-                    </button>
+                        <!-- 3. Chọn kỳ hạn thời gian -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-muted text-uppercase" style="letter-spacing: 0.5px;">Thời hạn mượn</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check d-none" name="numberOfDays" id="term7" value="7" autocomplete="off" />
+                                    <label class="btn btn-outline-classic w-100 py-2 fs-6 text-center" for="term7" style="border-radius:10px; cursor:pointer;">7 Ngày</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check d-none" name="numberOfDays" id="term14" value="14" autocomplete="off" checked />
+                                    <label class="btn btn-outline-classic w-100 py-2 fs-6 text-center active" for="term14" style="border-radius:10px; cursor:pointer;">14 Ngày</label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check d-none" name="numberOfDays" id="term30" value="30" autocomplete="off" />
+                                    <label class="btn btn-outline-classic w-100 py-2 fs-6 text-center" for="term30" style="border-radius:10px; cursor:pointer;">30 Ngày</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. KHỐI TÀI CHÍNH TÍNH PHÍ XEM TRƯỚC VÀ KIỂM TRA SỐ DƯ -->
+                        <div class="border-top pt-3" style="border-color: rgba(139, 90, 43, 0.15) !important;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Quyển / ngày:</span>
+                                <span class="fw-bold" th:text="${#numbers.formatDecimal(borrowFeePerDay, 0, 'POINT', 0, 'COMMA') + 'đ'}">5,000đ</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="${discountPercent > 0}">
+                                <span class="text-muted">Ưu đãi cấp độ thẻ:</span>
+                                <span class="text-success fw-bold" th:text="${'-' + discountPercent + '%'}">-10%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Số dư ví khả dụng:</span>
+                                <span class="fw-bold" style="color:#198754;" th:text="${#numbers.formatDecimal(walletBalance, 0, 'POINT', 0, 'COMMA') + 'đ'}">0đ</span>
+                            </div>
+                            <hr style="border-top:1px dashed rgba(139, 90, 43, 0.2);">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0" style="color: #4a3b32;">Tổng phí dự kiến:</h5>
+                                <h4 class="fw-bold mb-0 text-danger" id="modalPreviewFee">0đ</h4>
+                            </div>
+
+                            <!-- Cảnh báo nếu số dư ví không đủ điều kiện -->
+                            <div id="modalWalletAlert" class="alert alert-warning border-0 d-none" style="background-color: #fff9db; color: #b25e00; border-radius:8px;">
+                                <i class="bi bi-wallet2 me-2"></i> Số dư trong ví hiện tại không đủ thanh toán phí mượn. Vui lòng nạp thêm tiền!
+                            </div>
+                        </div>
+
+                    </div>
                 </form>
-            </div>
 
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="!hasRole('MEMBER')">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div>
-                        <h5 class="fw-bold mb-1" style="color:#4a3b32;">Viết đánh giá của bạn</h5>
-                        <div class="text-muted">Vui lòng đăng nhập bằng tài khoản member để gửi đánh giá.</div>
-                    </div>
-                    <a th:href="@{/login}" class="btn text-white px-4" style="background-color:#8b5a2b;">Đăng nhập</a>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2" style="background-color: #fdfbf7;">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1" id="closeBorrowModalBtn" style="border-radius:10px;">Hủy bỏ</button>
+                    <button type="button" class="btn text-white flex-grow-1 font-weight-bold" id="submitBorrowRequestBtn" style="background-color:#8b5a2b; border-radius:10px;" onclick="document.getElementById('borrowRequestForm').submit();">Gửi yêu cầu phê duyệt</button>
                 </div>
-            </div>
 
-            <div th:if="${bookReviews == null || bookReviews.isEmpty()}"
-                 class="bg-white rounded shadow-sm p-4 text-center text-muted">
-                Chưa có đánh giá nào cho cuốn sách này.
-            </div>
-
-            <!-- Danh sách reviews từ DB -->
-            <!-- Review 1 -->
-            <div th:each="review : ${bookReviews}" class="bg-white rounded shadow-sm p-4 mb-3 review-card">
-                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#8b5a2b;font-size:1.1rem;"
-                             th:text="${review.member != null && review.member.user != null && !#strings.isEmpty(review.member.user.fullName) ? #strings.substring(review.member.user.fullName, 0, 1) : '?'}">N</div>
-                        <div>
-                            <div class="fw-bold" th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : 'Bạn đọc'}">Bạn đọc</div>
-                            <div class="small text-muted" th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}">15/06/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">
-                        <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
-                        <span class="text-muted small ms-1" th:text="${review.rating + '/5'}">5/5</span>
-                    </div>
-                </div>
-                <p class="mb-0 text-muted lh-lg" th:text="${review.comment}">
-                    Cuốn sách cực kỳ hay và bổ ích! Tôi đã đọc nhiều lần và mỗi lần đều rút ra được những bài học mới.
-                    Nguyên tắc của Dale Carnegie áp dụng được trong cả công việc lẫn cuộc sống hàng ngày.
-                    Rất đáng để đọc, đặc biệt là với những ai đang muốn cải thiện kỹ năng giao tiếp.
-                </p>
-            </div>
-
-            <!-- Review 2 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card" th:remove="all">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#4a3b32;font-size:1.1rem;">T</div>
-                        <div>
-                            <div class="fw-bold">Trần Thị Bình</div>
-                            <div class="small text-muted">20/05/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★<span style="color:#ccc;">★</span> <span class="text-muted small ms-1">4/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    Sách viết rất dễ đọc, nhiều ví dụ thực tế sinh động. Tuy nhiên một số nội dung có vẻ hơi cũ so với thời đại hiện nay.
-                    Nhìn chung vẫn là một cuốn sách đáng đọc và để trong tủ sách của mình.
-                </p>
-            </div>
-
-            <!-- Review 3 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card" th:remove="all">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#6c757d;font-size:1.1rem;">L</div>
-                        <div>
-                            <div class="fw-bold">Lê Minh Khoa</div>
-                            <div class="small text-muted">02/04/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    Kinh điển trong thể loại phát triển bản thân. Tôi đã nghe nhiều người khuyên đọc và giờ đọc xong thì thấy
-                    họ khuyên đúng! Nội dung đơn giản, dễ áp dụng, hiệu quả thực sự.
-                </p>
             </div>
         </div>
-        <!-- ====================== END REVIEWS ====================== -->
-
     </div>
 
-    <div layout:fragment="scripts">
-        <script>
-            (function() {
-                const reviewForm = document.getElementById("bookDetailReviewForm");
-                const ratingPicker = document.getElementById("memberRatingPicker");
-                const ratingStars = Array.from(
-                    document.querySelectorAll("#memberRatingPicker .rating-star")
-                );
-                const ratingInput = document.getElementById("ratingValue");
+</div>
 
-                if (reviewForm == null || ratingPicker == null || ratingInput == null) {
+<!-- KHU VỰC JAVASCRIPT HÀNH VI -->
+<div layout:fragment="scripts">
+    <!-- KHAI BÁO SCRIPT INLINE ĐỂ NHẬN BIẾN THYMELEAF AN TOÀN -->
+    <script th:inline="javascript">
+        (function() {
+            const reviewForm = document.getElementById("bookDetailReviewForm");
+            const ratingPicker = document.getElementById("memberRatingPicker");
+            const ratingStars = Array.from(
+                document.querySelectorAll("#memberRatingPicker .rating-star")
+            );
+            const ratingInput = document.getElementById("ratingValue");
+
+            if (reviewForm == null || ratingPicker == null || ratingInput == null) {
+                return;
+            }
+
+            function updateRatingStars(value) {
+                ratingStars.forEach((star) => {
+                    const starValue = Number(star.dataset.value);
+                    const isActive = starValue <= value;
+                    if (isActive) {
+                        star.style.color = "#ffc107";
+                    } else {
+                        star.style.color = "#ccc";
+                    }
+                    star.setAttribute("aria-checked", String(starValue === value));
+                });
+            }
+
+            function setRatingError(message) {
+                ratingPicker.classList.add("is-invalid");
+                const feedback = document.getElementById("ratingFeedback");
+                if (feedback != null) {
+                    feedback.textContent = message;
+                }
+            }
+
+            function clearRatingError() {
+                ratingPicker.classList.remove("is-invalid");
+                const feedback = document.getElementById("ratingFeedback");
+                if (feedback != null) {
+                    feedback.textContent = "";
+                }
+            }
+
+            function setRating(value) {
+                ratingInput.value = value || "";
+                updateRatingStars(value);
+                clearRatingError();
+            }
+
+            ratingStars.forEach((star) => {
+                star.addEventListener("click", function() {
+                    setRating(Number(this.dataset.value));
+                });
+                star.addEventListener("mouseenter", function() {
+                    updateRatingStars(Number(this.dataset.value));
+                });
+            });
+
+            ratingPicker.addEventListener("mouseleave", function() {
+                updateRatingStars(Number(ratingInput.value) || 0);
+            });
+
+            reviewForm.addEventListener("submit", function(event) {
+                if (ratingInput.value.trim() === "") {
+                    setRatingError("Vui lòng chọn đánh giá sao.");
+                    event.preventDefault();
+                    event.stopPropagation();
                     return;
                 }
-
-                function updateRatingStars(value) {
-                    ratingStars.forEach((star) => {
-                        const starValue = Number(star.dataset.value);
-                        const isActive = starValue <= value;
-                        star.classList.toggle("active", isActive);
-                        star.setAttribute("aria-checked", String(starValue === value));
-                    });
-                }
-
-                function setRatingError(message) {
-                    ratingPicker.classList.add("is-invalid");
-                    const feedback = document.getElementById("ratingFeedback");
-
-                    if (feedback != null) {
-                        feedback.textContent = message;
-                    }
-                }
-
-                function clearRatingError() {
-                    ratingPicker.classList.remove("is-invalid");
-                    const feedback = document.getElementById("ratingFeedback");
-
-                    if (feedback != null) {
-                        feedback.textContent = "";
-                    }
-                }
-
-                function setRating(value) {
-                    ratingInput.value = value || "";
-                    updateRatingStars(value);
-                    clearRatingError();
-                }
-
-                ratingStars.forEach((star) => {
-                    star.addEventListener("click", function() {
-                        setRating(Number(this.dataset.value));
-                    });
-
-                    star.addEventListener("mouseenter", function() {
-                        updateRatingStars(Number(this.dataset.value));
-                    });
-                });
-
-                ratingPicker.addEventListener("mouseleave", function() {
-                    updateRatingStars(Number(ratingInput.value) || 0);
-                });
-
-                reviewForm.addEventListener("submit", function(event) {
-                    if (ratingInput.value.trim() === "") {
-                        setRatingError("Vui lòng chọn đánh giá sao.");
-                        event.preventDefault();
-                        event.stopPropagation();
-                        return;
-                    }
-
-                    const comment = reviewForm.querySelector("[name='comment']");
-                    if (comment != null && comment.value.trim() === "") {
-                        comment.classList.add("is-invalid");
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                });
-
                 const comment = reviewForm.querySelector("[name='comment']");
-                if (comment != null) {
-                    comment.addEventListener("input", function() {
-                        this.classList.remove("is-invalid");
-                    });
+                if (comment != null && comment.value.trim() === "") {
+                    comment.classList.add("is-invalid");
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
+            });
 
-                setRating(Number(ratingInput.value) || 0);
-            })();
-        </script>
-    </div>
+            const comment = reviewForm.querySelector("[name='comment']");
+            if (comment != null) {
+                comment.addEventListener("input", function() {
+                    this.classList.remove("is-invalid");
+                });
+            }
+
+            setRating(Number(ratingInput.value) || 0);
+        })();
+
+        // Bootstrap Modal Management (Tương thích đồng thời Bootstrap 4 và Bootstrap 5)
+        document.addEventListener("DOMContentLoaded", function () {
+            var modalEl = document.getElementById('borrowModal');
+            var openBtn = document.getElementById('openBorrowModalBtn');
+            var closeBtn = document.getElementById('closeBorrowModalBtn');
+            var closeHeaderBtn = document.getElementById('closeHeaderBtn');
+
+            if (!modalEl) return;
+
+            function showModal() {
+                if (window.$ && typeof $.fn.modal === 'function') {
+                    $('#borrowModal').modal('show');
+                } else if (window.bootstrap && bootstrap.Modal) {
+                    var bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    bsModal.show();
+                } else {
+                    modalEl.classList.add('show');
+                    modalEl.style.display = 'block';
+                    modalEl.style.background = 'rgba(0,0,0,0.5)';
+                    document.body.classList.add('modal-open');
+                }
+            }
+
+            function hideModal() {
+                if (window.$ && typeof $.fn.modal === 'function') {
+                    $('#borrowModal').modal('hide');
+                } else if (window.bootstrap && bootstrap.Modal) {
+                    var bsModal = bootstrap.Modal.getInstance(modalEl);
+                    if (bsModal) bsModal.hide();
+                } else {
+                    modalEl.classList.remove('show');
+                    modalEl.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                }
+            }
+
+            if (openBtn) {
+                openBtn.addEventListener('click', showModal);
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', hideModal);
+            }
+            if (closeHeaderBtn) {
+                closeHeaderBtn.addEventListener('click', hideModal);
+            }
+
+            modalEl.addEventListener('click', function (e) {
+                if (e.target === modalEl) {
+                    hideModal();
+                }
+            });
+        });
+
+        // Xử lý logic Real-time Preview phí mượn sách đơn lẻ
+        document.addEventListener("DOMContentLoaded", function() {
+            const previewFeeText = document.getElementById("modalPreviewFee");
+            const walletAlert = document.getElementById("modalWalletAlert");
+            const submitBtn = document.getElementById("submitBorrowRequestBtn");
+
+            // Truy xuất dữ liệu động từ Thymeleaf Model map an toàn vào JS
+            const baseFeePerDay = /*[[${borrowFeePerDay != null ? borrowFeePerDay : 5000}]]*/ 5000;
+            const discountPercent = /*[[${discountPercent != null ? discountPercent : 0.0}]]*/ 0.0;
+            const walletBalance = /*[[${walletBalance != null ? walletBalance : 0.0}]]*/ 0.0;
+
+            function updateModalBorrowFee() {
+                const checkedRadio = document.querySelector("input[name='numberOfDays']:checked");
+                if (!checkedRadio || !previewFeeText) return;
+
+                // Cập nhật trạng thái active cho label các button radio thời hạn
+                document.querySelectorAll("input[name='numberOfDays']").forEach(radio => {
+                    const label = document.querySelector(`label[for='${radio.id}']`);
+                    if(label) {
+                        if(radio.checked) {
+                            label.classList.add('active');
+                            label.style.backgroundColor = '#8b5a2b';
+                            label.style.color = '#fff';
+                        } else {
+                            label.classList.remove('active');
+                            label.style.backgroundColor = 'transparent';
+                            label.style.color = '#8b5a2b';
+                        }
+                    }
+                });
+
+                const days = parseInt(checkedRadio.value);
+                const rawFee = days * baseFeePerDay;
+                const finalFee = rawFee * (1 - (discountPercent / 100));
+
+                previewFeeText.textContent = Math.round(finalFee).toLocaleString('vi-VN') + "đ";
+
+                // Kiểm tra điều kiện khả dụng tài chính của ví thành viên
+                if (walletBalance < finalFee) {
+                    if (walletAlert) walletAlert.classList.remove("d-none");
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = "0.5";
+                        submitBtn.style.cursor = "not-allowed";
+                    }
+                } else {
+                    if (walletAlert) walletAlert.classList.add("d-none");
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = "1";
+                        submitBtn.style.cursor = "pointer";
+                    }
+                }
+            }
+
+            // Lắng nghe thay đổi khi bấm nút chọn ngày
+            document.querySelectorAll("input[name='numberOfDays']").forEach(radio => {
+                radio.addEventListener("change", updateModalBorrowFee);
+            });
+
+            // Gọi tính toán ngay lần đầu tiên mở modal để thông số hiển thị chuẩn xác
+            const openModalBtn = document.getElementById("openBorrowModalBtn");
+            if(openModalBtn) {
+                openModalBtn.addEventListener("click", function() {
+                    setTimeout(updateModalBorrowFee, 150);
+                });
+            }
+        });
+    </script>
+</div>
 </body>
 </html>

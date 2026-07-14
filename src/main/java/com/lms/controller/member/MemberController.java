@@ -21,15 +21,9 @@ public class MemberController {
     }
 
     @GetMapping("/borrow")
-    public String borrow(Principal principal, Model model) {
+    public String borrow(Principal principal) {
         if (principal == null) return "redirect:/login";
-        String username = principal.getName();
-        
-        model.addAttribute("activeBorrows", borrowDetailRepository.findActiveBorrowDetailsByUsername(username));
-        model.addAttribute("reservations", reservationRepository.findReservationsByUsername(username));
-        model.addAttribute("historyBorrows", borrowDetailRepository.findReturnedBorrowDetailsByUsername(username));
-        
-        return "member/borrow";
+        return "redirect:/member/borrow/management?tab=borrowing";
     }
 
     @GetMapping("/wallet")

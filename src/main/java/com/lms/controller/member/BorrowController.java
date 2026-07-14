@@ -55,7 +55,9 @@ public class BorrowController {
         this.systemSettingRepository = systemSettingRepository;
     }
 
+
     @GetMapping("/management")
+
     public String viewBorrowManagement(@RequestParam(value = "tab", defaultValue = "borrowing") String tab,
                                        Principal principal,
                                        Model model) {
@@ -83,33 +85,39 @@ public class BorrowController {
 
     @GetMapping("/create")
     public String showCreateRequestForm(@RequestParam(value = "bookId", required = false) Integer bookId,
-                                        Model model,
-                                        Principal principal,
-                                        RedirectAttributes redirectAttributes) {
+                                        Model model, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
-
         if (bookId == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn sách trước khi gửi yêu cầu mượn.");
             return "redirect:/";
         }
 
-        model.addAttribute("currentMemberName", principal.getName());
-        model.addAttribute("selectedBookId", bookId);
-
         try {
             Book book = bookService.findBookById(bookId);
             if ("Inactive".equalsIgnoreCase(book.getStatus())) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không có sẵn để mượn!");
-                return "redirect:/";
+                return "redirect:/books/" + bookId;
             }
+
+            Member member = getCurrentMember(principal);
+            BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                    .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance()).orElse(BigDecimal.ZERO);
+            double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                    ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+
             model.addAttribute("selectedBook", book);
+            model.addAttribute("walletBalance", walletBalance);
+            model.addAttribute("discountPercent", discountPercent);
+            model.addAttribute("borrowFeePerDay", 5000); // Phí cơ bản hệ thống
+
+            return "member/borrow-create";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");
             return "redirect:/";
         }
-        return "member/borrow-create";
     }
 
+    // [CẢI TIẾN QUAN TRỌNG] Sửa đổi xử lý Redirect khi gặp lỗi nghiệp vụ mượn sách
     @PostMapping("/request/submit")
     public String submitBorrowRequest(@RequestParam(value = "bookId", required = false) Integer bookId,
                                       @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
@@ -122,11 +130,12 @@ public class BorrowController {
         }
         try {
             borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của ban đang chờ phê duyệt.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của bạn đang chờ phê duyệt.");
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
+            // [THAY ĐỔI] Thay vì redirect về form tạo mượn rườm rà, đưa người dùng quay lại thẳng trang chi tiết của cuốn sách vừa chọn
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
-            return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
+            return "redirect:/books/" + bookId;
         }
     }
 
@@ -157,14 +166,12 @@ public class BorrowController {
         }
     }
 
-    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
                               Principal principal,
                               RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            // Chuyển đổi từ memberFavoriteService sang borrowService để chạy đúng nghiệp vụ Quản lý đặt sách
             borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
             redirectAttributes.addFlashAttribute("successMessage", "Đặt trước sách thành công! Đơn của bạn đang chờ thủ thư xử lý.");
         } catch (Exception e) {
