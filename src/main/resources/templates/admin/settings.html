@@ -144,6 +144,47 @@
 
                 <div class="col-12 settings-section-title">
                     <h6 class="fw-bold text-classic mb-0">
+                        <i class="bi bi-award me-1"></i>
+                        Giới hạn theo hạng thành viên
+                    </h6>
+                </div>
+
+                <div class="col-12" th:if="${#lists.isEmpty(membershipTiers)}">
+                    <div class="alert alert-warning mb-0">
+                        Chưa có hạng thành viên để cấu hình.
+                    </div>
+                </div>
+
+                <div class="col-md-6" th:each="tier : ${membershipTiers}">
+                    <div class="border rounded-3 p-3 h-100">
+                        <h6 class="fw-bold text-classic mb-3" th:text="${tier.tierName}">Hạng thành viên</h6>
+                        <input type="hidden" name="tierIds" th:value="${tier.tierId}">
+
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            Số sách được mượn tối đa
+                        </label>
+                        <input name="tierBorrowLimits"
+                               type="number"
+                               class="form-control mb-3"
+                               min="1"
+                               required
+                               th:value="${tier.borrowLimit != null ? tier.borrowLimit : 1}">
+
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            Mức chi tiêu để đạt hạng
+                        </label>
+                        <input name="tierSpendingConditions"
+                               type="text"
+                               inputmode="numeric"
+                               class="form-control money-input"
+                               required
+                               th:value="${tier.condition != null ? tier.condition : 0}">
+                        <div class="form-text">VNĐ</div>
+                    </div>
+                </div>
+
+                <div class="col-12 settings-section-title">
+                    <h6 class="fw-bold text-classic mb-0">
                         <i class="bi bi-cash-coin me-1"></i>
                         Bảng giá và phí phạt
                     </h6>
