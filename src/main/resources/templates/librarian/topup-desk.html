@@ -24,6 +24,7 @@
         <div class="row g-4">
             <div class="col-lg-7">
                 <form method="post" th:action="@{/librarian/members/topup}" id="topupForm"
+                    th:attr="data-payos-action=@{/librarian/payments/payos/top-up}"
                     class="card-classic finance-card p-4 mb-4">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
@@ -66,9 +67,9 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold small text-muted text-uppercase">Số tiền nạp</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" name="amount" id="topupAmount"
-                                th:value="${amount != null ? amount : ''}" placeholder="Nhập số tiền" min="10000"
-                                step="10000">
+                            <input type="text" inputmode="numeric" class="form-control" name="amount" id="topupAmount"
+                                th:value="${amount != null ? amount : ''}" placeholder="Nhập số tiền"
+                                data-vnd-input data-min-amount="10000" autocomplete="off">
                             <span class="input-group-text fw-bold" style="background:#fdf5ec;color:#8b5a2b;">VNĐ</span>
                         </div>
                         <div id="topupAmountRequired" class="invalid-feedback">
@@ -96,13 +97,20 @@
                                     Tiền mặt
                                 </label>
                             </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payMethod" id="payTransfer"
+                                    value="transfer">
+                                <label class="form-check-label fw-bold" for="payTransfer">
+                                    Chuyển khoản KQPay
+                                </label>
+                            </div>
                         </div>
                     </div>
 
                     <div class="finance-actions d-flex">
                         <button type="reset" class="btn btn-light border flex-grow-1">Hủy</button>
-                        <button type="submit" class="btn btn-confirm-topup flex-grow-1">
-                            Xác nhận nạp tiền
+                        <button type="submit" class="btn btn-confirm-topup flex-grow-1" id="topupSubmitButton">
+                            <span>Xác nhận thanh toán</span>
                         </button>
                     </div>
                 </form>
@@ -225,6 +233,7 @@
 
             const topupForm = document.getElementById("topupForm");
             if (topupForm != null) {
+                const cashAction = topupForm.getAttribute("action");
                 topupForm.addEventListener("submit", function (event) {
                     let isValid = true;
                     if (!document.querySelector(".topup-member-checkbox:checked")) {
@@ -243,7 +252,13 @@
                     if (!isValid) {
                         event.preventDefault();
                         topupForm.querySelector(".is-invalid")?.focus();
+                        return;
                     }
+
+                    const selectedMethod = document.querySelector("input[name='payMethod']:checked")?.value;
+                    topupForm.setAttribute("action", selectedMethod === "transfer"
+                        ? topupForm.dataset.payosAction
+                        : cashAction);
                 });
             }
 
@@ -253,6 +268,7 @@
                 document.getElementById("topupAmountRequired")?.classList.remove("d-block");
             });
         </script>
+        <script th:src="@{/js/payos-money-input.js}"></script>
     </div>
 </body>
 
