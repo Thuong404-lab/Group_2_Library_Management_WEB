@@ -352,6 +352,14 @@
                                 <td class="text-end pe-3"
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
 
+                                    <!-- View detail and this member's transaction history -->
+                                    <a th:if="${account.member != null}"
+                                        th:href="@{/librarian/members/{memberId}/details(memberId=${account.member.memberId})}"
+                                        class="btn btn-sm btn-outline-secondary account-action-tooltip"
+                                        data-bs-title="Xem chi tiết" aria-label="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
                                     <!-- Update -->
                                     <button type="button" class="btn btn-sm btn-outline-classic account-action-tooltip"
                                         data-bs-toggle="modal" th:data-bs-target="${'#updateMemberModal' + account.id}"

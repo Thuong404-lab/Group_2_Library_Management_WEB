@@ -359,6 +359,78 @@
                                     </div>
 
                                     <button type="button"
+                                        th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
+                                        class="btn btn-sm btn-outline-warning ms-1 account-action-tooltip"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="${'#resetPasswordMemberModal' + account.accountId}"
+                                        data-bs-title="Gửi link đặt lại mật khẩu"
+                                        data-bs-custom-class="reset-password-tooltip"
+                                        aria-label="Gửi link đặt lại mật khẩu">
+                                        <i class="bi bi-key"></i>
+                                    </button>
+
+                                    <div class="modal fade text-start"
+                                        th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
+                                        th:id="${'resetPasswordMemberModal' + account.accountId}" tabindex="-1"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow">
+                                                <form method="post"
+                                                    th:action="@{/admin/accounts/{id}/send-password-reset(id=${account.accountId})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                                                    <div class="modal-header border-bottom-0">
+                                                        <h5 class="modal-title fw-bold" style="color:#8b5a2b;">
+                                                            <i class="bi bi-key-fill me-2"></i>
+                                                            Xác nhận gửi liên kết đặt lại mật khẩu
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                    </div>
+
+                                                    <div class="modal-body pb-0">
+                                                        <p class="mb-3">
+                                                            Liên kết đặt lại mật khẩu sẽ được gửi đến email hiện tại của thành viên và có hiệu lực trong 24 giờ.
+                                                        </p>
+                                                        <div class="p-3 bg-light rounded border">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Username:</div>
+                                                                    <div class="fw-bold" th:text="${account.username}">username</div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Account ID:</div>
+                                                                    <div class="fw-bold" th:text="${account.accountId}">id</div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Họ tên:</div>
+                                                                    <div class="fw-bold" th:text="${account.user.fullName}">họ tên</div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted">Email nhận liên kết:</div>
+                                                                    <div>
+                                                                        <i class="bi bi-envelope me-1 text-classic"></i>
+                                                                        <span th:text="${account.user.email}">email</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer border-top-0 pt-4">
+                                                        <button type="button" class="btn btn-light"
+                                                            data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-classic">
+                                                            <i class="bi bi-send me-1"></i>Đồng ý gửi
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="button"
                                         class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#deleteMemberModal' + account.accountId}"

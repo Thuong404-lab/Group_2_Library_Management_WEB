@@ -6,6 +6,7 @@ import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.exception.AccountFormValidationException;
 import com.lms.service.AccountService;
+import com.lms.service.AuthService;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
@@ -25,9 +26,11 @@ import java.util.Map;
 public class AccountController {
 
     private final AccountService accountService;
+    private final AuthService authService;
 
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountService accountService, AuthService authService) {
         this.accountService = accountService;
+        this.authService = authService;
     }
 
     @GetMapping
@@ -140,6 +143,23 @@ public class AccountController {
         }
 
         return redirectBySource(source);
+    }
+
+    @PostMapping("/{id}/send-password-reset")
+    public String sendPasswordReset(@PathVariable Integer id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String email = accountService.getMemberEmail(id);
+            authService.requestPasswordReset(email);
+            redirectAttributes.addFlashAttribute("success",
+                    "Đã gửi liên kết đặt lại mật khẩu đến email " + email + ".");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    e.getMessage() == null || e.getMessage().isBlank()
+                            ? "Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại."
+                            : e.getMessage());
+        }
+        return "redirect:/admin/accounts";
     }
 
     private Map<String, Object> createFormValues(AdminAccountCreateRequest request) {

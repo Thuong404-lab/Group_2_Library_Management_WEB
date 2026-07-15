@@ -18,7 +18,6 @@ public interface AccountService {
     // UC-20.4: Tìm kiếm / phân trang tài khoản thành viên
     AdminAccountListViewData getMemberAccountList(int page, String keyword);
 
-    // Dữ liệu phụ trợ cho màn hình admin account
     // UC-20.1: Tạo tài khoản
     void createAccount(AdminAccountCreateRequest request);
 
@@ -30,4 +29,7 @@ public interface AccountService {
 
     // UC-20.3: Xóa tài khoản (soft delete)
     void deleteAccount(Integer accountId, String source, Integer currentAccountId);
+
+    // Lấy email hiện tại của tài khoản thành viên để gửi liên kết đặt lại mật khẩu.
+    String getMemberEmail(Integer accountId);
 }

@@ -233,6 +233,17 @@ public class AccountServiceImpl implements AccountService {
                 "Vô hiệu hóa tài khoản thành viên " + account.getUsername() + ".");
     }
 
+    @Override
+    public String getMemberEmail(Integer accountId) {
+        MemberAccount account = memberAccountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản thành viên."));
+        if (account.getUser() == null || account.getUser().getEmail() == null
+                || account.getUser().getEmail().isBlank()) {
+            throw new IllegalArgumentException("Tài khoản thành viên chưa có email để nhận liên kết đặt lại mật khẩu.");
+        }
+        return account.getUser().getEmail().trim();
+    }
+
     private Map<String, String> validateAccountCreate(AdminAccountCreateRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
         String fullName = trim(request.getFullName());
