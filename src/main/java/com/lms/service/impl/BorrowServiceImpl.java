@@ -169,10 +169,51 @@ public class BorrowServiceImpl implements BorrowService {
     public void approvePendingRequest(Integer borrowId, String staffUsername) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new IllegalArgumentException("Khong tim thay don yeu cau muon!"));
+
+        List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
+
+        // === TRỪ TIỀN PHÍ MƯỢN KHI LIBRARIAN PHÊ DUYỆT ===
+        Member member = borrow.getMember();
+        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví điện tử của độc giả!"));
+
+        // Tính số ngày mượn từ chi tiết đầu tiên (dueDate - borrowDate)
+        int borrowDays = 14; // mặc định
+        if (!details.isEmpty() && details.get(0).getDueDate() != null && borrow.getBorrowDate() != null) {
+            long days = java.time.temporal.ChronoUnit.DAYS.between(borrow.getBorrowDate(), details.get(0).getDueDate());
+            borrowDays = (int) Math.max(1, days);
+        }
+
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000));
+        double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+        BigDecimal discountFactor = BigDecimal.valueOf(1.0 - (discountPercent / 100.0));
+        BigDecimal totalFee = feePerBookPerDay
+                .multiply(BigDecimal.valueOf(details.size()))
+                .multiply(BigDecimal.valueOf(borrowDays))
+                .multiply(discountFactor);
+
+        if (wallet.getBalance().compareTo(totalFee) < 0) {
+            throw new IllegalArgumentException("Số dư ví của độc giả không đủ để thanh toán phí mượn sách! Số dư hiện tại: "
+                    + wallet.getBalance() + " VND, phí cần thanh toán: " + totalFee + " VND.");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(totalFee));
+        walletRepository.save(wallet);
+
+        Transaction feeTxn = new Transaction();
+        feeTxn.setWallet(wallet);
+        feeTxn.setBorrow(borrow);
+        feeTxn.setTransactionType("BORROW_FEE");
+        feeTxn.setAmount(totalFee);
+        feeTxn.setTransactionDate(LocalDateTime.now());
+        feeTxn.setStatus("Completed");
+        transactionRepository.save(feeTxn);
+        // ===================================================
+
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
 
-        List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
         for (BorrowDetail detail : details) {
             detail.setStatus("Borrowed");
             if (detail.getBookItem() == null) {
@@ -191,6 +232,10 @@ public class BorrowServiceImpl implements BorrowService {
             }
             borrowDetailRepository.save(detail);
         }
+
+        sendInternalNotification(member, "Yêu cầu mượn sách được phê duyệt",
+                "Yêu cầu mượn sách #" + borrowId + " đã được thủ thư phê duyệt. Phí mượn "
+                        + totalFee + " VND đã được trừ từ ví điện tử của bạn.");
     }
 
     @Override
@@ -305,16 +350,40 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException("Ban da co mot yeu cau dat truoc cuon sach nay va dang cho xu ly!");
         }
 
+        // === TRỪ TIỀN CỌC KHI MEMBER ĐẶT TRƯỚC ===
+        BigDecimal depositAmount = getDepositAmountSetting();
+        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví điện tử của bạn! Vui lòng liên hệ thủ thư."));
+        if (wallet.getBalance().compareTo(depositAmount) < 0) {
+            throw new IllegalArgumentException("Số dư ví không đủ để đặt cọc! Cần " + depositAmount
+                    + " VND, hiện có " + wallet.getBalance() + " VND. Vui lòng nạp thêm tiền vào ví.");
+        }
+        // ==========================================
+
         Reservation reservation = new Reservation();
         reservation.setMember(member);
         reservation.setBook(book);
         reservation.setReservationDate(LocalDateTime.now());
         reservation.setStatus("Pending");
         Reservation savedReservation = reservationRepository.save(reservation);
+
+        // Trừ tiền cọc & ghi giao dịch sau khi reservation đã được tạo
+        wallet.setBalance(wallet.getBalance().subtract(depositAmount));
+        walletRepository.save(wallet);
+
+        Transaction depositTxn = new Transaction();
+        depositTxn.setWallet(wallet);
+        depositTxn.setReservation(savedReservation);
+        depositTxn.setTransactionType("DEPOSIT");
+        depositTxn.setAmount(depositAmount);
+        depositTxn.setTransactionDate(LocalDateTime.now());
+        depositTxn.setStatus("Completed");
+        transactionRepository.save(depositTxn);
+
         auditLogService.log(
                 ActionType.RESERVE_BOOK,
                 "Member " + username + " gui yeu cau dat truoc sach #" + book.getBookId()
-                        + " - " + book.getTitle() + ".");
+                        + " - " + book.getTitle() + ". Phi dat coc " + depositAmount + " VND da duoc tru.");
         return savedReservation;
     }
 
@@ -342,8 +411,15 @@ public class BorrowServiceImpl implements BorrowService {
         if (currentMemberId == null || !reservation.getMember().getMemberId().equals(currentMemberId)) {
             throw new IllegalArgumentException("Ban khong co quyen huy don dat truoc cua nguoi khac!");
         }
+        if (!"Pending".equalsIgnoreCase(reservation.getStatus()) && !"Active".equalsIgnoreCase(reservation.getStatus())) {
+            throw new IllegalArgumentException("Don dat truoc nay khong the huy vi da duoc xu ly!");
+        }
         reservation.setStatus("Canceled");
         reservationRepository.save(reservation);
+
+        // === HOÀN TIỀN CỌC KHI MEMBER HỦY ĐẶT TRƯỚC ===
+        refundDeposit(reservation, "Bạn đã hủy đặt trước sách '" + reservation.getBook().getTitle() + "'.");
+        // =================================================
     }
 
     @Override
@@ -425,7 +501,6 @@ public class BorrowServiceImpl implements BorrowService {
         Borrow borrow = borrowRepository.findById(loanId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn mượn/tra tương ứng!"));
 
-        String oldStatus = borrow.getStatus();
         borrow.setStatus(status);
         borrowRepository.save(borrow);
 
@@ -433,43 +508,16 @@ public class BorrowServiceImpl implements BorrowService {
         for (BorrowDetail detail : details) {
             detail.setStatus(status);
             borrowDetailRepository.save(detail);
+            // Khi bị từ chối: trả lại trạng thái Available cho bản sách vật lý đã giữ
             if (detail.getBookItem() != null && "Rejected".equalsIgnoreCase(status)) {
                 BookItem item = detail.getBookItem();
                 item.setStatus("Available");
                 bookItemRepository.save(item);
             }
         }
-
-        // KÍCH HOẠT HOÀN TIỀN: Nếu chuyển trạng thái từ Pending sang Rejected
-        if ("Pending".equalsIgnoreCase(oldStatus) && "Rejected".equalsIgnoreCase(status)) {
-            // Tìm giao dịch trừ tiền phí mượn ban đầu tương ứng với phiếu mượn này
-            List<Transaction> feeTxns = transactionRepository.findAll().stream()
-                    .filter(t -> t.getBorrow() != null && t.getBorrow().getBorrowId().equals(loanId) && "BORROW_FEE".equals(t.getTransactionType()))
-                    .toList();
-
-            for (Transaction originalTxn : feeTxns) {
-                Wallet wallet = originalTxn.getWallet();
-                BigDecimal refundAmount = originalTxn.getAmount();
-
-                // Trả tiền lại vào ví độc giả
-                wallet.setBalance(wallet.getBalance().add(refundAmount));
-                walletRepository.save(wallet);
-
-                // Ghi nhận giao dịch hoàn tiền mới
-                Transaction refundTxn = new Transaction();
-                refundTxn.setWallet(wallet);
-                refundTxn.setBorrow(borrow);
-                refundTxn.setTransactionType("REFUND_FEE");
-                refundTxn.setAmount(refundAmount);
-                refundTxn.setTransactionDate(LocalDateTime.now());
-                refundTxn.setStatus("Completed");
-                transactionRepository.save(refundTxn);
-
-                // Gửi thông báo hoàn phí
-                sendInternalNotification(borrow.getMember(), "Hoàn phí mượn sách thành công",
-                        "Yêu cầu mượn sách #" + loanId + " bị từ chối. Thư viện đã hoàn trả lại " + refundAmount + " VND vào ví điện tử của bạn.");
-            }
-        }
+        // Lưu ý: Khi từ chối đơn mượn Pending, không cần hoàn tiền vì phí mượn
+        // chỉ bị trừ tại thời điểm librarian PHÊ DUYỆT (approvePendingRequest),
+        // không phải lúc member gửi yêu cầu.
     }
 
     @Override
@@ -677,8 +725,9 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setStatus("Rejected");
         reservationRepository.save(reservation);
 
-        sendInternalNotification(reservation.getMember(), "Yeu cau dat truoc bi tu choi",
-                "Yeu cau dat truoc cuon sach '" + reservation.getBook().getTitle() + "' da bi tu choi.");
+        // === HOÀN TIỀN CỌC KHI LIBRARIAN TỪ CHỐI ===
+        refundDeposit(reservation, "Thủ thư đã từ chối yêu cầu đặt trước sách '" + reservation.getBook().getTitle() + "'.");
+        // ============================================
     }
 
     @Override
@@ -708,6 +757,59 @@ public class BorrowServiceImpl implements BorrowService {
     public int getMaxBorrowDays() {
         // Goi lai ham doc cau hinh he thong san co cua ban
         return getPositiveIntSetting("MAX_BORROW_DAYS", 14);
+    }
+
+    /**
+     * Đọc số tiền cọc đặt trước từ cấu hình hệ thống (key: Deposit_Amount).
+     * Mặc định 50.000 VND nếu chưa cấu hình.
+     */
+    private BigDecimal getDepositAmountSetting() {
+        try {
+            return systemSettingRepository.findAll().stream()
+                    .filter(s -> s.getSettingKey() != null && "Deposit_Amount".equalsIgnoreCase(s.getSettingKey()))
+                    .map(s -> s.getSettingValue())
+                    .filter(v -> v != null && !v.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(v -> v.signum() > 0)
+                    .findFirst()
+                    .orElse(BigDecimal.valueOf(50000));
+        } catch (Exception ignored) {
+            return BigDecimal.valueOf(50000);
+        }
+    }
+
+    /**
+     * Hoàn tiền cọc đặt trước cho member khi reservation bị từ chối hoặc bị hủy.
+     * Tìm transaction DEPOSIT gốc tương ứng với reservation và hoàn lại số tiền đó.
+     * Ghi nhận transaction REFUND_DEPOSIT và gửi thông báo nội bộ cho member.
+     */
+    private void refundDeposit(Reservation reservation, String reason) {
+        List<Transaction> depositTxns = transactionRepository.findAll().stream()
+                .filter(t -> t.getReservation() != null
+                        && t.getReservation().getReservationId().equals(reservation.getReservationId())
+                        && "DEPOSIT".equalsIgnoreCase(t.getTransactionType()))
+                .toList();
+
+        for (Transaction originalTxn : depositTxns) {
+            Wallet wallet = originalTxn.getWallet();
+            BigDecimal refundAmount = originalTxn.getAmount();
+
+            wallet.setBalance(wallet.getBalance().add(refundAmount));
+            walletRepository.save(wallet);
+
+            Transaction refundTxn = new Transaction();
+            refundTxn.setWallet(wallet);
+            refundTxn.setReservation(reservation);
+            refundTxn.setTransactionType("REFUND_DEPOSIT");
+            refundTxn.setAmount(refundAmount);
+            refundTxn.setTransactionDate(LocalDateTime.now());
+            refundTxn.setStatus("Completed");
+            transactionRepository.save(refundTxn);
+
+            sendInternalNotification(reservation.getMember(), "Hoàn tiền cọc đặt trước",
+                    reason + " Thư viện đã hoàn lại " + refundAmount + " VND tiền cọc vào ví điện tử của bạn.");
+        }
     }
 
     @Override
@@ -755,36 +857,15 @@ public class BorrowServiceImpl implements BorrowService {
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
 
-        // 2. Tính toán tổng chi phí trừ ví
-        BigDecimal totalFee = calculateBorrowFeePreview(username, bookIds, borrowDays);
-
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản ví điện tử thành viên!"));
-        if (wallet.getBalance().compareTo(totalFee) < 0) {
-            throw new IllegalArgumentException("Số dư ví không đủ để thanh toán phí mượn sách! Vui lòng nạp thêm tiền.");
-        }
-
-        // 3. Khởi tạo phiếu mượn gốc (Borrow)
+        // 2. Khởi tạo phiếu mượn - KHÔNG trừ tiền ở đây.
+        // Tiền sẽ chỉ bị trừ khi LIBRARIAN PHÊ DUYỆT (approvePendingRequest)
         Borrow borrow = new Borrow();
         borrow.setMember(member);
         borrow.setBorrowDate(LocalDateTime.now());
         borrow.setStatus("Pending");
         borrow = borrowRepository.save(borrow);
 
-        // 4. Trừ tiền ví & Ghi nhận lịch sử giao dịch tài chính
-        wallet.setBalance(wallet.getBalance().subtract(totalFee)); // update balance
-        walletRepository.save(wallet);
-
-        Transaction transaction = new Transaction();
-        transaction.setWallet(wallet);
-        transaction.setBorrow(borrow);
-        transaction.setTransactionType("BORROW_FEE");
-        transaction.setAmount(totalFee);
-        transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setStatus("Completed");
-        transactionRepository.save(transaction);
-
-        // 5. Tìm bản sách vật lý khả dụng ứng với từng đầu sách được chọn và thiết lập BorrowDetail
+        // 3. Tìm bản sách vật lý khả dụng và thiết lập BorrowDetail
         List<String> titles = new ArrayList<>();
         for (Integer bookId : bookIds) {
             Book book = bookRepository.findById(bookId)
@@ -811,10 +892,10 @@ public class BorrowServiceImpl implements BorrowService {
             titles.add(book.getTitle());
         }
 
-        // 6. Ghi nhật ký hệ thống (Audit Log)
+        // 4. Ghi nhật ký hệ thống (Audit Log)
         auditLogService.log(ActionType.REQUEST_BORROW,
-                "Độc giả " + username + " đã đăng ký mượn tập trung " + bookIds.size() + " cuốn sách: "
-                        + String.join(", ", titles) + " trong vòng " + borrowDays + " ngày. Phí trừ ví: " + totalFee + " VND.");
+                "Độc giả " + username + " đã đăng ký mượn " + bookIds.size() + " cuốn sách: "
+                        + String.join(", ", titles) + " trong vòng " + borrowDays + " ngày. Đang chờ thủ thư phê duyệt.");
 
         return borrow;
     }
