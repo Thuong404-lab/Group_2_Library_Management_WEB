@@ -70,7 +70,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
 
     // BỔ SUNG & CẬP NHẬT 1: Lấy danh sách sách hiện tại bao gồm cả Pending và Return_Pending (Vấn đề 7)
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
-            "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending') ORDER BY bd.dueDate ASC")
+            "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending') ORDER BY bd.dueDate ASC")
     List<BorrowDetail> findCurrentBorrowsByMemberId(@Param("memberId") Integer memberId);
 
     // BỔ SUNG 2: Lấy lịch sử mượn trả trong vòng 1 tháng gần đây (Hiển thị tab Lịch sử)
