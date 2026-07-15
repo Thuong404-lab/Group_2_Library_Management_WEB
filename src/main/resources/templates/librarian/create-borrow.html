@@ -361,24 +361,46 @@
 
 
 
-                    <form th:action="@{/librarian/borrow/review}" method="post" class="row g-4 mx-auto" style="max-width: 600px; width: 100%;">
+                    <form th:action="@{/librarian/borrow/review}" method="post" class="row g-4 mx-auto" style="max-width: 600px; width: 100%;" id="offlineBorrowForm">
                         <div class="col-md-7">
                             <label for="inlineMemberId" class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Email hoặc Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="text" id="inlineMemberId" name="memberIdentifier" class="form-control" placeholder="09xxxx hoặc email@..." required th:value="${billMemberIdentifier != null ? billMemberIdentifier : ''}" />
+                            <input type="text" id="inlineMemberId" name="memberIdentifier" class="form-control" placeholder="09xxxx hoặc email@..." required th:value="${billMemberIdentifier != null ? billMemberIdentifier : ''}" autocomplete="off" />
+                            <div id="memberInfoBox" class="mt-2 p-2 rounded" style="display: none; background-color: #fdfbf7; border: 1px solid rgba(139, 90, 43, 0.2); font-size: 0.85rem;"></div>
                         </div>
                         <div class="col-md-5">
                             <label for="inlineDays" class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">
                                 Số ngày mượn 
                                 <span class="badge ms-1 fw-normal" style="background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.2); font-size: 0.7rem; text-transform: none;" th:text="'Tối đa ' + ${maxBorrowDays} + ' ngày'">Tối đa 14 ngày</span>
                             </label>
-                            <input type="number" id="inlineDays" name="numberOfDays" class="form-control" th:value="${billDays != null ? billDays : maxBorrowDays}" min="1" th:max="${maxBorrowDays}" />
+                            <input type="number" id="inlineDays" name="numberOfDays" class="form-control" th:value="${billDays != null ? billDays : maxBorrowDays}" min="1" th:max="${maxBorrowDays}" required />
+                            <div id="dueDateBox" class="small mt-1" style="color: #6c757d; font-size: 0.8rem;"></div>
                         </div>
                         <div class="col-12">
-                            <label for="inlineBarcodes" class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Danh sách mã vạch sách <span class="text-danger">*</span></label>
-                            <input type="text" id="inlineBarcodes" name="rawBarcodes" class="form-control" placeholder="Nhập các mã vạch cách nhau bởi dấu phẩy (VD: BC001-1, BC001-2)" required autocomplete="off" th:value="${billRawBarcodes != null ? billRawBarcodes : ''}" />
+                            <label for="scannerInput" class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Quét mã vạch sách <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-upc-scan"></i></span>
+                                <input type="text" id="scannerInput" class="form-control" placeholder="Quét hoặc nhập mã vạch rồi ấn Enter..." autocomplete="off" />
+                                <button class="btn btn-outline-secondary" type="button" id="btnAddBarcode">Thêm</button>
+                            </div>
+                            <input type="hidden" id="inlineBarcodes" name="rawBarcodes" required th:value="${billRawBarcodes != null ? billRawBarcodes : ''}" />
+                            
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm table-bordered mb-0" id="scannedBooksTable" style="display: none;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 30%">Mã vạch</th>
+                                            <th style="width: 55%">Tên sách</th>
+                                            <th style="width: 15%" class="text-center">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="scanErrorBox" class="text-danger small mt-1" style="display: none;"></div>
                         </div>
                         <div class="col-12 text-center mt-2">
-                            <button type="submit" class="btn btn-classic-primary px-5 py-2">
+                            <button type="submit" class="btn btn-classic-primary px-5 py-2" id="btnPreviewBill">
                                 <i class="bi bi-file-text me-1"></i>Xem trước phiếu mượn
                             </button>
                         </div>
@@ -605,71 +627,251 @@
                 activeTab.show();
             }
 
-            // TỰ ĐỘNG BẬT POPUP NẾU CÓ DỮ LIỆU TỪ BACKEND TRẢ VỀ
-            var showBill = /*[[${showBillPopup != null ? showBillPopup : false}]]*/ false;
-            if (showBill) {
-                var myModal = new bootstrap.Modal(document.getElementById('reviewBillModal'));
-                myModal.show();
-            }
         });
     </script>
 
-    <!-- Modal Review Bill -->
-    <div class="modal fade" id="reviewBillModal" tabindex="-1" aria-labelledby="reviewBillModalLabel" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
-                <div class="modal-header" style="background-color: #fdfbf7; border-bottom: 1px dashed rgba(139, 90, 43, 0.2);">
-                    <h5 class="modal-title font-playfair fw-bold" id="reviewBillModalLabel" style="color: #4a3b32;">
-                        <i class="bi bi-receipt me-2" style="color: #8b5a2b;"></i>Phiếu Xác Nhận Mượn Sách
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4" th:if="${showBillPopup}">
-                    <!-- Thông tin Member -->
-                    <div class="mb-4 p-3 rounded" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
-                        <h6 class="fw-bold mb-2 text-uppercase small" style="color: #8b5a2b;">Thông tin người mượn</h6>
-                        <div class="d-flex align-items-center mb-1">
-                            <i class="bi bi-person-check text-success me-2 fs-5"></i>
-                            <span class="fw-bold text-dark fs-5" th:text="${billMember.user.fullName}">Tên</span>
-                        </div>
-                        <div class="text-muted small">
-                            <i class="bi bi-telephone me-1"></i> <span th:text="${billMember.user.phone}">SĐT</span> | 
-                            <i class="bi bi-envelope me-1"></i> <span th:text="${billMember.user.email}">Email</span>
-                        </div>
-                    </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const memberInput = document.getElementById("inlineMemberId");
+        const memberInfoBox = document.getElementById("memberInfoBox");
+        const scannerInput = document.getElementById("scannerInput");
+        const hiddenBarcodes = document.getElementById("inlineBarcodes");
+        const scannedBooksTable = document.getElementById("scannedBooksTable");
+        const tbody = scannedBooksTable.querySelector("tbody");
+        const scanErrorBox = document.getElementById("scanErrorBox");
+        const offlineBorrowForm = document.getElementById("offlineBorrowForm");
+        const daysInput = document.getElementById("inlineDays");
+        const dueDateBox = document.getElementById("dueDateBox");
+        
+        let scannedBarcodes = [];
+        let maxLimit = 0;
+        let currentBorrowed = 0;
+        let memberFound = false;
 
-                    <!-- Danh sách Sách -->
-                    <div class="mb-4">
-                        <h6 class="fw-bold mb-2 text-uppercase small" style="color: #8b5a2b;">Danh sách mượn (<span th:text="${billDays}">14</span> ngày)</h6>
-                        <ul class="list-group">
-                            <li class="list-group-item d-flex justify-content-between align-items-center" th:each="item : ${billBookItems}">
-                                <div>
-                                    <i class="bi bi-book text-secondary me-2"></i>
-                                    <span class="fw-bold text-dark" th:text="${item.book.title}">Tên sách</span>
-                                    <br>
-                                    <small class="text-muted">Mã vạch: <span th:text="${item.barcode}">BC001</span></small>
-                                </div>
-                                <span class="status-badge status-approved">Sẵn sàng</span>
-                            </li>
-                        </ul>
-                    </div>
+        function updateDueDate() {
+            if(daysInput && dueDateBox) {
+                const days = parseInt(daysInput.value) || 0;
+                if(days > 0) {
+                    const today = new Date();
+                    today.setDate(today.getDate() + days);
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const yyyy = today.getFullYear();
+                    dueDateBox.innerHTML = `<i class="bi bi-calendar-check me-1"></i>Ngày trả dự kiến: <strong style="color: #8b5a2b;">${dd}/${mm}/${yyyy}</strong>`;
+                } else {
+                    dueDateBox.innerHTML = "";
+                }
+            }
+        }
 
-                    <!-- Form xác nhận -->
-                    <form th:action="@{/librarian/borrow/create}" method="post" id="finalCreateForm">
-                        <input type="hidden" name="memberEmail" th:value="${billMember.user.email}">
-                        <input type="hidden" name="memberIdentifier" th:value="${billMemberIdentifier}">
-                        <input type="hidden" name="numberOfDays" th:value="${billDays}">
-                        <input type="hidden" name="rawBarcodes" th:value="${billRawBarcodes}">
-                        <div class="d-flex justify-content-end pt-3 mt-2" style="border-top: 1px dashed rgba(139, 90, 43, 0.2);">
-                            <button type="button" class="btn btn-outline-secondary px-4 me-2" data-bs-dismiss="modal">Sửa lại</button>
-                            <button type="submit" class="btn btn-classic-primary px-4"><i class="bi bi-check-circle me-2"></i>Xác nhận tạo phiếu</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-</div>
+        if(daysInput) {
+            daysInput.addEventListener("input", updateDueDate);
+            updateDueDate(); // Gọi luôn lúc đầu để hiện ngày
+        }
 
+        if (hiddenBarcodes && hiddenBarcodes.value) {
+            const initialBarcodes = hiddenBarcodes.value.split(',').map(b => b.trim()).filter(b => b);
+            if (initialBarcodes.length > 0) {
+                fetch(`/librarian/api/book-lookup?barcodes=${initialBarcodes.join(',')}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        data.forEach(book => {
+                            if (book.found && book.rawStatus === 'Available') {
+                                addBookToList(book.barcode, book.title);
+                            }
+                        });
+                    });
+            }
+        }
+        
+        if (memberInput && memberInput.value) {
+            lookupMember(memberInput.value);
+        }
 
+        let debounceTimer;
+        if(memberInput) {
+            memberInput.addEventListener("input", function() {
+                clearTimeout(debounceTimer);
+                memberInfoBox.style.display = "none";
+                memberFound = false;
+                debounceTimer = setTimeout(() => {
+                    const val = this.value.trim();
+                    if (val.length >= 3) {
+                        lookupMember(val);
+                    }
+                }, 500);
+            });
+        }
+        
+        function lookupMember(val) {
+            fetch(`/librarian/api/member-lookup?identifier=${val}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.found) {
+                        memberFound = true;
+                        maxLimit = data.maxBorrowLimit;
+                        currentBorrowed = data.currentBorrowCount;
+                        let statusHtml = data.status === 'Active' ? `<span class="text-success fw-bold">Hoạt động</span>` : `<span class="text-danger fw-bold">Bị khóa</span>`;
+                        memberInfoBox.innerHTML = `
+                            <strong>${data.fullName}</strong> (${data.memberLevel})<br/>
+                            Trạng thái: ${statusHtml}<br/>
+                            Đang mượn: <strong>${currentBorrowed} / ${maxLimit}</strong> cuốn
+                        `;
+                        memberInfoBox.style.display = "block";
+                    } else {
+                        memberInfoBox.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Không tìm thấy độc giả hợp lệ!</span>`;
+                        memberInfoBox.style.display = "block";
+                    }
+                });
+        }
+
+        const btnAddBarcode = document.getElementById("btnAddBarcode");
+
+        if(scannerInput) {
+            function processBarcode() {
+                scanErrorBox.style.display = "none";
+                const barcode = scannerInput.value.trim();
+                if (!barcode) return;
+
+                if (!memberFound) {
+                    showError("Vui lòng nhập và chọn Độc giả hợp lệ trước khi quét sách!");
+                    return;
+                }
+
+                if (scannedBarcodes.includes(barcode)) {
+                    showError("Sách này đã được quét rồi!");
+                    scannerInput.value = "";
+                    return;
+                }
+
+                if (currentBorrowed + scannedBarcodes.length >= maxLimit) {
+                    showError(`Vượt quá giới hạn! Độc giả này chỉ được mượn tối đa ${maxLimit} cuốn (hiện đã mượn ${currentBorrowed}).`);
+                    scannerInput.value = "";
+                    return;
+                }
+
+                fetch(`/librarian/api/book-lookup?barcodes=${barcode}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const book = data[0];
+                            if (book.found) {
+                                if (book.rawStatus === 'Available') {
+                                    addBookToList(book.barcode, book.title);
+                                    scannerInput.value = "";
+                                } else {
+                                    showError(`Sách hiện không khả dụng (Trạng thái: ${book.status}).`);
+                                }
+                            } else {
+                                showError("Mã vạch không tồn tại trong hệ thống.");
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        showError("Có lỗi xảy ra khi tra cứu sách.");
+                    });
+            }
+
+            scannerInput.addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    processBarcode();
+                }
+            });
+
+            if (btnAddBarcode) {
+                btnAddBarcode.addEventListener("click", function() {
+                    processBarcode();
+                });
+            }
+        }
+
+        function addBookToList(barcode, title) {
+            if(!scannedBarcodes.includes(barcode)) {
+                scannedBarcodes.push(barcode);
+                updateHiddenInput();
+                
+                scannedBooksTable.style.display = "table";
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><span class="badge" style="background-color: #8b5a2b;">${barcode}</span></td>
+                    <td class="text-truncate" style="max-width: 200px;" title="${title}">${title}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeBook(this, '${barcode}')"><i class="bi bi-x"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        window.removeBook = function(btn, barcode) {
+            scannedBarcodes = scannedBarcodes.filter(b => b !== barcode);
+            updateHiddenInput();
+            btn.closest("tr").remove();
+            if (scannedBarcodes.length === 0) {
+                scannedBooksTable.style.display = "none";
+            }
+            scanErrorBox.style.display = "none";
+        };
+
+        function updateHiddenInput() {
+            hiddenBarcodes.value = scannedBarcodes.join(",");
+        }
+
+        function showError(msg) {
+            scanErrorBox.textContent = msg;
+            scanErrorBox.style.display = "block";
+        }
+
+        if(offlineBorrowForm) {
+            offlineBorrowForm.addEventListener("submit", function(e) {
+                const pendingInput = scannerInput ? scannerInput.value.trim() : "";
+                if (pendingInput !== "") {
+                    e.preventDefault();
+                    showError("Bạn có mã vạch chưa thêm. Vui lòng ấn nút 'Thêm' hoặc phím Enter để thêm sách vào danh sách trước khi tạo phiếu!");
+                    return;
+                }
+                
+                if (scannedBarcodes.length === 0) {
+                    e.preventDefault();
+                    showError("Vui lòng quét ít nhất một mã vạch sách!");
+                } else if (!memberFound) {
+                    e.preventDefault();
+                    scanErrorBox.textContent = "Vui lòng kiểm tra lại thông tin Độc giả hợp lệ trước khi xem trước phiếu mượn!";
+                    scanErrorBox.style.display = "block";
+                }
+            });
+        }
+
+        // Logic Modal Xac Nhan
+        if(document.getElementById('modalDueDate')) {
+            var hiddenDays = document.getElementById('modalHiddenDays');
+            var days = hiddenDays ? (parseInt(hiddenDays.value) || 14) : 14;
+            var d = new Date();
+            d.setDate(d.getDate() + days);
+            var dd = String(d.getDate()).padStart(2, '0');
+            var mm = String(d.getMonth() + 1).padStart(2, '0');
+            var yyyy = d.getFullYear();
+            document.getElementById('modalDueDate').innerText = dd + "/" + mm + "/" + yyyy;
+        }
+
+        const finalCreateForm = document.getElementById("finalCreateForm");
+        const btnConfirmCreate = document.getElementById("btnConfirmCreate");
+        const btnConfirmText = document.getElementById("btnConfirmText");
+        const btnConfirmSpinner = document.getElementById("btnConfirmSpinner");
+        const btnConfirmLoadingText = document.getElementById("btnConfirmLoadingText");
+
+        if(finalCreateForm) {
+            finalCreateForm.addEventListener("submit", function() {
+                if(btnConfirmCreate) {
+                    btnConfirmCreate.disabled = true;
+                    btnConfirmText.classList.add("d-none");
+                    btnConfirmSpinner.classList.remove("d-none");
+                    btnConfirmLoadingText.classList.remove("d-none");
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

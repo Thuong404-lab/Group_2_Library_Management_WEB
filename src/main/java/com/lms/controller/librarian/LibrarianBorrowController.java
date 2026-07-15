@@ -5,6 +5,9 @@ import com.lms.entity.Borrow;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.service.BorrowService;
+import com.lms.repository.SystemSettingRepository;
+import com.lms.entity.SystemSetting;
+import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +26,16 @@ public class LibrarianBorrowController {
     private final BorrowRepository borrowRepository;
     private final MemberRepository memberRepository;
     private final com.lms.repository.BookItemRepository bookItemRepository;
+    private final com.lms.repository.BorrowDetailRepository borrowDetailRepository;
+    private final SystemSettingRepository systemSettingRepository;
 
-    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository) {
+    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository, com.lms.repository.BorrowDetailRepository borrowDetailRepository, SystemSettingRepository systemSettingRepository) {
         this.borrowService = borrowService;
         this.borrowRepository = borrowRepository;
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
+        this.systemSettingRepository = systemSettingRepository;
     }
 
     // Xem danh sách toàn cục các phiếu mượn trả
@@ -161,9 +168,13 @@ public class LibrarianBorrowController {
     // Xem trước thông tin phiếu mượn (Review Bill)
     @PostMapping("/librarian/borrow/review")
     public String reviewCreateBorrow(@RequestParam("memberIdentifier") String memberIdentifier,
-                                     @RequestParam("numberOfDays") Integer numberOfDays,
+                                     @RequestParam(value = "numberOfDays", required = false) Integer numberOfDays,
                                      @RequestParam("rawBarcodes") String rawBarcodes,
+                                     Model model,
                                      RedirectAttributes redirectAttributes) {
+        if (numberOfDays == null || numberOfDays <= 0) {
+            numberOfDays = 14; // Giá trị mặc định nếu người dùng nhập rỗng
+        }
         try {
             // 1. Tìm thành viên
             java.util.Optional<com.lms.entity.Member> optMember = memberRepository.findByUserEmail(memberIdentifier.trim());
@@ -209,18 +220,43 @@ public class LibrarianBorrowController {
                 return "redirect:/librarian/borrow/create";
             }
 
-            // 3. Truyền dữ liệu sang giao diện popup
-            redirectAttributes.addFlashAttribute("showBillPopup", true);
-            redirectAttributes.addFlashAttribute("billMember", member);
-            redirectAttributes.addFlashAttribute("billBookItems", validItems);
-            redirectAttributes.addFlashAttribute("billDays", numberOfDays != null ? numberOfDays : 14);
-            redirectAttributes.addFlashAttribute("billRawBarcodes", rawBarcodes);
-            redirectAttributes.addFlashAttribute("billMemberIdentifier", memberIdentifier);
+            // Tính phí mượn sách
+            BigDecimal baseFee = new BigDecimal("5000"); // Giá mặc định nếu không tìm thấy setting
+            try {
+                java.util.Optional<SystemSetting> setting = systemSettingRepository.findBySettingKeyIgnoreCase("BORROW_FEE_PER_BOOK");
+                if (setting.isPresent()) {
+                    baseFee = new BigDecimal(setting.get().getSettingValue().trim());
+                }
+            } catch (Exception ignored) {}
+
+            int days = (numberOfDays != null ? numberOfDays : 14);
+            int books = validItems.size();
+            BigDecimal totalBaseFee = baseFee.multiply(new BigDecimal(days)).multiply(new BigDecimal(books));
+            
+            BigDecimal discount = BigDecimal.ZERO;
+            if (member.getTier() != null && member.getTier().getDiscountPercent() != null) {
+                discount = member.getTier().getDiscountPercent();
+            }
+            
+            BigDecimal finalFee = totalBaseFee.multiply(new BigDecimal("100").subtract(discount)).divide(new BigDecimal("100"), java.math.RoundingMode.HALF_UP);
+
+            // 3. Truyền dữ liệu sang trang Review
+            model.addAttribute("billMember", member);
+            model.addAttribute("billBookItems", validItems);
+            model.addAttribute("billDays", days);
+            model.addAttribute("billRawBarcodes", rawBarcodes);
+            model.addAttribute("billMemberIdentifier", memberIdentifier);
+            model.addAttribute("billFeePerBookPerDay", baseFee);
+            model.addAttribute("billBaseFee", totalBaseFee);
+            model.addAttribute("billDiscount", discount);
+            model.addAttribute("billFinalFee", finalFee);
+            
+            return "librarian/review-borrow";
             
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kiểm tra thông tin: " + e.getMessage());
+            return "redirect:/librarian/borrow/create";
         }
-        return "redirect:/librarian/borrow/create";
     }
 
     // Xử lý tạo phiếu mượn trực tiếp bằng mã vạch (Barcode) quét tại quầy sau khi xác nhận Bill
@@ -295,5 +331,45 @@ public class LibrarianBorrowController {
             results.add(data);
         }
         return results;
+    }
+
+    @GetMapping("/librarian/api/member-lookup")
+    @ResponseBody
+    public java.util.Map<String, Object> lookupMember(@RequestParam("identifier") String identifier) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        if (identifier == null || identifier.trim().isEmpty()) {
+            response.put("found", false);
+            return response;
+        }
+        
+        java.util.Optional<com.lms.entity.Member> optMember = memberRepository.findByUserEmail(identifier.trim());
+        if (optMember.isEmpty()) {
+            optMember = memberRepository.findByUserPhone(identifier.trim());
+        }
+        
+        if (optMember.isPresent()) {
+            com.lms.entity.Member member = optMember.get();
+            response.put("found", true);
+            response.put("fullName", member.getUser().getFullName());
+            response.put("email", member.getUser().getEmail());
+            response.put("phone", member.getUser().getPhone());
+            response.put("status", member.getUser().getStatus().name());
+            
+            int maxBorrowLimit = 0;
+            if (member.getTier() != null) {
+                response.put("memberLevel", member.getTier().getTierName());
+                maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit() : 0;
+            } else {
+                response.put("memberLevel", "Mặc định");
+            }
+            response.put("maxBorrowLimit", maxBorrowLimit);
+            
+            long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
+            response.put("currentBorrowCount", currentBorrowCount);
+        } else {
+            response.put("found", false);
+        }
+        
+        return response;
     }
 }

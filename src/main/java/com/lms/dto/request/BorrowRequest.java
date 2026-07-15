@@ -7,6 +7,15 @@ public class BorrowRequest {
     private String memberIdentifier;
     private List<String> barcodes;
     private Integer numberOfDays;
+    private String paymentMethod;
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
 
     public String getMemberEmail() {
         return memberEmail;

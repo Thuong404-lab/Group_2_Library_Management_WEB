@@ -28,8 +28,13 @@ import com.lms.repository.MemberRepository;
 import com.lms.repository.NotificationRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
+import com.lms.repository.TransactionRepository;
+import com.lms.repository.WalletRepository;
 import com.lms.service.AuditLogService;
 import com.lms.service.BorrowService;
+import com.lms.entity.Wallet;
+import com.lms.entity.Transaction;
+import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +58,8 @@ public class BorrowServiceImpl implements BorrowService {
     private final AuditLogService auditLogService;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
                              BookItemRepository bookItemRepository,
@@ -64,7 +71,9 @@ public class BorrowServiceImpl implements BorrowService {
                              ReservationRepository reservationRepository,
                              AuditLogService auditLogService,
                              NotificationRepository notificationRepository,
-                             MemberNotificationRepository memberNotificationRepository) {
+                             MemberNotificationRepository memberNotificationRepository,
+                             WalletRepository walletRepository,
+                             TransactionRepository transactionRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -76,6 +85,8 @@ public class BorrowServiceImpl implements BorrowService {
         this.auditLogService = auditLogService;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.walletRepository = walletRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @Override
@@ -109,11 +120,47 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         int borrowDays = normalizeBorrowDays(request.getNumberOfDays());
+        
+        // Tính toán số tiền
+        double feePerBookPerDay = 5000.0;
+        try {
+            SystemSetting setting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
+            if (setting != null) feePerBookPerDay = Double.parseDouble(setting.getSettingValue());
+        } catch (Exception e) {}
+        double baseFee = bookItemsToBorrow.size() * borrowDays * feePerBookPerDay;
+        double discount = member.getTier() != null && member.getTier().getDiscountPercent() != null ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+        double finalFeeDouble = baseFee - (baseFee * discount / 100);
+        BigDecimal finalFee = BigDecimal.valueOf(finalFeeDouble);
+
+        // Xử lý thanh toán ví nếu user chọn WALLET
+        if ("WALLET".equals(request.getPaymentMethod())) {
+            Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví của độc giả!"));
+            if (wallet.getBalance().compareTo(finalFee) < 0) {
+                throw new IllegalArgumentException("Số dư ví không đủ để thanh toán!");
+            }
+            wallet.setBalance(wallet.getBalance().subtract(finalFee));
+            walletRepository.save(wallet);
+        }
+
         Borrow borrow = new Borrow();
         borrow.setMember(member);
         borrow.setBorrowDate(LocalDateTime.now());
         borrow.setStatus("Active");
         borrow = borrowRepository.save(borrow);
+
+        // Ghi lại giao dịch nếu là thanh toán ví
+        if ("WALLET".equals(request.getPaymentMethod())) {
+            Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId()).get();
+            Transaction transaction = new Transaction();
+            transaction.setWallet(wallet);
+            transaction.setBorrow(borrow);
+            transaction.setTransactionType("PAYMENT");
+            transaction.setAmount(finalFee.negate());
+            transaction.setTransactionDate(LocalDateTime.now());
+            transaction.setStatus("Completed");
+            transactionRepository.save(transaction);
+        }
 
         for (BookItem item : bookItemsToBorrow) {
             BorrowDetail detail = new BorrowDetail();
@@ -129,9 +176,14 @@ public class BorrowServiceImpl implements BorrowService {
             bookItemRepository.save(item);
         }
         
+        // Tạo danh sách tên sách
+        String bookNames = bookItemsToBorrow.stream()
+                .map(item -> item.getBook().getTitle())
+                .collect(java.util.stream.Collectors.joining(", "));
+        
         // Gửi thông báo trực tiếp cho độc giả khi tạo phiếu mượn thành công tại quầy
         sendInternalNotification(member, "Mượn sách thành công", 
-                "Phiếu mượn của bạn đã được tạo thành công với " + bookItemsToBorrow.size() + " cuốn sách. Hạn trả: " + borrowDays + " ngày.");
+                "Bạn đã mượn thành công các cuốn sách [" + bookNames + "] tại quầy thông qua mã phiếu mượn BRW-" + borrow.getBorrowId() + ". Vui lòng trả sách đúng hạn vào ngày " + LocalDateTime.now().plusDays(borrowDays).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
 
         return borrow;
     }
@@ -566,7 +618,7 @@ public class BorrowServiceImpl implements BorrowService {
         int tierLimit = member != null && member.getTier() != null && member.getTier().getBorrowLimit() != null
                 ? member.getTier().getBorrowLimit()
                 : configuredLimit;
-        return Math.max(1, Math.min(configuredLimit, tierLimit));
+        return Math.max(1, tierLimit);
     }
 
     private int normalizeBorrowDays(Integer requestedDays) {
