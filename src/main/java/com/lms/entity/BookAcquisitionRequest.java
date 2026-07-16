@@ -27,6 +27,9 @@ public class BookAcquisitionRequest {
     @Column(length = 255)
     private String author;
 
+    @Column(length = 20)
+    private String isbn;
+
     @Column(length = 255)
     private String publisher;
 
@@ -106,6 +109,8 @@ public class BookAcquisitionRequest {
 
     public String getPublisher() { return publisher; }
     public void setPublisher(String publisher) { this.publisher = publisher; }
+    public String getIsbn() { return isbn; }
+    public void setIsbn(String isbn) { this.isbn = isbn; }
     public Integer getPublicationYear() { return publicationYear; }
     public void setPublicationYear(Integer publicationYear) { this.publicationYear = publicationYear; }
     public String getRequestReason() { return requestReason; }

@@ -15,6 +15,9 @@ public class MemberBookAcquisitionRequest {
     @Size(max = 255, message = "Tên tác giả không được vượt quá 255 ký tự")
     private String author;
 
+    @Size(max = 20, message = "ISBN không được vượt quá 20 ký tự")
+    private String isbn;
+
     @Size(max = 255, message = "Nhà xuất bản không được vượt quá 255 ký tự")
     private String publisher;
 
@@ -54,6 +57,8 @@ public class MemberBookAcquisitionRequest {
     }
     public String getPublisher() { return publisher; }
     public void setPublisher(String publisher) { this.publisher = publisher; }
+    public String getIsbn() { return isbn; }
+    public void setIsbn(String isbn) { this.isbn = isbn; }
     public Integer getPublicationYear() { return publicationYear; }
     public void setPublicationYear(Integer publicationYear) { this.publicationYear = publicationYear; }
     public String getRequestReason() { return requestReason; }

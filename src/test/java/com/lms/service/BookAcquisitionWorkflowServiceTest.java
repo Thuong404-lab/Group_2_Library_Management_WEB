@@ -62,6 +62,20 @@ class BookAcquisitionWorkflowServiceTest {
     }
 
     @Test
+    void rejectionPersistsReasonAndNotifiesMember() {
+        BookAcquisitionRequest request = pendingRequest();
+        when(requestRepository.findById(1)).thenReturn(Optional.of(request));
+
+        service.rejectBookAcquisitionRequest(1, "  Thông tin xuất bản chưa đầy đủ.  ");
+
+        assertThat(request.getStatus()).isEqualTo(AcquisitionRequestStatus.REJECTED);
+        assertThat(request.getDecisionNote()).isEqualTo("Thông tin xuất bản chưa đầy đủ.");
+        assertThat(request.getProcessedDate()).isNotNull();
+        verify(requestRepository).save(request);
+        verify(memberNotificationRepository).save(any());
+    }
+
+    @Test
     void cannotProcessRequestTwice() {
         BookAcquisitionRequest request = pendingRequest();
         request.setStatus(AcquisitionRequestStatus.APPROVED);
