@@ -2,6 +2,7 @@ package com.lms.entity;
 
 import com.lms.enums.AcquisitionRequestStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,13 +33,17 @@ public class BookAcquisitionRequest {
     @Column(name = "publication_year")
     private Integer publicationYear;
 
-    @Column(name = "request_reason", nullable = false, length = 1000)
+    // Kept nullable at database level so Hibernate can add the column to
+    // installations that already contain legacy acquisition requests.
+    // New submissions still require this field through DTO validation.
+    @Column(name = "request_reason", length = 1000)
     private String requestReason;
 
     @Column(name = "reference_url", length = 500)
     private String referenceUrl;
 
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'PENDING'")
     @Column(nullable = false, length = 20)
     private AcquisitionRequestStatus status = AcquisitionRequestStatus.PENDING;
 
