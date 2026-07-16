@@ -7,6 +7,7 @@ import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
+import com.lms.service.FinancialService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,9 +15,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -32,15 +35,18 @@ public class LibrarianMemberDetailController {
     private final MemberAccountRepository memberAccountRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final FinancialService financialService;
 
     public LibrarianMemberDetailController(MemberRepository memberRepository,
                                            MemberAccountRepository memberAccountRepository,
                                            WalletRepository walletRepository,
-                                           TransactionRepository transactionRepository) {
+                                           TransactionRepository transactionRepository,
+                                           FinancialService financialService) {
         this.memberRepository = memberRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.financialService = financialService;
     }
 
     @GetMapping("/{memberId}/details")
@@ -67,9 +73,28 @@ public class LibrarianMemberDetailController {
         model.addAttribute("transactions", transactionPage.getContent());
         model.addAttribute("currentPage", safePage);
         model.addAttribute("selectedType", selectedType);
+        model.addAttribute("refundableReservations", financialService.getRefundableReservationDeposits(memberId));
+        model.addAttribute("reservationDepositAmount", financialService.getReservationDepositAmount());
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
         }
         return "librarian/member-detail";
+    }
+
+    @PostMapping("/{memberId}/reservations/{reservationId}/refund")
+    public String refundReservationDeposit(@PathVariable Integer memberId,
+                                           @PathVariable Integer reservationId,
+                                           @RequestParam(required = false) String returnTo,
+                                           RedirectAttributes redirectAttributes) {
+        try {
+            financialService.refundReservationDeposit(memberId, reservationId);
+            redirectAttributes.addFlashAttribute("success", "Đã duyệt và hoàn tiền cọc vào ví thành viên.");
+        } catch (RuntimeException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+        }
+        if ("refunds".equals(returnTo)) {
+            return "redirect:/librarian/members/refunds";
+        }
+        return "redirect:/librarian/members/" + memberId + "/details";
     }
 }

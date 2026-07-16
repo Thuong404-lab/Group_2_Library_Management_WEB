@@ -5,16 +5,19 @@
     <title>Chi tiết thành viên</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-detail.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
   </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='members'" class="finance-page member-detail-page">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom librarian-member-detail-div-border-color-01"
-        >
+    <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="member-detail-header">
         <div>
             <h2 class="detail-page-title fw-bold mb-1">Chi Tiết Thành Viên</h2>
             <div class="text-muted small">Xem thông tin thành viên, số dư ví và các giao dịch liên quan.</div>
         </div>
-        <a th:href="@{/librarian/members}" class="btn btn-link text-decoration-none px-2 u-color-4a3b32-8f35ff96">
+        <a th:href="@{/librarian/members}" class="app-secondary-action">
             <i class="bi bi-arrow-left me-1"></i>Quay lại
         </a>
     </div>
@@ -95,11 +98,55 @@
                 </div>
             </div>
 
+            <section class="refund-section" id="refund-requests">
+                <div class="refund-section-heading">
+                    <div>
+                        <h5 class="section-title"><i class="bi bi-arrow-counterclockwise"></i>Duyệt hoàn tiền cọc</h5>
+                        <p>Kiểm tra và duyệt yêu cầu hoàn tiền cọc vào ví thành viên.</p>
+                    </div>
+                    <span class="refund-count"
+                          th:text="${#lists.size(refundableReservations) + ' yêu cầu chờ duyệt'}">0 yêu cầu chờ duyệt</span>
+                </div>
+
+                <div th:if="${#lists.isEmpty(refundableReservations)}" class="refund-empty">
+                    Không có yêu cầu hoàn tiền cọc nào đang chờ duyệt.
+                </div>
+
+                <div th:unless="${#lists.isEmpty(refundableReservations)}" class="refund-list">
+                    <article class="refund-item" th:each="reservation : ${refundableReservations}">
+                        <div class="refund-main">
+                            <strong th:text="${reservation.book != null ? reservation.book.title : 'Sách không còn thông tin'}">Tên sách</strong>
+                            <span>
+                                Phiếu #<span th:text="${reservation.reservationId}">1</span>
+                                · Đặt ngày
+                                <span th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                            </span>
+                        </div>
+                        <div class="refund-amount">
+                            <small>Số tiền hoàn</small>
+                            <strong>
+                                <span th:text="${#numbers.formatDecimal(reservationDepositAmount, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                VNĐ
+                            </strong>
+                        </div>
+                        <form method="post" class="app-confirm-form"
+                              th:action="@{/librarian/members/{memberId}/reservations/{reservationId}/refund(memberId=${member.memberId},reservationId=${reservation.reservationId})}"
+                              data-confirm-title="Xác nhận duyệt hoàn tiền"
+                              data-confirm-subject-label="Phiếu cọc"
+                              th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : 'Sách không còn thông tin')}"
+                              data-confirm-message="Tiền cọc sẽ được cộng vào ví thành viên và giao dịch hoàn tiền được ghi nhận. Thao tác này không thể hoàn tác."
+                              data-confirm-action="Xác nhận hoàn tiền">
+                            <button type="submit" class="btn btn-classic refund-button">Duyệt hoàn tiền</button>
+                        </form>
+                    </article>
+                </div>
+            </section>
+
             <h5 class="section-title transaction-title"><i class="bi bi-wallet2"></i>Lịch sử giao dịch</h5>
 
             <form method="get" th:action="@{/librarian/members/{memberId}/details(memberId=${member.memberId})}"
-                  class="detail-filter d-flex flex-wrap align-items-center gap-2">
-                <select name="type" class="form-select" aria-label="Lọc loại giao dịch">
+                  class="detail-filter d-flex flex-wrap align-items-center gap-2" data-auto-filter-form>
+                <select name="type" class="form-select" aria-label="Lọc loại giao dịch" data-auto-submit>
                     <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao dịch</option>
                     <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
                     <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
@@ -129,7 +176,7 @@
                         <td colspan="5" class="py-4 text-muted">Thành viên chưa có giao dịch phù hợp.</td>
                     </tr>
                     <tr th:each="transaction : ${transactions}">
-                        <td class="fw-bold font-monospace u-color-8b5a2b-d7f13118"
+                                <td class="fw-bold font-monospace transaction-code"
                             th:text="${'TX-' + transaction.transactionId}">TX-1</td>
                         <td>
                             <span class="badge transaction-type"
@@ -138,7 +185,7 @@
                                 Loại giao dịch
                             </span>
                         </td>
-                        <td class="fw-bold" th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
+                                <td class="fw-bold" th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' transaction-amount-positive' : ' transaction-amount-negative'">
                             <span th:text="${transaction.amount != null and transaction.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
                             <span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                             VNĐ
@@ -156,19 +203,20 @@
                 </table>
             </div>
 
-            <nav th:if="${transactionPage != null and transactionPage.totalPages > 1}" aria-label="Phân trang giao dịch">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
-                        <a class="page-link page-link-classic" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage - 1},type=${selectedType})}">Trước</a>
-                    </li>
-                    <li class="page-item disabled">
-                        <span class="page-link page-link-classic text-muted" th:text="${'Trang ' + (currentPage + 1) + ' / ' + transactionPage.totalPages}">Trang 1 / 1</span>
-                    </li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
-                        <a class="page-link page-link-classic" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage + 1},type=${selectedType})}">Sau</a>
-                    </li>
-                </ul>
-            </nav>
+            <div class="app-pagination-region" th:if="${transactionPage != null and transactionPage.totalPages > 1}"
+                 th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))}">
+                <nav aria-label="Phân trang giao dịch" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
+                    <ul class="pagination app-pagination">
+                        <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=0,type=${selectedType})}">Đầu</a></li>
+                        <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${transactionPage.number-1},type=${selectedType})}" aria-label="Trang trước"><i class="bi bi-chevron-left"></i></a></li>
+                        <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${i},type=${selectedType})}" th:text="${i+1}">1</a></li>
+                        <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">…</span></li>
+                        <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${transactionPage.number+1},type=${selectedType})}" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a></li>
+                        <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${transactionPage.totalPages-1},type=${selectedType})}">Cuối</a></li>
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 </div>

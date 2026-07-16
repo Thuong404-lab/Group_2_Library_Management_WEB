@@ -5,15 +5,17 @@
     <!-- UC-8.5 UI maintained by Pham Kien Quoc. -->
     <meta charset="UTF-8">
     <title>Thông báo nạp tiền</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
+    <link rel="stylesheet" th:href="@{/css/pages/member/topup-notifications.css}"/>
 </head>
 <body>
-<div layout:fragment="content" class="container mt-4 mb-5">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div layout:fragment="content" class="container finance-page topup-notifications-page">
+    <div class="finance-header">
         <div>
-            <h2 class="fw-bold mb-1">Thông báo nạp tiền</h2>
-            <div class="text-muted">Theo dõi các thông báo liên quan đến giao dịch nạp tiền vào ví của bạn.</div>
+            <h2 class="finance-title">Thông báo nạp tiền</h2>
+            <div class="finance-description">Theo dõi các thông báo liên quan đến giao dịch nạp tiền vào ví của bạn.</div>
         </div>
-        <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn btn-outline-secondary">
+        <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn app-secondary-action">
             Lịch sử nạp tiền
         </a>
     </div>
@@ -21,38 +23,37 @@
     <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
 
     <form method="post" th:action="@{/member/financial/topup-notifications/mark-all-read(page=${currentPage})}"
-          class="mb-3" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
+          class="notification-toolbar" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-        <button type="submit" class="btn btn-outline-primary btn-sm">
+        <button type="submit" class="btn app-secondary-action">
             Đánh dấu tất cả là đã đọc
         </button>
     </form>
 
-    <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="card border-0 shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            Hiện chưa có thông báo nạp tiền nào.
-        </div>
+    <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="notification-empty-state">
+        <span class="notification-empty-icon" aria-hidden="true"><i class="bi bi-bell"></i></span>
+        <h2>Chưa có thông báo nạp tiền</h2>
+        <p>Các cập nhật liên quan đến giao dịch nạp tiền sẽ được hiển thị tại đây.</p>
     </div>
 
-    <div class="list-group" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
-        <div class="list-group-item mb-2 border rounded shadow-sm"
-             th:each="memberNotification : ${notifications}">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                <div>
-                    <h5 class="mb-1" th:text="${memberNotification.notification.title}">Nạp tiền thành công</h5>
-                    <p class="mb-2 text-muted" th:text="${memberNotification.notification.content}">
+    <div class="notification-list" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
+        <article class="notification-item"
+                 th:each="memberNotification : ${notifications}">
+            <div class="notification-item-head">
+                <div class="notification-item-copy">
+                    <h2 th:text="${memberNotification.notification.title}">Nạp tiền thành công</h2>
+                    <p th:text="${memberNotification.notification.content}">
                         Tài khoản ví của bạn vừa được nạp tiền.
                     </p>
                 </div>
-                <small class="text-muted"
-                       th:text="${memberNotification.notification.createdDate != null ? #temporals.format(memberNotification.notification.createdDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                <time th:text="${memberNotification.notification.createdDate != null ? #temporals.format(memberNotification.notification.createdDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
                     01/01/2026 08:00
-                </small>
+                </time>
             </div>
 
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <span class="badge"
-                      th:classappend="${memberNotification.isRead} ? ' bg-success' : ' bg-warning text-dark'"
+            <div class="notification-item-footer">
+                <span class="notification-read-status"
+                      th:classappend="${memberNotification.isRead} ? ' is-read' : ' is-unread'"
                       th:text="${memberNotification.isRead} ? 'Đã đọc' : 'Chưa đọc'">
                     Chưa đọc
                 </span>
@@ -60,32 +61,30 @@
                       th:if="${!memberNotification.isRead}"
                       th:action="@{/member/financial/topup-notifications/{id}/mark-read(id=${memberNotification.notification.notificationId}, page=${currentPage})}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="btn btn-sm btn-outline-success">
+                    <button type="submit" class="app-secondary-action notification-action">
                         Đánh dấu đã đọc
                     </button>
                 </form>
             </div>
-        </div>
+        </article>
     </div>
 
-    <nav th:if="${notificationPage != null and notificationPage.totalPages > 1}" class="mt-3"
-         aria-label="Phân trang thông báo nạp tiền">
-        <ul class="pagination justify-content-center">
-            <li class="page-item" th:classappend="${notificationPage.first} ? 'disabled'">
-                <a class="page-link page-link-classic" th:href="@{/member/financial/topup-notifications(page=${currentPage - 1})}">Trước</a>
-            </li>
-            <li class="page-item" th:each="i : ${#numbers.sequence(0, notificationPage.totalPages - 1)}"
-                th:classappend="${i == currentPage} ? 'active'">
-                <a class="page-link page-link-classic" th:href="@{/member/financial/topup-notifications(page=${i})}"
-                   th:text="${i + 1}">1</a>
-            </li>
-            <li class="page-item" th:classappend="${notificationPage.last} ? 'disabled'">
-                <a class="page-link page-link-classic" th:href="@{/member/financial/topup-notifications(page=${currentPage + 1})}">Sau</a>
-            </li>
-        </ul>
-    </nav>
+    <div class="app-pagination-region" th:if="${notificationPage != null and notificationPage.totalPages > 1}"
+         th:with="startPage=${notificationPage.totalPages <= 10 ? 0 : (notificationPage.number < 9 ? 0 : (notificationPage.number - 8 > notificationPage.totalPages - 10 ? notificationPage.totalPages - 10 : notificationPage.number - 8))}">
+        <nav aria-label="Phân trang thông báo nạp tiền" th:with="endPage=${startPage + 9 < notificationPage.totalPages ? startPage + 9 : notificationPage.totalPages - 1}">
+            <ul class="pagination app-pagination">
+                <li class="page-item" th:classappend="${notificationPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=0)}">Đầu</a></li>
+                <li class="page-item" th:classappend="${notificationPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${notificationPage.number-1})}" aria-label="Trang trước"><i class="bi bi-chevron-left"></i></a></li>
+                <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == notificationPage.number} ? 'active'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${i})}" th:text="${i+1}">1</a></li>
+                <li class="page-item disabled" th:if="${endPage < notificationPage.totalPages-1}"><span class="page-link">…</span></li>
+                <li class="page-item" th:classappend="${notificationPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${notificationPage.number+1})}" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a></li>
+                <li class="page-item" th:classappend="${notificationPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${notificationPage.totalPages-1})}">Cuối</a></li>
+            </ul>
+        </nav>
+    </div>
 
-    <a th:href="@{/member/financial/transactions}" class="btn btn-secondary mt-3">
+    <a th:href="@{/member/financial/transactions}" class="app-secondary-action notification-back-action">
         Quay lại lịch sử giao dịch
     </a>
 </div>

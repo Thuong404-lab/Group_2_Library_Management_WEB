@@ -5,16 +5,16 @@
 <head>
     <title>Danh sách Thành viên</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
   </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='members'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
-           >
+    <div layout:fragment="content" th:with="activeMenu='members'" class="member-management-page">
+        <div class="member-page-header">
             <div>
-                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Danh sách Thành
+                <h2 class="member-page-title">Danh sách Thành
                     viên</h2>
-                <div class="text-muted">Danh sách và thông tin tài khoản thành viên trong hệ thống</div>
+                <div class="member-page-description">Danh sách và thông tin tài khoản thành viên trong hệ thống</div>
             </div>
 
             <button type="button" class="btn btn-classic shadow-sm" data-bs-toggle="modal"
@@ -29,7 +29,7 @@
 
                             <div
                                 class="card-header bg-white border-bottom border-color p-4 d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336" id="createMemberModalLabel"
+                                <h5 class="modal-title" id="createMemberModalLabel"
                                    >
                                     <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                     Thông tin tài khoản
@@ -48,7 +48,7 @@
                                     <div class="row g-4">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Họ tên <span class="text-danger">*</span>
+                                                Họ tên <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="fullName" required
                                                 placeholder="Nguyễn Văn A"
@@ -62,7 +62,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Email <span class="text-danger">*</span>
+                                                Email <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="email" type="email"
                                                 required
@@ -78,7 +78,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Số điện thoại <span class="text-danger">*</span>
+                                                Số điện thoại <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="phone" required
                                                 pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
@@ -93,7 +93,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Username <span class="text-danger">*</span>
+                                                Username <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="username" required
                                                 pattern="[a-zA-Z0-9_]{3,20}" placeholder="Nhập tên đăng nhập"
@@ -108,7 +108,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Mật khẩu <span class="text-danger">*</span>
+                                                Mật khẩu <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="password" type="password"
                                                 required minlength="6" placeholder="Nhập mật khẩu"
@@ -121,7 +121,7 @@
                                         </div>
                                     </div>
 
-                                    <h5 class="fw-bold mb-1 mt-3 u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                    <h5 class="member-form-section-title"
                                        >
                                         <i class="bi bi-card-heading me-2 text-classic"></i>
                                         Thiết lập Thẻ Thư viện
@@ -130,7 +130,7 @@
                                     <div class="row g-4">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Hạng thành viên <span class="text-danger">*</span>
+                                                Hạng thành viên <span class="required-marker">*</span>
                                             </label>
                                             <select class="form-select form-control validate-field" name="tierId"
                                                 required
@@ -153,7 +153,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Trạng thái <span class="text-danger">*</span>
+                                                Trạng thái <span class="required-marker">*</span>
                                             </label>
                                             <select class="form-select form-control validate-field" name="status"
                                                 required
@@ -174,9 +174,9 @@
                                         </div>
                                     </div>
 
-                                    <hr class="my-4 u-border-color-rgba-139-90-43-0-2-447fe402">
+                                    <hr class="member-form-divider">
 
-                                    <div class="d-flex justify-content-end u-gap-12px-58cf3fe5">
+                                    <div class="member-form-actions">
                                         <button type="button" class="btn btn-light border shadow-sm"
                                             data-bs-dismiss="modal">
                                             Hủy bỏ
@@ -208,19 +208,19 @@
             <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Thao tác thành công.</span>
         </div>
 
-        <div class="card-classic shadow-sm mb-4">
+        <div class="card-classic member-list-card mb-4">
             <div class="card-body p-4">
 
                 <!-- Search & Filter + Back Button -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="member-list-toolbar">
                     <!-- Search & Filter -->
-                    <form class="d-flex align-items-center u-gap-12px-width-60-1a3153fd" method="get"
-                        th:action="@{/librarian/members}">
+                    <form class="member-search-form" method="get"
+                        th:action="@{/librarian/members}" data-auto-filter-form data-focus-key="librarianMemberFilterFocus">
                         <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783">
+                            <span class="input-group-text member-search-icon">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
                                 placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
                             <button class="btn btn-classic ms-2 rounded text-nowrap" type="submit">
@@ -239,14 +239,14 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle stable-table-layout">
+                    <table class="table member-table align-middle stable-table-layout">
                         <colgroup>
-                            <col class="u-width-7-2d9383cf">
-                            <col class="u-width-15-f7f760e2">
-                            <col class="u-width-25-84a0e8c4">
-                            <col class="u-width-20-00e2b68d">
-                            <col class="u-width-17-9278e232">
-                            <col class="u-width-16-9fe033fb">
+                            <col class="member-col-index">
+                            <col class="member-col-username">
+                            <col class="member-col-user">
+                            <col class="member-col-tier">
+                            <col class="member-col-status">
+                            <col class="member-col-actions">
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
@@ -292,7 +292,7 @@
                                         Standard
                                     </span>
 
-                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                    <span class="membership-tier-badge membership-tier-badge--empty"
                                         th:if="${member == null || member.tier == null}">
                                         N/A
                                     </span>
@@ -339,9 +339,9 @@
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
 
-                                                    <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05"
+                                                <div class="modal-header"
                                                        >
-                                                        <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                                    <h5 class="modal-title"
                                                            >
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                                             Cập nhật tài khoản
@@ -357,7 +357,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên <span class="text-danger">*</span>
+                                                                    Họ tên <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
                                                                     data-label="Họ tên"
@@ -371,7 +371,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username <span class="text-danger">*</span>
+                                                                    Username <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
@@ -385,7 +385,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại <span class="text-danger">*</span>
+                                                                    Số điện thoại <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
                                                                     data-label="Số điện thoại"
@@ -401,7 +401,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Email <span class="text-danger">*</span>
+                                                                    Email <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="email" type="email"
                                                                     data-label="Email"
@@ -460,7 +460,7 @@
                                                     </div>
 
                                                     <div class="modal-footer border-top bg-light">
-                                                        <button type="button" class="btn btn-secondary"
+                                                        <button type="button" class="btn app-secondary-action"
                                                             data-bs-dismiss="modal">Hủy bỏ</button>
                                                         <button type="submit" class="btn btn-classic">
                                                             Lưu thay đổi
@@ -473,7 +473,7 @@
 
                                     <!-- Delete -->
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
+                                        class="btn btn-sm app-danger-outline ms-1 account-action-tooltip"
                                         data-bs-toggle="modal" th:data-bs-target="${'#deleteMemberModal' + account.id}"
                                         data-bs-title="Xóa tài khoản" data-bs-custom-class="delete-account-tooltip"
                                         aria-label="Xóa">
@@ -491,7 +491,7 @@
                                                     <input type="hidden" name="source" value="members">
 
                                                     <div class="modal-header border-bottom-0">
-                                                        <h5 class="modal-title fw-bold text-danger">
+                                                        <h5 class="modal-title destructive-title">
                                                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                                             Xác nhận xóa tài khoản
                                                         </h5>
@@ -561,7 +561,7 @@
                                                                     </span>
 
                                                                     <span
-                                                                        class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                                class="membership-tier-badge membership-tier-badge--empty"
                                                                         th:if="${member == null || member.tier == null}">
                                                                         N/A
                                                                     </span>
@@ -574,7 +574,7 @@
                                                     <div class="modal-footer border-top-0 pt-4">
                                                         <button type="button" class="btn btn-light"
                                                             data-bs-dismiss="modal">Hủy</button>
-                                                        <button type="submit" class="btn btn-danger">Đồng ý xóa</button>
+                                                        <button type="submit" class="btn app-danger-action">Đồng ý xóa</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -594,21 +594,21 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
+                <div class="app-pagination-region"
                     th:if="${accounts.totalPages > 1}"
                     th:with="startPage=${accounts.totalPages <= 10 ? 0 : (accounts.number < 9 ? 0 : (accounts.number - 8 > accounts.totalPages - 10 ? accounts.totalPages - 10 : accounts.number - 8))}">
                     <nav
                         th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
-                        <ul class="pagination mb-0">
+                        <ul class="pagination app-pagination">
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/librarian/members(page=0, keyword=${keyword})}"
+                                <a class="page-link" th:href="@{/librarian/members(page=0, keyword=${keyword})}"
                                    >Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}"
                                    ><i
                                         class="bi bi-chevron-left"></i></a>
@@ -631,7 +631,7 @@
 
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}"
                                    ><i
                                         class="bi bi-chevron-right"></i></a>
@@ -639,7 +639,7 @@
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/members(page=${accounts.totalPages - 1}, keyword=${keyword})}"
                                    >Cuối</a>
                             </li>
