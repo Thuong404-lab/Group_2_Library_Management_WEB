@@ -45,12 +45,23 @@ public class GuestController {
 
     // Trang chủ
     @GetMapping("/")
-    public String homePage(Model model, Principal principal) {
+    public String homePage(Model model, org.springframework.security.core.Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (isAdmin) {
+                return "redirect:/admin/dashboard";
+            }
+            boolean isLibrarian = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN"));
+            if (isLibrarian) {
+                return "redirect:/librarian/dashboard";
+            }
+        }
+
         List<Book> books = bookService.getRecentBooks(6);
         List<Book> trendingBooks = bookService.getTrendingBooks(6);
         model.addAttribute("books", books);
         model.addAttribute("trendingBooks", trendingBooks);
-        addFavoriteBookIds(model, principal);
+        addFavoriteBookIds(model, authentication);
         return "index";
     }
 

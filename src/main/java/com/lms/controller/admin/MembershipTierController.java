@@ -2,6 +2,7 @@ package com.lms.controller.admin;
 
 import com.lms.entity.MembershipTier;
 import com.lms.service.MembershipService;
+import com.lms.exception.ValidationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +35,11 @@ public class MembershipTierController {
         try {
             membershipService.saveTier(tier);
             redirectAttributes.addFlashAttribute("success", "Lưu hạng thành viên thành công!");
-        } catch (Exception e) {
+        } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi hệ thống khi lưu hạng thành viên. Vui lòng thử lại sau!");
+            e.printStackTrace();
         }
         return "redirect:/admin/tiers";
     }
@@ -46,8 +50,11 @@ public class MembershipTierController {
         try {
             membershipService.deleteTier(id);
             redirectAttributes.addFlashAttribute("success", "Đã xóa hạng thành viên thành công!");
-        } catch (Exception e) {
+        } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi hệ thống khi xóa hạng thành viên. Vui lòng thử lại sau!");
+            e.printStackTrace();
         }
         return "redirect:/admin/tiers";
     }

@@ -99,6 +99,15 @@ public class MembershipServiceImpl implements MembershipService {
         if (tier.getDiscountPercent() != null && (tier.getDiscountPercent().doubleValue() < 0 || tier.getDiscountPercent().doubleValue() > 100)) {
             throw new ValidationException("Phần trăm giảm giá phải từ 0 đến 100!");
         }
+        if (tier.getBorrowLimit() != null && tier.getBorrowLimit() < 0) {
+            throw new ValidationException("Giới hạn mượn không được nhỏ hơn 0!");
+        }
+        if (tier.getCondition() == null) {
+            throw new ValidationException("Điểm/Chi tiêu không được để trống!");
+        }
+        if (tier.getCondition().doubleValue() < 0) {
+            throw new ValidationException("Điểm/Chi tiêu không được nhỏ hơn 0!");
+        }
         membershipTierRepository.save(tier);
     }
 
