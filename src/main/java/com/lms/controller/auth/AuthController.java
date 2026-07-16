@@ -83,7 +83,7 @@ public class AuthController {
         try {
             authService.requestPasswordReset(forgotPasswordRequest.getEmail());
             redirectAttributes.addFlashAttribute("successMsg",
-                    "Nếu email của bạn tồn tại trong hệ thống, một liên kết đặt lại mật khẩu đã được gửi đến email của bạn.");
+                    "Liên kết đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn. Vui lòng kiểm tra hộp thư để tiếp tục.");
             return "redirect:/forgot-password";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());

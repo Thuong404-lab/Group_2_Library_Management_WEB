@@ -1,0 +1,47 @@
+package com.lms.controller.member;
+
+import com.lms.entity.Member;
+import com.lms.repository.MemberRepository;
+import com.lms.service.FineBatchPaymentService;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.security.Principal;
+
+@Controller
+@RequestMapping("/member/payments/fines")
+public class FineBatchPaymentController {
+    private final FineBatchPaymentService paymentService;
+    private final MemberRepository memberRepository;
+
+    public FineBatchPaymentController(FineBatchPaymentService paymentService,
+                                      MemberRepository memberRepository) {
+        this.paymentService = paymentService;
+        this.memberRepository = memberRepository;
+    }
+
+    @PostMapping("/pay-all")
+    public String payAll(Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            Member member = currentMember(principal);
+            paymentService.payAllFromWallet(member.getMemberId());
+            redirectAttributes.addFlashAttribute("success", "Đã thanh toán toàn bộ phí phạt bằng ví.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/member/financial/transactions";
+    }
+
+    private Member currentMember(Principal principal) {
+        if (principal == null) {
+            throw new RuntimeException("Bạn cần đăng nhập để thanh toán.");
+        }
+        String login = principal.getName();
+        return memberRepository.findByAccountUsername(login)
+                .or(() -> memberRepository.findByUserEmail(login))
+                .or(() -> memberRepository.findByUserPhone(login))
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên hiện tại."));
+    }
+}
