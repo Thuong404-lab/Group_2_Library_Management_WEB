@@ -11,14 +11,20 @@
   </head>
 
 <body>
-    <div layout:fragment="content"
-        th:with="activeMenu='dashboard', currentSection=${param.section != null ? param.section[0] : 'overview'}, currentSubSection=${param.subsection != null ? param.subsection[0] : ''}">
+    <div layout:fragment="content" class="librarian-dashboard-page"
+        th:classappend="${param.section != null && param.section[0] == 'reviews'} ? ' canonical-management-page book-reviews-page' : (${param.section != null && param.section[0] == 'books' && param.subsection != null && param.subsection[0] == 'inventory'} ? ' canonical-management-page book-inventory-page' : '')"
+        th:with="activeMenu=${param.section != null && param.section[0] == 'reviews' ? 'reviews' : (param.section != null && param.section[0] == 'books' ? 'books' : 'dashboard')}, currentSection=${param.section != null ? param.section[0] : 'overview'}, currentSubSection=${param.subsection != null ? param.subsection[0] : ''}">
 
         <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom dashboard-page-header"
+            th:classappend="${currentSection != 'reviews' && !(currentSection == 'books' && currentSubSection == 'inventory')} ? ' u-border-color-rgba-139-90-43-0-2-important-f8e732ba' : ''"
            >
             <div>
-                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                <div class="app-page-eyebrow" th:if="${currentSection == 'reviews'}">TƯƠNG TÁC ĐỘC GIẢ</div>
+                <div class="app-page-eyebrow"
+                    th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">QUẢN LÝ TÀI NGUYÊN</div>
+                <h2 class="app-page-title"
+                    th:classappend="${currentSection != 'reviews' && !(currentSection == 'books' && currentSubSection == 'inventory')} ? ' fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336' : ''">
                     <span th:if="${currentSection == 'notifications'}">Gửi thông báo</span>
                     <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
                     <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
@@ -35,7 +41,7 @@
                 <div class="text-muted" th:if="${currentSection == 'notifications'}">
                     Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
                 </div>
-                <div class="text-muted" th:if="${currentSection == 'reviews'}">
+                <div class="app-page-description" th:if="${currentSection == 'reviews'}">
                     Xem, phản hồi và xoá đánh giá của độc giả.
                 </div>
                 <div class="text-muted" th:if="${currentSection == 'acquisition'}">
@@ -47,7 +53,7 @@
                 <div class="text-muted" th:if="${currentSection == 'users'}">
                     Theo dõi và quản lý tài khoản thành viên, thủ thư trong hệ thống.
                 </div>
-                <div class="text-muted"
+                <div class="app-page-description"
                     th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">
                     Thêm, cập nhật và quản lý đầu sách, bản sách trong kho thư viện.
                 </div>
@@ -63,8 +69,12 @@
             </div>
         </div>
 
-        <div th:if="${success}" class="alert alert-success shadow-sm" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
+        <div th:if="${success}" class="alert"
+            th:classappend="${currentSection == 'reviews' || (currentSection == 'books' && currentSubSection == 'inventory')} ? ' app-alert app-alert--success' : ' alert-success shadow-sm'"
+            th:text="${success}"></div>
+        <div th:if="${error}" class="alert"
+            th:classappend="${currentSection == 'reviews' || (currentSection == 'books' && currentSubSection == 'inventory')} ? ' app-alert app-alert--danger' : ' alert-danger shadow-sm'"
+            th:text="${error}"></div>
 
         <!-- Overview -->
         <section id="section-overview" class="lib-section"
@@ -372,139 +382,157 @@
             </div>
         </section>
         <!-- Reviews -->
-        <section id="section-reviews" class="lib-section"
+        <section id="section-reviews" class="lib-section book-reviews-section"
             th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
-            <div class="card-classic shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle stable-table-layout">
-                            <colgroup>
-                                <col class="u-width-27-8908da00">
-                                <col class="u-width-9-adad3d83">
-                                <col class="u-width-8-5966c0f2">
-                                <col class="u-width-9-adad3d83">
-                                <col class="u-width-17-9278e232">
-                                <col class="u-width-30-e6074643">
-                            </colgroup>
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th class="ps-3">Sách</th>
-                                    <th>Người gửi</th>
-                                    <th>Đánh giá</th>
-                                    <th>Nội dung</th>
-                                    <th>Phản hồi của thủ thư</th>
-                                    <th class="text-end pe-3 table-fixed-action">Thao tác</th>
-                                </tr>
-                            </thead>
-
-                            <tbody th:if="${reviews != null && reviews.totalElements > 0}">
-                                <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-3 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
-                                    <td th:text="${review.memberName}">Người gửi</td>
-                                    <td>
-                                        <span class="badge bg-warning text-dark border">
-                                            <i class="bi bi-star-fill me-1"></i>
-                                            <span th:text="${review.rating + ' sao'}">5 sao</span>
-                                        </span>
-                                    </td>
-                                    <td th:text="${review.comment}">Nội dung</td>
-                                    <td>
-                                        <div th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
-                                            class="fw-semibold" th:text="${review.librarianResponse}">
-                                            Phản hồi
-                                        </div>
-                                        <span
-                                            th:if="${review.status == 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
-                                            class="text-muted">Member đã xoá</span>
-                                        <span
-                                            th:if="${review.status != 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
-                                            class="text-muted">Chưa phản hồi</span>
-                                    </td>
-                                    <td class="pe-3 table-fixed-action">
-                                        <form th:if="${review.status != 'DELETED_BY_MEMBER'}"
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                            method="post" class="review-reply-box mb-2" novalidate>
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <textarea name="response"
-                                                class="form-control form-control-sm validate-field mb-2" rows="2"
-                                                placeholder="Nhập phản hồi..."
-                                                th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
-                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
-                                            <div class="invalid-feedback d-block"
-                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
-                                            </div>
-                                            <button type="submit" class="btn btn-sm btn-classic w-100">
-                                                Phản hồi
-                                            </button>
-                                        </form>
-                                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
-                                            class="text-muted small mb-2">
-                                            Member đã xoá đánh giá này, không thể phản hồi.
-                                        </div>
-
-                                        <form
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
-                                            method="post"
-                                            onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                                Xoá
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            </tbody>
-
-                            <tbody th:if="${reviews == null || reviews.totalElements == 0}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-5">
-                                        <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
-                                        Hiện chưa có đánh giá nào.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="app-card review-management-card">
+                <div class="review-management-header">
+                    <div>
+                        <h3 class="app-section-title">Danh sách đánh giá</h3>
+                        <p class="app-section-description">Theo dõi nội dung và phản hồi của độc giả theo từng đầu sách.</p>
                     </div>
-                    <nav th:if="${reviews != null && reviews.totalPages > 1}" class="mt-3"
+                    <span class="review-count" th:if="${reviews != null}"
+                        th:text="${reviews.totalElements + ' đánh giá'}">0 đánh giá</span>
+                </div>
+                <div class="app-table-wrap">
+                    <table class="app-table review-management-table">
+                        <colgroup>
+                            <col class="review-book-column">
+                            <col class="review-member-column">
+                            <col class="review-rating-column">
+                            <col class="review-comment-column">
+                            <col class="review-response-column">
+                            <col class="review-actions-column">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Sách</th>
+                                <th>Người gửi</th>
+                                <th>Đánh giá</th>
+                                <th>Nội dung</th>
+                                <th>Phản hồi của thủ thư</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody th:if="${reviews != null && reviews.totalElements > 0}">
+                            <tr th:each="review : ${reviews.content}">
+                                <td class="review-book-title" th:text="${review.bookTitle}">Tên sách</td>
+                                <td th:text="${review.memberName}">Người gửi</td>
+                                <td>
+                                    <span class="review-rating-badge">
+                                        <i class="bi bi-star-fill" aria-hidden="true"></i>
+                                        <span th:text="${review.rating + ' sao'}">5 sao</span>
+                                    </span>
+                                </td>
+                                <td class="review-comment" th:text="${review.comment}">Nội dung</td>
+                                <td>
+                                    <div th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
+                                        class="review-response-text" th:text="${review.librarianResponse}">
+                                        Phản hồi
+                                    </div>
+                                    <span
+                                        th:if="${review.status == 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
+                                        class="review-helper-text">Member đã xoá</span>
+                                    <span
+                                        th:if="${review.status != 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
+                                        class="review-helper-text">Chưa phản hồi</span>
+                                </td>
+                                <td class="review-action-cell">
+                                    <form class="app-detached-form"
+                                        th:id="${'reviewDeleteForm-' + review.feedbackId}"
+                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                        method="post"
+                                        onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    </form>
+                                    <form th:if="${review.status != 'DELETED_BY_MEMBER'}"
+                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                                        method="post" class="review-reply-box review-reply-form" novalidate>
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <textarea name="response"
+                                            class="form-control validate-field review-response-input" rows="2"
+                                            placeholder="Nhập phản hồi..."
+                                            th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
+                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
+                                        <div class="invalid-feedback review-validation-message"
+                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
+                                        </div>
+                                        <div class="app-form-actions">
+                                            <button type="submit" class="app-form-primary">Phản hồi</button>
+                                            <button type="submit" class="app-icon-action app-icon-action--delete"
+                                                th:form="${'reviewDeleteForm-' + review.feedbackId}"
+                                                title="Xoá đánh giá" aria-label="Xoá đánh giá">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                    <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                                        class="review-deleted-note">
+                                        Member đã xoá đánh giá này, không thể phản hồi.
+                                    </div>
+                                    <div class="app-form-actions app-form-actions--end"
+                                        th:if="${review.status == 'DELETED_BY_MEMBER'}">
+                                        <button type="submit" class="app-icon-action app-icon-action--delete"
+                                            th:form="${'reviewDeleteForm-' + review.feedbackId}"
+                                            title="Xoá đánh giá" aria-label="Xoá đánh giá">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+
+                        <tbody th:if="${reviews == null || reviews.totalElements == 0}">
+                            <tr>
+                                <td colspan="6" class="review-empty-cell">
+                                    <div class="app-empty-state">
+                                        <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                                        <span>Hiện chưa có đánh giá nào.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav th:if="${reviews != null && reviews.totalPages > 1}" class="app-pagination-nav"
                         th:with="startPage=${reviews.totalPages <= 10 ? 0 : (reviews.number < 9 ? 0 : (reviews.number - 8 > reviews.totalPages - 10 ? reviews.totalPages - 10 : reviews.number - 8))}, endPage=${startPage + 9 < reviews.totalPages ? startPage + 9 : reviews.totalPages - 1}">
-                        <ul class="pagination justify-content-center mb-0">
+                        <ul class="pagination app-pagination">
                             <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=0,requestPage=${requests != null ? requests.number : 0})}"
                                    >Đầu</a>
                             </li>
                             <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number - 1},requestPage=${requests != null ? requests.number : 0})}"
                                    ><i class="bi bi-chevron-left"></i></a>
                             </li>
                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                <span class="page-link page-link-classic">…</span>
+                                <span class="page-link">…</span>
                             </li>
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == reviews.number ? 'active' : ''}">
-                                <a class="page-link page-link-classic"
+                                <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${i},requestPage=${requests != null ? requests.number : 0})}"
                                     th:text="${i + 1}">1</a>
                             </li>
                             <li class="page-item disabled" th:if="${endPage < reviews.totalPages - 1}">
-                                <span class="page-link page-link-classic">…</span>
+                                <span class="page-link">…</span>
                             </li>
                             <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number + 1},requestPage=${requests != null ? requests.number : 0})}"
                                    ><i class="bi bi-chevron-right"></i></a>
                             </li>
                             <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.totalPages - 1},requestPage=${requests != null ? requests.number : 0})}"
                                    >Cuối</a>
                             </li>
                         </ul>
-                    </nav>
-                </div>
+                </nav>
             </div>
         </section>
         <!-- Book Suggestions -->
@@ -695,28 +723,25 @@
             </div>
 
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
-            <div class="card-classic shadow-sm mb-4" th:if="${currentSubSection == 'inventory'}">
-                <div class="card-body p-4">
+            <div class="app-card book-inventory-card" th:if="${currentSubSection == 'inventory'}">
+                <div class="book-inventory-body">
                     <div id="bookInventoryPanel">
-                        <div class="nav d-flex flex-wrap mb-4 u-gap-12px-58cf3fe5" id="inventory-tab" role="tablist"
+                        <div class="nav inventory-tabs" id="inventory-tab" role="tablist"
                            >
-                            <button class="nav-link btn btn-classic btn-sm active text-white" id="nav-books-tab"
+                            <button class="nav-link category-tab active" id="nav-books-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-books" type="button" role="tab"
-                                aria-controls="nav-books" aria-selected="true"
-                                onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-categories-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-categories-tab').classList.remove('text-white'); document.getElementById('nav-audit-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-audit-tab').classList.remove('text-white');">
-                                <i class="bi bi-book me-1"></i>Kho sách
+                                aria-controls="nav-books" aria-selected="true">
+                                Kho sách
                             </button>
-                            <button class="nav-link btn btn-outline-classic btn-sm" id="nav-categories-tab"
+                            <button class="nav-link category-tab" id="nav-categories-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-categories" type="button" role="tab"
-                                aria-controls="nav-categories" aria-selected="false"
-                                onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-books-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-books-tab').classList.remove('text-white'); document.getElementById('nav-audit-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-audit-tab').classList.remove('text-white');">
-                                <i class="bi bi-tags me-1"></i>Danh mục & thể loại
+                                aria-controls="nav-categories" aria-selected="false">
+                                Danh mục &amp; thể loại
                             </button>
-                            <button class="nav-link btn btn-outline-classic btn-sm" id="nav-audit-tab"
+                            <button class="nav-link category-tab" id="nav-audit-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-audit" type="button" role="tab"
-                                aria-controls="nav-audit" aria-selected="false"
-                                onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-books-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-books-tab').classList.remove('text-white'); document.getElementById('nav-categories-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-categories-tab').classList.remove('text-white');">
-                                <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
+                                aria-controls="nav-audit" aria-selected="false">
+                                Kiểm kê kho
                             </button>
                         </div>
 
@@ -786,27 +811,29 @@
                             <div class="tab-pane fade show active" id="nav-books" role="tabpanel"
                                 aria-labelledby="nav-books-tab" tabindex="0">
 
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i>Danh sách
-                                        đầu sách</h5>
-                                    <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                <div class="app-table-toolbar">
+                                    <div>
+                                        <h3 class="app-section-title">Danh sách đầu sách</h3>
+                                        <p class="app-section-description">Quản lý thông tin, trạng thái và các bản sách trong kho.</p>
+                                    </div>
+                                    <button type="button" class="app-primary-action" data-bs-toggle="modal"
                                         data-bs-target="#addBookModal">
                                         Thêm sách mới
                                     </button>
                                 </div>
 
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0 stable-table-layout">
+                                <div class="app-table-wrap">
+                                    <table class="app-table app-table--three-actions book-inventory-table">
                                         <colgroup>
-                                            <col class="u-width-5-dccc3412">
-                                            <col class="u-width-7-2d9383cf">
-                                            <col class="u-width-25-84a0e8c4">
-                                            <col class="u-width-12-392c6809">
-                                            <col class="librarian-dashboard-col-width-36">
-                                            <col class="librarian-dashboard-col-width-37">
-                                            <col class="librarian-dashboard-col-width-38">
+                                            <col class="inventory-index-col">
+                                            <col class="inventory-cover-col">
+                                            <col class="inventory-book-col">
+                                            <col class="inventory-isbn-col">
+                                            <col class="inventory-description-col">
+                                            <col class="inventory-status-col">
+                                            <col class="app-action-col">
                                         </colgroup>
-                                        <thead class="table-light text-uppercase small text-muted">
+                                        <thead>
                                             <tr>
                                                 <th>STT</th>
                                                 <th>Ảnh</th>
@@ -814,33 +841,33 @@
                                                 <th>ISBN</th>
                                                 <th>Mô tả</th>
                                                 <th>Trạng thái</th>
-                                                <th class="text-end">Thao tác</th>
+                                                <th class="app-action-column">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr th:each="book, iterStat : ${books.content}">
-                                                <td class="ps-3 fw-bold"
+                                                <td class="inventory-index"
                                                     th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                                 <td>
                                                     <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
                                                         th:src="${book.coverImageUrl}" alt="Bìa sách"
-                                                        class="rounded border u-width-40px-height-56px-object-fit-cover-8457e107"
+                                                        class="inventory-book-cover"
                                                        >
                                                     <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                        class="bg-light rounded border d-flex align-items-center justify-content-center text-muted u-width-40px-height-56px-0055c9ad"
+                                                        class="inventory-book-cover inventory-book-cover--placeholder"
                                                        >
                                                         <i class="bi bi-book"></i>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="fw-bold text-classic" th:text="${book.title}">Tên sách
+                                                    <div class="inventory-book-title" th:text="${book.title}">Tên sách
                                                     </div>
-                                                    <div class="small text-muted"
+                                                    <div class="inventory-book-genre"
                                                         th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">
                                                         Thể loại</div>
                                                 </td>
-                                                <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
-                                                <td class="small text-muted text-truncate u-max-width-250px-e42dc5be"
+                                                <td class="inventory-isbn" th:text="${book.isbn}">ISBN</td>
+                                                <td class="inventory-description"
                                                     th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}"
                                                     th:title="${book.description}">Mô tả
                                                 </td>
@@ -849,29 +876,34 @@
                                                         th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
                                                         th:text="${book.status}">Active</span>
                                                 </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-info me-1"
-                                                        data-bs-toggle="modal"
+                                                <td class="app-action-column">
+                                                    <div class="app-row-actions">
+                                                    <button type="button" class="app-icon-action app-icon-action--view" data-bs-toggle="modal"
                                                         th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
-                                                        title="Xem bản sách">
-                                                        <i class="bi bi-eye"></i>
+                                                        title="Xem bản sách" aria-label="Xem bản sách">
+                                                        <i class="bi bi-eye" aria-hidden="true"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-classic me-1"
+                                                    <button type="button" class="app-icon-action app-icon-action--edit"
                                                         data-bs-toggle="modal"
-                                                        th:data-bs-target="${'#editBookModal' + book.bookId}">
-                                                        <i class="bi bi-pencil-square"></i>
+                                                        th:data-bs-target="${'#editBookModal' + book.bookId}"
+                                                        title="Sửa sách" aria-label="Sửa sách">
+                                                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    <button type="button" class="app-icon-action app-icon-action--delete"
                                                         data-bs-toggle="modal"
-                                                        th:data-bs-target="${'#deleteBookModal' + book.bookId}">
-                                                        <i class="bi bi-trash"></i>
+                                                        th:data-bs-target="${'#deleteBookModal' + book.bookId}"
+                                                        title="Xoá sách" aria-label="Xoá sách">
+                                                        <i class="bi bi-trash" aria-hidden="true"></i>
                                                     </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <tr th:if="${books == null || books.totalElements == 0}">
-                                                <td colspan="7" class="text-center text-muted py-5">
-                                                    <i class="bi bi-book fs-2 d-block mb-2"></i>
-                                                    Chưa có sách trong kho.
+                                                <td colspan="7" class="inventory-empty-cell">
+                                                    <div class="app-empty-state">
+                                                        <i class="bi bi-book" aria-hidden="true"></i>
+                                                        <span>Chưa có sách trong kho.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -879,46 +911,46 @@
                                 </div>
 
                                 <!-- Pagination -->
-                                <div class="mt-4 d-flex justify-content-center"
+                                <div class="app-pagination-region"
                                     th:if="${books != null && books.totalPages > 1}"
                                     th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}">
                                     <nav
                                         th:with="endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
-                                        <ul class="pagination mb-0">
+                                        <ul class="pagination app-pagination">
                                             <!-- First page -->
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=0)}"
                                                    >Đầu</a>
                                             </li>
 
                                             <!-- Previous page -->
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number - 1})}"
                                                    ><i
                                                         class="bi bi-chevron-left"></i></a>
                                             </li>
 
                                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                                <span class="page-link page-link-classic">…</span>
+                                                <span class="page-link">…</span>
                                             </li>
 
                                             <!-- Sliding window: at most 10 page numbers -->
                                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                                 th:classappend="${i == books.number ? 'active' : ''}">
-                                                <a class="page-link page-link-classic"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${i})}"
                                                     th:text="${i + 1}">1</a>
                                             </li>
 
                                             <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
-                                                <span class="page-link page-link-classic">…</span>
+                                                <span class="page-link">…</span>
                                             </li>
 
                                             <!-- Next page -->
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number + 1})}"
                                                    ><i
                                                         class="bi bi-chevron-right"></i></a>
@@ -926,7 +958,7 @@
 
                                             <!-- Last page -->
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.totalPages - 1})}"
                                                    >Cuối</a>
                                             </li>
@@ -937,53 +969,59 @@
 
                             <div class="tab-pane fade" id="nav-categories" role="tabpanel"
                                 aria-labelledby="nav-categories-tab" tabindex="0">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i>Danh sách
-                                        thể loại và danh mục</h5>
-                                    <div class="d-flex u-gap-12px-58cf3fe5">
-                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                <div class="app-table-toolbar category-management-toolbar">
+                                    <div>
+                                        <h3 class="app-section-title">Danh sách danh mục và thể loại</h3>
+                                        <p class="app-section-description">Tổ chức đầu sách theo nhóm nội dung và thể loại.</p>
+                                    </div>
+                                    <div class="category-toolbar-actions">
+                                        <button type="button" class="app-primary-action" data-bs-toggle="modal"
                                             data-bs-target="#addCategoryModal">
                                             Thêm danh mục
                                         </button>
-                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                        <button type="button" class="app-secondary-action" data-bs-toggle="modal"
                                             data-bs-target="#addGenreModal">
                                             Thêm thể loại
                                         </button>
                                     </div>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle border">
-                                        <thead class="table-light">
+                                <div class="app-table-wrap">
+                                    <table class="app-table app-table--two-actions category-management-table">
+                                        <colgroup>
+                                            <col class="category-name-col">
+                                            <col class="app-action-col">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
                                                 <th>Danh mục / Thể loại</th>
-                                                <th class="text-center librarian-dashboard-th-width-40">Thao tác</th>
+                                                <th class="app-action-column">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <th:block th:each="category : ${categories}">
                                                 <!-- Category Row -->
-                                                <tr class="bg-white librarian-dashboard-tr-cursor-41" data-bs-toggle="collapse"
+                                                <tr class="category-row" data-bs-toggle="collapse"
                                                     th:data-bs-target="'.category-genres-' + ${category.categoryId}"
                                                     aria-expanded="false">
-                                                    <td class="fw-bold u-color-4a3b32-1ba01220">
-
+                                                    <td class="category-name">
                                                         <span th:text="${category.categoryName}">Văn học</span>
-                                                        <i class="bi bi-chevron-down ms-2 small text-muted"></i>
+                                                        <i class="bi bi-chevron-down category-toggle-icon" aria-hidden="true"></i>
                                                     </td>
-                                                    <td class="text-center" onclick="event.stopPropagation()">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary me-1"
+                                                    <td class="app-action-column" onclick="event.stopPropagation()">
+                                                        <div class="app-row-actions">
+                                                        <button type="button" class="app-icon-action app-icon-action--edit"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#editCategoryModal' + ${category.categoryId}"
-                                                            title="Sửa danh mục">
-                                                            <i class="bi bi-pencil-square"></i>
+                                                            title="Sửa danh mục" aria-label="Sửa danh mục">
+                                                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        <button type="button" class="app-icon-action app-icon-action--delete"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#deleteCategoryModal' + ${category.categoryId}"
-                                                            title="Xóa danh mục">
-                                                            <i class="bi bi-trash"></i>
+                                                            title="Xóa danh mục" aria-label="Xóa danh mục">
+                                                            <i class="bi bi-trash" aria-hidden="true"></i>
                                                         </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                                 <!-- Genres Rows -->
@@ -991,32 +1029,34 @@
                                                     th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
                                                     class="collapse"
                                                     th:classappend="'category-genres-' + ${category.categoryId}">
-                                                    <td class="librarian-dashboard-td-padding-left-43">
-                                                        <span class="text-muted me-2 font-monospace"></span>
-                                                        <span th:text="${genre.genreName}" class="fw-medium">Tiểu thuyết
+                                                    <td class="genre-name">
+                                                        <span th:text="${genre.genreName}">Tiểu thuyết
                                                             văn học</span>
                                                     </td>
-                                                    <td class="text-center">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary me-1"
+                                                    <td class="app-action-column">
+                                                        <div class="app-row-actions">
+                                                        <button type="button" class="app-icon-action app-icon-action--edit"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#editGenreModal' + ${genre.genreId}"
-                                                            title="Sửa">
-                                                            <i class="bi bi-pencil-square"></i>
+                                                            title="Sửa thể loại" aria-label="Sửa thể loại">
+                                                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        <button type="button" class="app-icon-action app-icon-action--delete"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#deleteGenreModal' + ${genre.genreId}"
-                                                            title="Xóa">
-                                                            <i class="bi bi-trash"></i>
+                                                            title="Xóa thể loại" aria-label="Xóa thể loại">
+                                                            <i class="bi bi-trash" aria-hidden="true"></i>
                                                         </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </th:block>
                                             <tr th:if="${#lists.isEmpty(categories)}">
-                                                <td colspan="2" class="text-center py-4 text-muted">
-                                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                                    Chưa có danh mục nào.
+                                                <td colspan="2" class="category-empty-cell">
+                                                    <div class="app-empty-state">
+                                                        <i class="bi bi-inbox" aria-hidden="true"></i>
+                                                        <span>Chưa có danh mục nào.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -1025,10 +1065,22 @@
                             </div> <!-- tab-pane #nav-categories -->
 
                             <div class="tab-pane fade" id="nav-audit" role="tabpanel">
-
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light text-uppercase small text-muted">
+                                <div class="app-table-toolbar audit-toolbar">
+                                    <div>
+                                        <h3 class="app-section-title">Kiểm kê kho sách</h3>
+                                        <p class="app-section-description">Đối chiếu tổng số bản sách và số lượng đang được mượn.</p>
+                                    </div>
+                                </div>
+                                <div class="app-table-wrap">
+                                    <table class="app-table inventory-audit-table">
+                                        <colgroup>
+                                            <col class="audit-index-col">
+                                            <col class="audit-cover-col">
+                                            <col class="audit-book-col">
+                                            <col class="audit-total-col">
+                                            <col class="audit-borrowed-col">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
                                                 <th>STT</th>
                                                 <th>Ảnh</th>
@@ -1039,82 +1091,84 @@
                                         </thead>
                                         <tbody>
                                             <tr th:each="book, iterStat : ${books.content}">
-                                                <td class="ps-3 fw-bold"
+                                                <td class="inventory-index"
                                                     th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                                 <td>
                                                     <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
                                                         th:src="${book.coverImageUrl}" alt="Bìa sách"
-                                                        class="rounded border u-width-40px-height-56px-object-fit-cover-8457e107"
+                                                        class="inventory-book-cover"
                                                        >
                                                     <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                        class="bg-light rounded border d-flex align-items-center justify-content-center text-muted u-width-40px-height-56px-0055c9ad"
+                                                        class="inventory-book-cover inventory-book-cover--placeholder"
                                                        >
                                                         <i class="bi bi-book"></i>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="fw-bold text-classic" th:text="${book.title}">Tên sách
+                                                    <div class="inventory-book-title" th:text="${book.title}">Tên sách
                                                     </div>
-                                                    <div class="small text-muted"
+                                                    <div class="inventory-book-genre"
                                                         th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">
                                                         Thể loại</div>
                                                 </td>
                                                 <td>
-                                                    <span class="fw-bold text-classic"
+                                                    <span class="audit-value"
                                                         th:text="${bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0}">0</span>
                                                 </td>
                                                 <td>
-                                                    <span class="fw-bold text-muted"
+                                                    <span class="audit-value audit-value--muted"
                                                         th:text="${bookBorrowedQuantities[book.bookId] != null ? bookBorrowedQuantities[book.bookId] : 0}">0</span>
                                                 </td>
                                             </tr>
                                             <tr th:if="${books == null || books.totalElements == 0}">
-                                                <td colspan="5" class="text-center text-muted py-5">
-                                                    <i class="bi bi-book fs-2 d-block mb-2"></i>
-                                                    Chưa có sách trong kho.
+                                                <td colspan="5" class="audit-empty-cell">
+                                                    <div class="app-empty-state">
+                                                        <i class="bi bi-book" aria-hidden="true"></i>
+                                                        <span>Chưa có sách trong kho.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <div class="mt-4 d-flex justify-content-center"
+                                <div class="app-pagination-region"
                                     th:if="${books != null && books.totalPages > 1}"
                                     th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}">
                                     <nav
                                         th:with="endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
-                                        <ul class="pagination mb-0">
+                                        <ul class="pagination app-pagination">
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=0)}"
                                                    >Đầu</a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number - 1})}"
                                                    ><i
                                                         class="bi bi-chevron-left"></i></a>
                                             </li>
                                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                                <span class="page-link page-link-classic">…</span>
+                                                <span class="page-link">…</span>
                                             </li>
                                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                                 th:classappend="${i == books.number ? 'active' : ''}">
-                                                <a class="page-link page-link-classic"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${i})}"
                                                     th:text="${i + 1}">1</a>
                                             </li>
                                             <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
-                                                <span class="page-link page-link-classic">…</span>
+                                                <span class="page-link">…</span>
                                             </li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number + 1})}"
                                                    ><i
                                                         class="bi bi-chevron-right"></i></a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                                <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.totalPages - 1})}"
                                                    >Cuối</a>
                                             </li>
