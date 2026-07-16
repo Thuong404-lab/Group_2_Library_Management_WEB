@@ -70,14 +70,19 @@ public class MemberMgmtController {
     public String viewMemberList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "") String tier,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        MemberListViewData data = memberService.getMemberList(page, keyword);
+        MemberListViewData data = memberService.getMemberList(page, keyword, status, tier);
         model.addAttribute("accounts", data.accounts());
         model.addAttribute("memberByUserId", data.memberByUserId());
         model.addAttribute("tiers", data.tiers());
+        model.addAttribute("memberSummary", data.summaryCounts());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedTier", tier);
         addCurrentUser(model, userDetails);
         return "librarian/member-list";
     }
