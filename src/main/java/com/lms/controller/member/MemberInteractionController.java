@@ -47,12 +47,15 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/notifications")
-    public String viewNotifications(Model model, Principal principal) {
+    public String viewNotifications(Model model,
+                                    Principal principal,
+                                    @RequestParam(defaultValue = "0") int page) {
         memberNotificationService.markAllNotificationsAsRead(principal.getName());
 
         model.addAttribute(
                 "notifications",
-                memberNotificationService.getMyNotifications(principal.getName())
+                memberNotificationService.getMyNotifications(
+                        principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE))
         );
         model.addAttribute("showNotificationBell", false);
 

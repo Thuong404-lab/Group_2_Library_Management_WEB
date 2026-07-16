@@ -20,8 +20,8 @@
     <div th:if="${error}" class="member-notifications-alert is-error" th:text="${error}"></div>
 
     <section class="member-notifications-card" aria-label="Danh sách thông báo">
-      <div class="member-notifications-list" th:if="${notifications != null && !notifications.isEmpty()}">
-        <article class="member-notification-row" th:each="notification : ${notifications}">
+      <div class="member-notifications-list" th:if="${notifications != null && notifications.totalElements > 0}">
+        <article class="member-notification-row" th:each="notification : ${notifications.content}">
           <span class="member-notification-row-icon"><i class="bi bi-bell" aria-hidden="true"></i></span>
           <div class="member-notification-row-content">
             <h2 th:text="${notification.title}">Tiêu đề</h2>
@@ -30,11 +30,44 @@
           <time class="member-notification-row-time" th:datetime="${notification.sentDate}" th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Ngày gửi</time>
         </article>
       </div>
-      <div class="member-notifications-empty" th:if="${notifications == null || notifications.isEmpty()}">
+      <div class="member-notifications-empty" th:if="${notifications == null || notifications.totalElements == 0}">
         <span><i class="bi bi-bell-slash" aria-hidden="true"></i></span>
         <h2>Chưa có thông báo</h2>
         <p>Các cập nhật mới từ thư viện sẽ xuất hiện tại đây.</p>
       </div>
+      <nav class="member-notifications-pagination" aria-label="Phân trang thông báo"
+           th:if="${notifications != null && notifications.totalPages > 1}"
+           th:with="startPage=${notifications.totalPages <= 10 ? 0 : (notifications.number < 9 ? 0 : (notifications.number - 8 > notifications.totalPages - 10 ? notifications.totalPages - 10 : notifications.number - 8))}, endPage=${startPage + 9 < notifications.totalPages ? startPage + 9 : notifications.totalPages - 1}">
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item" th:classappend="${notifications.first} ? 'disabled'">
+            <a class="page-link page-link-classic" th:href="@{/member/interaction/notifications(page=0)}">Đầu</a>
+          </li>
+          <li class="page-item" th:classappend="${notifications.first} ? 'disabled'">
+            <a class="page-link page-link-classic" th:href="@{/member/interaction/notifications(page=${notifications.number - 1})}" aria-label="Trang trước">
+              <i class="bi bi-chevron-left" aria-hidden="true"></i>
+            </a>
+          </li>
+          <li class="page-item disabled" th:if="${startPage > 0}">
+            <span class="page-link page-link-classic">…</span>
+          </li>
+          <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+              th:classappend="${i == notifications.number ? 'active' : ''}">
+            <a class="page-link page-link-classic" th:href="@{/member/interaction/notifications(page=${i})}"
+               th:text="${i + 1}">1</a>
+          </li>
+          <li class="page-item disabled" th:if="${endPage < notifications.totalPages - 1}">
+            <span class="page-link page-link-classic">…</span>
+          </li>
+          <li class="page-item" th:classappend="${notifications.last} ? 'disabled'">
+            <a class="page-link page-link-classic" th:href="@{/member/interaction/notifications(page=${notifications.number + 1})}" aria-label="Trang sau">
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </a>
+          </li>
+          <li class="page-item" th:classappend="${notifications.last} ? 'disabled'">
+            <a class="page-link page-link-classic" th:href="@{/member/interaction/notifications(page=${notifications.totalPages - 1})}">Cuối</a>
+          </li>
+        </ul>
+      </nav>
     </section>
   </div>
 </main>
