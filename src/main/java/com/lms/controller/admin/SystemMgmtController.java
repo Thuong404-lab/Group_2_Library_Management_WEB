@@ -21,13 +21,25 @@ public class SystemMgmtController {
      // UC-19.3: View System Logs
     @GetMapping("/logs")
     public String viewSystemLogs(@RequestParam(defaultValue = "0") int page,
-                                 @RequestParam(required = false, defaultValue = "") String action,
+                                 @RequestParam(required = false, defaultValue = "auth") String section,
                                  @RequestParam(required = false, defaultValue = "") String keyword,
                                  Model model) {
 
-        model.addAttribute("logs", systemService.getSystemLogs(page, action, keyword));
+        String currentSection = normalizeSection(section);
+        model.addAttribute("logs", systemService.getSystemLogs(page, currentSection, keyword));
         model.addAttribute("keyword", keyword);
+        model.addAttribute("currentSection", currentSection);
 
         return "admin/system-logs";
+    }
+
+    private String normalizeSection(String section) {
+        if ("operations".equalsIgnoreCase(section)) {
+            return "operations";
+        }
+        if ("circulation".equalsIgnoreCase(section)) {
+            return "circulation";
+        }
+        return "auth";
     }
 }

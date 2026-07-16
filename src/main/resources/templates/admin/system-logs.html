@@ -22,33 +22,54 @@
             </div>
         </div>
 
-        <div class="card-classic shadow-sm mb-4">
-            <div class="card-body p-4">
-                <form class="row g-3 align-items-end" method="get" th:action="@{/admin/system/logs}">
-                    <div class="col-md-10">
-                        <label class="form-label fw-bold small text-muted text-uppercase">
-                            Từ khóa
-                        </label>
-                        <input type="text" name="keyword" class="form-control"
-                            placeholder="Tìm thời gian, người thực hiện, hành động, IP hoặc mô tả..."
-                            th:value="${keyword}">
-                    </div>
-
-                    <div class="col-md-auto d-flex gap-2">
-                        <button type="submit" class="btn btn-classic px-3" title="Tìm kiếm" aria-label="Tìm kiếm">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <div class="card-classic shadow-sm">
             <div class="card-header bg-white border-bottom border-color p-4">
+                <form class="system-log-filter" method="get" th:action="@{/admin/system/logs}">
+                    <div class="system-log-filter-field">
+                        <label for="systemLogKeyword">Từ khóa</label>
+                        <input id="systemLogKeyword" type="text" name="keyword" class="form-control"
+                            placeholder="Tìm thời gian, người thực hiện, IP hoặc mô tả..."
+                            th:value="${keyword}">
+                    </div>
+                    <div class="system-log-filter-actions">
+                        <button type="submit" name="section" th:value="${currentSection}"
+                            class="btn btn-classic system-log-search-button"
+                            title="Tìm kiếm" aria-label="Tìm kiếm">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </button>
+                        <a th:href="@{/admin/system/logs(section=${currentSection})}"
+                            class="btn btn-outline-classic system-log-cancel-button">
+                            Hủy tìm kiếm
+                        </a>
+                    </div>
+                    <nav class="system-log-section-nav" aria-label="Nhóm nhật ký hệ thống">
+                        <button type="submit" name="section" value="auth"
+                            class="btn btn-sm"
+                            th:classappend="${currentSection == 'auth'} ? 'btn-classic' : 'btn-outline-classic'"
+                            th:attr="aria-current=${currentSection == 'auth'} ? 'page'">
+                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>Đăng nhập/Đăng xuất
+                        </button>
+                        <button type="submit" name="section" value="operations"
+                            class="btn btn-sm"
+                            th:classappend="${currentSection == 'operations'} ? 'btn-classic' : 'btn-outline-classic'"
+                            th:attr="aria-current=${currentSection == 'operations'} ? 'page'">
+                            <i class="bi bi-activity" aria-hidden="true"></i>Trạng thái/CRUD
+                        </button>
+                        <button type="submit" name="section" value="circulation"
+                            class="btn btn-sm"
+                            th:classappend="${currentSection == 'circulation'} ? 'btn-classic' : 'btn-outline-classic'"
+                            th:attr="aria-current=${currentSection == 'circulation'} ? 'page'">
+                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>Mượn/Trả/Đặt sách
+                        </button>
+                    </nav>
+                </form>
                 <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                     <i class="bi bi-journal-text me-2 text-classic"></i>
-                    Danh sách nhật ký
+                    <span th:text="${currentSection == 'auth' ? 'Lịch sử đăng nhập/đăng xuất' : (currentSection == 'operations' ? 'Nhật ký trạng thái / CRUD' : 'Nhật ký mượn / Trả / Đặt sách')}">
+                        Danh sách nhật ký
+                    </span>
                 </h5>
+
             </div>
 
             <div class="card-body p-0">
@@ -75,7 +96,9 @@
                             <tr th:if="${logs == null or logs.content.isEmpty()}">
                                 <td colspan="5" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    Không có nhật ký hệ thống.
+                                    <span th:text="${currentSection == 'auth' ? 'Không có lịch sử đăng nhập/đăng xuất.' : (currentSection == 'operations' ? 'Không có nhật ký trạng thái hoặc CRUD.' : 'Không có nhật ký mượn, trả hoặc đặt sách.')}">
+                                        Không có nhật ký hệ thống.
+                                    </span>
                                 </td>
                             </tr>
 
@@ -142,22 +165,22 @@
                 </div>
             </div>
 
-            <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
+            <div class="member-pagination app-pagination-region"
                 th:if="${logs != null and logs.totalPages > 1}"
                 th:with="startPage=${logs.totalPages <= 10 ? 0 : (logs.number < 9 ? 0 : (logs.number - 8 > logs.totalPages - 10 ? logs.totalPages - 10 : logs.number - 8))}">
                 <nav aria-label="Phân trang nhật ký hệ thống"
                     th:with="endPage=${startPage + 9 < logs.totalPages ? startPage + 9 : logs.totalPages - 1}">
-                    <ul class="pagination mb-0">
+                    <ul class="pagination mb-0 app-pagination">
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(page=0, keyword=${keyword})}" aria-label="Trang đầu">
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword})}" aria-label="Trang đầu">
                                 Đầu
                             </a>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(page=${logs.number - 1}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number - 1}, keyword=${keyword})}"
                                 aria-label="Trang trước">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
@@ -170,7 +193,7 @@
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == logs.number} ? 'active'">
                             <a class="page-link page-link-classic"
-                                th:href="@{/admin/system/logs(page=${i}, keyword=${keyword})}" th:text="${i + 1}">
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${i}, keyword=${keyword})}" th:text="${i + 1}">
                                 1
                             </a>
                         </li>
@@ -181,7 +204,7 @@
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(page=${logs.number + 1}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number + 1}, keyword=${keyword})}"
                                 aria-label="Trang sau">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
@@ -189,7 +212,7 @@
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(page=${logs.totalPages - 1}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.totalPages - 1}, keyword=${keyword})}"
                                 aria-label="Trang cuối">
                                 Cuối
                             </a>
