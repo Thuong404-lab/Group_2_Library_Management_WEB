@@ -70,6 +70,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
         acquisitionRequest.setMember(member);
         acquisitionRequest.setTitle(title);
         acquisitionRequest.setAuthor(author);
+        acquisitionRequest.setIsbn(normalizeOptional(request.getIsbn()));
         acquisitionRequest.setPublisher(publisher);
         acquisitionRequest.setPublicationYear(request.getPublicationYear());
         acquisitionRequest.setRequestReason(reason);

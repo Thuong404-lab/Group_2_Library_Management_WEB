@@ -64,6 +64,13 @@
             </li>
 
             <li class="menu-item">
+                <a th:href="@{/admin/payments}" class="menu-link" th:classappend="${activeMenu == 'payments'} ? 'active'">
+                    <i class="bi bi-credit-card-2-front-fill menu-icon"></i>
+                    <span class="menu-text">Thanh toán online</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
                 <a th:href="@{/admin/system/logs}" class="menu-link"
                     th:classappend="${activeMenu == 'logs'} ? 'active'">
                     <i class="bi bi-journal-text menu-icon"></i>
@@ -113,9 +120,10 @@
             <div class="topbar-right">
                 <details class="dropdown admin-user-dropdown">
                     <summary class="user-dropdown-toggle">
-                        <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad">
-                            <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
-                            <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
+                        <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad"
+                             th:with="principalAvatar=${#authentication.principal.getClass().getName() == 'com.lms.config.CustomUserDetails' ? #authentication.principal.user?.avatar : null}">
+                            <i th:if="${principalAvatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
+                            <img th:if="${principalAvatar != null}" th:src="${principalAvatar}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
                         </div>
                         <span sec:authorize="isAuthenticated()" sec:authentication="name">Admin</span>
                         <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8"></i>

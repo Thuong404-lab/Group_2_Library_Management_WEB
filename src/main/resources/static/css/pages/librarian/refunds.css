@@ -1,0 +1,97 @@
+/*
+ * Page family: Librarian deposit refund approval
+ * Templates: templates/librarian/refunds.html
+ * Routes: /librarian/members/refunds
+ * Root scope: .refund-page
+ */
+
+.refund-page .refund-total {
+    padding: 7px 12px;
+    color: var(--app-color-primary-active);
+    background: var(--app-color-surface-soft);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.refund-page .refund-list { overflow: hidden; }
+.refund-page .refund-row {
+    display: grid;
+    grid-template-columns: minmax(180px, .9fr) minmax(240px, 1.2fr) minmax(130px, .55fr) auto;
+    align-items: center;
+    gap: 24px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--app-color-hairline-soft);
+}
+.refund-page .refund-row:last-child { border-bottom: 0; }
+.refund-page .refund-member,
+.refund-page .refund-book,
+.refund-page .refund-amount { display: grid; gap: 3px; min-width: 0; }
+.refund-page .refund-row small { color: var(--app-color-muted); font-size: 12px; text-transform: uppercase; }
+.refund-page .refund-member strong,
+.refund-page .refund-book strong { overflow: hidden; color: var(--app-color-body-strong); text-overflow: ellipsis; white-space: nowrap; }
+.refund-page .refund-member span,
+.refund-page .refund-book span { overflow: hidden; color: var(--app-color-muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.refund-page .refund-amount strong { color: var(--app-color-success-ink); white-space: nowrap; }
+.refund-page .refund-actions { display: flex; align-items: center; gap: 8px; }
+.refund-page .refund-actions form { margin: 0; }
+.refund-page .refund-actions .btn { white-space: nowrap; }
+.refund-page .refund-empty { min-height: 260px; display: grid; place-items: center; padding: 32px; color: var(--app-color-muted); text-align: center; }
+.refund-page .refund-empty h5 { margin-bottom: 6px; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 22px; font-weight: 500; }
+.refund-page .refund-empty p { margin: 0; }
+.refund-page .refund-receipt-modal { color: var(--app-color-body); text-align: left; }
+.refund-page .refund-receipt-modal .modal-dialog { width: 800px; max-width: calc(100vw - 32px); }
+.refund-page .refund-receipt-modal .modal-body { max-height: calc(100vh - 220px); overflow-y: auto; }
+.refund-page .refund-receipt-modal .modal-subtitle { margin-top: 4px; color: var(--app-color-muted); font-size: 13px; }
+.refund-page .refund-receipt-modal .modal-footer form { margin: 0; }
+.refund-page .deposit-receipt-account { display: grid; gap: 4px; margin-bottom: 20px; padding: 16px; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.refund-page .deposit-receipt-account small,
+.refund-page .deposit-receipt-book small { color: var(--app-color-muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.refund-page .deposit-receipt-account strong { color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 18px; font-weight: 500; }
+.refund-page .deposit-receipt-account span { color: var(--app-color-muted); font-size: 13px; }
+.refund-page .deposit-receipt-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 20px; }
+.refund-page .deposit-receipt-book { display: grid; align-content: start; gap: 6px; min-height: 176px; padding: 18px; background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.refund-page .deposit-receipt-book strong { color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 20px; font-weight: 500; }
+.refund-page .deposit-receipt-book span { color: var(--app-color-muted); font-size: 13px; }
+.refund-page .deposit-receipt-details { margin: 0; padding: 4px 16px; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.refund-page .deposit-receipt-details > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--app-color-hairline-soft); }
+.refund-page .deposit-receipt-details > div:last-child { border-bottom: 0; }
+.refund-page .deposit-receipt-details dt { color: var(--app-color-muted); font-size: 13px; font-weight: 400; }
+.refund-page .deposit-receipt-details dd { margin: 0; color: var(--app-color-body-strong); font-size: 14px; font-weight: 600; text-align: right; }
+.refund-page .receipt-status { display: inline-flex; padding: 4px 8px; color: var(--app-color-warning-ink); background: var(--app-color-warning-soft); border: 1px solid var(--app-color-warning-border); border-radius: 999px; font-size: 12px; }
+.refund-page .deposit-receipt-total { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 20px; padding: 16px 18px; color: var(--app-color-body); background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.refund-page .deposit-receipt-total strong { color: var(--app-color-application-primary); font-family: var(--app-font-display); font-size: 22px; font-weight: 500; white-space: nowrap; }
+.refund-page .refund-confirm-modal { color: var(--app-color-body); text-align: left; }
+.refund-page .refund-confirm-modal .modal-dialog { width: 400px; max-width: calc(100vw - 32px); }
+.refund-page .refund-confirm-modal .modal-body { max-height: calc(100vh - 220px); overflow-y: auto; }
+.refund-page .refund-confirm-modal .modal-subtitle { margin-top: 4px; color: var(--app-color-muted); font-size: 13px; line-height: 1.4; }
+.refund-page .refund-confirm-summary { margin: 0; padding: 4px 16px; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.refund-page .refund-confirm-summary > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--app-color-hairline-soft); }
+.refund-page .refund-confirm-summary > div:last-child { border-bottom: 0; }
+.refund-page .refund-confirm-summary dt { color: var(--app-color-muted); font-size: 13px; font-weight: 400; }
+.refund-page .refund-confirm-summary dd { display: grid; gap: 3px; min-width: 0; margin: 0; text-align: right; }
+.refund-page .refund-confirm-summary dd strong { overflow: hidden; color: var(--app-color-ink); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.refund-page .refund-confirm-summary dd span { overflow: hidden; color: var(--app-color-muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.refund-page .refund-confirm-summary .refund-confirm-amount strong,
+.refund-page .refund-confirm-summary .refund-confirm-amount span { color: var(--app-color-application-primary); }
+.refund-page .refund-confirm-note { margin: 16px 0 0; padding: 14px 16px; color: var(--app-color-body); background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-left: 4px solid var(--app-color-application-primary); border-radius: 8px; font-size: 14px; line-height: 1.5; }
+.refund-page .refund-confirm-modal .modal-footer form { margin: 0; }
+
+@media (max-width: 991.98px) {
+    .refund-page .refund-row { grid-template-columns: 1fr 1fr; }
+    .refund-page .refund-actions { justify-content: flex-start; }
+}
+@media (max-width: 575.98px) {
+    .refund-page .finance-header { align-items: stretch; flex-direction: column; }
+    .refund-page .refund-total { align-self: flex-start; }
+    .refund-page .refund-row { grid-template-columns: 1fr; gap: 14px; }
+    .refund-page .refund-actions { align-items: stretch; flex-direction: column; }
+    .refund-page .refund-actions .btn { width: 100%; }
+    .refund-page .deposit-receipt-grid { grid-template-columns: 1fr; }
+    .refund-page .deposit-receipt-book { min-height: 0; }
+    .refund-page .deposit-receipt-total { align-items: flex-start; flex-direction: column; }
+    .refund-page .refund-receipt-modal .modal-footer { align-items: stretch; flex-direction: column; }
+    .refund-page .refund-receipt-modal .modal-footer .btn { width: 100%; }
+    .refund-page .refund-confirm-summary > div { grid-template-columns: 1fr; gap: 4px; }
+    .refund-page .refund-confirm-summary dd { text-align: left; }
+}
