@@ -30,7 +30,7 @@
                     th:classappend="${currentSection != 'reviews' && currentSection != 'notifications' && currentSection != 'acquisition' && !(currentSection == 'books' && currentSubSection == 'inventory')} ? ' fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336' : ''">
                     <span th:if="${currentSection == 'notifications'}">Gửi thông báo</span>
                     <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
-                    <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
+                    <span th:if="${currentSection == 'acquisition'}">Đề xuất bổ sung sách</span>
                     <span th:if="${currentSection == 'users'}">Quản lý người dùng</span>
                     <span th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">Quản lý kho
                         sách</span>
@@ -602,8 +602,8 @@
             <div class="app-card acquisition-requests-card">
                 <div class="acquisition-requests-header">
                     <div>
-                        <h3 class="app-section-title">Danh sách đề xuất mua sách</h3>
-                        <p class="app-section-description">Theo dõi nhu cầu bổ sung đầu sách do độc giả gửi tới thư viện.</p>
+                        <h3 class="app-section-title">Danh sách đề xuất bổ sung sách</h3>
+                        <p class="app-section-description">Xem xét thông tin, nhu cầu của độc giả và phản hồi từng đề xuất.</p>
                     </div>
                     <span class="acquisition-request-count" th:if="${requests != null}"
                         th:text="${requests.totalElements + ' đề xuất'}">0 đề xuất</span>
@@ -611,33 +611,47 @@
                     <div class="app-table-wrap">
                         <table class="app-table acquisition-requests-table">
                             <colgroup>
-                                <col class="acquisition-id-col">
-                                <col class="acquisition-title-col">
-                                <col class="acquisition-author-col">
-                                <col class="acquisition-member-col">
-                                <col class="acquisition-date-col">
+                                <col class="acquisition-book-col">
+                                <col class="acquisition-requester-col">
+                                <col class="acquisition-reason-col">
+                                <col class="acquisition-status-col">
+                                <col class="acquisition-actions-col">
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>Mã</th>
-                                    <th>Tên sách</th>
-                                    <th>Tác giả</th>
+                                    <th>Thông tin sách</th>
                                     <th>Người đề xuất</th>
-                                    <th>Ngày đề xuất</th>
+                                    <th>Lý do đề xuất</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
                                 </tr>
                             </thead>
 
                             <tbody th:if="${requests != null && requests.totalElements > 0}">
                                 <tr th:each="request : ${requests.content}">
-                                    <td class="acquisition-request-id" th:text="${request.requestId}">1</td>
-                                    <td class="acquisition-book-title" th:text="${request.title}">Tên sách</td>
-                                    <td class="acquisition-author" th:text="${request.author}">Tác giả</td>
-                                    <td class="acquisition-member"
-                                        th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : 'Không rõ'}">
-                                        Người đề xuất</td>
-                                    <td class="acquisition-date"
-                                        th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">
-                                        Ngày đề xuất</td>
+                                    <td class="acquisition-book-info">
+                                        <strong th:text="${request.title}">Tên sách</strong>
+                                        <span class="acquisition-book-author" th:text="${request.author}">Tác giả</span>
+                                        <span class="acquisition-book-edition" th:if="${request.publisher != null || request.publicationYear != null}">
+                                            <span th:if="${request.publisher != null}" th:text="${request.publisher}"></span>
+                                            <span th:if="${request.publisher != null && request.publicationYear != null}"> · </span>
+                                            <span th:if="${request.publicationYear != null}" th:text="${request.publicationYear}"></span>
+                                        </span>
+                                        <a th:if="${request.referenceUrl != null}" th:href="${request.referenceUrl}" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Link tham khảo</a>
+                                    </td>
+                                    <td class="acquisition-requester">
+                                        <strong th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : 'Không rõ'}">Người đề xuất</strong>
+                                        <time th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Ngày đề xuất</time>
+                                    </td>
+                                    <td class="acquisition-reason" th:text="${request.requestReason != null ? request.requestReason : 'Đề xuất cũ chưa có lý do.'}">Lý do đề xuất</td>
+                                    <td><span class="status-badge" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? 'Chờ duyệt' : (request.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Đã từ chối')}">Chờ duyệt</span><small class="acquisition-decision-note" th:if="${request.status.name() == 'REJECTED'}" th:text="${request.decisionNote}"></small></td>
+                                    <td class="acquisition-actions">
+                                        <div th:if="${request.status.name() == 'PENDING'}" class="acquisition-action-group">
+                                            <form th:action="@{/librarian/interaction/acquisition-requests/{id}/approve(id=${request.requestId})}" method="post"><button type="submit" class="acquisition-approve-action">Duyệt</button></form>
+                                            <button type="button" class="acquisition-reject-action" data-bs-toggle="modal" data-bs-target="#rejectAcquisitionModal" th:data-reject-url="@{/librarian/interaction/acquisition-requests/{id}/reject(id=${request.requestId})}" th:data-book-title="${request.title}">Từ chối</button>
+                                        </div>
+                                        <span th:if="${request.status.name() != 'PENDING'}" class="acquisition-processed-date" th:text="${request.processedDate != null ? #temporals.format(request.processedDate, 'dd/MM/yyyy HH:mm') : ''}"></span>
+                                    </td>
                                 </tr>
                             </tbody>
 
@@ -646,7 +660,7 @@
                                     <td colspan="5" class="acquisition-empty-cell">
                                         <div class="app-empty-state">
                                             <i class="bi bi-inbox" aria-hidden="true"></i>
-                                            <span>Chưa có đề xuất mua sách nào.</span>
+                                            <span>Chưa có đề xuất bổ sung sách nào.</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -690,6 +704,9 @@
                             </li>
                         </ul>
                     </nav>
+            </div>
+            <div class="modal fade acquisition-reject-modal" id="rejectAcquisitionModal" tabindex="-1" aria-labelledby="rejectAcquisitionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel">Từ chối đề xuất</h2><p id="rejectAcquisitionBookTitle"></p></div><button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" aria-label="Đóng"><i class="bi bi-x-lg"></i></button></div><form id="rejectAcquisitionForm" method="post" novalidate><div class="modal-body"><label for="rejectAcquisitionReason">Lý do từ chối</label><textarea id="rejectAcquisitionReason" name="reason" maxlength="500" placeholder="Nhập lý do để member biết kết quả"></textarea><div id="rejectAcquisitionReasonError" class="acquisition-field-error"></div></div><div class="modal-footer"><button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal">Hủy</button><button type="submit" class="acquisition-modal-reject">Từ chối đề xuất</button></div></form></div></div>
             </div>
         </section>
 
@@ -2463,6 +2480,35 @@
                 });
             }
 
+            function initializeAcquisitionRejectModal() {
+                const form = document.getElementById("rejectAcquisitionForm");
+                const title = document.getElementById("rejectAcquisitionBookTitle");
+                const reason = document.getElementById("rejectAcquisitionReason");
+                const error = document.getElementById("rejectAcquisitionReasonError");
+                if (form == null || title == null || reason == null || error == null) return;
+                document.querySelectorAll(".acquisition-reject-action").forEach(function (trigger) {
+                    trigger.addEventListener("click", function () {
+                        form.action = trigger.dataset.rejectUrl;
+                        title.textContent = trigger.dataset.bookTitle || "";
+                        reason.value = "";
+                        reason.classList.remove("is-invalid");
+                        error.textContent = "";
+                    });
+                });
+                form.addEventListener("submit", function (event) {
+                    if (reason.value.trim() === "") {
+                        event.preventDefault();
+                        reason.classList.add("is-invalid");
+                        error.textContent = "Lý do từ chối không được để trống.";
+                        reason.focus();
+                    }
+                });
+                reason.addEventListener("input", function () {
+                    this.classList.remove("is-invalid");
+                    error.textContent = "";
+                });
+            }
+
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 
@@ -2483,6 +2529,7 @@
 
                 validateReviewReplyForms();
                 initializeReviewDeleteModal();
+                initializeAcquisitionRejectModal();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 

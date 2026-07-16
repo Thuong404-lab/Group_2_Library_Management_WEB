@@ -24,5 +24,9 @@ public interface LibrarianInteractionService {
 
     Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
 
+    void approveBookAcquisitionRequest(Integer requestId);
+
+    void rejectBookAcquisitionRequest(Integer requestId, String reason);
+
 
 }

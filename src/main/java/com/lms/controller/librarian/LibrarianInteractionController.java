@@ -4,6 +4,8 @@ import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.enums.NotificationRecipientType;
 import com.lms.enums.NotificationType;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -131,6 +133,31 @@ public class LibrarianInteractionController {
                 PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("requestId").ascending())));
 
         return "librarian/acquisition-request-list";
+    }
+
+    @PostMapping("/acquisition-requests/{id}/approve")
+    public String approveBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                                RedirectAttributes flash) {
+        try {
+            librarianInteractionService.approveBookAcquisitionRequest(requestId);
+            flash.addFlashAttribute("success", "Đã duyệt đề xuất bổ sung sách.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=acquisition";
+    }
+
+    @PostMapping("/acquisition-requests/{id}/reject")
+    public String rejectBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                               @RequestParam("reason") String reason,
+                                               RedirectAttributes flash) {
+        try {
+            librarianInteractionService.rejectBookAcquisitionRequest(requestId, reason);
+            flash.addFlashAttribute("success", "Đã từ chối đề xuất bổ sung sách.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=acquisition";
     }
 
     private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {

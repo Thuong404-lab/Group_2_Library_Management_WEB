@@ -115,7 +115,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("notificationTypes", NotificationType.values());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
-                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").descending())));
         data.put("shelves", storageService.getAllStorageLocations());
         Page<Book> booksPage = bookRepository
                 .findAllWithAuthors(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));

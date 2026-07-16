@@ -199,10 +199,14 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/acquisition-requests/new")
-    public String showBookAcquisitionRequestForm(Model model) {
+    public String showBookAcquisitionRequestForm(Model model,
+                                                 Principal principal,
+                                                 @RequestParam(defaultValue = "0") int page) {
         if (!model.containsAttribute("acquisitionRequest")) {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
+        model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/book-acquisition-request";
     }
@@ -216,6 +220,8 @@ public class MemberInteractionController {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
 
@@ -226,6 +232,8 @@ public class MemberInteractionController {
 
         } catch (ValidationException | ResourceNotFoundException e) {
             model.addAttribute("error", e.getMessage());
+            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
     }

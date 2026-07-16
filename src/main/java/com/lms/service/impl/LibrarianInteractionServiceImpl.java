@@ -6,6 +6,7 @@ import com.lms.dto.response.LibrarianReviewResponse;
 import com.lms.entity.*;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
+import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.Page;
@@ -211,5 +212,51 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Transactional(readOnly = true)
     public Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable) {
         return bookAcquisitionRequestRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public void approveBookAcquisitionRequest(Integer requestId) {
+        BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
+        request.setStatus(AcquisitionRequestStatus.APPROVED);
+        request.setDecisionNote(null);
+        request.setProcessedDate(LocalDateTime.now());
+        bookAcquisitionRequestRepository.save(request);
+        sendPersonalNotification(
+                request.getMember(),
+                "Đề xuất sách đã được duyệt",
+                "Đề xuất bổ sung sách '" + request.getTitle() + "' của bạn đã được thư viện chấp nhận."
+        );
+    }
+
+    @Override
+    @Transactional
+    public void rejectBookAcquisitionRequest(Integer requestId, String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ValidationException("Lý do từ chối không được để trống.");
+        }
+        if (reason.trim().length() > 500) {
+            throw new ValidationException("Lý do từ chối không được vượt quá 500 ký tự.");
+        }
+
+        BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
+        request.setStatus(AcquisitionRequestStatus.REJECTED);
+        request.setDecisionNote(reason.trim());
+        request.setProcessedDate(LocalDateTime.now());
+        bookAcquisitionRequestRepository.save(request);
+        sendPersonalNotification(
+                request.getMember(),
+                "Đề xuất sách chưa được chấp nhận",
+                "Đề xuất bổ sung sách '" + request.getTitle() + "' của bạn đã bị từ chối. Lý do: " + reason.trim()
+        );
+    }
+
+    private BookAcquisitionRequest getPendingAcquisitionRequest(Integer requestId) {
+        BookAcquisitionRequest request = bookAcquisitionRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề xuất sách."));
+        if (request.getStatus() != AcquisitionRequestStatus.PENDING) {
+            throw new ValidationException("Đề xuất này đã được xử lý trước đó.");
+        }
+        return request;
     }
 }

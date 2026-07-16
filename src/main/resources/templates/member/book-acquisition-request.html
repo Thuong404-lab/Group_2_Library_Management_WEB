@@ -11,20 +11,41 @@
     <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
     <section class="member-form-card" aria-labelledby="acquisition-form-title">
         <div class="member-form-heading"><span><i class="bi bi-journal-plus"></i></span><div><h2 id="acquisition-form-title">Gửi đề xuất mới</h2><p>Thông tin rõ ràng sẽ giúp thư viện tìm đúng đầu sách.</p></div></div>
-        <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post">
+        <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
             <div class="member-form-grid">
                 <div class="member-form-field"><label for="title">Tên sách <span aria-hidden="true">*</span></label><input type="text" id="title" class="validate-field" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" th:field="*{title}" maxlength="255" placeholder="Nhập tên sách muốn đề xuất"><div id="titleFeedback" class="member-field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div></div>
-                <div class="member-form-field"><label for="author">Tác giả</label><input type="text" id="author" th:field="*{author}" maxlength="255" placeholder="Nhập tên tác giả nếu biết"></div>
+                <div class="member-form-field"><label for="author">Tác giả <span aria-hidden="true">*</span></label><input type="text" id="author" th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'" th:field="*{author}" maxlength="255" placeholder="Nhập tên tác giả"><div id="authorFeedback" class="member-field-error" th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></div></div>
+                <div class="member-form-field"><label for="publisher">Nhà xuất bản</label><input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" placeholder="Nhập nhà xuất bản nếu biết"><div class="member-field-error" th:if="${#fields.hasErrors('publisher')}" th:errors="*{publisher}"></div></div>
+                <div class="member-form-field"><label for="publicationYear">Năm xuất bản</label><input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" max="2100" placeholder="Ví dụ: 2024"><div class="member-field-error" th:if="${#fields.hasErrors('publicationYear')}" th:errors="*{publicationYear}"></div></div>
+                <div class="member-form-field member-form-field--full"><label for="requestReason">Lý do đề xuất <span aria-hidden="true">*</span></label><textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" maxlength="1000" placeholder="Cho thư viện biết vì sao bạn muốn bổ sung cuốn sách này"></textarea><div id="requestReasonFeedback" class="member-field-error" th:if="${#fields.hasErrors('requestReason')}" th:errors="*{requestReason}"></div></div>
+                <div class="member-form-field member-form-field--full"><label for="referenceUrl">Link tham khảo</label><input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://..."><div class="member-field-error" th:if="${#fields.hasErrors('referenceUrl')}" th:errors="*{referenceUrl}"></div></div>
             </div>
             <div class="member-form-actions"><button type="submit" class="member-primary-action">Gửi đề xuất</button></div>
         </form>
     </section>
+    <section class="member-request-history" aria-labelledby="request-history-title">
+        <div class="member-request-history-heading"><h2 id="request-history-title">Đề xuất của tôi</h2><span th:text="${myAcquisitionRequests.totalElements + ' đề xuất'}">0 đề xuất</span></div>
+        <div class="member-request-list" th:if="${myAcquisitionRequests.totalElements > 0}">
+            <article class="member-request-item" th:each="request : ${myAcquisitionRequests.content}">
+                <div><h3 th:text="${request.title}">Tên sách</h3><p><span th:text="${request.author}">Tác giả</span><span th:if="${request.publisher != null}" th:text="${' · ' + request.publisher}"></span></p></div>
+                <div class="member-request-meta"><span class="request-status" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? 'Chờ duyệt' : (request.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Đã từ chối')}">Chờ duyệt</span><time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time></div>
+                <p class="member-request-decision" th:if="${request.status.name() == 'REJECTED'}"><strong>Lý do từ chối:</strong> <span th:text="${request.decisionNote}"></span></p>
+            </article>
+        </div>
+        <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}">Bạn chưa gửi đề xuất nào.</div>
+        <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}" aria-label="Phân trang đề xuất">
+            <a th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}"><i class="bi bi-chevron-left"></i></a>
+            <span th:text="${(myAcquisitionRequests.number + 1) + ' / ' + myAcquisitionRequests.totalPages}">1 / 1</span>
+            <a th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}"><i class="bi bi-chevron-right"></i></a>
+        </nav>
+    </section>
     <script>
-        const acquisitionForm=document.getElementById('acquisitionRequestForm');const titleInput=document.getElementById('title');
-        function setTitleError(message){titleInput.classList.remove('is-valid');titleInput.classList.add('is-invalid');let feedback=document.getElementById('titleFeedback');if(!feedback){feedback=document.createElement('div');feedback.id='titleFeedback';feedback.className='member-field-error';titleInput.insertAdjacentElement('afterend',feedback)}feedback.textContent=message}
-        function clearTitleError(){titleInput.classList.remove('is-invalid','is-valid');const feedback=document.getElementById('titleFeedback');if(feedback)feedback.textContent=''}
-        titleInput.addEventListener('input',function(){if(this.value.trim()!=='')clearTitleError()});
-        acquisitionForm.addEventListener('submit',function(event){if(titleInput.value.trim()===''){event.preventDefault();setTitleError('Tên sách không được để trống');titleInput.focus()}else{titleInput.classList.remove('is-invalid');titleInput.classList.add('is-valid')}});
+        const acquisitionForm=document.getElementById('acquisitionRequestForm');
+        function setRequiredError(input,id,message){input.classList.add('is-invalid');let feedback=document.getElementById(id);if(!feedback){feedback=document.createElement('div');feedback.id=id;feedback.className='member-field-error';input.insertAdjacentElement('afterend',feedback)}feedback.textContent=message}
+        function clearRequiredError(input,id){input.classList.remove('is-invalid');const feedback=document.getElementById(id);if(feedback)feedback.textContent=''}
+        const requiredFields=[{inputId:'title',feedbackId:'titleFeedback',message:'Tên sách không được để trống'},{inputId:'author',feedbackId:'authorFeedback',message:'Tác giả không được để trống'},{inputId:'requestReason',feedbackId:'requestReasonFeedback',message:'Lý do đề xuất không được để trống'}];
+        requiredFields.forEach(function(field){const input=document.getElementById(field.inputId);input.addEventListener('input',function(){if(this.value.trim()!=='')clearRequiredError(this,field.feedbackId)})});
+        acquisitionForm.addEventListener('submit',function(event){let firstInvalid=null;requiredFields.forEach(function(field){const input=document.getElementById(field.inputId);if(input.value.trim()===''){setRequiredError(input,field.feedbackId,field.message);firstInvalid=firstInvalid||input}});if(firstInvalid){event.preventDefault();firstInvalid.focus()}});
     </script>
 </div>
 </body></html>
