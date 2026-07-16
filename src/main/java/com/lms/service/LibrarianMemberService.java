@@ -10,7 +10,7 @@ import java.util.Map;
 
 public interface LibrarianMemberService {
 
-    MemberListViewData getMemberList(int page, String keyword);
+    MemberListViewData getMemberList(int page, String keyword, String status, String tier);
 
     List<MembershipTier> getMembershipTiers();
 

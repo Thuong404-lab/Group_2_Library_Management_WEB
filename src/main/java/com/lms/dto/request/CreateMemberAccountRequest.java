@@ -4,12 +4,20 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class CreateMemberAccountRequest {
 
     @NotBlank(message = "Họ tên không được để trống.")
     @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
             message = "Họ tên chỉ được chứa chữ cái và khoảng trắng.")
+    @Pattern(regexp = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$",
+            message = "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.")
+    @Pattern(regexp = "^(?!.*([\\p{L}])\\1\\1).*$",
+            message = "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.")
+    @Pattern(regexp = "^(?!([\\p{L}])\\1+$).+$",
+            message = "Họ tên không được chỉ gồm một ký tự lặp lại.")
+    @Size(max = 50, message = "Họ tên không được vượt quá 50 ký tự.")
     private String fullName;
 
     @NotBlank(message = "Email không được để trống.")
