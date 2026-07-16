@@ -8,5 +8,6 @@ import java.util.Map;
 
 public record AdminStaffListViewData(
         Page<Staff> staffPage,
-        Map<Integer, StaffAccount> accountByUserId) {
+        Map<Integer, StaffAccount> accountByUserId,
+        Map<String, Long> summaryCounts) {
 }

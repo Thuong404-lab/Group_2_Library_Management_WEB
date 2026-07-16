@@ -3,6 +3,7 @@ package com.lms.service.impl;
 import com.lms.dto.response.AdminStaffListViewData;
 import com.lms.entity.Staff;
 import com.lms.entity.StaffAccount;
+import com.lms.enums.UserStatus;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -78,12 +79,13 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public AdminStaffListViewData getStaffList(int page, String keyword) {
+    public AdminStaffListViewData getStaffList(int page, String keyword, String status, String staffType) {
         PageRequest pageable = PageRequest.of(Math.max(page, 0), 10, Sort.by("staffId").ascending());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
-        Page<Staff> staffPage = normalizedKeyword.isEmpty()
-                ? staffRepository.findAll(pageable)
-                : staffRepository.searchStaffByKeyword(normalizedKeyword, pageable);
+        String normalizedStaffType = normalizeStaffType(staffType);
+        UserStatus selectedStatus = parseUserStatus(status);
+        Page<Staff> staffPage = staffRepository.searchStaffWithStatus(
+                normalizedKeyword, selectedStatus, normalizedStaffType, pageable);
 
         Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
         for (Staff staff : staffPage.getContent()) {
@@ -92,7 +94,39 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                         .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
             }
         }
-        return new AdminStaffListViewData(staffPage, accountByUserId);
+        Map<String, Long> summaryCounts = new LinkedHashMap<>();
+        summaryCounts.put("total", staffRepository.count());
+        summaryCounts.put("librarian", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
+        summaryCounts.put("admin", staffRepository.countByStaffTypeIgnoreCase("Admin"));
+        summaryCounts.put("active", staffRepository.countByUser_Status(UserStatus.Active));
+        summaryCounts.put("inactive", staffRepository.countByUser_Status(UserStatus.Inactive));
+        summaryCounts.put("blocked", staffRepository.countByUser_Status(UserStatus.Blocked));
+        return new AdminStaffListViewData(staffPage, accountByUserId, summaryCounts);
+    }
+
+    private UserStatus parseUserStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        for (UserStatus candidate : UserStatus.values()) {
+            if (candidate.name().equalsIgnoreCase(status.trim())) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private String normalizeStaffType(String staffType) {
+        if (staffType == null || staffType.isBlank()) {
+            return "";
+        }
+        if ("Admin".equalsIgnoreCase(staffType.trim())) {
+            return "Admin";
+        }
+        if ("Librarian".equalsIgnoreCase(staffType.trim())) {
+            return "Librarian";
+        }
+        return "";
     }
 
     private List<Map<String, Object>> getLastSixMonthStats() {

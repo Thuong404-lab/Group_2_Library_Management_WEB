@@ -8,5 +8,5 @@ public interface AdminDashboardService {
 
     Map<String, Object> getDashboardData();
 
-    AdminStaffListViewData getStaffList(int page, String keyword);
+    AdminStaffListViewData getStaffList(int page, String keyword, String status, String staffType);
 }

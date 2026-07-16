@@ -38,11 +38,16 @@ public class DashboardController {
     @GetMapping("/staff")
     public String viewStaffList(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "") String staffType,
             Model model) {
-        AdminStaffListViewData data = dashboardService.getStaffList(page, keyword);
+        AdminStaffListViewData data = dashboardService.getStaffList(page, keyword, status, staffType);
         model.addAttribute("staffPage", data.staffPage());
         model.addAttribute("keyword", keyword);
         model.addAttribute("accountByUserId", data.accountByUserId());
+        model.addAttribute("staffSummary", data.summaryCounts());
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedStaffType", staffType);
         return "admin/staff-list";
     }
 
