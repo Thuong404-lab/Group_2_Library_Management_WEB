@@ -18,6 +18,11 @@ import java.util.Optional;
 @Service
 public class ProfileServiceImpl implements ProfileService {
 
+    private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
+    private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
+    private static final String FULL_NAME_TRIPLE_REPEAT_PATTERN = ".*([\\p{L}])\\1\\1.*";
+    private static final String FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN = "^([\\p{L}])\\1+$";
+
     private final UserRepository userRepository;
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
@@ -58,10 +63,8 @@ public class ProfileServiceImpl implements ProfileService {
     public void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile) {
         User user = getUserByUsername(username);
 
-        if (fullName == null || fullName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Họ và tên không được để trống!");
-        }
-        user.setFullName(fullName);
+        String normalizedFullName = validateFullName(fullName);
+        user.setFullName(normalizedFullName);
 
         validateAndSetEmail(user, email);
         validateAndSetPhone(user, phone);
@@ -72,6 +75,29 @@ public class ProfileServiceImpl implements ProfileService {
         }
         
         userRepository.save(user);
+    }
+
+    private String validateFullName(String fullNameValue) {
+        String fullName = fullNameValue == null ? "" : fullNameValue.trim();
+        if (fullName.isEmpty()) {
+            throw new IllegalArgumentException("Họ và tên không được để trống!");
+        }
+        if (fullName.length() > 50) {
+            throw new IllegalArgumentException("Họ tên không được vượt quá 50 ký tự.");
+        }
+        if (!fullName.matches(FULL_NAME_PATTERN)) {
+            throw new IllegalArgumentException("Họ tên chỉ được chứa chữ cái và khoảng trắng.");
+        }
+        if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
+            throw new IllegalArgumentException("Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
+        }
+        if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
+            throw new IllegalArgumentException("Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
+        }
+        if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
+            throw new IllegalArgumentException("Họ tên không được chỉ gồm một ký tự lặp lại.");
+        }
+        return fullName;
     }
 
     private void validateAndSetEmail(User user, String email) {
