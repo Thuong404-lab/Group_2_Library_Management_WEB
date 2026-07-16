@@ -3,6 +3,9 @@ package com.lms.controller.librarian;
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.enums.NotificationRecipientType;
+import com.lms.enums.NotificationType;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -89,6 +93,7 @@ public class LibrarianInteractionController {
     @GetMapping("/notifications/new")
     public String notificationForm(Model model) {
         model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+        model.addAttribute("notificationTypes", NotificationType.values());
         model.addAttribute("members", librarianInteractionService.getAllMembers());
 
         return "librarian/send-notification";
@@ -97,6 +102,7 @@ public class LibrarianInteractionController {
     @PostMapping("/notifications")
     public String sendNotificationToMembers(
             @ModelAttribute("notificationRequest") LibrarianNotificationSendRequest request,
+            Principal principal,
             RedirectAttributes flash) {
 
         Map<String, String> fieldErrors = validateNotificationRequest(request);
@@ -108,7 +114,7 @@ public class LibrarianInteractionController {
         }
 
         try {
-            librarianInteractionService.sendNotificationToMembers(request);
+            librarianInteractionService.sendNotificationToMembers(request, principal.getName());
             flash.addFlashAttribute("success", "Đã gửi thông báo thành công.");
         } catch (Exception e) {
             flash.addFlashAttribute("notificationRequest", request);
@@ -129,6 +135,31 @@ public class LibrarianInteractionController {
         return "librarian/acquisition-request-list";
     }
 
+    @PostMapping("/acquisition-requests/{id}/approve")
+    public String approveBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                                RedirectAttributes flash) {
+        try {
+            librarianInteractionService.approveBookAcquisitionRequest(requestId);
+            flash.addFlashAttribute("success", "Đã duyệt đề xuất bổ sung sách.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=acquisition";
+    }
+
+    @PostMapping("/acquisition-requests/{id}/reject")
+    public String rejectBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                               @RequestParam("reason") String reason,
+                                               RedirectAttributes flash) {
+        try {
+            librarianInteractionService.rejectBookAcquisitionRequest(requestId, reason);
+            flash.addFlashAttribute("success", "Đã từ chối đề xuất bổ sung sách.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=acquisition";
+    }
+
     private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {
         Map<String, String> fieldErrors = new HashMap<>();
 
@@ -136,8 +167,14 @@ public class LibrarianInteractionController {
             fieldErrors.put("recipientType", "Vui lòng chọn đối tượng nhận thông báo.");
         }
 
+        if (request.getNotificationType() == null) {
+            fieldErrors.put("notificationType", "Vui lòng chọn loại thông báo.");
+        }
+
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
             fieldErrors.put("title", "Tiêu đề không được để trống.");
+        } else if (request.getTitle().trim().length() > 255) {
+            fieldErrors.put("title", "Tiêu đề không được vượt quá 255 ký tự.");
         } else {
             request.setTitle(request.getTitle().trim());
         }

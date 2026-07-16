@@ -4,53 +4,15 @@
 
 <head>
     <title>Quản lý tài khoản thành viên</title>
-    <style>
-        #createAccountForm .form-control.is-invalid,
-        #createAccountForm .form-select.is-invalid,
-        #createAccountForm .form-control.is-valid,
-        #createAccountForm .form-select.is-valid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .member-update-form .form-control.is-invalid,
-        .member-update-form .form-select.is-invalid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .member-update-form .form-control.is-valid,
-        .member-update-form .form-select.is-valid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .update-account-tooltip .tooltip-inner {
-            background-color: #8b5a2b !important;
-            color: #ffffff !important;
-        }
-
-        .delete-account-tooltip .tooltip-inner {
-            background-color: #dc3545 !important;
-            color: #ffffff !important;
-        }
-
-        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #8b5a2b !important;
-        }
-
-        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #dc3545 !important;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/accounts.css}" />
 </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='accounts'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div
+            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý tài
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Quản lý tài
                     khoản thành viên</h2>
                 <div class="text-muted">
                     Danh sách và thông tin tài khoản người dùng thư viện
@@ -69,8 +31,8 @@
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header bg-white border-bottom p-4">
-                        <h5 class="modal-title fw-bold" id="createMemberAccountModalLabel"
-                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                            id="createMemberAccountModalLabel">
                             <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản thành viên
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
@@ -106,7 +68,7 @@
                 <form class="row g-3 mb-4" method="get" th:action="@{/admin/accounts}">
                     <div class="col-md-8 col-lg-6">
                         <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;">
+                            <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
@@ -121,12 +83,12 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle stable-table-layout">
                         <colgroup>
-                            <col style="width: 7%">
-                            <col style="width: 15%">
-                            <col style="width: 25%">
-                            <col style="width: 20%">
-                            <col style="width: 17%">
-                            <col style="width: 16%">
+                            <col class="u-width-7-2d9383cf">
+                            <col class="u-width-15-f7f760e2">
+                            <col class="u-width-25-84a0e8c4">
+                            <col class="u-width-20-00e2b68d">
+                            <col class="u-width-17-9278e232">
+                            <col class="u-width-16-9fe033fb">
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
@@ -168,13 +130,7 @@
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
-                                        th:style="${
-              member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
-              member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
-              member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
-              member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
-              'background-color: #8b5a2b;'
-          }">
+                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
@@ -217,10 +173,10 @@
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
 
-                                                    <div class="modal-header border-bottom border-color"
-                                                        style="background-color: #fdfbf7;">
-                                                        <h5 class="modal-title fw-bold"
-                                                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                                    <div
+                                                        class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                                        <h5
+                                                            class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336">
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                                             Cập nhật tài khoản
                                                         </h5>
@@ -381,7 +337,7 @@
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                                                     <div class="modal-header border-bottom-0">
-                                                        <h5 class="modal-title fw-bold" style="color:#8b5a2b;">
+                                                        <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118">
                                                             <i class="bi bi-key-fill me-2"></i>
                                                             Xác nhận gửi liên kết đặt lại mật khẩu
                                                         </h5>
@@ -391,27 +347,33 @@
 
                                                     <div class="modal-body pb-0">
                                                         <p class="mb-3">
-                                                            Liên kết đặt lại mật khẩu sẽ được gửi đến email hiện tại của thành viên và có hiệu lực trong 24 giờ.
+                                                            Liên kết đặt lại mật khẩu sẽ được gửi đến email hiện tại của
+                                                            thành viên và có hiệu lực trong 24 giờ.
                                                         </p>
                                                         <div class="p-3 bg-light rounded border">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Username:</div>
-                                                                    <div class="fw-bold" th:text="${account.username}">username</div>
+                                                                    <div class="fw-bold" th:text="${account.username}">
+                                                                        username</div>
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Account ID:</div>
-                                                                    <div class="fw-bold" th:text="${account.accountId}">id</div>
+                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                        id</div>
                                                                 </div>
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Họ tên:</div>
-                                                                    <div class="fw-bold" th:text="${account.user.fullName}">họ tên</div>
+                                                                    <div class="fw-bold"
+                                                                        th:text="${account.user.fullName}">họ tên</div>
                                                                 </div>
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Email nhận liên kết:</div>
+                                                                    <div class="small text-muted">Email nhận liên kết:
+                                                                    </div>
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
-                                                                        <span th:text="${account.user.email}">email</span>
+                                                                        <span
+                                                                            th:text="${account.user.email}">email</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -517,12 +479,7 @@
                                                                         class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
                                                                         th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
-                                                                        th:style="${
-                                          member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
-                                          member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
-                                          member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
-                                          member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
-                                          'background-color: #8b5a2b;'}">
+                                                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                                                         Standard
                                                                     </span>
 
@@ -569,51 +526,47 @@
 
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link" th:href="@{/admin/accounts(page=0, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/accounts(page=0, keyword=${keyword})}">Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link"
-                                    th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword})}">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
 
                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Sliding window: at most 10 page numbers -->
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == accounts.number ? 'active' : ''}">
-                                <a class="page-link" th:href="@{/admin/accounts(page=${i}, keyword=${keyword})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == accounts.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
+                                <a class="page-link page-link-classic"
+                                    th:href="@{/admin/accounts(page=${i}, keyword=${keyword})}" th:text="${i + 1}">
                                     1
                                 </a>
                             </li>
 
                             <li class="page-item disabled" th:if="${endPage < accounts.totalPages - 1}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link"
-                                    th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword})}">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link"
-                                    th:href="@{/admin/accounts(page=${accounts.totalPages - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/accounts(page=${accounts.totalPages - 1}, keyword=${keyword})}">Cuối</a>
                             </li>
                         </ul>
                     </nav>

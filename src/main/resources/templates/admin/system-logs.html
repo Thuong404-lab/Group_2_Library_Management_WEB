@@ -4,15 +4,16 @@
 
 <head>
     <title>Nhật ký hệ thống</title>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/system-logs.css}" />
 </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='logs'">
 
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div
+            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                     Nhật ký hệ thống
                 </h2>
                 <div class="text-muted">
@@ -44,7 +45,7 @@
 
         <div class="card-classic shadow-sm">
             <div class="card-header bg-white border-bottom border-color p-4">
-                <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                     <i class="bi bi-journal-text me-2 text-classic"></i>
                     Danh sách nhật ký
                 </h5>
@@ -54,13 +55,13 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 stable-table-layout">
                         <colgroup>
-                            <col style="width: 24%">
-                            <col style="width: 21%">
-                            <col style="width: 14%">
-                            <col style="width: 17%">
-                            <col style="width: 24%">
+                            <col class="u-width-24-3ca932db">
+                            <col class="admin-system-logs-col-width-04">
+                            <col class="u-width-14-546d6dae">
+                            <col class="u-width-17-9278e232">
+                            <col class="u-width-24-3ca932db">
                         </colgroup>
-                        <thead style="background-color: #f7f1e8;">
+                        <thead class="admin-system-logs-thead-background-07">
                             <tr>
                                 <th>Thời gian</th>
                                 <th>Người thực hiện</th>
@@ -130,7 +131,7 @@
                                     </span>
                                 </td>
 
-                                <td style="max-width: 420px;">
+                                <td class="admin-system-logs-td-max-width-08">
                                     <span th:text="${log.description != null ? log.description : 'Không có mô tả'}">
                                         Đăng nhập thành công.
                                     </span>
@@ -148,49 +149,48 @@
                     th:with="endPage=${startPage + 9 < logs.totalPages ? startPage + 9 : logs.totalPages - 1}">
                     <ul class="pagination mb-0">
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/system/logs(page=0, keyword=${keyword})}"
-                                aria-label="Trang đầu" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                th:href="@{/admin/system/logs(page=0, keyword=${keyword})}" aria-label="Trang đầu">
                                 Đầu
                             </a>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
-                            <a class="page-link"
+                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                 th:href="@{/admin/system/logs(page=${logs.number - 1}, keyword=${keyword})}"
-                                aria-label="Trang trước" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                aria-label="Trang trước">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
 
                         <li class="page-item disabled" th:if="${startPage > 0}">
-                            <span class="page-link">…</span>
+                            <span class="page-link page-link-classic">…</span>
                         </li>
 
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == logs.number} ? 'active'">
-                            <a class="page-link" th:href="@{/admin/system/logs(page=${i}, keyword=${keyword})}"
-                                th:text="${i + 1}"
-                                th:style="${i == logs.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
+                            <a class="page-link page-link-classic"
+                                th:href="@{/admin/system/logs(page=${i}, keyword=${keyword})}" th:text="${i + 1}">
                                 1
                             </a>
                         </li>
 
                         <li class="page-item disabled" th:if="${endPage < logs.totalPages - 1}">
-                            <span class="page-link">…</span>
+                            <span class="page-link page-link-classic">…</span>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
-                            <a class="page-link"
+                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                 th:href="@{/admin/system/logs(page=${logs.number + 1}, keyword=${keyword})}"
-                                aria-label="Trang sau" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                aria-label="Trang sau">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
-                            <a class="page-link"
+                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                 th:href="@{/admin/system/logs(page=${logs.totalPages - 1}, keyword=${keyword})}"
-                                aria-label="Trang cuối" style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                aria-label="Trang cuối">
                                 Cuối
                             </a>
                         </li>

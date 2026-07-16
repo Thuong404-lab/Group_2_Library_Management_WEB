@@ -1,11 +1,14 @@
 package com.lms.service;
 
 import com.lms.dto.response.MemberNotificationResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface MemberNotificationService {
 
-    List<MemberNotificationResponse> getMyNotifications(String username);
+    Page<MemberNotificationResponse> getMyNotifications(String username, Pageable pageable);
 
     List<MemberNotificationResponse> getLatestNotifications(String username);
 

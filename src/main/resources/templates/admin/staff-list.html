@@ -3,101 +3,17 @@
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Quản lý tài khoản nhân </title>
-    <style>
-        #createAccountForm .form-control.is-invalid,
-        #createAccountForm .form-select.is-invalid,
-        #createAccountForm .form-control.is-valid,
-        #createAccountForm .form-select.is-valid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .staff-update-form .form-control.is-invalid,
-        .staff-update-form .form-select.is-invalid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .staff-update-form .form-control.is-valid,
-        .staff-update-form .form-select.is-valid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .update-account-tooltip .tooltip-inner {
-            background-color: #8b5a2b !important;
-            color: #ffffff !important;
-        }
-
-        .delete-account-tooltip .tooltip-inner {
-            background-color: #dc3545 !important;
-            color: #ffffff !important;
-        }
-
-        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #8b5a2b !important;
-        }
-
-        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #dc3545 !important;
-        }
-
-        .staff-type-badge {
-            border: 1px solid transparent;
-            font-weight: 600;
-        }
-
-        .staff-type-admin {
-            background-color: #6b4630;
-            border-color: #593824;
-            color: #fff8ee;
-        }
-
-        .staff-type-librarian {
-            background-color: #b87936;
-            border-color: #9a622a;
-            color: #fffaf2;
-        }
-
-        .staff-type-other {
-            background-color: #7a7068;
-            border-color: #665d56;
-            color: #ffffff;
-        }
-
-        .staff-status-badge {
-            border: 1px solid transparent;
-            font-weight: 600;
-        }
-
-        .staff-status-active {
-            background-color: #587442;
-            border-color: #476036;
-            color: #ffffff;
-        }
-
-        .staff-status-blocked {
-            background-color: #b44336;
-            border-color: #96362c;
-            color: #ffffff;
-        }
-
-        .staff-status-other {
-            background-color: #77716c;
-            border-color: #625d59;
-            color: #ffffff;
-        }
-    </style>
+    <title>Quản lý tài khoản thủ thư</title>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/staff-list.css}" />
 </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='staff'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div
+            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý tài
-                    khoản nhân viên
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Quản lý tài
+                    khoản thủ thư
                 </h2>
                 <div class="text-muted">
                     Danh sách và thông tin tài khoản nhân viên
@@ -116,8 +32,8 @@
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header bg-white border-bottom p-4">
-                        <h5 class="modal-title fw-bold" id="createStaffAccountModalLabel"
-                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                            id="createStaffAccountModalLabel">
                             <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản nhân sự
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
@@ -153,7 +69,7 @@
                 <form class="row g-3 mb-4" method="get" th:action="@{/admin/staff}">
                     <div class="col-md-8 col-lg-6">
                         <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;">
+                            <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
@@ -264,10 +180,10 @@
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
 
-                                                        <div class="modal-header border-bottom border-color"
-                                                            style="background-color: #fdfbf7;">
-                                                            <h5 class="modal-title fw-bold"
-                                                                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                                        <div
+                                                            class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                                            <h5
+                                                                class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336">
                                                                 <i
                                                                     class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
                                                                 nhật tài khoản nhân viên
@@ -535,51 +451,47 @@
                         <ul class="pagination mb-0">
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
-                                <a class="page-link" th:href="@{/admin/staff(page=0, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/staff(page=0, keyword=${keyword})}">Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
-                                <a class="page-link"
-                                    th:href="@{/admin/staff(page=${staffPage.number - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/staff(page=${staffPage.number - 1}, keyword=${keyword})}">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
 
                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Sliding window: at most 10 page numbers -->
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
-                                <a class="page-link" th:href="@{/admin/staff(page=${i}, keyword=${keyword})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == staffPage.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">
+                                <a class="page-link page-link-classic"
+                                    th:href="@{/admin/staff(page=${i}, keyword=${keyword})}" th:text="${i + 1}">
                                     1
                                 </a>
                             </li>
 
                             <li class="page-item disabled" th:if="${endPage < staffPage.totalPages - 1}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
-                                <a class="page-link"
-                                    th:href="@{/admin/staff(page=${staffPage.number + 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/staff(page=${staffPage.number + 1}, keyword=${keyword})}">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
-                                <a class="page-link"
-                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword})}">Cuối</a>
                             </li>
                         </ul>
                     </nav>

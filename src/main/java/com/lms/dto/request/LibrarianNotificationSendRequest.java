@@ -1,11 +1,13 @@
 package com.lms.dto.request;
 
 import com.lms.enums.NotificationRecipientType;
+import com.lms.enums.NotificationType;
 import java.util.List;
 
 public class LibrarianNotificationSendRequest {
 
     private NotificationRecipientType recipientType;
+    private NotificationType notificationType;
     private List<Integer> memberIds;
     private String title;
     private String content;
@@ -19,6 +21,14 @@ public class LibrarianNotificationSendRequest {
 
     public void setRecipientType(NotificationRecipientType recipientType) {
         this.recipientType = recipientType;
+    }
+
+    public NotificationType getNotificationType() {
+        return notificationType;
+    }
+
+    public void setNotificationType(NotificationType notificationType) {
+        this.notificationType = notificationType;
     }
 
     public List<Integer> getMemberIds() {

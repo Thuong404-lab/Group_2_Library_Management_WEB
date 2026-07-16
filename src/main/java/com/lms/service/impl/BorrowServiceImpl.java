@@ -174,6 +174,10 @@ public class BorrowServiceImpl implements BorrowService {
                 ActionType.REQUEST_BORROW,
                 "Thành viên " + username + " gửi yêu cầu mượn sách #" + book.getBookId()
                         + " - " + book.getTitle() + " trong " + borrowDays + " ngay.");
+                        
+        sendInternalNotification(member, "Yêu cầu mượn sách thành công",
+                "Yêu cầu mượn cuốn sách '" + book.getTitle() + "' đã được gửi thành công. Vui lòng chờ thủ thư phê duyệt.");
+
         return borrow;
     }
 
@@ -209,6 +213,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
+        
+        sendInternalNotification(borrow.getMember(), "Yêu cầu mượn sách đã được phê duyệt",
+                "Yêu cầu mượn sách của bạn đã được thủ thư phê duyệt. Vui lòng đến quầy để nhận sách.");
     }
 
     @Override
@@ -502,7 +509,7 @@ public class BorrowServiceImpl implements BorrowService {
         dto.setId(detail.getBorrowDetailId());
         dto.setBookTitle(detail.getBook().getTitle());
         dto.setAuthorName(getAuthorNames(detail.getBook()));
-        dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "BK-" + detail.getBook().getBookId());
+        dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "Chưa cấp mã");
         dto.setActionDate(detail.getBorrow().getBorrowDate());
         dto.setDueDate(detail.getDueDate());
         dto.setReturnDate(detail.getReturnDate());

@@ -4,7 +4,8 @@
       layout:decorate="~{layout/base}">
 <head>
     <title>Tiến Trình Nâng Hạng Thành Viên</title>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/member/membership-tier.css}" />
+  </head>
 <body>
 <div layout:fragment="content" class="container py-4">
     <div class="card shadow-sm border-0 mb-4">
@@ -18,15 +19,15 @@
                 </p>
             </div>
 
-            <div class="mt-4 mx-auto" style="max-width: 600px;" th:if="${nextTier != null}">
+            <div class="mt-4 mx-auto member-membership-tier-div-max-width-01" th:if="${nextTier != null}">
                 <div class="d-flex justify-content-between mb-1 small text-muted">
                     <span>Mức hiện tại</span>
                     <span>Hạng tiếp theo: <strong th:text="${nextTier.tierName}">VIP</strong></span>
                 </div>
-                <div class="progress mb-3" style="height: 12px;">
+                <div class="progress mb-3 member-membership-tier-div-height-02">
                     <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                          role="progressbar"
-                         th:style="'width: ' + (${currentSpent} / ${nextTier.condition} * 100) + '%'"></div>
+                         th:data-presentation-width="${currentSpent / nextTier.condition * 100}"></div>
                 </div>
                 <div class="alert alert-info border-0 shadow-sm" role="alert">
                     <i class="bi bi-info-circle-fill me-2"></i>
