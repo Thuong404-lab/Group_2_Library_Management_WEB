@@ -164,9 +164,10 @@ public class BorrowController {
                               RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            // Chuyển đổi từ memberFavoriteService sang borrowService để chạy đúng nghiệp vụ Quản lý đặt sách
             borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt trước sách thành công! Đơn của bạn đang chờ thủ thư xử lý.");
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Đặt trước thành công. Tiền cọc đã được trừ từ ví và ghi nhận trong phiếu đặt.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể đặt trước sách: " + e.getMessage());
         }

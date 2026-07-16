@@ -231,6 +231,15 @@ public class MemberMgmtController {
         return "librarian/transactions";
     }
 
+    @GetMapping("/members/refunds")
+    public String viewPendingRefunds(Model model,
+                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        model.addAttribute("pendingRefundRequests", financialService.getPendingReservationDepositRefunds());
+        model.addAttribute("reservationDepositAmount", financialService.getReservationDepositAmount());
+        addCurrentUser(model, userDetails);
+        return "librarian/refunds";
+    }
+
     @GetMapping("/members/topup")
     public String showTopupDesk(Model model,
                                 @RequestParam(required = false, defaultValue = "") String memberKeyword,

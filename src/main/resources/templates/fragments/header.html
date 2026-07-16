@@ -93,17 +93,19 @@
               class="dropdown-menu dropdown-menu-right member-notification-menu"
 
             >
-              <h6
-                class="member-notification-heading"
-
-              >
-                Thông báo từ Thư viện
-              </h6>
+              <div class="member-notification-heading">
+                <h6>Thông báo từ Thư viện</h6>
+                <button type="button" id="markAllNotificationsRead" class="member-notification-mark-all"
+                        th:disabled="${unreadNotificationCount == null || unreadNotificationCount == 0}">
+                  Đánh dấu đã xem tất cả
+                </button>
+              </div>
 
               <a
                 class="dropdown-item member-notification-item"
                 th:each="notification : ${latestNotifications}"
-                th:href="@{/member/interaction/notifications}"
+                th:href="@{/member/interaction/notifications(notificationId=${notification.notificationId})} + '#notification-' + ${notification.notificationId}"
+                th:data-notification-id="${notification.notificationId}"
                 th:classappend="${notification.read == false} ? ' is-unread' : ''"
 
               >
@@ -138,16 +140,9 @@
                 Bạn chưa có thông báo nào.
               </div>
 
-              <div
-                class="member-notification-divider"
-
-              ></div>
-              <a
-                class="member-notification-view-all"
-                th:href="@{/member/interaction/notifications}"
-
-                >Xem tất cả</a
-              >
+              <div class="member-notification-footer">
+                <a class="member-notification-view-all" th:href="@{/member/interaction/notifications}">Xem tất cả</a>
+              </div>
             </div>
           </div>
 

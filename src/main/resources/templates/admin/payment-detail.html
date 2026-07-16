@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<head><title>Chi tiết thanh toán</title><link rel="stylesheet" th:href="@{/css/pages/admin/payments.css}"/></head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='payments'" class="admin-payment-page">
+    <div class="app-page-header">
+        <div><a th:href="@{/admin/payments}" class="app-back-link"><i class="bi bi-arrow-left"></i> Danh sách</a><h2 class="app-page-title">Đơn <span th:text="${payment.orderCode}"></span></h2></div>
+        <form method="post" th:action="@{/admin/payments/{code}/reconcile(code=${payment.orderCode})}"><button class="btn btn-classic"><i class="bi bi-arrow-repeat me-1"></i> Đối soát lại</button></form>
+    </div>
+    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7"><div class="app-card h-100"><div class="app-card-body">
+            <h5 class="app-section-title mb-4">Thông tin giao dịch</h5>
+            <div class="row g-3">
+                <div class="col-md-6"><small class="text-muted">Thành viên</small><div class="fw-semibold" th:text="${payment.member.user.fullName}"></div><div th:text="${payment.member.user.email}"></div></div>
+                <div class="col-md-3"><small class="text-muted">Mục đích</small><div class="fw-semibold" th:text="${payment.purpose}"></div></div>
+                <div class="col-md-3"><small class="payment-meta-label">Trạng thái</small><div><span class="payment-status" th:classappend="${payment.status == 'PAID' ? ' status-paid' : (payment.status == 'PENDING' ? ' status-pending' : ' status-failed')}" th:text="${payment.status}"></span></div></div>
+                <div class="col-md-4"><small class="payment-meta-label">Số tiền</small><div class="payment-amount" th:text="${#numbers.formatDecimal(payment.amount,0,'COMMA',0,'POINT') + ' ₫'}"></div></div>
+                <div class="col-md-4"><small class="text-muted">Tham chiếu nghiệp vụ</small><div th:text="${payment.referenceId != null ? payment.referenceId : '—'}"></div></div>
+                <div class="col-md-4"><small class="text-muted">Transaction ID</small><div th:text="${payment.transaction != null ? payment.transaction.transactionId : '—'}"></div></div>
+                <div class="col-md-6"><small class="text-muted">Payment Link ID</small><div class="text-break" th:text="${payment.paymentLinkId != null ? payment.paymentLinkId : '—'}"></div></div>
+                <div class="col-md-6"><small class="text-muted">Bank reference</small><div th:text="${payment.bankReference != null ? payment.bankReference : '—'}"></div></div>
+                <div class="col-md-6"><small class="text-muted">Tạo lúc</small><div th:text="${#temporals.format(payment.createdAt,'dd/MM/yyyy HH:mm:ss')}"></div></div>
+                <div class="col-md-6"><small class="text-muted">Thanh toán lúc</small><div th:text="${payment.paidAt != null ? #temporals.format(payment.paidAt,'dd/MM/yyyy HH:mm:ss') : '—'}"></div></div>
+            </div>
+        </div></div></div>
+        <div class="col-lg-5"><div class="app-card h-100"><div class="app-card-body">
+            <h5 class="app-section-title mb-3">Lịch sử đối soát</h5>
+            <div th:if="${#lists.isEmpty(issues)}" class="text-muted">Chưa ghi nhận vấn đề đối soát.</div>
+            <div th:each="issue : ${issues}" class="reconciliation-item mb-3">
+                <div class="d-flex justify-content-between"><span class="payment-status" th:classappend="${issue.status == 'OPEN' ? ' status-failed' : ' status-paid'}" th:text="${issue.status}"></span><span th:text="${issue.attemptCount + ' lần thử'}"></span></div>
+                <div class="small mt-2" th:text="${issue.errorMessage}"></div>
+                <div class="small text-muted mt-2" th:text="${#temporals.format(issue.lastAttemptAt,'dd/MM/yyyy HH:mm:ss')}"></div>
+            </div>
+        </div></div></div>
+    </div>
+
+    <div class="app-card"><div class="app-card-header"><h3 class="app-section-title">Payment audit log</h3></div><div class="app-table-wrap">
+        <table class="app-table"><thead><tr><th>Thời gian</th><th>Sự kiện</th><th>Nguồn</th><th>Thay đổi trạng thái</th><th>Kết quả</th><th>Người thực hiện</th><th>Thông tin</th></tr></thead>
+            <tbody><tr th:if="${audits.content.isEmpty()}"><td colspan="7" class="text-center text-muted py-4">Chưa có audit log cho giao dịch này.</td></tr>
+            <tr th:each="a : ${audits.content}"><td th:text="${#temporals.format(a.createdAt,'dd/MM/yyyy HH:mm:ss')}"></td><td th:text="${a.eventType}"></td><td th:text="${a.source}"></td><td th:text="${(a.oldStatus != null ? a.oldStatus : '—') + ' → ' + (a.newStatus != null ? a.newStatus : '—')}"></td><td><span class="audit-result" th:classappend="${a.successful ? ' result-success' : ' result-failure'}" th:text="${a.successful ? 'OK' : 'FAILED'}"></span></td><td th:text="${a.actor != null ? a.actor.fullName : 'SYSTEM'}"></td><td th:text="${a.message}"></td></tr></tbody>
+        </table>
+    </div>
+        <div class="app-pagination-region"
+             th:if="${audits.totalPages > 1}"
+             th:with="startPage=${audits.totalPages <= 10 ? 0 : (audits.number < 9 ? 0 : (audits.number - 8 > audits.totalPages - 10 ? audits.totalPages - 10 : audits.number - 8))}">
+            <nav aria-label="Phân trang audit của giao dịch"
+                 th:with="endPage=${startPage + 9 < audits.totalPages ? startPage + 9 : audits.totalPages - 1}">
+                <ul class="pagination app-pagination">
+                    <li class="page-item" th:classappend="${audits.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments/{code}(code=${payment.orderCode},auditPage=0)}">Đầu</a>
+                    </li>
+                    <li class="page-item" th:classappend="${audits.first ? 'disabled' : ''}">
+                        <a class="page-link" aria-label="Trang trước" th:href="@{/admin/payments/{code}(code=${payment.orderCode},auditPage=${audits.number-1})}"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == audits.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments/{code}(code=${payment.orderCode},auditPage=${i})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${endPage < audits.totalPages - 1}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:classappend="${audits.last ? 'disabled' : ''}">
+                        <a class="page-link" aria-label="Trang sau" th:href="@{/admin/payments/{code}(code=${payment.orderCode},auditPage=${audits.number+1})}"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                    <li class="page-item" th:classappend="${audits.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments/{code}(code=${payment.orderCode},auditPage=${audits.totalPages-1})}">Cuối</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

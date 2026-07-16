@@ -321,21 +321,27 @@
                                 <div class="notification-member-section" id="memberListBox">
                                     <label class="notification-form-label" for="memberSearchInput">Chọn Member</label>
                                     <input type="text" id="memberSearchInput" class="notification-control"
-                                        placeholder="Nhập tên Member để tìm...">
+                                        placeholder="Nhập email hoặc số điện thoại để tìm..."
+                                        autocomplete="off" aria-controls="memberIdsGroup" aria-describedby="memberSearchHint">
+
+                                    <p id="memberSearchHint" class="notification-helper-text">
+                                        Nhập email hoặc số điện thoại để hiển thị kết quả phù hợp.
+                                    </p>
 
                                     <div class="notification-member-list member-list-scroll validate-group"
                                         id="memberIdsGroup"
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
                                         <div th:each="member : ${members}" class="notification-member-item member-item"
-                                            th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
+                                            th:data-member-email="${member.user != null && member.user.email != null ? #strings.toLowerCase(#strings.trim(member.user.email)) : ''}"
+                                            th:data-member-phone="${member.user != null && member.user.phone != null ? #strings.trim(member.user.phone) : ''}">
                                             <input class="form-check-input member-checkbox" type="checkbox"
                                                 name="memberIds" th:value="${member.memberId}"
                                                 th:id="${'notificationMember-' + member.memberId}"
                                                 th:checked="${notificationRequest != null and notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
-                                            <label class="form-check-label"
-                                                th:for="${'notificationMember-' + member.memberId}"
-                                                th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
-                                                Member name
+                                            <label class="form-check-label" th:for="${'notificationMember-' + member.memberId}">
+                                                <strong th:text="${member.user != null ? member.user.fullName : 'Member ID: ' + member.memberId}">Member name</strong>
+                                                <small th:if="${member.user != null}"
+                                                    th:text="${(member.user.email != null ? member.user.email : 'Chưa có email') + ' · ' + (member.user.phone != null ? member.user.phone : 'Chưa có số điện thoại')}">email · phone</small>
                                             </label>
                                         </div>
 
@@ -343,6 +349,10 @@
                                             class="notification-empty-state">
                                             <i class="bi bi-person-x" aria-hidden="true"></i>
                                             <span>Chưa có member nào trong hệ thống.</span>
+                                        </div>
+                                        <div id="memberSearchEmpty" class="notification-member-search-empty" hidden>
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            <span>Không tìm thấy email/số điện thoại phù hợp.</span>
                                         </div>
                                     </div>
 
@@ -384,10 +394,15 @@
                                 <div class="notification-field">
                                     <label class="notification-form-label" for="title">Tiêu đề</label>
                                     <input type="text" class="notification-control validate-field" th:field="*{title}" required
-                                        maxlength="255"
-                                        placeholder="Nhập tiêu đề thông báo"
+                                        minlength="5" maxlength="150" aria-describedby="titleCharacterCount titleValidationMessage"
+                                        placeholder="Nhập từ 5–150 ký tự"
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
-                                    <div class="invalid-feedback notification-validation-message"
+                                    <div class="notification-field-support">
+                                        <span id="titleCharacterCount" class="notification-character-count" aria-live="polite">0/150</span>
+                                    </div>
+
+                                    <div id="titleValidationMessage" class="invalid-feedback notification-validation-message"
+                                        role="alert" aria-live="assertive"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
                                     </div>
                                 </div>
@@ -396,9 +411,14 @@
                                     <label class="notification-form-label" for="content">Nội dung</label>
                                     <textarea class="notification-textarea validate-field"
                                         rows="8" th:field="*{content}"
-                                        required placeholder="Nhập nội dung thông báo"
+                                        required minlength="10" maxlength="2000" aria-describedby="contentCharacterCount contentValidationMessage"
+                                        placeholder="Nhập từ 10–2000 ký tự; nội dung không được giống hoàn toàn tiêu đề."
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
-                                    <div class="invalid-feedback notification-validation-message"
+                                    <div class="notification-field-support">
+                                        <span id="contentCharacterCount" class="notification-character-count" aria-live="polite">0/2000</span>
+                                    </div>
+                                    <div id="contentValidationMessage" class="invalid-feedback notification-validation-message"
+                                        role="alert" aria-live="assertive"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
                                     </div>
                                 </div>
@@ -483,14 +503,23 @@
                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                         <textarea name="response"
                                             class="form-control validate-field review-response-input" rows="2"
-                                            placeholder="Nhập phản hồi..."
+                                            required minlength="5" maxlength="1000"
+                                            th:placeholder="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Chỉnh sửa phản hồi (5–1000 ký tự)' : 'Nhập từ 5–1000 ký tự'"
+                                            th:attr="aria-describedby=${'reviewResponseCount-' + review.feedbackId + ' reviewResponseError-' + review.feedbackId}"
                                             th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
-                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
-                                        <div class="invalid-feedback review-validation-message"
+                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : (review.librarianResponse != null ? review.librarianResponse : '')}"></textarea>
+                                        <div class="review-response-support">
+                                            <span class="review-response-count" th:id="${'reviewResponseCount-' + review.feedbackId}" aria-live="polite">0/1000</span>
+                                        </div>
+                                        <div class="invalid-feedback review-validation-message" role="alert" aria-live="assertive"
+                                            th:id="${'reviewResponseError-' + review.feedbackId}"
                                             th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
                                         </div>
                                         <div class="app-form-actions">
-                                            <button type="submit" class="app-form-primary">Phản hồi</button>
+                                            <button type="submit" class="app-form-primary"
+                                                th:text="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Lưu chỉnh sửa' : 'Phản hồi'">
+                                                Phản hồi
+                                            </button>
                                             <button type="button" class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
                                                 data-bs-toggle="modal" data-bs-target="#librarianDeleteReviewModal"
                                                 th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
@@ -632,6 +661,7 @@
                                     <td class="acquisition-book-info">
                                         <strong th:text="${request.title}">Tên sách</strong>
                                         <span class="acquisition-book-author" th:text="${request.author}">Tác giả</span>
+                                        <span class="acquisition-book-edition" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></span>
                                         <span class="acquisition-book-edition" th:if="${request.publisher != null || request.publicationYear != null}">
                                             <span th:if="${request.publisher != null}" th:text="${request.publisher}"></span>
                                             <span th:if="${request.publisher != null && request.publicationYear != null}"> · </span>
@@ -706,7 +736,7 @@
                     </nav>
             </div>
             <div class="modal fade acquisition-reject-modal" id="rejectAcquisitionModal" tabindex="-1" aria-labelledby="rejectAcquisitionModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel">Từ chối đề xuất</h2><p id="rejectAcquisitionBookTitle"></p></div><button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" aria-label="Đóng"><i class="bi bi-x-lg"></i></button></div><form id="rejectAcquisitionForm" method="post" novalidate><div class="modal-body"><label for="rejectAcquisitionReason">Lý do từ chối</label><textarea id="rejectAcquisitionReason" name="reason" maxlength="500" placeholder="Nhập lý do để member biết kết quả"></textarea><div id="rejectAcquisitionReasonError" class="acquisition-field-error"></div></div><div class="modal-footer"><button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal">Hủy</button><button type="submit" class="acquisition-modal-reject">Từ chối đề xuất</button></div></form></div></div>
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel">Từ chối đề xuất</h2><p id="rejectAcquisitionBookTitle"></p></div><button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" aria-label="Đóng"><i class="bi bi-x-lg"></i></button></div><form id="rejectAcquisitionForm" method="post" novalidate><div class="modal-body"><label for="rejectAcquisitionReason">Lý do từ chối</label><textarea id="rejectAcquisitionReason" name="reason" required minlength="5" maxlength="500" placeholder="Nhập từ 5–500 ký tự" aria-describedby="rejectAcquisitionReasonCount rejectAcquisitionReasonError"></textarea><div class="acquisition-reason-support"><span id="rejectAcquisitionReasonCount" aria-live="polite">0/500</span></div><div id="rejectAcquisitionReasonError" class="acquisition-field-error" role="alert" aria-live="assertive"></div></div><div class="modal-footer"><button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal">Hủy</button><button type="submit" class="acquisition-modal-reject">Từ chối đề xuất</button></div></form></div></div>
             </div>
         </section>
 
@@ -2223,17 +2253,30 @@
             function filterMembers() {
                 const searchInput = document.getElementById("memberSearchInput");
                 const memberItems = document.querySelectorAll(".member-item");
+                const memberList = document.getElementById("memberIdsGroup");
+                const emptyState = document.getElementById("memberSearchEmpty");
 
-                if (searchInput == null) {
+                if (searchInput == null || memberList == null) {
                     return;
                 }
 
                 const keyword = searchInput.value.toLowerCase().trim();
+                const normalizedPhoneKeyword = keyword.replace(/[^0-9+]/g, "");
+                let visibleCount = 0;
 
                 memberItems.forEach(function (item) {
-                    const memberName = item.getAttribute("data-member-name") || "";
-                    item.classList.toggle("is-filtered-out", !memberName.includes(keyword));
+                    const memberEmail = (item.getAttribute("data-member-email") || "").toLowerCase().trim();
+                    const memberPhone = (item.getAttribute("data-member-phone") || "").replace(/[^0-9+]/g, "");
+                    const checkbox = item.querySelector(".member-checkbox");
+                    const matchesEmail = memberEmail.includes(keyword);
+                    const matchesPhone = normalizedPhoneKeyword !== "" && memberPhone.includes(normalizedPhoneKeyword);
+                    const visible = keyword !== "" ? matchesEmail || matchesPhone : checkbox != null && checkbox.checked;
+                    item.classList.toggle("is-filtered-out", !visible);
+                    if (visible) visibleCount++;
                 });
+
+                memberList.classList.toggle("is-search-inactive", keyword === "" && visibleCount === 0);
+                if (emptyState != null) emptyState.hidden = keyword === "" || visibleCount > 0;
             }
 
             function validateIsbn(inputElement) {
@@ -2366,6 +2409,15 @@
                 }
             }
 
+            function updateNotificationCharacterCount(input, counterId, maximum) {
+                const counter = document.getElementById(counterId);
+                if (input == null || counter == null) return;
+                const length = input.value.length;
+                counter.textContent = length + "/" + maximum;
+                counter.classList.toggle("is-near-limit", length >= Math.floor(maximum * 0.9) && length < maximum);
+                counter.classList.toggle("is-limit-reached", length >= maximum);
+            }
+
             function validateNotificationForm(event) {
                 const form = document.getElementById("notificationForm");
                 if (form == null) {
@@ -2410,18 +2462,38 @@
                     setInlineValid(notificationTypeInput);
                 }
 
-                if (titleInput != null && titleInput.value.trim() === "") {
+                const normalizedTitle = titleInput == null ? "" : titleInput.value.trim().replace(/\s+/g, " ");
+                const normalizedContent = contentInput == null ? "" : contentInput.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+
+                if (titleInput != null) titleInput.value = normalizedTitle;
+                if (contentInput != null) contentInput.value = normalizedContent;
+                updateNotificationCharacterCount(titleInput, "titleCharacterCount", 150);
+                updateNotificationCharacterCount(contentInput, "contentCharacterCount", 2000);
+
+                if (normalizedTitle === "") {
                     setInlineError(titleInput, "Tiêu đề không được để trống.");
                     isValid = false;
-                } else if (titleInput != null && titleInput.value.trim().length > 255) {
-                    setInlineError(titleInput, "Tiêu đề không được vượt quá 255 ký tự.");
+                } else if (normalizedTitle.length < 5) {
+                    setInlineError(titleInput, "Tiêu đề phải có ít nhất 5 ký tự.");
+                    isValid = false;
+                } else if (normalizedTitle.length > 150) {
+                    setInlineError(titleInput, "Tiêu đề không được vượt quá 150 ký tự.");
                     isValid = false;
                 } else {
                     setInlineValid(titleInput);
                 }
 
-                if (contentInput != null && contentInput.value.trim() === "") {
+                if (normalizedContent === "") {
                     setInlineError(contentInput, "Nội dung không được để trống.");
+                    isValid = false;
+                } else if (normalizedContent.length < 10) {
+                    setInlineError(contentInput, "Nội dung phải có ít nhất 10 ký tự.");
+                    isValid = false;
+                } else if (normalizedContent.length > 2000) {
+                    setInlineError(contentInput, "Nội dung không được vượt quá 2000 ký tự.");
+                    isValid = false;
+                } else if (normalizedContent.toLocaleLowerCase("vi") === normalizedTitle.toLocaleLowerCase("vi")) {
+                    setInlineError(contentInput, "Nội dung không được giống hoàn toàn tiêu đề.");
                     isValid = false;
                 } else {
                     setInlineValid(contentInput);
@@ -2435,12 +2507,44 @@
 
             function validateReviewReplyForms() {
                 document.querySelectorAll(".review-reply-box").forEach(function (form) {
-                    form.addEventListener("submit", function (event) {
-                        const response = form.querySelector("textarea[name='response']");
-                        clearInlineError(response);
+                    const response = form.querySelector("textarea[name='response']");
+                    const counter = form.querySelector(".review-response-count");
 
-                        if (response != null && response.value.trim() === "") {
+                    function updateReplyCounter() {
+                        if (response == null || counter == null) return;
+                        counter.textContent = response.value.length + "/1000";
+                        counter.classList.toggle("is-near-limit", response.value.length >= 900 && response.value.length < 1000);
+                        counter.classList.toggle("is-limit-reached", response.value.length >= 1000);
+                    }
+
+                    updateReplyCounter();
+                    if (response != null) {
+                        response.addEventListener("input", function () {
+                            updateReplyCounter();
+                            clearInlineError(response);
+                        });
+                    }
+
+                    form.addEventListener("submit", function (event) {
+                        clearInlineError(response);
+                        const normalizedResponse = response == null ? "" : response.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                        if (response != null) response.value = normalizedResponse;
+                        updateReplyCounter();
+
+                        if (normalizedResponse === "") {
                             setInlineError(response, "Nội dung phản hồi không được để trống.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        } else if (normalizedResponse.length < 5) {
+                            setInlineError(response, "Nội dung phản hồi phải có ít nhất 5 ký tự.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        } else if (normalizedResponse.length > 1000) {
+                            setInlineError(response, "Nội dung phản hồi không được vượt quá 1000 ký tự.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        } else if (!/\p{L}/u.test(normalizedResponse)) {
+                            setInlineError(response, "Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt.");
                             event.preventDefault();
                             event.stopPropagation();
                         } else {
@@ -2485,7 +2589,13 @@
                 const title = document.getElementById("rejectAcquisitionBookTitle");
                 const reason = document.getElementById("rejectAcquisitionReason");
                 const error = document.getElementById("rejectAcquisitionReasonError");
-                if (form == null || title == null || reason == null || error == null) return;
+                const counter = document.getElementById("rejectAcquisitionReasonCount");
+                if (form == null || title == null || reason == null || error == null || counter == null) return;
+                function updateReasonCounter() {
+                    counter.textContent = reason.value.length + "/500";
+                    counter.classList.toggle("is-near-limit", reason.value.length >= 450 && reason.value.length < 500);
+                    counter.classList.toggle("is-limit-reached", reason.value.length >= 500);
+                }
                 document.querySelectorAll(".acquisition-reject-action").forEach(function (trigger) {
                     trigger.addEventListener("click", function () {
                         form.action = trigger.dataset.rejectUrl;
@@ -2493,19 +2603,29 @@
                         reason.value = "";
                         reason.classList.remove("is-invalid");
                         error.textContent = "";
+                        updateReasonCounter();
                     });
                 });
                 form.addEventListener("submit", function (event) {
-                    if (reason.value.trim() === "") {
+                    const normalizedReason = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                    reason.value = normalizedReason;
+                    updateReasonCounter();
+                    let message = "";
+                    if (normalizedReason === "") message = "Lý do từ chối không được để trống.";
+                    else if (normalizedReason.length < 5) message = "Lý do từ chối phải có ít nhất 5 ký tự.";
+                    else if (normalizedReason.length > 500) message = "Lý do từ chối không được vượt quá 500 ký tự.";
+                    else if (!/\p{L}/u.test(normalizedReason)) message = "Lý do từ chối không được chỉ gồm số hoặc ký tự đặc biệt.";
+                    if (message !== "") {
                         event.preventDefault();
                         reason.classList.add("is-invalid");
-                        error.textContent = "Lý do từ chối không được để trống.";
+                        error.textContent = message;
                         reason.focus();
                     }
                 });
                 reason.addEventListener("input", function () {
                     this.classList.remove("is-invalid");
                     error.textContent = "";
+                    updateReasonCounter();
                 });
             }
 
@@ -2525,6 +2645,22 @@
 
                 if (notificationForm != null) {
                     notificationForm.addEventListener("submit", validateNotificationForm);
+                    const titleInput = notificationForm.querySelector("[name='title']");
+                    const contentInput = notificationForm.querySelector("[name='content']");
+                    updateNotificationCharacterCount(titleInput, "titleCharacterCount", 150);
+                    updateNotificationCharacterCount(contentInput, "contentCharacterCount", 2000);
+                    if (titleInput != null) {
+                        titleInput.addEventListener("input", function () {
+                            updateNotificationCharacterCount(titleInput, "titleCharacterCount", 150);
+                            clearInlineError(titleInput);
+                        });
+                    }
+                    if (contentInput != null) {
+                        contentInput.addEventListener("input", function () {
+                            updateNotificationCharacterCount(contentInput, "contentCharacterCount", 2000);
+                            clearInlineError(contentInput);
+                        });
+                    }
                 }
 
                 validateReviewReplyForms();
@@ -2535,6 +2671,10 @@
 
                 if (memberSearchInput != null) {
                     memberSearchInput.addEventListener("input", filterMembers);
+                    document.querySelectorAll(".member-checkbox").forEach(function (checkbox) {
+                        checkbox.addEventListener("change", filterMembers);
+                    });
+                    filterMembers();
                 }
             });
         </script>

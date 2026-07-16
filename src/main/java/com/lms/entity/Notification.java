@@ -1,6 +1,7 @@
 package com.lms.entity;
 import com.lms.enums.NotificationType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 @Entity
 @Table(name = "Notifications")
@@ -15,6 +16,7 @@ public class Notification {
     @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String content;
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'GENERAL'")
     @Column(name = "notification_type", nullable = false, length = 30)
     private NotificationType notificationType = NotificationType.GENERAL;
     private LocalDateTime createdDate;

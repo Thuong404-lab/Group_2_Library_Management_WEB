@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
 </head>
 <body>
-<div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page py-4">
+<div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page">
     <section class="payos-receipt">
         <header class="payos-receipt-header">
             <h2 th:text="${payment.purpose == 'TOP_UP' ? 'Phiếu Nạp Tiền Thành Viên' : 'Phiếu Thanh Toán Phí Mượn'}">Phiếu Nạp Tiền Thành Viên</h2>
@@ -22,8 +22,11 @@
                 </p>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h3 class="payos-section-title" th:text="${payment.purpose == 'TOP_UP' ? 'Thông tin đơn nạp tiền' : 'Thông tin thanh toán phí mượn'}">Thông tin đơn nạp tiền</h3>
+            <div class="payos-section-bar">
+                <h3 class="payos-section-title"
+                    th:text="${payment.purpose == 'TOP_UP' ? 'Thông tin đơn nạp tiền' : 'Thông tin thanh toán phí mượn'}">
+                    Thông tin đơn nạp tiền
+                </h3>
                 <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending">Đang chờ thanh toán</span>
                 <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid">Đã thanh toán</span>
                 <span th:if="${payment.status != 'PAID' and payment.status != 'PENDING'}"

@@ -45,6 +45,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Override
     @Transactional
     public void submitReview(String username, MemberReviewSubmitRequest request) {
+        String normalizedComment = validateAndNormalizeComment(request.getComment());
         MemberAccount account = memberAccountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
 
@@ -71,7 +72,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         feedback.setMember(member);
         feedback.setBook(book);
         feedback.setRating(request.getRating());
-        feedback.setComment(request.getComment().trim());
+        feedback.setComment(normalizedComment);
         feedback.setCreatedDate(LocalDateTime.now());
         feedback.setStatus(APPROVED_STATUS);
 
@@ -143,6 +144,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Transactional
     public void updateMyReview(String username, Integer feedbackId, MemberReviewUpdateRequest request) {
         Feedback feedback = getEditableReview(username, feedbackId);
+        String normalizedComment = validateAndNormalizeComment(request.getComment());
 
         if (borrowDetailRepository.countEligibleReviewBorrows(
                 feedback.getMember().getMemberId(), feedback.getBook().getBookId()) == 0) {
@@ -151,8 +153,23 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         }
 
         feedback.setRating(request.getRating());
-        feedback.setComment(request.getComment().trim());
+        feedback.setComment(normalizedComment);
         feedbackRepository.save(feedback);
+    }
+
+    private String validateAndNormalizeComment(String comment) {
+        String normalizedComment = comment == null ? "" : comment.strip()
+                .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
+        if (normalizedComment.isEmpty()) {
+            throw new ValidationException("Nội dung đánh giá không được để trống.");
+        }
+        if (normalizedComment.length() < 5 || normalizedComment.length() > 1000) {
+            throw new ValidationException("Nội dung đánh giá phải có từ 5 đến 1000 ký tự.");
+        }
+        if (normalizedComment.codePoints().noneMatch(Character::isLetter)) {
+            throw new ValidationException("Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt.");
+        }
+        return normalizedComment;
     }
 
     @Override

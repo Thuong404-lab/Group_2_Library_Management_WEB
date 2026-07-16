@@ -50,6 +50,7 @@ public class PayOsPaymentService {
     private final BorrowRepository borrowRepository;
     private final FinancialService financialService;
     private final PayOsSettlementService settlementService;
+    private final PayOsPaymentAuditService auditService;
     private final String clientId;
     private final String apiKey;
     private final String checksumKey;
@@ -62,6 +63,7 @@ public class PayOsPaymentService {
                                BorrowRepository borrowRepository,
                                FinancialService financialService,
                                PayOsSettlementService settlementService,
+                               PayOsPaymentAuditService auditService,
                                @Value("${PAYOS_CLIENT_ID:${payos.client-id:}}") String clientId,
                                @Value("${PAYOS_API_KEY:${payos.api-key:}}") String apiKey,
                                @Value("${PAYOS_CHECKSUM_KEY:${payos.checksum-key:}}") String checksumKey,
@@ -72,6 +74,7 @@ public class PayOsPaymentService {
         this.borrowRepository = borrowRepository;
         this.financialService = financialService;
         this.settlementService = settlementService;
+        this.auditService = auditService;
         this.clientId = clientId;
         this.apiKey = apiKey;
         this.checksumKey = checksumKey;
@@ -195,8 +198,11 @@ public class PayOsPaymentService {
             throw new RuntimeException(
                     "Danh sách phí phạt đã thay đổi nhưng chưa thể hủy mã QR cũ. Vui lòng thử lại.");
         }
+        String oldStatus = payment.getStatus();
         payment.setStatus("CANCELLED");
         paymentRepository.save(payment);
+        auditService.record(payment, "PAYMENT_CANCELLED", "MEMBER", oldStatus, payment.getStatus(), true,
+                "Hủy mã QR cũ vì danh sách phí phạt đã thay đổi.");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -282,26 +288,41 @@ public class PayOsPaymentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment refreshForMember(Long orderCode, Integer memberId) {
-        return refreshPayment(orderCode, memberId);
+        return refreshPayment(orderCode, memberId, false, "MEMBER_POLL");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment refreshForStaff(Long orderCode) {
-        return refreshPayment(orderCode, null);
+        return refreshPayment(orderCode, null, false, "STAFF_POLL");
     }
 
-    private PayOsPayment refreshPayment(Long orderCode, Integer expectedMemberId) {
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment reconcileForStaff(Long orderCode) {
+        return refreshPayment(orderCode, null, true, "RECONCILIATION");
+    }
+
+    private PayOsPayment refreshPayment(Long orderCode, Integer expectedMemberId,
+                                        boolean failOnGatewayError, String source) {
         PayOsPayment current = expectedMemberId == null
                 ? getForStaff(orderCode)
                 : getForMember(orderCode, expectedMemberId);
-        if (payOS == null || (PAID.equalsIgnoreCase(current.getStatus()) && current.getTransaction() != null)) {
+        if (PAID.equalsIgnoreCase(current.getStatus()) && current.getTransaction() != null) {
+            return current;
+        }
+        if (payOS == null) {
+            if (failOnGatewayError) {
+                throw new RuntimeException("PayOS chưa được cấu hình nên không thể đối soát.");
+            }
             return current;
         }
 
         PaymentLink remote;
         try {
             remote = client().paymentRequests().get(orderCode);
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            if (failOnGatewayError) {
+                throw new RuntimeException("Không thể lấy trạng thái từ cổng thanh toán: " + exception.getMessage(), exception);
+            }
             return current;
         }
         if (remote == null || remote.getStatus() == null) {
@@ -315,6 +336,7 @@ public class PayOsPaymentService {
             return payment;
         }
 
+        String oldStatus = payment.getStatus();
         if (remote.getStatus() == PaymentLinkStatus.PAID) {
             validateRemotePayment(payment, remote);
             Transaction transaction = settlementService.settle(payment);
@@ -326,7 +348,12 @@ public class PayOsPaymentService {
                 || remote.getStatus() == PaymentLinkStatus.FAILED) {
             payment.setStatus(remote.getStatus().name());
         }
-        return paymentRepository.save(payment);
+        PayOsPayment saved = paymentRepository.save(payment);
+        if (!normalize(oldStatus).equals(normalize(saved.getStatus()))) {
+            auditService.record(saved, "STATUS_CHANGED", source, oldStatus, saved.getStatus(), true,
+                    "Đồng bộ trạng thái thanh toán từ cổng PayOS.");
+        }
+        return saved;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -350,12 +377,15 @@ public class PayOsPaymentService {
             throw new RuntimeException("Mã liên kết thanh toán không khớp.");
         }
 
+        String oldStatus = payment.getStatus();
         Transaction transaction = settlementService.settle(payment);
         payment.setTransaction(transaction);
         payment.setBankReference(data.getReference());
         payment.setPaidAt(LocalDateTime.now());
         payment.setStatus(PAID);
         paymentRepository.save(payment);
+        auditService.record(payment, "WEBHOOK_SETTLED", "WEBHOOK", oldStatus, payment.getStatus(), true,
+                "Webhook hợp lệ; thanh toán đã được quyết toán.");
     }
 
     private PayOsPayment createPayment(Member member, String purpose, Integer referenceId,
@@ -391,7 +421,10 @@ public class PayOsPaymentService {
         payment.setPaymentLinkId(response.getPaymentLinkId());
         payment.setCheckoutUrl(response.getCheckoutUrl());
         payment.setQrCode(response.getQrCode());
-        return paymentRepository.save(payment);
+        PayOsPayment saved = paymentRepository.save(payment);
+        auditService.record(saved, "PAYMENT_CREATED", "APPLICATION", null, saved.getStatus(), true,
+                "Đã tạo yêu cầu thanh toán " + saved.getPurpose() + ".");
+        return saved;
     }
 
     private String descriptionWithId(String preferredPrefix, String compactPrefix, Integer id) {
