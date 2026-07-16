@@ -27,7 +27,8 @@
                     th:text="${payment.purpose == 'TOP_UP' ? 'Thông tin đơn nạp tiền' : 'Thông tin thanh toán phí mượn'}">
                     Thông tin đơn nạp tiền
                 </h3>
-                <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending">Đang chờ thanh toán</span>
+                <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending"
+                      th:text="${payment.purpose == 'TOP_UP' ? 'Đang chờ thanh toán' : 'Phiếu đang chờ thanh toán'}">Đang chờ thanh toán</span>
                 <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid">Đã thanh toán</span>
                 <span th:if="${payment.status != 'PAID' and payment.status != 'PENDING'}"
                       class="payos-status payos-status-failed"
@@ -78,10 +79,10 @@
                 </div>
             </div>
 
-            <p class="payos-help" th:text="${payment.purpose == 'TOP_UP' ? 'ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.' : 'ⓘ Hệ thống sẽ tự động ghi nhận thanh toán sau khi KQPay xác nhận.'}">ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.</p>
+            <p class="payos-help" th:text="${payment.purpose == 'TOP_UP' ? 'ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.' : 'ⓘ Phiếu mượn chỉ được kích hoạt sau khi KQPay xác nhận đã nhận tiền.'}">ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.</p>
 
             <div th:if="${payment.status == 'PAID'}" class="payos-success">
-                <span th:text="${payment.purpose == 'TOP_UP' ? 'Đã cộng tiền vào ví thành viên thành công.' : 'Đã thanh toán phí mượn thành công.'}">Đã cộng tiền vào ví thành viên thành công.</span>
+                <span th:text="${payment.purpose == 'TOP_UP' ? 'Đã cộng tiền vào ví thành viên thành công.' : 'Tạo phiếu mượn thành công.'}">Đã cộng tiền vào ví thành viên thành công.</span>
                 <span th:if="${payment.transaction != null}">Mã giao dịch: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
             </div>
 

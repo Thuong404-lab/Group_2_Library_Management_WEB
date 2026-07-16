@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Quầy cấp mượn sách</title>
+    <title>Quầy xử lý mượn sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/create-borrow.css}" />
@@ -14,7 +14,7 @@
 
     <header class="dashboard-page-header">
         <div class="page-title-group">
-            <h1 class="app-page-title">Quầy cấp mượn sách</h1>
+            <h1 class="app-page-title">Quầy xử lý mượn sách</h1>
             <p class="app-page-description">Lập phiếu tại quầy và xử lý các yêu cầu mượn, gia hạn, đặt trước của độc giả.</p>
         </div>
     </header>
@@ -145,7 +145,7 @@
                 <div class="borrow-create-body">
                     <div class="borrow-create-heading">
                         <h2 class="app-section-title" id="borrowCreateTitle">
-                            <i class="bi bi-pencil-square" aria-hidden="true"></i>Tạo phiếu mượn trực tiếp tại quầy
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>Tạo phiếu mượn tại quầy
                         </h2>
                         <p class="app-section-description">Vui lòng nhập thông tin độc giả và mã vạch sách để tạo phiếu mượn mới.</p>
                     </div>
@@ -480,8 +480,6 @@
             </div>
         </div>
     </div>
-    </div>
-    </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -529,7 +527,7 @@
                     .then(data => {
                         data.forEach(book => {
                             if (book.found && book.rawStatus === 'Available') {
-                                addBookToList(book.barcode, book.title);
+                                addBookToList(book.barcode, book.title, book.coverImageUrl);
                             }
                         });
                     });
@@ -609,7 +607,7 @@
                             const book = data[0];
                             if (book.found) {
                                 if (book.rawStatus === 'Available') {
-                                    addBookToList(book.barcode, book.title);
+                                    addBookToList(book.barcode, book.title, book.coverImageUrl);
                                     scannerInput.value = "";
                                 } else {
                                     showError(`Sách hiện không khả dụng (Trạng thái: ${book.status}).`);
@@ -638,22 +636,74 @@
             }
         }
 
-        function addBookToList(barcode, title) {
+        function createBookCover(coverImageUrl, title) {
+            if (coverImageUrl) {
+                const image = document.createElement("img");
+                image.className = "borrow-scanned-book-cover";
+                image.src = coverImageUrl;
+                image.alt = `Bìa sách ${title}`;
+                image.loading = "lazy";
+                image.addEventListener("error", function() {
+                    image.replaceWith(createBookCover("", title));
+                }, { once: true });
+                return image;
+            }
+
+            const placeholder = document.createElement("span");
+            placeholder.className = "borrow-scanned-book-cover borrow-scanned-book-cover--placeholder";
+            placeholder.setAttribute("aria-hidden", "true");
+            const icon = document.createElement("i");
+            icon.className = "bi bi-book";
+            placeholder.appendChild(icon);
+            return placeholder;
+        }
+
+        function addBookToList(barcode, title, coverImageUrl) {
             if(!scannedBarcodes.includes(barcode)) {
                 scannedBarcodes.push(barcode);
                 updateHiddenInput();
                 
                 scannedBooksTable.classList.remove("borrow-is-hidden");
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><span class="borrow-barcode-badge">${barcode}</span></td>
-                    <td class="borrow-scanned-book-title" title="${title}">${title}</td>
-                    <td class="borrow-action-column">
-                        <div class="app-row-actions">
-                            <button type="button" class="app-icon-action app-icon-action--delete" title="Bỏ sách khỏi phiếu" aria-label="Bỏ sách khỏi phiếu" onclick="removeBook(this, '${barcode}')"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
-                        </div>
-                    </td>
-                `;
+
+                const barcodeCell = document.createElement("td");
+                const barcodeBadge = document.createElement("span");
+                barcodeBadge.className = "borrow-barcode-badge";
+                barcodeBadge.textContent = barcode;
+                barcodeCell.appendChild(barcodeBadge);
+
+                const bookCell = document.createElement("td");
+                bookCell.className = "borrow-scanned-book-cell";
+                const bookSummary = document.createElement("div");
+                bookSummary.className = "borrow-scanned-book";
+                bookSummary.appendChild(createBookCover(coverImageUrl, title));
+                const bookTitle = document.createElement("span");
+                bookTitle.className = "borrow-scanned-book-title";
+                bookTitle.title = title;
+                bookTitle.textContent = title;
+                bookSummary.appendChild(bookTitle);
+                bookCell.appendChild(bookSummary);
+
+                const actionCell = document.createElement("td");
+                actionCell.className = "borrow-action-column";
+                const actionGroup = document.createElement("div");
+                actionGroup.className = "app-row-actions";
+                const removeButton = document.createElement("button");
+                removeButton.type = "button";
+                removeButton.className = "app-icon-action app-icon-action--delete";
+                removeButton.title = "Bỏ sách khỏi phiếu";
+                removeButton.setAttribute("aria-label", "Bỏ sách khỏi phiếu");
+                removeButton.addEventListener("click", function() {
+                    removeBook(removeButton, barcode);
+                });
+                const removeIcon = document.createElement("i");
+                removeIcon.className = "bi bi-x-lg";
+                removeIcon.setAttribute("aria-hidden", "true");
+                removeButton.appendChild(removeIcon);
+                actionGroup.appendChild(removeButton);
+                actionCell.appendChild(actionGroup);
+
+                tr.append(barcodeCell, bookCell, actionCell);
                 tbody.appendChild(tr);
             }
         }
@@ -681,9 +731,11 @@
             offlineBorrowForm.addEventListener("submit", function(e) {
                 const pendingInput = scannerInput ? scannerInput.value.trim() : "";
                 if (pendingInput !== "") {
-                    e.preventDefault();
-                    showError("Bạn có mã vạch chưa thêm. Vui lòng ấn nút 'Thêm' hoặc phím Enter để thêm sách vào danh sách trước khi tạo phiếu!");
-                    return;
+                    if (!scannedBarcodes.includes(pendingInput)) {
+                        scannedBarcodes.push(pendingInput);
+                        updateHiddenInput();
+                    }
+                    scannerInput.value = "";
                 }
                 
                 if (scannedBarcodes.length === 0) {
@@ -727,5 +779,7 @@
         }
     });
 </script>
+    </div>
+    </div>
 </body>
 </html>

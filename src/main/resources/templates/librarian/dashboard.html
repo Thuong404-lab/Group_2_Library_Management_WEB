@@ -66,7 +66,7 @@
                 </div>
                 <div class="text-muted"
                     th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports' || currentSection == 'users' || (currentSection == 'books' && (currentSubSection == 'inventory' || currentSubSection == 'storage'))}">
-                    Cập nhật:
+                    Hôm nay:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
             </div>
@@ -82,208 +82,185 @@
         <!-- Overview -->
         <section id="section-overview" class="lib-section"
             th:classappend="${currentSection == 'overview'} ? ' active' : ''">
+            <nav class="overview-quick-actions" aria-label="Thao tác nhanh">
+                <a th:href="@{/librarian/borrow/create}" class="overview-quick-action overview-quick-action--primary">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    <span>Tạo phiếu mượn</span>
+                </a>
+                <a th:href="@{/librarian/loan/returns}" class="overview-quick-action">
+                    <i class="bi bi-upc-scan" aria-hidden="true"></i>
+                    <span>Xác nhận trả sách</span>
+                </a>
+                <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-quick-action">
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    <span>Lịch mượn trả</span>
+                </a>
+            </nav>
+
             <!-- Statistics Cards -->
-            <div class="row row-cols-5 g-3 mb-5">
+            <div class="overview-kpi-grid">
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm u-border-left-4px-solid-0d6efd-important-64ac16c1"
-                       >
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-13-110-253-0-1-color-0d6efd-e5954655"
-                               >
-                                <i class="bi bi-book fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0 librarian-dashboard-div-min-height-display-align-05"
-                                   >
-                                    Tổng Đầu Sách
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${totalBookCount}">0</h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--neutral">
+                    <div class="overview-kpi-icon"><i class="bi bi-journal-arrow-up" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Phiếu đang mượn</p>
+                        <strong class="overview-kpi-value" th:text="${activeBorrows}">0</strong>
+                        <span class="overview-kpi-caption">Phiếu đang hoạt động</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm u-border-left-4px-solid-198754-important-8dcb64f6"
-                       >
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-25-135-84-0-1-color-198754-c23022eb"
-                               >
-                                <i class="bi bi-check2-square fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0 librarian-dashboard-div-min-height-display-align-05"
-                                   >
-                                    Bản sách sẵn có
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${availableItems}">0</h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--success">
+                    <div class="overview-kpi-icon"><i class="bi bi-check2-square" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Bản sách sẵn có</p>
+                        <strong class="overview-kpi-value" th:text="${availableItems}">0</strong>
+                        <span class="overview-kpi-caption">Có thể cấp mượn</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm u-border-left-4px-solid-0dcaf0-important-b5b60906"
-                       >
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-13-202-240-0-1-color-0dcaf0-5c77f3cf"
-                               >
-                                <i class="bi bi-journal-arrow-up fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0 librarian-dashboard-div-min-height-display-align-05"
-                                   >
-                                    Đang Mượn
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${activeBorrows}">0</h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--warning">
+                    <div class="overview-kpi-icon"><i class="bi bi-bookmark-star" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Đặt trước chờ xử lý</p>
+                        <strong class="overview-kpi-value" th:text="${pendingReservations}">0</strong>
+                        <span class="overview-kpi-caption">Yêu cầu cần theo dõi</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm u-border-left-4px-solid-fd7e14-important-0fa630a5"
-                       >
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-253-126-20-0-1-color-fd7e14-8d4d646a"
-                               >
-                                <i class="bi bi-clock-history fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0 librarian-dashboard-div-min-height-display-align-05"
-                                   >
-                                    Yêu cầu mượn
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${pendingReservations}">0
-                                </h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--danger">
+                    <div class="overview-kpi-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Bản sách quá hạn</p>
+                        <strong class="overview-kpi-value" th:text="${overdueDetails}">0</strong>
+                        <span class="overview-kpi-caption">Cần liên hệ độc giả</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm u-border-left-4px-solid-dc3545-important-49da6d79"
-                       >
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-220-53-69-0-1-color-dc3545-4faa87be"
-                               >
-                                <i class="bi bi-exclamation-triangle fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0 librarian-dashboard-div-min-height-display-align-05"
-                                   >
-                                    Quá hạn mượn
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${overdueDetails}">0
-                                </h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--neutral">
+                    <div class="overview-kpi-icon"><i class="bi bi-book" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Tổng đầu sách</p>
+                        <strong class="overview-kpi-value" th:text="${totalBookCount}">0</strong>
+                        <span class="overview-kpi-caption">Đầu sách trong hệ thống</span>
                     </div>
-                </div>
+                </article>
             </div>
 
 
             <!-- Main Dashboard Content -->
-            <div class="row g-4">
+            <div class="overview-content-grid">
                 <!-- Sắp đến hạn trả -->
-                <div class="col-lg-8">
-                    <div class="card-classic h-100 shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                <i class="bi bi-calendar-event me-2 text-classic"></i> Sắp đến hạn trả (7 ngày tới)
-                            </h5>
+                <section class="overview-panel overview-due-panel" aria-labelledby="dueSoonTitle">
+                    <header class="overview-panel-header">
+                        <div>
+                            <h2 class="overview-panel-title" id="dueSoonTitle">
+                                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                                Sắp đến hạn trả
+                            </h2>
+                            <p class="overview-panel-description">Các bản sách đến hạn trong 7 ngày tới.</p>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light text-uppercase small text-muted">
+                        <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-panel-link">
+                            Xem lịch mượn trả <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    </header>
+                    <div class="overview-table-wrap">
+                        <table class="overview-table">
+                            <colgroup>
+                                <col class="overview-index-column">
+                                <col>
+                                <col class="overview-date-column">
+                                <col class="overview-status-column">
+                            </colgroup>
+                            <thead>
                                         <tr>
-                                            <th class="ps-4">STT</th>
+                                            <th>STT</th>
                                             <th>Thông tin</th>
                                             <th>Ngày đến hạn</th>
                                             <th>Trạng thái</th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="detail, iterStat : ${dueSoonDetails}">
-                                            <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
-                                            <td>
-                                                <div class="fw-bold text-dark" th:text="${detail.book != null ? detail.book.title : 'N/A'}">Tên sách</div>
-                                                <div class="small text-muted" th:text="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null ? detail.borrow.member.user.fullName : 'N/A'}">Người mượn</div>
-                                            </td>
-                                            <td class="fw-bold"
-                                                th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'N/A'}">
-                                                N/A</td>
-                                            <td>
-                                                <span class="badge bg-warning text-dark border"
-                                                    th:text="${detail.status}">Borrowed</span>
-                                            </td>
-                                        </tr>
-                                        <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
-                                            <td colspan="4" class="text-center text-muted py-5">
-                                                <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
-                                                Không có sách nào sắp đến hạn.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                            </thead>
+                            <tbody>
+                                <tr th:each="detail, iterStat : ${dueSoonDetails}">
+                                    <td class="overview-index-cell" th:text="${iterStat.index + 1}">1</td>
+                                    <td>
+                                        <strong class="overview-book-title"
+                                                th:text="${detail.book != null ? detail.book.title : 'Chưa rõ tên sách'}">Tên sách</strong>
+                                        <span class="overview-member-name"
+                                              th:text="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null ? detail.borrow.member.user.fullName : 'Chưa rõ độc giả'}">Người mượn</span>
+                                    </td>
+                                    <td class="overview-due-date"
+                                        th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'Chưa rõ'}">
+                                        17/07/2026
+                                    </td>
+                                    <td><span class="overview-status-badge">Đang mượn</span></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
+                                    <td colspan="4" class="overview-empty-cell">
+                                        <div class="overview-empty-state">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                            <strong>Chưa có sách sắp đến hạn</strong>
+                                            <span>Danh sách sẽ hiển thị các bản sách đến hạn trong 7 ngày tới.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
+                </section>
 
                 <!-- Hoạt động gần đây -->
-                <div class="col-lg-4">
-                    <div class="card-classic h-100 shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                <i class="bi bi-activity me-2 text-classic"></i> Hoạt động gần đây
-                            </h5>
+                <section class="overview-panel overview-activity-panel" aria-labelledby="recentActivityTitle">
+                    <header class="overview-panel-header">
+                        <div>
+                            <h2 class="overview-panel-title" id="recentActivityTitle">
+                                <i class="bi bi-activity" aria-hidden="true"></i>
+                                Hoạt động gần đây
+                            </h2>
+                            <p class="overview-panel-description">Năm lượt mượn được ghi nhận gần nhất.</p>
                         </div>
-                        <div class="card-body p-4">
-                            <div th:if="${#lists.isEmpty(recentBorrows)}" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                Chưa có hoạt động mượn sách nào.
+                    </header>
+
+                    <div class="overview-activity-list">
+                        <div th:if="${#lists.isEmpty(recentBorrows)}" class="overview-empty-state">
+                            <i class="bi bi-inbox" aria-hidden="true"></i>
+                            <strong>Chưa có hoạt động mượn sách</strong>
+                            <span>Hoạt động mới sẽ xuất hiện tại đây.</span>
+                        </div>
+
+                        <article class="overview-activity-item" th:each="borrow : ${recentBorrows}">
+                            <img th:if="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
+                                 th:src="${borrow.borrow.member.user.avatar}"
+                                 th:alt="${'Ảnh của ' + borrow.borrow.member.user.fullName}"
+                                 class="overview-activity-avatar">
+                            <div th:unless="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
+                                 class="overview-activity-avatar overview-activity-avatar--fallback"
+                                 aria-hidden="true"
+                                 th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null && !#strings.isEmpty(borrow.borrow.member.user.fullName) ? #strings.substring(borrow.borrow.member.user.fullName, 0, 1) : 'N'}">
+                                N
                             </div>
-
-                            <div class="d-flex mb-3 pb-3 border-bottom librarian-dashboard-div-border-color-15" th:each="borrow, iterStat : ${recentBorrows}"
-                               >
-                                <div class="flex-shrink-0">
-                                    <img th:if="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
-                                         th:src="${borrow.borrow.member.user.avatar}"
-                                         class="rounded-circle border u-width-40px-height-40px-object-fit-cover-2142a144"
-
-                                         alt="Avatar">
-                                    <div th:unless="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
-                                        class="rounded-circle text-white d-flex align-items-center justify-content-center u-width-40px-height-40px-font-weight-bold-background-color-8b5a2b-aa9fcd7a"
-
-                                        th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? #strings.substring(borrow.borrow.member.user.fullName, 0, 1) : 'N'}">
-                                        N
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 fw-bold"
-                                        th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? borrow.borrow.member.user.fullName : 'Người dùng ẩn danh'}">
-                                        Người dùng</h6>
-                                    <div class="text-muted small">
-                                        <i class="bi bi-box-arrow-right me-1"></i> Đã mượn: <span th:text="${borrow.book.title}">Sách</span> ·
-                                        <span
-                                            th:text="${borrow.borrow.borrowDate != null ? #temporals.format(borrow.borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Hôm
-                                            nay</span>
-                                    </div>
-                                </div>
+                            <div class="overview-activity-copy">
+                                <strong class="overview-activity-member"
+                                        th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? borrow.borrow.member.user.fullName : 'Chưa rõ độc giả'}">
+                                    Người dùng
+                                </strong>
+                                <p class="overview-activity-description">
+                                    Đã mượn
+                                    <span th:text="${borrow.book != null ? borrow.book.title : 'Chưa rõ tên sách'}">Tên sách</span>
+                                </p>
+                                <time class="overview-activity-time"
+                                      th:text="${borrow.borrow.borrowDate != null ? #temporals.format(borrow.borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'Chưa rõ thời gian'}">
+                                    17/07/2026 · 10:30
+                                </time>
                             </div>
-                        </div>
-                        <div class="card-footer bg-white border-top text-center p-3 border-color"
-                            th:if="${!#lists.isEmpty(recentBorrows)}">
-                            <a th:href="@{/librarian/reports}" class="text-decoration-none fw-bold text-classic">Xem tất
-                                cả
-                            <a th:href="@{/librarian/loan/borrow-schedule}" class="text-decoration-none fw-bold text-classic">Xem tất cả
-                                hoạt động <i class="bi bi-arrow-right"></i></a>
-                        </div>
+                        </article>
                     </div>
-                </div>
+
+                    <footer class="overview-panel-footer" th:if="${!#lists.isEmpty(recentBorrows)}">
+                        <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-panel-link">
+                            Xem tất cả hoạt động <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    </footer>
+                </section>
             </div>
         </section>
 

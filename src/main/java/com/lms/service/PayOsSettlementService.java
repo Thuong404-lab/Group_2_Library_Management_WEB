@@ -27,6 +27,7 @@ public class PayOsSettlementService {
     private final FinancialService financialService;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final BorrowService borrowService;
 
     public PayOsSettlementService(PayOsWalletRepository walletRepository,
                                   PayOsTransactionRepository transactionRepository,
@@ -34,7 +35,8 @@ public class PayOsSettlementService {
                                   PayOsPaymentFineItemRepository fineItemRepository,
                                   FinancialService financialService,
                                   NotificationRepository notificationRepository,
-                                  MemberNotificationRepository memberNotificationRepository) {
+                                  MemberNotificationRepository memberNotificationRepository,
+                                  BorrowService borrowService) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.borrowRepository = borrowRepository;
@@ -42,6 +44,7 @@ public class PayOsSettlementService {
         this.financialService = financialService;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.borrowService = borrowService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -138,7 +141,8 @@ public class PayOsSettlementService {
             throw new RuntimeException("Phiếu mượn không thuộc về thành viên.");
         }
         String status = normalize(borrow.getStatus());
-        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)) {
+        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)
+                && !"PAYMENT_PENDING".equals(status)) {
             throw new RuntimeException("Phiếu mượn không thể thanh toán.");
         }
         if (transactionRepository.hasCompletedBorrowFee(memberId, borrowId)) {
@@ -150,7 +154,17 @@ public class PayOsSettlementService {
         }
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ví thành viên."));
-        return saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate());
+        Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate());
+        borrowService.activatePendingBankBorrow(borrowId);
+        return transaction;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelPendingBorrow(PayOsPayment payment, String paymentStatus) {
+        if (payment != null && PayOsPaymentService.BORROW_FEE.equals(payment.getPurpose())
+                && payment.getReferenceId() != null) {
+            borrowService.cancelPendingBankBorrow(payment.getReferenceId(), paymentStatus);
+        }
     }
 
     private Transaction saveTransaction(Wallet wallet, Borrow borrow, String type, BigDecimal amount) {

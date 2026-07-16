@@ -141,7 +141,7 @@
                                     <i class="bi bi-arrow-left me-2"></i>Quay lại sửa
                                 </button>
                                 <button type="submit" class="btn btn-primary px-4 py-2" id="btnConfirmCreate" style="background-color: #8b5a2b; border-color: #8b5a2b;">
-                                    <span id="btnConfirmText"><i class="bi bi-check-circle me-2"></i>Thanh toán</span>
+                                    <span id="btnConfirmText"><i class="bi bi-check-circle me-2"></i>Xác nhận tạo phiếu</span>
                                     <span id="btnConfirmSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                     <span id="btnConfirmLoadingText" class="d-none">Đang xử lý...</span>
                                 </button>
@@ -167,6 +167,20 @@
             const btnText = document.getElementById('btnConfirmText');
             const spinner = document.getElementById('btnConfirmSpinner');
             const loadingText = document.getElementById('btnConfirmLoadingText');
+            const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+
+            function updateConfirmLabel() {
+                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                const isBankTransfer = selectedMethod && selectedMethod.value === 'BANK';
+                btnText.innerHTML = isBankTransfer
+                    ? '<i class="bi bi-bank me-2"></i>Tiếp tục thanh toán'
+                    : '<i class="bi bi-check-circle me-2"></i>Xác nhận tạo phiếu';
+            }
+
+            paymentMethods.forEach(function(paymentMethod) {
+                paymentMethod.addEventListener('change', updateConfirmLabel);
+            });
+            updateConfirmLabel();
 
             form.addEventListener('submit', function() {
                 if(btn.disabled) return false;

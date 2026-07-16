@@ -12,6 +12,8 @@ import java.util.List;
 public interface BorrowService {
     // Luồng mượn trực tiếp tại quầy
     Borrow processBorrowing(BorrowRequest request, String librarianUsername);
+    Borrow activatePendingBankBorrow(Integer borrowId);
+    void cancelPendingBankBorrow(Integer borrowId, String paymentStatus);
 
     // Luồng đăng ký mượn trực tuyến (Chờ duyệt)
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);

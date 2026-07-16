@@ -73,6 +73,15 @@
     min-width: 0;
 }
 
+.borrow-queue-panel .borrow-panel-header {
+    flex-direction: column;
+    gap: 16px;
+}
+
+.borrow-queue-panel .borrow-panel-heading {
+    width: 100%;
+}
+
 .librarian-create-borrow-page .app-section-title {
     display: flex;
     align-items: center;
@@ -87,16 +96,18 @@
 }
 
 .borrow-pill-tabs {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
-    margin: 16px 0 0;
+    width: 100%;
+    margin: 0;
     padding: 0;
     border: 0;
     list-style: none;
 }
 
 .borrow-pill-tabs .nav-item {
+    min-width: 0;
     margin: 0;
 }
 
@@ -106,7 +117,8 @@
     justify-content: center;
     gap: 6px;
     min-height: 36px;
-    padding: 8px 12px;
+    width: 100%;
+    padding: 8px;
     border: 1px solid var(--app-color-hairline);
     border-radius: var(--app-radius-md);
     background: transparent;
@@ -547,11 +559,44 @@
 }
 
 .borrow-scanned-book-title {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     color: var(--app-color-body-strong);
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.borrow-scanned-book-cell {
+    vertical-align: middle !important;
+}
+
+.borrow-scanned-book {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.borrow-scanned-book-cover {
+    display: block;
+    width: 40px;
+    height: 56px;
+    flex: 0 0 40px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 6px;
+    background: var(--app-color-surface-soft);
+    object-fit: cover;
+}
+
+.borrow-scanned-book-cover--placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--app-color-muted);
+    font-size: 18px;
 }
 
 .borrow-validation-message {
@@ -893,12 +938,16 @@
 }
 
 @media (max-width: 479.98px) {
-    .borrow-pill-tabs .nav-item {
-        flex: 1 1 calc(50% - 4px);
+    .borrow-pill-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .borrow-pill-tabs .nav-link {
-        width: 100%;
+    .borrow-pill-tabs .nav-item {
+        min-width: 0;
+    }
+
+    .borrow-pill-tabs .nav-item:last-child {
+        grid-column: 1 / -1;
     }
 
     .borrow-request-heading,

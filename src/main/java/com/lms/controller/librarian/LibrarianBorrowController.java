@@ -272,12 +272,13 @@ public class LibrarianBorrowController {
                                       @RequestParam(value = "rawBarcodes", required = false) String rawBarcodes,
                                       Principal principal,
                                       RedirectAttributes redirectAttributes) {
+        Borrow borrow = null;
         try {
             if (rawBarcodes != null && !rawBarcodes.trim().isEmpty()) {
                 request.setBarcodes(Arrays.asList(rawBarcodes.split("\\s*,\\s*")));
             }
             String librarianUsername = (principal != null) ? principal.getName() : "admin";
-            Borrow borrow = borrowService.processBorrowing(request, librarianUsername);
+            borrow = borrowService.processBorrowing(request, librarianUsername);
             
             if ("BANK".equalsIgnoreCase(request.getPaymentMethod())) {
                 BigDecimal fee = financialService.calculateBorrowingFeeAmount(borrow.getBorrowId());
@@ -285,9 +286,17 @@ public class LibrarianBorrowController {
                     PayOsPayment payment = payOsPaymentService.createBorrowFeeForLibrarian(borrow.getMember(), borrow.getBorrowId());
                     return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
                 }
+                borrowService.activatePendingBankBorrow(borrow.getBorrowId());
             }
             redirectAttributes.addFlashAttribute("successMessage", "Tạo phiếu mượn trực tiếp tại quầy thành công!");
         } catch (Exception e) {
+            if (borrow != null && "BANK".equalsIgnoreCase(request.getPaymentMethod())) {
+                try {
+                    borrowService.cancelPendingBankBorrow(borrow.getBorrowId(), "FAILED");
+                } catch (Exception ignored) {
+                    // Preserve the original payment error shown to the librarian.
+                }
+            }
             redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";
@@ -331,6 +340,7 @@ public class LibrarianBorrowController {
                 com.lms.entity.BookItem item = itemOpt.get();
                 data.put("found", true);
                 data.put("title", item.getBook().getTitle());
+                data.put("coverImageUrl", item.getBook().getCoverImageUrl());
                 String rawStatus = item.getStatus();
                 String vnStatus = "Có sẵn";
                 if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = "Đang mượn";

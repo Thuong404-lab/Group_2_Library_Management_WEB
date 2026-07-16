@@ -237,7 +237,8 @@ public class PayOsPaymentService {
             throw new RuntimeException("Phiếu mượn không thuộc về độc giả này.");
         }
         String status = normalize(borrow.getStatus());
-        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)) {
+        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)
+                && !"PAYMENT_PENDING".equals(status)) {
             throw new RuntimeException("Phiếu mượn chưa ở trạng thái có thể thanh toán.");
         }
         if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
@@ -346,6 +347,7 @@ public class PayOsPaymentService {
         } else if (remote.getStatus() == PaymentLinkStatus.CANCELLED
                 || remote.getStatus() == PaymentLinkStatus.EXPIRED
                 || remote.getStatus() == PaymentLinkStatus.FAILED) {
+            settlementService.cancelPendingBorrow(payment, remote.getStatus().name());
             payment.setStatus(remote.getStatus().name());
         }
         PayOsPayment saved = paymentRepository.save(payment);

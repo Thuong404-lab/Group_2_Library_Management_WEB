@@ -105,8 +105,14 @@ public class MemberReviewServiceImpl implements MemberReviewService {
             throw new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘á»™c giáº£ vá»›i tÃ i khoáº£n: " + username);
         }
 
-        return feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
+        Page<Feedback> reviews = feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
                 member.getMemberId(), DELETED_BY_MEMBER_STATUS, pageable);
+        reviews.forEach(review -> {
+            if (review.getBook() != null && review.getBook().getAuthors() != null) {
+                review.getBook().getAuthors().size();
+            }
+        });
+        return reviews;
     }
 
     @Override

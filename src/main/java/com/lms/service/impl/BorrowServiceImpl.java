@@ -48,6 +48,11 @@ import java.util.stream.Collectors;
 @Service
 public class BorrowServiceImpl implements BorrowService {
 
+    private static final String PAYMENT_PENDING = "Payment_Pending";
+    private static final String PAYMENT_CANCELLED = "Payment_Cancelled";
+    private static final String PAYMENT_EXPIRED = "Payment_Expired";
+    private static final String PAYMENT_FAILED = "Payment_Failed";
+
     private final MemberRepository memberRepository;
     private final BookItemRepository bookItemRepository;
     private final BorrowRepository borrowRepository;
@@ -96,6 +101,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Borrow processBorrowing(BorrowRequest request, String librarianUsername) {
+        boolean awaitingBankPayment = "BANK".equalsIgnoreCase(request.getPaymentMethod());
         String identifier = request.getMemberIdentifier() != null && !request.getMemberIdentifier().isBlank()
                 ? request.getMemberIdentifier().trim()
                 : request.getMemberEmail();
@@ -137,7 +143,7 @@ public class BorrowServiceImpl implements BorrowService {
         BigDecimal finalFee = BigDecimal.valueOf(finalFeeDouble);
 
         // Xử lý thanh toán ví nếu user chọn WALLET
-        if ("WALLET".equals(request.getPaymentMethod())) {
+        if ("WALLET".equalsIgnoreCase(request.getPaymentMethod())) {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví của độc giả!"));
             if (wallet.getBalance().compareTo(finalFee) < 0) {
@@ -150,11 +156,11 @@ public class BorrowServiceImpl implements BorrowService {
         Borrow borrow = new Borrow();
         borrow.setMember(member);
         borrow.setBorrowDate(LocalDateTime.now());
-        borrow.setStatus("Active");
+        borrow.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Active");
         borrow = borrowRepository.save(borrow);
 
         // Ghi lại giao dịch nếu là thanh toán ví
-        if ("WALLET".equals(request.getPaymentMethod())) {
+        if ("WALLET".equalsIgnoreCase(request.getPaymentMethod())) {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId()).get();
             Transaction transaction = new Transaction();
             transaction.setWallet(wallet);
@@ -172,11 +178,11 @@ public class BorrowServiceImpl implements BorrowService {
             detail.setBook(item.getBook());
             detail.setBookItem(item);
             detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
-            detail.setStatus("Borrowed");
+            detail.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Borrowed");
             detail.setRenewCount(0);
             borrowDetailRepository.save(detail);
 
-            item.setStatus("Borrowed");
+            item.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Borrowed");
             bookItemRepository.save(item);
         }
         
@@ -184,12 +190,93 @@ public class BorrowServiceImpl implements BorrowService {
         String bookNames = bookItemsToBorrow.stream()
                 .map(item -> item.getBook().getTitle())
                 .collect(java.util.stream.Collectors.joining(", "));
+
+        if (awaitingBankPayment) {
+            return borrow;
+        }
         
         // Gửi thông báo trực tiếp cho độc giả khi tạo phiếu mượn thành công tại quầy
         sendInternalNotification(member, "Mượn sách thành công", 
                 "Bạn đã mượn thành công các cuốn sách [" + bookNames + "] tại quầy thông qua mã phiếu mượn BRW-" + borrow.getBorrowId() + ". Vui lòng trả sách đúng hạn vào ngày " + LocalDateTime.now().plusDays(borrowDays).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
 
         return borrow;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Borrow activatePendingBankBorrow(Integer borrowId) {
+        Borrow borrow = borrowRepository.findById(borrowId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phiếu mượn."));
+        if ("Active".equalsIgnoreCase(borrow.getStatus())
+                || "Borrowing".equalsIgnoreCase(borrow.getStatus())
+                || "Overdue".equalsIgnoreCase(borrow.getStatus())) {
+            return borrow;
+        }
+        if (!PAYMENT_PENDING.equalsIgnoreCase(borrow.getStatus())) {
+            throw new IllegalStateException("Phiếu mượn không còn ở trạng thái chờ thanh toán.");
+        }
+
+        List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
+        if (details.isEmpty()) {
+            throw new IllegalStateException("Phiếu mượn không có chi tiết sách.");
+        }
+
+        LocalDateTime paidAt = LocalDateTime.now();
+        LocalDateTime pendingAt = borrow.getBorrowDate();
+        for (BorrowDetail detail : details) {
+            if (!PAYMENT_PENDING.equalsIgnoreCase(detail.getStatus())) {
+                throw new IllegalStateException("Chi tiết phiếu mượn không còn chờ thanh toán.");
+            }
+            BookItem item = detail.getBookItem();
+            if (item == null || !PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())) {
+                throw new IllegalStateException("Sách trong phiếu không còn được giữ cho giao dịch này.");
+            }
+
+            long borrowDays = pendingAt == null || detail.getDueDate() == null
+                    ? normalizeBorrowDays(null)
+                    : Math.max(1, ChronoUnit.DAYS.between(pendingAt, detail.getDueDate()));
+            detail.setDueDate(paidAt.plusDays(borrowDays));
+            detail.setStatus("Borrowed");
+            borrowDetailRepository.save(detail);
+
+            item.setStatus("Borrowed");
+            bookItemRepository.save(item);
+        }
+
+        borrow.setBorrowDate(paidAt);
+        borrow.setStatus("Active");
+        Borrow activatedBorrow = borrowRepository.save(borrow);
+        sendSuccessfulBorrowNotification(borrow, details);
+        return activatedBorrow;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelPendingBankBorrow(Integer borrowId, String paymentStatus) {
+        Borrow borrow = borrowRepository.findById(borrowId).orElse(null);
+        if (borrow == null || !PAYMENT_PENDING.equalsIgnoreCase(borrow.getStatus())) {
+            return;
+        }
+
+        for (BorrowDetail detail : borrowDetailRepository.findByBorrowId(borrowId)) {
+            BookItem item = detail.getBookItem();
+            if (item != null && PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())) {
+                item.setStatus("Available");
+                bookItemRepository.save(item);
+            }
+            if (PAYMENT_PENDING.equalsIgnoreCase(detail.getStatus())) {
+                detail.setStatus("Cancelled");
+                borrowDetailRepository.save(detail);
+            }
+        }
+
+        String normalizedStatus = paymentStatus == null ? "" : paymentStatus.trim().toUpperCase();
+        borrow.setStatus(switch (normalizedStatus) {
+            case "EXPIRED" -> PAYMENT_EXPIRED;
+            case "FAILED" -> PAYMENT_FAILED;
+            default -> PAYMENT_CANCELLED;
+        });
+        borrowRepository.save(borrow);
     }
 
     @Override
@@ -617,6 +704,24 @@ public class BorrowServiceImpl implements BorrowService {
         mn.setNotification(saved);
         mn.setIsRead(false);
         memberNotificationRepository.save(mn);
+    }
+
+    private void sendSuccessfulBorrowNotification(Borrow borrow, List<BorrowDetail> details) {
+        String bookNames = details.stream()
+                .map(BorrowDetail::getBook)
+                .filter(java.util.Objects::nonNull)
+                .map(Book::getTitle)
+                .collect(Collectors.joining(", "));
+        LocalDateTime dueDate = details.stream()
+                .map(BorrowDetail::getDueDate)
+                .filter(java.util.Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+        sendInternalNotification(borrow.getMember(), "Mượn sách thành công",
+                "Ngân hàng đã xác nhận thanh toán. Bạn đã mượn thành công các cuốn sách [" + bookNames
+                        + "] tại quầy thông qua mã phiếu mượn BRW-" + borrow.getBorrowId()
+                        + ". Vui lòng trả sách đúng hạn vào ngày "
+                        + dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
     }
 
     private String getAuthorNames(Book book) {
