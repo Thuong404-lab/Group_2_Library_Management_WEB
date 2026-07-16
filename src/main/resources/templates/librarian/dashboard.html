@@ -504,10 +504,10 @@
                                         <textarea name="response"
                                             class="form-control validate-field review-response-input" rows="2"
                                             required minlength="5" maxlength="1000"
-                                            placeholder="Nhập từ 5–1000 ký tự"
+                                            th:placeholder="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Chỉnh sửa phản hồi (5–1000 ký tự)' : 'Nhập từ 5–1000 ký tự'"
                                             th:attr="aria-describedby=${'reviewResponseCount-' + review.feedbackId + ' reviewResponseError-' + review.feedbackId}"
                                             th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
-                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
+                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : (review.librarianResponse != null ? review.librarianResponse : '')}"></textarea>
                                         <div class="review-response-support">
                                             <span class="review-response-count" th:id="${'reviewResponseCount-' + review.feedbackId}" aria-live="polite">0/1000</span>
                                         </div>
@@ -516,7 +516,10 @@
                                             th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
                                         </div>
                                         <div class="app-form-actions">
-                                            <button type="submit" class="app-form-primary">Phản hồi</button>
+                                            <button type="submit" class="app-form-primary"
+                                                th:text="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Lưu chỉnh sửa' : 'Phản hồi'">
+                                                Phản hồi
+                                            </button>
                                             <button type="button" class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
                                                 data-bs-toggle="modal" data-bs-target="#librarianDeleteReviewModal"
                                                 th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"

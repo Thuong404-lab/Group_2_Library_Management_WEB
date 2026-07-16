@@ -14,7 +14,7 @@ public interface LibrarianInteractionService {
 
     Page<LibrarianReviewResponse> getReviewsForModeration(String status, Pageable pageable);
 
-    void replyReview(Integer feedbackId, LibrarianReviewReplyRequest request);
+    boolean replyReview(Integer feedbackId, LibrarianReviewReplyRequest request);
 
     void deleteReview(Integer feedbackId);
 

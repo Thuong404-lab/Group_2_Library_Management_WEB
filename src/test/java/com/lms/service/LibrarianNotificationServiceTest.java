@@ -1,6 +1,9 @@
 package com.lms.service;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
+import com.lms.dto.request.LibrarianReviewReplyRequest;
+import com.lms.entity.Book;
+import com.lms.entity.Feedback;
 import com.lms.entity.Member;
 import com.lms.entity.Notification;
 import com.lms.entity.Staff;
@@ -29,6 +32,47 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class LibrarianNotificationServiceTest {
+
+    @Test
+    void editsExistingLibrarianReply() {
+        FeedbackRepository feedbackRepository = mock(FeedbackRepository.class);
+        NotificationRepository notificationRepository = mock(NotificationRepository.class);
+        MemberNotificationRepository memberNotificationRepository = mock(MemberNotificationRepository.class);
+        LibrarianInteractionServiceImpl service = new LibrarianInteractionServiceImpl(
+                feedbackRepository,
+                mock(MemberRepository.class),
+                notificationRepository,
+                memberNotificationRepository,
+                mock(BookAcquisitionRequestRepository.class),
+                mock(StaffAccountRepository.class));
+
+        Member member = new Member();
+        member.setMemberId(7);
+        Book book = new Book();
+        book.setTitle("Dế Mèn phiêu lưu ký");
+        Feedback feedback = new Feedback();
+        feedback.setFeedbackId(21);
+        feedback.setMember(member);
+        feedback.setBook(book);
+        feedback.setStatus("APPROVED");
+        feedback.setLibrarianResponse("Phản hồi cũ");
+
+        when(feedbackRepository.findById(21)).thenReturn(Optional.of(feedback));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification notification = invocation.getArgument(0);
+            notification.setNotificationId(11);
+            return notification;
+        });
+
+        boolean edited = service.replyReview(21,
+                new LibrarianReviewReplyRequest("  Phản hồi sau khi chỉnh sửa.  "));
+
+        assertThat(edited).isTrue();
+        assertThat(feedback.getLibrarianResponse()).isEqualTo("Phản hồi sau khi chỉnh sửa.");
+        assertThat(feedback.getResponseDate()).isNotNull();
+        verify(feedbackRepository).save(feedback);
+        verify(memberNotificationRepository).save(any());
+    }
 
     @Test
     void savesSelectedTypeAndAuthenticatedLibrarianAsSender() {
