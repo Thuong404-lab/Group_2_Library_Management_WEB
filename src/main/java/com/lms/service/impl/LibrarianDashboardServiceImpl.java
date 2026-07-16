@@ -7,6 +7,7 @@ import com.lms.entity.Staff;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
 import com.lms.enums.NotificationType;
+import com.lms.enums.UserStatus;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
@@ -172,13 +173,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     @Override
     @Transactional(readOnly = true)
-    public LibrarianListViewData getLibrarianList(int page, String keyword) {
+    public LibrarianListViewData getLibrarianList(int page, String keyword, String status) {
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("staffId").ascending());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
-        Page<Staff> staffPage = normalizedKeyword.isEmpty()
-                ? staffRepository.findByStaffTypeIgnoreCase("Librarian", pageable)
-                : staffRepository.searchByStaffTypeAndKeyword(
-                        "Librarian", normalizedKeyword, pageable);
+        UserStatus selectedStatus = parseUserStatus(status);
+        Page<Staff> staffPage = staffRepository.searchLibrariansWithStatus(
+                "Librarian", normalizedKeyword, selectedStatus, pageable);
 
         Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
         for (Staff staff : staffPage.getContent()) {
@@ -187,7 +187,27 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                         .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
             }
         }
-        return new LibrarianListViewData(staffPage, accountByUserId);
+        return new LibrarianListViewData(staffPage, accountByUserId, librarianSummaryCounts());
+    }
+
+    private UserStatus parseUserStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return UserStatus.valueOf(status.trim());
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private Map<String, Long> librarianSummaryCounts() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("total", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
+        counts.put("active", staffRepository.countByStaffTypeAndUserStatus("Librarian", UserStatus.Active));
+        counts.put("inactive", staffRepository.countByStaffTypeAndUserStatus("Librarian", UserStatus.Inactive));
+        counts.put("blocked", staffRepository.countByStaffTypeAndUserStatus("Librarian", UserStatus.Blocked));
+        return counts;
     }
 
     private Map<String, Long> inventoryStatusCounts() {

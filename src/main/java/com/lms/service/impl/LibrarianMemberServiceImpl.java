@@ -63,12 +63,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public MemberListViewData getMemberList(int page, String keyword) {
+    public MemberListViewData getMemberList(int page, String keyword, String status, String tier) {
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("id").ascending());
         String normalizedKeyword = trim(keyword);
-        Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
-                ? memberAccountRepository.findAll(pageable)
-                : memberAccountRepository.searchMemberAccounts(normalizedKeyword, pageable);
+        String normalizedStatus = trim(status);
+        String normalizedTier = trim(tier);
+        Page<MemberAccount> accounts = memberAccountRepository.searchMemberAccountsWithFilters(
+                normalizedKeyword, normalizedStatus, normalizedTier, pageable);
 
         Map<Integer, Member> memberByUserId = new HashMap<>();
         for (MemberAccount account : accounts.getContent()) {
@@ -77,7 +78,16 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
                         .ifPresent(member -> memberByUserId.put(account.getMember().getUser().getId(), member));
             }
         }
-        return new MemberListViewData(accounts, memberByUserId, getMembershipTiers());
+        return new MemberListViewData(accounts, memberByUserId, getMembershipTiers(), getMemberSummaryCounts());
+    }
+
+    private Map<String, Long> getMemberSummaryCounts() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("total", memberAccountRepository.count());
+        counts.put("active", memberAccountRepository.countByStatusIgnoreCase("Active"));
+        counts.put("inactive", memberAccountRepository.countByStatusIgnoreCase("Inactive"));
+        counts.put("blocked", memberAccountRepository.countByStatusIgnoreCase("Blocked"));
+        return counts;
     }
 
     @Override
@@ -198,24 +208,15 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
-        MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
         User user = account.getMember().getUser();
 
         user.setFullName(trim(request.getFullName()));
         user.setEmail(trim(request.getEmail()));
         user.setPhone(trim(request.getPhone()));
-        user.setStatus(toUserStatus(request.getStatus()));
         account.setUsername(trim(request.getUsername()));
-        account.setStatus(request.getStatus());
-
-        Member member = memberRepository.findByUserId(user.getId()).orElse(new Member());
-        member.setUser(user);
-        member.setTier(tier);
 
         userRepository.save(user);
         memberAccountRepository.save(account);
-        memberRepository.save(member);
 
         auditLogService.log(
                 ActionType.UPDATE_ACCOUNT,

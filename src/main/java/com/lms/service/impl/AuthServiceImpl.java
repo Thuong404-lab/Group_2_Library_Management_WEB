@@ -24,6 +24,11 @@ import java.util.UUID;
 @Service
 public class AuthServiceImpl implements AuthService {
 
+    private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
+    private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
+    private static final String FULL_NAME_TRIPLE_REPEAT_PATTERN = ".*([\\p{L}])\\1\\1.*";
+    private static final String FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN = "^([\\p{L}])\\1+$";
+
     private final UserRepository userRepository;
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
@@ -75,9 +80,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Mật khẩu phải có ít nhất 6 ký tự!");
         }
 
-        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-            throw new AuthException("Họ và tên không được để trống!");
-        }
+        validateFullName(request.getFullName());
 
         if (request.getEmail() == null
                 || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
@@ -105,10 +108,32 @@ public class AuthServiceImpl implements AuthService {
 
         createCoreAccount(
                 request.getUsername(),
-                request.getFullName(),
+                request.getFullName().trim(),
                 encodedPassword,
                 request.getEmail(),
                 request.getPhone());
+    }
+
+    private void validateFullName(String fullNameValue) throws AuthException {
+        String fullName = fullNameValue == null ? "" : fullNameValue.trim();
+        if (fullName.isEmpty()) {
+            throw new AuthException("Họ và tên không được để trống!");
+        }
+        if (fullName.length() > 50) {
+            throw new AuthException("Họ tên không được vượt quá 50 ký tự.");
+        }
+        if (!fullName.matches(FULL_NAME_PATTERN)) {
+            throw new AuthException("Họ tên chỉ được chứa chữ cái và khoảng trắng.");
+        }
+        if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
+            throw new AuthException("Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
+        }
+        if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
+            throw new AuthException("Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
+        }
+        if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
+            throw new AuthException("Họ tên không được chỉ gồm một ký tự lặp lại.");
+        }
     }
 
     private void createAndSaveLog(Integer userId,

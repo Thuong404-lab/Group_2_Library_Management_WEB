@@ -84,10 +84,34 @@
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/dashboard(section='users')}" class="menu-link" th:classappend="${activeMenu == 'users'} ? 'active'">
-                <i class="bi bi-people-fill menu-icon"></i>
-                <span class="menu-text">Quản lý người dùng</span>
+            <a href="#userManagementMenu" data-bs-toggle="collapse"
+                class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
+                th:attr="aria-expanded=${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'}"
+                aria-controls="userManagementMenu">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-people-fill menu-icon"></i>
+                    <span class="menu-text">Quản lý người dùng</span>
+                </div>
+                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
+            <ul class="collapse list-unstyled ps-4" id="userManagementMenu"
+                th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'show'">
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${activeMenu == 'members'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Danh sách thành viên</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/librarians}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${activeMenu == 'librarians'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Danh sách thủ thư</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="menu-item">
