@@ -21,7 +21,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public String handleGeneralException(Exception ex, Model model) {
-        model.addAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + ex.getMessage());
+        // Log the actual error to the console for developers
+        ex.printStackTrace();
+        
+        // Show a generic message to the user
+        model.addAttribute("errorMessage", "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ quản trị viên.");
         return "error/500";
     }
 }

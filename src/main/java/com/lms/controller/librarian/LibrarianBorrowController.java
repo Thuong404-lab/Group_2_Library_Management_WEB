@@ -7,6 +7,9 @@ import com.lms.repository.MemberRepository;
 import com.lms.service.BorrowService;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.entity.SystemSetting;
+import com.lms.service.PayOsPaymentService;
+import com.lms.service.FinancialService;
+import com.lms.entity.PayOsPayment;
 import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,14 +31,18 @@ public class LibrarianBorrowController {
     private final com.lms.repository.BookItemRepository bookItemRepository;
     private final com.lms.repository.BorrowDetailRepository borrowDetailRepository;
     private final SystemSettingRepository systemSettingRepository;
+    private final PayOsPaymentService payOsPaymentService;
+    private final FinancialService financialService;
 
-    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository, com.lms.repository.BorrowDetailRepository borrowDetailRepository, SystemSettingRepository systemSettingRepository) {
+    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository, com.lms.repository.BorrowDetailRepository borrowDetailRepository, SystemSettingRepository systemSettingRepository, PayOsPaymentService payOsPaymentService, FinancialService financialService) {
         this.borrowService = borrowService;
         this.borrowRepository = borrowRepository;
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.systemSettingRepository = systemSettingRepository;
+        this.payOsPaymentService = payOsPaymentService;
+        this.financialService = financialService;
     }
 
     // Xem danh sách toàn cục các phiếu mượn trả
@@ -270,7 +277,15 @@ public class LibrarianBorrowController {
                 request.setBarcodes(Arrays.asList(rawBarcodes.split("\\s*,\\s*")));
             }
             String librarianUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.processBorrowing(request, librarianUsername);
+            Borrow borrow = borrowService.processBorrowing(request, librarianUsername);
+            
+            if ("BANK".equalsIgnoreCase(request.getPaymentMethod())) {
+                BigDecimal fee = financialService.calculateBorrowingFeeAmount(borrow.getBorrowId());
+                if (fee.compareTo(BigDecimal.ZERO) > 0) {
+                    PayOsPayment payment = payOsPaymentService.createBorrowFeeForLibrarian(borrow.getMember(), borrow.getBorrowId());
+                    return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
+                }
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Tạo phiếu mượn trực tiếp tại quầy thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());

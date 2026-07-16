@@ -223,6 +223,30 @@ public class PayOsPaymentService {
                 "/member/payments/payos/return");
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment createBorrowFeeForLibrarian(Member member, Integer borrowId) {
+        Borrow borrow = borrowRepository.findById(borrowId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn."));
+        if (borrow.getMember() == null || !member.getMemberId().equals(borrow.getMember().getMemberId())) {
+            throw new RuntimeException("Phiếu mượn không thuộc về độc giả này.");
+        }
+        String status = normalize(borrow.getStatus());
+        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)) {
+            throw new RuntimeException("Phiếu mượn chưa ở trạng thái có thể thanh toán.");
+        }
+        if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
+            throw new RuntimeException("Phí mượn đã được thanh toán.");
+        }
+        PayOsPayment activePayment = findActivePayment(member.getMemberId(), BORROW_FEE, borrowId);
+        if (activePayment != null) {
+            return activePayment;
+        }
+        BigDecimal amount = requireWholeVnd(financialService.calculateBorrowingFeeAmount(borrowId));
+        return createPayment(member, BORROW_FEE, borrowId, amount,
+                descriptionWithId("LMW NOP PHI MUON ID", "LMW MUON ID", borrowId),
+                "/librarian/payments/payos/return");
+    }
+
     @Transactional(readOnly = true)
     public PayOsPayment getForMember(Long orderCode, Integer memberId) {
         return paymentRepository.findByOrderCodeAndMemberMemberId(orderCode, memberId)
