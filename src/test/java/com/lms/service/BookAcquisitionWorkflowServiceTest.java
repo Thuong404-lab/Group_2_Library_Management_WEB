@@ -62,6 +62,22 @@ class BookAcquisitionWorkflowServiceTest {
     }
 
     @Test
+    void rejectRequiresAtLeastFiveCharacters() {
+        assertThatThrownBy(() -> service.rejectBookAcquisitionRequest(1, "abc"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("ít nhất 5 ký tự");
+        verifyNoInteractions(requestRepository);
+    }
+
+    @Test
+    void rejectDoesNotAcceptOnlyNumbersOrSpecialCharacters() {
+        assertThatThrownBy(() -> service.rejectBookAcquisitionRequest(1, "12345!!!"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("số hoặc ký tự đặc biệt");
+        verifyNoInteractions(requestRepository);
+    }
+
+    @Test
     void cannotProcessRequestTwice() {
         BookAcquisitionRequest request = pendingRequest();
         request.setStatus(AcquisitionRequestStatus.APPROVED);

@@ -11,6 +11,7 @@ public class MemberNotificationResponse {
     private NotificationType notificationType;
     private LocalDateTime sentDate;
     private Boolean read;
+    private Boolean fromLibrarian;
 
     public MemberNotificationResponse() {
     }
@@ -62,4 +63,7 @@ public class MemberNotificationResponse {
     public void setRead(Boolean read) {
         this.read = read;
     }
+
+    public Boolean getFromLibrarian() { return fromLibrarian; }
+    public void setFromLibrarian(Boolean fromLibrarian) { this.fromLibrarian = fromLibrarian; }
 }

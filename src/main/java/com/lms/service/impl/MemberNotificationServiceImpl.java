@@ -60,14 +60,24 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
                 : NotificationType.GENERAL);
         response.setSentDate(mn.getNotification().getCreatedDate());
         response.setRead(Boolean.TRUE.equals(mn.getIsRead()));
+        response.setFromLibrarian(mn.getNotification().getStaff() != null);
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MemberNotificationResponse> getAllMyNotifications(String username) {
+        Member member = getMemberByUsername(username);
+        return memberNotificationRepository
+                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
+                .stream().map(this::mapToResponse).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MemberNotificationResponse> getLatestNotifications(String username) {
         Member member = getMemberByUsername(username);
-        return memberNotificationRepository.findTop5ByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
+        return memberNotificationRepository.findTop20ByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -86,6 +96,21 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         Member member = getMemberByUsername(username);
         memberNotificationRepository.markUnreadNotificationsAsRead(
                 member.getMemberId(), LocalDateTime.now());
+    }
+
+    @Override
+    @Transactional
+    public long markNotificationAsRead(String username, Integer notificationId) {
+        Member member = getMemberByUsername(username);
+        MemberNotificationId id = new MemberNotificationId(member.getMemberId(), notificationId);
+        MemberNotification memberNotification = memberNotificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông báo."));
+        if (!Boolean.TRUE.equals(memberNotification.getIsRead())) {
+            memberNotification.setIsRead(true);
+            memberNotification.setReadDate(LocalDateTime.now());
+            memberNotificationRepository.save(memberNotification);
+        }
+        return memberNotificationRepository.countByMember_MemberIdAndIsReadFalse(member.getMemberId());
     }
 
     @Override

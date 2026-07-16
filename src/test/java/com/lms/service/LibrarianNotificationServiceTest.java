@@ -89,6 +89,42 @@ class LibrarianNotificationServiceTest {
                 .hasMessageContaining("loại thông báo");
     }
 
+    @Test
+    void rejectsContentIdenticalToTitle() {
+        LibrarianInteractionServiceImpl service = service(
+                mock(MemberRepository.class), mock(NotificationRepository.class),
+                mock(MemberNotificationRepository.class), mock(StaffAccountRepository.class));
+        LibrarianNotificationSendRequest request = validRequest();
+        request.setTitle("Thông báo nghỉ lễ");
+        request.setContent("  thông báo nghỉ lễ  ");
+
+        assertThatThrownBy(() -> service.sendNotificationToMembers(request, "librarian"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("không được giống hoàn toàn tiêu đề");
+    }
+
+    @Test
+    void rejectsContentLongerThanTwoThousandCharacters() {
+        LibrarianInteractionServiceImpl service = service(
+                mock(MemberRepository.class), mock(NotificationRepository.class),
+                mock(MemberNotificationRepository.class), mock(StaffAccountRepository.class));
+        LibrarianNotificationSendRequest request = validRequest();
+        request.setContent("N".repeat(2001));
+
+        assertThatThrownBy(() -> service.sendNotificationToMembers(request, "librarian"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("10 đến 2000 ký tự");
+    }
+
+    private LibrarianNotificationSendRequest validRequest() {
+        LibrarianNotificationSendRequest request = new LibrarianNotificationSendRequest();
+        request.setRecipientType(NotificationRecipientType.ALL);
+        request.setNotificationType(NotificationType.GENERAL);
+        request.setTitle("Thông báo thư viện");
+        request.setContent("Thư viện cập nhật thông tin mới đến bạn đọc.");
+        return request;
+    }
+
     private LibrarianInteractionServiceImpl service(MemberRepository memberRepository,
                                                      NotificationRepository notificationRepository,
                                                      MemberNotificationRepository memberNotificationRepository,

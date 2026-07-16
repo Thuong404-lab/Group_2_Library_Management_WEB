@@ -179,11 +179,16 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold">Bình luận</label>
                         <textarea class="form-control"
+                                  id="bookDetailReviewComment"
                                   rows="5"
                                   th:field="*{comment}"
+                                  required minlength="5"
                                   maxlength="1000"
-                                  placeholder="Nhập nội dung đánh giá"></textarea>
-                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}"></div>
+                                  placeholder="Nhập từ 5–1000 ký tự"
+                                  aria-describedby="bookDetailReviewCommentCount bookDetailReviewCommentError"></textarea>
+                        <div class="book-review-comment-support"><span id="bookDetailReviewCommentCount" aria-live="polite">0/1000</span></div>
+                        <div id="bookDetailReviewCommentError" class="book-review-field-error" role="alert" aria-live="assertive"
+                             th:text="${#fields.hasErrors('comment') ? #fields.errors('comment')[0] : ''}"></div>
                     </div>
 
                     <button type="submit" class="btn text-white px-4 u-background-8b5a2b-9b8da1d0">
@@ -291,6 +296,9 @@
                     document.querySelectorAll("#memberRatingPicker .rating-star")
                 );
                 const ratingInput = document.getElementById("ratingValue");
+                const comment = document.getElementById("bookDetailReviewComment");
+                const commentError = document.getElementById("bookDetailReviewCommentError");
+                const commentCount = document.getElementById("bookDetailReviewCommentCount");
 
                 if (reviewForm == null || ratingPicker == null || ratingInput == null) {
                     return;
@@ -329,6 +337,18 @@
                     clearRatingError();
                 }
 
+                function updateCommentCount() {
+                    if (comment == null || commentCount == null) return;
+                    commentCount.textContent = comment.value.length + "/1000";
+                    commentCount.classList.toggle("is-near-limit", comment.value.length >= 900 && comment.value.length < 1000);
+                    commentCount.classList.toggle("is-limit-reached", comment.value.length >= 1000);
+                }
+
+                function setCommentError(message) {
+                    if (comment != null) comment.classList.add("is-invalid");
+                    if (commentError != null) commentError.textContent = message;
+                }
+
                 ratingStars.forEach((star) => {
                     star.addEventListener("click", function() {
                         setRating(Number(this.dataset.value));
@@ -351,21 +371,30 @@
                         return;
                     }
 
-                    const comment = reviewForm.querySelector("[name='comment']");
-                    if (comment != null && comment.value.trim() === "") {
-                        comment.classList.add("is-invalid");
+                    const normalizedComment = comment == null ? "" : comment.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                    if (comment != null) comment.value = normalizedComment;
+                    updateCommentCount();
+                    let commentMessage = "";
+                    if (normalizedComment === "") commentMessage = "Vui lòng nhập nội dung đánh giá.";
+                    else if (normalizedComment.length < 5) commentMessage = "Nội dung đánh giá phải có ít nhất 5 ký tự.";
+                    else if (normalizedComment.length > 1000) commentMessage = "Nội dung đánh giá không được vượt quá 1000 ký tự.";
+                    else if (!/\p{L}/u.test(normalizedComment)) commentMessage = "Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt.";
+                    if (commentMessage !== "") {
+                        setCommentError(commentMessage);
                         event.preventDefault();
                         event.stopPropagation();
                     }
                 });
 
-                const comment = reviewForm.querySelector("[name='comment']");
                 if (comment != null) {
                     comment.addEventListener("input", function() {
                         this.classList.remove("is-invalid");
+                        if (commentError != null) commentError.textContent = "";
+                        updateCommentCount();
                     });
                 }
 
+                updateCommentCount();
                 setRating(Number(ratingInput.value) || 0);
             })();
         </script>

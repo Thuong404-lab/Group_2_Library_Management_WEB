@@ -83,6 +83,17 @@ class MemberReviewEligibilityServiceTest {
     }
 
     @Test
+    void rejectsNewReviewContainingOnlyNumbersAndSpecialCharacters() {
+        MemberReviewSubmitRequest request = reviewRequest();
+        request.setComment("12345!!!");
+
+        assertThatThrownBy(() -> service.submitReview("member7", request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("số hoặc ký tự đặc biệt");
+        verify(feedbackRepository, never()).save(any(Feedback.class));
+    }
+
+    @Test
     void reportsEligibilityForTheBookDetailPage() {
         when(borrowDetailRepository.countEligibleReviewBorrows(7, 11)).thenReturn(2L);
 
@@ -103,6 +114,20 @@ class MemberReviewEligibilityServiceTest {
         assertThat(feedback.getRating()).isEqualTo(4);
         assertThat(feedback.getComment()).isEqualTo("Nội dung sau khi chỉnh sửa.");
         verify(feedbackRepository).save(feedback);
+    }
+
+    @Test
+    void rejectsEditedReviewShorterThanFiveCharacters() {
+        Feedback feedback = review();
+        when(feedbackRepository.findById(21)).thenReturn(Optional.of(feedback));
+        MemberReviewUpdateRequest request = new MemberReviewUpdateRequest();
+        request.setRating(4);
+        request.setComment("abc");
+
+        assertThatThrownBy(() -> service.updateMyReview("member7", 21, request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("5 đến 1000 ký tự");
+        verify(feedbackRepository, never()).save(feedback);
     }
 
     @Test
