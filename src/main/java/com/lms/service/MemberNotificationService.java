@@ -10,11 +10,15 @@ public interface MemberNotificationService {
 
     Page<MemberNotificationResponse> getMyNotifications(String username, Pageable pageable);
 
+    List<MemberNotificationResponse> getAllMyNotifications(String username);
+
     List<MemberNotificationResponse> getLatestNotifications(String username);
 
     long countUnreadNotifications(String username);
 
     void markAllNotificationsAsRead(String username);
+
+    long markNotificationAsRead(String username, Integer notificationId);
 
     // ======= BỔ SUNG PHƯƠNG THỨC GỬI THÔNG BÁO =======
     void sendNotificationToUser(String username, String title, String content);

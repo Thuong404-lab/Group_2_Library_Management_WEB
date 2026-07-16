@@ -1,6 +1,9 @@
 package com.lms.service;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
+import com.lms.dto.request.LibrarianReviewReplyRequest;
+import com.lms.entity.Book;
+import com.lms.entity.Feedback;
 import com.lms.entity.Member;
 import com.lms.entity.Notification;
 import com.lms.entity.Staff;
@@ -29,6 +32,47 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class LibrarianNotificationServiceTest {
+
+    @Test
+    void editsExistingLibrarianReply() {
+        FeedbackRepository feedbackRepository = mock(FeedbackRepository.class);
+        NotificationRepository notificationRepository = mock(NotificationRepository.class);
+        MemberNotificationRepository memberNotificationRepository = mock(MemberNotificationRepository.class);
+        LibrarianInteractionServiceImpl service = new LibrarianInteractionServiceImpl(
+                feedbackRepository,
+                mock(MemberRepository.class),
+                notificationRepository,
+                memberNotificationRepository,
+                mock(BookAcquisitionRequestRepository.class),
+                mock(StaffAccountRepository.class));
+
+        Member member = new Member();
+        member.setMemberId(7);
+        Book book = new Book();
+        book.setTitle("Dế Mèn phiêu lưu ký");
+        Feedback feedback = new Feedback();
+        feedback.setFeedbackId(21);
+        feedback.setMember(member);
+        feedback.setBook(book);
+        feedback.setStatus("APPROVED");
+        feedback.setLibrarianResponse("Phản hồi cũ");
+
+        when(feedbackRepository.findById(21)).thenReturn(Optional.of(feedback));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification notification = invocation.getArgument(0);
+            notification.setNotificationId(11);
+            return notification;
+        });
+
+        boolean edited = service.replyReview(21,
+                new LibrarianReviewReplyRequest("  Phản hồi sau khi chỉnh sửa.  "));
+
+        assertThat(edited).isTrue();
+        assertThat(feedback.getLibrarianResponse()).isEqualTo("Phản hồi sau khi chỉnh sửa.");
+        assertThat(feedback.getResponseDate()).isNotNull();
+        verify(feedbackRepository).save(feedback);
+        verify(memberNotificationRepository).save(any());
+    }
 
     @Test
     void savesSelectedTypeAndAuthenticatedLibrarianAsSender() {
@@ -87,6 +131,42 @@ class LibrarianNotificationServiceTest {
         assertThatThrownBy(() -> service.sendNotificationToMembers(request, "librarian"))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("loại thông báo");
+    }
+
+    @Test
+    void rejectsContentIdenticalToTitle() {
+        LibrarianInteractionServiceImpl service = service(
+                mock(MemberRepository.class), mock(NotificationRepository.class),
+                mock(MemberNotificationRepository.class), mock(StaffAccountRepository.class));
+        LibrarianNotificationSendRequest request = validRequest();
+        request.setTitle("Thông báo nghỉ lễ");
+        request.setContent("  thông báo nghỉ lễ  ");
+
+        assertThatThrownBy(() -> service.sendNotificationToMembers(request, "librarian"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("không được giống hoàn toàn tiêu đề");
+    }
+
+    @Test
+    void rejectsContentLongerThanTwoThousandCharacters() {
+        LibrarianInteractionServiceImpl service = service(
+                mock(MemberRepository.class), mock(NotificationRepository.class),
+                mock(MemberNotificationRepository.class), mock(StaffAccountRepository.class));
+        LibrarianNotificationSendRequest request = validRequest();
+        request.setContent("N".repeat(2001));
+
+        assertThatThrownBy(() -> service.sendNotificationToMembers(request, "librarian"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("10 đến 2000 ký tự");
+    }
+
+    private LibrarianNotificationSendRequest validRequest() {
+        LibrarianNotificationSendRequest request = new LibrarianNotificationSendRequest();
+        request.setRecipientType(NotificationRecipientType.ALL);
+        request.setNotificationType(NotificationType.GENERAL);
+        request.setTitle("Thông báo thư viện");
+        request.setContent("Thư viện cập nhật thông tin mới đến bạn đọc.");
+        return request;
     }
 
     private LibrarianInteractionServiceImpl service(MemberRepository memberRepository,

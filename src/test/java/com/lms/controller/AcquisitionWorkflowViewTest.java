@@ -38,6 +38,14 @@ class AcquisitionWorkflowViewTest {
     }
 
     @Test
+    @WithUserDetails(value = "qanh123", userDetailsServiceBeanName = "customMemberDetailsService")
+    void rendersGroupedMemberNotificationsWithoutPagination() throws Exception {
+        mockMvc.perform(get("/member/interaction/notifications"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/notifications"));
+    }
+
+    @Test
     @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
     void rendersLibrarianAcquisitionDashboardWithCurrentDatabase() throws Exception {
         mockMvc.perform(get("/librarian/dashboard").param("section", "acquisition"))

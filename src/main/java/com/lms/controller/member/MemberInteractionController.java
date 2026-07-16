@@ -49,15 +49,13 @@ public class MemberInteractionController {
 
     @GetMapping("/notifications")
     public String viewNotifications(Model model,
-                                    Principal principal,
-                                    @RequestParam(defaultValue = "0") int page) {
-        memberNotificationService.markAllNotificationsAsRead(principal.getName());
-
-        model.addAttribute(
-                "notifications",
-                memberNotificationService.getMyNotifications(
-                        principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE))
-        );
+                                    Principal principal) {
+        var notifications = memberNotificationService.getAllMyNotifications(principal.getName());
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("systemNotifications", notifications.stream()
+                .filter(notification -> !Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
+        model.addAttribute("librarianNotifications", notifications.stream()
+                .filter(notification -> Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
         model.addAttribute("showNotificationBell", false);
 
         return "member/notifications";
@@ -68,6 +66,14 @@ public class MemberInteractionController {
     public String markNotificationsAsRead(Principal principal) {
         memberNotificationService.markAllNotificationsAsRead(principal.getName());
         return "OK";
+    }
+
+    @GetMapping("/notifications/{notificationId}/mark-read")
+    @ResponseBody
+    public Map<String, Long> markNotificationAsRead(@PathVariable Integer notificationId,
+                                                     Principal principal) {
+        return Map.of("unreadCount",
+                memberNotificationService.markNotificationAsRead(principal.getName(), notificationId));
     }
 
     @GetMapping("/reviews")
