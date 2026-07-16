@@ -43,11 +43,16 @@ import java.util.Map;
  */
 @Service
 public class AccountServiceImpl implements AccountService {
+
+    private static final int SYSTEM_ADMIN_ACCOUNT_ID = 1;
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
             + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
     private static final String PHONE_PATTERN = "^(?!0{10}$)0\\d{9}$";
     private static final String USERNAME_PATTERN = "[a-zA-Z0-9_]{3,20}";
     private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
+    private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
+    private static final String FULL_NAME_TRIPLE_REPEAT_PATTERN = ".*([\\p{L}])\\1\\1.*";
+    private static final String FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN = "^([\\p{L}])\\1+$";
 
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
@@ -80,12 +85,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AdminAccountListViewData getMemberAccountList(int page, String keyword) {
+    public AdminAccountListViewData getMemberAccountList(int page, String keyword, String status, String tier) {
         PageRequest pageable = PageRequest.of(Math.max(page, 0), 10, Sort.by("id").ascending());
         String normalizedKeyword = trim(keyword);
-        Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
-                ? memberAccountRepository.findAll(pageable)
-                : memberAccountRepository.searchMemberAccounts(normalizedKeyword, pageable);
+        String normalizedStatus = trim(status);
+        String normalizedTier = trim(tier);
+        Page<MemberAccount> accounts = memberAccountRepository.searchMemberAccountsWithFilters(
+                normalizedKeyword, normalizedStatus, normalizedTier, pageable);
         Map<Integer, Member> memberByUserId = new HashMap<>();
         for (MemberAccount account : accounts.getContent()) {
             if (account.getMember() != null && account.getMember().getUser() != null) {
@@ -93,7 +99,12 @@ public class AccountServiceImpl implements AccountService {
             }
         }
         List<MembershipTier> tiers = membershipTierRepository.findAll(Sort.by("tierId").ascending());
-        return new AdminAccountListViewData(accounts, memberByUserId, tiers);
+        Map<String, Long> summaryCounts = new LinkedHashMap<>();
+        summaryCounts.put("total", memberAccountRepository.count());
+        summaryCounts.put("active", memberAccountRepository.countByStatusIgnoreCase("Active"));
+        summaryCounts.put("inactive", memberAccountRepository.countByStatusIgnoreCase("Inactive"));
+        summaryCounts.put("blocked", memberAccountRepository.countByStatusIgnoreCase("Blocked"));
+        return new AdminAccountListViewData(accounts, memberByUserId, tiers, summaryCounts);
     }
 
     @Override
@@ -109,13 +120,15 @@ public class AccountServiceImpl implements AccountService {
         String phone = trim(request.getPhone());
         String username = trim(request.getUsername());
         String roleName = normalizeRole(request.getAccountType());
-        String status = normalizeStatus(request.getStatus());
+        String status = "Active";
 
         MembershipTier selectedTier = null;
         if ("MEMBER".equals(roleName)) {
-            selectedTier = membershipTierRepository.findById(request.getTierId())
+            selectedTier = membershipTierRepository.findAll().stream()
+                    .filter(tier -> "Regular".equalsIgnoreCase(tier.getTierName()))
+                    .findFirst()
                     .orElseThrow(() -> new AccountFormValidationException(
-                            Map.of("tierId", "Hạng thành viên không hợp lệ.")));
+                            Map.of("tierId", "Không tìm thấy hạng thành viên Thường.")));
         }
 
         Role role = roleRepository.findByNameIgnoreCase(roleName)
@@ -179,6 +192,15 @@ public class AccountServiceImpl implements AccountService {
         validateEmailForUpdate(email, user.getId(), errors);
         validatePhoneForUpdate(phone, user.getId(), errors);
 
+        if (staffSource && accountId != null && accountId == SYSTEM_ADMIN_ACCOUNT_ID) {
+            if (!"Admin".equals(request.getStaffType())) {
+                errors.put("staffType", "Không thể thay đổi loại tài khoản của Admin tổng.");
+            }
+            if (!"Active".equalsIgnoreCase(request.getStatus())) {
+                errors.put("status", "Admin tổng phải luôn ở trạng thái hoạt động.");
+            }
+        }
+
         if (!staffSource
                 && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
             errors.put("tierId", "Hạng thành viên không hợp lệ.");
@@ -202,6 +224,10 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public void deleteAccount(Integer accountId, String source, Integer currentAccountId) {
         if (isStaffSource(source)) {
+            if (accountId != null && accountId == SYSTEM_ADMIN_ACCOUNT_ID) {
+                throw new AccountFormValidationException(
+                        Map.of("status", "Không thể xóa hoặc vô hiệu hóa tài khoản Admin tổng."));
+            }
             if (accountId != null && accountId.equals(currentAccountId)) {
                 throw new AccountFormValidationException(
                         Map.of("status", "Bạn không thể vô hiệu hóa tài khoản đang đăng nhập."));
@@ -356,15 +382,11 @@ public class AccountServiceImpl implements AccountService {
     private void updateMemberAccount(AdminAccountUpdateRequest request) {
         MemberAccount account = memberAccountRepository.findById(request.getAccountId()).orElseThrow();
         User user = account.getMember().getUser();
-        updateUser(user, request);
+        user.setFullName(trim(request.getFullName()));
+        user.setEmail(trim(request.getEmail()));
+        user.setPhone(trim(request.getPhone()));
 
         account.setUsername(trim(request.getUsername()));
-        account.setStatus(normalizeStatus(request.getStatus()));
-
-        Member member = account.getMember();
-        MembershipTier tier = membershipTierRepository.findById(request.getTierId()).orElseThrow();
-        member.setTier(tier);
-        memberRepository.save(member);
         userRepository.save(user);
         memberAccountRepository.save(account);
 
@@ -393,8 +415,16 @@ public class AccountServiceImpl implements AccountService {
     private void validateFullName(String fullName, Map<String, String> errors) {
         if (fullName.isEmpty()) {
             errors.put("fullName", "Họ tên không được để trống.");
+        } else if (fullName.length() > 50) {
+            errors.put("fullName", "Họ tên không được vượt quá 50 ký tự.");
         } else if (!fullName.matches(FULL_NAME_PATTERN)) {
             errors.put("fullName", "Họ tên chỉ được chứa chữ cái và khoảng trắng.");
+        } else if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
+            errors.put("fullName", "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
+        } else if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
+            errors.put("fullName", "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
+        } else if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
+            errors.put("fullName", "Họ tên không được chỉ gồm một ký tự lặp lại.");
         }
     }
 

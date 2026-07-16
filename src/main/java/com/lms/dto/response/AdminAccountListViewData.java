@@ -11,5 +11,6 @@ import java.util.Map;
 public record AdminAccountListViewData(
         Page<MemberAccount> accounts,
         Map<Integer, Member> memberByUserId,
-        List<MembershipTier> tiers) {
+        List<MembershipTier> tiers,
+        Map<String, Long> summaryCounts) {
 }

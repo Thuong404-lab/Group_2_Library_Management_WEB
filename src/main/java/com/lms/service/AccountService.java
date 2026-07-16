@@ -16,7 +16,7 @@ import java.util.Map;
 public interface AccountService {
 
     // UC-20.4: Tìm kiếm / phân trang tài khoản thành viên
-    AdminAccountListViewData getMemberAccountList(int page, String keyword);
+    AdminAccountListViewData getMemberAccountList(int page, String keyword, String status, String tier);
 
     // UC-20.1: Tạo tài khoản
     void createAccount(AdminAccountCreateRequest request);

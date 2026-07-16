@@ -36,13 +36,18 @@ public class AccountController {
     @GetMapping
     public String listAccounts(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "") String tier,
             Model model) {
-        AdminAccountListViewData data = accountService.getMemberAccountList(page, keyword);
+        AdminAccountListViewData data = accountService.getMemberAccountList(page, keyword, status, tier);
 
         model.addAttribute("accounts", data.accounts());
         model.addAttribute("keyword", keyword);
         model.addAttribute("memberByUserId", data.memberByUserId());
         model.addAttribute("tiers", data.tiers());
+        model.addAttribute("memberSummary", data.summaryCounts());
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedTier", tier);
 
         return "admin/accounts";
     }
@@ -51,7 +56,7 @@ public class AccountController {
     public String searchAccounts(@RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") int page,
             Model model) {
-        return listAccounts(page, keyword, model);
+        return listAccounts(page, keyword, "", "", model);
     }
 
     @PostMapping("/create")
