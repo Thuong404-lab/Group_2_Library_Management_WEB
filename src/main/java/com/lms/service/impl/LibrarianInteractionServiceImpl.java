@@ -6,6 +6,7 @@ import com.lms.dto.response.LibrarianReviewResponse;
 import com.lms.entity.*;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
+import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.Page;
@@ -26,17 +27,20 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
+    private final StaffAccountRepository staffAccountRepository;
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
                                            NotificationRepository notificationRepository,
                                            MemberNotificationRepository memberNotificationRepository,
-                                           BookAcquisitionRequestRepository bookAcquisitionRequestRepository) {
+                                           BookAcquisitionRequestRepository bookAcquisitionRequestRepository,
+                                           StaffAccountRepository staffAccountRepository) {
         this.feedbackRepository = feedbackRepository;
         this.memberRepository = memberRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @Override
@@ -126,18 +130,31 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional
-    public void sendNotificationToMembers(LibrarianNotificationSendRequest request) {
+    public void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername) {
         if (request.getRecipientType() == null) {
             throw new ValidationException("Vui lòng chọn đối tượng nhận thông báo.");
+        }
+
+        if (request.getNotificationType() == null) {
+            throw new ValidationException("Vui lòng chọn loại thông báo.");
         }
 
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
             throw new ValidationException("Tiêu đề không được để trống");
         }
 
+        if (request.getTitle().trim().length() > 255) {
+            throw new ValidationException("Tiêu đề không được vượt quá 255 ký tự.");
+        }
+
         if (request.getContent() == null || request.getContent().trim().isEmpty()) {
             throw new ValidationException("Nội dung không được để trống");
         }
+
+        Staff sender = staffAccountRepository.findByUsername(senderUsername)
+                .map(StaffAccount::getStaff)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy thủ thư gửi thông báo."));
 
         List<Member> members;
 
@@ -165,12 +182,14 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         Notification notification = new Notification();
         notification.setTitle(request.getTitle().trim());
         notification.setContent(request.getContent().trim());
+        notification.setNotificationType(request.getNotificationType());
+        notification.setStaff(sender);
         notification.setStatus("Active");
         notification.setCreatedDate(LocalDateTime.now());
 
         Notification saved = notificationRepository.save(notification);
 
-        for (Member member : members) {
+        List<MemberNotification> memberNotifications = members.stream().map(member -> {
             MemberNotification mn = new MemberNotification();
 
             mn.setId(new MemberNotificationId(
@@ -181,14 +200,63 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             mn.setMember(member);
             mn.setNotification(saved);
             mn.setIsRead(false);
+            mn.setReadDate(null);
 
-            memberNotificationRepository.save(mn);
-        }
+            return mn;
+        }).toList();
+
+        memberNotificationRepository.saveAll(memberNotifications);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable) {
         return bookAcquisitionRequestRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public void approveBookAcquisitionRequest(Integer requestId) {
+        BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
+        request.setStatus(AcquisitionRequestStatus.APPROVED);
+        request.setDecisionNote(null);
+        request.setProcessedDate(LocalDateTime.now());
+        bookAcquisitionRequestRepository.save(request);
+        sendPersonalNotification(
+                request.getMember(),
+                "Đề xuất sách đã được duyệt",
+                "Đề xuất bổ sung sách '" + request.getTitle() + "' của bạn đã được thư viện chấp nhận."
+        );
+    }
+
+    @Override
+    @Transactional
+    public void rejectBookAcquisitionRequest(Integer requestId, String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ValidationException("Lý do từ chối không được để trống.");
+        }
+        if (reason.trim().length() > 500) {
+            throw new ValidationException("Lý do từ chối không được vượt quá 500 ký tự.");
+        }
+
+        BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
+        request.setStatus(AcquisitionRequestStatus.REJECTED);
+        request.setDecisionNote(reason.trim());
+        request.setProcessedDate(LocalDateTime.now());
+        bookAcquisitionRequestRepository.save(request);
+        sendPersonalNotification(
+                request.getMember(),
+                "Đề xuất sách chưa được chấp nhận",
+                "Đề xuất bổ sung sách '" + request.getTitle() + "' của bạn đã bị từ chối. Lý do: " + reason.trim()
+        );
+    }
+
+    private BookAcquisitionRequest getPendingAcquisitionRequest(Integer requestId) {
+        BookAcquisitionRequest request = bookAcquisitionRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề xuất sách."));
+        if (request.getStatus() != AcquisitionRequestStatus.PENDING) {
+            throw new ValidationException("Đề xuất này đã được xử lý trước đó.");
+        }
+        return request;
     }
 }

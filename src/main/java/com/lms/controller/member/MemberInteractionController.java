@@ -14,6 +14,7 @@ import java.security.Principal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.lms.dto.request.MemberReviewSubmitRequest;
+import com.lms.dto.request.MemberReviewUpdateRequest;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import jakarta.validation.Valid;
@@ -47,12 +48,15 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/notifications")
-    public String viewNotifications(Model model, Principal principal) {
+    public String viewNotifications(Model model,
+                                    Principal principal,
+                                    @RequestParam(defaultValue = "0") int page) {
         memberNotificationService.markAllNotificationsAsRead(principal.getName());
 
         model.addAttribute(
                 "notifications",
-                memberNotificationService.getMyNotifications(principal.getName())
+                memberNotificationService.getMyNotifications(
+                        principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE))
         );
         model.addAttribute("showNotificationBell", false);
 
@@ -69,10 +73,21 @@ public class MemberInteractionController {
     @GetMapping("/reviews")
     public String showReviewForm(Model model,
                                  Principal principal,
-                                 @RequestParam(defaultValue = "0") int page) {
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(required = false) Integer editReviewId) {
         if (!model.containsAttribute("reviewRequest")) {
             model.addAttribute("reviewRequest", new MemberReviewSubmitRequest());
         }
+        if (editReviewId != null && !model.containsAttribute("reviewEditRequest")) {
+            try {
+                model.addAttribute("reviewEditRequest",
+                        memberReviewService.getMyReviewForEdit(principal.getName(), editReviewId));
+            } catch (ValidationException | ResourceNotFoundException e) {
+                model.addAttribute("error", e.getMessage());
+                editReviewId = null;
+            }
+        }
+        model.addAttribute("editReviewId", editReviewId);
         model.addAttribute("books", bookRepository.findAll());
         model.addAttribute("myReviews", memberReviewService.getMyReviews(
                 principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
@@ -127,13 +142,46 @@ public class MemberInteractionController {
 
         try {
             memberReviewService.submitReview(principal.getName(), request);
-            flash.addFlashAttribute("success", "Đã gửi đánh giá thành công.");
+            flash.addFlashAttribute("reviewSubmittedSuccess", true);
         } catch (ValidationException | ResourceNotFoundException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewRequest", request);
         }
 
         return "redirect:/books/" + bookId;
+    }
+
+    @PostMapping("/reviews/{feedbackId}/edit")
+    public String updateMyReview(@PathVariable("feedbackId") Integer feedbackId,
+                                 @Valid @ModelAttribute("reviewEditRequest") MemberReviewUpdateRequest request,
+                                 BindingResult bindingResult,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 Principal principal,
+                                 RedirectAttributes flash) {
+        int safePage = Math.max(0, page);
+
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getAllErrors().isEmpty()
+                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    : bindingResult.getAllErrors().get(0).getDefaultMessage();
+            flash.addFlashAttribute("error", message);
+            flash.addFlashAttribute("reviewEditRequest", request);
+            flash.addAttribute("page", safePage);
+            flash.addAttribute("editReviewId", feedbackId);
+            return "redirect:/member/interaction/reviews";
+        }
+
+        try {
+            memberReviewService.updateMyReview(principal.getName(), feedbackId, request);
+            flash.addFlashAttribute("success", "Đã cập nhật đánh giá thành công.");
+        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+            flash.addFlashAttribute("reviewEditRequest", request);
+            flash.addAttribute("editReviewId", feedbackId);
+        }
+
+        flash.addAttribute("page", safePage);
+        return "redirect:/member/interaction/reviews";
     }
 
     @PostMapping("/reviews/{feedbackId}/delete")
@@ -151,10 +199,14 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/acquisition-requests/new")
-    public String showBookAcquisitionRequestForm(Model model) {
+    public String showBookAcquisitionRequestForm(Model model,
+                                                 Principal principal,
+                                                 @RequestParam(defaultValue = "0") int page) {
         if (!model.containsAttribute("acquisitionRequest")) {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
+        model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/book-acquisition-request";
     }
@@ -168,6 +220,8 @@ public class MemberInteractionController {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
 
@@ -178,6 +232,8 @@ public class MemberInteractionController {
 
         } catch (ValidationException | ResourceNotFoundException e) {
             model.addAttribute("error", e.getMessage());
+            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
     }

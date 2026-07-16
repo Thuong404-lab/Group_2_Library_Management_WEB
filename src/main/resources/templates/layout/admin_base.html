@@ -6,376 +6,14 @@
     <meta charset="UTF-8">
     <title layout:title-pattern="$CONTENT_TITLE - Admin">Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
         rel="stylesheet">
-
-    <style>
-        :root {
-            --sidebar-bg: #4a3b32;
-            /* Dark brown */
-            --sidebar-hover: #5a4b42;
-            --sidebar-active: #8b5a2b;
-            /* Classic accent brown */
-            --page-bg: #fdfbf7;
-            /* Cream */
-            --text-main: #2c1e16;
-            --border-color: rgba(139, 90, 43, 0.2);
-            --header-bg: #ffffff;
-        }
-
-        body {
-            background-color: var(--page-bg);
-            color: var(--text-main);
-            font-family: 'Lora', Georgia, serif;
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        .navbar-brand,
-        .sidebar-brand {
-            font-family: 'Playfair Display', serif;
-        }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            color: #fdfbf7;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1000;
-            transition: width 0.3s;
-        }
-
-        body.sidebar-collapsed .sidebar {
-            width: 70px;
-        }
-
-        .sidebar-header {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            border-bottom: 1px solid rgba(253, 251, 247, 0.1);
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .sidebar-brand {
-            color: #fdfbf7;
-            text-decoration: none;
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sidebar-brand,
-        .sidebar-brand:hover,
-        .sidebar-brand:focus {
-            color: #fdfbf7;
-            text-decoration: none;
-        }
-
-        .sidebar-menu {
-            flex: 1;
-            overflow-y: auto;
-            padding-top: 15px;
-            list-style: none;
-            margin: 0;
-            padding-left: 0;
-        }
-
-        .menu-item {
-            margin-bottom: 4px;
-        }
-
-        .menu-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: #e6dfd7;
-            text-decoration: none;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .menu-link,
-        .menu-link:hover,
-        .menu-link:focus,
-        .menu-link:active {
-            text-decoration: none;
-        }
-
-        .menu-link:hover {
-            background-color: var(--sidebar-hover);
-            color: #fdfbf7;
-        }
-
-        .menu-link.active {
-            background-color: var(--sidebar-active);
-            color: #ffffff;
-            font-weight: 600;
-            border-left: 4px solid #dcb38a;
-        }
-
-        .menu-icon {
-            font-size: 1.1rem;
-            min-width: 30px;
-            text-align: center;
-            margin-right: 10px;
-        }
-
-        body.sidebar-collapsed .menu-text {
-            display: none;
-        }
-
-        /* Topbar Styling */
-        .main-wrapper {
-            flex: 1;
-            margin-left: 250px;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            transition: margin-left 0.3s;
-        }
-
-        body.sidebar-collapsed .main-wrapper {
-            margin-left: 70px;
-        }
-
-        .topbar {
-            height: 60px;
-            background-color: var(--header-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-        }
-
-        .toggle-btn {
-            background: transparent;
-            border: none;
-            color: #8b5a2b;
-            font-size: 1.25rem;
-            cursor: pointer;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-dropdown-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .admin-user-dropdown>summary {
-            list-style: none;
-        }
-
-        .admin-user-dropdown>summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .admin-user-dropdown[open]>.dropdown-menu {
-            display: block;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: var(--sidebar-active);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        /* Content Area */
-        .content-area {
-            padding: 24px;
-            flex: 1;
-        }
-
-        /* Common Utility Classes for Classic Theme */
-        .btn-classic {
-            background-color: #8b5a2b;
-            color: #fdfbf7;
-            border: none;
-        }
-
-        .btn-classic:hover {
-            background-color: #6b4423;
-            color: #fdfbf7;
-        }
-
-        .btn-outline-classic {
-            border: 1px solid #8b5a2b;
-            color: #8b5a2b;
-            background-color: transparent;
-        }
-
-        .btn-outline-classic:hover {
-            background-color: #8b5a2b;
-            color: #fdfbf7;
-        }
-
-        .card-classic {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(139, 90, 43, 0.05);
-        }
-
-        .text-classic {
-            color: #8b5a2b !important;
-        }
-
-        .edit-validate-field.is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-            background-image: none !important;
-        }
-
-        .edit-validate-field.is-valid {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
-            background-image: none !important;
-        }
-
-        .edit-account-form .edit-validate-field:focus:valid:not(.is-invalid) {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
-            background-image: none !important;
-        }
-
-        .edit-account-form .edit-validate-field:focus:invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-            background-image: none !important;
-        }
-
-        .edit-account-form .edit-validate-field:focus:invalid~.invalid-feedback {
-            display: block !important;
-        }
-
-        @supports selector(input:user-valid) {
-            .edit-account-form .edit-validate-field:user-valid:not(.is-invalid) {
-                border-color: #198754 !important;
-                box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
-                background-image: none !important;
-            }
-
-            .edit-account-form .edit-validate-field:user-invalid {
-                border-color: #dc3545 !important;
-                box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-                background-image: none !important;
-            }
-
-            .edit-account-form .edit-validate-field:user-invalid~.invalid-feedback {
-                display: block !important;
-            }
-        }
-
-        .edit-account-form .invalid-feedback:empty::after {
-            content: attr(data-default-message);
-        }
-
-        .modal:target {
-            display: block;
-            opacity: 1;
-            overflow-x: hidden;
-            overflow-y: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-        }
-
-        .modal:target .modal-dialog {
-            transform: none;
-        }
-
-        .modal:target .modal-content {
-            max-height: calc(100vh - 2rem);
-            overflow-y: auto;
-        }
-
-        .table-responsive:has(.modal:target) {
-            overflow: visible !important;
-        }
-
-        #settingsMenu .menu-link {
-            min-height: auto;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            padding-left: 58px;
-            background: transparent;
-            border-left: 0;
-            font-size: 0.95rem;
-        }
-
-        #settingsMenu .menu-link.active-submenu {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.08);
-        }
-        /* Shared pagination: keep page numbers and navigation controls aligned. */
-        .pagination {
-            align-items: center;
-        }
-
-        .pagination .page-link {
-            min-width: 42px;
-            height: 42px;
-            padding: 0 12px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            color: #8b5a2b;
-            border-color: rgba(139, 90, 43, 0.2);
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: #8b5a2b;
-            border-color: #8b5a2b;
-            color: #fff;
-        }
-
-        /* Prevent table columns from shifting when changing pages. */
-        .stable-table-layout {
-            width: 100%;
-            table-layout: fixed;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/layouts/admin-base.css}" />
+      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+  </head>
 
 <body>
 
@@ -383,7 +21,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a th:href="@{/admin/dashboard}" class="sidebar-brand">
-                <i class="bi bi-book-half" style="color: #dcb38a;"></i>
+                <i class="bi bi-book-half u-color-dcb38a-c310609e"></i>
                 <span class="menu-text">LMW Admin</span>
             </a>
         </div>
@@ -441,14 +79,14 @@
             </li>
 
             <li class="menu-item">
-                <a href="#settingsMenu" data-bs-toggle="collapse" class="menu-link"
+                <a href="#settingsMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'settings' || activeMenu == 'tiers'} ? 'active'"
-                    style="display: flex; justify-content: space-between; align-items: center;">
+                   >
                     <span>
                         <i class="bi bi-gear-fill menu-icon"></i>
                         <span class="menu-text">Cài đặt</span>
                     </span>
-                    <i class="bi bi-chevron-down menu-text" style="font-size: 0.75rem;"></i>
+                    <i class="bi bi-chevron-down menu-text u-font-size-0-75rem-8b511f07"></i>
                 </a>
                 <ul class="collapse list-unstyled mb-0" id="settingsMenu"
                     th:classappend="${activeMenu == 'settings' || activeMenu == 'tiers'} ? 'show'">
@@ -482,15 +120,15 @@
             <div class="topbar-right">
                 <details class="dropdown admin-user-dropdown">
                     <summary class="user-dropdown-toggle">
-                        <div class="user-avatar p-0 overflow-hidden" style="border: 2px solid #8b5a2b;">
-                            <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0" style="background-color: #8b5a2b; color: white;"></i>
-                            <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0" style="object-fit: cover;">
+                        <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad">
+                            <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
+                            <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
                         </div>
                         <span sec:authorize="isAuthenticated()" sec:authentication="name">Admin</span>
-                        <i class="bi bi-chevron-down ms-1" style="font-size: 0.8rem; color: #8b5a2b;"></i>
+                        <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8"></i>
                     </summary>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        style="border: 1px solid var(--border-color) !important; right: 0; left: auto; top: 100%;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 admin-base-ul-border-right-left-08"
+                       >
                         <li><a class="dropdown-item py-2" th:href="@{/admin/profile}"><i
                                     class="bi bi-person-circle me-2 text-classic"></i>Hồ sơ cá nhân</a></li>
                         <li>
@@ -516,6 +154,7 @@
             document.body.classList.toggle('sidebar-collapsed');
         });
     </script>
+    <script th:src="@{/js/dynamic-presentation.js}"></script>
 </body>
 
 </html>

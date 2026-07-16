@@ -2,12 +2,12 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 <head>
     <title>Quản lý Kho Sách</title>
-</head>
+  </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='dashboard', currentSection='books'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                 <a th:href="@{/librarian/dashboard?section=books}" class="text-decoration-none text-muted fs-5 me-2"><i class="bi bi-arrow-left"></i></a>
                 Quản lý Kho Sách
             </h2>
@@ -30,29 +30,29 @@
                     <div id="bookInventoryPanel">
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #8b5a2b !important;">
+                                <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d"
+                                   >
                                     <div class="text-muted small text-uppercase fw-bold mb-1">Tá»•ng Ä‘áº§u sÃ¡ch</div>
                                     <h4 class="fw-bold mb-0 text-classic" th:text="${totalBookCount}">0</h4>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #198754 !important;">
+                                <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6"
+                                   >
                                     <div class="text-muted small text-uppercase fw-bold mb-1">Danh má»¥c</div>
                                     <h4 class="fw-bold mb-0 text-success" th:text="${totalCategories}">0</h4>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #0d6efd !important;">
+                                <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-0d6efd-important-64ac16c1"
+                                   >
                                     <div class="text-muted small text-uppercase fw-bold mb-1">Thá»ƒ loáº¡i</div>
-                                    <h4 class="fw-bold mb-0" style="color: #0d6efd;" th:text="${totalGenres}">0</h4>
+                                    <h4 class="fw-bold mb-0 u-color-0d6efd-7fee07de" th:text="${totalGenres}">0</h4>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card-classic p-3 shadow-sm border-0"
-                                    style="border-left: 4px solid #fd7e14 !important;">
+                                <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-fd7e14-important-0fa630a5"
+                                   >
                                     <div class="text-muted small text-uppercase fw-bold mb-1">Sáºµn sÃ ng</div>
                                     <h4 class="fw-bold mb-0 text-warning"
                                         th:text="${inventoryStatusCounts['Available']} ?: 0">0</h4>
@@ -92,13 +92,13 @@
                                     <tr th:each="book, iterStat : ${books.content}">
                                         <td class="ps-3 fw-bold" th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
-                                            <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}" 
-                                                 th:src="${book.coverImageUrl}" 
-                                                 alt="BÃ¬a sÃ¡ch" 
-                                                 class="rounded border" style="width: 40px; height: 56px; object-fit: cover;">
-                                            <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}" 
-                                                 class="bg-light rounded border d-flex align-items-center justify-content-center text-muted" 
-                                                 style="width: 40px; height: 56px;">
+                                            <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
+                                                 th:src="${book.coverImageUrl}"
+                                                 alt="BÃ¬a sÃ¡ch"
+                                                 class="rounded border u-width-40px-height-56px-object-fit-cover-8457e107">
+                                            <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
+                                                 class="bg-light rounded border d-flex align-items-center justify-content-center text-muted u-width-40px-height-56px-0055c9ad"
+                                                >
                                                 <i class="bi bi-book"></i>
                                             </div>
                                         </td>
@@ -109,7 +109,7 @@
                                                 Thá»ƒ loáº¡i</div>
                                         </td>
                                         <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
-                                        <td class="small text-muted text-truncate" style="max-width: 250px;" th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}" th:title="${book.description}">Mô tả</td>
+                                        <td class="small text-muted text-truncate u-max-width-250px-e42dc5be" th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}" th:title="${book.description}">Mô tả</td>
                                         <td>
                                             <span class="status-badge"
                                                 th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
@@ -146,48 +146,47 @@
                                 <ul class="pagination mb-0">
                                     <!-- First page -->
                                     <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                        <a class="page-link" th:href="@{/librarian/dashboard(section='books', bookPage=0)}"
-                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                        <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/librarian/dashboard(section='books', bookPage=0)}"
+                                           >Đầu</a>
                                     </li>
 
                                     <!-- Previous page -->
                                     <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                        <a class="page-link"
+                                        <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                             th:href="@{/librarian/dashboard(section='books', bookPage=${books.number - 1})}"
-                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                           ><i
                                                 class="bi bi-chevron-left"></i></a>
                                     </li>
 
                                     <li class="page-item disabled" th:if="${startPage > 0}">
-                                        <span class="page-link">…</span>
+                                        <span class="page-link page-link-classic">…</span>
                                     </li>
 
                                     <!-- Sliding window: at most 10 page numbers -->
                                     <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                         th:classappend="${i == books.number ? 'active' : ''}">
-                                        <a class="page-link"
+                                        <a class="page-link page-link-classic"
                                             th:href="@{/librarian/dashboard(section='books', bookPage=${i})}"
-                                            th:text="${i + 1}"
-                                            th:style="${i == books.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                            th:text="${i + 1}">1</a>
                                     </li>
 
                                     <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
-                                        <span class="page-link">…</span>
+                                        <span class="page-link page-link-classic">…</span>
                                     </li>
 
                                     <!-- Next page -->
                                     <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                        <a class="page-link"
+                                        <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                             th:href="@{/librarian/dashboard(section='books', bookPage=${books.number + 1})}"
-                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                           ><i
                                                 class="bi bi-chevron-right"></i></a>
                                     </li>
 
                                     <!-- Last page -->
                                     <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                        <a class="page-link"
+                                        <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                             th:href="@{/librarian/dashboard(section='books', bookPage=${books.totalPages - 1})}"
-                                            style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                           >Cuối</a>
                                     </li>
                                 </ul>
                             </nav>
@@ -248,9 +247,9 @@
                                             <input type="file" name="coverImage" class="form-control"
                                                 accept="image/*" id="addBookCoverInput"
                                                 onchange="previewAddBookCover(event)">
-                                            <div class="mt-2" id="addBookCoverPreview" style="display:none;">
+                                            <div class="mt-2 u-display-none-d0466aa3" id="addBookCoverPreview">
                                                 <img id="addBookCoverImg" src="#" alt="Xem trÆ°á»›c áº£nh bÃ¬a"
-                                                    style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid #ddd;object-fit:cover;">
+                                                    class="u-max-height-160px-max-width-100-border-radius-8px-border-1px-solid-ddd-ob-646b7764">
                                             </div>
                                         </div>
                                     </div>
@@ -432,7 +431,7 @@
                                                         <img th:src="${book.coverImageUrl}"
                                                             th:id="'editCoverCurrent' + ${book.bookId}"
                                                             alt="áº¢nh bÃ¬a hiá»‡n táº¡i"
-                                                            style="height:100px;width:75px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+                                                            class="u-height-100px-width-75px-object-fit-cover-border-radius-6px-border-1px-so-eeb48d2c">
                                                     </div>
                                                     <div class="flex-grow-1">
                                                         <div class="text-muted small mb-1"
@@ -442,13 +441,13 @@
                                                             accept="image/*"
                                                             th:id="'editBookCoverInput' + ${book.bookId}"
                                                             th:onchange="'previewEditBookCover(event, \'' + ${book.bookId} + '\')'">
-                                                        <div class="mt-2"
+                                                        <div class="mt-2 u-display-none-d0466aa3"
                                                             th:id="'editBookCoverPreview' + ${book.bookId}"
-                                                            style="display:none;">
+                                                           >
                                                             <div class="text-muted small mb-1">Xem trÆ°á»›c:</div>
                                                             <img th:id="'editBookCoverImg' + ${book.bookId}" src="#"
                                                                 alt="Xem trÆ°á»›c áº£nh bÃ¬a"
-                                                                style="max-height:100px;max-width:100%;border-radius:6px;border:1px solid #ddd;object-fit:cover;">
+                                                                class="u-max-height-100px-max-width-100-border-radius-6px-border-1px-solid-ddd-ob-00913d30">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -499,10 +498,10 @@
                     </div>
                 </div>
 
-                <div id="bookShelfPanel" style="display: none;">
+                <div id="bookShelfPanel" class="u-display-none-6e22c58a">
                     <div class="card-classic shadow-sm">
                         <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <h5 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                                 <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
                             </h5>
                             <div class="text-muted small">Quản lý vị trí lưu trữ</div>

@@ -6,12 +6,13 @@
     <!-- Librarian top-up desk UI maintained by Pham Kien Quoc. -->
     <title>Nạp tiền tại quầy</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/topup-desk.css}" />
+  </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page">
-        <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139,90,43,0.2) !important;">
+        <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-4432b9df"
+           >
             <div>
                 <h2 class="fw-bold mb-1">Nạp tiền tại quầy</h2>
                 <div class="text-muted">Tra cứu thành viên, cộng tiền vào ví điện tử và tạo giao dịch nạp tiền.</div>
@@ -70,7 +71,7 @@
                             <input type="text" inputmode="numeric" class="form-control" name="amount" id="topupAmount"
                                 th:value="${amount != null ? amount : ''}" placeholder="Nhập số tiền"
                                 data-vnd-input data-min-amount="10000" autocomplete="off">
-                            <span class="input-group-text fw-bold" style="background:#fdf5ec;color:#8b5a2b;">VNĐ</span>
+                            <span class="input-group-text fw-bold librarian-topup-desk-span-background-02">VNĐ</span>
                         </div>
                         <div id="topupAmountRequired" class="invalid-feedback">
                             Số tiền nạp không được để trống.
@@ -126,7 +127,7 @@
                             <div class="text-muted small">Giao dịch</div>
                         </div>
                         <div class="text-center">
-                            <div class="fw-bold fs-5" style="color:#8b5a2b;">
+                            <div class="fw-bold fs-5 u-color-8b5a2b-d7f13118">
                                 <span
                                     th:text="${todayTopupTotal != null ? #numbers.formatDecimal(todayTopupTotal, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                 VNĐ
@@ -144,11 +145,11 @@
                         <div th:each="transaction : ${todayTopups}"
                             class="d-flex justify-content-between align-items-center py-2 border-bottom">
                             <div>
-                                <div class="fw-bold small" style="color:#4a3b32;"
+                                <div class="fw-bold small u-color-4a3b32-8f35ff96"
                                     th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
                                     Thành viên
                                 </div>
-                                <div class="text-muted" style="font-size:0.78rem;"
+                                <div class="text-muted librarian-topup-desk-div-font-size-05"
                                     th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'HH:mm dd/MM') : '-'}">
                                     -
                                 </div>
@@ -175,7 +176,7 @@
                                     th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
                                     Thành viên
                                 </div>
-                                <div class="text-muted" style="font-size:0.78rem;"
+                                <div class="text-muted librarian-topup-desk-div-font-size-05"
                                     th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">
                                     -
                                 </div>

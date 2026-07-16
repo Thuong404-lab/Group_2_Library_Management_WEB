@@ -4,37 +4,15 @@
 
 <head>
     <title>Danh sách Thủ thư</title>
-    <style>
-        .btn-view-detail {
-            color: #78909c;
-            background-color: transparent;
-            border-color: #78909c;
-        }
-
-        .btn-view-detail:hover,
-        .btn-view-detail:focus {
-            color: #ffffff;
-            background-color: #78909c;
-            border-color: #78909c;
-        }
-
-        .view-detail-tooltip .tooltip-inner {
-            color: #ffffff !important;
-            background-color: #78909c !important;
-        }
-
-        .view-detail-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #78909c !important;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
+  </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='librarians'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
+           >
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Danh sách Thủ
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Danh sách Thủ
                     thư</h2>
                 <div class="text-muted">Quản lý nhân viên thư viện và tài khoản thủ thư</div>
             </div>
@@ -46,10 +24,10 @@
                 <!-- Search & Filter + Back Button -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <!-- Search & Filter -->
-                    <form class="d-flex align-items-center" style="gap: 12px; width: 60%;" method="get"
+                    <form class="d-flex align-items-center u-gap-12px-width-60-1a3153fd" method="get"
                         th:action="@{/librarian/librarians}">
                         <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;">
+                            <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
@@ -75,12 +53,12 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle stable-table-layout">
                         <colgroup>
-                            <col style="width: 7%">
-                            <col style="width: 16%">
-                            <col style="width: 26%">
-                            <col style="width: 19%">
-                            <col style="width: 17%">
-                            <col style="width: 15%">
+                            <col class="u-width-7-2d9383cf">
+                            <col class="u-width-16-9fe033fb">
+                            <col class="librarian-librarian-list-col-width-07">
+                            <col class="librarian-librarian-list-col-width-08">
+                            <col class="u-width-17-9278e232">
+                            <col class="u-width-15-f7f760e2">
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
@@ -137,8 +115,8 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
-                                        style="background-color: #b87936; border: 1px solid #9a622a;"
+                                    <span class="badge rounded-pill px-3 py-2 text-white librarian-librarian-list-span-background-border-11"
+
                                         th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
                                         Thủ thư
                                     </span>
@@ -175,10 +153,10 @@
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content border-0 shadow">
 
-                                                <div class="modal-header border-bottom border-color"
-                                                    style="background-color: #fdfbf7;">
-                                                    <h5 class="modal-title fw-bold"
-                                                        style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                                <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05"
+                                                   >
+                                                    <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                                       >
                                                         <i class="bi bi-person-badge me-2 text-classic"></i>
                                                         Chi tiết thủ thư
                                                     </h5>
@@ -273,8 +251,8 @@
                                                             <div class="small text-muted text-uppercase fw-bold">
                                                                 Loại nhân viên
                                                             </div>
-                                                            <span class="badge rounded-pill px-3 py-2 text-white"
-                                                                style="background-color: #b87936; border: 1px solid #9a622a;"
+                                                            <span class="badge rounded-pill px-3 py-2 text-white librarian-librarian-list-span-background-border-11"
+
                                                                 th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
                                                                 Thủ thư
                                                             </span>
@@ -315,47 +293,46 @@
 
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
-                                <a class="page-link" th:href="@{/librarian/librarians(page=0, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/librarian/librarians(page=0, keyword=${keyword})}"
+                                   >Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
-                                <a class="page-link"
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                     th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                   ><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
 
                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Sliding window: at most 10 page numbers -->
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
-                                <a class="page-link" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == staffPage.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                <a class="page-link page-link-classic" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}"
+                                    th:text="${i + 1}">1</a>
                             </li>
 
                             <li class="page-item disabled" th:if="${endPage < staffPage.totalPages - 1}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
-                                <a class="page-link"
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                     th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                   ><i
                                         class="bi bi-chevron-right"></i></a>
                             </li>
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
-                                <a class="page-link"
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                     th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                   >Cuối</a>
                             </li>
                         </ul>
                     </nav>
