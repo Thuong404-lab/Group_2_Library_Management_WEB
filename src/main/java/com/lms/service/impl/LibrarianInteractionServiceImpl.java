@@ -26,17 +26,20 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
+    private final StaffAccountRepository staffAccountRepository;
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
                                            NotificationRepository notificationRepository,
                                            MemberNotificationRepository memberNotificationRepository,
-                                           BookAcquisitionRequestRepository bookAcquisitionRequestRepository) {
+                                           BookAcquisitionRequestRepository bookAcquisitionRequestRepository,
+                                           StaffAccountRepository staffAccountRepository) {
         this.feedbackRepository = feedbackRepository;
         this.memberRepository = memberRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @Override
@@ -126,18 +129,31 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional
-    public void sendNotificationToMembers(LibrarianNotificationSendRequest request) {
+    public void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername) {
         if (request.getRecipientType() == null) {
             throw new ValidationException("Vui lòng chọn đối tượng nhận thông báo.");
+        }
+
+        if (request.getNotificationType() == null) {
+            throw new ValidationException("Vui lòng chọn loại thông báo.");
         }
 
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
             throw new ValidationException("Tiêu đề không được để trống");
         }
 
+        if (request.getTitle().trim().length() > 255) {
+            throw new ValidationException("Tiêu đề không được vượt quá 255 ký tự.");
+        }
+
         if (request.getContent() == null || request.getContent().trim().isEmpty()) {
             throw new ValidationException("Nội dung không được để trống");
         }
+
+        Staff sender = staffAccountRepository.findByUsername(senderUsername)
+                .map(StaffAccount::getStaff)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy thủ thư gửi thông báo."));
 
         List<Member> members;
 
@@ -165,12 +181,14 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         Notification notification = new Notification();
         notification.setTitle(request.getTitle().trim());
         notification.setContent(request.getContent().trim());
+        notification.setNotificationType(request.getNotificationType());
+        notification.setStaff(sender);
         notification.setStatus("Active");
         notification.setCreatedDate(LocalDateTime.now());
 
         Notification saved = notificationRepository.save(notification);
 
-        for (Member member : members) {
+        List<MemberNotification> memberNotifications = members.stream().map(member -> {
             MemberNotification mn = new MemberNotification();
 
             mn.setId(new MemberNotificationId(
@@ -181,9 +199,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             mn.setMember(member);
             mn.setNotification(saved);
             mn.setIsRead(false);
+            mn.setReadDate(null);
 
-            memberNotificationRepository.save(mn);
-        }
+            return mn;
+        }).toList();
+
+        memberNotificationRepository.saveAll(memberNotifications);
     }
 
     @Override

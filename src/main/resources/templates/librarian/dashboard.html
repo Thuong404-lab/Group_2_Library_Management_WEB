@@ -314,7 +314,7 @@
                                             chọn</label>
                                     </div>
                                 </div>
-                                <div class="notification-validation-message"
+                                <div class="invalid-feedback notification-validation-message"
                                     th:text="${notificationFieldErrors != null ? notificationFieldErrors['recipientType'] : ''}">
                                 </div>
 
@@ -349,7 +349,7 @@
                                     <p class="notification-helper-text">
                                         Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
                                     </p>
-                                    <div class="notification-validation-message"
+                                    <div class="invalid-feedback notification-validation-message"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['memberIds'] : ''}">
                                     </div>
                                 </div>
@@ -357,11 +357,37 @@
 
                             <div class="notification-message-column">
                                 <div class="notification-field">
+                                    <label class="notification-form-label" for="notificationType">Loại thông báo</label>
+                                    <select id="notificationType" name="notificationType"
+                                        class="notification-control validate-field"
+                                        required
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['notificationType'] != null} ? 'is-invalid'">
+                                        <option value="" disabled hidden
+                                            th:selected="${notificationRequest == null or notificationRequest.notificationType == null}">Chọn loại thông báo</option>
+                                        <option th:each="type : ${notificationTypes}" th:value="${type}"
+                                            th:selected="${notificationRequest != null and notificationRequest.notificationType == type}"
+                                            th:text="${type.displayName}">Thông báo chung</option>
+                                    </select>
+                                    <div class="invalid-feedback notification-validation-message"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['notificationType'] : ''}">
+                                    </div>
+                                </div>
+
+                                <div class="notification-field">
+                                    <label class="notification-form-label" for="notificationSender">Người nhập</label>
+                                    <input type="text" id="notificationSender" class="notification-control"
+                                        th:value="${currentUser != null ? currentUser.fullName : #authentication.name}"
+                                        readonly aria-readonly="true">
+                                    <p class="notification-helper-text">Tự động lấy từ tài khoản thủ thư đang đăng nhập.</p>
+                                </div>
+
+                                <div class="notification-field">
                                     <label class="notification-form-label" for="title">Tiêu đề</label>
                                     <input type="text" class="notification-control validate-field" th:field="*{title}" required
+                                        maxlength="255"
                                         placeholder="Nhập tiêu đề thông báo"
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
-                                    <div class="notification-validation-message"
+                                    <div class="invalid-feedback notification-validation-message"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
                                     </div>
                                 </div>
@@ -372,7 +398,7 @@
                                         rows="8" th:field="*{content}"
                                         required placeholder="Nhập nội dung thông báo"
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
-                                    <div class="notification-validation-message"
+                                    <div class="invalid-feedback notification-validation-message"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
                                     </div>
                                 </div>
@@ -2304,12 +2330,14 @@
                 const recipientSelected = document.getElementById("recipientSelected");
                 const recipientTypeGroup = document.getElementById("recipientTypeGroup");
                 const memberIdsGroup = document.getElementById("memberIdsGroup");
+                const notificationTypeInput = form.querySelector("[name='notificationType']");
                 const titleInput = form.querySelector("[name='title']");
                 const contentInput = form.querySelector("[name='content']");
                 const selectedMembers = form.querySelectorAll(".member-checkbox:checked");
 
                 clearInlineError(recipientTypeGroup);
                 clearInlineError(memberIdsGroup);
+                clearInlineError(notificationTypeInput);
                 clearInlineError(titleInput);
                 clearInlineError(contentInput);
 
@@ -2328,8 +2356,18 @@
                     setInlineValid(memberIdsGroup);
                 }
 
+                if (notificationTypeInput == null || notificationTypeInput.value === "") {
+                    setInlineError(notificationTypeInput, "Vui lòng chọn loại thông báo.");
+                    isValid = false;
+                } else {
+                    setInlineValid(notificationTypeInput);
+                }
+
                 if (titleInput != null && titleInput.value.trim() === "") {
                     setInlineError(titleInput, "Tiêu đề không được để trống.");
+                    isValid = false;
+                } else if (titleInput != null && titleInput.value.trim().length > 255) {
+                    setInlineError(titleInput, "Tiêu đề không được vượt quá 255 ký tự.");
                     isValid = false;
                 } else {
                     setInlineValid(titleInput);

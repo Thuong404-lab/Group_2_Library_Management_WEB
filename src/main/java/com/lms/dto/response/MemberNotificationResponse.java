@@ -1,5 +1,6 @@
 package com.lms.dto.response;
 
+import com.lms.enums.NotificationType;
 import java.time.LocalDateTime;
 
 public class MemberNotificationResponse {
@@ -7,6 +8,7 @@ public class MemberNotificationResponse {
     private Integer notificationId;
     private String title;
     private String content;
+    private NotificationType notificationType;
     private LocalDateTime sentDate;
     private Boolean read;
 
@@ -35,6 +37,14 @@ public class MemberNotificationResponse {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public NotificationType getNotificationType() {
+        return notificationType;
+    }
+
+    public void setNotificationType(NotificationType notificationType) {
+        this.notificationType = notificationType;
     }
 
     public LocalDateTime getSentDate() {

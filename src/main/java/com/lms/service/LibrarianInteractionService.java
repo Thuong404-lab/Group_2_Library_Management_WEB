@@ -18,7 +18,7 @@ public interface LibrarianInteractionService {
 
     void deleteReview(Integer feedbackId);
 
-    void sendNotificationToMembers(LibrarianNotificationSendRequest request);
+    void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
 
     List<Member> getAllMembers();
 

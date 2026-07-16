@@ -27,7 +27,7 @@ public class LibrarianDashboardController {
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAllAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
+        model.mergeAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
     }

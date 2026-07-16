@@ -2,6 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.dto.response.MemberNotificationResponse;
 import com.lms.entity.*;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.*;
 import com.lms.service.MemberNotificationService;
@@ -54,6 +55,9 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         response.setNotificationId(mn.getNotification().getNotificationId());
         response.setTitle(mn.getNotification().getTitle());
         response.setContent(mn.getNotification().getContent());
+        response.setNotificationType(mn.getNotification().getNotificationType() != null
+                ? mn.getNotification().getNotificationType()
+                : NotificationType.GENERAL);
         response.setSentDate(mn.getNotification().getCreatedDate());
         response.setRead(Boolean.TRUE.equals(mn.getIsRead()));
         return response;

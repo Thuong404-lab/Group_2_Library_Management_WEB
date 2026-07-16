@@ -107,14 +107,21 @@
                 th:classappend="${notification.read == false} ? ' is-unread' : ''"
 
               >
-                <small class="member-notification-time">
-                  <i class="bi bi-clock"></i>
-                  <span
-                    th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"
-                    >Hôm nay</span
+                <div class="member-notification-meta">
+                  <span class="member-notification-type"
+                    th:text="${notification.notificationType != null ? notification.notificationType.displayName : 'Thông báo chung'}"
+                    >Thông báo chung</span
                   >
-                </small>
+                  <small class="member-notification-time">
+                    <i class="bi bi-clock" aria-hidden="true"></i>
+                    <span
+                      th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"
+                      >Hôm nay</span
+                    >
+                  </small>
+                </div>
                 <span class="member-notification-title" th:text="${notification.title}"
+                  th:title="${notification.title}"
                   >Tiêu đề thông báo</span
                 >
                 <span
