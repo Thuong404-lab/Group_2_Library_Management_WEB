@@ -73,11 +73,22 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             throw new ValidationException("Đánh giá này đã được member xoá nên không thể phản hồi.");
         }
 
-        if (request.getResponse() == null || request.getResponse().trim().isEmpty()) {
+        String normalizedResponse = request.getResponse() == null ? "" : request.getResponse().strip()
+                .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
+
+        if (normalizedResponse.isEmpty()) {
             throw new ValidationException("Nội dung phản hồi không được để trống");
         }
 
-        feedback.setLibrarianResponse(request.getResponse().trim());
+        if (normalizedResponse.length() < 5 || normalizedResponse.length() > 1000) {
+            throw new ValidationException("Nội dung phản hồi phải có từ 5 đến 1000 ký tự.");
+        }
+
+        if (normalizedResponse.codePoints().noneMatch(Character::isLetter)) {
+            throw new ValidationException("Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt.");
+        }
+
+        feedback.setLibrarianResponse(normalizedResponse);
         feedback.setResponseDate(LocalDateTime.now());
 
         feedbackRepository.save(feedback);
@@ -139,16 +150,28 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             throw new ValidationException("Vui lòng chọn loại thông báo.");
         }
 
-        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+        String normalizedTitle = request.getTitle() == null ? "" : request.getTitle().trim().replaceAll("\\s+", " ");
+        String normalizedContent = request.getContent() == null ? "" : request.getContent().strip()
+                .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
+
+        if (normalizedTitle.isEmpty()) {
             throw new ValidationException("Tiêu đề không được để trống");
         }
 
-        if (request.getTitle().trim().length() > 255) {
-            throw new ValidationException("Tiêu đề không được vượt quá 255 ký tự.");
+        if (normalizedTitle.length() < 5 || normalizedTitle.length() > 150) {
+            throw new ValidationException("Tiêu đề phải có từ 5 đến 150 ký tự.");
         }
 
-        if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+        if (normalizedContent.isEmpty()) {
             throw new ValidationException("Nội dung không được để trống");
+        }
+
+        if (normalizedContent.length() < 10 || normalizedContent.length() > 2000) {
+            throw new ValidationException("Nội dung phải có từ 10 đến 2000 ký tự.");
+        }
+
+        if (normalizedContent.equalsIgnoreCase(normalizedTitle)) {
+            throw new ValidationException("Nội dung không được giống hoàn toàn tiêu đề.");
         }
 
         Staff sender = staffAccountRepository.findByUsername(senderUsername)
@@ -180,8 +203,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         }
 
         Notification notification = new Notification();
-        notification.setTitle(request.getTitle().trim());
-        notification.setContent(request.getContent().trim());
+        notification.setTitle(normalizedTitle);
+        notification.setContent(normalizedContent);
         notification.setNotificationType(request.getNotificationType());
         notification.setStaff(sender);
         notification.setStatus("Active");
@@ -232,16 +255,24 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Override
     @Transactional
     public void rejectBookAcquisitionRequest(Integer requestId, String reason) {
-        if (reason == null || reason.trim().isEmpty()) {
+        String normalizedReason = reason == null ? "" : reason.strip()
+                .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
+        if (normalizedReason.isEmpty()) {
             throw new ValidationException("Lý do từ chối không được để trống.");
         }
-        if (reason.trim().length() > 500) {
+        if (normalizedReason.length() < 5) {
+            throw new ValidationException("Lý do từ chối phải có ít nhất 5 ký tự.");
+        }
+        if (normalizedReason.length() > 500) {
             throw new ValidationException("Lý do từ chối không được vượt quá 500 ký tự.");
+        }
+        if (normalizedReason.codePoints().noneMatch(Character::isLetter)) {
+            throw new ValidationException("Lý do từ chối không được chỉ gồm số hoặc ký tự đặc biệt.");
         }
 
         BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
         request.setStatus(AcquisitionRequestStatus.REJECTED);
-        request.setDecisionNote(reason.trim());
+        request.setDecisionNote(normalizedReason);
         request.setProcessedDate(LocalDateTime.now());
         bookAcquisitionRequestRepository.save(request);
         sendPersonalNotification(

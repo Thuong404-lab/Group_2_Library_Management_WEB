@@ -138,66 +138,68 @@
           return;
         }
 
-        var openedWithUnreadNotifications = false;
-        var notificationsMarkedRead = false;
-
-        function removeNotificationBadge() {
+        function updateNotificationBadge(unreadCount) {
           var badge = document.getElementById("notificationBellBadge");
-          if (badge) {
-            openedWithUnreadNotifications = true;
-            badge.remove();
-          }
-        }
-
-        function clearUnreadNotificationStyles() {
-          notificationDropdown
-            .querySelectorAll(".font-weight-bold")
-            .forEach(function (item) {
-              item.classList.remove("font-weight-bold");
-            });
-        }
-
-        function markNotificationsRead() {
-          if (!openedWithUnreadNotifications || notificationsMarkedRead) {
+          var markAllButton = document.getElementById("markAllNotificationsRead");
+          if (markAllButton) markAllButton.disabled = unreadCount <= 0;
+          if (unreadCount <= 0) {
+            if (badge) badge.remove();
             return;
           }
-
-          notificationsMarkedRead = true;
-
-          fetch("/member/interaction/notifications/mark-read", {
-            method: "GET",
-            credentials: "same-origin",
-            headers: {
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          })
-            .then(function (response) {
-              if (response.ok) {
-                clearUnreadNotificationStyles();
-              } else {
-                notificationsMarkedRead = false;
-              }
-            })
-            .catch(function (error) {
-              notificationsMarkedRead = false;
-              console.error(
-                "Không thể cập nhật trạng thái thông báo đọc:",
-                error,
-              );
-            });
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.id = "notificationBellBadge";
+            badge.className = "badge badge-danger position-absolute header-notification-badge";
+            notificationToggle.appendChild(badge);
+          }
+          badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
         }
 
-        notificationToggle.addEventListener("click", function () {
-          removeNotificationBadge();
+        notificationDropdown.querySelectorAll(".member-notification-item").forEach(function (item) {
+          item.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            var targetUrl = item.href;
+            if (!item.classList.contains("is-unread")) {
+              window.location.href = targetUrl;
+              return;
+            }
+            var notificationId = item.dataset.notificationId;
+            fetch("/member/interaction/notifications/" + notificationId + "/mark-read", {
+              method: "GET", credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
+            }).then(function (response) {
+              if (!response.ok) throw new Error("Không thể cập nhật thông báo");
+              return response.json();
+            }).then(function (data) {
+              item.classList.remove("is-unread");
+              updateNotificationBadge(Number(data.unreadCount) || 0);
+              window.location.href = targetUrl;
+            }).catch(function (error) {
+              console.error(error);
+              window.location.href = targetUrl;
+            });
+          });
         });
 
-        if (window.jQuery) {
-          window.jQuery(notificationDropdown).on("hidden.bs.dropdown", function () {
-            markNotificationsRead();
+        var markAllButton = document.getElementById("markAllNotificationsRead");
+        if (markAllButton) {
+          markAllButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (markAllButton.disabled) return;
+            markAllButton.disabled = true;
+          fetch("/member/interaction/notifications/mark-read", {
+            method: "GET", credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
+          }).then(function (response) {
+            if (!response.ok) throw new Error("Không thể đánh dấu tất cả thông báo");
+            notificationDropdown.querySelectorAll(".member-notification-item.is-unread").forEach(function (item) {
+              item.classList.remove("is-unread");
+            });
+            updateNotificationBadge(0);
+          }).catch(function (error) {
+            markAllButton.disabled = false;
+            console.error(error);
           });
-        } else {
-          notificationDropdown.addEventListener("hidden.bs.dropdown", function () {
-            markNotificationsRead();
           });
         }
       });
