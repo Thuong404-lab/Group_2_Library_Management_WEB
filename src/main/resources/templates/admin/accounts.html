@@ -5,16 +5,16 @@
 <head>
     <title>Quản lý tài khoản thành viên</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/accounts.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
   </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='accounts'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
-           >
+    <div layout:fragment="content" th:with="activeMenu='accounts'" class="accounts-page">
+        <div class="accounts-header">
             <div>
-                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Quản lý tài
+                <h2 class="accounts-title">Quản lý tài
                     khoản thành viên</h2>
-                <div class="text-muted">
+                <div class="accounts-description">
                     Danh sách và thông tin tài khoản người dùng thư viện
                 </div>
             </div>
@@ -29,9 +29,9 @@
         <div class="modal fade text-start" id="createMemberAccountModal" tabindex="-1"
             aria-labelledby="createMemberAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header bg-white border-bottom p-4">
-                        <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" id="createMemberAccountModalLabel"
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createMemberAccountModalLabel"
                            >
                             <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản thành viên
                         </h5>
@@ -52,26 +52,26 @@
         </script>
 
         <!-- Alerts -->
-        <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
+        <div class="alert alert-warning" th:if="${param.notFound != null}">
             <i class="bi bi-exclamation-circle me-2"></i>Không tìm thấy tài khoản.
         </div>
-        <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
+        <div class="alert alert-danger" th:if="${error != null}">
             <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
         </div>
-        <div class="alert alert-success shadow-sm border-0" th:if="${success != null}">
+        <div class="alert alert-success" th:if="${success != null}">
             <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Thao tác thành công.</span>
         </div>
 
-        <div class="card-classic shadow-sm mb-4">
+        <div class="card-classic mb-4">
             <div class="card-body p-4">
                 <!-- Search & Filter -->
-                <form class="row g-3 mb-4" method="get" th:action="@{/admin/accounts}">
+                <form class="row g-3 mb-4" method="get" th:action="@{/admin/accounts}" data-auto-filter-form data-focus-key="adminAccountFilterFocus">
                     <div class="col-md-8 col-lg-6">
-                        <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783">
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
                                 placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
 
@@ -83,12 +83,12 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle stable-table-layout">
                         <colgroup>
-                            <col class="u-width-7-2d9383cf">
-                            <col class="u-width-15-f7f760e2">
-                            <col class="u-width-25-84a0e8c4">
-                            <col class="u-width-20-00e2b68d">
-                            <col class="u-width-17-9278e232">
-                            <col class="u-width-16-9fe033fb">
+                            <col class="account-col-index">
+                            <col class="account-col-username">
+                            <col class="account-col-user">
+                            <col class="account-col-role">
+                            <col class="account-col-status">
+                            <col class="account-col-actions">
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
@@ -127,23 +127,23 @@
                                 </td>
 
                                 <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                    <span class="badge"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}" th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
-                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                    <span class="badge"
                                         th:if="${member == null || member.tier == null}">
                                         N/A
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white" th:classappend="${
-              account.status == 'Active' ? 'bg-success' :
-              account.status == 'Blocked' ? 'bg-danger' :
-              'bg-secondary'
+                                    <span class="badge" th:classappend="${
+              account.status == 'Active' ? 'status-active' :
+              account.status == 'Blocked' ? 'status-blocked' :
+              'status-inactive'
           }" th:text="${account.status == 'Active' ? 'Hoạt động' : (account.status == 'Inactive' ? 'Ngừng hoạt động' : (account.status == 'Blocked' ? 'Bị khóa' : account.status))}">
                                         Hoạt động
                                     </span>
@@ -164,7 +164,7 @@
                                         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                         th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
                                         <div class="modal-dialog modal-dialog-centered modal-lg">
-                                            <div class="modal-content border-0 shadow">
+                                            <div class="modal-content">
                                                 <form method="post" class="member-update-form" novalidate
                                                     th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
                                                     th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='members')}">
@@ -172,9 +172,9 @@
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
 
-                                                    <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05"
+                                                <div class="modal-header"
                                                        >
-                                                        <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                                    <h5 class="modal-title"
                                                            >
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                                             Cập nhật tài khoản
@@ -190,7 +190,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên <span class="text-danger">*</span>
+                                                                    Họ tên <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
                                                                     data-label="Họ tên"
@@ -206,7 +206,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username <span class="text-danger">*</span>
+                                                                    Username <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
@@ -222,7 +222,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại <span class="text-danger">*</span>
+                                                                    Số điện thoại <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
                                                                     data-label="Số điện thoại" required
@@ -239,7 +239,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Email <span class="text-danger">*</span>
+                                                                    Email <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="email" type="email"
                                                                     data-label="Email"
@@ -301,8 +301,8 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="modal-footer border-top bg-light">
-                                                        <button type="button" class="btn btn-secondary"
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn app-secondary-action"
                                                             data-bs-dismiss="modal">Hủy bỏ</button>
                                                         <button type="submit" class="btn btn-classic">
                                                             Lưu thay đổi
@@ -315,7 +315,7 @@
 
                                     <button type="button"
                                         th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
-                                        class="btn btn-sm btn-outline-warning ms-1 account-action-tooltip"
+                                        class="btn btn-sm btn-outline-classic ms-1 account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#resetPasswordMemberModal' + account.accountId}"
                                         data-bs-title="Gửi link đặt lại mật khẩu"
@@ -329,14 +329,14 @@
                                         th:id="${'resetPasswordMemberModal' + account.accountId}" tabindex="-1"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow">
+                                            <div class="modal-content">
                                                 <form method="post"
                                                     th:action="@{/admin/accounts/{id}/send-password-reset(id=${account.accountId})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                                                     <div class="modal-header border-bottom-0">
-                                                        <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118">
+                                                    <h5 class="modal-title">
                                                             <i class="bi bi-key-fill me-2"></i>
                                                             Xác nhận gửi liên kết đặt lại mật khẩu
                                                         </h5>
@@ -348,7 +348,7 @@
                                                         <p class="mb-3">
                                                             Liên kết đặt lại mật khẩu sẽ được gửi đến email hiện tại của thành viên và có hiệu lực trong 24 giờ.
                                                         </p>
-                                                        <div class="p-3 bg-light rounded border">
+                                                        <div class="account-info-panel">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Username:</div>
@@ -374,7 +374,7 @@
                                                     </div>
 
                                                     <div class="modal-footer border-top-0 pt-4">
-                                                        <button type="button" class="btn btn-light"
+                                                        <button type="button" class="btn app-secondary-action"
                                                             data-bs-dismiss="modal">Hủy</button>
                                                         <button type="submit" class="btn btn-classic">
                                                             <i class="bi bi-send me-1"></i>Đồng ý gửi
@@ -386,7 +386,7 @@
                                     </div>
 
                                     <button type="button"
-                                        class="btn btn-sm btn-outline-danger ms-1 account-action-tooltip"
+                                        class="btn btn-sm app-danger-outline ms-1 account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
                                         data-bs-title="Xóa tài khoản" data-bs-custom-class="delete-account-tooltip"
@@ -398,7 +398,7 @@
                                         th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow">
+                                            <div class="modal-content">
                                                 <form method="post"
                                                     th:action="@{/admin/accounts/delete/{id}(id=${account.accountId})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
@@ -406,7 +406,7 @@
                                                     <input type="hidden" name="source" value="members">
 
                                                     <div class="modal-header border-bottom-0">
-                                                        <h5 class="modal-title fw-bold text-danger">
+                                                        <h5 class="modal-title destructive-title">
                                                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                                             Xác nhận xóa tài khoản
                                                         </h5>
@@ -418,7 +418,7 @@
                                                         <p class="mb-3">
                                                             Bạn có chắc chắn muốn xóa tài khoản này không?
                                                             Thao tác này không thể hoàn tác.</p>
-                                                        <div class="p-3 bg-light rounded border">
+                                                        <div class="account-info-panel">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Username: </div>
@@ -469,14 +469,14 @@
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Hạng thành viên</div>
                                                                     <span
-                                                                        class="badge rounded-pill px-3 py-2 text-white"
+                                                                        class="badge"
                                                                         th:if="${member != null && member.tier != null}"
                                                                         th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}" th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                                                         Standard
                                                                     </span>
 
                                                                     <span
-                                                                        class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                                        class="badge"
                                                                         th:if="${member == null || member.tier == null}">
                                                                         N/A
                                                                     </span>
@@ -487,9 +487,9 @@
                                                     </div>
 
                                                     <div class="modal-footer border-top-0 pt-4">
-                                                        <button type="button" class="btn btn-light"
+                                                        <button type="button" class="btn app-secondary-action"
                                                             data-bs-dismiss="modal">Hủy</button>
-                                                        <button type="submit" class="btn btn-danger">Đồng ý xóa</button>
+                                                        <button type="submit" class="btn app-danger-action">Đồng ý xóa</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -500,7 +500,7 @@
 
                             <tr th:if="${#lists.isEmpty(accounts.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
-                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    <i class="bi bi-inbox empty-state-icon d-block mb-2"></i>
                                     Không có tài khoản nào.
                                 </td>
                             </tr>
@@ -509,22 +509,22 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
+                <div class="app-pagination-region"
                     th:if="${accounts.totalPages > 1}"
                     th:with="startPage=${accounts.totalPages <= 10 ? 0 : (accounts.number < 9 ? 0 : (accounts.number - 8 > accounts.totalPages - 10 ? accounts.totalPages - 10 : accounts.number - 8))}">
                     <nav
                         th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
-                        <ul class="pagination mb-0">
+                        <ul class="pagination app-pagination">
 
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/admin/accounts(page=0, keyword=${keyword})}"
+                                <a class="page-link" th:href="@{/admin/accounts(page=0, keyword=${keyword})}"
                                    >Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword})}"
                                    >
                                     <i class="bi bi-chevron-left"></i>
@@ -550,7 +550,7 @@
 
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword})}"
                                    >
                                     <i class="bi bi-chevron-right"></i>
@@ -559,7 +559,7 @@
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                <a class="page-link"
                                     th:href="@{/admin/accounts(page=${accounts.totalPages - 1}, keyword=${keyword})}"
                                    >Cuối</a>
                             </li>

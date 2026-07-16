@@ -1,0 +1,165 @@
+/*
+ * Page family: Admin online payments
+ * Templates: admin/payments.html, admin/payment-detail.html, admin/payment-audit-logs.html
+ * Routes: /admin/payments/**
+ * Root scope: .admin-payment-page
+ */
+
+.admin-payment-page { width: 100%; max-width: 100%; color: var(--app-color-body); font-family: var(--app-font-ui); font-size: 14px; line-height: 1.5; }
+.admin-payment-page .app-page-header { margin-bottom: 24px; padding-bottom: 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--app-color-hairline); }
+.admin-payment-page .app-page-title { margin: 0 0 6px; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: clamp(30px, 3vw, 40px); font-weight: 400; line-height: 1.15; letter-spacing: -.02em; }
+.admin-payment-page .app-page-description { margin: 0; color: var(--app-color-muted); font-size: 16px; line-height: 1.5; }
+.admin-payment-page .app-page-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.admin-payment-page .app-card { width: 100%; max-width: 100%; box-sizing: border-box; color: var(--app-color-body); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 12px; box-shadow: none; overflow: visible; }
+.admin-payment-page .app-card-body { padding: 24px; }
+.admin-payment-page .app-card-header,
+.admin-payment-page .app-card-footer { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--app-color-surface-soft); border-color: var(--app-color-hairline-soft); }
+.admin-payment-page .app-card-header { border-bottom: 1px solid var(--app-color-hairline-soft); border-radius: 12px 12px 0 0; }
+.admin-payment-page .app-card-footer { border-top: 1px solid var(--app-color-hairline-soft); border-radius: 0 0 12px 12px; }
+.admin-payment-page .app-section-title { margin: 0; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 20px; font-weight: 500; line-height: 1.3; }
+.admin-payment-page .app-back-link { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--app-color-muted); font-size: 13px; font-weight: 500; text-decoration: none; }
+.admin-payment-page .app-back-link:hover { color: var(--app-color-primary-active); }
+.admin-payment-page .form-label { margin-bottom: 8px; color: var(--app-color-body-strong); font-size: 14px; font-weight: 600; line-height: 1.4; text-transform: none; }
+.admin-payment-page .form-control,
+.admin-payment-page .form-select { min-height: 42px; padding: 0 38px 0 14px; color: var(--app-color-body); background-color: var(--app-color-canvas); background-position: right 14px center; border: 1px solid var(--app-color-hairline); border-radius: 8px; font-size: 14px; }
+.admin-payment-page .form-control:focus,
+.admin-payment-page .form-select:focus { border-color: var(--app-color-primary); box-shadow: 0 0 0 3px var(--app-color-focus-coral-ring); }
+.admin-payment-page .payment-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.6fr) repeat(4, minmax(130px, 1fr)) auto;
+    align-items: end;
+    column-gap: 16px;
+    row-gap: 14px;
+}
+.admin-payment-page .audit-filter-grid {
+    grid-template-columns: minmax(220px, 1.5fr) minmax(180px, 1fr) repeat(2, minmax(140px, 1fr)) auto;
+}
+.admin-payment-page .payment-filter-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+}
+.admin-payment-page .payment-filter-field .form-label {
+    display: block;
+    width: 100%;
+    min-height: 20px;
+}
+.admin-payment-page .payment-filter-field .form-control,
+.admin-payment-page .payment-filter-field .form-select { width: 100%; }
+.admin-payment-page .payment-filter-field input[type="date"] {
+    position: relative;
+    min-height: 42px;
+    padding-right: 42px;
+}
+.admin-payment-page .payment-filter-field input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+.admin-payment-page .payment-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 4px;
+    white-space: nowrap;
+}
+.admin-payment-page .btn { min-height: 40px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; font-size: 14px; font-weight: 600; line-height: 1; white-space: nowrap; }
+.admin-payment-page .btn-classic { color: var(--app-color-on-dark); background: var(--app-color-application-primary); border: 1px solid var(--app-color-application-primary); }
+.admin-payment-page .btn-classic:hover { color: var(--app-color-on-dark); background: var(--app-color-application-primary-hover); border-color: var(--app-color-application-primary-hover); }
+.admin-payment-page .btn-outline-classic,
+.admin-payment-page .app-secondary-action { color: var(--app-color-ink); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); }
+.admin-payment-page .btn-outline-classic:hover,
+.admin-payment-page .app-secondary-action:hover { color: var(--app-color-primary-active); background: var(--app-color-surface-soft); border-color: var(--app-color-primary); }
+.admin-payment-page .app-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
+.admin-payment-page .app-table { width: 100%; margin: 0; color: var(--app-color-body); font-size: 14px; }
+.admin-payment-page .app-table th { padding: 12px 16px; color: var(--app-color-muted); background: var(--app-color-surface-soft); border-bottom: 1px solid var(--app-color-hairline); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.admin-payment-page .app-table td { padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid var(--app-color-hairline-soft); }
+.admin-payment-page .app-table tbody tr:last-child td { border-bottom: 0; }
+.admin-payment-page .app-empty-state { padding: 48px 24px !important; color: var(--app-color-muted); text-align: center; }
+.admin-payment-page .payment-purpose,
+.admin-payment-page .payment-status,
+.admin-payment-page .audit-result { min-height: 24px; padding: 5px 11px; display: inline-flex; align-items: center; border: 1px solid var(--app-color-hairline); border-radius: 9999px; color: var(--app-color-ink); background: var(--app-color-surface-card); font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; }
+.admin-payment-page .status-paid,
+.admin-payment-page .result-success { color: var(--app-color-success-ink); background: var(--app-color-success-soft); border-color: var(--app-color-success-border); }
+.admin-payment-page .status-pending { color: var(--app-color-warning-ink); background: var(--app-color-warning-soft); border-color: var(--app-color-warning-border); }
+.admin-payment-page .status-failed,
+.admin-payment-page .result-failure { color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border-color: var(--app-color-danger-border); }
+.admin-payment-page .alert { padding: 14px 16px; border: 1px solid; border-radius: 12px; box-shadow: none; font-size: 14px; font-weight: 500; }
+.admin-payment-page .alert-success { color: var(--app-color-success-ink); background: var(--app-color-success-soft); border-color: var(--app-color-success-border); }
+.admin-payment-page .alert-danger { color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border-color: var(--app-color-danger-border); }
+.admin-payment-page .payment-issue-message { max-width: 420px; color: var(--app-color-danger-ink); overflow-wrap: anywhere; }
+.admin-payment-page .payment-amount { color: var(--app-color-application-primary); font-family: var(--app-font-display); font-size: 28px; font-weight: 500; line-height: 1.15; }
+.admin-payment-page .payment-meta-label { display: block; margin-bottom: 4px; color: var(--app-color-muted); font-size: 13px; line-height: 1.4; }
+.admin-payment-page .reconciliation-item { padding: 16px; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.admin-payment-page .app-pagination-summary { color: var(--app-color-muted); font-size: 13px; }
+.admin-payment-page .app-pagination-region {
+    display: flex;
+    justify-content: center;
+    padding: 20px 24px;
+    border-top: 1px solid var(--app-color-hairline-soft);
+}
+.admin-payment-page .app-pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+}
+.admin-payment-page .app-pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    margin-left: 0;
+    padding: 0 12px;
+    color: var(--app-color-body);
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+}
+.admin-payment-page .app-pagination .page-link:hover,
+.admin-payment-page .app-pagination .page-link:focus {
+    color: var(--app-color-primary-active);
+    background: var(--app-color-surface-soft);
+    border-color: var(--app-color-primary);
+    box-shadow: none;
+}
+.admin-payment-page .app-pagination .page-item.active .page-link {
+    color: var(--app-color-on-dark);
+    background: var(--app-color-application-primary);
+    border-color: var(--app-color-application-primary);
+}
+.admin-payment-page .app-pagination .page-item.disabled .page-link {
+    color: var(--app-color-muted-soft);
+    background: var(--app-color-surface-soft);
+    border-color: var(--app-color-hairline);
+}
+@media (max-width: 767.98px) {
+    .admin-payment-page .app-page-header { align-items: stretch; flex-direction: column; }
+    .admin-payment-page .app-page-actions { justify-content: flex-start; }
+    .admin-payment-page .app-page-actions .btn { flex: 1; }
+    .admin-payment-page .app-card-body { padding: 16px; }
+    .admin-payment-page .app-card-header,
+    .admin-payment-page .app-card-footer { padding: 16px; }
+    .admin-payment-page .payment-filter-grid { grid-template-columns: 1fr; }
+    .admin-payment-page .payment-filter-actions { align-items: stretch; flex-direction: column; padding-left: 0; }
+    .admin-payment-page .payment-filter-actions .btn { width: 100%; }
+    .admin-payment-page .app-pagination-region { padding: 16px; }
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .admin-payment-page .payment-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-payment-page .payment-filter-search,
+    .admin-payment-page .payment-filter-actions { grid-column: 1 / -1; }
+}

@@ -1,19 +1,46 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
-<head><title>Payment audit logs</title></head>
-<body><div layout:fragment="content" th:with="activeMenu='payments'">
-    <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom"><div><a th:href="@{/admin/payments}" class="text-muted text-decoration-none"><i class="bi bi-arrow-left"></i> Thanh toán</a><h2 class="fw-bold mt-2 mb-0" style="color:#4a3b32">Payment audit logs</h2></div>
-        <div class="d-flex gap-2"><a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs/export(format='csv',keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">CSV</a><a class="btn btn-classic" th:href="@{/admin/payments/audit-logs/export(format='pdf',keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">PDF</a></div></div>
-    <div class="card-classic shadow-sm mb-4"><div class="card-body p-4"><form class="row g-3 align-items-end" method="get" th:action="@{/admin/payments/audit-logs}">
-        <div class="col-md-4"><label class="form-label">Tìm kiếm</label><input class="form-control" name="keyword" th:value="${keyword}" placeholder="Mã đơn, thành viên, sự kiện, nội dung"></div>
-        <div class="col-md-3"><label class="form-label">Loại sự kiện</label><input class="form-control" name="eventType" th:value="${eventType}" placeholder="STATUS_CHANGED"></div>
-        <div class="col-md-2"><label class="form-label">Từ ngày</label><input type="date" class="form-control" name="fromDate" th:value="${fromDate}"></div>
-        <div class="col-md-2"><label class="form-label">Đến ngày</label><input type="date" class="form-control" name="toDate" th:value="${toDate}"></div>
-        <div class="col-md-1"><button class="btn btn-classic w-100"><i class="bi bi-search"></i></button></div>
+<head><title>Payment audit logs</title><link rel="stylesheet" th:href="@{/css/pages/admin/payments.css}"/><script defer th:src="@{/js/auto-filter.js}"></script></head>
+<body><div layout:fragment="content" th:with="activeMenu='payments'" class="admin-payment-page">
+    <div class="app-page-header"><div><a th:href="@{/admin/payments}" class="app-back-link"><i class="bi bi-arrow-left"></i> Thanh toán</a><h2 class="app-page-title">Payment audit logs</h2></div>
+        <div class="app-page-actions"><a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs/export(format='csv',keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">CSV</a><a class="btn btn-classic" th:href="@{/admin/payments/audit-logs/export(format='pdf',keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">PDF</a></div></div>
+    <div class="app-card mb-4"><div class="app-card-body"><form id="auditFilterForm" class="payment-filter-grid audit-filter-grid" method="get" th:action="@{/admin/payments/audit-logs}" data-auto-filter-form data-focus-key="adminPaymentAuditFilterFocus">
+        <div class="payment-filter-field payment-filter-search"><label class="form-label">Tìm kiếm</label><input class="form-control" name="keyword" th:value="${keyword}" data-auto-search placeholder="Mã đơn, thành viên, sự kiện, nội dung"></div>
+        <div class="payment-filter-field"><label class="form-label">Loại sự kiện</label><input class="form-control" name="eventType" th:value="${eventType}" data-auto-search placeholder="STATUS_CHANGED"></div>
+        <div class="payment-filter-field"><label class="form-label">Từ ngày</label><input type="date" class="form-control" name="fromDate" th:value="${fromDate}" data-auto-submit></div>
+        <div class="payment-filter-field"><label class="form-label">Đến ngày</label><input type="date" class="form-control" name="toDate" th:value="${toDate}" data-auto-submit></div>
+        <div class="payment-filter-actions"><button class="btn btn-classic" type="submit">Tìm kiếm</button></div>
     </form></div></div>
-    <div class="card-classic shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Thời gian</th><th>Mã đơn</th><th>Thành viên</th><th>Sự kiện</th><th>Nguồn</th><th>Trạng thái</th><th>Kết quả</th><th>Nội dung</th></tr></thead>
+    <div class="app-card"><div class="app-table-wrap"><table class="app-table"><thead><tr><th>Thời gian</th><th>Mã đơn</th><th>Thành viên</th><th>Sự kiện</th><th>Nguồn</th><th>Trạng thái</th><th>Kết quả</th><th>Nội dung</th></tr></thead>
         <tbody><tr th:if="${audits.content.isEmpty()}"><td colspan="8" class="text-center text-muted py-5">Không có payment audit log phù hợp.</td></tr>
-        <tr th:each="a : ${audits.content}"><td th:text="${#temporals.format(a.createdAt,'dd/MM/yyyy HH:mm:ss')}"></td><td><a th:href="@{/admin/payments/{code}(code=${a.payment.orderCode})}" th:text="${a.payment.orderCode}"></a></td><td th:text="${a.payment.member.user.fullName}"></td><td th:text="${a.eventType}"></td><td th:text="${a.source}"></td><td th:text="${(a.oldStatus != null ? a.oldStatus : '—') + ' → ' + (a.newStatus != null ? a.newStatus : '—')}"></td><td><span class="badge" th:classappend="${a.successful ? 'bg-success' : 'bg-danger'}" th:text="${a.successful ? 'OK' : 'FAILED'}"></span></td><td th:text="${a.message}"></td></tr></tbody>
-    </table></div></div>
+        <tr th:each="a : ${audits.content}"><td th:text="${#temporals.format(a.createdAt,'dd/MM/yyyy HH:mm:ss')}"></td><td><a th:href="@{/admin/payments/{code}(code=${a.payment.orderCode})}" th:text="${a.payment.orderCode}"></a></td><td th:text="${a.payment.member.user.fullName}"></td><td th:text="${a.eventType}"></td><td th:text="${a.source}"></td><td th:text="${(a.oldStatus != null ? a.oldStatus : '—') + ' → ' + (a.newStatus != null ? a.newStatus : '—')}"></td><td><span class="audit-result" th:classappend="${a.successful ? ' result-success' : ' result-failure'}" th:text="${a.successful ? 'OK' : 'FAILED'}"></span></td><td th:text="${a.message}"></td></tr></tbody>
+    </table></div>
+        <div class="app-pagination-region"
+             th:if="${audits.totalPages > 1}"
+             th:with="startPage=${audits.totalPages <= 10 ? 0 : (audits.number < 9 ? 0 : (audits.number - 8 > audits.totalPages - 10 ? audits.totalPages - 10 : audits.number - 8))}">
+            <nav aria-label="Phân trang nhật ký thanh toán"
+                 th:with="endPage=${startPage + 9 < audits.totalPages ? startPage + 9 : audits.totalPages - 1}">
+                <ul class="pagination app-pagination">
+                    <li class="page-item" th:classappend="${audits.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments/audit-logs(page=0,keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">Đầu</a>
+                    </li>
+                    <li class="page-item" th:classappend="${audits.first ? 'disabled' : ''}">
+                        <a class="page-link" aria-label="Trang trước" th:href="@{/admin/payments/audit-logs(page=${audits.number-1},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == audits.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments/audit-logs(page=${i},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${endPage < audits.totalPages - 1}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:classappend="${audits.last ? 'disabled' : ''}">
+                        <a class="page-link" aria-label="Trang sau" th:href="@{/admin/payments/audit-logs(page=${audits.number+1},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                    <li class="page-item" th:classappend="${audits.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments/audit-logs(page=${audits.totalPages-1},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">Cuối</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
 </div></body></html>

@@ -1,35 +1,144 @@
 /* Presentation owner for templates/librarian/member-list.html */
 
+.member-management-page { min-width: 0; color: var(--app-color-body); font-family: var(--app-font-ui); }
+.member-management-page .member-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--app-color-hairline);
+}
+.member-management-page .member-page-title {
+    margin: 0 0 6px;
+    color: var(--app-color-ink);
+    font-family: var(--app-font-display);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+.member-management-page .member-page-description { color: var(--app-color-muted); font-size: 14px; }
+.member-management-page .refund-approval-panel {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--app-color-surface-soft);
+    border: 1px solid var(--app-color-hairline);
+    border-left: 4px solid var(--app-color-application-primary);
+    border-radius: var(--app-radius-lg);
+}
+.member-management-page .refund-approval-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+.member-management-page .refund-approval-header h5 { margin: 0 0 4px; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 20px; font-weight: 500; }
+.member-management-page .refund-approval-header p { margin: 0; color: var(--app-color-muted); font-size: 13px; }
+.member-management-page .refund-approval-header > span { flex: 0 0 auto; padding: 5px 10px; color: var(--app-color-primary-active); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 999px; font-size: 12px; font-weight: 600; }
+.member-management-page .refund-approval-list { display: grid; gap: 10px; }
+.member-management-page .refund-approval-item {
+    display: grid;
+    grid-template-columns: minmax(180px, .8fr) minmax(240px, 1.2fr) auto;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 16px;
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline-soft);
+    border-radius: var(--app-radius-md);
+}
+.member-management-page .refund-member,
+.member-management-page .refund-reservation { display: grid; gap: 3px; min-width: 0; }
+.member-management-page .refund-member strong,
+.member-management-page .refund-reservation strong { overflow: hidden; color: var(--app-color-body-strong); text-overflow: ellipsis; white-space: nowrap; }
+.member-management-page .refund-member span,
+.member-management-page .refund-reservation span { overflow: hidden; color: var(--app-color-muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.member-management-page .refund-approval-actions { display: flex; align-items: center; gap: 8px; }
+.member-management-page .refund-approval-actions form { margin: 0; }
+.member-management-page .refund-approval-actions .btn { white-space: nowrap; }
+.member-management-page .member-list-card {
+    overflow: hidden;
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    box-shadow: none !important;
+}
+.member-management-page .member-list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.member-management-page .member-search-form { width: min(680px, 100%); }
+.member-management-page .member-search-icon { color: var(--app-color-primary); background: var(--app-color-canvas); border-color: var(--app-color-hairline); }
+.member-management-page .member-form-section-title { margin: 20px 0 8px; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 18px; font-weight: 500; }
+.member-management-page .member-form-divider { margin: 24px 0; border-color: var(--app-color-hairline); opacity: 1; }
+.member-management-page .member-form-actions { display: flex; justify-content: flex-end; gap: 12px; }
+.member-management-page .form-control,
+.member-management-page .form-select { min-height: 42px; color: var(--app-color-body); background-color: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: var(--app-radius-md); font-size: 14px; }
+.member-management-page .form-control:focus,
+.member-management-page .form-select:focus { border-color: var(--app-color-primary); box-shadow: 0 0 0 3px var(--app-color-focus-coral-ring); }
+.member-management-page .form-label { margin-bottom: 8px; color: var(--app-color-body-strong) !important; font-size: 14px; font-weight: 600 !important; text-transform: none !important; }
+.member-management-page .required-marker,
+.member-management-page .destructive-title { color: var(--app-color-danger-ink); }
+.member-management-page .member-table { width: 100%; margin: 0; color: var(--app-color-body); font-size: 14px; }
+.member-management-page .member-table thead th { padding: 12px 16px; color: var(--app-color-muted); background: var(--app-color-surface-soft); border-bottom: 1px solid var(--app-color-hairline); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.member-management-page .member-table tbody td { padding: 14px 16px; background: var(--app-color-canvas); border-bottom: 1px solid var(--app-color-hairline-soft); vertical-align: middle; }
+.member-management-page .member-table tbody tr:hover td { background: var(--app-color-surface-soft); }
+.member-management-page .member-col-index { width: 7%; }
+.member-management-page .member-col-username { width: 15%; }
+.member-management-page .member-col-user { width: 25%; }
+.member-management-page .member-col-tier { width: 20%; }
+.member-management-page .member-col-status { width: 17%; }
+.member-management-page .member-col-actions { width: 16%; }
+.member-management-page .membership-tier-badge,
+.member-management-page .status-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 4px 10px; border: 1px solid transparent; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.member-management-page .membership-tier-badge--empty { color: var(--app-color-muted); background: var(--app-color-surface-soft); border-color: var(--app-color-hairline); }
+.member-management-page .status-active { color: var(--app-color-success-ink); background: var(--app-color-success-soft); border-color: var(--app-color-success-border); }
+.member-management-page .status-inactive { color: var(--app-color-warning-ink); background: var(--app-color-warning-soft); border-color: var(--app-color-warning-border); }
+.member-management-page .status-blocked { color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border-color: var(--app-color-danger-border); }
+.member-management-page .modal-content { overflow: hidden; color: var(--app-color-body); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline) !important; border-radius: var(--app-radius-lg); box-shadow: var(--app-color-overlay-shadow) !important; }
+.member-management-page .modal-header,
+.member-management-page .modal-footer,
+.member-management-page .card-header { padding: 20px !important; background: var(--app-color-surface-soft) !important; border-color: var(--app-color-hairline-soft) !important; }
+.member-management-page .modal-body { padding: 24px; }
+.member-management-page .modal-title { color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 20px; font-weight: 500 !important; }
+.member-management-page .modal-footer { display: flex; flex-wrap: nowrap; justify-content: flex-end; gap: 8px; }
+.member-management-page .modal-footer > * { margin: 0; }
+.member-management-page .app-danger-outline { color: var(--app-color-danger-ink); background: var(--app-color-canvas); border: 1px solid var(--app-color-danger-border); }
+.member-management-page .app-danger-action { color: var(--app-color-on-dark); background: var(--app-color-danger-ink); border: 1px solid var(--app-color-danger-ink); }
+.member-management-page .app-pagination-region { display: flex; justify-content: center; padding: 20px 24px; border-top: 1px solid var(--app-color-hairline-soft); }
+.member-management-page .app-pagination { justify-content: center; flex-wrap: wrap; gap: 8px; margin: 0; }
+.member-management-page .app-pagination .page-link { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; margin-left: 0; padding: 0 12px; color: var(--app-color-body); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: var(--app-radius-md); font-size: 14px; font-weight: 500; line-height: 1; }
+.member-management-page .app-pagination .page-item.active .page-link { color: var(--app-color-on-dark); background: var(--app-color-application-primary); border-color: var(--app-color-application-primary); }
+.member-management-page .app-pagination .page-item.disabled .page-link { color: var(--app-color-muted-soft); background: var(--app-color-surface-soft); border-color: var(--app-color-hairline); }
 #createMemberForm .form-control.is-invalid,
-        #createMemberForm .form-select.is-invalid,
-        .member-update-form .form-control.is-invalid,
-        .member-update-form .form-select.is-invalid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
+#createMemberForm .form-select.is-invalid,
+.member-update-form .form-control.is-invalid,
+.member-update-form .form-select.is-invalid,
+#createMemberForm .form-control.is-valid,
+#createMemberForm .form-select.is-valid,
+.member-update-form .form-control.is-valid,
+.member-update-form .form-select.is-valid { padding-right: 14px !important; background-image: none !important; }
+.update-account-tooltip .tooltip-inner,
+.delete-account-tooltip .tooltip-inner { color: var(--app-color-on-dark); background: var(--app-color-ink); }
 
-        #createMemberForm .form-control.is-valid,
-        #createMemberForm .form-select.is-valid,
-        .member-update-form .form-control.is-valid,
-        .member-update-form .form-select.is-valid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .update-account-tooltip .tooltip-inner {
-            background-color: #8b5a2b !important;
-            color: #ffffff !important;
-        }
-
-        .delete-account-tooltip .tooltip-inner {
-            background-color: #dc3545 !important;
-            color: #ffffff !important;
-        }
-
-        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #8b5a2b !important;
-        }
-
-        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #dc3545 !important;
-        }
+@media (max-width: 767.98px) {
+    .member-management-page .member-page-header,
+    .member-management-page .member-list-toolbar { align-items: stretch; flex-direction: column; }
+    .member-management-page .member-page-header .btn,
+    .member-management-page .member-list-toolbar .btn { width: 100%; }
+    .member-management-page .modal-header,
+    .member-management-page .modal-body,
+    .member-management-page .modal-footer { padding: 16px !important; }
+    .member-management-page .modal-footer { align-items: stretch; flex-direction: column; }
+    .member-management-page .modal-footer .btn { width: 100%; }
+    .member-management-page .app-pagination-region { padding: 16px; }
+    .member-management-page .refund-approval-header,
+    .member-management-page .refund-approval-item,
+    .member-management-page .refund-approval-actions { align-items: stretch; grid-template-columns: 1fr; flex-direction: column; }
+    .member-management-page .refund-approval-header > span { align-self: flex-start; }
+    .member-management-page .refund-approval-actions .btn { width: 100%; }
+}

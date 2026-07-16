@@ -152,6 +152,24 @@ public class FinancialController {
         return "redirect:/member/borrow/reservations";
     }
 
+    @PostMapping("/deposit/{reservationId}/refund-request")
+    public String requestReservationDepositRefund(@PathVariable Integer reservationId,
+                                                  Principal principal,
+                                                  RedirectAttributes redirectAttributes) {
+        Member member = getCurrentMember(principal);
+
+        try {
+            financialService.requestReservationDepositRefund(member.getMemberId(), reservationId);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Đã gửi yêu cầu hoàn tiền. Vui lòng chờ thủ thư duyệt.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+
+        return "redirect:/member/borrow/reservations";
+    }
+
     @GetMapping("/transactions")
     public String viewTransactionHistory(Principal principal,
                                          @RequestParam(defaultValue = "0") int page,

@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
-<head><title>Quản lý thanh toán online</title></head>
+<head><title>Quản lý thanh toán online</title><link rel="stylesheet" th:href="@{/css/pages/admin/payments.css}"/><script defer th:src="@{/js/auto-filter.js}"></script></head>
 <body>
-<div layout:fragment="content" th:with="activeMenu='payments'">
-    <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
+<div layout:fragment="content" th:with="activeMenu='payments'" class="admin-payment-page">
+    <div class="app-page-header">
         <div>
-            <h2 class="fw-bold mb-1" style="color:#4a3b32;font-family:'Playfair Display',serif;">Thanh toán online</h2>
-            <div class="text-muted">Theo dõi giao dịch PayOS, trạng thái và vấn đề đối soát</div>
+            <h2 class="app-page-title">Thanh toán online</h2>
+            <p class="app-page-description">Theo dõi giao dịch KQPay, trạng thái và vấn đề đối soát</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <div class="app-page-actions">
             <a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs}"><i class="bi bi-journal-text me-1"></i> Audit log</a>
             <a class="btn btn-outline-classic" th:href="@{/admin/payments/export(format='csv',keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">CSV</a>
             <a class="btn btn-classic" th:href="@{/admin/payments/export(format='pdf',keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">PDF</a>
@@ -17,80 +17,101 @@
     </div>
 
     <div class="alert alert-danger d-flex align-items-center" th:if="${openIssueCount > 0}">
-        <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+        <i class="bi bi-exclamation-triangle-fill me-3"></i>
         <div><strong th:text="${openIssueCount}">0</strong> vấn đề đối soát đang chờ xử lý.</div>
     </div>
 
-    <div class="card-classic shadow-sm mb-4">
-        <div class="card-body p-4">
-            <form method="get" th:action="@{/admin/payments}" class="row g-3 align-items-end">
-                <div class="col-lg-4">
-                    <label class="form-label small fw-bold text-uppercase text-muted">Tìm kiếm</label>
-                    <input class="form-control" name="keyword" th:value="${criteria.keyword}"
+    <div class="app-card mb-4">
+        <div class="app-card-body">
+            <form id="paymentFilterForm" method="get" th:action="@{/admin/payments}" class="payment-filter-grid" data-auto-filter-form data-focus-key="adminPaymentFilterFocus">
+                <div class="payment-filter-field payment-filter-search">
+                    <label class="form-label">Tìm kiếm</label>
+                    <input class="form-control" name="keyword" th:value="${criteria.keyword}" data-auto-search
                            placeholder="Mã đơn, tên, email, SĐT, mã ngân hàng">
                 </div>
-                <div class="col-lg-2 col-md-3">
-                    <label class="form-label small fw-bold text-uppercase text-muted">Trạng thái</label>
-                    <select class="form-select" name="status">
+                <div class="payment-filter-field">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" name="status" data-auto-submit>
                         <option value="">Tất cả</option>
                         <option th:each="item : ${statuses}" th:value="${item}" th:text="${item}" th:selected="${item == criteria.status}"></option>
                     </select>
                 </div>
-                <div class="col-lg-2 col-md-3">
-                    <label class="form-label small fw-bold text-uppercase text-muted">Mục đích</label>
-                    <select class="form-select" name="purpose">
+                <div class="payment-filter-field">
+                    <label class="form-label">Mục đích</label>
+                    <select class="form-select" name="purpose" data-auto-submit>
                         <option value="">Tất cả</option>
                         <option th:each="item : ${purposes}" th:value="${item}" th:text="${item}" th:selected="${item == criteria.purpose}"></option>
                     </select>
                 </div>
-                <div class="col-lg-2 col-md-3"><label class="form-label small fw-bold text-uppercase text-muted">Từ ngày</label><input type="date" class="form-control" name="fromDate" th:value="${criteria.fromDate}"></div>
-                <div class="col-lg-2 col-md-3"><label class="form-label small fw-bold text-uppercase text-muted">Đến ngày</label><input type="date" class="form-control" name="toDate" th:value="${criteria.toDate}"></div>
-                <div class="col-12 d-flex gap-2">
-                    <button class="btn btn-classic" type="submit"><i class="bi bi-search me-1"></i> Tìm và lọc</button>
-                    <a class="btn btn-light border" th:href="@{/admin/payments}">Xóa bộ lọc</a>
+                <div class="payment-filter-field"><label class="form-label">Từ ngày</label><input type="date" class="form-control" name="fromDate" th:value="${criteria.fromDate}" data-auto-submit></div>
+                <div class="payment-filter-field"><label class="form-label">Đến ngày</label><input type="date" class="form-control" name="toDate" th:value="${criteria.toDate}" data-auto-submit></div>
+                <div class="payment-filter-actions">
+                    <button class="btn btn-classic" type="submit">Tìm kiếm</button>
+                    <a class="btn app-secondary-action" th:href="@{/admin/payments}">Xóa bộ lọc</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card-classic shadow-sm mb-4">
-        <div class="card-header bg-white p-3 d-flex justify-content-between"><strong>Giao dịch PayOS</strong><span class="text-muted" th:text="${payments.totalElements + ' kết quả'}">0 kết quả</span></div>
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
+    <div class="app-card mb-4">
+        <div class="app-card-header"><h3 class="app-section-title">Giao dịch KQPay</h3><span class="app-pagination-summary" th:text="${payments.totalElements + ' kết quả'}">0 kết quả</span></div>
+        <div class="app-table-wrap">
+            <table class="app-table">
                 <thead class="table-light"><tr><th>Mã đơn</th><th>Thành viên</th><th>Mục đích</th><th class="text-end">Số tiền</th><th>Trạng thái</th><th>Thời gian</th><th></th></tr></thead>
                 <tbody>
-                <tr th:if="${payments.content.isEmpty()}"><td colspan="7" class="text-center text-muted py-5">Không tìm thấy giao dịch phù hợp.</td></tr>
+                <tr th:if="${payments.content.isEmpty()}"><td colspan="7" class="app-empty-state">Không tìm thấy giao dịch phù hợp.</td></tr>
                 <tr th:each="p : ${payments.content}">
                     <td class="fw-semibold" th:text="${p.orderCode}">1</td>
                     <td><div class="fw-semibold" th:text="${p.member.user.fullName}">Tên</div><small class="text-muted" th:text="${p.member.user.email}">email</small></td>
-                    <td><span class="badge bg-light text-dark border" th:text="${p.purpose}">TOP_UP</span></td>
+                    <td><span class="payment-purpose" th:text="${p.purpose}">TOP_UP</span></td>
                     <td class="text-end fw-semibold" th:text="${#numbers.formatDecimal(p.amount,0,'COMMA',0,'POINT') + ' ₫'}">0 ₫</td>
-                    <td><span class="badge" th:classappend="${p.status == 'PAID' ? 'bg-success' : (p.status == 'PENDING' ? 'bg-warning text-dark' : (p.status == 'CANCELLED' ? 'bg-secondary' : 'bg-danger'))}" th:text="${p.status}">PAID</span></td>
+                    <td><span class="payment-status" th:classappend="${p.status == 'PAID' ? ' status-paid' : (p.status == 'PENDING' ? ' status-pending' : ' status-failed')}" th:text="${p.status}">PAID</span></td>
                     <td><span th:text="${#temporals.format(p.createdAt,'dd/MM/yyyy HH:mm')}">-</span></td>
                     <td class="text-end"><a class="btn btn-sm btn-outline-classic" th:href="@{/admin/payments/{code}(code=${p.orderCode})}">Chi tiết</a></td>
                 </tr>
                 </tbody>
             </table>
         </div>
-        <div class="card-footer bg-white d-flex justify-content-between align-items-center" th:if="${payments.totalPages > 1}">
-            <a class="btn btn-sm btn-light border" th:classappend="${payments.first} ? 'disabled'" th:href="@{/admin/payments(page=${payments.number-1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">Trước</a>
-            <span th:text="${'Trang ' + (payments.number+1) + '/' + payments.totalPages}">Trang</span>
-            <a class="btn btn-sm btn-light border" th:classappend="${payments.last} ? 'disabled'" th:href="@{/admin/payments(page=${payments.number+1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">Sau</a>
+        <div class="app-pagination-region"
+             th:if="${payments.totalPages > 1}"
+             th:with="startPage=${payments.totalPages <= 10 ? 0 : (payments.number < 9 ? 0 : (payments.number - 8 > payments.totalPages - 10 ? payments.totalPages - 10 : payments.number - 8))}">
+            <nav aria-label="Phân trang giao dịch"
+                 th:with="endPage=${startPage + 9 < payments.totalPages ? startPage + 9 : payments.totalPages - 1}">
+                <ul class="pagination app-pagination">
+                    <li class="page-item" th:classappend="${payments.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments(page=0,keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">Đầu</a>
+                    </li>
+                    <li class="page-item" th:classappend="${payments.first ? 'disabled' : ''}">
+                        <a class="page-link" aria-label="Trang trước" th:href="@{/admin/payments(page=${payments.number-1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}"><i class="bi bi-chevron-left"></i></a>
+                    </li>
+                    <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == payments.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments(page=${i},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${endPage < payments.totalPages - 1}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:classappend="${payments.last ? 'disabled' : ''}">
+                        <a class="page-link" aria-label="Trang sau" th:href="@{/admin/payments(page=${payments.number+1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}"><i class="bi bi-chevron-right"></i></a>
+                    </li>
+                    <li class="page-item" th:classappend="${payments.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/admin/payments(page=${payments.totalPages-1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">Cuối</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 
-    <div class="card-classic shadow-sm" id="reconciliation-issues">
-        <div class="card-header bg-white p-3"><strong>Vấn đề đối soát đang mở</strong></div>
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
+    <div class="app-card" id="reconciliation-issues">
+        <div class="app-card-header"><h3 class="app-section-title">Vấn đề đối soát đang mở</h3></div>
+        <div class="app-table-wrap">
+            <table class="app-table">
                 <thead class="table-light"><tr><th>Mã đơn</th><th>Thành viên</th><th>Số lần thử</th><th>Lần thử cuối</th><th>Lỗi gần nhất</th><th></th></tr></thead>
                 <tbody>
                 <tr th:if="${openIssues.content.isEmpty()}"><td colspan="6" class="text-center text-muted py-4">Không có vấn đề đối soát đang mở.</td></tr>
                 <tr th:each="issue : ${openIssues.content}">
                     <td th:text="${issue.payment.orderCode}">1</td><td th:text="${issue.payment.member.user.fullName}">Tên</td>
                     <td th:text="${issue.attemptCount}">1</td><td th:text="${#temporals.format(issue.lastAttemptAt,'dd/MM/yyyy HH:mm')}">-</td>
-                    <td class="text-danger" style="max-width:420px" th:text="${issue.errorMessage}">Lỗi</td>
-                    <td class="text-end"><a class="btn btn-sm btn-danger" th:href="@{/admin/payments/{code}(code=${issue.payment.orderCode})}">Xử lý</a></td>
+                    <td class="payment-issue-message" th:text="${issue.errorMessage}">Lỗi</td>
+                    <td class="text-end"><a class="btn btn-classic" th:href="@{/admin/payments/{code}(code=${issue.payment.orderCode})}">Xử lý</a></td>
                 </tr>
                 </tbody>
             </table>

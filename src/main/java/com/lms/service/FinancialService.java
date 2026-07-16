@@ -1,7 +1,9 @@
 package com.lms.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
+import com.lms.entity.Reservation;
 import com.lms.entity.Transaction;
 import org.springframework.data.domain.Page;
 
@@ -16,6 +18,16 @@ public interface FinancialService {
     boolean hasPaidBorrowingFee(Integer memberId, Integer borrowId);
 
     void payReservationDeposit(Integer memberId, Integer reservationId);
+
+    void requestReservationDepositRefund(Integer memberId, Integer reservationId);
+
+    void refundReservationDeposit(Integer memberId, Integer reservationId);
+
+    List<Reservation> getRefundableReservationDeposits(Integer memberId);
+
+    List<Reservation> getPendingReservationDepositRefunds();
+
+    BigDecimal getReservationDepositAmount();
 
     Page<Transaction> getTransactionHistory(Integer memberId, int page, String type);
 

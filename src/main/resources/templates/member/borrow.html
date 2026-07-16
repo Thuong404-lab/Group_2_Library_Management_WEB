@@ -163,16 +163,21 @@
                             <td><strong class="text-dark" th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">21/11/2026</strong></td>
                             <td>
                                 <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ chuẩn bị</span>
+                                <span th:if="${item.status == 'Deposit_Paid'}" class="badge badge-classic-status badge-classic-warn">Đã cọc - chờ duyệt</span>
+                                <span th:if="${item.status == 'Refund_Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt hoàn tiền</span>
                                 <span th:if="${item.status == 'Active' || item.status == 'Ready'}" class="badge badge-classic-status badge-classic-success"><i class="bi bi-bell me-1"></i>Đã phê duyệt (Chờ lấy)</span>
                                 <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status badge-classic-danger">Đã hủy</span>
                                 <span th:if="${item.status == 'Completed'}" class="badge badge-classic-status">Đã nhận sách</span>
                             </td>
                             <td class="text-end pe-4">
                                 <!-- Form thực hiện Hủy đặt trước -->
-                                <form th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${item.id})}" method="post" class="member-borrow-form-display-11">
-                                    <button type="submit" class="btn btn-sm btn-danger">Hủy đặt</button>
-                                </form>
-                                <span th:unless="${item.status == 'Active' || item.status == 'Pending' || item.status == 'Ready'}" class="text-muted">-</span>
+                                <button th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
+                                        type="button" class="btn reservation-cancel-action"
+                                        data-toggle="modal"
+                                        th:data-target="${'#cancelReservationModal' + item.id}">
+                                    Hủy đặt
+                                </button>
+                                <span th:unless="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}" class="text-muted">-</span>
                             </td>
                         </tr>
                         </tbody>
@@ -224,15 +229,72 @@
             </div>
         </div>
     </div>
+    <th:block th:if="${activeTab == 'reserved'}">
+        <div th:each="item : ${booksData}"
+             th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
+             class="modal fade cancel-reservation-modal"
+             th:id="${'cancelReservationModal' + item.id}"
+             tabindex="-1"
+             role="dialog"
+             th:aria-labelledby="${'cancelReservationModalTitle' + item.id}"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="modal-title" th:id="${'cancelReservationModalTitle' + item.id}">Xác nhận hủy đặt trước</h2>
+                            <p>Kiểm tra thông tin trước khi xác nhận.</p>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="cancel-reservation-summary">
+                            <div>
+                                <small>Sách đặt trước</small>
+                                <strong th:text="${item.bookTitle}">Tên sách</strong>
+                                <span th:text="${item.authorName}">Tác giả</span>
+                            </div>
+                            <div>
+                                <small>Mã phiếu</small>
+                                <strong th:text="${'RES-' + item.id}">RES-1</strong>
+                            </div>
+                        </div>
+
+                        <div th:if="${item.status == 'Pending'}" class="cancel-reservation-message">
+                            Phiếu này chưa thanh toán tiền cọc. Sau khi xác nhận, yêu cầu đặt trước sẽ được hủy ngay.
+                        </div>
+                        <div th:unless="${item.status == 'Pending'}" class="cancel-reservation-message is-refund">
+                            Phiếu đã thanh toán tiền cọc. Sau khi xác nhận, hệ thống sẽ chuyển sang
+                            <strong>Chờ duyệt hoàn tiền</strong>. Tiền chỉ được cộng lại vào ví khi thủ thư duyệt.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn cancel-reservation-secondary" data-dismiss="modal">Quay lại</button>
+                        <form th:if="${item.status == 'Pending'}"
+                              th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${item.id})}"
+                              method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn cancel-reservation-confirm">Xác nhận hủy đặt</button>
+                        </form>
+                        <form th:unless="${item.status == 'Pending'}"
+                              th:action="@{/member/financial/deposit/{reservationId}/refund-request(reservationId=${item.id})}"
+                              method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn cancel-reservation-confirm">Gửi yêu cầu hoàn tiền</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
     <!-- Modal Xác Nhận Gia Hạn (Vanilla JS) -->
     <div class="modal fade member-borrow-div-background-14" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
                 <div class="modal-header member-borrow-div-background-border-bottom-border-radius-16">
                     <h5 class="modal-title font-playfair member-borrow-h5-color-font-weight-17" id="renewConfirmModalLabel"><i class="bi bi-question-circle me-2"></i>Xác nhận gia hạn</h5>
-                    <button type="button" class="close member-borrow-button-color-opacity-18" onclick="hideRenewModal()" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
                 </div>
                 <div class="modal-body text-center py-4">
                     <i class="bi bi-clock-history mb-3 member-borrow-i-font-size-color-opacity-19"></i>
@@ -253,9 +315,6 @@
             <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
                 <div class="modal-header member-borrow-div-background-border-bottom-border-radius-16">
                     <h5 class="modal-title font-playfair member-borrow-h5-color-font-weight-17"><i class="bi bi-question-circle me-2"></i>Xác nhận trả sách</h5>
-                    <button type="button" class="close member-borrow-button-color-opacity-18" onclick="hideReturnModal()" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
                 </div>
                 <div class="modal-body text-center py-4">
                     <i class="bi bi-box-arrow-in-right mb-3 member-borrow-i-font-size-color-opacity-24"></i>

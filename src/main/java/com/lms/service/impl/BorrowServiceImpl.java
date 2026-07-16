@@ -30,6 +30,7 @@ import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.service.AuditLogService;
 import com.lms.service.BorrowService;
+import com.lms.service.FinancialService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +54,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final AuditLogService auditLogService;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final FinancialService financialService;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
                              BookItemRepository bookItemRepository,
@@ -64,7 +66,8 @@ public class BorrowServiceImpl implements BorrowService {
                              ReservationRepository reservationRepository,
                              AuditLogService auditLogService,
                              NotificationRepository notificationRepository,
-                             MemberNotificationRepository memberNotificationRepository) {
+                             MemberNotificationRepository memberNotificationRepository,
+                             FinancialService financialService) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -76,6 +79,7 @@ public class BorrowServiceImpl implements BorrowService {
         this.auditLogService = auditLogService;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.financialService = financialService;
     }
 
     @Override
@@ -279,7 +283,11 @@ public class BorrowServiceImpl implements BorrowService {
                 .stream()
                 .anyMatch(r -> r.getBook() != null
                         && r.getBook().getBookId().equals(bookId)
-                        && ("Pending".equalsIgnoreCase(r.getStatus()) || "Active".equalsIgnoreCase(r.getStatus())));
+                        && ("Pending".equalsIgnoreCase(r.getStatus())
+                        || "Deposit_Paid".equalsIgnoreCase(r.getStatus())
+                        || "Refund_Pending".equalsIgnoreCase(r.getStatus())
+                        || "Ready".equalsIgnoreCase(r.getStatus())
+                        || "Active".equalsIgnoreCase(r.getStatus())));
         if (alreadyReserved) {
             throw new IllegalArgumentException("Bạn đã có một yêu cầu đặt trước cuốn sách này và đang chờ xử lý!");
         }
@@ -290,6 +298,7 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setReservationDate(LocalDateTime.now());
         reservation.setStatus("Pending");
         Reservation savedReservation = reservationRepository.save(reservation);
+        financialService.payReservationDeposit(member.getMemberId(), savedReservation.getReservationId());
         auditLogService.log(
                 ActionType.RESERVE_BOOK,
                 "Member " + username + " gui yeu cau dat truoc sach #" + book.getBookId()
@@ -302,7 +311,8 @@ public class BorrowServiceImpl implements BorrowService {
     public void approveReservationRequest(Integer reservationId, String staffUsername) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn yêu cầu đặt trước!"));
-        if (!"Pending".equalsIgnoreCase(reservation.getStatus())) {
+        if (!"Pending".equalsIgnoreCase(reservation.getStatus())
+                && !"Deposit_Paid".equalsIgnoreCase(reservation.getStatus())) {
             throw new IllegalArgumentException("Đơn đặt trước này đã được xử lý từ trước!");
         }
 
@@ -368,7 +378,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(readOnly = true)
     public List<Reservation> getAllPendingReservations() {
         return reservationRepository.findAll().stream()
-                .filter(r -> "Pending".equalsIgnoreCase(r.getStatus()))
+                .filter(r -> "Pending".equalsIgnoreCase(r.getStatus())
+                        || "Deposit_Paid".equalsIgnoreCase(r.getStatus()))
                 .toList();
     }
 
@@ -474,7 +485,11 @@ public class BorrowServiceImpl implements BorrowService {
 
         List<MemberBorrowDTO> dtoList = new ArrayList<>();
         for (Reservation res : reservationRepository.findByMember_MemberIdOrderByReservationDateDesc(memberId)) {
-            if (!"Pending".equalsIgnoreCase(res.getStatus()) && !"Active".equalsIgnoreCase(res.getStatus())) {
+            if (!"Pending".equalsIgnoreCase(res.getStatus())
+                    && !"Deposit_Paid".equalsIgnoreCase(res.getStatus())
+                    && !"Refund_Pending".equalsIgnoreCase(res.getStatus())
+                    && !"Ready".equalsIgnoreCase(res.getStatus())
+                    && !"Active".equalsIgnoreCase(res.getStatus())) {
                 continue;
             }
             MemberBorrowDTO dto = new MemberBorrowDTO();
