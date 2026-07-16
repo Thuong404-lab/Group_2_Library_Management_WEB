@@ -58,17 +58,24 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public Page<SystemLog> getSystemLogs(int page, String action, String keyword) {
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10);
-
-        String trimmedAction = action == null ? "" : action.trim();
         String trimmedKeyword = keyword == null ? "" : keyword.trim();
-        String searchKeyword = (trimmedAction + " " + trimmedKeyword).trim();
+        String section = normalizeLogSection(action);
 
-        Page<SystemLog> logs = !searchKeyword.isEmpty()
-                ? systemLogRepository.searchLogs(searchKeyword, pageRequest)
-                : systemLogRepository.findAllByOrderByCreatedAtDesc(pageRequest);
+        Page<SystemLog> logs = systemLogRepository.searchLogsBySection(
+                section, trimmedKeyword, pageRequest);
 
         logs.forEach(this::populateActorUsername);
         return logs;
+    }
+
+    private String normalizeLogSection(String section) {
+        if ("operations".equalsIgnoreCase(section)) {
+            return "operations";
+        }
+        if ("circulation".equalsIgnoreCase(section)) {
+            return "circulation";
+        }
+        return "auth";
     }
 
     private void populateActorUsername(SystemLog log) {

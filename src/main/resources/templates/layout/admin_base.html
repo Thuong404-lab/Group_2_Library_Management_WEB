@@ -36,18 +36,32 @@
             </li>
 
             <li class="menu-item">
-                <a th:href="@{/admin/accounts}" class="menu-link"
-                    th:classappend="${activeMenu == 'accounts'} ? 'active'">
-                    <i class="bi bi-people-fill menu-icon"></i>
-                    <span class="menu-text">Thành viên</span>
+                <a href="#adminUserManagementMenu" data-bs-toggle="collapse"
+                    class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                    th:classappend="${activeMenu == 'accounts' || activeMenu == 'staff'} ? 'active'"
+                    th:attr="aria-expanded=${activeMenu == 'accounts' || activeMenu == 'staff'}"
+                    aria-controls="adminUserManagementMenu">
+                    <span class="d-flex align-items-center">
+                        <i class="bi bi-people-fill menu-icon"></i>
+                        <span class="menu-text">Quản lý người dùng</span>
+                    </span>
+                    <i class="bi bi-chevron-down ms-auto menu-text u-font-size-0-75rem-8b511f07"></i>
                 </a>
-            </li>
-
-            <li class="menu-item">
-                <a th:href="@{/admin/staff}" class="menu-link" th:classappend="${activeMenu == 'staff'} ? 'active'">
-                    <i class="bi bi-person-badge-fill menu-icon"></i>
-                    <span class="menu-text">Thủ thư</span>
-                </a>
+                <ul class="collapse list-unstyled ps-4 mb-0" id="adminUserManagementMenu"
+                    th:classappend="${activeMenu == 'accounts' || activeMenu == 'staff'} ? 'show'">
+                    <li class="menu-item my-1">
+                        <a th:href="@{/admin/accounts}" class="menu-link py-2"
+                            th:classappend="${activeMenu == 'accounts'} ? 'active-submenu'">
+                            <span class="menu-text">Danh sách thành viên</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/admin/staff}" class="menu-link py-2"
+                            th:classappend="${activeMenu == 'staff'} ? 'active-submenu'">
+                            <span class="menu-text">Danh sách nhân sự</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
             <li class="menu-item">

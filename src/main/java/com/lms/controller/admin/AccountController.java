@@ -3,14 +3,10 @@ package com.lms.controller.admin;
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.AdminAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
-import com.lms.entity.Member;
-import com.lms.entity.MemberAccount;
+import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.exception.AccountFormValidationException;
 import com.lms.service.AccountService;
 import com.lms.service.AuthService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
@@ -40,15 +36,18 @@ public class AccountController {
     @GetMapping
     public String listAccounts(@RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "") String tier,
             Model model) {
-        PageRequest pageRequest = PageRequest.of(page, 10, Sort.by("id").ascending());
-        Page<MemberAccount> accounts = accountService.getMemberAccounts(keyword, pageRequest);
-        Map<Integer, Member> memberByUserId = accountService.getMemberByUserId(accounts);
+        AdminAccountListViewData data = accountService.getMemberAccountList(page, keyword, status, tier);
 
-        model.addAttribute("accounts", accounts);
+        model.addAttribute("accounts", data.accounts());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("memberByUserId", memberByUserId);
-        model.addAttribute("tiers", accountService.getMembershipTiers());
+        model.addAttribute("memberByUserId", data.memberByUserId());
+        model.addAttribute("tiers", data.tiers());
+        model.addAttribute("memberSummary", data.summaryCounts());
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedTier", tier);
 
         return "admin/accounts";
     }
@@ -57,7 +56,7 @@ public class AccountController {
     public String searchAccounts(@RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") int page,
             Model model) {
-        return listAccounts(page, keyword, model);
+        return listAccounts(page, keyword, "", "", model);
     }
 
     @PostMapping("/create")
@@ -98,10 +97,11 @@ public class AccountController {
             @RequestParam(required = false) Integer tierId,
             @RequestParam(required = false) String staffType,
             @RequestParam(required = false, defaultValue = "") String status,
-            @RequestParam(required = false, defaultValue = "members") String source) {
+            @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
         AdminAccountUpdateRequest request = new AdminAccountUpdateRequest(
                 id, fullName, email, phone, username, tierId, staffType, status, source);
-        return accountService.validateAccountUpdate(request);
+        return accountService.validateAccountUpdate(request, accountIdOf(currentUser));
     }
 
     @PostMapping("/edit/{id}")
@@ -120,19 +120,8 @@ public class AccountController {
         AdminAccountUpdateRequest request = new AdminAccountUpdateRequest(
                 id, fullName, email, phone, username, tierId, staffType, status, source);
 
-        if ("staff".equalsIgnoreCase(source)
-                && currentUser != null
-                && id.equals(currentUser.getAccountId())
-                && !"Active".equalsIgnoreCase(status)) {
-            redirectAttributes.addFlashAttribute("editAccountId", id);
-            redirectAttributes.addFlashAttribute("editFormValues", createEditFormValues(request));
-            redirectAttributes.addFlashAttribute("editFieldErrors",
-                    Map.of("status", "Bạn không thể khóa hoặc vô hiệu hóa tài khoản đang đăng nhập."));
-            return redirectBySource(source) + "#updateStaffModal" + id;
-        }
-
         try {
-            accountService.updateAccount(request);
+            accountService.updateAccount(request, accountIdOf(currentUser));
             redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
@@ -149,9 +138,10 @@ public class AccountController {
     @PostMapping("/delete/{id}")
     public String deleteAccount(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
         try {
-            accountService.deleteAccount(id, source);
+            accountService.deleteAccount(id, source, accountIdOf(currentUser));
             redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -175,20 +165,6 @@ public class AccountController {
                             : e.getMessage());
         }
         return "redirect:/admin/accounts";
-    }
-
-    private void prepareCreateAccountPage(Model model, String source) {
-        model.addAttribute("tiers", accountService.getMembershipTiers());
-
-        if ("staff".equalsIgnoreCase(source)) {
-            model.addAttribute("source", "staff");
-            model.addAttribute("backText", "← Về danh sách thủ thư");
-            model.addAttribute("backUrl", "/admin/staff");
-        } else {
-            model.addAttribute("source", "members");
-            model.addAttribute("backText", "← Về danh sách thành viên");
-            model.addAttribute("backUrl", "/admin/accounts");
-        }
     }
 
     private Map<String, Object> createFormValues(AdminAccountCreateRequest request) {
@@ -225,5 +201,9 @@ public class AccountController {
 
     private String trim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private Integer accountIdOf(CustomUserDetails currentUser) {
+        return currentUser == null ? null : currentUser.getAccountId();
     }
 }

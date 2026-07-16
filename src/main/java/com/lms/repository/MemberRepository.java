@@ -16,6 +16,11 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
     Optional<Member> findByUserId(Integer userId);
     List<Member> findAll();
 
+    // Kept for compatibility with IDE incremental builds that may still load
+    // the previous member-summary implementation. The current service does not
+    // call this method after tier summary chips were removed.
+    long countByTier_TierNameIgnoreCase(String tierName);
+
     Optional<Member> findByUserEmail(String email);
 
     Optional<Member> findByUserPhone(String phone);
