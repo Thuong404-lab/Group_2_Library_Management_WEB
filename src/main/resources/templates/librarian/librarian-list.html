@@ -20,6 +20,16 @@
 
         <section class="member-data-card">
             <div class="member-data-card-body">
+                <div class="member-summary-chips" aria-label="Tổng quan thủ thư">
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> thủ
+                        thư</span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong> hoạt
+                        động</span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['inactive'] : 0}">0</strong>
+                        ngừng hoạt động</span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['blocked'] : 0}">0</strong> bị
+                        khóa</span>
+                </div>
 
                 <!-- Search & Filter + Back Button -->
                 <div class="member-toolbar">
@@ -32,20 +42,20 @@
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
                                 th:value="${keyword}"
                                 placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
-
+                            <select class="form-select member-filter-select" name="status"
+                                aria-label="Lọc theo trạng thái">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
+                                </option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động
+                                </option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
+                            </select>
                             <button class="btn member-search-button text-nowrap" type="submit">
                                 Tìm kiếm
                             </button>
                         </div>
                     </form>
-
-                    <!-- Back Button -->
-                    <div class="member-toolbar-secondary">
-                        <a class="btn member-back-button text-nowrap"
-                            th:href="@{/librarian/dashboard(section='users')}">
-                            <i class="bi bi-arrow-left me-1"></i> Trở về
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Table -->
@@ -153,9 +163,6 @@
                                                 <div class="modal-header member-modal-header">
                                                     <h5 class="modal-title member-modal-title-accent">Chi tiết thủ
                                                         thư</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close">
-                                                    </button>
                                                 </div>
 
                                                 <div class="modal-body member-modal-body">
@@ -283,13 +290,13 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword})}">Đầu</a>
+                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword}, status=${selectedStatus})}">Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword})}"><i
+                                    th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword}, status=${selectedStatus})}"><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
 
@@ -300,7 +307,8 @@
                             <!-- Sliding window: at most 10 page numbers -->
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
-                                <a class="page-link" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}"
+                                <a class="page-link"
+                                    th:href="@{/librarian/librarians(page=${i}, keyword=${keyword}, status=${selectedStatus})}"
                                     th:text="${i + 1}">1</a>
                             </li>
 
@@ -311,14 +319,14 @@
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword})}"><i
+                                    th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword}, status=${selectedStatus})}"><i
                                         class="bi bi-chevron-right"></i></a>
                             </li>
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword})}">Cuối</a>
+                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus})}">Cuối</a>
                             </li>
                         </ul>
                     </nav>

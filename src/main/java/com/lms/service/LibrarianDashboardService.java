@@ -14,5 +14,5 @@ public interface LibrarianDashboardService {
 
     Map<String, Object> getStatisticsData();
 
-    LibrarianListViewData getLibrarianList(int page, String keyword);
+    LibrarianListViewData getLibrarianList(int page, String keyword, String status);
 }
