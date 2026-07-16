@@ -2,12 +2,13 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 <head>
     <title>Đề xuất mua sách</title>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/suggestions.css}" />
+  </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='suggestions'">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Đề xuất Mua Sách</h2>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Đề xuất Mua Sách</h2>
             <div class="text-muted">Xem xét và phê duyệt các đề xuất mua sách từ bạn đọc</div>
         </div>
         <div>
@@ -20,25 +21,25 @@
     <!-- Stats Row -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card-classic p-3 text-center shadow-sm border-0" style="border-left: 4px solid #ffc107 !important;">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-ffc107-important-437ded87">
                 <div class="text-muted small text-uppercase fw-bold mb-1">Chờ duyệt</div>
-                <h4 class="fw-bold mb-0" style="color: #ffc107;" th:text="${pendingCount ?: 0}">0</h4>
+                <h4 class="fw-bold mb-0 u-color-ffc107-b61c34a0" th:text="${pendingCount ?: 0}">0</h4>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card-classic p-3 text-center shadow-sm border-0" style="border-left: 4px solid #198754 !important;">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6">
                 <div class="text-muted small text-uppercase fw-bold mb-1">Đã duyệt</div>
                 <h4 class="fw-bold mb-0 text-success" th:text="${approvedCount ?: 0}">0</h4>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card-classic p-3 text-center shadow-sm border-0" style="border-left: 4px solid #dc3545 !important;">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-dc3545-important-49da6d79">
                 <div class="text-muted small text-uppercase fw-bold mb-1">Từ chối</div>
                 <h4 class="fw-bold mb-0 text-danger" th:text="${rejectedCount ?: 0}">0</h4>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card-classic p-3 text-center shadow-sm border-0" style="border-left: 4px solid #8b5a2b !important;">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d">
                 <div class="text-muted small text-uppercase fw-bold mb-1">Tổng cộng</div>
                 <h4 class="fw-bold mb-0 text-classic" th:text="${totalCount ?: 0}">0</h4>
             </div>
@@ -51,7 +52,7 @@
             <form class="row g-3 mb-4" method="get">
                 <div class="col-md-6">
                     <div class="input-group shadow-sm">
-                        <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;"><i class="bi bi-search"></i></span>
+                        <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
                         <input class="form-control border-start-0 ps-0" type="text" name="keyword" placeholder="Tìm theo tên sách, tác giả hoặc người đề xuất...">
                         <button class="btn btn-classic" type="submit">Tìm</button>
                     </div>
@@ -69,11 +70,11 @@
             <div class="table-responsive">
                     <table class="table table-hover align-middle stable-table-layout">
                         <colgroup>
-                            <col style="width: 6%">
-                            <col style="width: 25%">
-                            <col style="width: 20%">
-                            <col style="width: 25%">
-                            <col style="width: 24%">
+                            <col class="u-width-6-89d41777">
+                            <col class="u-width-25-84a0e8c4">
+                            <col class="u-width-20-00e2b68d">
+                            <col class="u-width-25-84a0e8c4">
+                            <col class="u-width-24-3ca932db">
                         </colgroup>
                     <thead class="table-light text-uppercase small text-muted">
                         <tr>
@@ -98,7 +99,7 @@
                             <td th:text="${suggestion.requesterName}">Bạn đọc</td>
                             <td th:text="${#temporals.format(suggestion.createdAt, 'dd/MM/yyyy')}">01/01/2026</td>
                             <td>
-                                <span class="text-truncate d-inline-block" style="max-width: 150px;" th:text="${suggestion.reason}">Lý do</span>
+                                <span class="text-truncate d-inline-block librarian-suggestions-span-max-width-13" th:text="${suggestion.reason}">Lý do</span>
                             </td>
                             <td>
                                 <span class="status-badge status-pending" th:if="${suggestion.status == 'pending'}">Chờ duyệt</span>

@@ -5,99 +5,26 @@
 <head>
     <title>Bàn tiếp nhận trả sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        .classic-card {
-            border: 1px solid rgba(139, 90, 43, 0.18) !important;
-            border-radius: 10px !important;
-            background-color: #ffffff !important;
-            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
-            overflow: hidden;
-        }
-        .classic-card .card-header {
-            background: #ffffff !important;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.18) !important;
-            padding-top: 1.25rem;
-            padding-bottom: 1.25rem;
-        }
-        .card-title-custom {
-            color: #4a3b32;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        .classic-table thead th {
-            background: rgba(139, 90, 43, 0.04) !important;
-            color: #4a3b32 !important;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.3px;
-        }
-        .classic-table tbody tr {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #dee2e6 !important;
-        }
-        .btn-classic-primary {
-            background: #8b5a2b !important;
-            border: 1px solid #8b5a2b !important;
-            color: #ffffff !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-primary:hover {
-            background: #74481f !important;
-            border-color: #74481f !important;
-            color: #ffffff !important;
-        }
-        .btn-classic-outline {
-            background: transparent !important;
-            border: 1px solid rgba(139, 90, 43, 0.5) !important;
-            color: #8b5a2b !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-outline:hover {
-            background: rgba(139, 90, 43, 0.08) !important;
-            border-color: #8b5a2b !important;
-        }
-        .scan-input {
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            background-color: #ffffff;
-            color: #4a3b32;
-            font-size: 1.05rem;
-            transition: all 0.2s ease;
-        }
-        .scan-input:focus {
-            border-color: #8b5a2b;
-            box-shadow: 0 0 0 0.2rem rgba(139, 90, 43, 0.15);
-            background-color: #fff;
-        }
-        .badge-classic { background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.3); border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; }
-        .result-card { border-left: 4px solid #8b5a2b !important; }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/return-desk.css}" />
+  </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='borrow-return'">
 
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Thành công</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Lỗi</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
     <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bàn tiếp nhận trả sách</h2>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Bàn tiếp nhận trả sách</h2>
             <div class="text-muted">Tiếp nhận sách hoàn trả và đánh giá tình trạng sách tại quầy thư viện.</div>
         </div>
     </div>
@@ -105,19 +32,19 @@
     <!-- Barcode Search Card -->
     <div class="card classic-card shadow-sm mb-4">
         <div class="card-header">
-            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2" style="color: #8b5a2b;"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
+            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2 u-color-8b5a2b-93ece783"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
         </div>
         <div class="card-body p-4 bg-white">
             <form th:action="@{/librarian/loan/returns/search}" method="get" class="row g-3 align-items-end">
                 <div class="col-md-9">
-                    <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Mã vạch (Barcode) của cuốn sách</label>
+                    <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Mã vạch (Barcode) của cuốn sách</label>
                     <input type="text" name="barcode" th:value="${searchedBarcode}"
                            class="form-control scan-input"
                            placeholder="Ví dụ: BI-1002 hoặc quét trực tiếp bằng thiết bị..."
                            autofocus required autocomplete="off" />
                 </div>
                 <div class="col-md-3">
-                    <button type="submit" class="btn w-100 fw-bold btn-classic-primary" style="padding: 0.5rem 1rem;">
+                    <button type="submit" class="btn w-100 fw-bold btn-classic-primary librarian-return-desk-button-padding-07">
                         <i class="bi bi-search me-1"></i>Tìm đơn mượn
                     </button>
                 </div>
@@ -129,9 +56,9 @@
     <div class="card classic-card shadow-sm mb-4 result-card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title-custom mb-0">
-                <i class="bi bi-file-earmark-text me-2" style="color: #8b5a2b;"></i>
+                <i class="bi bi-file-earmark-text me-2 u-color-8b5a2b-93ece783"></i>
                 Kết quả tra cứu cho mã sách:
-                <span class="font-monospace ms-1" style="color: #8b5a2b;" th:text="${searchedBarcode}">BI-1002</span>
+                <span class="font-monospace ms-1 u-color-8b5a2b-93ece783" th:text="${searchedBarcode}">BI-1002</span>
             </h5>
         </div>
         <div class="table-responsive">
@@ -148,10 +75,10 @@
                 <tbody>
                 <tr th:each="detail : ${searchResults}">
                     <td class="ps-4">
-                        <span class="font-monospace fw-bold" style="color: #8b5a2b;" th:text="'BOR-' + ${detail.borrow.borrowId}">BOR-1</span>
+                        <span class="font-monospace fw-bold u-color-8b5a2b-93ece783" th:text="'BOR-' + ${detail.borrow.borrowId}">BOR-1</span>
                     </td>
                     <td>
-                        <div class="fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif;" th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
+                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d" th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
                         <small class="text-muted" th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
                     </td>
                     <td>
@@ -164,9 +91,9 @@
                               class="status-badge status-overdue ms-1">Quá hạn</span>
                     </td>
                     <td class="text-end pe-4">
-                        <button type="button" class="btn btn-classic-outline px-3 py-1"
+                        <button type="button" class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
                                 data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
-                                style="font-size: 0.85rem;">
+                               >
                             Tiếp nhận trả sách
                         </button>
                     </td>
@@ -183,10 +110,10 @@
                 </tr>
                 <tr th:if="${false}">
                     <td class="ps-4">
-                        <span class="font-monospace fw-bold" style="color: #8b5a2b;">BOR-1002</span>
+                        <span class="font-monospace fw-bold u-color-8b5a2b-93ece783">BOR-1002</span>
                     </td>
                     <td>
-                        <div class="fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif;">Nguyễn Văn A</div>
+                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d">Nguyễn Văn A</div>
                         <small class="text-muted">nva@gmail.com</small>
                     </td>
                     <td>
@@ -197,9 +124,9 @@
                         <span class="fw-bold text-dark">20/07/2026</span>
                     </td>
                     <td class="text-end pe-4">
-                        <button type="button" class="btn btn-classic-outline px-3 py-1"
+                        <button type="button" class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
                                 data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
-                                style="font-size: 0.85rem;">
+                               >
                             Tiếp nhận trả sách
                         </button>
                     </td>
@@ -213,21 +140,21 @@
     <div th:if="${searchResults != null and !#lists.isEmpty(searchResults)}"
          class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
+            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content border-0 shadow u-border-radius-12px-overflow-hidden-83c08529">
                 <input type="hidden" name="barcode" th:value="${searchedBarcode}">
-                <div class="modal-header" style="background-color: #fdfbf7; border-bottom: 1px dashed rgba(139, 90, 43, 0.2);">
-                    <h5 class="modal-title fw-bold" id="confirmReturnModalLabel" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                <div class="modal-header u-background-color-fdfbf7-border-bottom-1px-dashed-rgba-139-90-43-0-2-518871f5">
+                    <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" id="confirmReturnModalLabel">
                         Biên bản đánh giá hoàn sách nhập kho
                     </h5>
                 </div>
-                <div class="modal-body p-4" style="background-color: #fdfbf7;">
+                <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Ngày trả thực tế <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Ngày trả thực tế <span class="text-danger">*</span></label>
                         <input type="date" name="returnDate" th:value="${defaultReturnDate}"
                                class="form-control scan-input" required />
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
                         <select name="conditionNote" class="form-select scan-input" required>
                             <option value="Tốt - Sách nguyên vẹn, sạch đẹp">Tốt / Nguyên vẹn, sạch đẹp</option>
                             <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ">Hư hỏng nhẹ (Quăn mép, sờn bìa, vết rách nhỏ)</option>
@@ -235,13 +162,13 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Ghi chú chi tiết thêm (Tùy chọn)</label>
+                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Ghi chú chi tiết thêm (Tùy chọn)</label>
                         <textarea class="form-control scan-input" name="conditionNoteAdditional" rows="3" placeholder="Nhập thêm mô tả cụ thể về hư hỏng nếu có..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer" style="background-color: #fdfbf7; border-top: 1px dashed rgba(139, 90, 43, 0.2);">
+                <div class="modal-footer u-background-color-fdfbf7-border-top-1px-dashed-rgba-139-90-43-0-2-72a5c67f">
                     <button type="button" class="btn btn-classic-outline px-4" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-classic-primary px-4 fw-bold" style="margin-right: 0 !important;">
+                    <button type="submit" class="btn btn-classic-primary px-4 fw-bold u-margin-right-0-important-5a8785f5">
                         Xác nhận &amp; Hoàn kho
                     </button>
                 </div>

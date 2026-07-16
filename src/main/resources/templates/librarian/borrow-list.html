@@ -5,118 +5,25 @@
 <head>
     <title>Danh Sách Phiếu Mượn Sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body { background-color: #f8f7f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .text-classic { color: #8b5a2b !important; }
-        .btn-classic {
-            background-color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
-            color: #ffffff !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic:hover {
-            background-color: #74481f !important;
-            border-color: #74481f !important;
-            color: #ffffff !important;
-        }
-        .btn-outline-classic {
-            color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
-            background-color: transparent;
-            transition: all 0.2s ease;
-        }
-        .btn-outline-classic:hover {
-            background-color: #8b5a2b !important;
-            color: #ffffff !important;
-        }
-        .card-classic {
-            background-color: #ffffff;
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
-        .classic-table thead th {
-            background: rgba(139, 90, 43, 0.04) !important;
-            color: #4a3b32 !important;
-            border-bottom: 2px solid rgba(139, 90, 43, 0.15) !important;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.3px;
-        }
-        .classic-table tbody tr {
-            transition: background-color 0.2s ease;
-        }
-        .classic-table tbody tr:hover {
-            background-color: rgba(139, 90, 43, 0.02) !important;
-        }
-        .badge-status {
-            padding: 0.4rem 0.8rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            display: inline-block;
-        }
-        .badge-status-active {
-            background-color: #e3f2fd;
-            color: #0d47a1;
-            border: 1px solid #bbdefb;
-        }
-        .badge-status-returned {
-            background-color: #e8f5e9;
-            color: #1b5e20;
-            border: 1px solid #c8e6c9;
-        }
-        .badge-status-overdue {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-        .badge-status-pending {
-            background-color: #fff8e1;
-            color: #f57f17;
-            border: 1px solid #ffe082;
-        }
-        .badge-status-rejected {
-            background-color: #f5f5f5;
-            color: #616161;
-            border: 1px solid #e0e0e0;
-        }
-        .badge-status-return-pending {
-            background-color: #e0f7fa;
-            color: #006064;
-            border: 1px solid #b2ebf2;
-        }
-        .form-control-classic {
-            border: 1px solid rgba(139, 90, 43, 0.2);
-            color: #4a3b32;
-            background-color: #fdfbf7;
-            border-radius: 6px;
-        }
-        .form-control-classic:focus {
-            border-color: #8b5a2b;
-            box-shadow: 0 0 0 0.2rem rgba(139, 90, 43, 0.15);
-            background-color: #ffffff;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-list.css}" />
+  </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='borrow-desk'">
 
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Thông báo thành công</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Thông báo lỗi</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Lịch Mượn/Trả</h2>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Quản lý Lịch Mượn/Trả</h2>
             <div class="text-muted small">Quản lý toàn bộ các phiếu mượn sách lưu hành của độc giả và điều phối phân trang hệ thống.</div>
         </div>
     </div>
@@ -138,7 +45,7 @@
             </div>
             <div class="col-md-6">
                 <div class="input-group">
-                    <span class="input-group-text bg-white text-classic border-end-0" style="border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-search"></i></span>
+                    <span class="input-group-text bg-white text-classic border-end-0 u-border-color-rgba-139-90-43-0-2-447fe402"><i class="bi bi-search"></i></span>
                     <input type="text" class="form-control border-start-0 ps-0 form-control-classic" name="keyword" th:value="${keyword}" placeholder="Nhập tên độc giả, email, số điện thoại hoặc mã phiếu...">
                 </div>
             </div>
@@ -153,7 +60,7 @@
             <table class="table align-middle classic-table mb-0">
                 <thead>
                 <tr>
-                    <th class="ps-4" style="width: 60px;">STT</th>
+                    <th class="ps-4 librarian-borrow-list-th-width-06">STT</th>
                     <th>Mã Phiếu</th>
                     <th>Thông tin Độc giả</th>
                     <th>Ngày mượn</th>
@@ -209,21 +116,21 @@
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
-                        <a class="page-link text-classic" th:href="@{/librarian/borrow/list(page=${currentPage - 1}, status=${status}, keyword=${keyword})}" aria-label="Previous">
+                        <a class="page-link page-link-classic text-classic" th:href="@{/librarian/borrow/list(page=${currentPage - 1}, status=${status}, keyword=${keyword})}" aria-label="Previous">
                             <span aria-hidden="true">&laquo; Trước</span>
                         </a>
                     </li>
 
                     <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
                         th:classappend="${pageNum == currentPage} ? 'active' : ''">
-                        <a class="page-link"
+                        <a class="page-link page-link-classic"
                            th:classappend="${pageNum == currentPage} ? 'bg-classic border-classic text-white' : 'text-classic'"
                            th:href="@{/librarian/borrow/list(page=${pageNum}, status=${status}, keyword=${keyword})}"
                            th:text="${pageNum + 1}">1</a>
                     </li>
 
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
-                        <a class="page-link text-classic" th:href="@{/librarian/borrow/list(page=${currentPage + 1}, status=${status}, keyword=${keyword})}" aria-label="Next">
+                        <a class="page-link page-link-classic text-classic" th:href="@{/librarian/borrow/list(page=${currentPage + 1}, status=${status}, keyword=${keyword})}" aria-label="Next">
                             <span aria-hidden="true">Sau &raquo;</span>
                         </a>
                     </li>

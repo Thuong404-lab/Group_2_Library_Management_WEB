@@ -6,104 +6,7 @@
 >
   <head>
     <title>Đánh giá của tôi</title>
-    <style>
-      .member-page {
-        max-width: 1250px;
-      }
-      .member-page-title {
-        color: #4a3b32;
-        font-family: "Playfair Display", serif;
-      }
-      .review-card {
-        border: 1px solid rgba(139, 90, 43, 0.14);
-        border-left: 4px solid #8b5a2b;
-        border-radius: 8px;
-        transition: box-shadow 0.2s;
-      }
-      .review-card:hover {
-        box-shadow: 0 4px 16px rgba(139, 90, 43, 0.12) !important;
-      }
-      .sent-review-card {
-        background: #fffdfa;
-        border: 1px solid rgba(139, 90, 43, 0.14);
-        border-left: 4px solid #8b5a2b;
-        border-radius: 8px;
-        box-shadow: 0 4px 14px rgba(74, 59, 50, 0.07) !important;
-      }
-      .review-table thead th {
-        background: #fdfbf7;
-        color: #4a3b32;
-        border-bottom: 1px solid rgba(139, 90, 43, 0.18);
-        font-weight: 700;
-      }
-      .review-table tbody td {
-        border-color: rgba(139, 90, 43, 0.1);
-      }
-      .review-table .review-main-row td {
-        border-bottom: 0;
-      }
-      .review-table .review-detail-row td {
-        border-top: 0;
-        padding-top: 0;
-      }
-      .review-cover {
-        width: 56px;
-        height: 78px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid rgba(139, 90, 43, 0.12);
-        margin-right: 1.5rem;
-      }
-      .sent-review-title {
-        color: #2c1e16;
-        font-family: 'Playfair Display', serif;
-      }
-      .genre-badge {
-        background: #eee4d6;
-        color: #5f4736;
-        border: 1px solid rgba(139, 90, 43, 0.15);
-        font-weight: 600;
-      }
-      .sent-review-rating {
-        color: #c8942d;
-        font-weight: 700;
-        letter-spacing: 1px;
-      }
-      .sent-review-comment {
-        background: #fbf6ee;
-        border-left: 3px solid #8b5a2b;
-        color: #3f3128;
-      }
-      .librarian-response-box {
-        background: #f1f6ef;
-        border-left: 3px solid #6f8a57;
-        color: #3f3128;
-      }
-      .librarian-response-title {
-        color: #557143;
-      }
-      .btn-review-classic {
-        border-color: #8b5a2b;
-        color: #fff;
-        background: #8b5a2b;
-        font-weight: 700;
-      }
-      .btn-review-classic:hover,
-      .btn-review-classic:focus {
-        background: #74481f;
-        border-color: #74481f;
-        color: #fff;
-      }
-      .review-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        justify-content: flex-end;
-      }
-      .review-actions .btn {
-        width: 110px;
-      }
-    </style>
+      <link rel="stylesheet" th:href="@{/css/pages/member/reviews.css}" />
   </head>
 
   <body>
@@ -133,8 +36,8 @@
       <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
       <div class="mb-3">
-        <h5 class="fw-bold" style="color: #4a3b32">
-          <i class="bi bi-list-stars me-2" style="color: #8b5a2b"></i>Đánh giá
+        <h5 class="fw-bold u-color-4a3b32-1ba01220">
+          <i class="bi bi-list-stars me-2 u-color-8b5a2b-93ece783"></i>Đánh giá
           đã gửi
         </h5>
       </div>
@@ -145,16 +48,16 @@
             <table class="table review-table align-middle">
               <thead>
                 <tr>
-                  <th class="ps-3 py-3" style="width: 42%;">Tên sách</th>
-                  <th class="py-3" style="width: 24%;">Tác giả</th>
-                  <th class="py-3" style="width: 14%;">Đánh giá</th>
-                  <th class="text-end pe-3 py-3" style="width: 20%;">Thao tác</th>
+                  <th class="ps-3 py-3 u-width-42-918e6647">Tên sách</th>
+                  <th class="py-3 u-width-24-3ca932db">Tác giả</th>
+                  <th class="py-3 u-width-14-546d6dae">Đánh giá</th>
+                  <th class="text-end pe-3 py-3 u-width-20-00e2b68d">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:if="${myReviews == null || myReviews.totalElements == 0}">
                   <td colspan="4" class="text-center text-muted py-5">
-                    <i class="bi bi-list-stars fs-2 d-block mb-2" style="color:#8b5a2b;"></i>
+                    <i class="bi bi-list-stars fs-2 d-block mb-2 u-color-8b5a2b-d7f13118"></i>
                     Bạn chưa gửi đánh giá nào.
                   </td>
                 </tr>
@@ -256,34 +159,33 @@
             th:with="startPage=${myReviews.totalPages <= 10 ? 0 : (myReviews.number < 9 ? 0 : (myReviews.number - 8 > myReviews.totalPages - 10 ? myReviews.totalPages - 10 : myReviews.number - 8))}, endPage=${startPage + 9 < myReviews.totalPages ? startPage + 9 : myReviews.totalPages - 1}">
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=0)}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=0)}"
+                 >Đầu</a>
               </li>
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
+                 ><i class="bi bi-chevron-left"></i></a>
               </li>
               <li class="page-item disabled" th:if="${startPage > 0}">
-                <span class="page-link">…</span>
+                <span class="page-link page-link-classic">…</span>
               </li>
               <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                 th:classappend="${i == myReviews.number ? 'active' : ''}">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${i})}"
-                  th:text="${i + 1}"
-                  th:style="${i == myReviews.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                <a class="page-link page-link-classic" th:href="@{/member/interaction/reviews(page=${i})}"
+                  th:text="${i + 1}">1</a>
               </li>
               <li class="page-item disabled" th:if="${endPage < myReviews.totalPages - 1}">
-                <span class="page-link">…</span>
+                <span class="page-link page-link-classic">…</span>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
+                 >
                   <i class="bi bi-chevron-right"></i>
                 </a>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
+                 >Cuối</a>
               </li>
             </ul>
           </nav>
