@@ -65,7 +65,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional
-    public void replyReview(Integer feedbackId, LibrarianReviewReplyRequest request) {
+    public boolean replyReview(Integer feedbackId, LibrarianReviewReplyRequest request) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
 
@@ -88,6 +88,9 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             throw new ValidationException("Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt.");
         }
 
+        boolean isEditing = feedback.getLibrarianResponse() != null
+                && !feedback.getLibrarianResponse().isBlank();
+
         feedback.setLibrarianResponse(normalizedResponse);
         feedback.setResponseDate(LocalDateTime.now());
 
@@ -98,6 +101,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                 "Phản hồi đánh giá",
                 "Thủ thư đã phản hồi đánh giá của bạn cho sách '" + feedback.getBook().getTitle() + "'."
         );
+
+        return isEditing;
     }
 
     @Override

@@ -1,109 +1,55 @@
-/* Presentation owner for templates/librarian/fines.html */
+/*
+ * Page family: Librarian fine management
+ * Template: templates/librarian/fines.html
+ * Root scope: .finance-page.fines-page
+ */
 
-.overdue-summary {
-            border: 1px solid rgba(180, 67, 54, 0.24);
-            background: linear-gradient(135deg, #fffdf9 0%, #fff8f5 100%);
-        }
-
-        .overdue-count {
-            min-width: 88px;
-            border: 1px solid rgba(180, 67, 54, 0.22);
-            border-radius: 12px;
-            background-color: #fff;
-            color: #b44336;
-            text-align: center;
-        }
-
-        .overdue-count-group {
-            display: flex;
-            align-items: stretch;
-        }
-
-        .overdue-count-group .overdue-count + .overdue-count {
-            margin-left: 12px;
-        }
-
-        .overdue-table th {
-            border-bottom-color: rgba(139, 90, 43, 0.2);
-            color: #6a4420;
-            font-size: 0.78rem;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
-        .overdue-table td {
-            border-bottom-color: rgba(139, 90, 43, 0.12);
-            vertical-align: middle;
-        }
-
-        .overdue-days-badge {
-            display: inline-block;
-            min-width: 86px;
-            padding: 6px 10px;
-            border-radius: 999px;
-            background-color: #fce8e6;
-            color: #b44336;
-            font-size: 0.82rem;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .btn-remind-overdue {
-            border-color: #c69038;
-            color: #8a5a12;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .btn-remind-overdue:hover {
-            border-color: #c69038;
-            background-color: #c69038;
-            color: #fff;
-        }
-
-        .overdue-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 32px);
-            justify-content: center;
-            align-items: center;
-            column-gap: 10px;
-            width: 100%;
-        }
-
-        .overdue-actions form {
-            margin: 0;
-        }
-
-        .overdue-actions .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            padding: 0;
-        }
-
-        .overdue-actions .btn i {
-            display: block;
-            margin: 0;
-            line-height: 1;
-        }
-
-        .overdue-reminder-tooltip .tooltip-inner {
-            background-color: #c69038;
-            color: #fff;
-        }
-
-        .overdue-reminder-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #c69038;
-        }
-
-        .overdue-fine-tooltip .tooltip-inner {
-            background-color: #8b5a2b;
-            color: #fff;
-        }
-
-        .overdue-fine-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #8b5a2b;
-        }
+.fines-page .overdue-summary { background: var(--app-color-canvas); border: 1px solid var(--app-color-danger-border); }
+.fines-page .overdue-count-group { display: flex; align-items: stretch; gap: 12px; }
+.fines-page .overdue-count { min-width: 88px; padding: 10px 12px; color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border: 1px solid var(--app-color-danger-border); border-radius: 12px; text-align: center; }
+.fines-page .overdue-count-value { font-family: var(--app-font-display); font-size: 28px; font-weight: 500; line-height: 1.15; }
+.fines-page .overdue-days-badge { min-height: 24px; min-width: 86px; padding: 5px 11px; display: inline-flex; align-items: center; justify-content: center; color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border: 1px solid var(--app-color-danger-border); border-radius: 9999px; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; }
+.fines-page .overdue-member-name { color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.fines-page .fine-history-note-title { margin: 0 0 6px; color: var(--app-color-ink); font-family: var(--app-font-ui); font-size: 15px; font-weight: 600; line-height: 1.4; }
+.fines-page .overdue-actions { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.fines-page .overdue-actions form { margin: 0; }
+.fines-page .overdue-actions .btn { width: 36px; height: 36px; min-height: 36px; flex: 0 0 36px; padding: 0; color: var(--app-color-ink); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 9999px; }
+.fines-page .overdue-actions .btn:hover { color: var(--app-color-primary-active); background: var(--app-color-surface-soft); border-color: var(--app-color-primary); transform: translateY(-1px); }
+.fines-page .overdue-actions .btn i { margin: 0; font-size: 16px; line-height: 1; }
+.fines-page .btn-remind-overdue { color: var(--app-color-warning-ink); }
+.fines-page .overdue-reminder-tooltip .tooltip-inner,
+.fines-page .overdue-fine-tooltip .tooltip-inner { color: var(--app-color-canvas); background: var(--app-color-ink); border-radius: 6px; font-size: 12px; font-weight: 500; }
+.fines-page .member-picker { max-height: 260px; overflow-y: auto; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.fines-page .fine-member-search-hint,
+.fines-page .fine-member-selection-hint { color: var(--app-color-muted); font-size: 13px; line-height: 1.4; }
+.fines-page .fine-member-search-hint { margin-bottom: 6px; }
+.fines-page .fine-member-selection-hint { margin-bottom: 12px; }
+.fines-page .fine-member-item {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    margin: 0 !important;
+    padding: 10px 12px;
+}
+.fines-page .fine-member-item + .fine-member-item { margin-top: 2px !important; }
+.fines-page .fine-member-item .form-check-input { position: static; float: none; margin: 3px 0 0 !important; }
+.fines-page .fine-member-info { display: block; min-width: 0; }
+.fines-page .fine-member-name { display: block; color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.35; }
+.fines-page .fine-member-contact { display: block; margin-top: 3px; color: var(--app-color-muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.fines-page .fine-member-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 112px;
+    padding: 20px;
+    color: var(--app-color-muted);
+    text-align: center;
+}
+.fines-page .fine-member-empty i { color: var(--app-color-primary); }
+.fines-page .fine-entry-field { margin-top: 24px; }
+@media (max-width: 767.98px) {
+    .fines-page .overdue-count-group { width: 100%; }
+    .fines-page .overdue-count { flex: 1; min-width: 0; }
+}

@@ -77,8 +77,10 @@ public class LibrarianInteractionController {
         request.setResponse(response);
 
         try {
-            librarianInteractionService.replyReview(feedbackId, request);
-            flash.addFlashAttribute("success", "Đã phản hồi đánh giá thành công.");
+            boolean isEditing = librarianInteractionService.replyReview(feedbackId, request);
+            flash.addFlashAttribute("success", isEditing
+                    ? "Đã chỉnh sửa phản hồi thành công."
+                    : "Đã phản hồi đánh giá thành công.");
         } catch (Exception e) {
             flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }

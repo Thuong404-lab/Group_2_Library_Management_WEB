@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Duyệt hoàn tiền</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/refunds.css}">
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='refunds'" class="finance-page refund-page">
+    <div class="finance-header">
+        <div>
+            <h2 class="finance-title">Duyệt hoàn tiền</h2>
+            <div class="finance-description">Kiểm tra và duyệt yêu cầu hoàn tiền cọc vào ví thành viên.</div>
+        </div>
+        <span class="refund-total"
+              th:text="${#lists.size(pendingRefundRequests) + ' yêu cầu chờ duyệt'}">0 yêu cầu chờ duyệt</span>
+    </div>
+
+    <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div th:if="${pendingRefundRequests == null or #lists.isEmpty(pendingRefundRequests)}"
+         class="card-classic finance-card refund-empty">
+        <div>
+            <h5>Không có yêu cầu chờ duyệt</h5>
+            <p>Khi thành viên gửi yêu cầu hoàn tiền, phiếu sẽ xuất hiện tại đây.</p>
+        </div>
+    </div>
+
+    <div th:unless="${pendingRefundRequests == null or #lists.isEmpty(pendingRefundRequests)}"
+         class="card-classic finance-card refund-list">
+        <article class="refund-row" th:each="reservation : ${pendingRefundRequests}">
+            <div class="refund-member">
+                <small>Thành viên</small>
+                <strong th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.fullName : 'Thành viên'}">Thành viên</strong>
+                <span th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.email : '-'}">email@example.com</span>
+            </div>
+
+            <div class="refund-book">
+                <small>Phiếu đặt trước</small>
+                <strong th:text="${reservation.book != null ? reservation.book.title : 'Sách không còn thông tin'}">Tên sách</strong>
+                <span>
+                    Phiếu #<span th:text="${reservation.reservationId}">1</span>
+                    · <span th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                </span>
+            </div>
+
+            <div class="refund-amount">
+                <small>Số tiền hoàn</small>
+                <strong>
+                    <span th:text="${#numbers.formatDecimal(reservationDepositAmount, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                    VNĐ
+                </strong>
+            </div>
+
+            <div class="refund-actions">
+                <button type="button" class="btn app-secondary-action"
+                        data-bs-toggle="modal"
+                        th:data-bs-target="${'#refundDepositModal' + reservation.reservationId}">
+                    Xem chi tiết
+                </button>
+                <button type="button" class="btn btn-classic"
+                        data-bs-toggle="modal"
+                        th:data-bs-target="${'#confirmRefundModal' + reservation.reservationId}">
+                    Duyệt hoàn tiền
+                </button>
+            </div>
+
+            <div class="modal fade refund-receipt-modal"
+                 th:id="${'refundDepositModal' + reservation.reservationId}"
+                 tabindex="-1"
+                 role="dialog"
+                 th:aria-labelledby="${'refundDepositModalTitle' + reservation.reservationId}"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div>
+                                <h5 class="modal-title"
+                                    th:id="${'refundDepositModalTitle' + reservation.reservationId}">Phiếu cọc đặt trước sách</h5>
+                                <div class="modal-subtitle">Kiểm tra phiếu trước khi duyệt hoàn tiền</div>
+                            </div>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="deposit-receipt-account">
+                                <small>Tài khoản thanh toán</small>
+                                <strong th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.email : '-'}">email@example.com</strong>
+                                <span th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.fullName : 'Thành viên'}">Thành viên</span>
+                            </div>
+
+                            <div class="deposit-receipt-grid">
+                                <div class="deposit-receipt-book">
+                                    <small>Sách đặt trước</small>
+                                    <strong th:text="${reservation.book != null ? reservation.book.title : 'Sách không còn thông tin'}">Tên sách</strong>
+                                    <span th:text="${reservation.book != null and reservation.book.isbn != null ? 'ISBN: ' + reservation.book.isbn : 'Chưa có ISBN'}">ISBN</span>
+                                </div>
+                                <dl class="deposit-receipt-details">
+                                    <div>
+                                        <dt>Mã phiếu cọc</dt>
+                                        <dd th:text="${'RSV-' + reservation.reservationId}">RSV-1</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Ngày thanh toán cọc</dt>
+                                        <dd th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Trạng thái</dt>
+                                        <dd><span class="receipt-status">Chờ duyệt hoàn tiền</span></dd>
+                                    </div>
+                                </dl>
+                            </div>
+
+                            <div class="deposit-receipt-total">
+                                <span>Tiền cọc đã thanh toán</span>
+                                <strong>
+                                    <span th:text="${#numbers.formatDecimal(reservationDepositAmount, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                    VNĐ
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn app-secondary-action" data-bs-dismiss="modal">Đóng</button>
+                            <button type="button" class="btn btn-classic"
+                                    data-bs-dismiss="modal"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="${'#confirmRefundModal' + reservation.reservationId}">
+                                Duyệt hoàn tiền
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade refund-confirm-modal"
+                 th:id="${'confirmRefundModal' + reservation.reservationId}"
+                 tabindex="-1"
+                 role="dialog"
+                 th:aria-labelledby="${'confirmRefundModalTitle' + reservation.reservationId}"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div>
+                                <h5 class="modal-title"
+                                    th:id="${'confirmRefundModalTitle' + reservation.reservationId}">Xác nhận duyệt hoàn tiền</h5>
+                                <div class="modal-subtitle">Kiểm tra thông tin trước khi xác nhận.</div>
+                            </div>
+                        </div>
+
+                        <div class="modal-body">
+                            <dl class="refund-confirm-summary">
+                                <div>
+                                    <dt>Thành viên</dt>
+                                    <dd>
+                                        <strong th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.fullName : 'Thành viên'}">Thành viên</strong>
+                                        <span th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.email : '-'}">email@example.com</span>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Phiếu đặt trước</dt>
+                                    <dd>
+                                        <strong th:text="${'RSV-' + reservation.reservationId}">RSV-1</strong>
+                                        <span th:text="${reservation.book != null ? reservation.book.title : 'Sách không còn thông tin'}">Tên sách</span>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Số tiền hoàn</dt>
+                                    <dd class="refund-confirm-amount">
+                                        <strong>
+                                            <span th:text="${#numbers.formatDecimal(reservationDepositAmount, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                            VNĐ
+                                        </strong>
+                                    </dd>
+                                </div>
+                            </dl>
+                            <p class="refund-confirm-note">
+                                Sau khi duyệt, tiền cọc sẽ được cộng vào ví thành viên và giao dịch hoàn tiền được ghi nhận. Thao tác này không thể hoàn tác.
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn app-secondary-action" data-bs-dismiss="modal">Quay lại</button>
+                            <form method="post"
+                                  th:action="@{/librarian/members/{memberId}/reservations/{reservationId}/refund(memberId=${reservation.member.memberId},reservationId=${reservation.reservationId})}">
+                                <input type="hidden" name="returnTo" value="refunds">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-classic">Xác nhận hoàn tiền</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+</body>
+</html>

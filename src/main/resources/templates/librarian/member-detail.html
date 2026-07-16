@@ -6,10 +6,14 @@
     <title>Chi tiết thành viên</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-detail.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='members'" class="finance-page member-detail-page">
+        <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
+
         <header class="member-detail-header">
             <div>
                 <h1 class="detail-page-title">Chi tiết thành viên</h1>
@@ -104,11 +108,55 @@
                         </div>
                     </div>
 
+                    <section class="refund-section" id="refund-requests">
+                        <div class="refund-section-heading">
+                            <div>
+                                <h5 class="section-title"><i class="bi bi-arrow-counterclockwise"></i>Duyệt hoàn tiền cọc</h5>
+                                <p>Kiểm tra và duyệt yêu cầu hoàn tiền cọc vào ví thành viên.</p>
+                            </div>
+                            <span class="refund-count"
+                                th:text="${#lists.size(refundableReservations) + ' yêu cầu chờ duyệt'}">0 yêu cầu chờ duyệt</span>
+                        </div>
+
+                        <div th:if="${#lists.isEmpty(refundableReservations)}" class="refund-empty">
+                            Không có yêu cầu hoàn tiền cọc nào đang chờ duyệt.
+                        </div>
+
+                        <div th:unless="${#lists.isEmpty(refundableReservations)}" class="refund-list">
+                            <article class="refund-item" th:each="reservation : ${refundableReservations}">
+                                <div class="refund-main">
+                                    <strong th:text="${reservation.book != null ? reservation.book.title : 'Sách không còn thông tin'}">Tên sách</strong>
+                                    <span>
+                                        Phiếu #<span th:text="${reservation.reservationId}">1</span>
+                                        · Đặt ngày
+                                        <span th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
+                                    </span>
+                                </div>
+                                <div class="refund-amount">
+                                    <small>Số tiền hoàn</small>
+                                    <strong>
+                                        <span th:text="${#numbers.formatDecimal(reservationDepositAmount, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                        VNĐ
+                                    </strong>
+                                </div>
+                                <form method="post" class="app-confirm-form"
+                                    th:action="@{/librarian/members/{memberId}/reservations/{reservationId}/refund(memberId=${member.memberId},reservationId=${reservation.reservationId})}"
+                                    data-confirm-title="Xác nhận duyệt hoàn tiền"
+                                    data-confirm-subject-label="Phiếu cọc"
+                                    th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : 'Sách không còn thông tin')}"
+                                    data-confirm-message="Tiền cọc sẽ được cộng vào ví thành viên và giao dịch hoàn tiền được ghi nhận. Thao tác này không thể hoàn tác."
+                                    data-confirm-action="Xác nhận hoàn tiền">
+                                    <button type="submit" class="btn btn-classic refund-button">Duyệt hoàn tiền</button>
+                                </form>
+                            </article>
+                        </div>
+                    </section>
+
                     <h5 class="section-title transaction-title"><i class="bi bi-wallet2"></i>Lịch sử giao dịch</h5>
 
                     <form method="get" th:action="@{/librarian/members/{memberId}/details(memberId=${member.memberId})}"
-                        class="detail-filter d-flex flex-wrap align-items-center gap-2">
-                        <select name="type" class="form-select" aria-label="Lọc loại giao dịch">
+                        class="detail-filter d-flex flex-wrap align-items-center gap-2" data-auto-filter-form>
+                        <select name="type" class="form-select" aria-label="Lọc loại giao dịch" data-auto-submit>
                             <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao
                                 dịch</option>
                             <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>

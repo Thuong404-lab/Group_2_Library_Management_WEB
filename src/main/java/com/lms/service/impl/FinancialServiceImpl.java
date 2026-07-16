@@ -41,6 +41,7 @@ public class FinancialServiceImpl implements FinancialService {
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
     private static final String TOP_UP_TYPE = "TOP_UP";
     private static final String DEPOSIT_TYPE = "DEPOSIT";
+    private static final String REFUND_TYPE = "REFUND";
     private static final String COMPLETED_STATUS = "Completed";
     private static final String PAID_STATUS = "Paid";
     private static final String BORROW_FEE_SETTING_KEY = "BORROW_FEE_PER_BOOK";
@@ -182,7 +183,9 @@ public class FinancialServiceImpl implements FinancialService {
         if ("DEPOSIT_PAID".equals(reservationStatus) || "PAID".equals(reservationStatus)) {
             throw new RuntimeException("Tiền cọc cho yêu cầu đặt trước này đã được thanh toán.");
         }
-        if ("COMPLETED".equals(reservationStatus) || "CANCELED".equals(reservationStatus) || "CANCELLED".equals(reservationStatus)) {
+        if ("COMPLETED".equals(reservationStatus) || "CANCELED".equals(reservationStatus)
+                || "CANCELLED".equals(reservationStatus) || "REFUNDED".equals(reservationStatus)
+                || "REFUND_PENDING".equals(reservationStatus)) {
             throw new RuntimeException("Yêu cầu đặt trước này không thể thanh toán tiền cọc.");
         }
 
@@ -282,6 +285,91 @@ public class FinancialServiceImpl implements FinancialService {
                 "Nạp tiền thành công",
                 "Tài khoản ví của bạn vừa được nạp " + formatMoney(topUpAmount)
                         + ". Số dư hiện tại: " + formatMoney(newBalance) + ".");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void requestReservationDepositRefund(Integer memberId, Integer reservationId) {
+        Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu đặt trước với ID: " + reservationId));
+
+        if (reservation.getMember() == null
+                || reservation.getMember().getMemberId() == null
+                || !reservation.getMember().getMemberId().equals(memberId)) {
+            throw new RuntimeException("Phiếu đặt trước không thuộc về thành viên hiện tại.");
+        }
+
+        String reservationStatus = normalize(reservation.getStatus());
+        if ("REFUND_PENDING".equals(reservationStatus)) {
+            throw new RuntimeException("Yêu cầu hoàn tiền đang chờ thủ thư duyệt.");
+        }
+        if ("REFUNDED".equals(reservationStatus)) {
+            throw new RuntimeException("Tiền cọc của phiếu này đã được hoàn trước đó.");
+        }
+        if (!"DEPOSIT_PAID".equals(reservationStatus)
+                && !"ACTIVE".equals(reservationStatus)
+                && !"READY".equals(reservationStatus)) {
+            throw new RuntimeException("Chỉ phiếu đã thanh toán tiền cọc mới được yêu cầu hoàn tiền.");
+        }
+
+        reservation.setStatus("Refund_Pending");
+        reservationRepository.save(reservation);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refundReservationDeposit(Integer memberId, Integer reservationId) {
+        Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu đặt trước với ID: " + reservationId));
+
+        if (reservation.getMember() == null
+                || reservation.getMember().getMemberId() == null
+                || !reservation.getMember().getMemberId().equals(memberId)) {
+            throw new RuntimeException("Phiếu đặt trước không thuộc về thành viên này.");
+        }
+
+        String reservationStatus = normalize(reservation.getStatus());
+        if ("REFUNDED".equals(reservationStatus)) {
+            throw new RuntimeException("Tiền cọc của phiếu này đã được hoàn trước đó.");
+        }
+        if (!"REFUND_PENDING".equals(reservationStatus)) {
+            throw new RuntimeException("Chỉ có thể hoàn tiền cho yêu cầu đang chờ thủ thư duyệt.");
+        }
+
+        Wallet wallet = walletRepository.findByMemberMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+        BigDecimal refundAmount = getReservationDepositAmount();
+        if (refundAmount.signum() <= 0) {
+            throw new RuntimeException("Số tiền hoàn cọc không hợp lệ.");
+        }
+
+        BigDecimal newBalance = balanceOf(wallet.getBalance()).add(refundAmount);
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+        saveWalletTransaction(wallet, null, REFUND_TYPE, refundAmount, COMPLETED_STATUS);
+
+        reservation.setStatus("Refunded");
+        reservationRepository.save(reservation);
+
+        createMemberNotification(
+                reservation.getMember(),
+                "Hoàn tiền cọc thành công",
+                "Thư viện đã hoàn " + formatMoney(refundAmount) + " vào ví cho phiếu đặt trước #"
+                        + reservationId + ". Số dư hiện tại: " + formatMoney(newBalance) + ".");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Reservation> getRefundableReservationDeposits(Integer memberId) {
+        return reservationRepository.findByMemberMemberIdAndStatusInOrderByReservationDateDesc(
+                memberId,
+                List.of("Refund_Pending"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Reservation> getPendingReservationDepositRefunds() {
+        return reservationRepository.findByStatusInOrderByReservationDateAsc(List.of("Refund_Pending"));
     }
 
     private Borrow findBorrowForMember(Integer memberId, Integer borrowId) {
@@ -390,7 +478,8 @@ public class FinancialServiceImpl implements FinancialService {
         return (int) Math.max(days, 1);
     }
 
-    private BigDecimal getReservationDepositAmount() {
+    @Override
+    public BigDecimal getReservationDepositAmount() {
         try {
             return systemSettingRepository.findBySettingKeyIgnoreCase(DEPOSIT_SETTING_KEY).stream()
                     .map(SystemSetting::getSettingValue)

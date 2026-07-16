@@ -5,6 +5,7 @@
 <head>
     <title>Danh sách Thành viên</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
@@ -44,7 +45,7 @@
                                     <div class="row g-4">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Họ tên <span class="text-danger">*</span>
+                                                Họ tên <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="fullName" required
                                                 maxlength="50"
@@ -59,7 +60,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Email <span class="text-danger">*</span>
+                                                Email <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="email" type="email"
                                                 required
@@ -75,7 +76,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Số điện thoại <span class="text-danger">*</span>
+                                                Số điện thoại <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="phone" required
                                                 pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
@@ -90,7 +91,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Username <span class="text-danger">*</span>
+                                                Username <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="username" required
                                                 pattern="[a-zA-Z0-9_]{3,20}" placeholder="Nhập tên đăng nhập"
@@ -105,7 +106,7 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                Mật khẩu <span class="text-danger">*</span>
+                                                Mật khẩu <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="password" type="password"
                                                 required minlength="6" placeholder="Nhập mật khẩu"
@@ -187,16 +188,17 @@
                 <div class="member-toolbar">
 
                     <!-- Search & Filter -->
-                    <form class="member-search-form" method="get" th:action="@{/librarian/members}">
+                    <form class="member-search-form" method="get" th:action="@{/librarian/members}"
+                        data-auto-filter-form data-focus-key="librarianMemberFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
                                 placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
 
-                            <select class="form-select member-filter-select" name="tier"
+                            <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 aria-label="Lọc theo hạng thành viên">
                                 <option value="" th:selected="${#strings.isEmpty(selectedTier)}">Tất cả hạng</option>
                                 <option value="Regular" th:selected="${selectedTier == 'Regular'}">Thường</option>
@@ -205,7 +207,7 @@
                                 <option value="Diamond" th:selected="${selectedTier == 'Diamond'}">Kim cương</option>
                             </select>
 
-                            <select class="form-select member-filter-select" name="status"
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
                                 aria-label="Lọc theo trạng thái">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
                                 </option>
@@ -225,12 +227,12 @@
                 <div class="table-responsive member-table-wrap">
                     <table class="table table-hover align-middle stable-table-layout member-table">
                         <colgroup>
-                            <col class="u-width-7-2d9383cf">
-                            <col class="u-width-15-f7f760e2">
-                            <col class="u-width-25-84a0e8c4">
-                            <col class="u-width-20-00e2b68d">
-                            <col class="u-width-17-9278e232">
-                            <col class="u-width-16-9fe033fb">
+                            <col class="member-col-index">
+                            <col class="member-col-username">
+                            <col class="member-col-user">
+                            <col class="member-col-tier">
+                            <col class="member-col-status">
+                            <col class="member-col-actions">
                         </colgroup>
                         <thead>
                             <tr>
@@ -277,7 +279,7 @@
                                         Standard
                                     </span>
 
-                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                    <span class="membership-tier-badge membership-tier-badge--empty"
                                         th:if="${member == null || member.tier == null}">
                                         N/A
                                     </span>
@@ -340,7 +342,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên <span class="text-danger">*</span>
+                                                                    Họ tên <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
                                                                     data-label="Họ tên"
@@ -355,7 +357,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username <span class="text-danger">*</span>
+                                                                    Username <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
@@ -369,7 +371,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại <span class="text-danger">*</span>
+                                                                    Số điện thoại <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
                                                                     data-label="Số điện thoại"
@@ -385,7 +387,7 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Email <span class="text-danger">*</span>
+                                                                    Email <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="email" type="email"
                                                                     data-label="Email"
@@ -535,7 +537,7 @@
                                                                     </span>
 
                                                                     <span
-                                                                        class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                                class="membership-tier-badge membership-tier-badge--empty"
                                                                         th:if="${member == null || member.tier == null}">
                                                                         N/A
                                                                     </span>

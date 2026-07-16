@@ -10,12 +10,11 @@
   </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page">
-        <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-4432b9df"
-           >
+    <div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page topup-desk-page">
+        <div class="finance-header">
             <div>
-                <h2 class="fw-bold mb-1">Nạp tiền tại quầy</h2>
-                <div class="text-muted">Tra cứu thành viên, cộng tiền vào ví điện tử và tạo giao dịch nạp tiền.</div>
+                <h2 class="finance-title">Nạp tiền tại quầy</h2>
+                <div class="finance-description">Tra cứu thành viên, cộng tiền vào ví điện tử và tạo giao dịch nạp tiền.</div>
             </div>
         </div>
 
@@ -30,48 +29,74 @@
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
 
-                    <h5 class="section-title fw-bold mb-4">
+                    <h5 class="section-title mb-4">
                         Nạp tiền cho thành viên
                     </h5>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Chọn thành viên</label>
+                        <label class="form-label">Chọn thành viên</label>
                         <input type="text" id="topupMemberSearch" class="form-control mb-2"
-                            placeholder="Nhập tên thành viên, email, số điện thoại hoặc ID để tìm..."
+                            placeholder="Tìm theo tên, email, SĐT, mã, trạng thái hoặc hạng thành viên..."
                             autocomplete="off">
+                        <div class="topup-member-search-hint">Nhập tên, email, số điện thoại hoặc mã thành viên để hiển thị kết quả phù hợp.</div>
+                        <div class="topup-member-selection-hint">Bạn cần chọn một thành viên trước khi thực hiện nạp tiền.</div>
 
-                        <div class="topup-member-list border rounded-3 p-3" id="topupMemberList">
+                        <div class="topup-member-list p-3 d-none" id="topupMemberList">
                             <label th:each="member : ${topupMembers}" class="form-check topup-member-item mb-2"
-                                th:attr="data-search=${#strings.toLowerCase((member.user != null ? member.user.fullName : '') + ' ' + (member.user != null ? member.user.email : '') + ' ' + (member.user != null ? member.user.phone : '') + ' ' + member.memberId)}">
+                                th:data-selected-label="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - TV-' + member.memberId}"
+                                th:attr="data-search=${#strings.toLowerCase(
+                                    (member.user != null ? member.user.fullName : '') + ' ' +
+                                    (member.user != null ? member.user.email : '') + ' ' +
+                                    (member.user != null ? member.user.phone : '') + ' ' +
+                                    (member.user != null ? member.user.id : '') + ' ' +
+                                    (member.user != null and member.user.status != null ? member.user.status : '') + ' ' +
+                                    member.memberId + ' tv-' + member.memberId + ' ' +
+                                    (member.tier != null ? member.tier.tierId : '') + ' ' +
+                                    (member.tier != null ? member.tier.tierName : '') + ' ' +
+                                    (member.tier != null ? member.tier.discountPercent : '') + ' ' +
+                                    (member.tier != null ? member.tier.borrowLimit : '') + ' ' +
+                                    (member.tier != null ? member.tier.condition : '') + ' ' +
+                                    (member.tier != null ? member.tier.benefits : '')
+                                )}">
                                 <input class="form-check-input topup-member-checkbox" type="checkbox" name="memberPhone"
                                     th:value="${member.memberId}"
                                     th:checked="${memberPhone != null and #strings.equals(memberPhone, #strings.toString(member.memberId))}"
                                     autocomplete="off">
-                                <span class="form-check-label"
-                                    th:text="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - ID: ' + member.memberId}">
-                                    Thành viên - ID: 1
+                                <span class="form-check-label topup-member-info">
+                                    <strong class="topup-member-name"
+                                        th:text="${member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên'}">Tên thành viên</strong>
+                                    <span class="topup-member-contact">
+                                        <span th:text="${member.user != null and member.user.email != null ? member.user.email : 'Chưa có email'}">email@example.com</span>
+                                        <span aria-hidden="true"> · </span>
+                                        <span th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : 'Chưa có số điện thoại'}">0900000000</span>
+                                        <span aria-hidden="true"> · </span>
+                                        <span th:text="${'TV-' + member.memberId}">TV-1</span>
+                                    </span>
                                 </span>
                             </label>
 
                             <div th:if="${topupMembers == null or #lists.isEmpty(topupMembers)}"
-                                class="text-center text-muted py-3">Chưa có thành viên nào trong hệ thống.</div>
-                            <div id="topupMemberEmpty" class="text-center text-muted py-3 d-none">
-                                Không tìm thấy thành viên phù hợp.
+                                class="topup-member-empty">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span>Chưa có thành viên nào trong hệ thống.</span>
+                            </div>
+                            <div id="topupMemberEmpty" class="topup-member-empty d-none">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span>Không tìm thấy thông tin thành viên phù hợp.</span>
                             </div>
                         </div>
-                        <small class="text-muted d-block mt-2">Chọn một thành viên để thực hiện nạp tiền.</small>
                         <div id="topupMemberRequired" class="invalid-feedback">
                             Vui lòng chọn một thành viên.
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Số tiền nạp</label>
-                        <div class="input-group">
+                        <label class="form-label">Số tiền nạp</label>
+                        <div class="input-group finance-amount-group">
                             <input type="text" inputmode="numeric" class="form-control" name="amount" id="topupAmount"
                                 th:value="${amount != null ? amount : ''}" placeholder="Nhập số tiền"
                                 data-vnd-input data-min-amount="10000" autocomplete="off">
-                            <span class="input-group-text fw-bold librarian-topup-desk-span-background-02">VNĐ</span>
+                            <span class="input-group-text finance-currency-unit librarian-topup-desk-span-background-02">VNĐ</span>
                         </div>
                         <div id="topupAmountRequired" class="invalid-feedback">
                             Số tiền nạp không được để trống.
@@ -89,19 +114,19 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Phương thức ghi nhận</label>
-                        <div class="d-flex flex-wrap gap-3 mt-1">
-                            <div class="form-check">
+                        <label class="form-label">Phương thức ghi nhận</label>
+                        <div class="topup-method-options">
+                            <div class="form-check topup-method-option">
                                 <input class="form-check-input" type="radio" name="payMethod" id="payCash" value="cash"
                                     checked>
-                                <label class="form-check-label fw-bold" for="payCash">
+                                <label class="form-check-label" for="payCash">
                                     Tiền mặt
                                 </label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check topup-method-option">
                                 <input class="form-check-input" type="radio" name="payMethod" id="payTransfer"
                                     value="transfer">
-                                <label class="form-check-label fw-bold" for="payTransfer">
+                                <label class="form-check-label" for="payTransfer">
                                     Chuyển khoản KQPay
                                 </label>
                             </div>
@@ -109,7 +134,7 @@
                     </div>
 
                     <div class="finance-actions d-flex">
-                        <button type="reset" class="btn btn-light border flex-grow-1">Hủy</button>
+                        <button type="reset" class="btn app-secondary-action flex-grow-1">Hủy</button>
                         <button type="submit" class="btn btn-confirm-topup flex-grow-1" id="topupSubmitButton">
                             <span>Xác nhận thanh toán</span>
                         </button>
@@ -119,15 +144,15 @@
 
             <div class="col-lg-5">
                 <div class="card-classic finance-card p-4 mb-4">
-                    <h5 class="section-title fw-bold mb-3">Nạp tiền hôm nay</h5>
+                    <h5 class="section-title mb-3">Nạp tiền hôm nay</h5>
                     <div class="summary-panel d-flex justify-content-between mb-3 p-3 rounded">
                         <div class="text-center">
-                            <div class="fw-bold fs-5 text-success"
+                            <div class="topup-stat-value"
                                 th:text="${todayTopupCount != null ? todayTopupCount : 0}">0</div>
                             <div class="text-muted small">Giao dịch</div>
                         </div>
                         <div class="text-center">
-                            <div class="fw-bold fs-5 u-color-8b5a2b-d7f13118">
+                            <div class="topup-stat-value">
                                 <span
                                     th:text="${todayTopupTotal != null ? #numbers.formatDecimal(todayTopupTotal, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                 VNĐ
@@ -145,7 +170,7 @@
                         <div th:each="transaction : ${todayTopups}"
                             class="d-flex justify-content-between align-items-center py-2 border-bottom">
                             <div>
-                                <div class="fw-bold small u-color-4a3b32-8f35ff96"
+                                <div class="topup-transaction-name"
                                     th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
                                     Thành viên
                                 </div>
@@ -154,7 +179,7 @@
                                     -
                                 </div>
                             </div>
-                            <span class="fw-bold text-success">
+                            <span class="topup-transaction-amount amount-positive">
                                 +<span
                                     th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                             </span>
@@ -163,7 +188,7 @@
                 </div>
 
                 <div class="card-classic finance-card p-4">
-                    <h5 class="section-title fw-bold mb-3">10 giao dịch nạp gần nhất</h5>
+                    <h5 class="section-title mb-3">10 giao dịch nạp gần nhất</h5>
                     <div th:if="${recentTopups == null or #lists.isEmpty(recentTopups)}"
                         class="text-muted text-center py-4">
                         Chưa có lịch sử nạp tiền.
@@ -172,7 +197,7 @@
                         <div th:each="transaction : ${recentTopups}"
                             class="d-flex justify-content-between align-items-center py-2 border-bottom">
                             <div>
-                                <div class="fw-bold small"
+                                <div class="topup-transaction-name"
                                     th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
                                     Thành viên
                                 </div>
@@ -181,7 +206,7 @@
                                     -
                                 </div>
                             </div>
-                            <span class="fw-bold text-success">
+                            <span class="topup-transaction-amount amount-positive">
                                 +<span
                                     th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                             </span>
@@ -205,16 +230,33 @@
             const memberSearch = document.getElementById("topupMemberSearch");
             if (memberSearch != null) {
                 memberSearch.addEventListener("input", function () {
-                    const keyword = memberSearch.value.trim().toLocaleLowerCase("vi");
+                    const normalizeSearchText = function (value) {
+                        return (value || "")
+                            .toLocaleLowerCase("vi")
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .replace(/đ/g, "d");
+                    };
+                    const keyword = normalizeSearchText(memberSearch.value.trim());
+                    const memberList = document.getElementById("topupMemberList");
+                    const memberItems = document.querySelectorAll(".topup-member-item");
+
+                    if (keyword === "") {
+                        memberList?.classList.add("d-none");
+                        document.getElementById("topupMemberEmpty")?.classList.add("d-none");
+                        return;
+                    }
+
+                    memberList?.classList.remove("d-none");
                     let visibleCount = 0;
-                    document.querySelectorAll(".topup-member-item").forEach(function (item) {
-                        const isVisible = (item.getAttribute("data-search") || "").includes(keyword);
+                    memberItems.forEach(function (item) {
+                        const isVisible = normalizeSearchText(item.getAttribute("data-search")).includes(keyword);
                         item.classList.toggle("d-none", !isVisible);
                         if (isVisible) visibleCount++;
                     });
                     const emptyState = document.getElementById("topupMemberEmpty");
                     if (emptyState != null) {
-                        emptyState.classList.toggle("d-none", visibleCount !== 0);
+                        emptyState.classList.toggle("d-none", visibleCount !== 0 || memberItems.length === 0);
                     }
                 });
             }
@@ -226,6 +268,9 @@
                         memberCheckboxes.forEach(function (otherCheckbox) {
                             if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
                         });
+                        const selectedLabel = checkbox.closest(".topup-member-item")?.dataset.selectedLabel;
+                        if (memberSearch != null && selectedLabel) memberSearch.value = selectedLabel;
+                        document.getElementById("topupMemberList")?.classList.add("d-none");
                     }
                     document.getElementById("topupMemberList")?.classList.remove("is-invalid");
                     document.getElementById("topupMemberRequired")?.classList.remove("d-block");
