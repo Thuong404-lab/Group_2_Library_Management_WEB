@@ -3,47 +3,47 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/admin_base}">
 <head>
-    <title>Quản lý kho sách</title>
-</head>
+    <title>Quản lý sách</title>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/books.css}" />
+  </head>
 <body>
 <div layout:fragment="content"
      th:with="activeMenu='books', currentSection='books', currentSubSection=${param.subsection != null ? param.subsection[0] : 'inventory'}">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
+        >
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;"
-                th:text="${currentSubSection == 'storage' ? 'Quản lý kệ sách' : 'Quản lý kho sách'}">Quản lý kho sách</h2>
-            <div class="text-muted">Cập nhật: <span th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">12/07/2026</span></div>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Quản lý kho sách</h2>
+            <div class="text-muted">Thêm, cập nhật và quản lý đầu sách, bản sách trong kho thư viện.</div>
         </div>
     </div>
 
         <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
 
-            <div class="row g-3 mb-4">
+            <div class="row g-3 mb-4 d-none">
                 <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0"
-                        style="border-left: 4px solid #8b5a2b !important;">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Tổng đầu sách</div>
                         <h4 class="fw-bold mb-0 text-classic" th:text="${totalBookCount}">0</h4>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0"
-                        style="border-left: 4px solid #198754 !important;">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Danh mục</div>
                         <h4 class="fw-bold mb-0 text-success" th:text="${totalCategories}">0</h4>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0"
-                        style="border-left: 4px solid #0d6efd !important;">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-0d6efd-important-64ac16c1"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Thể loại</div>
-                        <h4 class="fw-bold mb-0" style="color: #0d6efd;" th:text="${totalGenres}">0</h4>
+                        <h4 class="fw-bold mb-0 u-color-0d6efd-7fee07de" th:text="${totalGenres}">0</h4>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0"
-                        style="border-left: 4px solid #fd7e14 !important;">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-fd7e14-important-0fa630a5"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Sẵn sàng</div>
                         <h4 class="fw-bold mb-0 text-warning"
                             th:text="${inventoryStatusCounts['Available']} ?: 0">0</h4>
@@ -54,8 +54,8 @@
             <!-- Sub-section selector cards: chỉ hiện khi chưa chọn subsection -->
             <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}" id="bookSubSectionCards">
                 <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4" style="transition: all 0.2s; border-left: 4px solid #8b5a2b !important; background-color: rgba(139, 90, 43, 0.05);">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <div class="card-classic h-100 shadow-sm p-4 admin-books-div-transition-border-left-background-08">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-book me-2 text-classic"></i> Quản lý kho sách
                         </h5>
                         <p class="text-muted mb-3">Thêm, sửa, xoá và quản lý số lượng sách trong kho.</p>
@@ -66,8 +66,8 @@
                 </div>
 
                 <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4" style="transition: all 0.2s; border-left: 4px solid #6c757d !important; background-color: rgba(108, 117, 125, 0.04);">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <div class="card-classic h-100 shadow-sm p-4 admin-books-div-transition-border-left-background-09">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-bookshelf me-2 text-classic"></i> Quản lý kệ sách
                         </h5>
                         <p class="text-muted mb-3">Tạo mới, chỉnh sửa vị trí và xóa các kệ lưu trữ sách.</p>
@@ -78,40 +78,56 @@
                 </div>
             </div>
 
-            <!-- Nút quay lại khi đang ở subsection -->
-            <div th:if="${currentSubSection == 'inventory' || currentSubSection == 'storage'}" class="mb-3">
-                <a th:href="@{/admin/books}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i> Quay lại Quản lý sách
-                </a>
-            </div>
-
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
             <div class="card-classic shadow-sm mb-4" th:if="${currentSubSection == 'inventory'}">
                 <div class="card-body p-4">
                     <div id="bookInventoryPanel">
-                        <div class="d-flex flex-wrap gap-2 mb-4">
-                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#addBookModal">
-                                <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
+                        <div class="nav d-flex flex-wrap mb-4 u-gap-12px-58cf3fe5" id="adminInventoryTabs" role="tablist">
+                            <button type="button" class="nav-link btn btn-classic btn-sm active text-white"
+                                id="admin-books-tab" data-bs-toggle="tab" data-bs-target="#admin-books-pane">
+                                <i class="bi bi-book me-1"></i>Kho sách
                             </button>
-                            <button type="button" class="btn btn-outline-classic btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#categoryGenreModal">
-                                <i class="bi bi-tags me-1"></i>Quản lý danh mục
+                            <button type="button" class="nav-link btn btn-outline-classic btn-sm"
+                                id="admin-categories-tab" data-bs-toggle="tab" data-bs-target="#admin-categories-pane">
+                                <i class="bi bi-tags me-1"></i>Danh mục &amp; thể loại
                             </button>
-                            <button type="button" class="btn btn-outline-classic btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#auditModal">
+                            <button type="button" class="nav-link btn btn-outline-classic btn-sm"
+                                id="admin-audit-tab" data-bs-toggle="tab" data-bs-target="#admin-audit-pane">
                                 <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
                             </button>
                         </div>
 
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="admin-books-pane" role="tabpanel">
+
+                        <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+                            <h5 class="fw-bold mb-0 text-classic">
+                                <i class="bi bi-list-ul me-2"></i>Danh sách đầu sách
+                            </h5>
+                            <button type="button" class="btn btn-classic btn-sm text-nowrap" data-bs-toggle="modal"
+                                data-bs-target="#addBookModal">
+                                Thêm sách mới
+                            </button>
+                        </div>
+
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0 stable-table-layout">
+                                <colgroup>
+                                    <col class="u-width-5-dccc3412">
+                                    <col class="u-width-7-2d9383cf">
+                                    <col class="u-width-25-84a0e8c4">
+                                    <col class="u-width-12-392c6809">
+                                    <col class="u-width-25-84a0e8c4">
+                                    <col class="u-width-11-ed323c3f">
+                                    <col class="u-width-15-f7f760e2">
+                                </colgroup>
                                 <thead class="table-light text-uppercase small text-muted">
                                     <tr>
                                         <th>STT</th>
                                         <th>Ảnh</th>
                                         <th>Sách</th>
                                         <th>ISBN</th>
+                                        <th>Mô tả</th>
                                         <th>Trạng thái</th>
                                         <th class="text-end">Thao tác</th>
                                     </tr>
@@ -122,11 +138,11 @@
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
                                             <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                th:src="${book.coverImageUrl}" alt="Bìa sách" class="rounded border"
-                                                style="width: 40px; height: 56px; object-fit: cover;">
+                                                th:src="${book.coverImageUrl}" alt="Bìa sách" class="rounded border u-width-40px-height-56px-object-fit-cover-8457e107"
+                                               >
                                             <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                class="bg-light rounded border d-flex align-items-center justify-content-center text-muted"
-                                                style="width: 40px; height: 56px;">
+                                                class="bg-light rounded border d-flex align-items-center justify-content-center text-muted u-width-40px-height-56px-0055c9ad"
+                                               >
                                                 <i class="bi bi-book"></i>
                                             </div>
                                         </td>
@@ -137,12 +153,17 @@
                                                 Thể loại</div>
                                         </td>
                                         <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                                        <td class="small text-muted text-truncate" th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}"
+                                            th:title="${book.description}">Mô tả</td>
                                         <td>
-                                            <span class="badge rounded-pill"
-                                                th:classappend="${book.status == 'Disposed'} ? ' bg-danger' : ' bg-success'"
+                                            <span class="status-badge"
+                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
                                                 th:text="${book.status}">Active</span>
                                         </td>
                                         <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-info me-1"
+                                                data-bs-toggle="modal" th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
+                                                title="Xem bản sách"><i class="bi bi-eye"></i></button>
                                             <button type="button" class="btn btn-sm btn-outline-classic me-1"
                                                 data-bs-toggle="modal"
                                                 th:data-bs-target="${'#editBookModal' + book.bookId}">
@@ -156,7 +177,7 @@
                                         </td>
                                     </tr>
                                     <tr th:if="${books == null || books.totalElements == 0}">
-                                        <td colspan="6" class="text-center text-muted py-5">
+                                        <td colspan="7" class="text-center text-muted py-5">
                                             <i class="bi bi-book fs-2 d-block mb-2"></i>
                                             Chưa có sách trong kho.
                                         </td>
@@ -166,26 +187,146 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="mt-4 d-flex justify-content-center"
-                            th:if="${books != null && books.totalPages > 1}">
-                            <ul class="pagination pagination-sm mb-0">
+                        <nav class="mt-4" th:if="${books != null && books.totalPages > 1}"
+                            th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
+                            <ul class="pagination justify-content-center mb-0">
                                 <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                    <a class="page-link"
+                                    <a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory', bookPage=0)}">Đầu</a>
+                                </li>
+                                <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
+                                    <a class="page-link page-link-classic"
                                         th:href="@{/admin/books(subsection='inventory', bookPage=${books.number - 1})}"><i
                                             class="bi bi-chevron-left"></i></a>
                                 </li>
-                                <li class="page-item" th:each="i : ${#numbers.sequence(0, books.totalPages - 1)}"
+                                <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link page-link-classic">…</span></li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                     th:classappend="${i == books.number ? 'active' : ''}">
-                                    <a class="page-link"
+                                    <a class="page-link page-link-classic"
                                         th:href="@{/admin/books(subsection='inventory', bookPage=${i})}"
                                         th:text="${i + 1}">1</a>
                                 </li>
+                                <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}"><span class="page-link page-link-classic">…</span></li>
                                 <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
-                                    <a class="page-link"
+                                    <a class="page-link page-link-classic"
                                         th:href="@{/admin/books(subsection='inventory', bookPage=${books.number + 1})}"><i
                                             class="bi bi-chevron-right"></i></a>
                                 </li>
+                                <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
+                                    <a class="page-link page-link-classic"
+                                        th:href="@{/admin/books(subsection='inventory', bookPage=${books.totalPages - 1})}">Cuối</a>
+                                </li>
                             </ul>
+                        </nav>
+                            </div>
+
+                            <div class="tab-pane fade" id="admin-categories-pane" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+                                    <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i>Danh sách thể loại và danh mục</h5>
+                                    <div class="d-flex u-gap-12px-58cf3fe5">
+                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#categoryGenreModal">Thêm danh mục</button>
+                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#categoryGenreModal">Thêm thể loại</button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle border mb-0">
+                                        <thead class="table-light">
+                                            <tr><th>Danh mục / Thể loại</th><th class="text-center admin-books-th-width-19">Thao tác</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <th:block th:each="category : ${categories}">
+                                                <tr class="bg-white admin-books-tr-cursor-20" data-bs-toggle="collapse"
+                                                    th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}">
+                                                    <td class="fw-bold u-color-4a3b32-8f35ff96">
+                                                        <span th:text="${category.categoryName}">Danh mục</span>
+                                                        <i class="bi bi-chevron-down ms-2 small text-muted"></i>
+                                                    </td>
+                                                    <td class="text-center" onclick="event.stopPropagation()">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                            data-bs-toggle="collapse" th:data-bs-target="'#adminEditCategory' + ${category.categoryId}"><i class="bi bi-pencil-square"></i></button>
+                                                        <form class="d-inline" th:action="@{/admin/inventory/categories/delete/{id}(id=${category.categoryId})}" method="post">
+                                                            <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Xóa danh mục này?');"><i class="bi bi-trash"></i></button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                <tr class="collapse" th:id="${'adminEditCategory' + category.categoryId}">
+                                                    <td colspan="2">
+                                                        <form class="d-flex gap-2" th:action="@{/admin/inventory/categories/edit/{id}(id=${category.categoryId})}" method="post">
+                                                            <input class="form-control form-control-sm" name="name" th:value="${category.categoryName}" required>
+                                                            <button class="btn btn-classic btn-sm" type="submit">Lưu</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                <tr th:each="genre : ${genres}"
+                                                    th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
+                                                    class="collapse" th:classappend="'admin-category-genres-' + ${category.categoryId}">
+                                                    <td class="admin-books-td-padding-left-22" th:text="${genre.genreName}">Thể loại</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                            data-bs-toggle="collapse" th:data-bs-target="'#adminEditGenre' + ${genre.genreId}"><i class="bi bi-pencil-square"></i></button>
+                                                        <form class="d-inline" th:action="@{/admin/inventory/genres/delete/{id}(id=${genre.genreId})}" method="post">
+                                                            <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Xóa thể loại này?');"><i class="bi bi-trash"></i></button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                <tr class="collapse" th:each="genre : ${genres}"
+                                                    th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
+                                                    th:id="${'adminEditGenre' + genre.genreId}">
+                                                    <td colspan="2">
+                                                        <form class="d-flex gap-2" th:action="@{/admin/inventory/genres/edit/{id}(id=${genre.genreId})}" method="post">
+                                                            <input class="form-control form-control-sm" name="name" th:value="${genre.genreName}" required>
+                                                            <select class="form-select form-select-sm" name="categoryId">
+                                                                <option th:each="option : ${categories}" th:value="${option.categoryId}" th:text="${option.categoryName}"
+                                                                    th:selected="${genre.category.categoryId == option.categoryId}"></option>
+                                                            </select>
+                                                            <button class="btn btn-classic btn-sm" type="submit">Lưu</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            </th:block>
+                                            <tr th:if="${#lists.isEmpty(categories)}"><td colspan="2" class="text-center text-muted py-4">Chưa có danh mục nào.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="admin-audit-pane" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0 stable-table-layout">
+                                        <colgroup><col class="admin-books-col-width-23"><col class="admin-books-col-width-24"><col class="admin-books-col-width-25"><col class="admin-books-col-width-26"><col class="admin-books-col-width-26"></colgroup>
+                                        <thead class="table-light text-uppercase small text-muted">
+                                            <tr><th>STT</th><th>Ảnh</th><th>Sách</th><th>Số lượng tổng</th><th>Đã mượn</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="book, stat : ${books.content}">
+                                                <td th:text="${stat.index + 1 + (books.number * books.size)}">1</td>
+                                                <td>
+                                                    <img th:if="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}" th:src="${book.coverImageUrl}"
+                                                        class="rounded border admin-books-img-width-height-fit-27" alt="Bìa sách">
+                                                    <div th:unless="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}"
+                                                        class="bg-light rounded border d-flex align-items-center justify-content-center text-muted admin-books-div-width-height-28"><i class="bi bi-book"></i></div>
+                                                </td>
+                                                <td><div class="fw-bold text-classic" th:text="${book.title}">Tên sách</div>
+                                                    <div class="small text-muted" th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">Thể loại</div></td>
+                                                <td th:text="${bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0}">0</td>
+                                                <td th:text="${bookBorrowedQuantities[book.bookId] != null ? bookBorrowedQuantities[book.bookId] : 0}">0</td>
+                                            </tr>
+                                            <tr th:if="${books == null or books.totalElements == 0}"><td colspan="5" class="text-center text-muted py-5">Chưa có sách trong kho.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <nav class="mt-4" th:if="${books != null and books.totalPages > 1}"
+                                    th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(tab='audit',bookPage=0)}">Đầu</a></li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(tab='audit',bookPage=${books.number - 1})}"><i class="bi bi-chevron-left"></i></a></li>
+                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == books.number ? 'active' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(tab='audit',bookPage=${i})}" th:text="${i + 1}">1</a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(tab='audit',bookPage=${books.number + 1})}"><i class="bi bi-chevron-right"></i></a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(tab='audit',bookPage=${books.totalPages - 1})}">Cuối</a></li>
+                                    </ul>
+                                </nav>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -260,9 +401,9 @@
                                             <label class="form-label">Ảnh bìa sách</label>
                                             <input type="file" name="coverImage" class="form-control" accept="image/*"
                                                 id="addBookCoverInput" onchange="previewAddBookCover(event)">
-                                            <div class="mt-2" id="addBookCoverPreview" style="display:none;">
+                                            <div class="mt-2 u-display-none-d0466aa3" id="addBookCoverPreview">
                                                 <img id="addBookCoverImg" src="#" alt="Xem trước ảnh bìa"
-                                                    style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid #ddd;object-fit:cover;">
+                                                    class="u-max-height-160px-max-width-100-border-radius-8px-border-1px-solid-ddd-ob-646b7764">
                                             </div>
                                         </div>
                                     </div>
@@ -389,6 +530,43 @@
                 </div>
 
                 <div th:each="book : ${books}">
+                    <!-- View Copies Modal -->
+                    <div class="modal fade" th:id="${'viewCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header border-bottom border-color">
+                                    <h5 class="modal-title fw-bold admin-books-h5-color-font-family-31">
+                                        Danh sách bản sách – <span th:text="${book.title}">Tên sách</span>
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light text-uppercase small text-muted">
+                                                <tr><th>STT</th><th>Mã bản sách</th><th>Tình trạng</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="item, stat : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId] : {}}">
+                                                    <td th:text="${stat.index + 1}">1</td>
+                                                    <td class="fw-bold font-monospace" th:text="${item.barcode}">BC001-001</td>
+                                                    <td>
+                                                        <span class="status-badge"
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : ' status-inactive')"
+                                                            th:text="${item.status == 'Available' ? 'Sẵn có' : (item.status == 'Borrowed' ? 'Đang mượn' : item.status)}">Sẵn có</span>
+                                                    </td>
+                                                </tr>
+                                                <tr th:if="${bookItemsByBookId == null or bookItemsByBookId[book.bookId] == null or #lists.isEmpty(bookItemsByBookId[book.bookId])}">
+                                                    <td colspan="3" class="text-center text-muted py-4">Chưa có bản sách nào trong kho.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Edit Book Modal -->
                     <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1"
                         th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
@@ -463,7 +641,7 @@
                                                         <img th:src="${book.coverImageUrl}"
                                                             th:id="'editCoverCurrent' + ${book.bookId}"
                                                             alt="Ảnh bìa hiện tại"
-                                                            style="height:100px;width:75px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+                                                            class="u-height-100px-width-75px-object-fit-cover-border-radius-6px-border-1px-so-eeb48d2c">
                                                     </div>
                                                     <div class="flex-grow-1">
                                                         <div class="text-muted small mb-1"
@@ -473,13 +651,13 @@
                                                             accept="image/*"
                                                             th:id="'editBookCoverInput' + ${book.bookId}"
                                                             th:onchange="'previewEditBookCover(event, \'' + ${book.bookId} + '\')'">
-                                                        <div class="mt-2"
+                                                        <div class="mt-2 u-display-none-d0466aa3"
                                                             th:id="'editBookCoverPreview' + ${book.bookId}"
-                                                            style="display:none;">
+                                                           >
                                                             <div class="text-muted small mb-1">Xem trước:</div>
                                                             <img th:id="'editBookCoverImg' + ${book.bookId}" src="#"
                                                                 alt="Xem trước ảnh bìa"
-                                                                style="max-height:100px;max-width:100%;border-radius:6px;border:1px solid #ddd;object-fit:cover;">
+                                                                class="u-max-height-100px-max-width-100-border-radius-6px-border-1px-solid-ddd-ob-00913d30">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -537,7 +715,7 @@
                 <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
                     <div class="card-classic shadow-sm">
                         <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <h5 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                                 <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
                             </h5>
                             <div class="text-muted small">Quản lý vị trí lưu trữ</div>
@@ -691,6 +869,25 @@
         </section>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = Array.from(document.querySelectorAll('#adminInventoryTabs [data-bs-toggle="tab"]'));
+            const activateStyle = activeTab => tabs.forEach(tab => {
+                const active = tab === activeTab;
+                tab.classList.toggle('btn-classic', active);
+                tab.classList.toggle('text-white', active);
+                tab.classList.toggle('btn-outline-classic', !active);
+            });
+
+            tabs.forEach(tab => tab.addEventListener('shown.bs.tab', () => activateStyle(tab)));
+
+            const tabName = new URLSearchParams(window.location.search).get('tab');
+            const requestedTab = tabName === 'categories' ? document.getElementById('admin-categories-tab')
+                : (tabName === 'audit' ? document.getElementById('admin-audit-tab') : null);
+            if (requestedTab && typeof bootstrap !== 'undefined') {
+                bootstrap.Tab.getOrCreateInstance(requestedTab).show();
+            }
+        });
+
         function previewAddBookCover(event) {
             previewBookCover(event, 'addBookCoverPreview', 'addBookCoverImg');
         }

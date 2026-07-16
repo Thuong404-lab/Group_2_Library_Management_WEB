@@ -13,6 +13,23 @@ import java.util.List;
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
     long countByStatusIgnoreCase(String status);
 
+    @Query(value = """
+            select count(*)
+            from dbo.BorrowDetails bd
+            join dbo.Borrows b on b.borrow_id = bd.borrow_id
+            where b.member_id = :memberId
+              and bd.book_id = :bookId
+              and upper(ltrim(rtrim(bd.status))) in (
+                    'BORROWED',
+                    'OVERDUE',
+                    'RETURN_PENDING',
+                    'RENEW_PENDING',
+                    'RETURNED'
+              )
+            """, nativeQuery = true)
+    long countEligibleReviewBorrows(@Param("memberId") Integer memberId,
+                                    @Param("bookId") Integer bookId);
+
     @Query("select count(bd) " +
             "from BorrowDetail bd " +
             "where bd.borrow.borrowDate >= :startDate and bd.borrow.borrowDate < :endDate")

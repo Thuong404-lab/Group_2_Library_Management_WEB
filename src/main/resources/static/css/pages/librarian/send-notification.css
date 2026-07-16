@@ -1,0 +1,323 @@
+/*
+ * Page family: Librarian notification compose
+ * Templates: templates/librarian/dashboard.html, templates/librarian/send-notification.html
+ * Routes: /librarian/dashboard?section=notifications
+ * Root scope: .notification-compose-page
+ */
+
+.notification-compose-page {
+    min-width: 0;
+    color: var(--app-color-body);
+    font-family: var(--app-font-ui);
+}
+
+.notification-compose-page .notification-compose-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-color-canvas);
+    box-shadow: none;
+}
+
+.notification-compose-page .notification-compose-body {
+    padding: 24px;
+}
+
+.notification-compose-page .notification-form-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+    gap: 32px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.notification-compose-page .notification-recipient-column,
+.notification-compose-page .notification-message-column,
+.notification-compose-page .notification-field,
+.notification-compose-page .notification-member-section {
+    min-width: 0;
+}
+
+.notification-compose-page .notification-message-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.notification-compose-page .notification-form-label {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--app-color-body-strong);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.notification-compose-page .notification-choice-group {
+    padding: 16px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    background: var(--app-color-surface-soft);
+}
+
+.notification-compose-page .notification-choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+}
+
+.notification-compose-page .notification-choice + .notification-choice {
+    margin-top: 8px;
+}
+
+.notification-compose-page .form-check-input {
+    flex: 0 0 auto;
+    float: none;
+    position: static;
+    margin: 0;
+    border-color: var(--app-color-hairline);
+}
+
+.notification-compose-page .form-check-input:checked {
+    border-color: var(--app-color-application-primary);
+    background-color: var(--app-color-application-primary);
+}
+
+.notification-compose-page .form-check-input:focus {
+    border-color: var(--app-color-primary);
+    box-shadow: 0 0 0 3px var(--app-color-focus-coral-ring);
+}
+
+.notification-compose-page .form-check-label {
+    color: var(--app-color-body);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.notification-compose-page .notification-member-section {
+    margin-top: 24px;
+}
+
+.notification-compose-page .notification-control,
+.notification-compose-page .notification-textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    background: var(--app-color-canvas);
+    color: var(--app-color-ink);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.notification-compose-page .notification-control {
+    height: 42px;
+    padding: 0 14px;
+}
+
+.notification-compose-page .notification-textarea {
+    min-height: 196px;
+    padding: 12px 14px;
+    resize: vertical;
+}
+
+.notification-compose-page .notification-control::placeholder,
+.notification-compose-page .notification-textarea::placeholder {
+    color: var(--app-color-muted);
+}
+
+.notification-compose-page .notification-control[readonly] {
+    background: var(--app-color-surface-soft);
+    color: var(--app-color-muted);
+    cursor: default;
+}
+
+.notification-compose-page .notification-control:focus,
+.notification-compose-page .notification-textarea:focus {
+    border-color: var(--app-color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--app-color-focus-coral-ring);
+}
+
+.notification-compose-page .notification-member-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 260px;
+    margin-top: 8px;
+    padding: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    background: var(--app-color-canvas);
+}
+
+.notification-compose-page .notification-member-item {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    min-height: 32px;
+    box-sizing: border-box;
+    clear: both;
+}
+
+.notification-compose-page .notification-member-item .form-check-input {
+    float: none;
+    position: static;
+    margin: 2px 0 0;
+}
+
+.notification-compose-page .notification-member-item .form-check-label {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.notification-compose-page .notification-member-item + .notification-member-item {
+    margin-top: 8px;
+}
+
+.notification-compose-page .notification-helper-text {
+    margin: 8px 0 0;
+    color: var(--app-color-muted);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.notification-compose-page .notification-validation-message {
+    margin-top: 6px;
+    color: var(--app-color-danger-ink);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.notification-compose-page .notification-validation-message:empty {
+    display: none;
+}
+
+.notification-compose-page .validate-field.is-invalid,
+.notification-compose-page .validate-group.is-invalid {
+    border-color: var(--app-color-error) !important;
+    box-shadow: 0 0 0 3px var(--app-color-danger-soft) !important;
+    background-image: none !important;
+}
+
+.notification-compose-page .validate-field.is-valid,
+.notification-compose-page .validate-group.is-valid {
+    border-color: var(--app-color-success) !important;
+    box-shadow: 0 0 0 3px var(--app-color-success-soft) !important;
+    background-image: none !important;
+}
+
+.notification-compose-page .notification-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 120px;
+    color: var(--app-color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.notification-compose-page .notification-empty-state i {
+    color: var(--app-color-muted-soft);
+    font-size: 24px;
+}
+
+.notification-compose-page .notification-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: auto;
+}
+
+.notification-compose-page .notification-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 18px;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: var(--app-radius-md);
+    background: var(--app-color-application-primary);
+    color: var(--app-color-on-dark);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.notification-compose-page .notification-submit:hover,
+.notification-compose-page .notification-submit:focus {
+    background: var(--app-color-application-primary-hover);
+    color: var(--app-color-on-dark);
+    transform: translateY(-1px);
+}
+
+.notification-compose-page .notification-submit:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--app-color-focus-application-ring);
+}
+
+.notification-compose-page .notification-submit:active {
+    background: var(--app-color-application-primary-active);
+    transform: none;
+}
+
+.notification-compose-page .notification-form-actions .notification-submit {
+    width: auto;
+}
+
+.notification-compose-page .notification-member-section.is-hidden {
+    display: none;
+}
+
+.notification-compose-page .notification-member-item.is-filtered-out {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .notification-compose-page .notification-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notification-compose-page .notification-submit {
+        transition: none;
+    }
+
+    .notification-compose-page .notification-submit:hover,
+    .notification-compose-page .notification-submit:focus {
+        transform: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .notification-compose-page .notification-compose-body {
+        padding: 16px;
+    }
+
+    .notification-compose-page .notification-form-actions .notification-submit {
+        width: 100%;
+    }
+}

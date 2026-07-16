@@ -6,122 +6,26 @@
 >
   <head>
     <title>Đánh giá của tôi</title>
-    <style>
-      .member-page {
-        max-width: 1250px;
-      }
-      .member-page-title {
-        color: #4a3b32;
-        font-family: "Playfair Display", serif;
-      }
-      .review-card {
-        border: 1px solid rgba(139, 90, 43, 0.14);
-        border-left: 4px solid #8b5a2b;
-        border-radius: 8px;
-        transition: box-shadow 0.2s;
-      }
-      .review-card:hover {
-        box-shadow: 0 4px 16px rgba(139, 90, 43, 0.12) !important;
-      }
-      .sent-review-card {
-        background: #fffdfa;
-        border: 1px solid rgba(139, 90, 43, 0.14);
-        border-left: 4px solid #8b5a2b;
-        border-radius: 8px;
-        box-shadow: 0 4px 14px rgba(74, 59, 50, 0.07) !important;
-      }
-      .review-table thead th {
-        background: #fdfbf7;
-        color: #4a3b32;
-        border-bottom: 1px solid rgba(139, 90, 43, 0.18);
-        font-weight: 700;
-      }
-      .review-table tbody td {
-        border-color: rgba(139, 90, 43, 0.1);
-      }
-      .review-table .review-main-row td {
-        border-bottom: 0;
-      }
-      .review-table .review-detail-row td {
-        border-top: 0;
-        padding-top: 0;
-      }
-      .review-cover {
-        width: 56px;
-        height: 78px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid rgba(139, 90, 43, 0.12);
-        margin-right: 1.5rem;
-      }
-      .sent-review-title {
-        color: #2c1e16;
-        font-family: 'Playfair Display', serif;
-      }
-      .genre-badge {
-        background: #eee4d6;
-        color: #5f4736;
-        border: 1px solid rgba(139, 90, 43, 0.15);
-        font-weight: 600;
-      }
-      .sent-review-rating {
-        color: #c8942d;
-        font-weight: 700;
-        letter-spacing: 1px;
-      }
-      .sent-review-comment {
-        background: #fbf6ee;
-        border-left: 3px solid #8b5a2b;
-        color: #3f3128;
-      }
-      .librarian-response-box {
-        background: #f1f6ef;
-        border-left: 3px solid #6f8a57;
-        color: #3f3128;
-      }
-      .librarian-response-title {
-        color: #557143;
-      }
-      .btn-review-classic {
-        border-color: #8b5a2b;
-        color: #fff;
-        background: #8b5a2b;
-        font-weight: 700;
-      }
-      .btn-review-classic:hover,
-      .btn-review-classic:focus {
-        background: #74481f;
-        border-color: #74481f;
-        color: #fff;
-      }
-      .review-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        justify-content: flex-end;
-      }
-      .review-actions .btn {
-        width: 110px;
-      }
-    </style>
+      <link rel="stylesheet" th:href="@{/css/pages/member/reviews.css}" />
   </head>
 
   <body>
-    <div layout:fragment="content" class="container member-page mt-4 mb-5">
+    <div layout:fragment="content" class="container member-page reviews-page">
       <div
-        class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+        class="member-page-header"
       >
         <div>
-          <h2
-            class="member-page-title fw-bold mb-1"
+          <span class="member-page-eyebrow">HOẠT ĐỘNG CỦA BẠN</span>
+          <h1
+            class="member-page-title"
           >
             Đánh giá
             của tôi
-          </h2>
-          <div class="text-muted">
+          </h1>
+          <p class="member-page-description">
             <span th:text="${myReviews != null ? myReviews.totalElements : 0}">0</span>
             đánh giá bạn đã gửi
-          </div>
+          </p>
         </div>
       </div>
 
@@ -132,29 +36,36 @@
       ></div>
       <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-      <div class="mb-3">
-        <h5 class="fw-bold" style="color: #4a3b32">
-          <i class="bi bi-list-stars me-2" style="color: #8b5a2b"></i>Đánh giá
+      <div class="review-section-heading">
+        <h2>
+          <i class="bi bi-list-stars me-2 u-color-8b5a2b-93ece783"></i>Đánh giá
           đã gửi
-        </h5>
+        </h2>
       </div>
 
-      <div class="card sent-review-card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <div class="table-responsive">
-            <table class="table review-table align-middle">
+      <div class="sent-review-card">
+          <div class="member-table-wrap">
+            <table class="review-table">
+              <colgroup>
+                <col class="review-book-column">
+                <col class="review-author-column">
+                <col class="review-date-column">
+                <col class="review-rating-column">
+                <col class="review-action-column">
+              </colgroup>
               <thead>
                 <tr>
-                  <th class="ps-3 py-3" style="width: 42%;">Tên sách</th>
-                  <th class="py-3" style="width: 24%;">Tác giả</th>
-                  <th class="py-3" style="width: 14%;">Đánh giá</th>
-                  <th class="text-end pe-3 py-3" style="width: 20%;">Thao tác</th>
+                  <th>Tên sách</th>
+                  <th class="review-cell-centered">Tác giả</th>
+                  <th class="review-cell-centered">Ngày đánh giá</th>
+                  <th class="review-cell-centered">Đánh giá</th>
+                  <th class="review-cell-centered">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:if="${myReviews == null || myReviews.totalElements == 0}">
-                  <td colspan="4" class="text-center text-muted py-5">
-                    <i class="bi bi-list-stars fs-2 d-block mb-2" style="color:#8b5a2b;"></i>
+                  <td colspan="5" class="text-center text-muted py-5">
+                    <i class="bi bi-list-stars fs-2 d-block mb-2 u-color-8b5a2b-d7f13118"></i>
                     Bạn chưa gửi đánh giá nào.
                   </td>
                 </tr>
@@ -182,7 +93,7 @@
                       </div>
                     </td>
 
-                    <td>
+                    <td class="review-cell-centered">
                       <span
                         th:if="${review.book.authors != null && !review.book.authors.isEmpty()}"
                         th:text="${review.book.authors.iterator().next().authorName}"
@@ -194,20 +105,22 @@
                       </span>
                     </td>
 
-                    <td>
-                      <div class="sent-review-rating mb-1">
-                        <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
-                        <span class="text-muted small" th:text="${review.rating + '/5'}">5/5</span>
-                      </div>
-                      <div
-                        class="small text-muted"
+                    <td class="review-cell-centered">
+                      <span
                         th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}"
                       >
                         Ngày
-                      </div>
+                      </span>
                     </td>
 
-                    <td class="text-end pe-3">
+                    <td class="review-cell-centered">
+                      <span class="review-rating-badge">
+                        <i class="bi bi-star-fill" aria-hidden="true"></i>
+                        <span th:text="${review.rating + ' sao'}">5 sao</span>
+                      </span>
+                    </td>
+
+                    <td class="review-cell-centered">
                       <div class="review-actions">
                         <a
                           th:href="@{'/books/' + ${review.book.bookId}}"
@@ -215,21 +128,34 @@
                         >
                           Xem sách
                         </a>
-                        <form
-                          th:action="@{'/member/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
-                          method="post"
-                          class="m-0"
+                        <button type="button"
+                          th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
+                          class="btn btn-sm btn-review-edit"
+                          data-toggle="modal"
+                          data-target="#editReviewModal"
+                          th:data-feedback-id="${review.feedbackId}"
+                          th:data-edit-url="@{/member/interaction/reviews/{id}/edit(id=${review.feedbackId}, page=${myReviews.number})}"
+                          th:data-review-title="${review.book.title}"
+                          th:data-review-rating="${review.rating}"
+                          th:data-review-comment="${review.comment}"
                         >
-                          <button type="submit" class="btn btn-sm btn-outline-danger">
-                            Xóa
-                          </button>
-                        </form>
+                          Sửa
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger review-delete-trigger"
+                                data-toggle="modal"
+                                data-target="#deleteReviewModal"
+                                th:data-delete-url="@{'/member/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                th:data-review-title="${review.book.title}"
+                                aria-label="Xóa đánh giá">
+                          Xóa
+                        </button>
                       </div>
                     </td>
                   </tr>
 
                   <tr class="review-detail-row">
-                    <td colspan="4" class="ps-3 pe-3 pb-4">
+                    <td colspan="5" class="ps-3 pe-3 pb-4">
                       <div
                         class="p-3 rounded mb-3 lh-lg sent-review-comment"
                         th:text="${review.comment}"
@@ -256,40 +182,233 @@
             th:with="startPage=${myReviews.totalPages <= 10 ? 0 : (myReviews.number < 9 ? 0 : (myReviews.number - 8 > myReviews.totalPages - 10 ? myReviews.totalPages - 10 : myReviews.number - 8))}, endPage=${startPage + 9 < myReviews.totalPages ? startPage + 9 : myReviews.totalPages - 1}">
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=0)}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=0)}"
+                 >Đầu</a>
               </li>
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
+                 ><i class="bi bi-chevron-left"></i></a>
               </li>
               <li class="page-item disabled" th:if="${startPage > 0}">
-                <span class="page-link">…</span>
+                <span class="page-link page-link-classic">…</span>
               </li>
               <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                 th:classappend="${i == myReviews.number ? 'active' : ''}">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${i})}"
-                  th:text="${i + 1}"
-                  th:style="${i == myReviews.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                <a class="page-link page-link-classic" th:href="@{/member/interaction/reviews(page=${i})}"
+                  th:text="${i + 1}">1</a>
               </li>
               <li class="page-item disabled" th:if="${endPage < myReviews.totalPages - 1}">
-                <span class="page-link">…</span>
+                <span class="page-link page-link-classic">…</span>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
+                 >
                   <i class="bi bi-chevron-right"></i>
                 </a>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
-                  style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
+                 >Cuối</a>
               </li>
             </ul>
           </nav>
-        </div>
       </div>
 
+    <div class="modal fade review-edit-modal"
+         id="editReviewModal"
+         tabindex="-1"
+         th:data-reopen-feedback-id="${editReviewId}"
+         th:data-invalid-rating="${reviewEditRequest != null ? reviewEditRequest.rating : ''}"
+         th:data-invalid-comment="${reviewEditRequest != null ? reviewEditRequest.comment : ''}"
+         aria-labelledby="editReviewModalLabel"
+         aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title" id="editReviewModalLabel">Sửa đánh giá</h2>
+              <p class="review-edit-book-title" id="editReviewBookTitle"></p>
+            </div>
+            <button type="button" class="review-modal-close" data-dismiss="modal" aria-label="Đóng">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+          <form id="editReviewForm" th:action="@{/member/interaction/reviews/0/edit}" method="post" novalidate>
+            <div class="modal-body">
+              <div class="review-edit-field">
+                <label class="review-edit-label" for="editReviewRating">Số sao</label>
+                <input type="hidden" class="review-edit-rating-value" id="editReviewRating" name="rating">
+                <div class="review-edit-rating-picker" role="radiogroup" aria-label="Chọn số sao">
+                  <button th:each="ratingValue : ${#numbers.sequence(1, 5)}"
+                          type="button"
+                          class="review-edit-rating-star"
+                          th:data-value="${ratingValue}"
+                          role="radio"
+                          th:aria-label="${ratingValue + ' sao'}"
+                          aria-checked="false">
+                    <i class="bi bi-star-fill"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="review-edit-field review-edit-comment-field">
+                <label class="review-edit-label" for="editReviewComment">Nội dung đánh giá</label>
+                <textarea class="review-edit-textarea"
+                          id="editReviewComment"
+                          name="comment"
+                          maxlength="1000"
+                          required></textarea>
+                <div class="review-edit-field-error" id="editReviewCommentError"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="review-modal-cancel" data-dismiss="modal">Hủy</button>
+              <button type="submit" class="review-edit-submit">Lưu thay đổi</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade review-delete-modal"
+         id="deleteReviewModal"
+         tabindex="-1"
+         aria-labelledby="deleteReviewModalLabel"
+         aria-describedby="deleteReviewModalDescription"
+         aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title" id="deleteReviewModalLabel">Xóa đánh giá?</h2>
+            <button type="button"
+                    class="review-modal-close"
+                    data-dismiss="modal"
+                    aria-label="Đóng">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p id="deleteReviewModalDescription">
+              Đánh giá của bạn cho sách <strong id="deleteReviewBookTitle"></strong> sẽ bị xóa khỏi danh sách.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="review-modal-cancel" data-dismiss="modal">Hủy</button>
+            <form id="deleteReviewForm"
+                  th:action="@{/member/interaction/reviews/0/delete}"
+                  method="post">
+              <button type="submit" class="review-modal-confirm">Xóa đánh giá</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+    <div layout:fragment="scripts">
+      <script>
+        (function () {
+          const editForm = document.getElementById("editReviewForm");
+          const editBookTitle = document.getElementById("editReviewBookTitle");
+
+          if (editForm != null && editBookTitle != null) {
+            const picker = editForm.querySelector(".review-edit-rating-picker");
+            const input = editForm.querySelector(".review-edit-rating-value");
+            const comment = editForm.querySelector("[name='comment']");
+            const commentError = document.getElementById("editReviewCommentError");
+            const stars = Array.from(editForm.querySelectorAll(".review-edit-rating-star"));
+
+            if (picker != null && input != null && comment != null && stars.length > 0) {
+
+            function paint(value) {
+              stars.forEach(function (star) {
+                const starValue = Number(star.dataset.value);
+                star.classList.toggle("active", starValue <= value);
+                star.setAttribute("aria-checked", String(starValue === value));
+              });
+            }
+
+            function select(value) {
+              input.value = String(value);
+              paint(value);
+            }
+
+            stars.forEach(function (star) {
+              star.addEventListener("click", function () {
+                select(Number(this.dataset.value));
+              });
+              star.addEventListener("mouseenter", function () {
+                paint(Number(this.dataset.value));
+              });
+            });
+
+            picker.addEventListener("mouseleave", function () {
+              paint(Number(input.value) || 0);
+            });
+
+              function populateEditModal(trigger, rating, commentValue) {
+                  editForm.action = trigger.dataset.editUrl;
+                  editBookTitle.textContent = trigger.dataset.reviewTitle || "";
+                  comment.value = commentValue != null ? commentValue : (trigger.dataset.reviewComment || "");
+                  comment.classList.remove("is-invalid");
+                  if (commentError != null) {
+                    commentError.textContent = "";
+                  }
+                  select(Number(rating != null ? rating : trigger.dataset.reviewRating) || 0);
+              }
+
+              editForm.addEventListener("submit", function (event) {
+                if (comment.value.trim() === "") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  comment.classList.add("is-invalid");
+                  if (commentError != null) {
+                    commentError.textContent = "Vui lòng nhập nội dung đánh giá.";
+                  }
+                  comment.focus();
+                }
+              });
+
+              comment.addEventListener("input", function () {
+                this.classList.remove("is-invalid");
+                if (commentError != null) {
+                  commentError.textContent = "";
+                }
+              });
+
+              document.querySelectorAll(".btn-review-edit").forEach(function (trigger) {
+                trigger.addEventListener("click", function () {
+                  populateEditModal(trigger);
+                });
+              });
+
+              const editModal = document.getElementById("editReviewModal");
+              if (editModal != null && editModal.dataset.reopenFeedbackId) {
+                const trigger = document.querySelector(
+                  '.btn-review-edit[data-feedback-id="' + editModal.dataset.reopenFeedbackId + '"]'
+                );
+                if (trigger != null && window.jQuery != null) {
+                  populateEditModal(trigger, editModal.dataset.invalidRating, editModal.dataset.invalidComment);
+                  window.jQuery(editModal).modal("show");
+                }
+              }
+            }
+          }
+
+          const deleteModal = document.getElementById("deleteReviewModal");
+          const deleteForm = document.getElementById("deleteReviewForm");
+          const deleteBookTitle = document.getElementById("deleteReviewBookTitle");
+
+          if (deleteModal != null && deleteForm != null && deleteBookTitle != null) {
+            document.querySelectorAll(".review-delete-trigger").forEach(function (trigger) {
+              trigger.addEventListener("click", function () {
+              deleteForm.action = trigger.dataset.deleteUrl;
+              deleteBookTitle.textContent = trigger.dataset.reviewTitle || "cuốn sách này";
+              });
+            });
+          }
+        })();
+      </script>
     </div>
   </body>
 </html>

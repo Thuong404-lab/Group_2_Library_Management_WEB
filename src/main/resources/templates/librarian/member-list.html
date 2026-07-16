@@ -4,49 +4,15 @@
 
 <head>
     <title>Danh sách Thành viên</title>
-    <style>
-        #createMemberForm .form-control.is-invalid,
-        #createMemberForm .form-select.is-invalid,
-        .member-update-form .form-control.is-invalid,
-        .member-update-form .form-select.is-invalid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        #createMemberForm .form-control.is-valid,
-        #createMemberForm .form-select.is-valid,
-        .member-update-form .form-control.is-valid,
-        .member-update-form .form-select.is-valid {
-            background-image: none !important;
-            padding-right: 0.75rem !important;
-        }
-
-        .update-account-tooltip .tooltip-inner {
-            background-color: #8b5a2b !important;
-            color: #ffffff !important;
-        }
-
-        .delete-account-tooltip .tooltip-inner {
-            background-color: #dc3545 !important;
-            color: #ffffff !important;
-        }
-
-        .update-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #8b5a2b !important;
-        }
-
-        .delete-account-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #dc3545 !important;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+  </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='members'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
+           >
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Danh sách Thành
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Danh sách Thành
                     viên</h2>
                 <div class="text-muted">Danh sách và thông tin tài khoản thành viên trong hệ thống</div>
             </div>
@@ -63,8 +29,8 @@
 
                             <div
                                 class="card-header bg-white border-bottom border-color p-4 d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0" id="createMemberModalLabel"
-                                    style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336" id="createMemberModalLabel"
+                                   >
                                     <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                     Thông tin tài khoản
                                 </h5>
@@ -155,8 +121,8 @@
                                         </div>
                                     </div>
 
-                                    <h5 class="fw-bold mb-1 mt-3"
-                                        style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                    <h5 class="fw-bold mb-1 mt-3 u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                       >
                                         <i class="bi bi-card-heading me-2 text-classic"></i>
                                         Thiết lập Thẻ Thư viện
                                     </h5>
@@ -208,9 +174,9 @@
                                         </div>
                                     </div>
 
-                                    <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
+                                    <hr class="my-4 u-border-color-rgba-139-90-43-0-2-447fe402">
 
-                                    <div class="d-flex justify-content-end" style="gap: 12px;">
+                                    <div class="d-flex justify-content-end u-gap-12px-58cf3fe5">
                                         <button type="button" class="btn btn-light border shadow-sm"
                                             data-bs-dismiss="modal">
                                             Hủy bỏ
@@ -248,10 +214,10 @@
                 <!-- Search & Filter + Back Button -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <!-- Search & Filter -->
-                    <form class="d-flex align-items-center" style="gap: 12px; width: 60%;" method="get"
+                    <form class="d-flex align-items-center u-gap-12px-width-60-1a3153fd" method="get"
                         th:action="@{/librarian/members}">
                         <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;">
+                            <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
@@ -275,12 +241,12 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle stable-table-layout">
                         <colgroup>
-                            <col style="width: 7%">
-                            <col style="width: 15%">
-                            <col style="width: 25%">
-                            <col style="width: 20%">
-                            <col style="width: 17%">
-                            <col style="width: 16%">
+                            <col class="u-width-7-2d9383cf">
+                            <col class="u-width-15-f7f760e2">
+                            <col class="u-width-25-84a0e8c4">
+                            <col class="u-width-20-00e2b68d">
+                            <col class="u-width-17-9278e232">
+                            <col class="u-width-16-9fe033fb">
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
@@ -322,13 +288,7 @@
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
-                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}" th:style="${
-              member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
-              member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
-              member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
-              member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
-              'background-color: #8b5a2b;'
-          }">
+                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}" th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
@@ -351,6 +311,14 @@
                                 <td class="text-end pe-3"
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
 
+                                    <!-- View detail and this member's transaction history -->
+                                    <a th:if="${account.member != null}"
+                                        th:href="@{/librarian/members/{memberId}/details(memberId=${account.member.memberId})}"
+                                        class="btn btn-sm btn-outline-secondary account-action-tooltip"
+                                        data-bs-title="Xem chi tiết" aria-label="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
                                     <!-- Update -->
                                     <button type="button" class="btn btn-sm btn-outline-classic account-action-tooltip"
                                         data-bs-toggle="modal" th:data-bs-target="${'#updateMemberModal' + account.id}"
@@ -371,10 +339,10 @@
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
 
-                                                    <div class="modal-header border-bottom border-color"
-                                                        style="background-color: #fdfbf7;">
-                                                        <h5 class="modal-title fw-bold"
-                                                            style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                                    <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05"
+                                                       >
+                                                        <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                                           >
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                                             Cập nhật tài khoản
                                                         </h5>
@@ -588,12 +556,7 @@
                                                                     <span
                                                                         class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
-                                                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}" th:style="${
-                                          member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
-                                          member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
-                                          member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
-                                          member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
-                                          'background-color: #8b5a2b;'}">
+                                                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}" th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                                                         Standard
                                                                     </span>
 
@@ -639,47 +602,46 @@
                         <ul class="pagination mb-0">
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link" th:href="@{/librarian/members(page=0, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/librarian/members(page=0, keyword=${keyword})}"
+                                   >Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
-                                <a class="page-link"
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                     th:href="@{/librarian/members(page=${accounts.number - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                   ><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
 
                             <li class="page-item disabled" th:if="${startPage > 0}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Sliding window: at most 10 page numbers -->
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == accounts.number ? 'active' : ''}">
-                                <a class="page-link" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == accounts.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                <a class="page-link page-link-classic" th:href="@{/librarian/members(page=${i}, keyword=${keyword})}"
+                                    th:text="${i + 1}">1</a>
                             </li>
 
                             <li class="page-item disabled" th:if="${endPage < accounts.totalPages - 1}">
-                                <span class="page-link">…</span>
+                                <span class="page-link page-link-classic">…</span>
                             </li>
 
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link"
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                     th:href="@{/librarian/members(page=${accounts.number + 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                   ><i
                                         class="bi bi-chevron-right"></i></a>
                             </li>
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
-                                <a class="page-link"
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                     th:href="@{/librarian/members(page=${accounts.totalPages - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                   >Cuối</a>
                             </li>
                         </ul>
                     </nav>

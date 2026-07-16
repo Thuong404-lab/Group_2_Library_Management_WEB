@@ -3,60 +3,28 @@
       layout:decorate="~{layout/base}">
 <head>
     <title>Lịch sử mượn sách</title>
-    <style>
-        body {
-            background-color: #f8f7f5;
-        }
-        .status-badge-returned { background-color: #e6f4ea; color: #137333; border: 1px solid #98f5b4; }
-        .status-badge-borrowing { background-color: #e8f0fe; color: #1a73e8; border: 1px solid #adc1f9; }
-        .status-badge-overdue { background-color: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
-        .status-badge-pending { background-color: #fef7e0; color: #b06000; border: 1px solid #fde293; }
-        .timeline-dot { width: 12px; height: 12px; border-radius: 50%; background: #8b5a2b; display: inline-block; }
-
-        .nav-pills-classic .nav-link {
-            color: #8b5a2b !important;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            border-bottom: 2px solid transparent;
-            border-radius: 0;
-            padding: 0.75rem 1.25rem;
-        }
-        .nav-pills-classic .nav-link.active {
-            background-color: transparent !important;
-            color: #4a3b32 !important;
-            border-bottom: 2px solid #8b5a2b !important;
-            font-weight: bold;
-        }
-        .card-history {
-            border-radius: 10px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .card-history:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/member/borrow-history.css}" />
+  </head>
 <body>
 <div layout:fragment="content" class="container mt-4 mb-5">
 
     <!-- Header thông tin -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139,90,43,0.15) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom member-borrow-history-div-border-color-01">
         <div>
-            <h2 class="font-weight-bold mb-1" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-journal-check me-2" style="color:#8b5a2b;"></i>Lịch sử Mượn Sách
+            <h2 class="font-weight-bold mb-1 u-font-family-playfair-display-serif-color-4a3b32-fbccaa2c">
+                <i class="bi bi-journal-check me-2 u-color-8b5a2b-d7f13118"></i>Lịch sử Mượn Sách
             </h2>
             <div class="text-muted">Tất cả biên bản và tiến trình mượn - trả của bạn</div>
         </div>
         <div>
-            <span class="badge rounded-pill px-3 py-2" style="background:#fdf5ec; color:#8b5a2b; border:1px solid #8b5a2b; font-size: 0.9rem;">
+            <span class="badge rounded-pill px-3 py-2 member-borrow-history-span-background-border-04">
                 Tổng cộng: <strong th:text="${totalBorrows != null ? totalBorrows : #lists.size(historyList)}">0</strong> lần mượn
             </span>
         </div>
     </div>
 
     <!-- Thanh chuyển Tab Bộ lọc (Động hóa bằng URL Parameter 'tab') -->
-    <ul class="nav nav-pills nav-pills-classic mb-4" style="border-bottom: 2px solid rgba(139,90,43,0.15);">
+    <ul class="nav nav-pills nav-pills-classic mb-4 member-borrow-history-ul-border-bottom-05">
         <li class="nav-item">
             <a class="nav-link" th:classappend="${activeTab == 'all' || activeTab == null} ? 'active' : ''"
                th:href="@{/member/borrow/history(tab='all')}">Tất cả</a>
@@ -77,16 +45,14 @@
 
     <!-- Trường hợp danh sách rỗng -->
     <div th:if="${#lists.isEmpty(historyList)}" class="text-center py-5 bg-white rounded shadow-sm">
-        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+        <i class="bi bi-inbox text-muted u-font-size-3rem-ea01e09b"></i>
         <p class="text-muted fst-italic mt-2">Không tìm thấy bản ghi lịch sử mượn sách nào trong danh mục này.</p>
-        <a th:href="@{/}" class="btn text-white mt-2" style="background-color: #8b5a2b;"><i class="bi bi-search me-1"></i> Khám phá mượn sách ngay</a>
+        <a th:href="@{/}" class="btn text-white mt-2 u-background-color-8b5a2b-9102f523"><i class="bi bi-search me-1"></i> Khám phá mượn sách ngay</a>
     </div>
 
     <!-- VÒNG LẶP DUYỆT DANH SÁCH LỊCH SỬ ĐỘNG -->
     <div th:each="item : ${historyList}" class="card border-0 shadow-sm mb-3 card-history"
-         th:styleappend="${item.status == 'Borrowed'} ? 'border-left: 5px solid #1a73e8 !important;' :
-                        (${item.status == 'Overdue'} ? 'border-left: 5px solid #d93025 !important;' :
-                        (${item.status == 'Returned'} ? 'border-left: 5px solid #1e8e3e !important;' : 'border-left: 5px solid #718096 !important;'))">
+         th:classappend="${item.status == 'Borrowed'} ? ' borrow-history-card--borrowed' : (${item.status == 'Overdue'} ? ' borrow-history-card--overdue' : (${item.status == 'Returned'} ? ' borrow-history-card--returned' : ' borrow-history-card--other'))">
         <div class="card-body p-4">
             <div class="row align-items-center">
 
@@ -94,9 +60,9 @@
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                             class="rounded me-3 border" alt="Book Cover" style="width: 46px; height: 64px; object-fit: cover; border-color: rgba(139,90,43,0.15)!important;">
+                             class="rounded me-3 border member-borrow-history-img-width-height-fit-08" alt="Book Cover">
                         <div>
-                            <div class="font-weight-bold" style="color:#4a3b32; font-size:1.1rem; font-family:'Playfair Display',serif;" th:text="${item.bookTitle}">Tên sách mượn</div>
+                            <div class="font-weight-bold member-borrow-history-div-color-font-size-font-family-09" th:text="${item.bookTitle}">Tên sách mượn</div>
                             <div class="text-muted small" th:text="${item.authorName}">Tác giả</div>
                             <div class="text-muted small mt-1">Mã phiếu: <strong th:text="${item.borrowCode != null ? item.borrowCode : 'BOR-' + item.id}">BOR-2026-0042</strong></div>
                         </div>
@@ -126,16 +92,16 @@
 
                     <!-- Nhóm Badge Trạng thái -->
                     <div>
-                        <span th:if="${item.status == 'Borrowed'}" class="badge px-3 py-2 status-badge-borrowing" style="font-size:0.8rem; border-radius:20px;">
+                        <span th:if="${item.status == 'Borrowed'}" class="badge px-3 py-2 status-badge-borrowing member-borrow-history-span-font-size-border-radius-10">
                             <i class="bi bi-arrow-left-right me-1"></i>Đang mượn
                         </span>
-                        <span th:if="${item.status == 'Overdue'}" class="badge px-3 py-2 status-badge-overdue" style="font-size:0.8rem; border-radius:20px;">
+                        <span th:if="${item.status == 'Overdue'}" class="badge px-3 py-2 status-badge-overdue member-borrow-history-span-font-size-border-radius-10">
                             <i class="bi bi-exclamation-triangle me-1"></i>Quá hạn
                         </span>
-                        <span th:if="${item.status == 'Returned'}" class="badge px-3 py-2 status-badge-returned" style="font-size:0.8rem; border-radius:20px;">
+                        <span th:if="${item.status == 'Returned'}" class="badge px-3 py-2 status-badge-returned member-borrow-history-span-font-size-border-radius-10">
                             <i class="bi bi-check-circle me-1"></i>Đã trả xong
                         </span>
-                        <span th:if="${item.status == 'Return_Pending'}" class="badge px-3 py-2 status-badge-pending" style="font-size:0.8rem; border-radius:20px;">
+                        <span th:if="${item.status == 'Return_Pending'}" class="badge px-3 py-2 status-badge-pending member-borrow-history-span-font-size-border-radius-10">
                             <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt trả
                         </span>
                     </div>
@@ -150,19 +116,19 @@
                         <!-- Đang mượn: Cho phép bấm gửi yêu cầu trả nhanh hoặc gia hạn -->
                         <div th:if="${item.status == 'Borrowed'}" class="d-flex justify-content-md-end gap-1">
                             <form th:action="@{/borrow/return/{detailId}(detailId=${item.id})}" method="post">
-                                <button type="submit" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;"><i class="bi bi-arrow-return-left"></i> Trả sách</button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary u-font-size-0-75rem-8b511f07"><i class="bi bi-arrow-return-left"></i> Trả sách</button>
                             </form>
                         </div>
 
                         <!-- Đã trả: Đã đánh giá nhận xét -->
                         <div th:if="${item.status == 'Returned' && item.isReviewed}">
                             <span class="text-warning small"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></span>
-                            <span class="text-muted small d-block" style="font-size: 0.75rem;">Đã gửi đánh giá</span>
+                            <span class="text-muted small d-block u-font-size-0-75rem-8b511f07">Đã gửi đánh giá</span>
                         </div>
 
                         <!-- Đã trả: Chưa đánh giá nhận xét -> Hiện nút viết bài -->
                         <div th:if="${item.status == 'Returned' && !item.isReviewed}">
-                            <a th:href="@{/books/{id}(id=${item.bookId})}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; border-radius: 6px;">
+                            <a th:href="@{/books/{id}(id=${item.bookId})}" class="btn btn-sm btn-outline-warning member-borrow-history-a-font-size-border-radius-12">
                                 <i class="bi bi-star me-1"></i>Viết đánh giá
                             </a>
                         </div>

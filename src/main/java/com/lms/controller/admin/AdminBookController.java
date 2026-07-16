@@ -116,6 +116,52 @@ public class AdminBookController {
         return BOOKS_REDIRECT;
     }
 
+    @PostMapping("/inventory/categories/edit/{id}")
+    public String editCategory(@PathVariable Integer id, @RequestParam String name,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateCategory(id, name);
+            success(redirectAttributes, "Cập nhật danh mục thành công.");
+        } catch (IllegalArgumentException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
+    @PostMapping("/inventory/categories/delete/{id}")
+    public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteCategory(id);
+            success(redirectAttributes, "Xóa danh mục thành công.");
+        } catch (IllegalArgumentException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
+    @PostMapping("/inventory/genres/edit/{id}")
+    public String editGenre(@PathVariable Integer id, @RequestParam String name,
+            @RequestParam(required = false) Integer categoryId, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateGenre(id, name, categoryId);
+            success(redirectAttributes, "Cập nhật thể loại thành công.");
+        } catch (IllegalArgumentException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
+    @PostMapping("/inventory/genres/delete/{id}")
+    public String deleteGenre(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteGenre(id);
+            success(redirectAttributes, "Xóa thể loại thành công.");
+        } catch (IllegalArgumentException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
     @PostMapping("/inventory/audit")
     public String audit(RedirectAttributes redirectAttributes) {
         try {

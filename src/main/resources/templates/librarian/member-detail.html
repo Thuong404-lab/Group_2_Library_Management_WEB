@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Chi tiết thành viên</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-detail.css}" />
+  </head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='members'" class="finance-page member-detail-page">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom librarian-member-detail-div-border-color-01"
+        >
+        <div>
+            <h2 class="detail-page-title fw-bold mb-1">Chi Tiết Thành Viên</h2>
+            <div class="text-muted small">Xem thông tin thành viên, số dư ví và các giao dịch liên quan.</div>
+        </div>
+        <a th:href="@{/librarian/members}" class="btn btn-link text-decoration-none px-2 u-color-4a3b32-8f35ff96">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+    </div>
+
+    <div class="row g-5 mt-2">
+        <div class="col-lg-4 reader-column">
+            <h5 class="section-title"><i class="bi bi-person-fill"></i>Thông tin độc giả</h5>
+
+            <div class="d-flex align-items-center mb-4">
+                <div th:if="${member.user == null or member.user.avatar == null or #strings.isEmpty(member.user.avatar)}"
+                     class="avatar-circle"
+                     th:text="${member.user != null and member.user.fullName != null and !#strings.isEmpty(member.user.fullName) ? #strings.toUpperCase(#strings.substring(member.user.fullName, 0, 1)) : 'T'}">T</div>
+                <img th:if="${member.user != null and member.user.avatar != null and !#strings.isEmpty(member.user.avatar)}"
+                     th:src="${member.user.avatar}" alt="Ảnh thành viên" class="rounded-circle shadow-sm me-3 librarian-member-detail-img-width-height-fit-03"
+                    >
+                <div>
+                    <div class="fw-bold fs-5 detail-page-title"
+                         th:text="${member.user != null ? member.user.fullName : 'Thành viên'}">Họ tên thành viên</div>
+                    <span class="member-status mt-1"
+                          th:text="${member.tier == null ? 'Chưa xếp hạng' : (member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName))))}">
+                        Hạng thành viên
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <small class="detail-label">Mã độc giả</small>
+                <div class="detail-value" th:text="${'TV-' + member.memberId}">TV-1</div>
+            </div>
+            <div class="mb-3">
+                <small class="detail-label">Tên đăng nhập</small>
+                <div class="detail-value" th:text="${memberAccount != null ? memberAccount.username : 'Chưa có'}">username</div>
+            </div>
+            <div class="mb-3">
+                <small class="detail-label">Địa chỉ Email</small>
+                <div class="detail-value text-break" th:text="${member.user != null ? member.user.email : 'Chưa cập nhật'}">email@domain.com</div>
+            </div>
+            <div class="mb-3">
+                <small class="detail-label">Số điện thoại</small>
+                <div class="detail-value"
+                     th:classappend="${member.user == null or member.user.phone == null or #strings.isEmpty(member.user.phone)} ? ' fst-italic text-muted'"
+                     th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : 'Chưa cập nhật'}">
+                    Chưa cập nhật
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <h5 class="section-title"><i class="bi bi-person-vcard-fill"></i>Thông tin tài khoản và ví</h5>
+            <div class="row mb-5 g-4 account-summary">
+                <div class="col-md-6">
+                    <small class="detail-label">Trạng thái tài khoản</small>
+                    <div class="detail-value">
+                        <span class="member-status"
+                              th:classappend="${memberAccount == null or memberAccount.status != 'Active'} ? ' is-inactive'"
+                              th:text="${memberAccount == null ? 'Chưa có tài khoản' : (memberAccount.status == 'Active' ? 'Đang hoạt động' : (memberAccount.status == 'Blocked' ? 'Bị khóa' : 'Ngừng hoạt động'))}">
+                            Đang hoạt động
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <small class="detail-label">Số dư ví hiện tại</small>
+                    <div class="wallet-value">
+                        <span th:text="${wallet != null and wallet.balance != null ? #numbers.formatDecimal(wallet.balance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                        VNĐ
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <small class="detail-label">Hạng thành viên</small>
+                    <div class="detail-value"
+                         th:text="${member.tier == null ? 'Chưa xếp hạng' : (member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName))))}">
+                        Thường
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <small class="detail-label">Số giao dịch phù hợp</small>
+                    <div class="detail-value" th:text="${transactionPage.totalElements + ' giao dịch'}">0 giao dịch</div>
+                </div>
+            </div>
+
+            <h5 class="section-title transaction-title"><i class="bi bi-wallet2"></i>Lịch sử giao dịch</h5>
+
+            <form method="get" th:action="@{/librarian/members/{memberId}/details(memberId=${member.memberId})}"
+                  class="detail-filter d-flex flex-wrap align-items-center gap-2">
+                <select name="type" class="form-select" aria-label="Lọc loại giao dịch">
+                    <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao dịch</option>
+                    <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
+                    <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
+                    <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}">Tiền cọc</option>
+                    <option value="FINE" th:selected="${selectedType == 'FINE'}">Phí phạt</option>
+                    <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}">Phí hư hỏng</option>
+                    <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
+                </select>
+                <button type="submit" class="btn btn-classic px-3">Lọc</button>
+                <a th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId})}"
+                   class="btn btn-outline-secondary px-3">Xóa lọc</a>
+            </form>
+
+            <div class="table-responsive mb-4">
+                <table class="table classic-table mb-0 text-center">
+                    <thead>
+                    <tr>
+                        <th>Mã GD</th>
+                        <th>Loại giao dịch</th>
+                        <th>Số tiền</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${transactions == null or #lists.isEmpty(transactions)}">
+                        <td colspan="5" class="py-4 text-muted">Thành viên chưa có giao dịch phù hợp.</td>
+                    </tr>
+                    <tr th:each="transaction : ${transactions}">
+                        <td class="fw-bold font-monospace u-color-8b5a2b-d7f13118"
+                            th:text="${'TX-' + transaction.transactionId}">TX-1</td>
+                        <td>
+                            <span class="badge transaction-type"
+                                  th:classappend="${transaction.transactionType == 'TOP_UP'} ? ' type-topup' : (${transaction.transactionType == 'BORROW_FEE'} ? ' type-borrow-fee' : (${transaction.transactionType == 'DEPOSIT'} ? ' type-deposit' : (${transaction.transactionType == 'FINE'} ? ' type-fine' : (${transaction.transactionType == 'DAMAGE_FEE'} ? ' type-damage-fee' : (${transaction.transactionType == 'REFUND'} ? ' type-refund' : ' type-default')))))"
+                                  th:text="${transaction.transactionType == 'TOP_UP' ? 'Nạp tiền' : (transaction.transactionType == 'BORROW_FEE' ? 'Phí mượn' : (transaction.transactionType == 'DEPOSIT' ? 'Tiền cọc' : (transaction.transactionType == 'FINE' ? 'Phí phạt' : (transaction.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng' : (transaction.transactionType == 'REFUND' ? 'Hoàn tiền' : transaction.transactionType)))))}">
+                                Loại giao dịch
+                            </span>
+                        </td>
+                        <td class="fw-bold" th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
+                            <span th:text="${transaction.amount != null and transaction.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
+                            <span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                            VNĐ
+                        </td>
+                        <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${transaction.status == 'Completed' ? 'status-completed' : (transaction.status == 'Failed' ? 'status-rejected' : (transaction.status == 'Canceled' ? 'status-canceled' : 'status-pending'))}"
+                                  th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : (transaction.status == 'Pending' ? 'Chờ xử lý' : (transaction.status == 'Failed' ? 'Thất bại' : (transaction.status == 'Canceled' ? 'Đã hủy' : transaction.status)))}">
+                                Hoàn tất
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav th:if="${transactionPage != null and transactionPage.totalPages > 1}" aria-label="Phân trang giao dịch">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
+                        <a class="page-link page-link-classic" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage - 1},type=${selectedType})}">Trước</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link page-link-classic text-muted" th:text="${'Trang ' + (currentPage + 1) + ' / ' + transactionPage.totalPages}">Trang 1 / 1</span>
+                    </li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
+                        <a class="page-link page-link-classic" th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage + 1},type=${selectedType})}">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+</body>
+</html>

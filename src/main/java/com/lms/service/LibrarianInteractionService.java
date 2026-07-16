@@ -18,11 +18,15 @@ public interface LibrarianInteractionService {
 
     void deleteReview(Integer feedbackId);
 
-    void sendNotificationToMembers(LibrarianNotificationSendRequest request);
+    void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
 
     List<Member> getAllMembers();
 
     Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
+
+    void approveBookAcquisitionRequest(Integer requestId);
+
+    void rejectBookAcquisitionRequest(Integer requestId, String reason);
 
 
 }

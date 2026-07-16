@@ -1,157 +1,360 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/librarian_base}">
+    layout:decorate="~{layout/librarian_base}">
+
 <head>
     <!-- Librarian fine management UI maintained by Pham Kien Quoc. -->
     <title>Quản lý phạt vi phạm</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/fines.css}" />
+  </head>
+
 <body>
-<div layout:fragment="content" th:with="activeMenu='fines'" class="finance-page">
-    <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139,90,43,0.2) !important;">
-        <div>
-            <h2 class="fw-bold mb-1">Quản lý phạt vi phạm</h2>
-            <div class="text-muted">Tra cứu thành viên, tạo khoản phạt và theo dõi các vi phạm của độc giả.</div>
+    <div layout:fragment="content" th:with="activeMenu='fines'" class="finance-page">
+        <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-4432b9df"
+           >
+            <div>
+                <h2 class="fw-bold mb-1">Quản lý phạt vi phạm</h2>
+                <div class="text-muted">Tra cứu thành viên, tạo khoản phạt và theo dõi các vi phạm của độc giả.</div>
+            </div>
         </div>
-    </div>
 
-    <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
 
-    <div class="card-classic finance-card p-4 mb-4">
-        <h5 class="section-title fw-bold mb-3">
-            Tạo khoản phạt mới
-        </h5>
-        <form method="post" th:action="@{/librarian/members/fines/create}" id="fineForm" class="row g-3">
-            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <div class="col-12">
-                <label class="form-label fw-bold">Chọn thành viên</label>
-                <input type="text" id="fineMemberSearch" class="form-control mb-2"
-                       placeholder="Nhập tên thành viên, email, số điện thoại hoặc ID để tìm..." autocomplete="off">
-                <div class="topup-member-list border rounded-3 p-3" id="fineMemberList">
-                    <label th:each="member : ${fineMembers}" class="form-check topup-member-item fine-member-item mb-2"
-                           th:attr="data-search=${#strings.toLowerCase((member.user != null ? member.user.fullName : '') + ' ' + (member.user != null ? member.user.email : '') + ' ' + (member.user != null ? member.user.phone : '') + ' ' + member.memberId)}">
-                        <input class="form-check-input fine-member-checkbox" type="checkbox" name="memberId"
-                               th:value="${member.memberId}" autocomplete="off">
-                        <span class="form-check-label"
-                              th:text="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - ID: ' + member.memberId}">
-                            Thành viên - ID: 1
-                        </span>
-                    </label>
-                    <div th:if="${fineMembers == null or #lists.isEmpty(fineMembers)}"
-                         class="text-center text-muted py-3">Chưa có thành viên nào trong hệ thống.</div>
-                    <div id="fineMemberEmpty" class="text-center text-muted py-3 d-none">
-                        Không tìm thấy thành viên phù hợp.
+        <div class="card-classic finance-card overdue-summary p-4 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <h5 class="section-title fw-bold mb-1">Thành viên đang có sách quá hạn</h5>
+                    <div class="text-muted">
+                        Danh sách được tự động tổng hợp theo hạn trả để thủ thư không phải kiểm tra từng thành viên.
+                    </div>
+                    <div class="small mt-2">
+                        Mức phạt quá hạn từ cấu hình Admin:
+                        <strong class="text-danger">
+                            <span
+                                th:text="${finePerDay != null ? #numbers.formatDecimal(finePerDay, 0, 'COMMA', 0, 'POINT') : '5,000'}">5,000</span>
+                            đ/ngày
+                        </strong>
                     </div>
                 </div>
-                <small class="text-muted d-block mt-2">Chọn một thành viên để tạo khoản phạt.</small>
-                <div id="fineMemberRequired" class="invalid-feedback">Vui lòng chọn một thành viên.</div>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold small text-muted text-uppercase">Số tiền phạt</label>
-                <div class="input-group">
-                    <input type="number" class="form-control" name="amount" id="fineAmount"
-                           min="1000" step="1000">
-                    <span class="input-group-text">VNĐ</span>
+                <div class="overdue-count-group">
+                    <div class="overdue-count px-3 py-2">
+                        <div class="fw-bold fs-5" th:text="${overdueMemberCount != null ? overdueMemberCount : 0}">0
+                        </div>
+                        <div class="small text-muted">Thành viên</div>
+                    </div>
+                    <div class="overdue-count px-3 py-2">
+                        <div class="fw-bold fs-5"
+                            th:text="${overdueViolationCount != null ? overdueViolationCount : 0}">0</div>
+                        <div class="small text-muted">Lượt quá hạn</div>
+                    </div>
                 </div>
-                <div id="fineAmountRequired" class="invalid-feedback">Số tiền phạt không được để trống.</div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted text-uppercase">Lý do</label>
-                <input type="text" class="form-control" name="reason" id="fineReason"
-                       placeholder="Quá hạn, mất sách, hư hỏng...">
-                <div id="fineReasonRequired" class="invalid-feedback">Lý do phạt không được để trống.</div>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-classic w-100">
-                    Tạo phạt
-                </button>
-            </div>
-        </form>
-    </div>
 
-    <div class="card-classic finance-card info-panel p-5 text-center">
-        <i class="bi bi-info-circle fs-1 d-block mb-3 text-classic opacity-75"></i>
-        <h5 class="fw-bold">Khoản phạt được lưu vào lịch sử giao dịch</h5>
-        <p class="text-muted mb-3">
-            Sau khi tạo phạt, thành viên sẽ thấy khoản phạt trong trang ví và có thể thanh toán từ số dư ví.
-        </p>
-        <a th:href="@{/librarian/members/transactions(type='FINE')}" class="btn btn-outline-classic">
-            Xem các giao dịch phạt
-        </a>
-    </div>
+            <div th:if="${overdueViolations == null or #lists.isEmpty(overdueViolations)}"
+                class="text-center text-muted border rounded-3 bg-white py-4">
+                Hiện không có thành viên nào đang giữ sách quá hạn.
+            </div>
 
-    <script>
-        const fineMemberSearch = document.getElementById("fineMemberSearch");
-        if (fineMemberSearch != null) {
-            fineMemberSearch.addEventListener("input", function () {
-                const keyword = fineMemberSearch.value.trim().toLocaleLowerCase("vi");
+            <div th:if="${overdueViolations != null and !#lists.isEmpty(overdueViolations)}">
+                <div class="row g-2 align-items-center mb-3">
+                    <div class="col-lg-7">
+                        <input type="search" id="overdueViolationSearch" class="form-control"
+                            placeholder="Tìm theo tên, email, số điện thoại, ID, sách hoặc barcode..."
+                            autocomplete="off">
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="small text-muted text-lg-end">
+                            Chọn “Tạo phạt” để điền sẵn thành viên và lý do. Hãy kiểm tra trước khi lưu để tránh phạt
+                            trùng.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive border rounded-3 bg-white">
+                    <table class="table overdue-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">Thành viên</th>
+                                <th>Sách quá hạn</th>
+                                <th>Hạn trả</th>
+                                <th>Số ngày trễ</th>
+                                <th>Tiền phạt dự kiến</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overdueViolationRows">
+                            <tr th:each="violation : ${overdueViolations}" class="overdue-violation-row"
+                                th:attr="data-search=${#strings.toLowerCase(violation.memberName + ' ' + violation.email + ' ' + violation.phone + ' ' + violation.memberId + ' ' + violation.bookTitle + ' ' + violation.barcode)}">
+                                <td class="ps-3">
+                                    <div class="fw-bold" th:text="${violation.memberName}">Nguyễn Văn A</div>
+                                    <div class="small text-muted">
+                                        ID: <span th:text="${violation.memberId}">1</span>
+                                        <span th:if="${violation.email != ''}"> · </span>
+                                        <span th:if="${violation.email != ''}"
+                                            th:text="${violation.email}">email@example.com</span>
+                                    </div>
+                                    <div class="small text-muted" th:if="${violation.phone != ''}"
+                                        th:text="${violation.phone}">0900000000</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold" th:text="${violation.bookTitle}">Tên sách</div>
+                                    <div class="small text-muted" th:if="${violation.barcode != ''}">
+                                        Barcode: <span th:text="${violation.barcode}">BC001</span>
+                                    </div>
+                                </td>
+                                <td th:text="${#temporals.format(violation.dueDate, 'dd/MM/yyyy')}">01/07/2026</td>
+                                <td>
+                                    <span class="overdue-days-badge" th:text="${violation.overdueDays + ' ngày'}">3
+                                        ngày</span>
+                                </td>
+                                <td>
+                                    <strong class="text-danger">
+                                        <span
+                                            th:text="${#numbers.formatDecimal(violation.suggestedFineAmount, 0, 'COMMA', 0, 'POINT')}">15,000</span>
+                                        đ
+                                    </strong>
+                                    <div class="small text-muted">
+                                        <span
+                                            th:text="${#numbers.formatDecimal(violation.finePerDay, 0, 'COMMA', 0, 'POINT')}">5,000</span>
+                                        × <span th:text="${violation.overdueDays}">3</span> ngày
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="overdue-actions">
+                                        <form method="post"
+                                            th:action="@{/librarian/members/fines/remind/{borrowDetailId}(borrowDetailId=${violation.borrowDetailId})}"
+                                            onsubmit="return confirm('Gửi thông báo nhắc thành viên trả cuốn sách quá hạn này?');">
+                                            <input type="hidden" th:if="${_csrf != null}"
+                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                            <button type="submit" class="btn btn-sm btn-remind-overdue overdue-action-tooltip"
+                                                data-bs-title="Nhắc trả sách"
+                                                data-bs-custom-class="overdue-reminder-tooltip"
+                                                data-bs-placement="top" aria-label="Nhắc trả sách">
+                                                <i class="bi bi-bell-fill" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-classic btn-select-violation overdue-action-tooltip"
+                                            data-bs-title="Tạo phạt" data-bs-custom-class="overdue-fine-tooltip"
+                                            data-bs-placement="top" aria-label="Tạo phạt" th:attr="data-member-id=${violation.memberId},
+                                                 data-member-name=${violation.memberName},
+                                                 data-book-title=${violation.bookTitle},
+                                                 data-overdue-days=${violation.overdueDays},
+                                                 data-fine-amount=${violation.suggestedFineAmount}">
+                                            <i class="bi bi-receipt-cutoff"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="overdueViolationEmpty" class="d-none">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    Không tìm thấy lượt quá hạn phù hợp.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-classic finance-card p-4 mb-4">
+            <h5 class="section-title fw-bold mb-3">
+                Tạo khoản phạt mới
+            </h5>
+            <form method="post" th:action="@{/librarian/members/fines/create}" id="fineForm" class="row g-3">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}">
+                <div class="col-12">
+                    <label class="form-label fw-bold">Chọn thành viên</label>
+                    <input type="text" id="fineMemberSearch" class="form-control mb-2"
+                        placeholder="Nhập tên thành viên, email, số điện thoại hoặc ID để tìm..." autocomplete="off">
+                    <div class="topup-member-list border rounded-3 p-3" id="fineMemberList">
+                        <label th:each="member : ${fineMembers}"
+                            class="form-check topup-member-item fine-member-item mb-2"
+                            th:attr="data-search=${#strings.toLowerCase((member.user != null ? member.user.fullName : '') + ' ' + (member.user != null ? member.user.email : '') + ' ' + (member.user != null ? member.user.phone : '') + ' ' + member.memberId)}">
+                            <input class="form-check-input fine-member-checkbox" type="checkbox" name="memberId"
+                                th:value="${member.memberId}" autocomplete="off">
+                            <span class="form-check-label"
+                                th:text="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - ID: ' + member.memberId}">
+                                Thành viên - ID: 1
+                            </span>
+                        </label>
+                        <div th:if="${fineMembers == null or #lists.isEmpty(fineMembers)}"
+                            class="text-center text-muted py-3">Chưa có thành viên nào trong hệ thống.</div>
+                        <div id="fineMemberEmpty" class="text-center text-muted py-3 d-none">
+                            Không tìm thấy thành viên phù hợp.
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">Chọn một thành viên để tạo khoản phạt.</small>
+                    <div id="fineMemberRequired" class="invalid-feedback">Vui lòng chọn một thành viên.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Số tiền phạt</label>
+                    <div class="input-group">
+                        <input type="text" inputmode="numeric" class="form-control" name="amount" id="fineAmount"
+                            data-vnd-input data-min-amount="1000" autocomplete="off">
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <div id="fineAmountRequired" class="invalid-feedback">Số tiền phạt không được để trống.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Lý do</label>
+                    <input type="text" class="form-control" name="reason" id="fineReason"
+                        placeholder="Quá hạn, mất sách, hư hỏng...">
+                    <div id="fineReasonRequired" class="invalid-feedback">Lý do phạt không được để trống.</div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-classic w-100">
+                        Tạo phạt
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-classic finance-card info-panel p-5 text-center">
+            <i class="bi bi-info-circle fs-1 d-block mb-3 text-classic opacity-75"></i>
+            <h5 class="fw-bold">Khoản phạt được lưu vào lịch sử giao dịch</h5>
+            <p class="text-muted mb-3">
+                Sau khi tạo phạt, thành viên sẽ thấy khoản phạt trong trang ví và có thể thanh toán từ số dư ví.
+            </p>
+            <a th:href="@{/librarian/members/transactions(type='FINE')}" class="btn btn-outline-classic">
+                Xem các giao dịch phạt
+            </a>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".overdue-action-tooltip").forEach(function (button) {
+                    const tooltip = new bootstrap.Tooltip(button, { trigger: "hover" });
+                    button.addEventListener("click", function () {
+                        tooltip.hide();
+                    });
+                });
+            });
+
+            const overdueViolationSearch = document.getElementById("overdueViolationSearch");
+            overdueViolationSearch?.addEventListener("input", function () {
+                const keyword = overdueViolationSearch.value.trim().toLocaleLowerCase("vi");
                 let visibleCount = 0;
-                document.querySelectorAll(".fine-member-item").forEach(function (item) {
-                    const isVisible = (item.getAttribute("data-search") || "").includes(keyword);
-                    item.classList.toggle("d-none", !isVisible);
+                document.querySelectorAll(".overdue-violation-row").forEach(function (row) {
+                    const isVisible = (row.getAttribute("data-search") || "").includes(keyword);
+                    row.classList.toggle("d-none", !isVisible);
                     if (isVisible) visibleCount++;
                 });
-                document.getElementById("fineMemberEmpty")?.classList.toggle("d-none", visibleCount !== 0);
+                document.getElementById("overdueViolationEmpty")?.classList.toggle("d-none", visibleCount !== 0);
             });
-        }
 
-        const fineMemberCheckboxes = document.querySelectorAll(".fine-member-checkbox");
-        fineMemberCheckboxes.forEach(function (checkbox) {
-            checkbox.addEventListener("change", function () {
-                if (checkbox.checked) {
-                    fineMemberCheckboxes.forEach(function (otherCheckbox) {
-                        if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
+            document.querySelectorAll(".btn-select-violation").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    const memberId = button.getAttribute("data-member-id");
+                    const memberName = button.getAttribute("data-member-name") || "thành viên";
+                    const bookTitle = button.getAttribute("data-book-title") || "sách";
+                    const overdueDays = button.getAttribute("data-overdue-days") || "0";
+                    const suggestedFineAmount = button.getAttribute("data-fine-amount") || "";
+
+                    let selectedMember = null;
+                    document.querySelectorAll(".fine-member-checkbox").forEach(function (checkbox) {
+                        checkbox.checked = checkbox.value === memberId;
+                        if (checkbox.checked) selectedMember = checkbox;
                     });
-                }
-                document.getElementById("fineMemberList")?.classList.remove("is-invalid");
-                document.getElementById("fineMemberRequired")?.classList.remove("d-block");
+
+                    const reasonInput = document.getElementById("fineReason");
+                    if (reasonInput != null) {
+                        reasonInput.value = "Quá hạn " + overdueDays + " ngày - " + bookTitle;
+                        reasonInput.classList.remove("is-invalid");
+                        document.getElementById("fineReasonRequired")?.classList.remove("d-block");
+                    }
+
+                    document.getElementById("fineMemberList")?.classList.remove("is-invalid");
+                    document.getElementById("fineMemberRequired")?.classList.remove("d-block");
+                    document.getElementById("fineForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+                    if (selectedMember != null) {
+                        const fineAmount = document.getElementById("fineAmount");
+                        if (fineAmount != null) {
+                            fineAmount.value = suggestedFineAmount;
+                            fineAmount.dispatchEvent(new Event("input"));
+                            fineAmount.classList.remove("is-invalid");
+                            document.getElementById("fineAmountRequired")?.classList.remove("d-block");
+                        }
+                        fineAmount?.focus({ preventScroll: true });
+                        fineAmount?.setAttribute("placeholder", "Nhập mức phạt cho " + memberName);
+                    }
+                });
             });
-        });
 
-        const fineForm = document.getElementById("fineForm");
-        if (fineForm != null) {
-            fineForm.addEventListener("submit", function (event) {
-                let isValid = true;
-                if (!document.querySelector(".fine-member-checkbox:checked")) {
-                    document.getElementById("fineMemberList")?.classList.add("is-invalid");
-                    document.getElementById("fineMemberRequired")?.classList.add("d-block");
-                    isValid = false;
-                }
+            const fineMemberSearch = document.getElementById("fineMemberSearch");
+            if (fineMemberSearch != null) {
+                fineMemberSearch.addEventListener("input", function () {
+                    const keyword = fineMemberSearch.value.trim().toLocaleLowerCase("vi");
+                    let visibleCount = 0;
+                    document.querySelectorAll(".fine-member-item").forEach(function (item) {
+                        const isVisible = (item.getAttribute("data-search") || "").includes(keyword);
+                        item.classList.toggle("d-none", !isVisible);
+                        if (isVisible) visibleCount++;
+                    });
+                    document.getElementById("fineMemberEmpty")?.classList.toggle("d-none", visibleCount !== 0);
+                });
+            }
 
-                const fineAmount = document.getElementById("fineAmount");
-                if (fineAmount != null && fineAmount.value.trim() === "") {
-                    fineAmount.classList.add("is-invalid");
-                    document.getElementById("fineAmountRequired")?.classList.add("d-block");
-                    isValid = false;
-                }
-
-                const fineReason = document.getElementById("fineReason");
-                if (fineReason != null && fineReason.value.trim() === "") {
-                    fineReason.classList.add("is-invalid");
-                    document.getElementById("fineReasonRequired")?.classList.add("d-block");
-                    isValid = false;
-                }
-
-                if (!isValid) {
-                    event.preventDefault();
-                    fineForm.querySelector(".is-invalid")?.focus();
-                }
+            const fineMemberCheckboxes = document.querySelectorAll(".fine-member-checkbox");
+            fineMemberCheckboxes.forEach(function (checkbox) {
+                checkbox.addEventListener("change", function () {
+                    if (checkbox.checked) {
+                        fineMemberCheckboxes.forEach(function (otherCheckbox) {
+                            if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
+                        });
+                    }
+                    document.getElementById("fineMemberList")?.classList.remove("is-invalid");
+                    document.getElementById("fineMemberRequired")?.classList.remove("d-block");
+                });
             });
-        }
 
-        [
-            ["fineAmount", "fineAmountRequired"],
-            ["fineReason", "fineReasonRequired"]
-        ].forEach(function (field) {
-            const input = document.getElementById(field[0]);
-            input?.addEventListener("input", function () {
-                input.classList.remove("is-invalid");
-                document.getElementById(field[1])?.classList.remove("d-block");
+            const fineForm = document.getElementById("fineForm");
+            if (fineForm != null) {
+                fineForm.addEventListener("submit", function (event) {
+                    let isValid = true;
+                    if (!document.querySelector(".fine-member-checkbox:checked")) {
+                        document.getElementById("fineMemberList")?.classList.add("is-invalid");
+                        document.getElementById("fineMemberRequired")?.classList.add("d-block");
+                        isValid = false;
+                    }
+
+                    const fineAmount = document.getElementById("fineAmount");
+                    if (fineAmount != null && fineAmount.value.trim() === "") {
+                        fineAmount.classList.add("is-invalid");
+                        document.getElementById("fineAmountRequired")?.classList.add("d-block");
+                        isValid = false;
+                    }
+
+                    const fineReason = document.getElementById("fineReason");
+                    if (fineReason != null && fineReason.value.trim() === "") {
+                        fineReason.classList.add("is-invalid");
+                        document.getElementById("fineReasonRequired")?.classList.add("d-block");
+                        isValid = false;
+                    }
+
+                    if (!isValid) {
+                        event.preventDefault();
+                        fineForm.querySelector(".is-invalid")?.focus();
+                    }
+                });
+            }
+
+            [
+                ["fineAmount", "fineAmountRequired"],
+                ["fineReason", "fineReasonRequired"]
+            ].forEach(function (field) {
+                const input = document.getElementById(field[0]);
+                input?.addEventListener("input", function () {
+                    input.classList.remove("is-invalid");
+                    document.getElementById(field[1])?.classList.remove("d-block");
+                });
             });
-        });
-    </script>
-</div>
+        </script>
+        <script th:src="@{/js/payos-money-input.js}"></script>
+    </div>
 </body>
+
 </html>

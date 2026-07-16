@@ -6,6 +6,7 @@ import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
+import com.lms.enums.NotificationType;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
@@ -111,9 +112,10 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
+        data.put("notificationTypes", NotificationType.values());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
-                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").descending())));
         data.put("shelves", storageService.getAllStorageLocations());
         Page<Book> booksPage = bookRepository
                 .findAllWithAuthors(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));

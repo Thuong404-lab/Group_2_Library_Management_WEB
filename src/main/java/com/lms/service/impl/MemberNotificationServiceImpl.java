@@ -2,9 +2,12 @@ package com.lms.service.impl;
 
 import com.lms.dto.response.MemberNotificationResponse;
 import com.lms.entity.*;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.*;
 import com.lms.service.MemberNotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,12 +32,11 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberNotificationResponse> getMyNotifications(String username) {
+    public Page<MemberNotificationResponse> getMyNotifications(String username, Pageable pageable) {
         Member member = getMemberByUsername(username);
-        return memberNotificationRepository.findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return memberNotificationRepository
+                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId(), pageable)
+                .map(this::mapToResponse);
     }
 
     private Member getMemberByUsername(String username) {
@@ -53,6 +55,9 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         response.setNotificationId(mn.getNotification().getNotificationId());
         response.setTitle(mn.getNotification().getTitle());
         response.setContent(mn.getNotification().getContent());
+        response.setNotificationType(mn.getNotification().getNotificationType() != null
+                ? mn.getNotification().getNotificationType()
+                : NotificationType.GENERAL);
         response.setSentDate(mn.getNotification().getCreatedDate());
         response.setRead(Boolean.TRUE.equals(mn.getIsRead()));
         return response;
@@ -79,19 +84,8 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
     @Transactional
     public void markAllNotificationsAsRead(String username) {
         Member member = getMemberByUsername(username);
-        List<MemberNotification> unread = memberNotificationRepository.findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
-                .stream()
-                .filter(mn -> Boolean.FALSE.equals(mn.getIsRead()))
-                .toList();
-
-        if (!unread.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            unread.forEach(mn -> {
-                mn.setIsRead(true);
-                mn.setReadDate(now);
-            });
-            memberNotificationRepository.saveAll(unread);
-        }
+        memberNotificationRepository.markUnreadNotificationsAsRead(
+                member.getMemberId(), LocalDateTime.now());
     }
 
     @Override

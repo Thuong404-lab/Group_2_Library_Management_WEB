@@ -4,7 +4,8 @@
       layout:decorate="~{layout}"> <!-- Kế thừa từ layout gốc -->
 <head>
     <title>Yêu cầu trả sách trực tuyến - Thư viện LMW</title>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/member/return-requests.css}" />
+  </head>
 <body>
 <div layout:fragment="content" class="container py-5">
     <div class="row mb-4">
@@ -15,7 +16,7 @@
                     <li class="breadcrumb-item active" aria-current="page">Yêu cầu trả sách</li>
                 </ol>
             </nav>
-            <h2 class="font-weight-bold mb-3" style="color: #4a3b32;">Đơn yêu cầu trả sách trực tuyến</h2>
+            <h2 class="font-weight-bold mb-3 u-color-4a3b32-1ba01220">Đơn yêu cầu trả sách trực tuyến</h2>
             <p class="text-muted">Danh sách các đơn mượn bạn đã bấm xác nhận trả sách trực tuyến và đang chờ thủ thư kiểm tra tình trạng sách vật lý.</p>
         </div>
     </div>
@@ -23,8 +24,8 @@
     <div class="card border-0 shadow-sm rounded bg-white">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" style="vertical-align: middle;">
-                    <thead style="background-color: #8b5a2b; color: #fdfbf7;">
+                <table class="table table-hover mb-0 member-return-requests-table-vertical-align-02">
+                    <thead class="member-return-requests-thead-background-color-03">
                     <tr>
                         <th class="py-3 pl-4">Mã đơn mượn</th>
                         <th class="py-3">Tên sách / Mã vạch</th>
@@ -36,7 +37,7 @@
                     <tbody>
                     <!-- Lặp danh sách đơn mượn có trạng thái gửi yêu cầu trả từ Controller -->
                     <tr th:each="loan : ${returnLoans}">
-                        <td class="py-4 pl-4 font-weight-bold" style="color: #4a3b32;" th:text="'#' + ${loan.borrowId}">#1024</td>
+                        <td class="py-4 pl-4 font-weight-bold u-color-4a3b32-1ba01220" th:text="'#' + ${loan.borrowId}">#1024</td>
                         <td class="py-4">
                             <div th:each="detail : ${loanDetailsMap.get(loan.borrowId)}">
                                 <span class="d-block font-weight-bold mb-0" th:text="${detail.book.title}">Tên sách</span>
@@ -56,7 +57,7 @@
                     <!-- Hiển thị khi không có đơn nào chờ trả -->
                     <tr th:if="${returnLoans == null || returnLoans.isEmpty()}">
                         <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="bi bi-check2-circle d-block fs-1 mb-2" style="font-size: 2.5rem; color: #198754;"></i>
+                            <i class="bi bi-check2-circle d-block fs-1 mb-2 member-return-requests-i-font-size-color-04"></i>
                             Bạn hiện không có yêu cầu trả sách nào đang chờ xử lý.
                         </td>
                     </tr>

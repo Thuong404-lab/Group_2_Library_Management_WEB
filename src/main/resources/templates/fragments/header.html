@@ -8,8 +8,8 @@
   <body>
     <header
       th:fragment="header"
-      class="sticky-top shadow-sm w-100"
-      style="z-index: 1040; border-bottom: 3px solid #8b5a2b"
+      class="sticky-top shadow-sm w-100 header-header-z-index-border-bottom-01"
+
     >
       <nav class="navbar navbar-expand-lg navbar-light bg-classic py-3 px-4">
         <button
@@ -22,57 +22,43 @@
         </button>
 
         <a
-          class="navbar-brand d-flex align-items-center font-weight-bold"
+          class="navbar-brand d-flex align-items-center font-weight-bold u-color-4a3b32-1ba01220"
           th:href="@{/}"
-          style="color: #4a3b32"
+
         >
           <div
-            class="rounded p-2 mr-2"
-            style="
-              width: 45px;
-              height: 45px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background-color: #8b5a2b;
-              color: #fdfbf7;
-            "
+            class="rounded p-2 mr-2 header-div-width-height-display-03"
+
           >
             <i class="bi bi-book-half fs-4"></i>
           </div>
           <h4
-            class="mb-0 font-weight-bold d-none d-md-block"
-            style="
-              font-family: &quot;Playfair Display&quot;, serif;
-              letter-spacing: 1px;
-            "
+            class="mb-0 font-weight-bold d-none d-md-block header-h4-font-family-letter-spacing-04"
+
           >
             Thư Viện LMW
           </h4>
         </a>
 
         <ul
-          class="navbar-nav mr-auto ml-4 d-none d-md-flex font-weight-bold"
-          style="
-            font-size: 1.05rem;
-            font-family: &quot;Playfair Display&quot;, serif;
-          "
+          class="navbar-nav mr-auto ml-4 d-none d-md-flex font-weight-bold header-ul-font-size-font-family-05"
+
         >
           <li class="nav-item mr-3">
-            <a class="nav-link" th:href="@{/}" style="color: #4a3b32">
-              <i class="bi bi-house-door mr-1" style="color: #8b5a2b"></i>Sảnh
+            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/}">
+              <i class="bi bi-house-door mr-1 u-color-8b5a2b-93ece783"></i>Sảnh
               chính
             </a>
           </li>
           <li class="nav-item mr-3">
-            <a class="nav-link" th:href="@{/books}" style="color: #4a3b32">
-              <i class="bi bi-collection mr-1" style="color: #8b5a2b"></i>Khám
+            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/books}">
+              <i class="bi bi-collection mr-1 u-color-8b5a2b-93ece783"></i>Khám
               phá
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" th:href="@{/about}" style="color: #4a3b32">
-              <i class="bi bi-feather mr-1" style="color: #8b5a2b"></i>Giới
+            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/about}">
+              <i class="bi bi-feather mr-1 u-color-8b5a2b-93ece783"></i>Giới
               thiệu
             </a>
           </li>
@@ -87,76 +73,79 @@
           >
             <a
               id="notificationToggle"
-              class="position-relative text-decoration-none"
+              class="member-notification-toggle"
               href="#"
               role="button"
               data-toggle="dropdown"
               aria-expanded="false"
-              style="color: #4a3b32"
+
             >
-              <i class="bi bi-bell-fill" style="font-size: 1.25rem"></i>
+              <i class="bi bi-bell-fill header-i-font-size-07"></i>
               <span
                 id="notificationBellBadge"
-                class="badge badge-danger position-absolute"
+                class="badge badge-danger position-absolute header-notification-badge"
                 th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}"
                 th:text="${unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}"
-                style="top: -5px; right: -8px; font-size: 0.65rem"
                 >3</span
               >
             </a>
             <div
-              class="dropdown-menu dropdown-menu-right shadow border-0 mt-2 bg-classic"
-              style="width: 340px; border: 1px solid #8b5a2b !important"
+              class="dropdown-menu dropdown-menu-right member-notification-menu"
+
             >
               <h6
-                class="dropdown-header font-weight-bold border-bottom pb-2"
-                style="
-                  color: #4a3b32;
-                  font-family: &quot;Playfair Display&quot;, serif;
-                "
+                class="member-notification-heading"
+
               >
                 Thông báo từ Thư viện
               </h6>
 
               <a
-                class="dropdown-item py-2 text-wrap"
+                class="dropdown-item member-notification-item"
                 th:each="notification : ${latestNotifications}"
                 th:href="@{/member/interaction/notifications}"
-                th:classappend="${notification.read == false} ? ' font-weight-bold' : ''"
-                style="font-family: &quot;Lora&quot;, serif"
+                th:classappend="${notification.read == false} ? ' is-unread' : ''"
+
               >
-                <small class="d-block" style="color: #8b5a2b">
-                  <i class="bi bi-clock"></i>
-                  <span
-                    th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"
-                    >Hôm nay</span
+                <div class="member-notification-meta">
+                  <span class="member-notification-type"
+                    th:text="${notification.notificationType != null ? notification.notificationType.displayName : 'Thông báo chung'}"
+                    >Thông báo chung</span
                   >
-                </small>
-                <span class="d-block" th:text="${notification.title}"
+                  <small class="member-notification-time">
+                    <i class="bi bi-clock" aria-hidden="true"></i>
+                    <span
+                      th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"
+                      >Hôm nay</span
+                    >
+                  </small>
+                </div>
+                <span class="member-notification-title" th:text="${notification.title}"
+                  th:title="${notification.title}"
                   >Tiêu đề thông báo</span
                 >
                 <span
-                  class="d-block small text-muted"
+                  class="member-notification-preview"
                   th:text="${#strings.abbreviate(notification.content, 80)}"
                   >Nội dung thông báo</span
                 >
               </a>
 
               <div
-                class="dropdown-item text-muted small py-3"
+                class="member-notification-empty"
                 th:if="${latestNotifications == null || latestNotifications.isEmpty()}"
               >
                 Bạn chưa có thông báo nào.
               </div>
 
               <div
-                class="dropdown-divider"
-                style="border-color: rgba(139, 90, 43, 0.2)"
+                class="member-notification-divider"
+
               ></div>
               <a
-                class="dropdown-item text-center small font-weight-bold"
+                class="member-notification-view-all"
                 th:href="@{/member/interaction/notifications}"
-                style="color: #8b5a2b"
+
                 >Xem tất cả</a
               >
             </div>
@@ -165,14 +154,14 @@
           <div sec:authorize="!isAuthenticated()" class="d-flex">
             <a
               th:href="@{/login}"
-              class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold mr-2"
-              style="font-family: &quot;Playfair Display&quot;, serif"
+              class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold mr-2 header-a-font-family-12"
+
               >Đăng nhập</a
             >
             <a
               th:href="@{/register}"
-              class="btn btn-classic btn-sm rounded-pill px-4 font-weight-bold"
-              style="font-family: &quot;Playfair Display&quot;, serif"
+              class="btn btn-classic btn-sm rounded-pill px-4 font-weight-bold header-a-font-family-12"
+
               >Đăng ký</a
             >
           </div>
@@ -180,21 +169,16 @@
           <div sec:authorize="isAuthenticated()">
             <div class="dropdown">
               <a
-                class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                class="d-flex align-items-center text-decoration-none dropdown-toggle u-color-4a3b32-1ba01220"
                 href="#"
                 role="button"
                 data-toggle="dropdown"
                 aria-expanded="false"
-                style="color: #4a3b32"
+
               >
                 <div
-                  class="rounded-circle d-flex align-items-center justify-content-center mr-2 font-weight-bold text-white"
-                  style="
-                    width: 36px;
-                    height: 36px;
-                    background-color: #8b5a2b;
-                    font-size: 0.95rem;
-                  "
+                  class="rounded-circle d-flex align-items-center justify-content-center mr-2 font-weight-bold text-white header-div-width-height-background-13"
+
                   th:if="${#authentication.principal.user?.avatar == null}"
                   th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                 >
@@ -203,44 +187,28 @@
                 <img
                   th:if="${#authentication.principal.user?.avatar != null}"
                   th:src="${#authentication.principal.user.avatar}"
-                  class="rounded-circle mr-2 shadow-sm border border-white"
-                  style="width: 36px; height: 36px; object-fit: cover;"
+                  class="rounded-circle mr-2 shadow-sm border border-white header-img-width-height-fit-14"
+
                 >
                 <span
-                  class="d-none d-md-block font-weight-bold"
-                  style="color: #4a3b32"
+                  class="d-none d-md-block font-weight-bold u-color-4a3b32-1ba01220"
+
                   th:text="${#authentication.principal.name}"
                   >User Name</span
                 >
               </a>
 
               <div
-                class="dropdown-menu dropdown-menu-right shadow border-0 mt-2 p-0"
-                style="
-                  min-width: 240px;
-                  border-radius: 10px;
-                  overflow: hidden;
-                  border: 1px solid rgba(139, 90, 43, 0.2) !important;
-                "
+                class="dropdown-menu dropdown-menu-right shadow border-0 mt-2 p-0 header-div-min-width-border-radius-overflow-15"
+
               >
                 <div
-                  class="px-4 py-3 text-center"
-                  style="
-                    background: linear-gradient(
-                      135deg,
-                      #4a3b32 0%,
-                      #8b5a2b 100%
-                    );
-                  "
+                  class="px-4 py-3 text-center header-div-background-16"
+
                 >
                   <div
-                    class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 font-weight-bold text-white border border-white"
-                    style="
-                      width: 50px;
-                      height: 50px;
-                      background: rgba(255, 255, 255, 0.2);
-                      font-size: 1.4rem;
-                    "
+                    class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 font-weight-bold text-white border border-white header-div-width-height-background-17"
+
                     th:if="${#authentication.principal.user?.avatar == null}"
                     th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                   >
@@ -249,8 +217,8 @@
                   <img
                     th:if="${#authentication.principal.user?.avatar != null}"
                     th:src="${#authentication.principal.user.avatar}"
-                    class="rounded-circle mx-auto mb-2 shadow-sm border border-2 border-white"
-                    style="width: 50px; height: 50px; object-fit: cover;"
+                    class="rounded-circle mx-auto mb-2 shadow-sm border border-2 border-white header-img-width-height-fit-18"
+
                   >
                   <h6
                     class="text-white font-weight-bold mb-1"
@@ -278,87 +246,87 @@
                   </span>
                 </div>
 
-                <div class="px-2 py-2" style="background: #fdfbf7">
+                <div class="px-2 py-2 header-div-background-19">
                   <a
                     sec:authorize="hasRole('ADMIN')"
-                    class="dropdown-item py-2 rounded font-weight-bold"
+                    class="dropdown-item py-2 rounded font-weight-bold u-color-4a3b32-1ba01220"
                     th:href="@{/admin/dashboard}"
-                    style="color: #4a3b32"
+
                   >
-                    <i class="bi bi-shield-lock mr-2" style="color: #8b5a2b"></i
+                    <i class="bi bi-shield-lock mr-2 u-color-8b5a2b-93ece783"></i
                     >Bảng điều khiển Admin
                   </a>
 
                   <a
                     sec:authorize="hasRole('LIBRARIAN')"
-                    class="dropdown-item py-2 rounded font-weight-bold"
+                    class="dropdown-item py-2 rounded font-weight-bold u-color-4a3b32-1ba01220"
                     th:href="@{/librarian/dashboard}"
-                    style="color: #4a3b32"
+
                   >
                     <i
-                      class="bi bi-journal-album mr-2"
-                      style="color: #8b5a2b"
+                      class="bi bi-journal-album mr-2 u-color-8b5a2b-93ece783"
+
                     ></i
                     >Bảng điều khiển Thủ thư
                   </a>
 
                   <div sec:authorize="hasRole('MEMBER')">
                     <a
-                      class="dropdown-item py-2 rounded"
+                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/profile}"
-                      style="color: #4a3b32"
+
                     >
-                      <i class="bi bi-person mr-2" style="color: #8b5a2b"></i
+                      <i class="bi bi-person mr-2 u-color-8b5a2b-93ece783"></i
                       >Tài khoản của tôi
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded"
+                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/wallet}"
-                      style="color: #4a3b32"
+
                     >
-                      <i class="bi bi-wallet2 mr-2" style="color: #198754"></i
+                      <i class="bi bi-wallet2 mr-2 header-i-color-20"></i
                       >Số dư ví
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded"
+                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/borrow}"
-                      style="color: #4a3b32"
+
                     >
                       <i
-                        class="bi bi-journal-check mr-2"
-                        style="color: #0d6efd"
+                        class="bi bi-journal-check mr-2 u-color-0d6efd-7fee07de"
+
                       ></i
                       >Sách đã mượn
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded"
+                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/favorites}"
-                      style="color: #4a3b32"
+
                     >
-                      <i class="bi bi-heart mr-2" style="color: #dc3545"></i
+                      <i class="bi bi-heart mr-2 header-i-color-22"></i
                       >Sách yêu thích
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded"
+                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/interaction/reviews}"
-                      style="color: #4a3b32"
+
                     >
-                      <i class="bi bi-star mr-2" style="color: #ffc107"></i>Đánh
+                      <i class="bi bi-star mr-2 u-color-ffc107-b61c34a0"></i>Đánh
                       giá của tôi
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded"
+                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/interaction/acquisition-requests/new}"
-                      style="color: #4a3b32"
+
                     >
-                      <i class="bi bi-journal-plus mr-2" style="color: #8b5a2b"></i
+                      <i class="bi bi-journal-plus mr-2 u-color-8b5a2b-93ece783"></i
                       >&#272;&#7873; xu&#7845;t b&#7893; sung s&#225;ch
                     </a>
                   </div>
 
                   <div
-                    class="dropdown-divider"
-                    style="border-color: rgba(139, 90, 43, 0.15)"
+                    class="dropdown-divider header-div-border-color-24"
+
                   ></div>
 
                   <form th:action="@{/logout}" method="post" class="m-0">

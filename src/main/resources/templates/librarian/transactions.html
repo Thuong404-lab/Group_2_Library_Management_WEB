@@ -3,15 +3,15 @@
       layout:decorate="~{layout/librarian_base}">
 <head>
     <!-- UC-14.3 UI maintained by Pham Kien Quoc. -->
-    <title>Lịch sử giao dịch</title>
+    <title>Quản lý giao dịch</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-</head>
+  </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page">
-    <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139,90,43,0.2) !important;">
+    <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-4432b9df"
+        >
         <div>
-            <h2 class="fw-bold mb-1">Lịch sử giao dịch</h2>
+            <h2 class="fw-bold mb-1">Quản lý giao dịch</h2>
             <div class="text-muted">Theo dõi giao dịch ví, phí mượn, phí phạt và nạp tiền trong hệ thống.</div>
         </div>
     </div>
@@ -29,7 +29,7 @@
                     <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
                 </select>
             </div>
-                
+
             <div class="col-auto transaction-filter-submit">
                 <button type="submit" class="btn btn-classic px-4">Lọc</button>
             </div>
@@ -104,14 +104,14 @@
         <nav th:if="${transactionPage != null and transactionPage.totalPages > 1}" class="p-3" aria-label="Phân trang giao dịch">
             <ul class="pagination justify-content-center mb-0">
                 <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/members/transactions(page=${currentPage - 1}, type=${selectedType})}">Trước</a>
+                    <a class="page-link page-link-classic" th:href="@{/librarian/members/transactions(page=${currentPage - 1}, type=${selectedType})}">Trước</a>
                 </li>
                 <li class="page-item" th:each="i : ${#numbers.sequence(0, transactionPage.totalPages - 1)}"
                     th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/librarian/members/transactions(page=${i}, type=${selectedType})}" th:text="${i + 1}">1</a>
+                    <a class="page-link page-link-classic" th:href="@{/librarian/members/transactions(page=${i}, type=${selectedType})}" th:text="${i + 1}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/members/transactions(page=${currentPage + 1}, type=${selectedType})}">Sau</a>
+                    <a class="page-link page-link-classic" th:href="@{/librarian/members/transactions(page=${currentPage + 1}, type=${selectedType})}">Sau</a>
                 </li>
             </ul>
         </nav>

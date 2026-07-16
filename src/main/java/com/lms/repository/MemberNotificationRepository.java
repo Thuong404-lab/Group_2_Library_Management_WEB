@@ -5,6 +5,7 @@ import com.lms.entity.MemberNotificationId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,7 +15,18 @@ import java.util.List;
 @Repository
 public interface MemberNotificationRepository extends JpaRepository<MemberNotification, MemberNotificationId> {
 
-    List<MemberNotification> findByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
+    Page<MemberNotification> findByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId,
+                                                                                       Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update MemberNotification mn
+            set mn.isRead = true, mn.readDate = :readDate
+            where mn.member.memberId = :memberId
+              and mn.isRead = false
+            """)
+    int markUnreadNotificationsAsRead(@Param("memberId") Integer memberId,
+                                      @Param("readDate") java.time.LocalDateTime readDate);
 
     // Lấy 5 thông báo mới nhất cho chuông thông báo.
     List<MemberNotification> findTop5ByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
