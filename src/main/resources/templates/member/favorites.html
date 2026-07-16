@@ -8,31 +8,28 @@
   </head>
 
 <body>
-    <div layout:fragment="content" class="container favorites-page mt-4 mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div layout:fragment="content" class="container favorites-page">
+        <div class="member-page-header">
             <div>
-                <h2 class="favorites-title fw-bold mb-1">
+                <span class="member-page-eyebrow">BỘ SƯU TẬP CÁ NHÂN</span>
+                <h1 class="favorites-title">
                     Sách Yêu Thích
-                </h2>
-                <div class="text-muted">
+                </h1>
+                <p class="member-page-description">
                     Những cuốn sách bạn đã lưu để đọc sau
-                </div>
+                </p>
             </div>
-            <a th:href="@{/books}" class="btn btn-classic">
+            <a th:href="@{/books}" class="member-primary-action">
                 Khám phá thêm
             </a>
         </div>
 
-        <div class="card favorite-card border-0 shadow-sm">
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table favorite-table align-middle">
+        <div class="favorite-card">
+                <div class="member-table-wrap">
+                    <table class="favorite-table">
                         <thead>
                             <tr>
-                                <th class="ps-3 py-3 u-width-42-918e6647">Tên sách</th>
-                                <th class="py-3 u-width-24-3ca932db">Tác giả</th>
-                                <th class="py-3 u-width-14-546d6dae">Tình trạng</th>
-                                <th class="text-end pe-3 py-3 u-width-20-00e2b68d">Thao tác</th>
+                                <th>Tên sách</th><th>Tác giả</th><th>Tình trạng</th><th class="favorite-action-column">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -78,7 +75,7 @@
                                 </span>
                             </td>
 
-                            <td class="text-end pe-3">
+                            <td class="favorite-action-column">
                                 <div class="favorite-actions d-flex flex-column flex-md-row justify-content-md-end">
                                     <button class="btn btn-sm btn-favorite-classic u-width-110px-d76d1bd5"
 
@@ -105,8 +102,7 @@
                             </td>
                         </tr>
                         </tbody>
-                    </table>
-                </div>
+                    </table></div>
                 <nav th:if="${favorites != null && favorites.totalPages > 1}" class="mt-3"
                      th:with="startPage=${favorites.totalPages <= 10 ? 0 : (favorites.number < 9 ? 0 : (favorites.number - 8 > favorites.totalPages - 10 ? favorites.totalPages - 10 : favorites.number - 8))}, endPage=${startPage + 9 < favorites.totalPages ? startPage + 9 : favorites.totalPages - 1}">
                     <ul class="pagination justify-content-center mb-0">
@@ -139,7 +135,6 @@
                         </li>
                     </ul>
                 </nav>
-            </div>
         </div>
     </div>
 </body>

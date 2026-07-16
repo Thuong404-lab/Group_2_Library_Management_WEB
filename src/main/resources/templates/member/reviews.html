@@ -10,21 +10,22 @@
   </head>
 
   <body>
-    <div layout:fragment="content" class="container member-page mt-4 mb-5">
+    <div layout:fragment="content" class="container member-page reviews-page">
       <div
-        class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
+        class="member-page-header"
       >
         <div>
-          <h2
-            class="member-page-title fw-bold mb-1"
+          <span class="member-page-eyebrow">HOẠT ĐỘNG CỦA BẠN</span>
+          <h1
+            class="member-page-title"
           >
             Đánh giá
             của tôi
-          </h2>
-          <div class="text-muted">
+          </h1>
+          <p class="member-page-description">
             <span th:text="${myReviews != null ? myReviews.totalElements : 0}">0</span>
             đánh giá bạn đã gửi
-          </div>
+          </p>
         </div>
       </div>
 
@@ -35,17 +36,16 @@
       ></div>
       <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-      <div class="mb-3">
-        <h5 class="fw-bold u-color-4a3b32-1ba01220">
+      <div class="review-section-heading">
+        <h2>
           <i class="bi bi-list-stars me-2 u-color-8b5a2b-93ece783"></i>Đánh giá
           đã gửi
-        </h5>
+        </h2>
       </div>
 
-      <div class="card sent-review-card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <div class="table-responsive">
-            <table class="table review-table align-middle">
+      <div class="sent-review-card">
+          <div class="member-table-wrap">
+            <table class="review-table">
               <thead>
                 <tr>
                   <th class="ps-3 py-3 u-width-42-918e6647">Tên sách</th>
@@ -189,7 +189,6 @@
               </li>
             </ul>
           </nav>
-        </div>
       </div>
 
     </div>
