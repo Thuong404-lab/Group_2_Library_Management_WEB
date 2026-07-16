@@ -112,6 +112,18 @@ public class GuestController {
         model.addAttribute("bookReviews", bookReviews);
         model.addAttribute("reviewCount", bookReviews.size());
         model.addAttribute("averageRating", averageRating);
+        model.addAttribute("reviewBorrowEligible", false);
+        model.addAttribute("reviewAlreadySubmitted", false);
+        if (principal != null) {
+            try {
+                model.addAttribute("reviewBorrowEligible",
+                        memberReviewService.isEligibleToReview(principal.getName(), id));
+                model.addAttribute("reviewAlreadySubmitted",
+                        memberReviewService.hasActiveReview(principal.getName(), id));
+            } catch (RuntimeException ignored) {
+                // Non-member authenticated accounts cannot submit member reviews.
+            }
+        }
         if (!model.containsAttribute("reviewRequest")) {
             MemberReviewSubmitRequest reviewRequest = new MemberReviewSubmitRequest();
             reviewRequest.setBookId(id);

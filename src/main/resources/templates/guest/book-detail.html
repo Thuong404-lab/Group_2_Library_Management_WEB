@@ -136,7 +136,8 @@
             <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
             <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')">
+            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')"
+                 th:if="${reviewBorrowEligible and !reviewAlreadySubmitted}">
                 <h5 class="fw-bold mb-4 u-color-4a3b32-8f35ff96">
                     <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i>Gửi đánh giá sách
                 </h5>
@@ -189,6 +190,14 @@
                         Gửi đánh giá
                     </button>
                 </form>
+            </div>
+
+            <div class="review-eligibility-notice" sec:authorize="hasRole('MEMBER')"
+                 th:if="${reviewSubmittedSuccess == true}">
+                <div>
+                    <h5>Đã gửi đánh giá thành công.</h5>
+                    <a th:href="@{/member/interaction/reviews}" class="review-eligibility-link">Xem đánh giá của tôi</a>
+                </div>
             </div>
 
             <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="!hasRole('MEMBER')">

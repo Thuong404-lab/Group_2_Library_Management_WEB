@@ -472,8 +472,7 @@
                                     <form class="app-detached-form"
                                         th:id="${'reviewDeleteForm-' + review.feedbackId}"
                                         th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
-                                        method="post"
-                                        onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                                        method="post">
                                         <input type="hidden" th:if="${_csrf != null}"
                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     </form>
@@ -492,8 +491,11 @@
                                         </div>
                                         <div class="app-form-actions">
                                             <button type="submit" class="app-form-primary">Phản hồi</button>
-                                            <button type="submit" class="app-icon-action app-icon-action--delete"
-                                                th:form="${'reviewDeleteForm-' + review.feedbackId}"
+                                            <button type="button" class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
+                                                data-bs-toggle="modal" data-bs-target="#librarianDeleteReviewModal"
+                                                th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
+                                                th:data-book-title="${review.bookTitle}"
+                                                th:data-member-name="${review.memberName}"
                                                 title="Xoá đánh giá" aria-label="Xoá đánh giá">
                                                 <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
@@ -505,8 +507,11 @@
                                     </div>
                                     <div class="app-form-actions app-form-actions--end"
                                         th:if="${review.status == 'DELETED_BY_MEMBER'}">
-                                        <button type="submit" class="app-icon-action app-icon-action--delete"
-                                            th:form="${'reviewDeleteForm-' + review.feedbackId}"
+                                        <button type="button" class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
+                                            data-bs-toggle="modal" data-bs-target="#librarianDeleteReviewModal"
+                                            th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
+                                            th:data-book-title="${review.bookTitle}"
+                                            th:data-member-name="${review.memberName}"
                                             title="Xoá đánh giá" aria-label="Xoá đánh giá">
                                             <i class="bi bi-trash" aria-hidden="true"></i>
                                         </button>
@@ -564,6 +569,31 @@
                             </li>
                         </ul>
                 </nav>
+            </div>
+
+            <div class="modal fade librarian-review-delete-modal" id="librarianDeleteReviewModal" tabindex="-1"
+                aria-labelledby="librarianDeleteReviewModalLabel" aria-describedby="librarianDeleteReviewModalDescription"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title" id="librarianDeleteReviewModalLabel">Xoá đánh giá?</h2>
+                            <button type="button" class="librarian-review-modal-close" data-bs-dismiss="modal" aria-label="Đóng">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="librarianDeleteReviewModalDescription">
+                                Đánh giá của <strong id="librarianDeleteReviewMember"></strong> cho sách
+                                <strong id="librarianDeleteReviewBook"></strong> sẽ bị xoá khỏi hệ thống.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="librarian-review-modal-cancel" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="librarian-review-modal-confirm" id="librarianConfirmDeleteReview">Xoá đánh giá</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
         <!-- Book Suggestions -->
@@ -2403,6 +2433,36 @@
                 });
             }
 
+            function initializeReviewDeleteModal() {
+                const modal = document.getElementById("librarianDeleteReviewModal");
+                const memberName = document.getElementById("librarianDeleteReviewMember");
+                const bookTitle = document.getElementById("librarianDeleteReviewBook");
+                const confirmButton = document.getElementById("librarianConfirmDeleteReview");
+                let deleteForm = null;
+
+                if (modal == null || memberName == null || bookTitle == null || confirmButton == null) {
+                    return;
+                }
+
+                document.querySelectorAll(".librarian-review-delete-trigger").forEach(function (trigger) {
+                    trigger.addEventListener("click", function () {
+                        deleteForm = document.getElementById(trigger.dataset.deleteFormId);
+                        memberName.textContent = trigger.dataset.memberName || "member này";
+                        bookTitle.textContent = trigger.dataset.bookTitle || "cuốn sách này";
+                    });
+                });
+
+                confirmButton.addEventListener("click", function () {
+                    if (deleteForm != null) {
+                        deleteForm.submit();
+                    }
+                });
+
+                modal.addEventListener("hidden.bs.modal", function () {
+                    deleteForm = null;
+                });
+            }
+
             document.addEventListener("DOMContentLoaded", function () {
                 openSectionFromUrl();
 
@@ -2422,6 +2482,7 @@
                 }
 
                 validateReviewReplyForms();
+                initializeReviewDeleteModal();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 
