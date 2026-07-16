@@ -74,6 +74,7 @@ class PayOsPaymentServiceTest {
                 mock(BorrowRepository.class),
                 mock(FinancialService.class),
                 mock(PayOsSettlementService.class),
+                mock(PayOsPaymentAuditService.class),
                 "", "", "", "http://localhost:8080");
     }
 

@@ -23,11 +23,14 @@ public class PayOsPaymentReconciliationJob {
 
     private final PayOsPaymentRepository paymentRepository;
     private final PayOsPaymentService paymentService;
+    private final PayOsPaymentAuditService auditService;
 
     public PayOsPaymentReconciliationJob(PayOsPaymentRepository paymentRepository,
-                                         PayOsPaymentService paymentService) {
+                                         PayOsPaymentService paymentService,
+                                         PayOsPaymentAuditService auditService) {
         this.paymentRepository = paymentRepository;
         this.paymentService = paymentService;
+        this.auditService = auditService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -53,9 +56,11 @@ public class PayOsPaymentReconciliationJob {
     private void reconcile(List<Long> orderCodes) {
         for (Long orderCode : orderCodes) {
             try {
-                paymentService.refreshForStaff(orderCode);
+                paymentService.reconcileForStaff(orderCode);
+                auditService.resolveReconciliationIssue(orderCode, "SCHEDULED_JOB");
             } catch (Exception exception) {
                 LOGGER.warn("Không thể đối soát đơn KQPay {}: {}", orderCode, exception.getMessage());
+                auditService.recordReconciliationFailure(orderCode, exception.getMessage(), "SCHEDULED_JOB");
             }
         }
     }
