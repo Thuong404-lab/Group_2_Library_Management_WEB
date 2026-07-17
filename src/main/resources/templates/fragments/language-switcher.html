@@ -1,0 +1,39 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <div
+      th:fragment="switcher"
+      class="btn-group btn-group-sm me-3 mr-3"
+      role="group"
+      th:aria-label="#{language.selector.label}"
+    >
+      <a
+        href="?lang=en"
+        data-language="en"
+        class="btn btn-outline-secondary js-language-switch"
+        th:classappend="${#locale.language == 'en'} ? ' active'"
+        th:aria-current="${#locale.language == 'en'} ? 'true' : null"
+        th:title="#{language.switch.english}"
+      >EN</a>
+      <a
+        href="?lang=vi"
+        data-language="vi"
+        class="btn btn-outline-secondary js-language-switch"
+        th:classappend="${#locale.language == 'vi'} ? ' active'"
+        th:aria-current="${#locale.language == 'vi'} ? 'true' : null"
+        th:title="#{language.switch.vietnamese}"
+      >VI</a>
+    </div>
+
+    <script th:fragment="script">
+      document.querySelectorAll(".js-language-switch").forEach(function (link) {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          var url = new URL(window.location.href);
+          url.searchParams.set("lang", link.dataset.language);
+          window.location.assign(url.toString());
+        });
+      });
+    </script>
+  </body>
+</html>

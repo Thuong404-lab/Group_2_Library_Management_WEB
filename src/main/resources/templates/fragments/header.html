@@ -36,7 +36,7 @@
             class="mb-0 font-weight-bold d-none d-md-block header-h4-font-family-letter-spacing-04"
 
           >
-            Thư Viện LMW
+            <span th:text="#{app.name}">Library Management System</span>
           </h4>
         </a>
 
@@ -46,25 +46,29 @@
         >
           <li class="nav-item mr-3">
             <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/}">
-              <i class="bi bi-house-door mr-1 u-color-8b5a2b-93ece783"></i>Sảnh
-              chính
+              <i class="bi bi-house-door mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.home}">Home</span>
             </a>
           </li>
           <li class="nav-item mr-3">
             <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/books}">
-              <i class="bi bi-collection mr-1 u-color-8b5a2b-93ece783"></i>Khám
-              phá
+              <i class="bi bi-collection mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.explore}">Explore</span>
+            </a>
+          </li>
+          <li class="nav-item mr-3">
+            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/membership-tiers}">
+              <i class="bi bi-award mr-1 u-color-8b5a2b-93ece783"></i><span
+                th:text="#{nav.membershipTiers}">Explore membership tiers</span>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/about}">
-              <i class="bi bi-feather mr-1 u-color-8b5a2b-93ece783"></i>Giới
-              thiệu
+              <i class="bi bi-feather mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.about}">About</span>
             </a>
           </li>
         </ul>
 
         <div class="ml-auto d-flex align-items-center">
+          <div th:replace="~{fragments/language-switcher :: switcher}"></div>
           <div
             id="notificationDropdown"
             class="dropdown mr-4"
@@ -94,10 +98,10 @@
 
             >
               <div class="member-notification-heading">
-                <h6>Thông báo từ Thư viện</h6>
+                <h6 th:text="#{notification.heading}">Library notifications</h6>
                 <button type="button" id="markAllNotificationsRead" class="member-notification-mark-all"
                         th:disabled="${unreadNotificationCount == null || unreadNotificationCount == 0}">
-                  Đánh dấu đã xem tất cả
+                  <span th:text="#{notification.markAllRead}">Mark all as read</span>
                 </button>
               </div>
 
@@ -111,25 +115,25 @@
               >
                 <div class="member-notification-meta">
                   <span class="member-notification-type"
-                    th:text="${notification.notificationType != null ? notification.notificationType.displayName : 'Thông báo chung'}"
-                    >Thông báo chung</span
+                    th:text="${notification.notificationType != null ? #messages.msg('notification.type.' + #strings.toLowerCase(notification.notificationType.name())) : #messages.msg('notification.type.general')}"
+                    >General notification</span
                   >
                   <small class="member-notification-time">
                     <i class="bi bi-clock" aria-hidden="true"></i>
                     <span
                       th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm') : 'N/A'}"
-                      >Hôm nay</span
+                      >Today</span
                     >
                   </small>
                 </div>
                 <span class="member-notification-title" th:text="${notification.title}"
                   th:title="${notification.title}"
-                  >Tiêu đề thông báo</span
+                  >Notification title</span
                 >
                 <span
                   class="member-notification-preview"
                   th:text="${#strings.abbreviate(notification.content, 80)}"
-                  >Nội dung thông báo</span
+                  >Notification content</span
                 >
               </a>
 
@@ -137,11 +141,11 @@
                 class="member-notification-empty"
                 th:if="${latestNotifications == null || latestNotifications.isEmpty()}"
               >
-                Bạn chưa có thông báo nào.
+                <span th:text="#{notification.empty}">You have no notifications.</span>
               </div>
 
               <div class="member-notification-footer">
-                <a class="member-notification-view-all" th:href="@{/member/interaction/notifications}">Xem tất cả</a>
+                <a class="member-notification-view-all" th:href="@{/member/interaction/notifications}" th:text="#{notification.viewAll}">View all</a>
               </div>
             </div>
           </div>
@@ -151,13 +155,13 @@
               th:href="@{/login}"
               class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold mr-2 header-a-font-family-12"
 
-              >Đăng nhập</a
+              th:text="#{nav.login}">Log in</a
             >
             <a
               th:href="@{/register}"
               class="btn btn-classic btn-sm rounded-pill px-4 font-weight-bold header-a-font-family-12"
 
-              >Đăng ký</a
+              th:text="#{nav.register}">Register</a
             >
           </div>
 
@@ -225,19 +229,19 @@
                     class="badge border border-warning text-warning px-2 py-1 small"
                     sec:authorize="hasRole('ADMIN')"
                   >
-                    <i class="bi bi-shield-check mr-1"></i>Quản trị viên
+                    <i class="bi bi-shield-check mr-1"></i><span th:text="#{role.admin}">Administrator</span>
                   </span>
                   <span
                     class="badge border border-info text-info px-2 py-1 small"
                     sec:authorize="hasRole('LIBRARIAN')"
                   >
-                    <i class="bi bi-journal-album mr-1"></i>Thủ thư
+                    <i class="bi bi-journal-album mr-1"></i><span th:text="#{role.librarian}">Librarian</span>
                   </span>
                   <span
                     class="badge border border-warning text-warning px-2 py-1 small"
                     sec:authorize="hasRole('MEMBER')"
                   >
-                    <i class="bi bi-star-fill mr-1"></i>Thành viên
+                    <i class="bi bi-star-fill mr-1"></i><span th:text="#{role.member}">Member</span>
                   </span>
                 </div>
 
@@ -249,7 +253,7 @@
 
                   >
                     <i class="bi bi-shield-lock mr-2 u-color-8b5a2b-93ece783"></i
-                    >Bảng điều khiển Admin
+                    ><span th:text="#{nav.adminDashboard}">Admin Dashboard</span>
                   </a>
 
                   <a
@@ -262,7 +266,7 @@
                       class="bi bi-journal-album mr-2 u-color-8b5a2b-93ece783"
 
                     ></i
-                    >Bảng điều khiển Thủ thư
+                    ><span th:text="#{nav.librarianDashboard}">Librarian Dashboard</span>
                   </a>
 
                   <div sec:authorize="hasRole('MEMBER')">
@@ -272,7 +276,7 @@
 
                     >
                       <i class="bi bi-person mr-2 u-color-8b5a2b-93ece783"></i
-                      >Tài khoản của tôi
+                      ><span th:text="#{nav.myAccount}">My account</span>
                     </a>
                     <a
                       class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
@@ -280,7 +284,7 @@
 
                     >
                       <i class="bi bi-wallet2 mr-2 header-i-color-20"></i
-                      >Số dư ví
+                      ><span th:text="#{nav.walletBalance}">Wallet balance</span>
                     </a>
                     <a
                       class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
@@ -291,7 +295,7 @@
                         class="bi bi-journal-check mr-2 u-color-0d6efd-7fee07de"
 
                       ></i
-                      >Sách đã mượn
+                      ><span th:text="#{nav.borrowedBooks}">Borrowed books</span>
                     </a>
                     <a
                       class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
@@ -299,15 +303,14 @@
 
                     >
                       <i class="bi bi-heart mr-2 header-i-color-22"></i
-                      >Sách yêu thích
+                      ><span th:text="#{nav.favoriteBooks}">Favorite books</span>
                     </a>
                     <a
                       class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
                       th:href="@{/member/interaction/reviews}"
 
                     >
-                      <i class="bi bi-star mr-2 u-color-ffc107-b61c34a0"></i>Đánh
-                      giá của tôi
+                      <i class="bi bi-star mr-2 u-color-ffc107-b61c34a0"></i><span th:text="#{nav.myReviews}">My reviews</span>
                     </a>
                     <a
                       class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
@@ -315,7 +318,7 @@
 
                     >
                       <i class="bi bi-journal-plus mr-2 u-color-8b5a2b-93ece783"></i
-                      >&#272;&#7873; xu&#7845;t b&#7893; sung s&#225;ch
+                      ><span th:text="#{nav.acquisitionRequest}">Suggest a book</span>
                     </a>
                   </div>
 
@@ -329,7 +332,7 @@
                       type="submit"
                       class="dropdown-item py-2 rounded font-weight-bold text-danger"
                     >
-                      <i class="bi bi-box-arrow-right mr-2"></i>Đăng xuất
+                      <i class="bi bi-box-arrow-right mr-2"></i><span th:text="#{nav.logout}">Log out</span>
                     </button>
                   </form>
                 </div>

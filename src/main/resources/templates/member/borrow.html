@@ -64,6 +64,7 @@
                         <thead>
                         <tr>
                             <th class="ps-4 border-0">Tên Sách</th>
+                            <th class="border-0">Mã Đơn</th>
                             <th class="border-0">Mã sách (ID)</th>
                             <th class="border-0">Ngày mượn</th>
                             <th class="border-0">Hạn trả</th>
@@ -73,19 +74,21 @@
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(booksData)}">
-                            <td colspan="6" class="text-center py-4 text-muted fst-italic">Hiện tại bạn không mượn cuốn sách nào.</td>
+                            <td colspan="7" class="text-center py-4 text-muted fst-italic">Hiện tại bạn không mượn cuốn sách nào.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
+                                    <img th:src="${item.bookImage != null && !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="${#messages.msg('book.coverAlt') + ' ' + item.bookTitle}"
+                                         onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                     <div>
                                         <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Tên Sách</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
                                     </div>
                                 </div>
                             </td>
+                            <td class="text-muted fw-semibold" th:text="${item.borrowIdStr}">BOR-10023</td>
                             <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10023</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">10/11/2026</td>
                             <td>
@@ -98,12 +101,15 @@
                                     <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-success">Đang mượn</span>
                                     <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger">Quá hạn</span>
                                     <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt mượn</span>
+                                    <span th:if="${item.status == 'Waiting_Pickup'}" class="badge badge-classic-status" style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i>Chờ nhận sách vật lý
+                                    </span>
                                     <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-08">Chờ duyệt trả</span>
                                     <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-09">Chờ duyệt gia hạn</span>
-
+                                    <small th:if="${item.status == 'Waiting_Pickup'}" class="text-primary d-block mt-1" style="font-size:0.8rem;"><i class="bi bi-info-circle me-1"></i>Vui lòng đến quầy thư viện để nhận sách</small>
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="'(Còn ' + ${item.daysLeft} + ' ngày)'"></small>
                                 </div>
-                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending'}"
+                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending' && item.status != 'Waiting_Pickup'}"
                                      th:title="'Thời gian mượn: Đã qua ' + ${item.progressPercentage} + '%'" data-bs-toggle="tooltip">
                                     <div class="progress-bar" role="progressbar"
                                          th:data-presentation-width="${item.progressPercentage}"
@@ -151,8 +157,9 @@
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
+                                    <img th:src="${item.bookImage != null && !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="${#messages.msg('book.coverAlt') + ' ' + item.bookTitle}"
+                                         onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                     <div>
                                         <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Tên Sách</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
@@ -188,6 +195,7 @@
                         <thead>
                         <tr>
                             <th class="ps-4 border-0">Tên Sách</th>
+                            <th class="border-0">Mã Đơn</th>
                             <th class="border-0">Mã Sách</th>
                             <th class="border-0">Ngày mượn</th>
                             <th class="border-0">Ngày trả thực tế</th>
@@ -197,19 +205,21 @@
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(booksData)}">
-                            <td colspan="6" class="text-center py-4 text-muted fst-italic">Không tìm thấy lịch sử mượn trả trong vòng 1 tháng qua.</td>
+                            <td colspan="7" class="text-center py-4 text-muted fst-italic">Không tìm thấy lịch sử mượn trả trong vòng 1 tháng qua.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
+                                    <img th:src="${item.bookImage != null && !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="${#messages.msg('book.coverAlt') + ' ' + item.bookTitle}"
+                                         onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                     <div>
                                         <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Tên Sách</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
                                     </div>
                                 </div>
                             </td>
+                            <td class="text-muted fw-semibold" th:text="${item.borrowIdStr}">BOR-10023</td>
                             <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10012</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">01/10/2026</td>
                             <td class="text-muted" th:text="${item.returnDate != null ? #temporals.format(item.returnDate, 'dd/MM/yyyy') : '-'}">10/10/2026</td>

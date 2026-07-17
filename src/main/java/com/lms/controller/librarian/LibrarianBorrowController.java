@@ -3,6 +3,7 @@ import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.BorrowRequest;
 import com.lms.entity.Borrow;
+import com.lms.entity.Transaction;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.service.BorrowService;
@@ -12,6 +13,7 @@ import com.lms.service.PayOsPaymentService;
 import com.lms.service.FinancialService;
 import com.lms.entity.PayOsPayment;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.List;
+import com.lms.entity.BorrowDetail;
 
 @Controller
 public class LibrarianBorrowController {
@@ -34,8 +38,21 @@ public class LibrarianBorrowController {
     private final SystemSettingRepository systemSettingRepository;
     private final PayOsPaymentService payOsPaymentService;
     private final FinancialService financialService;
+    private final com.lms.repository.TransactionRepository transactionRepository;
+    private final com.lms.repository.WalletRepository walletRepository;
+    private final com.lms.repository.MemberAccountRepository memberAccountRepository;
 
-    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository, MemberRepository memberRepository, com.lms.repository.BookItemRepository bookItemRepository, com.lms.repository.BorrowDetailRepository borrowDetailRepository, SystemSettingRepository systemSettingRepository, PayOsPaymentService payOsPaymentService, FinancialService financialService) {
+    public LibrarianBorrowController(BorrowService borrowService,
+                                     BorrowRepository borrowRepository,
+                                     MemberRepository memberRepository,
+                                     com.lms.repository.BookItemRepository bookItemRepository,
+                                     com.lms.repository.BorrowDetailRepository borrowDetailRepository,
+                                     SystemSettingRepository systemSettingRepository,
+                                     PayOsPaymentService payOsPaymentService,
+                                     FinancialService financialService,
+                                     com.lms.repository.TransactionRepository transactionRepository,
+                                     com.lms.repository.WalletRepository walletRepository,
+                                     com.lms.repository.MemberAccountRepository memberAccountRepository) {
         this.borrowService = borrowService;
         this.borrowRepository = borrowRepository;
         this.memberRepository = memberRepository;
@@ -44,6 +61,9 @@ public class LibrarianBorrowController {
         this.systemSettingRepository = systemSettingRepository;
         this.payOsPaymentService = payOsPaymentService;
         this.financialService = financialService;
+        this.transactionRepository = transactionRepository;
+        this.walletRepository = walletRepository;
+        this.memberAccountRepository = memberAccountRepository;
     }
 
     // Xem danh sách toàn cục các phiếu mượn trả
@@ -149,12 +169,25 @@ public class LibrarianBorrowController {
     @PostMapping("/librarian/borrow/reject/{borrowId}")
     public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
         try {
-            borrowService.updateStatus(borrowId, "Rejected");
+            borrowService.rejectPendingRequest(borrowId);
             redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối cấp sách cho yêu cầu trực tuyến này.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";
+    }
+
+    // XÁC NHẬN NHẬN SÁCH VẬT LÝ: Chuyển trạng thái Waiting_Pickup -> Active + bắt đầu tính giờ mượn
+    @PostMapping("/librarian/borrow/pickup/{borrowId}")
+    public String confirmPhysicalPickup(@PathVariable("borrowId") Integer borrowId, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            String staffUsername = (principal != null) ? principal.getName() : "admin";
+            borrowService.confirmPhysicalPickup(borrowId, staffUsername);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận nhận sách vật lý! Phiếu mượn đang hoạt động và bắt đầu tính thời gian.");
+        } catch (ApplicationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/borrow/list";
     }
 
 
@@ -399,5 +432,114 @@ public class LibrarianBorrowController {
         }
         
         return response;
+    }
+
+    @GetMapping("/librarian/borrow/member/{memberId}")
+    public String viewMemberBorrowHistory(@PathVariable Integer memberId,
+                                          @RequestParam(value = "startDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                          @RequestParam(value = "endDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                          Model model) {
+        com.lms.entity.Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new com.lms.exception.ForbiddenException("Không tìm thấy thành viên hoặc bạn không có quyền xem thông tin này."));
+
+        // Determine user account creation date
+        java.time.LocalDateTime minBorrow = borrowRepository.findMinBorrowDateByMemberId(memberId);
+        java.time.LocalDateTime minTx = transactionRepository.findMinTransactionDateByMemberId(memberId);
+        java.time.LocalDateTime creationDateTime = java.time.LocalDateTime.now().minusDays(30); // fallback default
+        if (minBorrow != null && minTx != null) {
+            creationDateTime = minBorrow.isBefore(minTx) ? minBorrow : minTx;
+        } else if (minBorrow != null) {
+            creationDateTime = minBorrow;
+        } else if (minTx != null) {
+            creationDateTime = minTx;
+        }
+        LocalDate creationDate = creationDateTime.toLocalDate();
+        LocalDate today = LocalDate.now();
+
+        // Enforce date bounds
+        LocalDate filterStart = startDate;
+        if (filterStart == null) {
+            filterStart = creationDate;
+        } else {
+            if (filterStart.isBefore(creationDate)) {
+                filterStart = creationDate;
+            }
+            if (filterStart.isAfter(today)) {
+                filterStart = today;
+            }
+        }
+
+        LocalDate filterEnd = endDate;
+        if (filterEnd == null) {
+            filterEnd = today;
+        } else {
+            if (filterEnd.isBefore(creationDate)) {
+                filterEnd = creationDate;
+            }
+            if (filterEnd.isAfter(today)) {
+                filterEnd = today;
+            }
+        }
+
+        if (filterStart.isAfter(filterEnd)) {
+            filterStart = filterEnd;
+        }
+
+        // Load filtered list of borrows
+        List<Borrow> allBorrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
+        LocalDate finalFilterStart = filterStart;
+        LocalDate finalFilterEnd = filterEnd;
+        List<Borrow> filteredBorrows = allBorrows.stream()
+                .filter(b -> {
+                    java.time.LocalDateTime bd = b.getBorrowDate();
+                    if (bd == null) return false;
+                    return !bd.isBefore(finalFilterStart.atStartOfDay()) && !bd.isAfter(finalFilterEnd.atTime(23, 59, 59));
+                })
+                .toList();
+
+        // Mappings
+        java.util.Map<Integer, List<BorrowDetail>> detailsByBorrowId = new java.util.HashMap<>();
+        java.util.Map<Integer, List<Transaction>> transactionsByBorrowId = new java.util.HashMap<>();
+        for (Borrow borrow : filteredBorrows) {
+            detailsByBorrowId.put(borrow.getBorrowId(), borrowDetailRepository.findByBorrowId(borrow.getBorrowId()));
+            transactionsByBorrowId.put(borrow.getBorrowId(), transactionRepository.findByBorrow_BorrowId(borrow.getBorrowId()));
+        }
+
+        // Stats (all time)
+        List<BorrowDetail> allMemberDetails = borrowDetailRepository.findBorrowHistoryLimit365Days(memberId, java.time.LocalDateTime.of(2000, 1, 1, 0, 0));
+        int totalBorrows = allMemberDetails.size();
+        int completedBorrows = 0;
+        int activeBorrows = 0;
+        for (BorrowDetail bd : allMemberDetails) {
+            if ("Returned".equalsIgnoreCase(bd.getStatus())) {
+                completedBorrows++;
+            } else if ("Borrowed".equalsIgnoreCase(bd.getStatus()) || "Overdue".equalsIgnoreCase(bd.getStatus()) || "Return_Pending".equalsIgnoreCase(bd.getStatus()) || "Approved".equalsIgnoreCase(bd.getStatus()) || "Waiting_Pickup".equalsIgnoreCase(bd.getStatus())) {
+                activeBorrows++;
+            }
+        }
+
+        com.lms.entity.MemberAccount account = memberAccountRepository.findByMemberMemberId(memberId).orElse(null);
+        com.lms.entity.Wallet wallet = walletRepository.findByMemberMemberId(memberId).orElse(null);
+
+        model.addAttribute("member", member);
+        model.addAttribute("accountUsername", account != null ? account.getUsername() : "Chưa có");
+        model.addAttribute("accountStatus", account != null ? account.getStatus() : "Inactive");
+        model.addAttribute("walletBalance", wallet != null && wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO);
+
+        model.addAttribute("totalBorrows", totalBorrows);
+        model.addAttribute("completedBorrows", completedBorrows);
+        model.addAttribute("activeBorrows", activeBorrows);
+
+        model.addAttribute("startDate", filterStart.toString());
+        model.addAttribute("endDate", filterEnd.toString());
+        model.addAttribute("minDate", creationDate.toString());
+        model.addAttribute("maxDate", today.toString());
+
+        model.addAttribute("borrows", filteredBorrows);
+        model.addAttribute("detailsByBorrowId", detailsByBorrowId);
+        model.addAttribute("transactionsByBorrowId", transactionsByBorrowId);
+        model.addAttribute("activeMenu", "borrow-schedule");
+
+        return "librarian/borrow-member-detail";
     }
 }

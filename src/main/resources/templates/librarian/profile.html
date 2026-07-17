@@ -79,20 +79,20 @@
                     <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220">Thông tin chi tiết tài khoản</h5>
                 </div>
                 <div class="card-body-classic">
-                    <form th:action="@{/librarian/profile/update}" method="post" enctype="multipart/form-data" class="m-0">
+                    <form th:action="@{/librarian/profile/update}" method="post" enctype="multipart/form-data" class="m-0" novalidate>
                         <input type="file" id="avatarUploadLibrarian" name="avatarFile" accept="image/*" class="d-none">
                         <div class="row g-3">
                             <div class="col-12 mb-3">
                                 <label class="form-label fw-bold text-muted small">Họ và Tên thành viên ban quản trị</label>
-                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${librarian?.fullName}" maxlength="50" required>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${librarian?.fullName}" th:placeholder="#{profile.fullNamePlaceholder}" maxlength="50" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small">Địa chỉ Email công vụ</label>
-                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${librarian?.email}" required>
+                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${librarian?.email}" th:placeholder="#{profile.emailPlaceholder}" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small">Số điện thoại nội bộ</label>
-                                <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${librarian?.phone}">
+                                <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${librarian?.phone}" th:placeholder="#{profile.phonePlaceholder}" required>
                             </div>
 
                             <div class="col-12 mt-3 text-end">
@@ -111,7 +111,7 @@
                         <h5 class="modal-title fw-bold font-playfair mb-0 u-color-4a3b32-1ba01220">Thay đổi mật khẩu tài khoản điều hành</h5>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form th:action="@{/librarian/profile/change-password}" method="post" class="m-0">
+                    <form th:action="@{/librarian/profile/change-password}" method="post" class="m-0" novalidate>
                         <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>

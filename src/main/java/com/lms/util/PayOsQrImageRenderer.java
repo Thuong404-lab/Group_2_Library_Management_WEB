@@ -23,7 +23,7 @@ public final class PayOsQrImageRenderer {
     private PayOsQrImageRenderer() {
     }
 
-    public static byte[] render(String qrContent) {
+    public static byte[] render(String qrContent, String unsupportedPngMessage, String renderFailedMessage) {
         try {
             Map<EncodeHintType, Object> hints = Map.of(
                     EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name(),
@@ -40,11 +40,11 @@ public final class PayOsQrImageRenderer {
             }
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             if (!ImageIO.write(image, "PNG", output)) {
-                throw new DataProcessingException("Hệ thống không hỗ trợ tạo ảnh PNG cho mã QR.");
+                throw new DataProcessingException(unsupportedPngMessage);
             }
             return output.toByteArray();
         } catch (WriterException | IOException ex) {
-            throw new DataProcessingException("Không thể tạo ảnh mã QR thanh toán.", ex);
+            throw new DataProcessingException(renderFailedMessage, ex);
         }
     }
 }

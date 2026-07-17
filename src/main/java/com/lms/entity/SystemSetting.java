@@ -3,7 +3,7 @@ package com.lms.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "`SystemSettings`")
+@Table(name = "SystemSettings")
 public class SystemSetting {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

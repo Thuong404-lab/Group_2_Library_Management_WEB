@@ -16,7 +16,7 @@
             if (remainingSeconds === 0) {
                 countdown.classList.add("is-expired");
                 const label = countdown.querySelector("[data-kqpay-label]");
-                if (label != null) label.textContent = "Mã QR đã hết hạn";
+                if (label != null) label.textContent = countdown.dataset.expiredLabel || "QR code expired";
                 if (timer != null) clearInterval(timer);
             }
 

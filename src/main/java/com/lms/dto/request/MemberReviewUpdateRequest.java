@@ -9,14 +9,14 @@ import jakarta.validation.constraints.Pattern;
 
 public class MemberReviewUpdateRequest {
 
-    @NotNull(message = "Vui lòng chọn đánh giá sao")
-    @Min(value = 1, message = "Tối thiểu 1 sao")
-    @Max(value = 5, message = "Tối đa 5 sao")
+    @NotNull(message = "{validation.review.ratingRequired}")
+    @Min(value = 1, message = "{validation.review.ratingMinimum}")
+    @Max(value = 5, message = "{validation.review.ratingMaximum}")
     private Integer rating;
 
-    @NotBlank(message = "Vui lòng nhập nội dung đánh giá")
-    @Size(min = 5, max = 1000, message = "Nội dung đánh giá phải có từ 5 đến 1000 ký tự")
-    @Pattern(regexp = "(?s).*\\p{L}.*", message = "Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt")
+    @NotBlank(message = "{backend.review.contentRequired}")
+    @Size(min = 5, max = 1000, message = "{backend.review.contentRange}")
+    @Pattern(regexp = "(?s).*\\p{L}.*", message = "{backend.review.contentLetters}")
     private String comment;
 
     public Integer getRating() {

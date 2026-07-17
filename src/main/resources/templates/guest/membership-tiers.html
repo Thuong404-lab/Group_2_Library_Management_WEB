@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/base}">
+
+<head>
+    <title th:text="#{public.tiers.title}">Membership Tiers - LMW Library</title>
+    <link rel="stylesheet" th:href="@{/css/pages/guest/membership-tiers.css}" />
+</head>
+
+<body>
+    <div layout:fragment="content" class="membership-tiers-page">
+        <section class="membership-tiers-hero">
+            <div class="container text-center">
+                <span class="membership-tiers-eyebrow">
+                    <i class="bi bi-stars" aria-hidden="true"></i>
+                    <span th:text="#{public.tiers.eyebrow}">Benefits made for you</span>
+                </span>
+                <h1 th:text="#{public.tiers.heading}">Explore membership tiers</h1>
+                <p th:text="#{public.tiers.description}">Every reading journey deserves recognition. Explore each
+                    tier's requirements and benefits at LMW Library.</p>
+            </div>
+        </section>
+
+        <section class="container membership-tiers-content" aria-labelledby="membership-tier-list-title">
+            <h2 id="membership-tier-list-title" class="sr-only" th:text="#{public.tiers.listTitle}">Membership tier list</h2>
+
+            <div class="row membership-tier-grid" th:if="${tiers != null && !tiers.isEmpty()}">
+                <div class="col-lg-3 col-md-6 d-flex" th:each="tier, tierStat : ${tiers}">
+                    <article class="membership-tier-card">
+                        <div class="membership-tier-card__top">
+                            <span class="membership-tier-card__number"
+                                th:text="${#numbers.formatInteger(tierStat.count, 2)}">01</span>
+                            <span class="membership-tier-card__icon" aria-hidden="true">
+                                <i class="bi bi-award-fill"></i>
+                            </span>
+                        </div>
+
+                        <p class="membership-tier-card__label" th:text="#{public.tiers.cardLabel}">Membership tier</p>
+                        <h3 th:text="${tier.tierName}">Regular</h3>
+
+                        <dl class="membership-tier-details">
+                            <div class="membership-tier-details__item">
+                                <dt><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span th:text="#{public.tiers.condition}">Tier requirement</span></dt>
+                                <dd th:if="${tier.condition != null}"
+                                    th:with="formattedCondition=${#numbers.formatDecimal(tier.condition, 1, 'POINT', 0, 'COMMA')}"
+                                    th:text="${#messages.msg('public.tiers.conditionValue', formattedCondition)}">0 VND</dd>
+                                <dd th:unless="${tier.condition != null}" th:text="#{public.tiers.noRequirement}">No requirement</dd>
+                            </div>
+                            <div class="membership-tier-details__item">
+                                <dt><i class="bi bi-book" aria-hidden="true"></i><span th:text="#{public.tiers.borrowLimit}">Borrowing limit</span></dt>
+                                <dd th:text="${#messages.msg('public.tiers.borrowLimitValue', tier.borrowLimit)}">3 books</dd>
+                            </div>
+                            <div class="membership-tier-details__item">
+                                <dt><i class="bi bi-percent" aria-hidden="true"></i><span th:text="#{public.tiers.discount}">Borrowing fee discount</span></dt>
+                                <dd th:text="${#messages.msg('public.tiers.discountValue', tier.discountPercent)}">0%</dd>
+                            </div>
+                        </dl>
+
+                        <div class="membership-tier-benefits">
+                            <h4><i class="bi bi-gift" aria-hidden="true"></i><span th:text="#{public.tiers.benefits}">Detailed benefits</span></h4>
+                            <p th:text="${tier.benefits}">Membership tier benefits.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div class="membership-tiers-empty" th:if="${tiers == null || tiers.isEmpty()}">
+                <i class="bi bi-award" aria-hidden="true"></i>
+                <h3 th:text="#{public.tiers.emptyTitle}">No membership tier information yet</h3>
+                <p th:text="#{public.tiers.emptyDescription}">Membership tier information is being updated. Please check back later.</p>
+            </div>
+
+    </section>
+</div>
+</body>
+
+</html>

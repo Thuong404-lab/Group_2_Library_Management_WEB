@@ -62,6 +62,7 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
                 OR (:section = 'operations' AND log.actionType NOT IN
                     ('LOGIN', 'LOGOUT', 'GOOGLE', 'REQUEST_BORROW', 'REQUEST_RETURN', 'RESERVE_BOOK'))
             )
+            AND (:actionType = '' OR log.actionType = :actionType)
             AND (:keyword = ''
                 OR LOWER(CAST(log.createdAt AS string)) LIKE LOWER(CONCAT('%', :keyword, '%'))
                 OR LOWER(FUNCTION('FORMAT', log.createdAt, 'dd/MM/yyyy HH:mm:ss')) LIKE LOWER(CONCAT('%', :keyword, '%'))
@@ -86,5 +87,6 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
             """)
     Page<SystemLog> searchLogsBySection(@Param("section") String section,
             @Param("keyword") String keyword,
+            @Param("actionType") String actionType,
             Pageable pageable);
 }

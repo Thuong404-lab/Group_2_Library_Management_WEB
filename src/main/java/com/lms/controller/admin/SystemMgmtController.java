@@ -23,12 +23,14 @@ public class SystemMgmtController {
     public String viewSystemLogs(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(required = false, defaultValue = "auth") String section,
                                  @RequestParam(required = false, defaultValue = "") String keyword,
+                                 @RequestParam(required = false, defaultValue = "") String actionType,
                                  Model model) {
 
         String currentSection = normalizeSection(section);
-        model.addAttribute("logs", systemService.getSystemLogs(page, currentSection, keyword));
+        model.addAttribute("logs", systemService.getSystemLogs(page, currentSection, keyword, actionType));
         model.addAttribute("keyword", keyword);
         model.addAttribute("currentSection", currentSection);
+        model.addAttribute("actionType", actionType);
 
         return "admin/system-logs";
     }

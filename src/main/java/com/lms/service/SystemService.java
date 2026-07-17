@@ -17,7 +17,7 @@ public interface SystemService {
 
     void restoreData(String backupFilePath);
 
-    Page<SystemLog> getSystemLogs(int page, String action, String keyword);
+    Page<SystemLog> getSystemLogs(int page, String action, String keyword, String actionType);
 
     List<SystemSetting> getAllSettings();
 

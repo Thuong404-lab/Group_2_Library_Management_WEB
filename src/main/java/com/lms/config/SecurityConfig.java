@@ -90,7 +90,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password",
-                        "/css/**", "/js/**", "/books/**", "/api/books/**", "/about", "/images/**"
+                        "/css/**", "/js/**", "/books/**", "/api/books/**", "/about",
+                        "/membership-tiers", "/images/**"
                         ).permitAll()
                 .requestMatchers("/member/**").hasRole("MEMBER")
                 .anyRequest().authenticated()
