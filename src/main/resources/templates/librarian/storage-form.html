@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title th:text="${shelf != null} ? 'Chỉnh sửa vị trí' : 'Thêm vị trí lưu trữ'"></title>
+    <title th:text="${shelf != null} ? #{librarian.storage.editTitle} : #{librarian.storage.addTitle}"></title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/storage-form.css}" />
       <link rel="stylesheet" th:href="@{/css/utilities.css}" />
@@ -14,29 +14,29 @@
         <a class="brand-link" th:href="@{/librarian/storage}">
             <span class="brand-name">LMS</span>
         </a>
-        <div>Quản lý vị trí lưu trữ</div>
+            <div th:text="#{librarian.storage.management}">Storage Location Management</div>
     </header>
 
     <div class="page">
         <div class="card-box">
-            <h2 th:text="${shelf != null} ? 'Chỉnh sửa vị trí' : 'Thêm vị trí mới'"></h2>
+        <h2 th:text="${shelf != null} ? #{librarian.storage.editTitle} : #{librarian.storage.addNew}"></h2>
             <form th:action="${shelf != null} ? @{/librarian/storage/update/{id}(id=${shelf.shelfId})} : @{/librarian/storage/add}" method="post">
                 <div th:if="${_csrf != null}">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 </div>
                 <div class="form-group">
-                    <label for="shelfName">Tên vị trí</label>
+                <label for="shelfName" th:text="#{librarian.storage.name}">Location Name</label>
                     <input id="shelfName" name="shelfName" type="text" class="form-control"
                            th:value="${shelf != null} ? ${shelf.shelfName} : ''" required>
                 </div>
                 <div class="form-group">
-                    <label for="location">Vị trí</label>
+                <label for="location" th:text="#{librarian.storage.location}">Location</label>
                     <input id="location" name="location" type="text" class="form-control"
                            th:value="${shelf != null} ? ${shelf.location} : ''">
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary" th:text="${shelf != null} ? 'Cập nhật' : 'Thêm'"></button>
-                    <a class="btn btn-outline-secondary" th:href="@{/librarian/storage}">Hủy</a>
+                <button type="submit" class="btn btn-primary" th:text="${shelf != null} ? #{common.update} : #{common.add}"></button>
+                <a class="btn btn-outline-secondary" th:href="@{/librarian/storage}" th:text="#{common.cancel}">Cancel</a>
                 </div>
             </form>
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>

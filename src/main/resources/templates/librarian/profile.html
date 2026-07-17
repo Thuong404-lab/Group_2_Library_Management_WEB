@@ -2,7 +2,7 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <title>Hồ sơ cá nhân - Thủ thư</title>
+    <title th:text="#{librarian.profile.title}">Profile - Librarian</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/profile.css}" />
   </head>
@@ -12,8 +12,8 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1 page-title"><i class="bi bi-person-badge-fill me-2 u-color-8b5a2b-93ece783"></i>Hồ sơ Cá nhân</h2>
-            <div class="text-muted small">Quản lý thông tin tài khoản và bảo mật hệ thống nhân sự thư viện.</div>
+            <h2 class="fw-bold mb-1 page-title"><i class="bi bi-person-badge-fill me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{librarian.profile.heading}">Profile</span></h2>
+            <div class="text-muted small" th:text="#{librarian.profile.description}">Manage account information and security.</div>
         </div>
     </div>
 
@@ -51,12 +51,12 @@
                         <img th:if="${librarian?.avatar != null}" id="avatarPreview" th:src="${librarian.avatar}" class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2">
                         <img th:if="${librarian?.avatar == null}" id="avatarPreview" src="" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100 u-object-fit-cover-fd3ff4b2">
 
-                        <label for="avatarUploadLibrarian" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" title="Đổi ảnh đại diện">
+                        <label for="avatarUploadLibrarian" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" th:title="#{member.profile.changeAvatar}">
                             <i class="bi bi-camera-fill u-font-size-0-85rem-4908cb0a"></i>
                         </label>
                     </div>
 
-                    <h4 class="fw-bold mb-1 font-playfair mt-3 u-color-2c1e16-5ab7ae80" th:text="${librarian?.fullName}">Thủ thư</h4>
+                    <h4 class="fw-bold mb-1 font-playfair mt-3 u-color-2c1e16-5ab7ae80" th:text="${librarian?.fullName}">Librarian</h4>
                     <p class="text-muted small mb-3" th:text="${librarian?.email}">lib01@library.vn</p>
 
                     <div class="d-flex justify-content-center gap-2 mb-2">
@@ -67,8 +67,8 @@
 
             <div class="card card-profile-classic">
                 <div class="card-body p-4 u-background-color-fdfbf7-71083b05">
-                    <h6 class="fw-bold mb-3 font-playfair u-color-4a3b32-1ba01220">Bảo mật tài khoản</h6>
-                    <button class="btn btn-classic-outline w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Thay đổi mật khẩu</button>
+                    <h6 class="fw-bold mb-3 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.security}">Account Security</h6>
+                    <button class="btn btn-classic-outline w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal" th:text="#{member.profile.changePassword}">Change Password</button>
                 </div>
             </div>
         </div>
@@ -76,27 +76,27 @@
         <div class="col-lg-8">
             <div class="card card-profile-classic h-100">
                 <div class="card-header-classic px-4">
-                    <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220">Thông tin chi tiết tài khoản</h5>
+                    <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.details}">Account Details</h5>
                 </div>
                 <div class="card-body-classic">
                     <form th:action="@{/librarian/profile/update}" method="post" enctype="multipart/form-data" class="m-0">
                         <input type="file" id="avatarUploadLibrarian" name="avatarFile" accept="image/*" class="d-none">
                         <div class="row g-3">
                             <div class="col-12 mb-3">
-                                <label class="form-label fw-bold text-muted small">Họ và Tên thành viên ban quản trị</label>
+                                <label class="form-label fw-bold text-muted small" th:text="#{librarian.profile.fullName}">Staff Full Name</label>
                                 <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${librarian?.fullName}" maxlength="50" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small">Địa chỉ Email công vụ</label>
+                                <label class="form-label fw-bold text-muted small" th:text="#{librarian.profile.workEmail}">Work Email Address</label>
                                 <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${librarian?.email}" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small">Số điện thoại nội bộ</label>
+                                <label class="form-label fw-bold text-muted small" th:text="#{librarian.profile.phone}">Internal Phone Number</label>
                                 <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${librarian?.phone}">
                             </div>
 
                             <div class="col-12 mt-3 text-end">
-                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm">Lưu thay đổi</button>
+                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm" th:text="#{member.profile.save}">Save Changes</button>
                             </div>
                         </div>
                     </form>
@@ -108,27 +108,27 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content modal-content-classic shadow-lg">
                     <div class="modal-header modal-header-classic d-flex justify-content-between align-items-center">
-                        <h5 class="modal-title fw-bold font-playfair mb-0 u-color-4a3b32-1ba01220">Thay đổi mật khẩu tài khoản điều hành</h5>
+                        <h5 class="modal-title fw-bold font-playfair mb-0 u-color-4a3b32-1ba01220" th:text="#{librarian.profile.passwordTitle}">Change Staff Account Password</h5>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form th:action="@{/librarian/profile/change-password}" method="post" class="m-0">
                         <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small">Mật khẩu hiện tại</label>
-                                <input type="password" name="oldPassword" class="form-control form-control-classic py-2" placeholder="Nhập mật khẩu hiện tại" required>
+                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.currentPassword}">Current Password</label>
+                                <input type="password" name="oldPassword" class="form-control form-control-classic py-2" th:placeholder="#{librarian.profile.currentPasswordPlaceholder}" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small">Mật khẩu mới</label>
-                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" placeholder="Tối thiểu 6 ký tự" required>
+                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.newPassword}">New Password</label>
+                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" th:placeholder="#{librarian.profile.passwordHint}" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small">Xác nhận mật khẩu mới</label>
-                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" placeholder="Xác nhận lại mật khẩu mới" required>
+                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
+                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" th:placeholder="#{member.profile.confirmPassword}" required>
                             </div>
                         </div>
                         <div class="modal-footer border-0 p-3 u-background-color-fdfbf7-71083b05">
-                            <button type="button" class="btn btn-sm fw-bold px-3 py-2 u-background-color-e2e8f0-color-4a3b32-border-radius-6px-33d529ee" data-bs-dismiss="modal">Hủy bỏ</button>
-                            <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm">Cập nhật mật khẩu</button>
+                            <button type="button" class="btn btn-sm fw-bold px-3 py-2 u-background-color-e2e8f0-color-4a3b32-border-radius-6px-33d529ee" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                            <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm" th:text="#{member.profile.updatePassword}">Update Password</button>
                         </div>
                     </form>
                 </div>

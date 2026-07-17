@@ -1,13 +1,16 @@
-<link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+      layout:decorate="~{layout/librarian_base}">
+<head>
+    <title th:text="#{librarian.notification.title}">Send Notifications to Members</title>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
+</head>
 <body>
 <main layout:fragment="content">
 
     <div class="container mt-4">
-        <h2>Gửi thông báo cho Độc giả</h2>
+            <h2 th:text="#{librarian.notification.title}">Send Notifications to Members</h2>
         <hr>
 
         <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
@@ -18,7 +21,7 @@
               method="post">
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Đối tượng nhận</label>
+                <label class="form-label fw-bold" th:text="#{librarian.notification.recipient}">Recipients</label>
 
                 <div class="form-check">
                     <input class="form-check-input"
@@ -27,7 +30,7 @@
                            value="ALL"
                            id="recipientAll">
                     <label class="form-check-label" for="recipientAll">
-                        Gửi cho tất cả Member
+                            <span th:text="#{librarian.notification.allMembers}">Send to All Members</span>
                     </label>
                 </div>
 
@@ -38,7 +41,7 @@
                            value="SELECTED"
                            id="recipientSelected">
                     <label class="form-check-label" for="recipientSelected">
-                        Gửi cho Member được chọn
+                            <span th:text="#{librarian.notification.selectedMembers}">Send to Selected Members</span>
                     </label>
                 </div>
 
@@ -49,7 +52,7 @@
             </div>
 
             <div class="mb-3" id="memberListBox">
-                <label class="form-label fw-bold">Chọn Member</label>
+                <label class="form-label fw-bold" th:text="#{librarian.notification.selectMember}">Select Members</label>
 
                 <div class="border rounded p-3 librarian-send-notification-div-max-height-overflow-y-01">
                     <div th:each="member : ${members}" class="form-check">
@@ -64,21 +67,21 @@
                     </div>
 
                     <div th:if="${members == null || members.isEmpty()}" class="text-muted">
-                        Chưa có member nào trong hệ thống.
+                        <span th:text="#{librarian.notification.noMembers}">There are no members in the system.</span>
                     </div>
                 </div>
 
                 <small class="text-muted">
-                    Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
+                    <span th:text="#{librarian.notification.selectionHint}">Only select members when "Send to Selected Members" is chosen.</span>
                 </small>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Tiêu đề</label>
+                <label class="form-label fw-bold" th:text="#{common.title}">Title</label>
                 <input type="text"
                        class="form-control"
                        th:field="*{title}"
-                       placeholder="Nhập tiêu đề thông báo">
+                       th:placeholder="#{librarian.notification.titlePlaceholder}" placeholder="Enter the notification title">
 
                 <div class="text-danger mt-1"
                      th:if="${#fields.hasErrors('title')}"
@@ -87,11 +90,11 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Nội dung</label>
+                <label class="form-label fw-bold" th:text="#{common.content}">Content</label>
                 <textarea class="form-control"
                           rows="5"
                           th:field="*{content}"
-                          placeholder="Nhập nội dung thông báo"></textarea>
+                          th:placeholder="#{librarian.notification.contentPlaceholder}" placeholder="Enter the notification content"></textarea>
 
                 <div class="text-danger mt-1"
                      th:if="${#fields.hasErrors('content')}"
@@ -100,11 +103,11 @@
             </div>
 
             <button type="submit" class="btn btn-primary">
-                Gửi thông báo
+                    <span th:text="#{librarian.notification.submit}">Send Notification</span>
             </button>
 
             <a th:href="@{/librarian/interaction/reviews}" class="btn btn-secondary">
-                Quay lại
+                    <span th:text="#{common.back}">Back</span>
             </a>
         </form>
     </div>

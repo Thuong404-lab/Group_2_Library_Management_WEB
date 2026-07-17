@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+      layout:decorate="~{layout/librarian_base}">
 <body>
-<main layout:fragment="content">
+<main layout:fragment="content" th:with="activeMenu='reviews'">
     <div class="container mt-4">
-        <h2>Kiểm duyệt đánh giá của Độc giả</h2>
+    <h2 th:text="#{librarian.reviews.heading}">Member Review Moderation</h2>
         <hr>
 
         <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
@@ -14,39 +14,39 @@
         <table class="table table-striped table-hover mt-3">
             <thead class="table-dark">
             <tr>
-                <th>Sách</th>
-                <th>Người gửi</th>
-                <th>Đánh giá</th>
-                <th>Nội dung</th>
-                <th>Phản hồi của thủ thư</th>
-                <th>Thao tác</th>
+        <th th:text="#{librarian.reviews.book}">Book</th>
+        <th th:text="#{librarian.reviews.sender}">Sender</th>
+        <th th:text="#{member.reviews.rating}">Rating</th>
+        <th th:text="#{common.content}">Content</th>
+        <th th:text="#{member.reviews.librarianResponse}">Librarian Response</th>
+        <th th:text="#{common.actions}">Actions</th>
             </tr>
             </thead>
 
             <tbody>
             <tr th:each="review : ${reviews.content}">
-                <td th:text="${review.bookTitle}">Tên sách</td>
-                <td th:text="${review.memberName}">Tên độc giả</td>
+        <td th:text="${review.bookTitle}">Book Title</td>
+        <td th:text="${review.memberName}">Member Name</td>
                 <td>
                     <span th:text="${review.rating} + ' sao'"></span>
                 </td>
-                <td th:text="${review.comment}">Nội dung bình luận...</td>
+        <td th:text="${review.comment}">Review content...</td>
 
                 <td>
                     <div th:if="${review.librarianResponse != null}">
                         <p th:text="${review.librarianResponse}"></p>
                         <small class="text-muted"
                                th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}">
-                            Ngày phản hồi
+                    <span th:text="#{librarian.reviews.responseDate}">Response Date</span>
                         </small>
                     </div>
 
                     <div th:if="${review.status == 'DELETED_BY_MEMBER' && review.librarianResponse == null}">
-                        <span class="text-muted">Member đã xoá</span>
+                <span class="text-muted" th:text="#{librarian.reviews.memberDeleted}">Member deleted</span>
                     </div>
 
                     <div th:if="${review.status != 'DELETED_BY_MEMBER' && review.librarianResponse == null}">
-                        <span class="text-muted">Chưa phản hồi</span>
+                <span class="text-muted" th:text="#{librarian.reviews.noResponse}">No response</span>
                     </div>
                 </td>
 
@@ -58,30 +58,31 @@
                 <textarea name="response"
                           class="form-control form-control-sm mb-1"
                           rows="2"
-                          th:placeholder="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Chỉnh sửa phản hồi...' : 'Nhập phản hồi...'"
+                      th:placeholder="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? #{librarian.reviews.editPlaceholder} : #{librarian.reviews.responsePlaceholder}"
                           th:text="${review.librarianResponse != null ? review.librarianResponse : ''}"></textarea>
                         <button type="submit" class="btn btn-sm btn-primary"
-                                th:text="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Lưu chỉnh sửa' : 'Phản hồi'">
-                            Phản hồi
+                        th:text="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? #{librarian.reviews.saveEdit} : #{librarian.reviews.respond}">
+                    Respond
                         </button>
                     </form>
                     <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
                          class="text-muted small mb-2">
-                        Member đã xoá đánh giá này, không thể phản hồi.
+                <span th:text="#{librarian.reviews.cannotRespond}">The member deleted this review, so it cannot be answered.</span>
                     </div>
 
                     <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                           method="post"
-                          onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
+                  th:data-confirm-message="#{librarian.reviews.deleteConfirm}"
+                  onsubmit="return confirm(this.dataset.confirmMessage);">
                         <button type="submit" class="btn btn-sm btn-danger">
-                            Xoá
+                <span th:text="#{common.delete}">Delete</span>
                         </button>
                     </form>
                 </td>
             </tr>
 
             <tr th:if="${reviews == null || reviews.totalElements == 0}">
-                <td colspan="6" class="text-center">Hiện chưa có đánh giá nào.</td>
+      <td colspan="6" class="text-center" th:text="#{librarian.reviews.empty}">There are no reviews.</td>
             </tr>
             </tbody>
         </table>
@@ -91,7 +92,7 @@
                 <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
                     <a class="page-link page-link-classic"
                        th:href="@{/librarian/interaction/reviews(page=${reviews.number - 1})}">
-                        Trước
+          <span th:text="#{pagination.previous}">Previous</span>
                     </a>
                 </li>
 

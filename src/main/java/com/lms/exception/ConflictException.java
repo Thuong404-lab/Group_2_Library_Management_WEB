@@ -4,10 +4,10 @@ import org.springframework.http.HttpStatus;
 
 public class ConflictException extends ApplicationException {
     public ConflictException(String message) {
-        super(HttpStatus.CONFLICT, "Dữ liệu xung đột", message);
+        super(HttpStatus.CONFLICT, "error.conflict.title", message);
     }
 
     public ConflictException(String message, Throwable cause) {
-        super(HttpStatus.CONFLICT, "Dữ liệu xung đột", message, cause);
+        super(HttpStatus.CONFLICT, "error.conflict.title", message, cause);
     }
 }

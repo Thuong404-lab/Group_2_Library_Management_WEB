@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title th:text="${source == 'staff' ? 'Tạo tài khoản nhân viên' : 'Tạo tài khoản thành viên'}">
-        Tạo tài khoản
+    <title th:text="${source == 'staff' ? #messages.msg('admin.createAccount.staffTitle') : #messages.msg('admin.createAccount.memberTitle')}">
+        Create Account
     </title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/create-account.css}" />
@@ -17,17 +17,17 @@
             class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
             <div>
                 <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336"
-                    th:text="${source == 'staff' ? 'Tạo Tài Khoản Thủ Thư' : 'Tạo Tài Khoản Thành Viên'}">
-                    Tạo Tài Khoản Mới
+                    th:text="${source == 'staff' ? #messages.msg('admin.createAccount.staffHeading') : #messages.msg('admin.createAccount.memberHeading')}">
+                    Create New Account
                 </h2>
                 <div class="text-muted"
-                    th:text="${source == 'staff' ? 'Thêm một tài khoản nhân viên mới vào hệ thống' : 'Thêm một tài khoản thành viên mới vào hệ thống'}">
-                    Thêm một tài khoản mới vào hệ thống
+                    th:text="${source == 'staff' ? #messages.msg('admin.createAccount.staffDescription') : #messages.msg('admin.createAccount.memberDescription')}">
+                    Add a new account to the system
                 </div>
             </div>
             <div>
                 <a class="btn btn-outline-secondary" th:href="${backUrl}">
-                    <span th:text="${backText}">← Quản lý tài khoản</span>
+                    <span th:text="${backText}">← Account Management</span>
                 </a>
             </div>
         </div>
@@ -38,7 +38,7 @@
                     <div class="card-header bg-white border-bottom border-color p-4">
                         <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
-                            Thông tin tài khoản
+                            <span th:text="#{admin.createAccount.information}">Account Information</span>
                         </h5>
                     </div>
                     <div class="card-body px-4 pb-4 pt-2">
@@ -52,15 +52,15 @@
 
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Họ tên <span
+                                    <label class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{member.profile.fullName}">Full Name</span> <span
                                             class="text-danger">*</span></label>
                                     <input class="form-control validate-field" name="fullName" maxlength="50" required
-                                        placeholder="Nguyễn Văn A"
+                                        th:placeholder="#{admin.createAccount.fullNamePlaceholder}"
                                         th:value="${formValues != null ? formValues['fullName'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['fullName'] : ''}">
-                                        Họ tên không được để trống.
+                                        <span th:text="#{validation.fullNameRequired}">Full name is required.</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -73,12 +73,12 @@
                                         th:classappend="${fieldErrors != null and fieldErrors['email'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['email'] : ''}">
-                                        Email không hợp lệ.
+                                        <span th:text="#{validation.email}">Invalid email.</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Số điện thoại <span class="text-danger">*</span>
+                                        <span th:text="#{member.profile.phone}">Phone Number</span> <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="phone" required
                                         pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
@@ -87,32 +87,32 @@
                                         th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['phone'] : ''}">
-                                        Số điện thoại không hợp lệ.
+                                        <span th:text="#{validation.phone}">Invalid phone number.</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Username <span
                                             class="text-danger">*</span></label>
                                     <input class="form-control validate-field" name="username" required
-                                        pattern="[a-zA-Z0-9_]{3,20}" placeholder="Nhập tên đăng nhập"
+                                        pattern="[a-zA-Z0-9_]{3,20}" th:placeholder="#{admin.createAccount.usernamePlaceholder}"
                                         autocomplete="new-password"
                                         th:value="${formValues != null ? formValues['username'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['username'] : ''}">
-                                        Username không được để trống.
+                                        <span th:text="#{validation.usernameRequired}">Username is required.</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Mật khẩu <span class="text-danger">*</span>
+                                        <span th:text="#{auth.password}">Password</span> <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="password" type="password" required
-                                        minlength="6" placeholder="Nhập mật khẩu" autocomplete="new-password"
+                                        minlength="6" th:placeholder="#{admin.createAccount.passwordPlaceholder}" autocomplete="new-password"
                                         th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['password'] : ''}">
-                                        Mật khẩu không được để trống.
+                                        <span th:text="#{admin.createAccount.passwordRequired}">Password is required.</span>
                                     </div>
                                 </div>
                             </div>
@@ -120,10 +120,10 @@
                             <div class="row g-4">
                                 <div class="col-md-6" id="tierBox" th:if="${source == 'members'}">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Hạng thành viên
+                                        <span th:text="#{member.profile.tier}">Membership Tier</span>
                                     </label>
                                     <div class="member-readonly-field" role="textbox" aria-readonly="true">
-                                        Thường
+                                        <span th:text="#{tier.regular}">Regular</span>
                                     </div>
                                     <input type="hidden" name="tierId" th:each="tier : ${tiers}"
                                         th:if="${#strings.equalsIgnoreCase(tier.tierName, 'Regular')}"
@@ -132,36 +132,33 @@
 
                                 <div class="col-md-6" th:if="${source != 'members'}">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Loại tài khoản <span class="text-danger">*</span>
+                                        <span th:text="#{admin.createAccount.accountType}">Account Type</span> <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select form-control validate-field" name="accountType"
                                         id="accountType" required
                                         th:classappend="${fieldErrors != null and fieldErrors['accountType'] != null} ? 'is-invalid'">
                                         <option value="" disabled
-                                            th:selected="${formValues == null or #strings.isEmpty(formValues['accountType'])}">
-                                            -- Chọn loại tài khoản --
-                                        </option>
+                                            th:selected="${formValues == null or #strings.isEmpty(formValues['accountType'])}"
+                                            th:text="#{admin.createAccount.selectType}">-- Select Account Type --</option>
                                         <option value="LIBRARIAN"
-                                            th:selected="${formValues != null and formValues['accountType'] == 'LIBRARIAN'}">
-                                            Thủ thư (Librarian)
-                                        </option>
+                                            th:selected="${formValues != null and formValues['accountType'] == 'LIBRARIAN'}"
+                                            th:text="#{admin.createAccount.librarianType}">Librarian</option>
                                         <option value="ADMIN"
-                                            th:selected="${formValues != null and formValues['accountType'] == 'ADMIN'}">
-                                            Quản trị viên (Admin)
-                                        </option>
+                                            th:selected="${formValues != null and formValues['accountType'] == 'ADMIN'}"
+                                            th:text="#{admin.createAccount.adminType}">Administrator</option>
                                     </select>
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['accountType'] : ''}">
-                                        Vui lòng chọn loại tài khoản.
+                                        <span th:text="#{admin.createAccount.selectTypeError}">Please select an account type.</span>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Trạng thái
+                                        <span th:text="#{common.status}">Status</span>
                                     </label>
                                     <div class="member-readonly-field" role="textbox" aria-readonly="true">
-                                        Hoạt động
+                                        <span th:text="#{account.status.active}">Active</span>
                                     </div>
                                     <input type="hidden" name="status" value="Active">
                                 </div>
@@ -172,12 +169,12 @@
                             <div class="d-flex justify-content-end u-gap-12px-58cf3fe5">
                                 <a class="btn btn-light border shadow-sm" th:if="${modalMode != true}"
                                     th:href="${backUrl}">
-                                    Hủy bỏ
+                                    <span th:text="#{common.cancel}">Cancel</span>
                                 </a>
                                 <button class="btn btn-light border shadow-sm" th:if="${modalMode == true}"
-                                    type="button" data-bs-dismiss="modal">Hủy bỏ</button>
+                                    type="button" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
                                 <button class="btn btn-classic px-4" type="submit">
-                                    Tạo tài khoản
+                                    <span th:text="#{admin.accounts.create}">Create Account</span>
                                 </button>
                             </div>
                         </form>
@@ -186,7 +183,7 @@
             </div>
         </div>
 
-        <script th:fragment="createAccountValidation">
+        <script th:fragment="createAccountValidation" th:inline="javascript">
             document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("createAccountForm");
 
@@ -204,45 +201,45 @@
 
                 function getErrorMessage(field) {
                     const labels = {
-                        fullName: "Họ tên",
+                        fullName: /*[[#{member.profile.fullName}]]*/ "Full Name",
                         email: "Email",
-                        phone: "Số điện thoại",
+                        phone: /*[[#{member.profile.phone}]]*/ "Phone Number",
                         username: "Username",
-                        password: "Mật khẩu",
-                        tierId: "Hạng thành viên",
-                        accountType: "Loại tài khoản",
-                        status: "Trạng thái tài khoản"
+                        password: /*[[#{auth.password}]]*/ "Password",
+                        tierId: /*[[#{member.profile.tier}]]*/ "Membership Tier",
+                        accountType: /*[[#{admin.createAccount.accountType}]]*/ "Account Type",
+                        status: /*[[#{admin.createAccount.accountStatus}]]*/ "Account Status"
                     };
 
                     if (field.validity.valueMissing) {
                         if (field.tagName === "SELECT") {
-                            return "Vui lòng chọn " + labels[field.name].toLowerCase() + ".";
+                            return (/*[[#{admin.createAccount.selectPrefix}]]*/ "Please select") + " " + labels[field.name].toLowerCase() + ".";
                         }
-                        return labels[field.name] + " không được để trống.";
+                        return labels[field.name] + (/*[[#{admin.createAccount.requiredSuffix}]]*/ " is required.");
                     }
 
                     if (field.name === "phone") {
-                        return "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
+                        return /*[[#{validation.phone}]]*/ "Phone number must contain exactly 10 digits, start with 0, and cannot be all zeros.";
                     }
 
                     if (field.name === "fullName") {
-                        return "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
+                        return /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
                     }
 
                     if (field.name === "username") {
-                        return "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
+                        return /*[[#{validation.username}]]*/ "Username must contain 3-20 letters, numbers, or underscores.";
                     }
 
                     if (field.name === "password") {
-                        return "Mật khẩu phải có ít nhất 6 ký tự.";
+                        return /*[[#{validation.passwordMin}]]*/ "Password must contain at least 6 characters.";
                     }
 
                     if (field.name === "email"
                         && (field.validity.typeMismatch || field.validity.patternMismatch)) {
-                        return "Email không đúng định dạng.";
+                        return /*[[#{validation.email}]]*/ "Invalid email format.";
                     }
 
-                    return "Giá trị không hợp lệ.";
+                    return /*[[#{validation.invalid}]]*/ "Invalid value.";
                 }
 
                 function validateField(field) {
@@ -273,7 +270,7 @@
                     if (field.name === "fullName" && value.length > 50) {
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
-                        feedback.textContent = "Họ tên không được vượt quá 50 ký tự.";
+                        feedback.textContent = /*[[#{validation.fullNameMax}]]*/ "Full name cannot exceed 50 characters.";
                         return false;
                     }
 
@@ -281,21 +278,21 @@
                         && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(value)) {
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
-                        feedback.textContent = "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.";
+                        feedback.textContent = /*[[#{validation.fullNameWords}]]*/ "Full name may contain at most 8 words and 15 characters per word.";
                         return false;
                     }
 
                     if (field.name === "fullName" && /([\p{L}])\1\1/u.test(value)) {
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
-                        feedback.textContent = "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.";
+                        feedback.textContent = /*[[#{validation.fullNameTriple}]]*/ "Full name cannot repeat a character three times in a row.";
                         return false;
                     }
 
                     if (field.name === "fullName" && /^([\p{L}])\1+$/u.test(value)) {
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
-                        feedback.textContent = "Họ tên không được chỉ gồm một ký tự lặp lại.";
+                        feedback.textContent = /*[[#{validation.fullNameRepeated}]]*/ "Full name cannot consist of one repeated character.";
                         return false;
                     }
 

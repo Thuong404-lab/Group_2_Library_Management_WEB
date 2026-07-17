@@ -3,26 +3,26 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Tiến Trình Nâng Hạng Thành Viên</title>
+    <title th:text="#{member.tier.title}">Membership Tier Progress</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/membership-tier.css}" />
   </head>
 <body>
 <div layout:fragment="content" class="container py-4">
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body p-4 text-center bg-light rounded">
-            <h4 class="text-muted mb-1">Hạng Thẻ Hiện Tại</h4>
-            <h1 class="display-4 text-primary fw-bold" th:text="${member.tier != null ? member.tier.tierName : 'Standard'}">MỚI</h1>
+                <h4 class="text-muted mb-1" th:text="#{member.tier.current}">Current Membership Tier</h4>
+            <h1 class="display-4 text-primary fw-bold" th:text="${member.tier != null ? member.tier.tierName : 'Standard'}">STANDARD</h1>
 
             <div class="mt-3">
                 <p class="text-secondary mb-2">
-                    Tổng chi tiêu tích lũy: <strong class="text-dark" th:text="${#numbers.formatDecimal(currentSpent, 1, 'DEFAULT', 0, 'DEFAULT')} + ' đ'">150,000 đ</strong>
+                <span th:text="#{member.tier.totalSpent}">Total accumulated spending:</span> <strong class="text-dark" th:text="${#numbers.formatDecimal(currentSpent, 1, 'DEFAULT', 0, 'DEFAULT')} + ' VND'">150,000 VND</strong>
                 </p>
             </div>
 
             <div class="mt-4 mx-auto member-membership-tier-div-max-width-01" th:if="${nextTier != null}">
                 <div class="d-flex justify-content-between mb-1 small text-muted">
-                    <span>Mức hiện tại</span>
-                    <span>Hạng tiếp theo: <strong th:text="${nextTier.tierName}">VIP</strong></span>
+                    <span th:text="#{member.tier.currentLevel}">Current level</span>
+                    <span><span th:text="#{member.tier.next}">Next tier:</span> <strong th:text="${nextTier.tierName}">VIP</strong></span>
                 </div>
                 <div class="progress mb-3 member-membership-tier-div-height-02">
                     <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
@@ -31,39 +31,39 @@
                 </div>
                 <div class="alert alert-info border-0 shadow-sm" role="alert">
                     <i class="bi bi-info-circle-fill me-2"></i>
-                    Bạn cần chi tiêu thêm <strong th:text="${#numbers.formatDecimal(amountNeeded, 1, 'DEFAULT', 0, 'DEFAULT')} + ' đ'">50,000 đ</strong> để mở khóa hạng <span th:text="${nextTier.tierName}">VIP</span>!
+                    <span th:text="#{member.tier.spendMorePrefix}">Spend another</span> <strong th:text="${#numbers.formatDecimal(amountNeeded, 1, 'DEFAULT', 0, 'DEFAULT')} + ' VND'">50,000 VND</strong> <span th:text="#{member.tier.unlockPrefix}">to unlock tier</span> <span th:text="${nextTier.tierName}">VIP</span>!
                 </div>
             </div>
 
             <div class="mt-4" th:if="${nextTier == null}">
-                <span class="badge bg-gold p-2 text-warning border border-warning fs-6"><i class="bi bi-trophy-fill me-1"></i>Chúc mừng! Bạn đã đạt hạng thành viên cao nhất.</span>
+                <span class="badge bg-gold p-2 text-warning border border-warning fs-6"><i class="bi bi-trophy-fill me-1"></i><span th:text="#{member.tier.highest}">Congratulations! You reached the highest tier.</span></span>
             </div>
         </div>
     </div>
 
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-layers me-2 text-primary"></i>Hệ Thống Các Cấp Bậc Thành Viên</h5>
+                <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-layers me-2 text-primary"></i><span th:text="#{member.tier.system}">Membership Tier System</span></h5>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                 <tr>
-                    <th>Tên Hạng</th>
-                    <th>Hạn Mức Mượn Sách</th>
-                    <th>Ưu Đãi Giảm Giá</th>
-                    <th>Cột Mốc Yêu Cầu (Chi tiêu)</th>
+                    <th th:text="#{member.tier.name}">Tier Name</th>
+                    <th th:text="#{member.tier.borrowLimit}">Borrowing Limit</th>
+                    <th th:text="#{member.tier.discount}">Discount</th>
+                    <th th:text="#{member.tier.requirement}">Required Spending</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="tier : ${allTiers}" th:classappend="${member.tier != null && member.tier.tierId == tier.tierId} ? 'table-primary fw-bold' : ''">
                     <td>
-                        <span th:text="${tier.tierName}">Tên Hạng</span>
-                        <span th:if="${member.tier != null && member.tier.tierId == tier.tierId}" class="badge bg-primary ms-2 small">Của Bạn</span>
+                            <span th:text="${tier.tierName}">Tier Name</span>
+                            <span th:if="${member.tier != null && member.tier.tierId == tier.tierId}" class="badge bg-primary ms-2 small" th:text="#{member.tier.yours}">Yours</span>
                     </td>
-                    <td th:text="${tier.borrowLimit} + ' cuốn cùng lúc'">3 cuốn</td>
-                    <td th:text="${tier.discountPercent} + '% phí mượn'">0%</td>
-                    <td th:text="${#numbers.formatDecimal(tier.condition, 1, 'DEFAULT', 0, 'DEFAULT')} + ' đ'">0 đ</td>
+                    <td th:text="#{member.tier.booksAtOnce(${tier.borrowLimit})}">3 books</td>
+                    <td th:text="#{member.tier.borrowFeeDiscount(${tier.discountPercent})}">0%</td>
+                    <td th:text="${#numbers.formatDecimal(tier.condition, 1, 'DEFAULT', 0, 'DEFAULT')} + ' VND'">0 VND</td>
                 </tr>
                 </tbody>
             </table>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <title>Danh sách Thủ thư</title>
+    <title th:text="#{librarian.staff.title}">Librarians</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
@@ -14,22 +14,18 @@
         class="member-management-page librarian-management-page">
         <header class="member-page-header">
             <div>
-                <h1 class="member-page-title">Danh sách thủ thư</h1>
-                <p class="member-page-description">Theo dõi hồ sơ, loại nhân viên và trạng thái tài khoản thủ thư.</p>
+                <h1 class="member-page-title" th:text="#{librarian.staff.heading}">Librarians</h1>
+                <p class="member-page-description" th:text="#{librarian.staff.description}">View librarian profiles, roles, and account statuses.</p>
             </div>
         </header>
 
         <section class="member-data-card">
             <div class="member-data-card-body">
-                <div class="member-summary-chips" aria-label="Tổng quan thủ thư">
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> thủ
-                        thư</span>
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong> hoạt
-                        động</span>
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['inactive'] : 0}">0</strong>
-                        ngừng hoạt động</span>
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['blocked'] : 0}">0</strong> bị
-                        khóa</span>
+                <div class="member-summary-chips" th:aria-label="#{librarian.staff.summary}">
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> <span th:text="#{librarian.staff.totalLabel}">librarians</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong> <span th:text="#{status.active}">active</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['inactive'] : 0}">0</strong> <span th:text="#{status.inactive}">inactive</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['blocked'] : 0}">0</strong> <span th:text="#{status.blocked}">blocked</span></span>
                 </div>
 
                 <!-- Search & Filter + Back Button -->
@@ -43,19 +39,17 @@
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
-                                placeholder="Tìm tên đăng nhập hoặc thông tin nhân viên...">
+                                th:placeholder="#{librarian.staff.searchPlaceholder}">
                             <select class="form-select member-filter-select" name="status" data-auto-submit
-                                aria-label="Lọc theo trạng thái">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
-                                </option>
-                                <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
-                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động
-                                </option>
-                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
+                                th:aria-label="#{librarian.staff.statusFilter}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{librarian.staff.allStatuses}">All statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{status.inactive}">Inactive</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{status.blocked}">Blocked</option>
                             </select>
                             <a class="btn member-search-button text-nowrap" th:href="@{/librarian/librarians}">
                                 <i class="bi bi-arrow-clockwise"></i>
-                                Xóa bộ lọc
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
                             </a>
                         </div>
                     </form>
@@ -74,12 +68,12 @@
                         </colgroup>
                         <thead>
                             <tr>
-                                <th class="ps-3">STT</th>
-                                <th>Tên đăng nhập</th>
-                                <th>Thông tin nhân viên</th>
-                                <th>Loại nhân viên</th>
-                                <th>Trạng thái</th>
-                                <th class="text-end pe-3">Hành động</th>
+                                <th class="ps-3" th:text="#{common.number}">No.</th>
+                                <th th:text="#{librarian.staff.username}">Username</th>
+                                <th th:text="#{librarian.staff.information}">Staff information</th>
+                                <th th:text="#{librarian.staff.type}">Staff type</th>
+                                <th th:text="#{common.status}">Status</th>
+                                <th class="text-end pe-3" th:text="#{common.actions}">Actions</th>
                             </tr>
                         </thead>
 
@@ -94,7 +88,7 @@
 
                                 <td>
                                     <span class="fw-bold text-classic"
-                                        th:text="${account != null ? account.username : 'Không có tài khoản'}">
+                                        th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
                                         username
                                     </span>
 
@@ -107,7 +101,7 @@
                                 <td>
                                     <div th:if="${staff.user != null}">
                                         <div class="fw-bold" th:text="${staff.user.fullName}">
-                                            Tên nhân viên
+                                            Staff name
                                         </div>
 
                                         <div class="small text-muted">
@@ -122,14 +116,14 @@
                                     </div>
 
                                     <div th:unless="${staff.user != null}" class="fst-italic text-muted small">
-                                        Không có thông tin user
+                                        <span th:text="#{librarian.staff.noUserInformation}">No user information</span>
                                     </div>
                                 </td>
 
                                 <td>
                                     <span class="librarian-role-badge"
-                                        th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
-                                        Thủ thư
+                                        th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}">
+                                        Librarian
                                     </span>
                                 </td>
 
@@ -139,8 +133,8 @@
                               staff.user.status.name() == 'Active' ? 'status-active' :
                               staff.user.status.name() == 'Blocked' ? 'status-blocked' :
                               'status-inactive'
-                          }" th:text="${staff.user.status.name() == 'Active' ? 'Hoạt động' : (staff.user.status.name() == 'Inactive' ? 'Ngừng hoạt động' : (staff.user.status.name() == 'Blocked' ? 'Bị khóa' : staff.user.status))}">
-                                        Hoạt động
+                          }" th:text="${staff.user.status.name() == 'Active' ? #messages.msg('status.active') : (staff.user.status.name() == 'Inactive' ? #messages.msg('status.inactive') : (staff.user.status.name() == 'Blocked' ? #messages.msg('status.blocked') : staff.user.status))}">
+                                        Active
                                     </span>
 
                                     <span class="status-badge status-unknown"
@@ -152,8 +146,8 @@
                                 <td class="text-end pe-3 member-actions">
                                     <button type="button" class="member-icon-action view-detail-tooltip-trigger"
                                         data-bs-toggle="modal" th:data-bs-target="${'#viewStaffModal' + staff.staffId}"
-                                        data-bs-title="Xem chi tiết" data-bs-custom-class="view-detail-tooltip"
-                                        aria-label="Xem chi tiết">
+                                        th:data-bs-title="#{librarian.staff.viewDetails}" data-bs-custom-class="view-detail-tooltip"
+                                        th:aria-label="#{librarian.staff.viewDetails}">
                                         <i class="bi bi-eye"></i>
                                     </button>
 
@@ -164,8 +158,7 @@
                                             <div class="modal-content">
 
                                                 <div class="modal-header member-modal-header">
-                                                    <h5 class="modal-title member-modal-title-accent">Chi tiết thủ
-                                                        thư</h5>
+                                                    <h5 class="modal-title member-modal-title-accent" th:text="#{librarian.staff.details}">Librarian details</h5>
                                                 </div>
 
                                                 <div class="modal-body member-modal-body">
@@ -173,7 +166,7 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                Mã nhân viên
+                                                                <span th:text="#{librarian.staff.staffId}">Staff ID</span>
                                                             </div>
                                                             <div class="fw-bold text-classic"
                                                                 th:text="${'ST' + staff.staffId}">
@@ -186,17 +179,17 @@
                                                                 Username
                                                             </div>
                                                             <div class="fw-bold"
-                                                                th:text="${account != null ? account.username : 'Không có tài khoản'}">
+                                                                th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
                                                                 librarian01
                                                             </div>
                                                         </div>
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                Họ tên
+                                                                <span th:text="#{librarian.staff.fullName}">Full name</span>
                                                             </div>
                                                             <div class="fw-bold"
-                                                                th:text="${staff.user != null ? staff.user.fullName : 'Không có họ tên'}">
+                                                                th:text="${staff.user != null ? staff.user.fullName : #messages.msg('librarian.staff.noFullName')}">
                                                                 Full name
                                                             </div>
                                                         </div>
@@ -208,7 +201,7 @@
                                                             <div>
                                                                 <i class="bi bi-envelope text-classic me-1"></i>
                                                                 <span
-                                                                    th:text="${staff.user != null ? staff.user.email : 'Không có email'}">
+                                                                    th:text="${staff.user != null ? staff.user.email : #messages.msg('common.noEmail')}">
                                                                     email
                                                                 </span>
                                                             </div>
@@ -216,12 +209,12 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                Số điện thoại
+                                                                <span th:text="#{librarian.staff.phone}">Phone number</span>
                                                             </div>
                                                             <div>
                                                                 <i class="bi bi-telephone text-classic me-1"></i>
                                                                 <span
-                                                                    th:text="${staff.user != null && staff.user.phone != null ? staff.user.phone : 'Không có SĐT'}">
+                                                                    th:text="${staff.user != null && staff.user.phone != null ? staff.user.phone : #messages.msg('common.noPhone')}">
                                                                     phone
                                                                 </span>
                                                             </div>
@@ -229,7 +222,7 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                Trạng thái
+                                                                <span th:text="#{common.status}">Status</span>
                                                             </div>
 
                                                             <span class="status-badge"
@@ -238,8 +231,8 @@
                                                       staff.user.status.name() == 'Active' ? 'status-active' :
                                                       staff.user.status.name() == 'Blocked' ? 'status-blocked' :
                                                       'status-inactive'
-                                                  }" th:text="${staff.user.status.name() == 'Active' ? 'Hoạt động' : (staff.user.status.name() == 'Inactive' ? 'Ngừng hoạt động' : (staff.user.status.name() == 'Blocked' ? 'Bị khóa' : staff.user.status))}">
-                                                                Hoạt động
+                                                  }" th:text="${staff.user.status.name() == 'Active' ? #messages.msg('status.active') : (staff.user.status.name() == 'Inactive' ? #messages.msg('status.inactive') : (staff.user.status.name() == 'Blocked' ? #messages.msg('status.blocked') : staff.user.status))}">
+                                                                Active
                                                             </span>
 
                                                             <span class="status-badge status-unknown"
@@ -250,11 +243,11 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                Loại nhân viên
+                                                                <span th:text="#{librarian.staff.type}">Staff type</span>
                                                             </div>
                                                             <span class="librarian-role-badge"
-                                                                th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
-                                                                Thủ thư
+                                                                th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}">
+                                                                Librarian
                                                             </span>
                                                         </div>
                                                     </div>
@@ -263,7 +256,7 @@
                                                 <div class="modal-footer member-modal-footer">
                                                     <button type="button" class="btn member-modal-secondary"
                                                         data-bs-dismiss="modal">
-                                                        Đóng
+                                                        <span th:text="#{common.close}">Close</span>
                                                     </button>
                                                 </div>
 
@@ -276,7 +269,7 @@
                             <tr th:if="${#lists.isEmpty(staffPage.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-person-badge fs-2 d-block mb-2"></i>
-                                    Không tìm thấy thủ thư nào.
+                                    <span th:text="#{librarian.staff.empty}">No librarians found.</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -293,7 +286,7 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword}, status=${selectedStatus})}">Đầu</a>
+                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword}, status=${selectedStatus})}" th:text="#{pagination.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
@@ -329,7 +322,7 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus})}">Cuối</a>
+                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus})}" th:text="#{pagination.last}">Last</a>
                             </li>
                         </ul>
                     </nav>

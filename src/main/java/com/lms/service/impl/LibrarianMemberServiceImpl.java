@@ -20,6 +20,8 @@ import com.lms.repository.RoleRepository;
 import com.lms.repository.UserRepository;
 import com.lms.service.AuditLogService;
 import com.lms.service.LibrarianMemberService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -38,6 +40,9 @@ import java.util.Map;
  */
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
+
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final MemberAccountRepository memberAccountRepository;
     private final MemberRepository memberRepository;
@@ -108,21 +113,21 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         String username = trim(request.getUsername());
 
         if (!email.isEmpty() && userRepository.existsByEmail(email)) {
-            errors.put("email", "Email đã được sử dụng.");
+            errors.put("email", messages.get("backend.account.emailUsed"));
         }
         if (!phone.isEmpty() && userRepository.existsByPhone(phone)) {
-            errors.put("phone", "Số điện thoại đã được sử dụng.");
+            errors.put("phone", messages.get("backend.account.phoneUsed"));
         }
         if (!username.isEmpty() && memberAccountRepository.existsByUsername(username)) {
-            errors.put("username", "Username đã tồn tại.");
+            errors.put("username", messages.get("backend.account.usernameExists"));
         }
         if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
-            errors.put("tierId", "Hạng thành viên không hợp lệ.");
+            errors.put("tierId", messages.get("validation.tier"));
         }
         if (request.getStatus() != null
                 && !"Active".equals(request.getStatus())
                 && !"Inactive".equals(request.getStatus())) {
-            errors.put("status", "Trạng thái thành viên không hợp lệ.");
+            errors.put("status", messages.get("validation.status"));
         }
         return errors;
     }
@@ -136,9 +141,9 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         }
 
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new ValidationException("Hạng thành viên không hợp lệ."));
+                .orElseThrow(() -> new ValidationException(messages.get("validation.tier")));
         Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
-                .orElseThrow(() -> new DataProcessingException("Không tìm thấy role MEMBER trong hệ thống."));
+                .orElseThrow(() -> new DataProcessingException(messages.get("backend.account.roleNotFound", "MEMBER")));
 
         User user = new User();
         user.setFullName(trim(request.getFullName()));
@@ -162,7 +167,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         auditLogService.log(
                 ActionType.CREATE_ACCOUNT,
-                "Tạo tài khoản thành viên." + account.getUsername());
+                messages.get("backend.account.audit.createdMember", account.getUsername()));
     }
 
     @Override
@@ -171,7 +176,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         Map<String, String> errors = new LinkedHashMap<>();
         MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
         if (account == null || account.getMember().getUser() == null) {
-            errors.put("_global", "Không tìm thấy tài khoản cần cập nhật.");
+            errors.put("_global", messages.get("backend.account.updateTargetNotFound"));
             return errors;
         }
 
@@ -181,22 +186,22 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         if (!username.isEmpty()
                 && memberAccountRepository.existsByUsernameAndIdNot(username, account.getId())) {
-            errors.put("username", "Username đã tồn tại.");
+            errors.put("username", messages.get("backend.account.usernameExists"));
         }
         if (!email.isEmpty() && userRepository.existsByEmailAndIdNot(email, account.getMember().getUser().getId())) {
-            errors.put("email", "Email đã được sử dụng.");
+            errors.put("email", messages.get("backend.account.emailUsed"));
         }
         if (!phone.isEmpty() && userRepository.existsByPhoneAndIdNot(phone, account.getMember().getUser().getId())) {
-            errors.put("phone", "Số điện thoại đã được sử dụng.");
+            errors.put("phone", messages.get("backend.account.phoneUsed"));
         }
         if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
-            errors.put("tierId", "Hạng thành viên không hợp lệ.");
+            errors.put("tierId", messages.get("validation.tier"));
         }
         if (request.getStatus() != null
                 && !"Active".equals(request.getStatus())
                 && !"Inactive".equals(request.getStatus())
                 && !"Blocked".equals(request.getStatus())) {
-            errors.put("status", "Trạng thái tài khoản không hợp lệ.");
+            errors.put("status", messages.get("validation.status"));
         }
         return errors;
     }
@@ -210,7 +215,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         }
 
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.notFound")));
         User user = account.getMember().getUser();
 
         user.setFullName(trim(request.getFullName()));
@@ -223,7 +228,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         auditLogService.log(
                 ActionType.UPDATE_ACCOUNT,
-                "Cập nhật tài khoản thành viên." + account.getUsername());
+                messages.get("backend.account.audit.updatedMember", account.getUsername()));
     }
 
     @Override
@@ -238,7 +243,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         auditLogService.log(
                 ActionType.DEACTIVATE_ACCOUNT,
-                "Vô hiệu hóa tài khoản thành viên." + account.getUsername());
+                messages.get("backend.account.audit.deactivatedMember", account.getUsername()));
         return true;
     }
 
@@ -246,10 +251,10 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     @Transactional
     public void changeMemberStatus(Integer accountId, String status) {
         if (!"Active".equals(status) && !"Inactive".equals(status) && !"Blocked".equals(status)) {
-            throw new ValidationException("Trạng thái tài khoản không hợp lệ.");
+            throw new ValidationException(messages.get("validation.status"));
         }
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.notFound")));
         applyStatus(account, status);
         memberAccountRepository.save(account);
     }

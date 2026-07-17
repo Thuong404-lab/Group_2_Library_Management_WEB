@@ -8,43 +8,43 @@ import jakarta.validation.constraints.Size;
 
 public class CreateMemberAccountRequest {
 
-    @NotBlank(message = "Họ tên không được để trống.")
+    @NotBlank(message = "{validation.fullNameRequired}")
     @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
-            message = "Họ tên chỉ được chứa chữ cái và khoảng trắng.")
+            message = "{validation.fullNameLetters}")
     @Pattern(regexp = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$",
-            message = "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.")
+            message = "{validation.fullNameWords}")
     @Pattern(regexp = "^(?!.*([\\p{L}])\\1\\1).*$",
-            message = "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.")
+            message = "{validation.fullNameTriple}")
     @Pattern(regexp = "^(?!([\\p{L}])\\1+$).+$",
-            message = "Họ tên không được chỉ gồm một ký tự lặp lại.")
-    @Size(max = 50, message = "Họ tên không được vượt quá 50 ký tự.")
+            message = "{validation.fullNameRepeated}")
+    @Size(max = 50, message = "{validation.fullNameMax}")
     private String fullName;
 
-    @NotBlank(message = "Email không được để trống.")
-    @Email(message = "Email không đúng định dạng.")
+    @NotBlank(message = "{validation.emailRequired}")
+    @Email(message = "{validation.email}")
     @Pattern(
             regexp = "^[A-Za-z0-9]+(?:[._%+\\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
-            message = "Email không đúng định dạng.")
+            message = "{validation.email}")
     private String email;
 
-    @NotBlank(message = "Số điện thoại không được để trống.")
+    @NotBlank(message = "{validation.phoneRequired}")
     @Pattern(
             regexp = "^(?!0{10}$)0\\d{9}$",
-            message = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.")
+            message = "{validation.phone}")
     private String phone;
 
-    @NotBlank(message = "Username không được để trống.")
-    @Pattern(regexp = "^(?:|[a-zA-Z0-9_]{3,20})$", message = "Username phải từ 3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt!")
+    @NotBlank(message = "{validation.usernameRequired}")
+    @Pattern(regexp = "^(?:|[a-zA-Z0-9_]{3,20})$", message = "{validation.username}")
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được để trống.")
-    @Pattern(regexp = "^(?:|.{6,})$", message = "Mật khẩu phải có ít nhất 6 ký tự!")
+    @NotBlank(message = "{backend.account.passwordRequired}")
+    @Pattern(regexp = "^(?:|.{6,})$", message = "{validation.passwordMin}")
     private String password;
 
-    @NotNull(message = "Vui lòng chọn hạng thành viên.")
+    @NotNull(message = "{validation.tier}")
     private Integer tierId;
 
-    @NotBlank(message = "Vui lòng chọn trạng thái thành viên.")
+    @NotBlank(message = "{validation.status}")
     private String status;
 
     public String getFullName() {

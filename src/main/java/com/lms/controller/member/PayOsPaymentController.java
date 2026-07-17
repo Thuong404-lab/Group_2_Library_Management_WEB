@@ -2,6 +2,7 @@ package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.UnauthorizedException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/member/payments/payos")
-public class PayOsPaymentController {
+public class PayOsPaymentController extends LocalizedControllerSupport {
     private final PayOsPaymentService payOsPaymentService;
     private final MemberRepository memberRepository;
 
@@ -64,7 +65,7 @@ public class PayOsPaymentController {
     public String paymentReturn(@RequestParam(required = false) Long orderCode,
                                 Principal principal, RedirectAttributes redirectAttributes) {
         if (orderCode == null) {
-            redirectAttributes.addFlashAttribute("error", "Không xác định được đơn thanh toán KQPay.");
+            redirectAttributes.addFlashAttribute("error", message("backend.payment.orderUnknown"));
             return "redirect:/member/financial/transactions";
         }
         payOsPaymentService.getForMember(orderCode, currentMember(principal).getMemberId());
@@ -101,7 +102,8 @@ public class PayOsPaymentController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG)
-                .body(PayOsQrImageRenderer.render(payment.getQrCode()));
+                .body(PayOsQrImageRenderer.render(payment.getQrCode(),
+                        message("backend.payment.qrPngUnsupported"), message("backend.payment.qrRenderFailed")));
     }
 
     private String createAndRedirect(PaymentCreator creator, String errorRedirect,
@@ -117,13 +119,13 @@ public class PayOsPaymentController {
 
     private Member currentMember(Principal principal) {
         if (principal == null) {
-            throw new UnauthorizedException("Bạn cần đăng nhập để thanh toán.");
+            throw new UnauthorizedException(message("backend.payment.loginRequired"));
         }
         String login = principal.getName();
         return memberRepository.findByAccountUsername(login)
                 .or(() -> memberRepository.findByUserEmail(login))
                 .or(() -> memberRepository.findByUserPhone(login))
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên hiện tại."));
+                .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
     }
 
     private String readableMessage(ApplicationException exception) {
@@ -131,7 +133,7 @@ public class PayOsPaymentController {
         while (current.getCause() != null && (current.getMessage() == null || current.getMessage().isBlank())) {
             current = current.getCause();
         }
-        return current.getMessage() == null ? "Không thể tạo thanh toán KQPay." : current.getMessage();
+        return current.getMessage() == null ? message("backend.payment.createFailed") : current.getMessage();
     }
 
     @FunctionalInterface

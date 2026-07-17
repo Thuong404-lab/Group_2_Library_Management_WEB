@@ -1,6 +1,7 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ValidationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.BorrowDetail;
 import com.lms.service.LoanService;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/librarian/loan")
-public class LoanController {
+public class LoanController extends LocalizedControllerSupport {
 
     private final LoanService loanService;
 
@@ -51,9 +52,9 @@ public class LoanController {
         model.addAttribute("defaultReturnDate", LocalDate.now());
 
         if (searchResults.isEmpty()) {
-            model.addAttribute("errorMessage", "Không tìm thấy cuốn sách nào chưa trả ứng với mã vạch: " + trimmedBarcode);
+            model.addAttribute("errorMessage", message("backend.return.activeNotFound", trimmedBarcode));
         } else {
-            model.addAttribute("successMessage", "Tìm thấy thông tin! Vui lòng nhấn nút xử lý để tiếp nhận thẩm định ngoại quan.");
+            model.addAttribute("successMessage", message("backend.return.activeFound"));
         }
         return "librarian/return-desk";
     }
@@ -71,7 +72,7 @@ public class LoanController {
                                                RedirectAttributes redirectAttributes) {
         try {
             if (barcode == null || barcode.trim().isEmpty()) {
-                throw new ValidationException("Mã vạch cuốn sách hoàn trả không hợp lệ.");
+                throw new ValidationException(message("backend.return.invalidBarcode"));
             }
 
             String staffUsername = (principal != null) ? principal.getName() : "admin";
@@ -79,7 +80,7 @@ public class LoanController {
             // Hợp nhất nội dung lựa chọn và ghi chú bổ sung của Thủ thư làm chuỗi lưu vết tình trạng sách
             String fullConditionLog = conditionNote;
             if (conditionNoteAdditional != null && !conditionNoteAdditional.trim().isEmpty()) {
-                fullConditionLog += " | Chi tiết: " + conditionNoteAdditional.trim();
+                fullConditionLog += message("backend.return.conditionDetail", conditionNoteAdditional.trim());
             }
 
             // Chuyển LocalDate sang LocalDateTime (giữ nguyên giờ, phút, giây hiện hành của ngày làm việc)
@@ -88,9 +89,9 @@ public class LoanController {
             // Thực thi nghiệp vụ lõi trong LoanService
             loanService.confirmReturnWithDetails(barcode.trim(), actualReturnDateTime, fullConditionLog, staffUsername);
 
-            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận nhận sách trả và cập nhật kho thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.return.confirmed"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Xử lý trả sách thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.return.failed", e));
         }
         return "redirect:/librarian/loan/returns";
     }
@@ -122,9 +123,9 @@ public class LoanController {
     public String manualRenew(@PathVariable("id") Integer borrowDetailId, RedirectAttributes redirectAttributes) {
         try {
             loanService.processRenewal(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn sách thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.success"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Gia hạn thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.failed", e));
         }
         return "redirect:/librarian/loan/borrow-schedule";
     }
@@ -138,9 +139,9 @@ public class LoanController {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             loanService.approveRenewal(borrowDetailId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu gia hạn!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.approved"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi duyệt gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.approveFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -154,9 +155,9 @@ public class LoanController {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             loanService.rejectRenewal(borrowDetailId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu gia hạn!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.rejected"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi từ chối gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.rejectFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }

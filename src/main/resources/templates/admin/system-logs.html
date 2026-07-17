@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Nhật ký hệ thống</title>
+    <title th:text="#{admin.logs.title}">System Logs</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/system-logs.css}" />
 </head>
 
@@ -14,10 +14,10 @@
             class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
             <div>
                 <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                    Nhật ký hệ thống
+                    <span th:text="#{admin.logs.heading}">System Logs</span>
                 </h2>
                 <div class="text-muted">
-                    Theo dõi các hoạt động quan trọng trong hệ thống
+                    <span th:text="#{admin.logs.description}">Track important activities in the system</span>
                 </div>
             </div>
         </div>
@@ -26,51 +26,51 @@
             <div class="card-header bg-white border-bottom border-color p-4">
                 <form id="systemLogFilterForm" class="system-log-filter" method="get" th:action="@{/admin/system/logs}">
                     <div class="system-log-filter-field">
-                        <label for="systemLogKeyword">Từ khóa</label>
+                        <label for="systemLogKeyword" th:text="#{admin.logs.keyword}">Keyword</label>
                         <input id="systemLogKeyword" type="text" name="keyword" class="form-control"
-                            placeholder="Tìm thời gian, người thực hiện, IP hoặc mô tả..."
+                            th:placeholder="#{admin.logs.searchPlaceholder}"
                             th:value="${keyword}">
                     </div>
                     <div class="system-log-filter-actions">
                         <button type="submit" name="section" th:value="${currentSection}"
                             class="btn btn-classic system-log-search-button"
-                            title="Tìm kiếm" aria-label="Tìm kiếm">
+                            th:title="#{common.search}" th:aria-label="#{common.search}">
                             <i class="bi bi-search" aria-hidden="true"></i>
                         </button>
                         <a th:href="@{/admin/system/logs(section=${currentSection})}"
                             class="btn btn-outline-classic system-log-cancel-button">
-                            Hủy tìm kiếm
+                            <span th:text="#{admin.logs.clearSearch}">Clear Search</span>
                         </a>
                     </div>
-                    <nav class="system-log-section-nav" aria-label="Nhóm nhật ký hệ thống">
+                    <nav class="system-log-section-nav" th:aria-label="#{admin.logs.groups}">
                         <button type="submit" name="section" value="auth"
                             onclick="this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'auth'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'auth'} ? 'page'">
-                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>Đăng nhập/Đăng xuất
+                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i><span th:text="#{admin.logs.auth}">Login / Logout</span>
                         </button>
                         <button type="submit" name="section" value="operations"
                             onclick="this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'operations'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'operations'} ? 'page'">
-                            <i class="bi bi-activity" aria-hidden="true"></i>Trạng thái/CRUD
+                            <i class="bi bi-activity" aria-hidden="true"></i><span th:text="#{admin.logs.operations}">Status / CRUD</span>
                         </button>
                         <button type="submit" name="section" value="circulation"
                             onclick="this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'circulation'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'circulation'} ? 'page'">
-                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>Mượn/Trả/Đặt sách
+                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i><span th:text="#{admin.logs.circulation}">Loans / Returns / Reservations</span>
                         </button>
                     </nav>
                 </form>
                 <div class="system-log-title-row">
                 <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                     <i class="bi bi-journal-text me-2 text-classic"></i>
-                    <span th:text="${currentSection == 'auth' ? 'Lịch sử đăng nhập/đăng xuất' : (currentSection == 'operations' ? 'Nhật ký trạng thái / CRUD' : 'Nhật ký mượn / Trả / Đặt sách')}">
-                        Danh sách nhật ký
+                    <span th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.authHistory') : (currentSection == 'operations' ? #messages.msg('admin.logs.operationsHistory') : #messages.msg('admin.logs.circulationHistory'))}">
+                        Log List
                     </span>
                 </h5>
                 <select form="systemLogFilterForm" class="form-select system-log-tab-filter" name="actionType" aria-label="Lọc loại nhật ký" onchange="this.form.submit()">
@@ -107,11 +107,11 @@
                         </colgroup>
                         <thead class="admin-system-logs-thead-background-07">
                             <tr>
-                                <th>Thời gian</th>
-                                <th>Người thực hiện</th>
-                                <th>Hành động</th>
+                                <th th:text="#{common.time}">Time</th>
+                                <th th:text="#{admin.logs.actor}">Actor</th>
+                                <th th:text="#{admin.logs.action}">Action</th>
                                 <th>IP</th>
-                                <th>Mô tả</th>
+                                <th th:text="#{librarian.inventory.bookDescription}">Description</th>
                             </tr>
                         </thead>
 
@@ -119,8 +119,8 @@
                             <tr th:if="${logs == null or logs.content.isEmpty()}">
                                 <td colspan="5" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    <span th:text="${currentSection == 'auth' ? 'Không có lịch sử đăng nhập/đăng xuất.' : (currentSection == 'operations' ? 'Không có nhật ký trạng thái hoặc CRUD.' : 'Không có nhật ký mượn, trả hoặc đặt sách.')}">
-                                        Không có nhật ký hệ thống.
+                                    <span th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.noAuth') : (currentSection == 'operations' ? #messages.msg('admin.logs.noOperations') : #messages.msg('admin.logs.noCirculation'))}">
+                                        No system logs.
                                     </span>
                                 </td>
                             </tr>
@@ -143,7 +143,7 @@
                                     </div>
                                     <small class="text-muted" th:if="${log.user != null}"
                                         th:text="${log.user.fullName}">
-                                        Admin Tổng
+                                        System Administrator
                                     </small>
                                 </td>
 
@@ -154,20 +154,20 @@
                                             #strings.startsWith(log.actionType, 'CREATE') ? 'bg-primary' :
                                             #strings.startsWith(log.actionType, 'UPDATE') ? 'bg-warning text-dark' :
                                             'bg-secondary'}"
-                                        th:text="${log.actionType == 'LOGIN' ? 'Đăng nhập' :
-                                            (log.actionType == 'LOGOUT' ? 'Đăng xuất' :
-                                            (log.actionType == 'CREATE_BOOK' ? 'Thêm sách' :
-                                            (log.actionType == 'UPDATE_BOOK' ? 'Cập nhật sách' :
-                                            (log.actionType == 'DELETE_BOOK' ? 'Xóa sách' :
-                                            (log.actionType == 'CREATE_ACCOUNT' ? 'Tạo tài khoản' :
-                                            (log.actionType == 'UPDATE_ACCOUNT' ? 'Cập nhật tài khoản' :
-                                            (log.actionType == 'DEACTIVATE_ACCOUNT' ? 'Vô hiệu hóa tài khoản' :
-                                            (log.actionType == 'UPDATE_SETTINGS' ? 'Cập nhật cài đặt' :
-                                            (log.actionType == 'REQUEST_BORROW' ? 'Yêu cầu mượn sách' :
-                                            (log.actionType == 'REQUEST_RETURN' ? 'Yêu cầu trả sách' :
-                                            (log.actionType == 'RESERVE_BOOK' ? 'Đặt trước sách' :
-                                            (log.actionType == 'GOOGLE' ? 'Đăng nhập Google' : log.actionType))))))))))))}">
-                                        Đăng nhập
+                                        th:text="${log.actionType == 'LOGIN' ? #messages.msg('admin.logs.action.login') :
+                                            (log.actionType == 'LOGOUT' ? #messages.msg('admin.logs.action.logout') :
+                                            (log.actionType == 'CREATE_BOOK' ? #messages.msg('admin.logs.action.create_book') :
+                                            (log.actionType == 'UPDATE_BOOK' ? #messages.msg('admin.logs.action.update_book') :
+                                            (log.actionType == 'DELETE_BOOK' ? #messages.msg('admin.logs.action.delete_book') :
+                                            (log.actionType == 'CREATE_ACCOUNT' ? #messages.msg('admin.logs.action.create_account') :
+                                            (log.actionType == 'UPDATE_ACCOUNT' ? #messages.msg('admin.logs.action.update_account') :
+                                            (log.actionType == 'DEACTIVATE_ACCOUNT' ? #messages.msg('admin.logs.action.deactivate_account') :
+                                            (log.actionType == 'UPDATE_SETTINGS' ? #messages.msg('admin.logs.action.update_settings') :
+                                            (log.actionType == 'REQUEST_BORROW' ? #messages.msg('admin.logs.action.request_borrow') :
+                                            (log.actionType == 'REQUEST_RETURN' ? #messages.msg('admin.logs.action.request_return') :
+                                            (log.actionType == 'RESERVE_BOOK' ? #messages.msg('admin.logs.action.reserve_book') :
+                                            (log.actionType == 'GOOGLE' ? #messages.msg('admin.logs.action.google') : log.actionType))))))))))))}">
+                                        Login
                                     </span>
                                 </td>
 
@@ -178,8 +178,8 @@
                                 </td>
 
                                 <td class="admin-system-logs-td-max-width-08">
-                                    <span th:text="${log.description != null ? log.description : 'Không có mô tả'}">
-                                        Đăng nhập thành công.
+                                    <span th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
+                                        No description
                                     </span>
                                 </td>
                             </tr>
@@ -191,20 +191,20 @@
             <div class="member-pagination app-pagination-region"
                 th:if="${logs != null and logs.totalPages > 1}"
                 th:with="startPage=${logs.totalPages <= 10 ? 0 : (logs.number < 9 ? 0 : (logs.number - 8 > logs.totalPages - 10 ? logs.totalPages - 10 : logs.number - 8))}">
-                <nav aria-label="Phân trang nhật ký hệ thống"
+                <nav th:aria-label="#{admin.logs.pagination}"
                     th:with="endPage=${startPage + 9 < logs.totalPages ? startPage + 9 : logs.totalPages - 1}">
                     <ul class="pagination mb-0 app-pagination">
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword})}" aria-label="Trang đầu">
-                                Đầu
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword})}" th:aria-label="#{common.first}" th:text="#{common.first}">
+                                First
                             </a>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                 th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number - 1}, keyword=${keyword})}"
-                                aria-label="Trang trước">
+                                th:aria-label="#{common.previous}">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
@@ -228,7 +228,7 @@
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                 th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number + 1}, keyword=${keyword})}"
-                                aria-label="Trang sau">
+                                th:aria-label="#{common.next}">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>
@@ -236,8 +236,8 @@
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
                                 th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.totalPages - 1}, keyword=${keyword})}"
-                                aria-label="Trang cuối">
-                                Cuối
+                                th:aria-label="#{common.last}" th:text="#{common.last}">
+                                Last
                             </a>
                         </li>
                     </ul>
