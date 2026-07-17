@@ -66,6 +66,19 @@ class AcquisitionWorkflowViewTest {
     }
 
     @Test
+    void rendersMemberNotificationsInVietnameseWithCurrentDatabase() throws Exception {
+        var accounts = memberAccountRepository.findAll(PageRequest.of(0, 1)).getContent();
+        Assumptions.assumeFalse(accounts.isEmpty(), "Current database has no member account");
+        var memberUser = memberDetailsService.loadUserByUsername(accounts.get(0).getUsername());
+
+        mockMvc.perform(get("/member/interaction/notifications").param("lang", "vi").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/notifications"))
+                .andExpect(content().string(containsString("TRUNG TÂM THÔNG BÁO")))
+                .andExpect(content().string(containsString("Nguồn thông báo")));
+    }
+
+    @Test
     void rendersMemberWalletInEnglishWithCurrentDatabase() throws Exception {
         var accounts = memberAccountRepository.findAll(PageRequest.of(0, 1)).getContent();
         Assumptions.assumeFalse(accounts.isEmpty(), "Current database has no member account");

@@ -12,6 +12,7 @@ import com.lms.repository.payos.PayOsBorrowRepository;
 import com.lms.repository.payos.PayOsTransactionRepository;
 import com.lms.repository.payos.PayOsWalletRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -22,6 +23,8 @@ import java.util.List;
 /** Isolated settlement logic owned by the PayOS integration flow. */
 @Service
 public class PayOsSettlementService {
+    @Autowired
+    private LocalizedMessageService localizedMessageService;
     private static final String COMPLETED = "Completed";
 
     private final PayOsWalletRepository walletRepository;
@@ -72,9 +75,9 @@ public class PayOsSettlementService {
         walletRepository.save(wallet);
 
         Transaction transaction = saveTransaction(wallet, null, "TOP_UP", amount);
-        createNotification(member, "Nạp tiền qua KQPay thành công",
-                "Ví của bạn đã được nạp " + formatMoney(amount)
-                        + ". Số dư hiện tại: " + formatMoney(newBalance) + ".");
+        createNotification(member,
+                localizedMessageService.get("systemNotification.kqpay.topup.title"),
+                localizedMessageService.get("systemNotification.topup.success.content", formatMoney(amount), formatMoney(newBalance)));
         return transaction;
     }
 

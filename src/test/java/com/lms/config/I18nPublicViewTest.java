@@ -1,5 +1,6 @@
 package com.lms.config;
 
+import com.lms.repository.BookRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,6 +19,9 @@ class I18nPublicViewTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private BookRepository bookRepository;
 
     @Test
     void loginPageUsesEnglishByDefault() throws Exception {
@@ -42,6 +46,19 @@ class I18nPublicViewTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Apply Filters")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Sort by:")));
+    }
+
+    @Test
+    void bookDetailUsesEnglishByDefault() throws Exception {
+        var books = bookRepository.findAll();
+        org.junit.jupiter.api.Assumptions.assumeFalse(books.isEmpty(), "Current database has no books");
+
+        mockMvc.perform(get("/books/{id}", books.get(0).getBookId()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Book Description")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Reader Reviews")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Đánh giá từ bạn đọc"))));
     }
 
     @Test

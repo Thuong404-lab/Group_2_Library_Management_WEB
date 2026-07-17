@@ -7,6 +7,8 @@ import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LoanService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import java.util.Optional;
  */
 @Service
 public class LoanServiceImpl implements LoanService {
+    @Autowired
+    private LocalizedMessageService localizedMessageService;
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
@@ -132,8 +136,8 @@ public class LoanServiceImpl implements LoanService {
         updateParentBorrowStatus(borrow);
 
         // 5. Gửi thông báo đến độc giả
-        sendInternalNotification(borrow.getMember(), "Xác nhận trả sách thành công",
-                "Yêu cầu trả sách của phiếu mượn #" + borrowId + " đã được thủ thư phê duyệt.");
+        sendInternalNotification(borrow.getMember(), localizedMessageService.get("systemNotification.return.approved.title"),
+                localizedMessageService.get("systemNotification.return.approved.content", borrowId));
     }
 
     // UC-13.3: Quầy mượn sách
@@ -274,11 +278,9 @@ public class LoanServiceImpl implements LoanService {
 
         Member member = detail.getBorrow().getMember();
         if (member != null && member.getMemberId() != null) {
-            sendInternalNotification(member, "Gia hạn sách thành công",
-                    "Cuốn sách '" + detail.getBook().getTitle() + "' đã được gia hạn thêm "
-                            + renewDays + " ngày. Hạn trả mới của bạn là: "
-                            + detail.getDueDate().format(
-                                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
+            sendInternalNotification(member, localizedMessageService.get("systemNotification.renewal.success.title"),
+                    localizedMessageService.get("systemNotification.renewal.success.content", detail.getBook().getTitle(), renewDays,
+                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         }
     }
 
@@ -326,8 +328,8 @@ public class LoanServiceImpl implements LoanService {
         updateParentBorrowStatus(detail.getBorrow());
 
         // 5. Gửi thông báo đến độc giả về việc trả sách tại quầy thành công
-        sendInternalNotification(detail.getBorrow().getMember(), "Xác nhận hoàn trả sách tại quầy thành công",
-                "Cuốn sách '" + detail.getBook().getTitle() + "' đã được thủ thư tiếp nhận nhập kho tại quầy.");
+        sendInternalNotification(detail.getBorrow().getMember(), localizedMessageService.get("systemNotification.return.desk.title"),
+                localizedMessageService.get("systemNotification.return.desk.content", detail.getBook().getTitle()));
     }
 
     @Override
@@ -363,8 +365,8 @@ public class LoanServiceImpl implements LoanService {
 
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
-                    "Phê duyệt gia hạn thành công",
-                    "Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã được thủ thư phê duyệt. Hạn trả mới: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                    localizedMessageService.get("systemNotification.renewal.approved.title"),
+                    localizedMessageService.get("systemNotification.renewal.approved.content", detail.getBook().getTitle(), detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         }
     }
 
@@ -388,8 +390,8 @@ public class LoanServiceImpl implements LoanService {
 
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
-                    "Từ chối gia hạn sách",
-                    "Yêu cầu gia hạn sách '" + detail.getBook().getTitle() + "' đã bị từ chối. Vui lòng trả sách đúng hạn: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                    localizedMessageService.get("systemNotification.renewal.rejected.title"),
+                    localizedMessageService.get("systemNotification.renewal.rejected.content", detail.getBook().getTitle(), detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         }
     }
 
@@ -455,8 +457,8 @@ public class LoanServiceImpl implements LoanService {
                 transactionRepository.save(transaction);
 
                 // Gửi thông báo hệ thống đến độc giả
-                sendInternalNotification(member, "Phạt quá hạn trả sách", 
-                        String.format("Hệ thống đã ghi nhận khoản phạt quá hạn %sđ đối với sách '%s' (Trễ %d ngày).", 
+                sendInternalNotification(member, localizedMessageService.get("systemNotification.overdueFine.title"),
+                        localizedMessageService.get("systemNotification.overdueFine.content",
                                 fineAmount.setScale(0, java.math.RoundingMode.HALF_UP), detail.getBook().getTitle(), overdueDays));
             }
         }

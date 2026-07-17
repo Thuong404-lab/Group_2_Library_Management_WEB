@@ -12,6 +12,7 @@ import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -27,6 +28,8 @@ import java.util.Set;
  */
 @Service
 public class OverdueReminderService {
+    @Autowired
+    private LocalizedMessageService localizedMessageService;
     private static final Set<String> REMINDABLE_STATUSES =
             Set.of("BORROWED", "OVERDUE", "RETURN_PENDING");
     private static final DateTimeFormatter DATE_FORMATTER =
@@ -56,7 +59,7 @@ public class OverdueReminderService {
         long overdueDays = Math.max(
                 ChronoUnit.DAYS.between(detail.getDueDate().toLocalDate(), LocalDate.now()),
                 1L);
-        String reminderMarker = "Mã lượt mượn: #" + detail.getBorrowDetailId();
+        String reminderMarker = localizedMessageService.get("systemNotification.overdue.marker", detail.getBorrowDetailId());
 
         boolean remindedRecently = memberNotificationRepository
                 .findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
@@ -72,17 +75,13 @@ public class OverdueReminderService {
         }
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
-                ? "sách đang mượn"
+                ? localizedMessageService.get("systemNotification.overdue.unknownBook")
                 : detail.getBook().getTitle();
 
         Notification notification = new Notification();
-        notification.setTitle("Nhắc nhở trả sách quá hạn");
-        notification.setContent(
-                "Sách \"" + bookTitle + "\" đã quá hạn " + overdueDays
-                        + " ngày (hạn trả " + detail.getDueDate().format(DATE_FORMATTER) + "). "
-                        + "Vui lòng mang sách đến thư viện để hoàn trả sớm. "
-                        + "Phí quá hạn sẽ được tính theo số ngày trễ tại thời điểm xử lý trả sách. "
-                        + reminderMarker + ".");
+        notification.setTitle(localizedMessageService.get("systemNotification.overdue.title"));
+        notification.setContent(localizedMessageService.get("systemNotification.overdue.content", bookTitle, overdueDays,
+                detail.getDueDate().format(DATE_FORMATTER), reminderMarker));
         notification.setCreatedDate(LocalDateTime.now());
         notification.setStatus("Active");
         notification = notificationRepository.save(notification);

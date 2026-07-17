@@ -24,6 +24,8 @@ import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,9 @@ import java.util.List;
  */
 @Service
 public class FinancialServiceImpl implements FinancialService {
+
+    @Autowired
+    private LocalizedMessageService localizedMessageService;
     private static final String BORROW_FEE_TYPE = "BORROW_FEE";
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
@@ -209,9 +214,9 @@ public class FinancialServiceImpl implements FinancialService {
 
         createMemberNotification(
                 reservation.getMember(),
-                "Thanh toán tiền cọc thành công",
-                "Thư viện đã ghi nhận tiền cọc đặt trước " + formatMoney(depositAmount)
-                        + " cho sách \"" + (reservation.getBook() == null ? "" : reservation.getBook().getTitle()) + "\".");
+                localizedMessageService.get("systemNotification.deposit.paid.title"),
+                localizedMessageService.get("systemNotification.deposit.paid.content", formatMoney(depositAmount),
+                        reservation.getBook() == null ? "" : reservation.getBook().getTitle()));
     }
 
     @Override
@@ -246,10 +251,9 @@ public class FinancialServiceImpl implements FinancialService {
         Member member = wallet.getMember();
         createMemberNotification(
                 member,
-                "Phí phạt mới",
-                "Thư viện đã ghi nhận khoản phạt " + formatMoney(transaction.getAmount().abs())
-                        + ". Lý do: " + (reason == null || reason.isBlank() ? "Vi phạm quy định thư viện" : reason.trim())
-                        + ".");
+                localizedMessageService.get("systemNotification.fine.created.title"),
+                localizedMessageService.get("systemNotification.fine.created.content", formatMoney(transaction.getAmount().abs()),
+                        reason == null || reason.isBlank() ? localizedMessageService.get("systemNotification.fine.defaultReason") : reason.trim()));
     }
 
     @Override
@@ -286,9 +290,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         createMemberNotification(
                 member,
-                "Nạp tiền thành công",
-                "Tài khoản ví của bạn vừa được nạp " + formatMoney(topUpAmount)
-                        + ". Số dư hiện tại: " + formatMoney(newBalance) + ".");
+                localizedMessageService.get("systemNotification.topup.success.title"),
+                localizedMessageService.get("systemNotification.topup.success.content", formatMoney(topUpAmount), formatMoney(newBalance)));
     }
 
     @Override
@@ -357,9 +360,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         createMemberNotification(
                 reservation.getMember(),
-                "Hoàn tiền cọc thành công",
-                "Thư viện đã hoàn " + formatMoney(refundAmount) + " vào ví cho phiếu đặt trước #"
-                        + reservationId + ". Số dư hiện tại: " + formatMoney(newBalance) + ".");
+                localizedMessageService.get("systemNotification.deposit.refunded.title"),
+                localizedMessageService.get("systemNotification.deposit.refunded.content", formatMoney(refundAmount), reservationId, formatMoney(newBalance)));
     }
 
     @Override

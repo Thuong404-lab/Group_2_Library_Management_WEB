@@ -30,7 +30,7 @@
                     <h2 id="notification-list-title" th:text="#{member.notifications.all}">All Notifications</h2>
                     <p th:text="#{member.notifications.browse}">Browse notifications by source and content type.</p>
         </div>
-        <div class="member-notification-source-tabs" role="tablist" aria-label="Nguồn thông báo">
+        <div class="member-notification-source-tabs" role="tablist" th:aria-label="#{member.notifications.sources}">
                         <button type="button" id="librarianNotificationsTab" class="is-active" data-notification-source="librarian" role="tab" aria-selected="true" aria-controls="memberNotificationsList"><i class="bi bi-person-badge" aria-hidden="true"></i><span th:text="#{member.notifications.librarian}">Librarian Notifications</span><b th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</b></button>
                         <button type="button" id="systemNotificationsTab" data-notification-source="system" role="tab" aria-selected="false" aria-controls="memberNotificationsList"><i class="bi bi-gear" aria-hidden="true"></i><span th:text="#{member.notifications.system}">System Notifications</span><b th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</b></button>
         </div>
@@ -57,7 +57,8 @@
           <span class="member-notification-row-icon" aria-hidden="true"><i th:class="${notification.fromLibrarian} ? 'bi bi-person-badge' : 'bi bi-gear'"></i></span>
           <div class="member-notification-row-content">
             <div class="member-notification-row-meta">
-              <span class="member-notification-row-type" th:text="${notification.notificationType.displayName}">Thông báo chung</span>
+              <span class="member-notification-row-type"
+                    th:text="${#messages.msg('notification.type.' + #strings.toLowerCase(notification.notificationType.name()))}">General Notification</span>
                             <span class="member-notification-unread-label" th:if="${notification.read == false}"><i aria-hidden="true"></i> <span th:text="#{member.notifications.unread}">Unread</span></span>
             </div>
                             <h3 th:text="${notification.title}">Title</h3>

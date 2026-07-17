@@ -37,6 +37,8 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.AuditLogService;
 import com.lms.service.BorrowService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.lms.service.FinancialService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class BorrowServiceImpl implements BorrowService {
+
+    @Autowired
+    private LocalizedMessageService localizedMessageService;
 
     private static final String PAYMENT_PENDING = "Payment_Pending";
     private static final String PAYMENT_CANCELLED = "Payment_Cancelled";
@@ -203,8 +208,10 @@ public class BorrowServiceImpl implements BorrowService {
         }
         
         // Gửi thông báo trực tiếp cho độc giả khi tạo phiếu mượn thành công tại quầy
-        sendInternalNotification(member, "Mượn sách thành công", 
-                "Bạn đã mượn thành công các cuốn sách [" + bookNames + "] tại quầy thông qua mã phiếu mượn BRW-" + borrow.getBorrowId() + ". Vui lòng trả sách đúng hạn vào ngày " + LocalDateTime.now().plusDays(borrowDays).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
+        sendInternalNotification(member,
+                localizedMessageService.get("systemNotification.borrow.success.title"),
+                localizedMessageService.get("systemNotification.borrow.desk.content", bookNames, borrow.getBorrowId(),
+                        LocalDateTime.now().plusDays(borrowDays).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
 
         return borrow;
     }
@@ -325,8 +332,9 @@ public class BorrowServiceImpl implements BorrowService {
                 "Thành viên " + username + " gửi yêu cầu mượn sách #" + book.getBookId()
                         + " - " + book.getTitle() + " trong " + borrowDays + " ngay.");
                         
-        sendInternalNotification(member, "Yêu cầu mượn sách thành công",
-                "Yêu cầu mượn cuốn sách '" + book.getTitle() + "' đã được gửi thành công. Vui lòng chờ thủ thư phê duyệt.");
+        sendInternalNotification(member,
+                localizedMessageService.get("systemNotification.borrow.requested.title"),
+                localizedMessageService.get("systemNotification.borrow.requested.content", book.getTitle()));
 
         return borrow;
     }
@@ -364,8 +372,9 @@ public class BorrowServiceImpl implements BorrowService {
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
         
-        sendInternalNotification(borrow.getMember(), "Yêu cầu mượn sách đã được phê duyệt",
-                "Yêu cầu mượn sách của bạn đã được thủ thư phê duyệt. Vui lòng đến quầy để nhận sách.");
+        sendInternalNotification(borrow.getMember(),
+                localizedMessageService.get("systemNotification.borrow.approved.title"),
+                localizedMessageService.get("systemNotification.borrow.approved.content"));
     }
 
     @Override
@@ -464,8 +473,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         reservation.setStatus("Active");
         reservationRepository.save(reservation);
-        sendInternalNotification(reservation.getMember(), "Yêu cầu đặt trước được phê duyệt",
-                "Cuốn sách '" + reservation.getBook().getTitle() + "' đã được đặt giữ thành công.");
+        sendInternalNotification(reservation.getMember(),
+                localizedMessageService.get("systemNotification.reservation.approved.title"),
+                localizedMessageService.get("systemNotification.reservation.approved.content", reservation.getBook().getTitle()));
     }
 
     @Override
@@ -479,8 +489,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         reservation.setStatus("Rejected");
         reservationRepository.save(reservation);
-        sendInternalNotification(reservation.getMember(), "Yêu cầu đặt trước bị từ chối",
-                "Yêu cầu đặt trước cuốn sách '" + reservation.getBook().getTitle() + "' đã bị từ chối.");
+        sendInternalNotification(reservation.getMember(),
+                localizedMessageService.get("systemNotification.reservation.rejected.title"),
+                localizedMessageService.get("systemNotification.reservation.rejected.content", reservation.getBook().getTitle()));
     }
 
     @Override
@@ -725,11 +736,10 @@ public class BorrowServiceImpl implements BorrowService {
                 .filter(java.util.Objects::nonNull)
                 .max(LocalDateTime::compareTo)
                 .orElse(LocalDateTime.now());
-        sendInternalNotification(borrow.getMember(), "Mượn sách thành công",
-                "Ngân hàng đã xác nhận thanh toán. Bạn đã mượn thành công các cuốn sách [" + bookNames
-                        + "] tại quầy thông qua mã phiếu mượn BRW-" + borrow.getBorrowId()
-                        + ". Vui lòng trả sách đúng hạn vào ngày "
-                        + dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
+        sendInternalNotification(borrow.getMember(),
+                localizedMessageService.get("systemNotification.borrow.success.title"),
+                localizedMessageService.get("systemNotification.borrow.bankConfirmed.content", bookNames, borrow.getBorrowId(),
+                        dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
     }
 
     private String getAuthorNames(Book book) {
