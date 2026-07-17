@@ -1,5 +1,6 @@
 <!doctype html>
 <html
+  th:lang="${#locale.language}"
   xmlns:th="http://www.thymeleaf.org"
   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 >
@@ -40,10 +41,16 @@
       id="customToast"
       class="base-div-position-bottom-right-02"
     >
-      <span id="toastMessage">Thông báo</span>
+      <span id="toastMessage" th:text="#{common.notification}">Notification</span>
     </div>
 
-    <script>
+    <script th:inline="javascript">
+      var favoriteAddError = /*[[#{favorite.add.error}]]*/ "Unable to add this book to favorites.";
+      var favoriteAddSuccess = /*[[#{favorite.add.success}]]*/ "Added to your favorites!";
+      var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
+      var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
+      var notificationMarkAllError = /*[[#{notification.markAll.error}]]*/ "Unable to mark all notifications as read.";
+
       function showToast(message) {
         var toast = document.getElementById("customToast");
         document.getElementById("toastMessage").innerText = message;
@@ -81,7 +88,7 @@
               return null;
             }
             if (!response.ok) {
-              throw new Error("Không thể thêm vào yêu thích.");
+              throw new Error(favoriteAddError);
             }
             return response.json();
           })
@@ -101,10 +108,10 @@
                 setFavoriteButtonActive(favoriteButton);
               });
 
-            showToast(data.message || "Đã thêm vào danh sách yêu thích!");
+            showToast(data.message || favoriteAddSuccess);
           })
           .catch(function (error) {
-            showToast(error.message || "Có lỗi xảy ra khi thêm yêu thích.");
+            showToast(error.message || favoriteAddError);
           })
           .finally(function () {
             if (button) {
@@ -127,7 +134,7 @@
 
         var label = button.querySelector("span");
         if (label) {
-          label.innerText = "Đã yêu thích";
+          label.innerText = favoriteAddedLabel;
         }
       }
 
@@ -170,7 +177,7 @@
             fetch("/member/interaction/notifications/" + notificationId + "/mark-read", {
               method: "GET", credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
             }).then(function (response) {
-              if (!response.ok) throw new Error("Không thể cập nhật thông báo");
+              if (!response.ok) throw new Error(notificationUpdateError);
               return response.json();
             }).then(function (data) {
               item.classList.remove("is-unread");
@@ -193,7 +200,7 @@
           fetch("/member/interaction/notifications/mark-read", {
             method: "GET", credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
           }).then(function (response) {
-            if (!response.ok) throw new Error("Không thể đánh dấu tất cả thông báo");
+            if (!response.ok) throw new Error(notificationMarkAllError);
             notificationDropdown.querySelectorAll(".member-notification-item.is-unread").forEach(function (item) {
               item.classList.remove("is-unread");
             });
@@ -210,6 +217,7 @@
     <!-- TODO: Thêm các script JS chung -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script th:src="@{/js/bootstrap.bundle.js}"></script>
+    <script th:replace="~{fragments/language-switcher :: script}"></script>
     <th:block layout:fragment="scripts"></th:block>
     <script th:src="@{/js/dynamic-presentation.js}"></script>
     <script th:src="@{/js/confirmation-dialog.js}"></script>
