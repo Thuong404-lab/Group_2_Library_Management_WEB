@@ -5,6 +5,10 @@
     var activeSubmitter = null;
     var dialog = null;
 
+    function label(name, fallback) {
+        return document.documentElement.dataset[name] || fallback;
+    }
+
     function createDialog() {
         if (dialog) {
             return dialog;
@@ -18,23 +22,29 @@
             '<div class="app-confirm-dialog__shell">' +
                 '<header class="app-confirm-dialog__header">' +
                     '<div class="app-confirm-dialog__heading">' +
-                        '<h2 class="app-confirm-dialog__title" id="appConfirmDialogTitle">Xác nhận thao tác</h2>' +
-                        '<p class="app-confirm-dialog__subtitle">Kiểm tra thông tin trước khi xác nhận.</p>' +
+                        '<h2 class="app-confirm-dialog__title" id="appConfirmDialogTitle"></h2>' +
+                        '<p class="app-confirm-dialog__subtitle"></p>' +
                     '</div>' +
                 '</header>' +
                 '<div class="app-confirm-dialog__body">' +
                     '<div class="app-confirm-dialog__subject" hidden>' +
-                        '<span class="app-confirm-dialog__subject-label">Thông tin</span>' +
+                        '<span class="app-confirm-dialog__subject-label"></span>' +
                         '<strong class="app-confirm-dialog__subject-value"></strong>' +
                     '</div>' +
                     '<p class="app-confirm-dialog__message" id="appConfirmDialogMessage"></p>' +
                 '</div>' +
                 '<footer class="app-confirm-dialog__footer">' +
-                    '<button type="button" class="app-confirm-dialog__button app-confirm-dialog__cancel">Quay lại</button>' +
-                    '<button type="button" class="app-confirm-dialog__button app-confirm-dialog__confirm">Xác nhận</button>' +
+                    '<button type="button" class="app-confirm-dialog__button app-confirm-dialog__cancel"></button>' +
+                    '<button type="button" class="app-confirm-dialog__button app-confirm-dialog__confirm"></button>' +
                 '</footer>' +
             '</div>';
         document.body.appendChild(dialog);
+
+        dialog.querySelector(".app-confirm-dialog__title").textContent = label("confirmTitle", "Confirm Action");
+        dialog.querySelector(".app-confirm-dialog__subtitle").textContent = label("confirmSubtitle", "Review the information before confirming.");
+        dialog.querySelector(".app-confirm-dialog__subject-label").textContent = label("confirmInformation", "Information");
+        dialog.querySelector(".app-confirm-dialog__cancel").textContent = label("confirmCancel", "Back");
+        dialog.querySelector(".app-confirm-dialog__confirm").textContent = label("confirmAction", "Confirm");
 
         dialog.querySelector(".app-confirm-dialog__cancel").addEventListener("click", closeDialog);
         dialog.querySelector(".app-confirm-dialog__confirm").addEventListener("click", confirmSubmission);
@@ -91,11 +101,11 @@
         activeSubmitter = event.submitter || null;
 
         var currentDialog = createDialog();
-        var title = form.dataset.confirmTitle || "Xác nhận thao tác";
-        var message = form.dataset.confirmMessage || "Bạn có chắc chắn muốn thực hiện thao tác này?";
+        var title = form.dataset.confirmTitle || label("confirmTitle", "Confirm Action");
+        var message = form.dataset.confirmMessage || label("confirmMessage", "Are you sure you want to perform this action?");
         var subject = form.dataset.confirmSubject || "";
-        var subjectLabel = form.dataset.confirmSubjectLabel || "Thông tin";
-        var actionLabel = form.dataset.confirmAction || "Xác nhận";
+        var subjectLabel = form.dataset.confirmSubjectLabel || label("confirmInformation", "Information");
+        var actionLabel = form.dataset.confirmAction || label("confirmAction", "Confirm");
         var isDanger = form.dataset.confirmTone === "danger";
         var subjectElement = currentDialog.querySelector(".app-confirm-dialog__subject");
 

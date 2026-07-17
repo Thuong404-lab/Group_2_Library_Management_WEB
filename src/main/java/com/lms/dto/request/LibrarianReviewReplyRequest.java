@@ -6,9 +6,9 @@ import jakarta.validation.constraints.Pattern;
 
 public class LibrarianReviewReplyRequest {
 
-    @NotBlank(message = "Nội dung phản hồi không được để trống")
-    @Size(min = 5, max = 1000, message = "Nội dung phản hồi phải có từ 5 đến 1000 ký tự")
-    @Pattern(regexp = "(?s).*\\p{L}.*", message = "Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt")
+    @NotBlank(message = "{backend.librarian.reviewReply.required}")
+    @Size(min = 5, max = 1000, message = "{backend.librarian.reviewReply.range}")
+    @Pattern(regexp = "(?s).*\\p{L}.*", message = "{backend.librarian.reviewReply.letters}")
     private String response;
 
     public LibrarianReviewReplyRequest() {

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Quản lý tài khoản nhân viên</title>
+    <title th:text="#{admin.staff.title}">Staff Account Management</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/staff-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
@@ -14,15 +15,13 @@
         class="member-management-page librarian-management-page">
         <header class="member-page-header">
             <div>
-                <h1 class="member-page-title">Danh sách nhân viên</h1>
-                <p class="member-page-description">
-                    Danh sách và thông tin tài khoản nhân viên
-                </p>
+                <h1 class="member-page-title" th:text="#{admin.staff.heading}">Staff List</h1>
+                <p class="member-page-description" th:text="#{admin.staff.description}">Staff account information</p>
             </div>
             <div class="member-page-actions">
                 <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
                     data-bs-target="#createStaffAccountModal">
-                    Tạo tài khoản mới
+                    <span th:text="#{admin.accounts.create}">Create Account</span>
                 </button>
             </div>
         </header>
@@ -34,7 +33,7 @@
                     <div class="modal-header member-modal-header">
                         <h5 class="modal-title member-modal-title-accent"
                             id="createStaffAccountModalLabel">
-                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản nhân sự
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i><span th:text="#{admin.staff.create}">Create Staff Account</span>
                         </h5>
                     </div>
                     <div class="modal-body member-modal-body">
@@ -53,54 +52,52 @@
 
         <!-- Alerts -->
         <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
-            <i class="bi bi-exclamation-circle me-2"></i>Không tìm thấy tài khoản.
+            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{admin.accounts.notFound}">Account not found.</span>
         </div>
         <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
-            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
+            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Error</span>
         </div>
         <div class="alert alert-success shadow-sm border-0" th:if="${success != null}">
-            <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Thao tác thành công.</span>
+            <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Operation completed successfully.</span>
         </div>
 
         <section class="member-data-card">
             <div class="member-data-card-body">
-                <div class="member-summary-chips" aria-label="Tổng quan nhân viên">
-                    <span><strong th:text="${staffSummary != null ? staffSummary['librarian'] : 0}">0</strong> thủ
-                        thư</span>
-                    <span><strong th:text="${staffSummary != null ? staffSummary['admin'] : 0}">0</strong> admin</span>
-                    <span><strong th:text="${staffSummary != null ? staffSummary['active'] : 0}">0</strong> hoạt
-                        động</span>
-                    <span><strong th:text="${staffSummary != null ? staffSummary['inactive'] : 0}">0</strong> ngừng hoạt
-                        động</span>
-                    <span><strong th:text="${staffSummary != null ? staffSummary['blocked'] : 0}">0</strong> bị
-                        khóa</span>
+                <div class="member-summary-chips" th:aria-label="#{admin.staff.summary}">
+                    <span th:text="#{admin.staff.librarianCount(${staffSummary != null ? staffSummary['librarian'] : 0})}">0 librarians</span>
+                    <span th:text="#{admin.staff.adminCount(${staffSummary != null ? staffSummary['admin'] : 0})}">0 admins</span>
+                    <span th:text="#{admin.staff.activeCount(${staffSummary != null ? staffSummary['active'] : 0})}">0 active</span>
+                    <span th:text="#{admin.staff.inactiveCount(${staffSummary != null ? staffSummary['inactive'] : 0})}">0 inactive</span>
+                    <span th:text="#{admin.staff.blockedCount(${staffSummary != null ? staffSummary['blocked'] : 0})}">0 blocked</span>
                 </div>
                 <!-- Search & Filter -->
                 <div class="member-toolbar">
-                    <form class="member-search-form" method="get" th:action="@{/admin/staff}">
+                    <form class="member-search-form" method="get" th:action="@{/admin/staff}"
+                        data-auto-filter-form data-focus-key="adminStaffFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
-                                placeholder="Tìm username, thông tin người dùng, loại thủ nhân viên hoặc trạng thái...">
-                            <select class="form-select member-filter-select" name="staffType"
-                                aria-label="Lọc theo loại nhân viên">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStaffType)}">Tất cả loại</option>
-                                <option value="Librarian" th:selected="${selectedStaffType == 'Librarian'}">Thủ thư</option>
+                                th:placeholder="#{admin.staff.searchPlaceholder}">
+                            <select class="form-select member-filter-select" name="staffType" data-auto-submit
+                                th:aria-label="#{admin.staff.filterType}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStaffType)}" th:text="#{admin.staff.allTypes}">All Types</option>
+                                <option value="Librarian" th:selected="${selectedStaffType == 'Librarian'}" th:text="#{role.librarian}">Librarian</option>
                                 <option value="Admin" th:selected="${selectedStaffType == 'Admin'}">Admin</option>
                             </select>
-                            <select class="form-select member-filter-select" name="status"
-                                aria-label="Lọc theo trạng thái">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
-                                </option>
-                                <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
-                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động
-                                </option>
-                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
+                                th:aria-label="#{admin.accounts.filterStatus}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{common.allStatuses}">All Statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{account.status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{account.status.inactive}">Inactive</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{account.status.blocked}">Blocked</option>
                             </select>
-                            <button class="btn member-search-button text-nowrap" type="submit">Tìm kiếm</button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/staff}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -109,12 +106,12 @@
                     <table class="table table-hover align-middle member-table">
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
-                                <th class="ps-3">STT</th>
-                                <th>Usename</th>
-                                <th>Thông tin nhân viên</th>
-                                <th>Loại nhân viên</th>
-                                <th>Trạng thái</th>
-                                <th class="text-end pe-3">Hành động</th>
+                                <th class="ps-3" th:text="#{common.number}">No.</th>
+                                <th th:text="#{member.profile.username}">Username</th>
+                                <th th:text="#{admin.staff.information}">Staff Information</th>
+                                <th th:text="#{admin.staff.type}">Staff Type</th>
+                                <th th:text="#{common.status}">Status</th>
+                                <th class="text-end pe-3" th:text="#{common.actions}">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -124,7 +121,7 @@
                                     th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">1</td>
                                 <td>
                                     <span class="fw-bold text-classic"
-                                        th:text="${account != null ? account.username : 'Không có tài khoản'}">
+                                        th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
                                         username
                                     </span>
                                     <div class="small text-muted"
@@ -135,7 +132,7 @@
 
                                 <td>
                                     <div th:if="${staff.user != null}">
-                                        <div class="fw-bold" th:text="${staff.user.fullName}">Tên nhân viên</div>
+                                        <div class="fw-bold" th:text="${staff.user.fullName}">Staff name</div>
                                         <div class="small text-muted">
                                             <i class="bi bi-envelope me-1"></i>
                                             <span th:text="${staff.user.email}">email</span>
@@ -146,27 +143,27 @@
                                         </div>
                                     </div>
                                     <div th:unless="${staff.user != null}" class="fst-italic text-muted small">
-                                        Không có thông tin user
+                                        <span th:text="#{admin.staff.noUserInfo}">No user information</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 staff-type-badge"
-                                        th:text="${staff.staffType}"
+                                    <span class="staff-type-badge"
+                                        th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}"
                                         th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                         Librarian
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 staff-status-badge"
+                                    <span class="status-badge"
                                         th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
-          staff.user.status.name() == 'Active' ? 'staff-status-active' :
-          staff.user.status.name() == 'Blocked' ? 'staff-status-blocked' :
-          'staff-status-other'
-      }" th:text="${staff.user.status}">
+          staff.user.status.name() == 'Active' ? 'status-active' :
+          staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+          'status-inactive'
+      }" th:text="${staff.user.status.name() == 'Active' ? #messages.msg('account.status.active') : (staff.user.status.name() == 'Blocked' ? #messages.msg('account.status.blocked') : #messages.msg('account.status.inactive'))}">
                                         Active
                                     </span>
-                                    <span class="badge rounded-pill px-3 py-2 staff-status-badge staff-status-other"
+                                    <span class="status-badge status-inactive"
                                         th:if="${staff.user == null || staff.user.status == null}">
                                         N/A
                                     </span>
@@ -177,9 +174,9 @@
                                         <button type="button" class="member-icon-action account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#updateStaffModal' + account.accountId}"
-                                            data-bs-title="Cập nhật tài khoản"
+                                            th:data-bs-title="#{admin.accounts.update}"
                                             data-bs-custom-class="update-account-tooltip"
-                                            aria-label="Cập nhật tài khoản">
+                                            th:aria-label="#{admin.accounts.update}">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
                                         <button type="button"
@@ -187,20 +184,21 @@
                                             class="member-icon-action member-icon-action-danger account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
-                                            data-bs-title="Xóa tài khoản" data-bs-custom-class="delete-account-tooltip"
-                                            aria-label="Xóa tài khoản">
+                                            th:data-bs-title="#{admin.accounts.delete}" data-bs-custom-class="delete-account-tooltip"
+                                            th:aria-label="#{admin.accounts.delete}">
                                             <i class="bi bi-trash"></i>
                                         </button>
 
                                         <!-- Update Modal -->
-                                        <div class="modal fade text-start"
+                                    <div class="modal text-start member-form-modal"
                                             th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
                                             aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                             th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
-                                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post" class="staff-update-form" novalidate
-                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
+                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
+                                                        th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='staff')}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -209,8 +207,7 @@
                                                             <h5
                                                                 class="modal-title member-modal-title-accent">
                                                                 <i
-                                                                    class="bi bi-person-lines-fill me-2 text-classic"></i>Cập
-                                                                nhật tài khoản nhân viên
+                                                                    class="bi bi-person-lines-fill me-2 text-classic"></i><span th:text="#{admin.staff.update}">Update Staff Account</span>
                                                             </h5>
                                                         </div>
 
@@ -220,18 +217,17 @@
                                                             <div class="row g-3">
                                                                 <div class="col-md-6 order-md-1">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase">Họ
-                                                                        tên <span class="text-danger">*</span></label>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{member.profile.fullName}">Full Name</span> <span class="text-danger">*</span></label>
                                                                     <input class="form-control" name="fullName"
-                                                                        data-label="Họ tên" maxlength="50"
+                                                                        th:data-label="#{member.profile.fullName}" maxlength="50"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (staff.user != null ? staff.user.fullName : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="fullName"
-                                                                        data-default-message="Họ tên không được để trống."
+                                                                        th:data-default-message="#{validation.fullNameRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
-                                                                        Họ tên không được để trống.
+                                                                        <span th:text="#{validation.fullNameRequired}">Full name is required.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-4">
@@ -246,26 +242,25 @@
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback" data-error-for="email"
-                                                                        data-default-message="Email không được để trống."
+                                                                        th:data-default-message="#{validation.emailRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
-                                                                        Email không hợp lệ.
+                                                                        <span th:text="#{validation.email}">Invalid email.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-3">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase">Số
-                                                                        điện thoại <span class="text-danger">*</span>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{member.profile.phone}">Phone Number</span> <span class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="phone"
-                                                                        data-label="Số điện thoại" required
+                                                                        th:data-label="#{member.profile.phone}" required
                                                                         pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
                                                                         inputmode="numeric"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (staff.user != null ? staff.user.phone : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                     <div class="invalid-feedback" data-error-for="phone"
-                                                                        data-default-message="Số điện thoại không được để trống."
+                                                                        th:data-default-message="#{validation.phoneRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
-                                                                        Số điện thoại không hợp lệ.
+                                                                        <span th:text="#{validation.phone}">Invalid phone number.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-2">
@@ -281,15 +276,14 @@
                                                                         required>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="username"
-                                                                        data-default-message="Username không được để trống."
+                                                                        th:data-default-message="#{validation.usernameRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
-                                                                        Username không được để trống.
+                                                                        <span th:text="#{validation.usernameRequired}">Username is required.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-5">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase">Loại
-                                                                        nhân viên</label>
+                                                                        class="form-label fw-bold small text-muted text-uppercase" th:text="#{admin.staff.type}">Staff Type</label>
                                                                     <div class="member-readonly-field"
                                                                         th:if="${account.accountId == 1}"
                                                                         role="textbox" aria-readonly="true">
@@ -299,7 +293,7 @@
                                                                         th:if="${account.accountId == 1}">
                                                                     <select class="form-select form-control"
                                                                         th:unless="${account.accountId == 1}"
-                                                                        name="staffType" data-label="Loại nhân viên"
+                                                                        name="staffType" th:data-label="#{admin.staff.type}"
                                                                         required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
                                                                         <option value="Admin"
@@ -311,25 +305,24 @@
                                                                     </select>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="staffType"
-                                                                        data-default-message="Vui lòng chọn loại nhân viên."
+                                                                        th:data-default-message="#{admin.staff.invalidType}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
-                                                                        Vui lòng chọn loại nhân viên.
+                                                                        <span th:text="#{admin.staff.invalidType}">Please select a staff type.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-6">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase">Trạng
-                                                                        thái <span class="text-danger">*</span></label>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{common.status}">Status</span> <span class="text-danger">*</span></label>
                                                                     <div class="member-readonly-field"
                                                                         th:if="${account.accountId == 1}"
                                                                         role="textbox" aria-readonly="true">
-                                                                        Hoạt động
+                                                                        <span th:text="#{account.status.active}">Active</span>
                                                                     </div>
                                                                     <input type="hidden" name="status" value="Active"
                                                                         th:if="${account.accountId == 1}">
                                                                     <select class="form-select form-control"
                                                                         th:unless="${account.accountId == 1}"
-                                                                        name="status" data-label="Trạng thái" required
+                                                                        name="status" th:data-label="#{common.status}" required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                         <option value="Active"
                                                                             th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}">
@@ -343,9 +336,9 @@
                                                                     </select>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="status"
-                                                                        data-default-message="Vui lòng chọn trạng thái."
+                                                                        th:data-default-message="#{validation.status}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
-                                                                        Vui lòng chọn trạng thái.
+                                                                        <span th:text="#{validation.status}">Please select a status.</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -353,9 +346,8 @@
 
                                                         <div class="modal-footer member-modal-footer">
                                                             <button type="button" class="btn btn-secondary"
-                                                                data-bs-dismiss="modal">Hủy bỏ</button>
-                                                            <button type="submit" class="btn btn-classic">Lưu thay
-                                                                đổi</button>
+                                                                data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                                                            <button type="submit" class="btn btn-classic" th:text="#{common.saveChanges}">Save Changes</button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -378,14 +370,13 @@
                                                         <div class="modal-header member-modal-header">
                                                             <h5 class="modal-title member-modal-title-accent">
                                                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                                                Xác nhận xóa tài khoản
+                                                                <span th:text="#{admin.accounts.deleteConfirmTitle}">Confirm Account Deletion</span>
                                                             </h5>
                                                         </div>
 
                                                         <div class="modal-body member-modal-body">
                                                             <p class="mb-3">
-                                                                Bạn có chắc chắn muốn xóa tài khoản này không?
-                                                                Thao tác này không thể hoàn tác.
+                                                                <span th:text="#{admin.accounts.deleteConfirmMessage}">Are you sure you want to delete this account? This action cannot be undone.</span>
                                                             </p>
                                                             <div class="p-3 bg-light rounded border">
                                                                 <div class="row g-3">
@@ -406,10 +397,10 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Họ tên:</div>
+                                                                        <div class="small text-muted" th:text="#{member.profile.fullName}">Full Name:</div>
                                                                         <div class="fw-bold"
-                                                                            th:text="${staff.user != null ? staff.user.fullName : 'Không có họ tên'}">
-                                                                            họ và tên
+                                                                            th:text="${staff.user != null ? staff.user.fullName : #messages.msg('librarian.members.noName')}">
+                                                                            full name
                                                                         </div>
                                                                     </div>
 
@@ -419,31 +410,29 @@
                                                                             <i
                                                                                 class="bi bi-envelope me-1 text-classic"></i>
                                                                             <span
-                                                                                th:text="${staff.user != null ? staff.user.email : 'Không có email'}">
+                                                                                th:text="${staff.user != null ? staff.user.email : #messages.msg('common.noEmail')}">
                                                                                 email
                                                                             </span>
                                                                         </div>
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Số điện thoại:
-                                                                        </div>
+                                                                        <div class="small text-muted" th:text="#{member.profile.phone}">Phone Number:</div>
                                                                         <div>
                                                                             <i
                                                                                 class="bi bi-telephone me-1 text-classic"></i>
                                                                             <span
-                                                                                th:text="${staff.user != null and staff.user.phone != null ? staff.user.phone : 'Không có SĐT'}">
+                                                                                th:text="${staff.user != null and staff.user.phone != null ? staff.user.phone : #messages.msg('common.noPhone')}">
                                                                                 phone
                                                                             </span>
                                                                         </div>
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Loại nhân viên
-                                                                        </div>
+                                                                        <div class="small text-muted" th:text="#{admin.staff.type}">Staff Type</div>
                                                                         <span
-                                                                            class="badge rounded-pill px-3 py-2 staff-type-badge"
-                                                                            th:text="${staff.staffType}"
+                                                                            class="staff-type-badge"
+                                                                            th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}"
                                                                             th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                                                             Librarian
                                                                         </span>
@@ -453,10 +442,9 @@
                                                         </div>
 
                                                         <div class="modal-footer member-modal-footer">
-                                                            <button type="button" class="btn btn-light"
-                                                                data-bs-dismiss="modal">Hủy</button>
-                                                            <button type="submit" class="btn btn-danger">Đồng ý
-                                                                xóa</button>
+                                                            <button type="button" class="btn btn-light member-update-cancel"
+                                                                data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                                                            <button type="submit" class="btn btn-danger" th:text="#{admin.accounts.confirmDelete}">Delete Account</button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -464,7 +452,7 @@
                                         </div>
                                     </div>
                                     <div th:if="${account == null}">
-                                        <span class="fst-italic text-muted small">Không có tài khoản</span>
+                                        <span class="fst-italic text-muted small" th:text="#{librarian.staff.noAccount}">No account</span>
                                     </div>
                                 </td>
                             </tr>
@@ -472,7 +460,7 @@
                             <tr th:if="${#lists.isEmpty(staffPage.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-person-badge fs-2 d-block mb-2"></i>
-                                    Không có nhân viên nào.
+                                    <span th:text="#{admin.staff.empty}">No staff found.</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -488,7 +476,7 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/staff(page=0, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}">Đầu</a>
+                                    th:href="@{/admin/staff(page=0, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}" th:text="#{common.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
@@ -528,7 +516,7 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}">Cuối</a>
+                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}" th:text="#{common.last}">Last</a>
                             </li>
                         </ul>
                     </nav>
@@ -536,7 +524,7 @@
             </div>
         </section>
 
-        <script>
+        <script th:inline="javascript">
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
                     const tooltip = new bootstrap.Tooltip(button, {
@@ -548,13 +536,21 @@
                 });
             });
         </script>
-        <script>
+        <script th:inline="javascript">
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".staff-update-form").forEach(function (form) {
                     const modal = form.closest(".modal");
                     const submitButton = form.querySelector("button[type='submit']");
                     const globalError = form.querySelector(".staff-update-global-error");
+                    let isSubmitting = false;
                     let lastFocusedField = null;
+
+                    submitButton.addEventListener("click", function (event) {
+                        if (isSubmitting) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        }
+                    });
 
                     form.querySelectorAll("input, select, textarea").forEach(function (field) {
                         field.addEventListener("focus", function () {
@@ -618,10 +614,6 @@
                             }
                         });
 
-                        if (lastFocusedField != null
-                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
-                            lastFocusedField.focus();
-                        }
                     }
 
                     function validateLocally() {
@@ -632,60 +624,98 @@
                         const phone = form.elements.phone.value.trim();
 
                         if (fullName === "") {
-                            errors.fullName = "Họ tên không được để trống.";
+                            errors.fullName = /*[[#{validation.fullNameRequired}]]*/ "Full name is required.";
                         }
                         if (fullName.length > 50) {
-                            errors.fullName = "Họ tên không được vượt quá 50 ký tự.";
+                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name cannot exceed 50 characters.";
                         } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
-                            errors.fullName = "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
+                            errors.fullName = /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
                         } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
-                            errors.fullName = "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.";
+                            errors.fullName = /*[[#{validation.fullNameWords}]]*/ "Full name may contain at most 8 words and 15 characters per word.";
                         } else if (/([\p{L}])\1\1/u.test(fullName)) {
-                            errors.fullName = "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.";
+                            errors.fullName = /*[[#{validation.fullNameTriple}]]*/ "Full name cannot repeat a character three times in a row.";
                         } else if (/^([\p{L}])\1+$/u.test(fullName)) {
-                            errors.fullName = "Họ tên không được chỉ gồm một ký tự lặp lại.";
+                            errors.fullName = /*[[#{validation.fullNameRepeated}]]*/ "Full name cannot consist of one repeated character.";
                         }
                         if (username === "") {
-                            errors.username = "Username không được để trống.";
+                            errors.username = /*[[#{validation.usernameRequired}]]*/ "Username is required.";
                         } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-                            errors.username = "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
+                            errors.username = /*[[#{validation.username}]]*/ "Username must contain 3-20 letters, numbers, or underscores.";
                         }
                         if (email === "") {
-                            errors.email = "Email không được để trống.";
+                            errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
                         } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
-                            errors.email = "Email không đúng định dạng.";
+                            errors.email = /*[[#{validation.email}]]*/ "Invalid email format.";
                         }
                         if (phone === "") {
-                            errors.phone = "Số điện thoại không được để trống.";
+                            errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
                         } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
-                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.";
+                            errors.phone = /*[[#{validation.phone}]]*/ "Phone number must contain exactly 10 digits, start with 0, and cannot be all zeros.";
                         }
                         if (form.elements.staffType.value === "") {
-                            errors.staffType = "Loại nhân viên không hợp lệ.";
+                            errors.staffType = /*[[#{admin.staff.invalidType}]]*/ "Invalid staff type.";
                         }
                         if (form.elements.status.value === "") {
-                            errors.status = "Trạng thái tài khoản không hợp lệ.";
+                            errors.status = /*[[#{validation.status}]]*/ "Invalid account status.";
                         }
                         return errors;
                     }
 
-                    form.addEventListener("submit", function (event) {
+                    form.addEventListener("submit", async function (event) {
                         event.preventDefault();
+                        if (isSubmitting) return;
+                        isSubmitting = true;
                         clearErrors();
 
                         const localErrors = validateLocally();
-                        if (Object.keys(localErrors).length > 0) {
-                            showErrors(localErrors);
-                            return;
-                        }
-
                         submitButton.disabled = true;
-                        form.submit();
+                        try {
+                            const params = new URLSearchParams();
+                            new FormData(form).forEach(function (value, key) {
+                                if (key !== "source" && !key.startsWith("_csrf")) {
+                                    params.append(key, value);
+                                }
+                            });
+
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
+                                headers: { "Accept": "application/json" }
+                            });
+                            if (!response.ok) {
+                                throw new Error("Validation request failed");
+                            }
+
+                            const serverErrors = await response.json();
+                            const errors = Object.assign({}, serverErrors, localErrors);
+                            if (Object.keys(errors).length > 0) {
+                                showErrors(errors);
+                                return;
+                            }
+
+                            form.submit();
+                        } catch (error) {
+                            showErrors(Object.assign({}, localErrors, {
+                                _global: "Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại."
+                            }));
+                        } finally {
+                            submitButton.disabled = false;
+                            isSubmitting = false;
+                        }
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
                         form.reset();
                         clearErrors();
+                    });
+                    modal.querySelector(".member-update-cancel")?.addEventListener("click", function () {
+                        form.reset();
+                        clearErrors();
+                    });
+                    modal.addEventListener("hide.bs.modal", function (event) {
+                        if (isSubmitting) event.preventDefault();
                     });
                 });
             });

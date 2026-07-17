@@ -27,7 +27,7 @@ public class Book {
     @ManyToMany
     @BatchSize(size = 20)
     @JoinTable(
-        name = "`BookAuthors`",
+        name = "BookAuthors",
         joinColumns = @JoinColumn(name = "book_id"),
         inverseJoinColumns = @JoinColumn(name = "author_id")
     )

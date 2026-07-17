@@ -17,9 +17,9 @@
         const maximum = Number(input.dataset.maxAmount || 0);
 
         if (digits !== "" && minimum > 0 && amount < minimum) {
-            input.setCustomValidity("Số tiền tối thiểu là " + formatAmount(minimum) + " VNĐ.");
+            input.setCustomValidity((input.dataset.minMessage || "Minimum amount: {0} VND.").replace("{0}", formatAmount(minimum)));
         } else if (maximum > 0 && amount > maximum) {
-            input.setCustomValidity("Số tiền tối đa là " + formatAmount(maximum) + " VNĐ.");
+            input.setCustomValidity((input.dataset.maxMessage || "Maximum amount: {0} VND.").replace("{0}", formatAmount(maximum)));
         } else {
             input.setCustomValidity("");
         }

@@ -24,9 +24,27 @@
             </div>
             <div>
                 <span th:if="${borrow.status == 'Active'}" class="status-badge status-active">Đang mượn</span>
+                <span th:if="${borrow.status == 'Waiting_Pickup'}" class="status-badge" style="background:#e8f4fd;color:#1565c0;border:1px solid #90caf9;font-size:0.85rem;padding:6px 12px;"><i class="bi bi-box-arrow-in-down me-1"></i>Chờ nhận sách vật lý</span>
                 <span th:if="${borrow.status == 'Returned'}" class="status-badge status-returned">Đã hoàn thành</span>
                 <span th:if="${borrow.status == 'Overdue'}" class="status-badge status-overdue">Quá hạn</span>
                 <span th:if="${borrow.status == 'Pending'}" class="status-badge status-pending">Chờ phê duyệt</span>
+            </div>
+        </div>
+
+        <!-- Nút xác nhận nhận bản vật lý (chỉ hiển thị khi ở trạng thái Waiting_Pickup) -->
+        <div th:if="${borrow.status == 'Waiting_Pickup'}" class="px-4 pt-3 pb-0">
+            <div class="alert d-flex align-items-center gap-3 mb-0" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;">
+                <i class="bi bi-info-circle-fill fs-5" style="color:#1565c0;"></i>
+                <div class="flex-grow-1">
+                    <strong style="color:#1565c0;">Độc giả đang chờ nhận sách vật lý</strong>
+                    <div class="small text-muted mt-1">Khi độc giả đến quầy và nhận sách, hãy bấm nút xác nhận để bắt đầu tính thời gian mượn.</div>
+                </div>
+                <form th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}" method="post"
+                      onsubmit="return confirm('Xác nhận độc giả đã nhận sách vật lý? Thời gian mượn sẽ bắt đầu tính từ bây giờ.')">
+                    <button type="submit" class="btn btn-sm fw-semibold" style="background:#1565c0;color:#fff;border:none;white-space:nowrap;">
+                        <i class="bi bi-box-arrow-in-down me-1"></i>Xác nhận nhận sách vật lý
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -102,6 +120,7 @@
                                     <td th:text="${detail.renewCount} + ' lần'">0 lần</td>
                                     <td>
                                         <span th:if="${detail.status == 'Borrowed'}" class="status-badge status-borrowed">Đang mượn</span>
+                                        <span th:if="${detail.status == 'Waiting_Pickup'}" class="status-badge" style="background:#e8f4fd;color:#1565c0;border:1px solid #90caf9;"><i class="bi bi-clock-history me-1"></i>Chờ nhận vật lý</span>
                                         <span th:if="${detail.status == 'Returned'}" class="status-badge status-returned">Đã trả</span>
                                         <span th:if="${detail.status == 'Overdue'}" class="status-badge status-overdue">Quá hạn</span>
                                         <span th:if="${detail.status == 'Return_Pending'}" class="status-badge status-return-pending">Chờ duyệt trả</span>

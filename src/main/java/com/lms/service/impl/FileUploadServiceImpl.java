@@ -4,6 +4,8 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.lms.exception.FileStorageException;
 import com.lms.service.FileUploadService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +14,9 @@ import java.util.Map;
 
 @Service
 public class FileUploadServiceImpl implements FileUploadService {
+
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final Cloudinary cloudinary;
 
@@ -34,7 +39,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             return uploadResult.get("secure_url").toString();
 
         } catch (IOException ex) {
-            throw new FileStorageException("Không thể tải ảnh lên Cloudinary. Vui lòng thử lại!", ex);
+            throw new FileStorageException(messages.get("backend.file.uploadFailed"), ex);
         }
     }
 }

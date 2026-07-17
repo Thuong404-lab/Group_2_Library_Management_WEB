@@ -12,6 +12,7 @@ import com.lms.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,8 @@ import java.time.LocalDateTime;
 
 @Service
 public class PayOsPaymentAuditService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private final PayOsPaymentAuditLogRepository auditRepository;
     private final PayOsReconciliationIssueRepository issueRepository;
     private final PayOsPaymentRepository paymentRepository;
@@ -78,7 +81,7 @@ public class PayOsPaymentAuditService {
         issue.setResolvedAt(LocalDateTime.now());
         issueRepository.save(issue);
         saveAudit(payment, "RECONCILIATION_RESOLVED", source, payment.getStatus(), payment.getStatus(), true,
-                "Đối soát lại thành công; vấn đề đã được đóng.");
+                messages.get("backend.payment.audit.issueResolved"));
     }
 
     private void saveAudit(PayOsPayment payment, String eventType, String source,
@@ -103,7 +106,7 @@ public class PayOsPaymentAuditService {
     }
 
     private String safeMessage(String message) {
-        if (message == null || message.isBlank()) return "Không có thông tin chi tiết.";
+        if (message == null || message.isBlank()) return messages.get("backend.common.noDetails");
         return message.length() <= 4000 ? message : message.substring(0, 4000);
     }
 }
