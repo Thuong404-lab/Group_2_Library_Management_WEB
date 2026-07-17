@@ -39,6 +39,9 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
     // 1. Phân trang lọc theo trạng thái (Status)
     Page<Borrow> findByStatus(String status, Pageable pageable);
 
+    // 1b. Lấy toàn bộ theo trạng thái (không phân trang) - dùng cho scheduled job
+    List<Borrow> findAllByStatus(String status);
+
     // 2. Phân trang lọc theo từ khóa tìm kiếm (Keyword: fullName, email, phone hoặc borrowId)
     @Query("SELECT b FROM Borrow b WHERE " +
             "LOWER(b.member.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
