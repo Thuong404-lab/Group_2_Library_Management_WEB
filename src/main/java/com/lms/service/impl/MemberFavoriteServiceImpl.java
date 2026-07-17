@@ -9,8 +9,6 @@ import com.lms.repository.*;
 import com.lms.service.AuditLogService;
 import com.lms.service.FinancialService;
 import com.lms.service.MemberFavoriteService;
-import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,9 +20,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class MemberFavoriteServiceImpl implements MemberFavoriteService {
-
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final MemberAccountRepository memberAccountRepository;
     private final BookRepository bookRepository;
@@ -49,10 +44,10 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     //lấy ra thông tin cá nhân của một Độc giả (Member) dựa trên tên đăng nhập (username) của người đó.
     private Member getMemberByUsername(String username) {
         MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username)));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
         Member member = account.getMember();
         if (member == null) {
-            throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
+            throw new ResourceNotFoundException("Không tìm thấy độc giả");
         }
         return member;
     }
@@ -63,11 +58,11 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         Member member = getMemberByUsername(username);
 
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách"));
 
         FavoritesId id = new FavoritesId(member.getMemberId(), book.getBookId());
         if (favoritesRepository.existsById(id)) {
-            throw new ConflictException(messages.get("backend.favorite.alreadyAdded"));
+            throw new ConflictException("Sách này đã có trong danh sách yêu thích.");
         }
 
         Favorites favorites = new Favorites();
@@ -85,7 +80,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
         FavoritesId id = new FavoritesId(member.getMemberId(), bookId);
         Favorites favorites = favoritesRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.favorite.notFound")));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách yêu thích."));
 
         favoritesRepository.delete(favorites);
     }
@@ -121,11 +116,11 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         Member member = getMemberByUsername(username);
 
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
+                .orElseThrow(() -> new ResourceNotFoundException("Sách không tồn tại"));
 
         if (reservationRepository.existsActiveReservationForMemberAndBook(
                 member.getMemberId(), book.getBookId(), List.of("PENDING", "DEPOSIT_PAID", "READY"))) {
-            throw new ConflictException(messages.get("backend.favorite.activeReservationExists"));
+            throw new ConflictException("Bạn đã có yêu cầu đặt trước đang hoạt động cho sách này.");
         }
 
         Reservation reservation = new Reservation();
@@ -138,7 +133,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         financialService.payReservationDeposit(member.getMemberId(), reservation.getReservationId());
         auditLogService.log(
                 ActionType.RESERVE_BOOK,
-                messages.get("backend.borrow.audit.reservationRequested", username, book.getBookId(), book.getTitle()));
+                "Member " + username + " dat giu cho sach #" + book.getBookId() + " - " + book.getTitle() + ".");
 
         return reservation;
     }

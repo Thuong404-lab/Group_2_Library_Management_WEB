@@ -6,8 +6,6 @@ import com.lms.enums.NotificationType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.*;
 import com.lms.service.MemberNotificationService;
-import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,9 +16,6 @@ import java.util.List;
 
 @Service
 public class MemberNotificationServiceImpl implements MemberNotificationService {
-
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final MemberAccountRepository memberAccountRepository;
     private final MemberNotificationRepository memberNotificationRepository;
@@ -46,11 +41,11 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
 
     private Member getMemberByUsername(String username) {
         MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username)));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
 
         Member member = account.getMember();
         if (member == null) {
-            throw new ResourceNotFoundException(messages.get("backend.review.memberAccountNotFound", username));
+            throw new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username);
         }
         return member;
     }
@@ -109,7 +104,7 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         Member member = getMemberByUsername(username);
         MemberNotificationId id = new MemberNotificationId(member.getMemberId(), notificationId);
         MemberNotification memberNotification = memberNotificationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.notification.notFound")));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông báo."));
         if (!Boolean.TRUE.equals(memberNotification.getIsRead())) {
             memberNotification.setIsRead(true);
             memberNotification.setReadDate(LocalDateTime.now());

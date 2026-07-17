@@ -9,8 +9,6 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.AuthService;
 import com.lms.service.EmailService;
-import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,9 +25,6 @@ import java.util.UUID;
  */
 @Service
 public class AuthServiceImpl implements AuthService {
-
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
     private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
@@ -79,35 +74,36 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
         if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
-            throw new AuthException(messages.get("validation.username"));
+            throw new AuthException(
+                    "Tên đăng nhập không hợp lệ (3-20 ký tự, không chứa khoảng trắng và ký tự đặc biệt)!");
         }
 
         if (request.getPassword() == null || request.getPassword().length() < 6) {
-            throw new AuthException(messages.get("validation.passwordMin"));
+            throw new AuthException("Mật khẩu phải có ít nhất 6 ký tự!");
         }
 
         validateFullName(request.getFullName());
 
         if (request.getEmail() == null
                 || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new AuthException(messages.get("validation.email"));
+            throw new AuthException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
 
         if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)[0-9]{9}$")) {
-            throw new AuthException(messages.get("backend.profile.phoneFormat"));
+            throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
         }
 
 
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw new AuthException(messages.get("backend.account.phoneUsed"));
+            throw new AuthException("Số điện thoại đã được sử dụng bởi tài khoản khác!");
         }
 
         if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new AuthException(messages.get("backend.account.usernameExists"));
+            throw new AuthException("Tên đăng nhập đã tồn tại!");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new AuthException(messages.get("backend.account.emailUsed"));
+            throw new AuthException("Email đã được sử dụng!");
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -123,22 +119,22 @@ public class AuthServiceImpl implements AuthService {
     private void validateFullName(String fullNameValue) throws AuthException {
         String fullName = fullNameValue == null ? "" : fullNameValue.trim();
         if (fullName.isEmpty()) {
-            throw new AuthException(messages.get("validation.fullNameRequired"));
+            throw new AuthException("Họ và tên không được để trống!");
         }
         if (fullName.length() > 50) {
-            throw new AuthException(messages.get("validation.fullNameMax"));
+            throw new AuthException("Họ tên không được vượt quá 50 ký tự.");
         }
         if (!fullName.matches(FULL_NAME_PATTERN)) {
-            throw new AuthException(messages.get("validation.fullNameLetters"));
+            throw new AuthException("Họ tên chỉ được chứa chữ cái và khoảng trắng.");
         }
         if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
-            throw new AuthException(messages.get("validation.fullNameWords"));
+            throw new AuthException("Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
         }
         if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
-            throw new AuthException(messages.get("validation.fullNameTriple"));
+            throw new AuthException("Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
         }
         if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
-            throw new AuthException(messages.get("validation.fullNameRepeated"));
+            throw new AuthException("Họ tên không được chỉ gồm một ký tự lặp lại.");
         }
     }
 
@@ -157,12 +153,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logLoginAction(Integer userId, String ipAddress, String userAgent) {
-        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, messages.get("backend.auth.audit.login"));
+        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, "Đăng nhập thành công.");
     }
 
     @Override
     public void logLogoutAction(Integer userId, String ipAddress, String userAgent) {
-        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, messages.get("backend.auth.audit.logout"));
+        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, "Đăng xuất thành công.");
     }
 
     @Override
@@ -203,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
     public void requestPasswordReset(String email) {
         String normalizedEmail = email == null ? "" : email.trim();
         if (normalizedEmail.isBlank()) {
-            throw new ValidationException(messages.get("validation.emailRequired"));
+            throw new ValidationException("Email không được để trống.");
         }
         Optional<User> userOptional = userRepository.findByEmail(normalizedEmail);
 
@@ -224,8 +220,15 @@ public class AuthServiceImpl implements AuthService {
         passwordResetTokenRepository.save(resetToken);
 
         String resetLink = applicationBaseUrl + "/reset-password?token=" + token;
-        String subject = messages.get("backend.auth.resetEmail.subject");
-        String emailContent = messages.get("backend.auth.resetEmail.content", user.getFullName(), resetLink);
+        String subject = "Yêu cầu đặt lại mật khẩu của bạn";
+
+        String emailContent = "Xin chào " + user.getFullName() + ",\n\n"
+                + "Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấp vào liên kết sau để đặt lại mật khẩu của bạn:\n"
+                + resetLink + "\n\n"
+                + "Liên kết này sẽ hết hạn sau 24 giờ.\n"
+                + "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n"
+                + "Trân trọng,\n"
+                + "Đội ngũ hỗ trợ Thư viện";
 
         emailService.sendEmail(user.getEmail(), subject, emailContent);
 
@@ -236,14 +239,14 @@ public class AuthServiceImpl implements AuthService {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new ValidationException(messages.get("backend.auth.resetTokenInvalid"));
+            throw new ValidationException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new ValidationException(messages.get("backend.auth.resetTokenExpired"));
+            throw new ValidationException("Token đặt lại mật khẩu đã hết hạn.");
         }
     }
 
@@ -253,14 +256,14 @@ public class AuthServiceImpl implements AuthService {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new ValidationException(messages.get("backend.auth.resetTokenInvalid"));
+            throw new ValidationException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new ValidationException(messages.get("backend.auth.resetTokenExpired"));
+            throw new ValidationException("Token đặt lại mật khẩu đã hết hạn.");
         }
 
         User user = resetToken.getUser();
@@ -277,7 +280,7 @@ public class AuthServiceImpl implements AuthService {
                 staffAccount.setPasswordHash(passwordEncoder.encode(newPassword));
                 staffAccountRepository.save(staffAccount);
             } else {
-                throw new DataProcessingException(messages.get("backend.auth.linkedAccountNotFound"));
+                throw new DataProcessingException("Không tìm thấy tài khoản liên kết với người dùng.");
             }
         }
 

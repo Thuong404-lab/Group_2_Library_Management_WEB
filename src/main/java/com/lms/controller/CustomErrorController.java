@@ -7,14 +7,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class CustomErrorController extends LocalizedControllerSupport {
+public class CustomErrorController {
 
     @GetMapping("/403")
     public String accessDenied(HttpServletResponse response, Model model) {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         model.addAttribute("status", HttpStatus.FORBIDDEN.value());
-        model.addAttribute("error", message("error.forbidden.title"));
-        model.addAttribute("errorMessage", message("backend.error.accessDeniedResource"));
+        model.addAttribute("error", "Không có quyền truy cập");
+        model.addAttribute("errorMessage", "Bạn không có quyền truy cập vào tài nguyên này.");
         return "error";
     }
 }

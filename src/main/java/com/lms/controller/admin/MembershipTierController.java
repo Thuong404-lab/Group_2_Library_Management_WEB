@@ -1,6 +1,5 @@
 package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
-import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.MembershipTier;
 import com.lms.service.MembershipService;
@@ -15,7 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 @RequestMapping("/admin/tiers")
-public class MembershipTierController extends LocalizedControllerSupport {
+public class MembershipTierController {
 
     private final MembershipService membershipService;
 
@@ -36,11 +35,11 @@ public class MembershipTierController extends LocalizedControllerSupport {
     public String saveMembershipTier(@ModelAttribute MembershipTier tier, RedirectAttributes redirectAttributes) {
         try {
             membershipService.saveTier(tier);
-            redirectAttributes.addFlashAttribute("success", message("backend.tier.saved"));
+            redirectAttributes.addFlashAttribute("success", "Lưu hạng thành viên thành công!");
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("error", message("backend.tier.saveSystemError"));
+            redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi hệ thống khi lưu hạng thành viên. Vui lòng thử lại sau!");
         }
         return "redirect:/admin/tiers";
     }
@@ -50,11 +49,11 @@ public class MembershipTierController extends LocalizedControllerSupport {
     public String deleteMembershipTier(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             membershipService.deleteTier(id);
-            redirectAttributes.addFlashAttribute("success", message("backend.tier.deleted"));
+            redirectAttributes.addFlashAttribute("success", "Đã xóa hạng thành viên thành công!");
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("error", message("backend.tier.deleteSystemError"));
+            redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi hệ thống khi xóa hạng thành viên. Vui lòng thử lại sau!");
         }
         return "redirect:/admin/tiers";
     }

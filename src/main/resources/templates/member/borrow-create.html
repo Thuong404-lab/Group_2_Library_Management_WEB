@@ -1,76 +1,109 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Xac nhan dang ky muon sach</title>
+    <title>Xác nhận đăng ký mượn sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/member/borrow-create.css}" />
-  </head>
+</head>
 <body>
-<div layout:fragment="content" class="container py-5 member-borrow-create-div-max-width-01">
-    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Loi</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+<div layout:fragment="content" class="member-management-page py-5">
+    <div class="container" style="max-width: 650px;">
 
-    <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-            <span th:text="${successMessage}">Success</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-    <div class="card card-classic shadow-sm">
-        <div class="card-header card-header-classic py-3 text-center">
-            <h5 class="mb-0 fw-bold font-playfair">
-                    <i class="bi bi-file-earmark-text me-2"></i><span th:text="#{member.borrowCreate.title}">Online Book Loan Request</span>
-            </h5>
+        <!-- Alerts thông báo lỗi/thành công đồng bộ hệ thống -->
+        <div class="alert alert-danger shadow-sm border-0 mb-4" th:if="${errorMessage != null}">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:text="${errorMessage}">Thông báo lỗi</span>
         </div>
-        <div class="card-body p-4 u-background-color-fdfbf7-71083b05">
-            <form th:action="@{/member/borrow/request/submit}" method="post">
-                <input type="hidden" name="bookId" th:value="${selectedBookId}" />
 
-                <div class="mb-4 p-3 rounded-2 text-muted member-borrow-create-div-background-border-03"
-                    >
-                    <small class="d-block fw-bold text-uppercase mb-1 member-borrow-create-small-color-letter-spacing-04"
-                             th:text="#{member.borrowCreate.account}">Requesting Account:</small>
-                    <span class="text-dark fw-semibold fs-5 u-font-family-playfair-display-serif-53670465"
-
-                          th:text="${currentMemberName}">Username</span>
-                </div>
-
-                <div class="mb-4" th:if="${selectedBook != null}">
-                    <label class="form-label fw-bold mb-2 u-color-4a3b32-1ba01220" th:text="#{member.borrowCreate.book}">Book</label>
-                    <div class="p-3 rounded-2 bg-white border">
-                            <div class="fw-bold" th:text="${selectedBook.title}">Book Title</div>
-                            <small class="text-muted" th:text="${selectedBook.isbn != null ? 'ISBN: ' + selectedBook.isbn : #messages.msg('book.isbn.missing')}">ISBN</small>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label fw-bold mb-2 u-color-4a3b32-1ba01220" th:text="#{member.borrowCreate.duration}">Preferred Loan Period</label>
-                    <select class="form-control member-borrow-create-select-border-radius-border-height-07" name="numberOfDays"
-                           >
-                        <option value="7" th:text="#{member.borrowCreate.shortTerm}">Short-term (7 days)</option>
-                        <option value="14" selected th:text="#{member.borrowCreate.standard}">Standard (14 days)</option>
-                        <option value="30" th:text="#{member.borrowCreate.longTerm}">Long-term (30 days)</option>
-                    </select>
-                    <div class="form-text text-muted mt-2 fst-italic u-font-size-0-85rem-4908cb0a">
-                        <i class="bi bi-info-circle me-1"></i>
-                    <span th:text="#{member.borrowCreate.notice}">After submission, the request will await librarian approval.</span>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end border-top pt-4 mt-2">
-
-                    <a th:href="@{/member/dashboard}" class="btn btn-classic-outline" th:text="#{common.cancel}">Cancel</a>
-                    <button type="submit" class="btn btn-classic-primary fw-bold u-margin-right-0-important-5a8785f5">
-                        <span th:text="#{member.borrowCreate.submit}">Submit for Approval</span>
-                    </button>
-                </div>
-            </form>
+        <div class="alert alert-success shadow-sm border-0 mb-4" th:if="${successMessage != null}">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${successMessage}">Thông báo thành công</span>
         </div>
+
+        <!-- Thẻ Card nội dung chính khối Bạn đọc -->
+        <div class="card member-data-card shadow-sm border-0">
+            <!-- Header của Form -->
+            <div class="card-header member-page-header border-0 text-center py-4" style="background-color: var(--classic-color, #8b5a2b); border-radius: 8px 8px 0 0;">
+                <h2 class="member-page-title text-white m-0 d-inline-flex align-items-center justify-content-center gap-2 fs-4">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Phiếu Đăng Ký Mượn Sách Trực Tuyến</span>
+                </h2>
+            </div>
+
+            <div class="card-body member-data-card-body p-4" style="background-color: #fdfbf7;">
+                <form th:action="@{/member/borrow/request/submit}" method="post">
+                    <!-- Lưu giữ ID của cuốn sách được chọn -->
+                    <input type="hidden" name="bookId" th:value="${selectedBookId}" />
+
+                    <!-- Khối thông tin tài khoản đăng ký -->
+                    <div class="mb-4 p-3 rounded-3" style="background-color: #f4eee1; border: 1px solid rgba(139, 90, 43, 0.15);">
+                        <small class="d-block text-uppercase fw-bold text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                            Tài khoản đăng ký
+                        </small>
+                        <span class="fw-bold text-dark fs-5" style="font-family: 'Playfair Display', serif;" th:text="${currentMemberName}">
+                            Username
+                        </span>
+                    </div>
+
+                    <!-- Khối thông tin cuốn sách muốn mượn -->
+                    <div class="mb-4" th:if="${selectedBook != null}">
+                        <label class="form-label fw-bold mb-2 text-dark" style="color: #4a3b32 !important;">Sách mượn</label>
+                        <div class="p-3 rounded-3 bg-white border shadow-sm">
+                            <div class="fw-bold text-dark fs-6" th:text="${selectedBook.title}">Tên tác phẩm</div>
+                            <div class="small text-muted mt-1 font-monospace">
+                                <i class="bi bi-barcode me-1"></i>
+                                <span th:text="${selectedBook.isbn != null ? 'ISBN: ' + selectedBook.isbn : 'Chưa có thông tin ISBN'}">ISBN</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khối cấu hình số ngày mong muốn mượn -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2" style="color: #4a3b32 !important;">Số ngày mượn mong muốn</label>
+
+                        <input type="number"
+                               class="form-control"
+                               style="border-radius: 6px; border: 1px solid #ced4da; padding: 0.6rem 0.75rem;"
+                               name="numberOfDays"
+                               min="1"
+                               th:max="${maxBorrowDays}"
+                               th:value="${maxBorrowDays >= 14 ? 14 : maxBorrowDays}"
+                               required
+                               placeholder="Nhập số ngày muốn mượn..."/>
+
+                        <div class="form-text text-muted mt-2 fst-italic" style="font-size: 0.85rem;">
+                            <i class="bi bi-info-circle me-1 text-primary"></i>
+                            <span>Quy định của thư viện cho phép mượn tối đa: </span>
+                            <strong class="text-danger fw-bold" th:text="${maxBorrowDays} + ' ngày.'">14 ngày.</strong>
+                        </div>
+                    </div>
+
+                    <!-- Nút hành động đồng bộ khối điều hướng chính -->
+                    <div class="d-flex justify-content-end align-items-center gap-2 border-top pt-4 mt-2">
+                        <!-- Nút Hủy bỏ (Dạng outline màu nâu thương hiệu) -->
+                        <a th:href="@{/member/dashboard}"
+                           class="btn btn-sm btn-outline-secondary px-4 py-2"
+                           style="border-color: #8b5a2b; color: #8b5a2b; font-weight: 500; border-radius: 6px; transition: all 0.2s;"
+                           onmouseover="this.style.backgroundColor='#8b5a2b'; this.style.color='white'"
+                           onmouseout="this.style.backgroundColor='transparent'; this.style.color='#8b5a2b'">
+                            Hủy bỏ
+                        </a>
+
+                        <!-- Nút Xác nhận gửi (Dạng Solid màu nâu thương hiệu) -->
+                        <button type="submit"
+                                class="btn btn-sm text-white px-4 py-2"
+                                style="background-color: #8b5a2b; border: 1px solid #8b5a2b; font-weight: 600; border-radius: 6px; transition: all 0.2s;"
+                                onmouseover="this.style.backgroundColor='#704620'; this.style.borderColor='#704620'"
+                                onmouseout="this.style.backgroundColor='#8b5a2b'; this.style.borderColor='#8b5a2b'">
+                            Gửi yêu cầu phê duyệt
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 </body>

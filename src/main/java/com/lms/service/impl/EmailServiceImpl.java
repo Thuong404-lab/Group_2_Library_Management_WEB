@@ -2,7 +2,6 @@ package com.lms.service.impl;
 
 import com.lms.exception.ExternalServiceException;
 import com.lms.service.EmailService;
-import com.lms.service.LocalizedMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.MailException;
@@ -15,9 +14,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EmailServiceImpl implements EmailService {
-
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final JavaMailSender mailSender;
 
@@ -39,7 +35,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             mailSender.send(message);
         } catch (MailException ex) {
-            throw new ExternalServiceException(messages.get("backend.email.sendFailed"), ex);
+            throw new ExternalServiceException("Không thể gửi email. Vui lòng thử lại sau.", ex);
         }
     }
 }

@@ -2,7 +2,6 @@ package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.UnauthorizedException;
-import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.response.BorrowFeeViewData;
 import com.lms.dto.response.MemberTransactionHistoryRow;
@@ -49,7 +48,7 @@ import java.util.Comparator;
  */
 @Controller
 @RequestMapping("/member/financial")
-public class FinancialController extends LocalizedControllerSupport {
+public class FinancialController {
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
     private static final String TOP_UP_NOTIFICATION_KEYWORD_VI = "nạp tiền";
@@ -100,7 +99,7 @@ public class FinancialController extends LocalizedControllerSupport {
 
         try {
             financialService.payOverdueFine(member.getMemberId(), fineId);
-            redirectAttributes.addFlashAttribute("success", message("backend.financial.finePaid"));
+            redirectAttributes.addFlashAttribute("success", "Đã thanh toán phí phạt thành công.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -133,7 +132,7 @@ public class FinancialController extends LocalizedControllerSupport {
 
         try {
             financialService.payBorrowingFee(member.getMemberId(), borrowId);
-            redirectAttributes.addFlashAttribute("message", message("backend.financial.borrowFeePaid"));
+            redirectAttributes.addFlashAttribute("message", "Đã thanh toán phí mượn thành công.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -149,7 +148,7 @@ public class FinancialController extends LocalizedControllerSupport {
 
         try {
             financialService.payReservationDeposit(member.getMemberId(), reservationId);
-            redirectAttributes.addFlashAttribute("successMessage", message("backend.financial.depositPaid"));
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thanh toán tiền cọc đặt trước thành công.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -167,7 +166,7 @@ public class FinancialController extends LocalizedControllerSupport {
             financialService.requestReservationDepositRefund(member.getMemberId(), reservationId);
             redirectAttributes.addFlashAttribute(
                     "successMessage",
-                    message("backend.financial.refundRequested"));
+                    "Đã gửi yêu cầu hoàn tiền. Vui lòng chờ thủ thư duyệt.");
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -222,19 +221,19 @@ public class FinancialController extends LocalizedControllerSupport {
         return new MemberTransactionHistoryRow(
                 "#TXN-" + transaction.getTransactionId(),
                 transaction.getTransactionDate(),
-                transactionTypeMessageKey(transaction.getTransactionType()),
+                transactionTypeLabel(transaction.getTransactionType()),
                 transaction.getAmount(),
-                transactionStatusMessageKey(transaction.getStatus()),
+                completed ? "Hoàn tất" : transaction.getStatus(),
                 completed);
     }
 
     private MemberTransactionHistoryRow toHistoryRow(PayOsPayment payment) {
         String typeLabel = switch (payment.getPurpose()) {
-            case "TOP_UP" -> "transaction.type.kqpayTopUp";
-            case "BORROW_FEE" -> "transaction.type.kqpayBorrowFee";
-            case "FINE" -> "transaction.type.kqpayFine";
-            case "FINE_BATCH" -> "transaction.type.kqpayFineBatch";
-            default -> "transaction.type.kqpay";
+            case "TOP_UP" -> "Nạp tiền qua KQPay";
+            case "BORROW_FEE" -> "Thanh toán phí mượn qua KQPay";
+            case "FINE" -> "Thanh toán phí phạt qua KQPay";
+            case "FINE_BATCH" -> "Thanh toán tổng phí phạt qua KQPay";
+            default -> "Thanh toán qua KQPay";
         };
         BigDecimal amount = payment.getAmount();
         if (!"TOP_UP".equalsIgnoreCase(payment.getPurpose()) && amount != null) {
@@ -245,34 +244,22 @@ public class FinancialController extends LocalizedControllerSupport {
                 payment.getPaidAt() != null ? payment.getPaidAt() : payment.getCreatedAt(),
                 typeLabel,
                 amount,
-                "transaction.status.completed",
+                "Hoàn tất",
                 true);
     }
 
-    private String transactionTypeMessageKey(String transactionType) {
+    private String transactionTypeLabel(String transactionType) {
         if (transactionType == null) {
-            return "transaction.type.other";
+            return "Khác";
         }
         return switch (transactionType.toUpperCase()) {
-            case "TOP_UP" -> "transaction.type.topUp";
-            case "BORROW_FEE" -> "transaction.type.borrowFee";
-            case "DEPOSIT" -> "transaction.type.deposit";
-            case "FINE" -> "transaction.type.fine";
-            case "DAMAGE_FEE" -> "transaction.type.damageFee";
-            case "REFUND" -> "transaction.type.refund";
-            default -> "transaction.type.other";
-        };
-    }
-
-    private String transactionStatusMessageKey(String status) {
-        if (status == null) {
-            return "transaction.status.pending";
-        }
-        return switch (status.trim().toUpperCase()) {
-            case "COMPLETED", "PAID" -> "transaction.status.completed";
-            case "FAILED" -> "transaction.status.failed";
-            case "CANCELED", "CANCELLED" -> "transaction.status.canceled";
-            default -> "transaction.status.pending";
+            case "TOP_UP" -> "Nạp tiền vào ví";
+            case "BORROW_FEE" -> "Phí mượn sách";
+            case "DEPOSIT" -> "Tiền cọc đặt trước";
+            case "FINE" -> "Phí phạt";
+            case "DAMAGE_FEE" -> "Phí hư hỏng";
+            case "REFUND" -> "Hoàn tiền";
+            default -> transactionType;
         };
     }
 
@@ -345,7 +332,7 @@ public class FinancialController extends LocalizedControllerSupport {
             memberNotificationRepository.save(memberNotification);
         });
 
-        redirectAttributes.addFlashAttribute("success", message("backend.notification.markedRead"));
+        redirectAttributes.addFlashAttribute("success", "Đã đánh dấu thông báo là đã đọc.");
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
     }
 
@@ -368,7 +355,7 @@ public class FinancialController extends LocalizedControllerSupport {
             }
         }
 
-        redirectAttributes.addFlashAttribute("success", message("backend.notification.topupAllRead"));
+        redirectAttributes.addFlashAttribute("success", "Đã đánh dấu tất cả thông báo nạp tiền là đã đọc.");
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
     }
 
@@ -490,13 +477,13 @@ public class FinancialController extends LocalizedControllerSupport {
 
     private Member getCurrentMember(Principal principal) {
         if (principal == null) {
-            throw new UnauthorizedException(message("backend.financial.loginRequired"));
+            throw new UnauthorizedException("Bạn cần đăng nhập để xem thông tin tài chính");
         }
 
         String usernameOrEmail = principal.getName();
         return memberRepository.findByAccountUsername(usernameOrEmail)
                 .or(() -> memberRepository.findByUserEmail(usernameOrEmail))
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
-                .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin thành viên hiện tại"));
     }
 }

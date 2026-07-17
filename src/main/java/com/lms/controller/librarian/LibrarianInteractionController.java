@@ -1,5 +1,4 @@
 package com.lms.controller.librarian;
-import com.lms.controller.LocalizedControllerSupport;
 import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
@@ -27,7 +26,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/librarian/interaction")
-public class LibrarianInteractionController extends LocalizedControllerSupport {
+public class LibrarianInteractionController {
 
     private static final int PAGE_SIZE = 10;
 
@@ -60,20 +59,20 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
         String responseError = null;
         if (response.isEmpty()) {
-            responseError = message("backend.librarian.reviewReply.required");
+            responseError = "Nội dung phản hồi không được để trống.";
         } else if (response.length() < 5) {
-            responseError = message("backend.librarian.reviewReply.minimum");
+            responseError = "Nội dung phản hồi phải có ít nhất 5 ký tự.";
         } else if (response.length() > 1000) {
-            responseError = message("backend.librarian.reviewReply.maximum");
+            responseError = "Nội dung phản hồi không được vượt quá 1000 ký tự.";
         } else if (response.codePoints().noneMatch(Character::isLetter)) {
-            responseError = message("backend.librarian.reviewReply.letters");
+            responseError = "Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt.";
         }
 
         if (responseError != null) {
             flash.addFlashAttribute("reviewReplyErrorId", feedbackId);
             flash.addFlashAttribute("reviewReplyErrors", Map.of("response", responseError));
             flash.addFlashAttribute("reviewReplyValues", Map.of("response", response));
-            return "redirect:/librarian/interaction/reviews";
+            return "redirect:/librarian/dashboard?section=reviews";
         }
 
         request.setResponse(response);
@@ -81,13 +80,13 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         try {
             boolean isEditing = librarianInteractionService.replyReview(feedbackId, request);
             flash.addFlashAttribute("success", isEditing
-                    ? message("backend.librarian.reviewReply.updated")
-                    : message("backend.librarian.reviewReply.created"));
+                    ? "Đã chỉnh sửa phản hồi thành công."
+                    : "Đã phản hồi đánh giá thành công.");
         } catch (ApplicationException e) {
-            flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
+            flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
-        return "redirect:/librarian/interaction/reviews";
+        return "redirect:/librarian/dashboard?section=reviews";
     }
 
     @PostMapping("/reviews/{id}/delete")
@@ -97,12 +96,12 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
         try {
             librarianInteractionService.deleteReview(feedbackId);
-            flash.addFlashAttribute("success", message("backend.librarian.review.deleted"));
+            flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
         } catch (ApplicationException e) {
-            flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
+            flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
-        return "redirect:/librarian/interaction/reviews";
+        return "redirect:/librarian/dashboard?section=reviews";
     }
 
     @GetMapping("/notifications/new")
@@ -125,18 +124,18 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         if (!fieldErrors.isEmpty()) {
             flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("notificationFieldErrors", fieldErrors);
-            return "redirect:/librarian/interaction/notifications/new";
+            return "redirect:/librarian/dashboard?section=notifications";
         }
 
         try {
             librarianInteractionService.sendNotificationToMembers(request, principal.getName());
-            flash.addFlashAttribute("success", message("backend.librarian.notification.sent"));
+            flash.addFlashAttribute("success", "Đã gửi thông báo thành công.");
         } catch (ApplicationException e) {
             flash.addFlashAttribute("notificationRequest", request);
-            flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
+            flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
-        return "redirect:/librarian/interaction/notifications/new";
+        return "redirect:/librarian/dashboard?section=notifications";
     }
 
     @GetMapping("/acquisition-requests")
@@ -155,11 +154,11 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
                                                 RedirectAttributes flash) {
         try {
             librarianInteractionService.approveBookAcquisitionRequest(requestId);
-            flash.addFlashAttribute("success", message("backend.librarian.acquisition.approved"));
+            flash.addFlashAttribute("success", "Đã duyệt đề xuất bổ sung sách.");
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/librarian/interaction/acquisition-requests";
+        return "redirect:/librarian/dashboard?section=acquisition";
     }
 
     @PostMapping("/acquisition-requests/{id}/reject")
@@ -168,22 +167,22 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
                                                RedirectAttributes flash) {
         try {
             librarianInteractionService.rejectBookAcquisitionRequest(requestId, reason);
-            flash.addFlashAttribute("success", message("backend.librarian.acquisition.rejected"));
+            flash.addFlashAttribute("success", "Đã từ chối đề xuất bổ sung sách.");
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/librarian/interaction/acquisition-requests";
+        return "redirect:/librarian/dashboard?section=acquisition";
     }
 
     private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {
         Map<String, String> fieldErrors = new HashMap<>();
 
         if (request.getRecipientType() == null) {
-            fieldErrors.put("recipientType", message("backend.librarian.notification.recipientRequired"));
+            fieldErrors.put("recipientType", "Vui lòng chọn đối tượng nhận thông báo.");
         }
 
         if (request.getNotificationType() == null) {
-            fieldErrors.put("notificationType", message("backend.librarian.notification.typeRequired"));
+            fieldErrors.put("notificationType", "Vui lòng chọn loại thông báo.");
         }
 
         String normalizedTitle = normalizeNotificationTitle(request.getTitle());
@@ -192,26 +191,26 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         request.setContent(normalizedContent);
 
         if (normalizedTitle.isEmpty()) {
-            fieldErrors.put("title", message("backend.librarian.notification.titleRequired"));
+            fieldErrors.put("title", "Tiêu đề không được để trống.");
         } else if (normalizedTitle.length() < 5) {
-            fieldErrors.put("title", message("backend.librarian.notification.titleMinimum"));
+            fieldErrors.put("title", "Tiêu đề phải có ít nhất 5 ký tự.");
         } else if (normalizedTitle.length() > 150) {
-            fieldErrors.put("title", message("backend.librarian.notification.titleMaximum"));
+            fieldErrors.put("title", "Tiêu đề không được vượt quá 150 ký tự.");
         }
 
         if (normalizedContent.isEmpty()) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentRequired"));
+            fieldErrors.put("content", "Nội dung không được để trống.");
         } else if (normalizedContent.length() < 10) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentMinimum"));
+            fieldErrors.put("content", "Nội dung phải có ít nhất 10 ký tự.");
         } else if (normalizedContent.length() > 2000) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentMaximum"));
+            fieldErrors.put("content", "Nội dung không được vượt quá 2000 ký tự.");
         } else if (!normalizedTitle.isEmpty() && normalizedContent.equalsIgnoreCase(normalizedTitle)) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentDifferent"));
+            fieldErrors.put("content", "Nội dung không được giống hoàn toàn tiêu đề.");
         }
 
         if (request.getRecipientType() == NotificationRecipientType.SELECTED
                 && (request.getMemberIds() == null || request.getMemberIds().isEmpty())) {
-            fieldErrors.put("memberIds", message("backend.librarian.notification.memberRequired"));
+            fieldErrors.put("memberIds", "Vui lòng chọn ít nhất một Member.");
         }
 
         return fieldErrors;

@@ -5,7 +5,7 @@
   layout:decorate="~{layout/base}"
 >
   <head>
-    <title th:text="#{member.reviews.title}">My Reviews</title>
+    <title>Đánh giá của tôi</title>
       <link rel="stylesheet" th:href="@{/css/pages/member/reviews.css}" />
   </head>
 
@@ -15,14 +15,16 @@
         class="member-page-header"
       >
         <div>
-          <span class="member-page-eyebrow" th:text="#{member.reviews.eyebrow}">YOUR ACTIVITY</span>
+          <span class="member-page-eyebrow">HOẠT ĐỘNG CỦA BẠN</span>
           <h1
             class="member-page-title"
           >
-            <span th:text="#{member.reviews.heading}">My Reviews</span>
+            Đánh giá
+            của tôi
           </h1>
           <p class="member-page-description">
-            <span th:text="#{member.reviews.count(${myReviews != null ? myReviews.totalElements : 0})}">0 reviews submitted</span>
+            <span th:text="${myReviews != null ? myReviews.totalElements : 0}">0</span>
+            đánh giá bạn đã gửi
           </p>
         </div>
       </div>
@@ -36,7 +38,8 @@
 
       <div class="review-section-heading">
         <h2>
-          <i class="bi bi-list-stars me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{member.reviews.submitted}">Submitted Reviews</span>
+          <i class="bi bi-list-stars me-2 u-color-8b5a2b-93ece783"></i>Đánh giá
+          đã gửi
         </h2>
       </div>
 
@@ -52,18 +55,18 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th th:text="#{book.title}">Book Title</th>
-                  <th class="review-cell-centered" th:text="#{book.author}">Author</th>
-                  <th class="review-cell-centered" th:text="#{member.reviews.date}">Review Date</th>
-                  <th class="review-cell-centered" th:text="#{member.reviews.rating}">Rating</th>
-                  <th class="review-cell-centered" th:text="#{common.actions}">Actions</th>
+                  <th>Tên sách</th>
+                  <th class="review-cell-centered">Tác giả</th>
+                  <th class="review-cell-centered">Ngày đánh giá</th>
+                  <th class="review-cell-centered">Đánh giá</th>
+                  <th class="review-cell-centered">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:if="${myReviews == null || myReviews.totalElements == 0}">
                   <td colspan="5" class="text-center text-muted py-5">
                     <i class="bi bi-list-stars fs-2 d-block mb-2 u-color-8b5a2b-d7f13118"></i>
-                    <span th:text="#{member.reviews.empty}">You have not submitted any reviews.</span>
+                    Bạn chưa gửi đánh giá nào.
                   </td>
                 </tr>
 
@@ -78,13 +81,13 @@
                         />
                         <div>
                           <h6 class="mb-2 fw-bold sent-review-title" th:text="${review.book.title}">
-                            Book Title
+                            Tên sách
                           </h6>
                           <span
                             class="badge genre-badge"
-                            th:text="${review.book.genre != null ? review.book.genre.genreName : #messages.msg('book.genre.uncategorized')}"
+                            th:text="${review.book.genre != null ? review.book.genre.genreName : 'Chưa phân loại'}"
                           >
-                            Genre
+                            Thể loại
                           </span>
                         </div>
                       </div>
@@ -95,25 +98,25 @@
                         th:if="${review.book.authors != null && !review.book.authors.isEmpty()}"
                         th:text="${review.book.authors.iterator().next().authorName}"
                       >
-                        Author
+                        Tác giả
                       </span>
-                      <span th:unless="${review.book.authors != null && !review.book.authors.isEmpty()}" th:text="#{common.unknown}">
-                        Unknown
+                      <span th:unless="${review.book.authors != null && !review.book.authors.isEmpty()}">
+                        Chưa rõ
                       </span>
                     </td>
 
                     <td class="review-cell-centered">
                       <span
-                        th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : #messages.msg('common.unknownDate')}"
+                        th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}"
                       >
-                        Date
+                        Ngày
                       </span>
                     </td>
 
                     <td class="review-cell-centered">
                       <span class="review-rating-badge">
                         <i class="bi bi-star-fill" aria-hidden="true"></i>
-                        <span th:text="#{member.reviews.starsValue(${review.rating})}">5 stars</span>
+                        <span th:text="${review.rating + ' sao'}">5 sao</span>
                       </span>
                     </td>
 
@@ -123,7 +126,7 @@
                           th:href="@{'/books/' + ${review.book.bookId}}"
                           class="btn btn-sm btn-review-classic"
                         >
-                          <span th:text="#{book.details}">View Book</span>
+                          Xem sách
                         </a>
                         <button type="button"
                           th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
@@ -136,7 +139,7 @@
                           th:data-review-rating="${review.rating}"
                           th:data-review-comment="${review.comment}"
                         >
-                          <span th:text="#{common.edit}">Edit</span>
+                          Sửa
                         </button>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger review-delete-trigger"
@@ -144,8 +147,8 @@
                                 data-target="#deleteReviewModal"
                                 th:data-delete-url="@{'/member/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                                 th:data-review-title="${review.book.title}"
-                                th:aria-label="#{member.reviews.delete}">
-                          <span th:text="#{common.delete}">Delete</span>
+                                aria-label="Xóa đánh giá">
+                          Xóa
                         </button>
                       </div>
                     </td>
@@ -157,7 +160,7 @@
                         class="p-3 rounded mb-3 lh-lg sent-review-comment"
                         th:text="${review.comment}"
                       >
-                        Review Content
+                        Nội dung đánh giá
                       </div>
 
                       <div
@@ -165,9 +168,9 @@
                         th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
                       >
                         <div class="fw-bold mb-1 librarian-response-title">
-                          <span th:text="#{member.reviews.librarianResponse}">Librarian Response</span>
+                          Phản hồi của thủ thư
                         </div>
-                        <div th:text="${review.librarianResponse}">Response content</div>
+                        <div th:text="${review.librarianResponse}">Nội dung phản hồi</div>
                       </div>
                     </td>
                   </tr>
@@ -180,7 +183,7 @@
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=0)}"
-                  th:text="#{pagination.first}">First</a>
+                 >Đầu</a>
               </li>
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
@@ -205,7 +208,7 @@
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
-                  th:text="#{pagination.last}">Last</a>
+                 >Cuối</a>
               </li>
             </ul>
           </nav>
@@ -223,47 +226,47 @@
         <div class="modal-content">
           <div class="modal-header">
             <div>
-              <h2 class="modal-title" id="editReviewModalLabel" th:text="#{member.reviews.editTitle}">Edit Review</h2>
+              <h2 class="modal-title" id="editReviewModalLabel">Sửa đánh giá</h2>
               <p class="review-edit-book-title" id="editReviewBookTitle"></p>
             </div>
-            <button type="button" class="review-modal-close" data-dismiss="modal" th:aria-label="#{common.close}">
+            <button type="button" class="review-modal-close" data-dismiss="modal" aria-label="Đóng">
               <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
           </div>
           <form id="editReviewForm" th:action="@{/member/interaction/reviews/0/edit}" method="post" novalidate>
             <div class="modal-body">
               <div class="review-edit-field">
-                <label class="review-edit-label" for="editReviewRating" th:text="#{member.reviews.stars}">Stars</label>
+                <label class="review-edit-label" for="editReviewRating">Số sao</label>
                 <input type="hidden" class="review-edit-rating-value" id="editReviewRating" name="rating">
-                <div class="review-edit-rating-picker" role="radiogroup" th:aria-label="#{member.reviews.selectStars}">
+                <div class="review-edit-rating-picker" role="radiogroup" aria-label="Chọn số sao">
                   <button th:each="ratingValue : ${#numbers.sequence(1, 5)}"
                           type="button"
                           class="review-edit-rating-star"
                           th:data-value="${ratingValue}"
                           role="radio"
-                          th:aria-label="#{member.reviews.starsValue(${ratingValue})}"
+                          th:aria-label="${ratingValue + ' sao'}"
                           aria-checked="false">
                     <i class="bi bi-star-fill"></i>
                   </button>
                 </div>
               </div>
               <div class="review-edit-field review-edit-comment-field">
-                <label class="review-edit-label" for="editReviewComment" th:text="#{member.reviews.content}">Review Content</label>
+                <label class="review-edit-label" for="editReviewComment">Nội dung đánh giá</label>
                 <textarea class="review-edit-textarea"
                           id="editReviewComment"
                           name="comment"
                           minlength="5"
                           maxlength="1000"
                           required
-                          th:placeholder="#{validation.charactersRange(5,1000)}"
+                          placeholder="Nhập từ 5–1000 ký tự"
                           aria-describedby="editReviewCommentCount editReviewCommentError"></textarea>
                 <div class="review-edit-comment-support"><span id="editReviewCommentCount" aria-live="polite">0/1000</span></div>
                 <div class="review-edit-field-error" id="editReviewCommentError" role="alert" aria-live="assertive"></div>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="review-modal-cancel" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-              <button type="submit" class="review-edit-submit" th:text="#{member.profile.save}">Save Changes</button>
+              <button type="button" class="review-modal-cancel" data-dismiss="modal">Hủy</button>
+              <button type="submit" class="review-edit-submit">Lưu thay đổi</button>
             </div>
           </form>
         </div>
@@ -279,25 +282,25 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title" id="deleteReviewModalLabel" th:text="#{member.reviews.deleteTitle}">Delete Review?</h2>
+            <h2 class="modal-title" id="deleteReviewModalLabel">Xóa đánh giá?</h2>
             <button type="button"
                     class="review-modal-close"
                     data-dismiss="modal"
-                    th:aria-label="#{common.close}">
+                    aria-label="Đóng">
               <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
           </div>
           <div class="modal-body">
             <p id="deleteReviewModalDescription">
-              <span th:text="#{member.reviews.deletePrefix}">Your review for</span> <strong id="deleteReviewBookTitle"></strong> <span th:text="#{member.reviews.deleteSuffix}">will be removed.</span>
+              Đánh giá của bạn cho sách <strong id="deleteReviewBookTitle"></strong> sẽ bị xóa khỏi danh sách.
             </p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="review-modal-cancel" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+            <button type="button" class="review-modal-cancel" data-dismiss="modal">Hủy</button>
             <form id="deleteReviewForm"
                   th:action="@{/member/interaction/reviews/0/delete}"
                   method="post">
-              <button type="submit" class="review-modal-confirm" th:text="#{member.reviews.delete}">Delete Review</button>
+              <button type="submit" class="review-modal-confirm">Xóa đánh giá</button>
             </form>
           </div>
         </div>
@@ -307,7 +310,7 @@
     </div>
 
     <div layout:fragment="scripts">
-      <script th:inline="javascript">
+      <script>
         (function () {
           const editForm = document.getElementById("editReviewForm");
           const editBookTitle = document.getElementById("editReviewBookTitle");
@@ -372,10 +375,10 @@
                 comment.value = normalizedComment;
                 updateCommentCount();
                 let message = "";
-                if (normalizedComment === "") message = /*[[#{member.reviews.validation.required}]]*/ "Please enter review content.";
-                else if (normalizedComment.length < 5) message = /*[[#{member.reviews.validation.min}]]*/ "Review content must contain at least 5 characters.";
-                else if (normalizedComment.length > 1000) message = /*[[#{member.reviews.validation.max}]]*/ "Review content cannot exceed 1000 characters.";
-                else if (!/\p{L}/u.test(normalizedComment)) message = /*[[#{member.reviews.validation.letters}]]*/ "Review content must include letters.";
+                if (normalizedComment === "") message = "Vui lòng nhập nội dung đánh giá.";
+                else if (normalizedComment.length < 5) message = "Nội dung đánh giá phải có ít nhất 5 ký tự.";
+                else if (normalizedComment.length > 1000) message = "Nội dung đánh giá không được vượt quá 1000 ký tự.";
+                else if (!/\p{L}/u.test(normalizedComment)) message = "Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt.";
                 if (message !== "") {
                   event.preventDefault();
                   event.stopPropagation();
@@ -422,7 +425,7 @@
             document.querySelectorAll(".review-delete-trigger").forEach(function (trigger) {
               trigger.addEventListener("click", function () {
               deleteForm.action = trigger.dataset.deleteUrl;
-              deleteBookTitle.textContent = trigger.dataset.reviewTitle || /*[[#{member.reviews.thisBook}]]*/ "this book";
+              deleteBookTitle.textContent = trigger.dataset.reviewTitle || "cuốn sách này";
               });
             });
           }

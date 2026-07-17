@@ -3,7 +3,7 @@
       layout:decorate="~{layout/base}">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title th:text="#{payos.title}">KQPay Payment</title>
+    <title>Phiếu thanh toán KQPay</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
     <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
 </head>
@@ -11,73 +11,73 @@
 <div layout:fragment="content" class="container finance-page">
     <section class="payos-receipt">
         <header class="payos-receipt-header">
-                <h2 th:text="#{payos.heading}">KQPay Payment</h2>
+            <h2>Phiếu Thanh Toán KQPay</h2>
         </header>
 
         <div class="payos-receipt-body">
             <div class="payos-customer-box">
-                <span class="payos-customer-label" th:text="#{member.wallet.paymentAccount}">Payment Account:</span>
+                <span class="payos-customer-label">Tài khoản thanh toán:</span>
                 <p class="payos-customer-value"
-                      th:text="${payment.member.user != null ? payment.member.user.email : #messages.msg('common.member')}">
+                   th:text="${payment.member.user != null ? payment.member.user.email : 'Thành viên'}">
                     member@example.com
                 </p>
             </div>
 
             <div class="payos-section-bar">
-                    <h3 class="payos-section-title" th:text="#{payos.paymentInfo}">Payment Information</h3>
-                    <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending" th:text="#{payos.status.pending}">Awaiting Payment</span>
-                    <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid" th:text="#{payment.status.paid}">Paid</span>
+                <h3 class="payos-section-title">Thông tin thanh toán</h3>
+                <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending">Đang chờ thanh toán</span>
+                <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid">Đã thanh toán</span>
                 <span th:if="${payment.status != 'PENDING' and payment.status != 'PAID'}"
                       class="payos-status payos-status-failed"
-                          th:text="${payment.status == 'EXPIRED' ? #messages.msg('payos.status.expired') : (payment.status == 'CANCELLED' ? #messages.msg('payos.status.canceled') : #messages.msg('payos.status.failed'))}">
-                        Payment Failed
+                      th:text="${payment.status == 'EXPIRED' ? 'Mã QR đã hết hạn' : (payment.status == 'CANCELLED' ? 'Đã hủy thanh toán' : 'Thanh toán không thành công')}">
+                    Thanh toán không thành công
                 </span>
             </div>
 
             <div class="payos-receipt-grid" th:classappend="${payment.status != 'PENDING'} ? ' no-qr' : ''">
                 <div class="payos-detail-card">
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{payos.type}">Payment Type</span>
+                        <span class="payos-detail-label">Loại thanh toán</span>
                         <span class="payos-detail-value"
-                              th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('transaction.type.topUp') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('transaction.type.borrowFee') : (payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.type.fineBatch') : #messages.msg('payos.type.singleFine')))}">
-                            Fine
+                              th:text="${payment.purpose == 'TOP_UP' ? 'Nạp tiền vào ví' : (payment.purpose == 'BORROW_FEE' ? 'Phí mượn sách' : (payment.purpose == 'FINE_BATCH' ? 'Thanh toán tổng phí phạt' : 'Thanh toán một khoản phạt'))}">
+                            Phí phạt
                         </span>
                     </div>
                     <div class="payos-detail-row" th:if="${payment.purpose == 'FINE_BATCH'}">
-                            <span class="payos-detail-label" th:text="#{payos.itemCount}">Payment Items</span>
+                        <span class="payos-detail-label">Số khoản thanh toán</span>
                         <span class="payos-detail-value">
-                                <span th:text="#{payos.fineCount(${fineItems != null ? #lists.size(fineItems) : 0})}">0 fines</span>
+                            <span th:text="${fineItems != null ? #lists.size(fineItems) : 0}">0</span> khoản phạt
                         </span>
                     </div>
                     <div class="payos-detail-row" th:if="${payment.referenceId != null}">
                         <span class="payos-detail-label"
-                              th:text="${payment.purpose == 'BORROW_FEE' ? #messages.msg('loan.id') : #messages.msg('payos.fineId')}">Fine ID</span>
+                              th:text="${payment.purpose == 'BORROW_FEE' ? 'Mã phiếu mượn' : 'Mã khoản phạt'}">Mã khoản phạt</span>
                         <span class="payos-detail-value" th:text="${'#' + payment.referenceId}">#1</span>
                     </div>
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{payos.orderCode}">KQPay Order Code</span>
+                        <span class="payos-detail-label">Mã đơn KQPay</span>
                         <span class="payos-detail-value" th:text="${payment.orderCode}">1</span>
                     </div>
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{payos.createdAt}">Created At</span>
+                        <span class="payos-detail-label">Thời gian tạo</span>
                         <span class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
                     </div>
                     <div class="payos-fine-breakdown"
                          th:if="${payment.purpose == 'FINE_BATCH' and fineItems != null and !#lists.isEmpty(fineItems)}">
-                    <div class="payos-fine-breakdown-title" th:text="#{payos.finesInOrder}">Fines in this Order</div>
+                        <div class="payos-fine-breakdown-title">Các khoản phạt trong đơn</div>
                         <div class="payos-detail-row payos-fine-row" th:each="item : ${fineItems}">
                             <span class="payos-detail-label"
-                                      th:text="#{payos.fineNumber(${item.fineTransaction.transactionId})}">Fine #1</span>
+                                  th:text="${'Khoản phạt #' + item.fineTransaction.transactionId}">Khoản phạt #1</span>
                             <span class="payos-detail-value">
-                                <span th:text="${#numbers.formatDecimal(item.amountSnapshot, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
+                                <span th:text="${#numbers.formatDecimal(item.amountSnapshot, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
                             </span>
                         </div>
                     </div>
                     <div class="payos-detail-row">
                         <span class="payos-detail-label"
-                          th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.totalFines') : #messages.msg('member.wallet.totalPayment')}">Total Payment</span>
+                              th:text="${payment.purpose == 'FINE_BATCH' ? 'Tổng toàn bộ phí phạt' : 'Tổng thanh toán'}">Tổng thanh toán</span>
                         <span class="payos-detail-value payos-total">
-                            <span th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
+                            <span th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
                         </span>
                     </div>
                 </div>
@@ -85,39 +85,39 @@
                 <div class="payos-qr-card" th:if="${payment.status == 'PENDING'}">
                     <div class="payos-qr-frame">
                         <img th:src="@{/member/payments/payos/{orderCode}/qr.png(orderCode=${payment.orderCode})}"
-                         th:alt="#{payos.qrAlt}"/>
+                             alt="Mã QR thanh toán KQPay"/>
                     </div>
                     <div class="payos-qr-title"
-                          th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.scanAll') : #messages.msg('payos.scan')}">
-                        Scan VietQR to Pay
+                         th:text="${payment.purpose == 'FINE_BATCH' ? 'Quét một lần để thanh toán toàn bộ' : 'Quét mã VietQR để thanh toán'}">
+                        Quét mã VietQR để thanh toán
                     </div>
                     <div class="payos-qr-note"
-                          th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.batchQrHint') : #messages.msg('payos.qrHint')}">
-                        Do not change the amount or transfer description.
+                         th:text="${payment.purpose == 'FINE_BATCH' ? 'Mã QR đã bao gồm tổng tiền của tất cả khoản phạt bên trái.' : 'Không thay đổi số tiền hoặc nội dung chuyển khoản.'}">
+                        Không thay đổi số tiền hoặc nội dung chuyển khoản.
                     </div>
-                    <div class="kqpay-countdown" data-kqpay-countdown th:data-expired-label="#{payment.qrExpired}"
+                    <div class="kqpay-countdown" data-kqpay-countdown
                          th:attr="data-expires-at=${paymentExpiresAt}">
-                        <span data-kqpay-label th:text="#{payos.expiresIn}">QR code expires in</span>
+                        <span data-kqpay-label>Mã QR hết hạn sau</span>
                         <strong data-kqpay-time>05:00</strong>
                     </div>
                 </div>
             </div>
 
-                <p class="payos-help" th:text="#{payos.help}">The page updates after KQPay confirms the transaction.</p>
+            <p class="payos-help">ⓘ Phiếu sẽ tự cập nhật sau khi KQPay xác nhận giao dịch. Vui lòng giữ trang này mở trong lúc thanh toán.</p>
 
             <div th:if="${payment.status == 'PAID'}" class="payos-success">
                 <span th:if="${payment.purpose == 'FINE_BATCH'}">
-                    <span th:text="#{payos.batchSuccess(${fineItems != null ? #lists.size(fineItems) : 0})}">All fines were paid successfully.</span>
+                    Đã thanh toán toàn bộ <strong th:text="${fineItems != null ? #lists.size(fineItems) : 0}">0</strong> khoản phạt thành công.
                 </span>
                 <span th:unless="${payment.purpose == 'FINE_BATCH'}">
-                    <span th:text="#{payos.success}">Payment was recorded successfully.</span>
-                    <span th:if="${payment.transaction != null}"><span th:text="#{transaction.code}">Transaction ID</span>: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
+                    Thanh toán đã được ghi nhận thành công.
+                    <span th:if="${payment.transaction != null}">Mã giao dịch: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
                 </span>
             </div>
 
             <div class="payos-receipt-actions">
-                <a th:if="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/fees}" class="payos-btn-secondary" th:text="#{payos.backFees}">Back to Borrowing Fees</a>
-                <a th:unless="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/transactions}" class="payos-btn-secondary" th:text="#{member.reservations.backWallet}">Back to Wallet</a>
+                <a th:if="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/fees}" class="payos-btn-secondary">Quay lại phí mượn</a>
+                <a th:unless="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/transactions}" class="payos-btn-secondary">Quay lại ví</a>
             </div>
         </div>
     </section>

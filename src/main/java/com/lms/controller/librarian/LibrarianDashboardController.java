@@ -26,23 +26,7 @@ public class LibrarianDashboardController {
             Model model,
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
-            @RequestParam(required = false, defaultValue = "") String section,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if ("notifications".equalsIgnoreCase(section)) {
-            return "redirect:/librarian/interaction/notifications/new";
-        }
-        if ("reviews".equalsIgnoreCase(section)) {
-            return "redirect:/librarian/interaction/reviews";
-        }
-        if ("acquisition".equalsIgnoreCase(section)) {
-            return "redirect:/librarian/interaction/acquisition-requests";
-        }
-        if ("reports".equalsIgnoreCase(section) || "statistics".equalsIgnoreCase(section)) {
-            return "redirect:/librarian/reports";
-        }
-        if ("users".equalsIgnoreCase(section)) {
-            return "redirect:/librarian/members";
-        }
         model.mergeAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";

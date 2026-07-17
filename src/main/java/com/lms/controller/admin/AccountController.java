@@ -2,7 +2,6 @@ package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
-import com.lms.controller.LocalizedControllerSupport;
 import com.lms.dto.request.AdminAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
@@ -25,7 +24,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/accounts")
-public class AccountController extends LocalizedControllerSupport {
+public class AccountController {
 
     private final AccountService accountService;
     private final AuthService authService;
@@ -78,7 +77,7 @@ public class AccountController extends LocalizedControllerSupport {
                 fullName, email, phone, username, password, accountType, tierId, status);
         try {
             accountService.createAccount(request);
-            redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
+            redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công.");
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
@@ -86,21 +85,6 @@ public class AccountController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
             return redirectBySource(source);
         }
-    }
-
-    @GetMapping("/create/validate")
-    @ResponseBody
-    public Map<String, String> validateAccountCreate(
-            @RequestParam(required = false, defaultValue = "") String fullName,
-            @RequestParam(required = false, defaultValue = "") String email,
-            @RequestParam(required = false, defaultValue = "") String phone,
-            @RequestParam(required = false, defaultValue = "") String username,
-            @RequestParam(required = false, defaultValue = "") String password,
-            @RequestParam(required = false, defaultValue = "") String accountType,
-            @RequestParam(required = false) Integer tierId,
-            @RequestParam(required = false, defaultValue = "Active") String status) {
-        return accountService.validateAccountCreate(new AdminAccountCreateRequest(
-                fullName, email, phone, username, password, accountType, tierId, status));
     }
 
     @GetMapping("/edit/{id}/validate")
@@ -139,7 +123,7 @@ public class AccountController extends LocalizedControllerSupport {
 
         try {
             accountService.updateAccount(request, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", message("backend.account.updated"));
+            redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("editAccountId", id);
@@ -159,7 +143,7 @@ public class AccountController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             accountService.deleteAccount(id, source, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", message("backend.account.deleted"));
+            redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -173,11 +157,12 @@ public class AccountController extends LocalizedControllerSupport {
         try {
             String email = accountService.getMemberEmail(id);
             authService.requestPasswordReset(email);
-            redirectAttributes.addFlashAttribute("success", message("backend.account.resetSent", email));
+            redirectAttributes.addFlashAttribute("success",
+                    "Đã gửi liên kết đặt lại mật khẩu đến email " + email + ".");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error",
                     e.getMessage() == null || e.getMessage().isBlank()
-                            ? message("backend.account.resetFailed")
+                            ? "Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại."
                             : e.getMessage());
         }
         return "redirect:/admin/accounts";

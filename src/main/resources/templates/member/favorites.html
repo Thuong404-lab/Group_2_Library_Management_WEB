@@ -3,7 +3,7 @@
       layout:decorate="~{layout/base}">
 
 <head>
-    <title th:text="#{member.favorites.title}">Favorite Books</title>
+    <title>Sách Yêu Thích</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/favorites.css}" />
   </head>
 
@@ -11,16 +11,16 @@
     <div layout:fragment="content" class="container favorites-page">
         <div class="member-page-header">
             <div>
-                <span class="member-page-eyebrow" th:text="#{member.favorites.eyebrow}">PERSONAL COLLECTION</span>
+                <span class="member-page-eyebrow">BỘ SƯU TẬP CÁ NHÂN</span>
                 <h1 class="favorites-title">
-                    <span th:text="#{member.favorites.heading}">Favorite Books</span>
+                    Sách Yêu Thích
                 </h1>
                 <p class="member-page-description">
-                    <span th:text="#{member.favorites.description}">Books you saved to read later</span>
+                    Những cuốn sách bạn đã lưu để đọc sau
                 </p>
             </div>
             <a th:href="@{/books}" class="member-primary-action">
-                <span th:text="#{member.favorites.explore}">Explore More</span>
+                Khám phá thêm
             </a>
         </div>
 
@@ -29,7 +29,7 @@
                     <table class="favorite-table">
                         <thead>
                             <tr>
-                                <th th:text="#{book.title}">Book Title</th><th th:text="#{book.author}">Author</th><th th:text="#{common.status}">Status</th><th class="favorite-action-column" th:text="#{common.actions}">Actions</th>
+                                <th>Tên sách</th><th>Tác giả</th><th>Tình trạng</th><th class="favorite-action-column">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -45,12 +45,12 @@
                                         <h6 class="mb-2 fw-bold member-favorites-h6-color-05"
 
                                             th:text="${favorite.book.title}">
-                                            Book title
+                                            Tên sách
                                         </h6>
 
                                         <span class="badge genre-badge"
-                                              th:text="${favorite.book.genre != null ? favorite.book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
-                                            Genre
+                                              th:text="${favorite.book.genre != null ? favorite.book.genre.genreName : 'Chưa phân loại'}">
+                                            Thể loại
                                         </span>
                                     </div>
                                 </div>
@@ -59,19 +59,19 @@
                             <td>
         <span th:if="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}"
               th:text="${favorite.book.authors.iterator().next().authorName}">
-            Author
+            Tác giả
         </span>
 
-                                <span th:unless="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}" th:text="#{common.unknown}">
-            Unknown
+                                <span th:unless="${favorite.book.authors != null && !favorite.book.authors.isEmpty()}">
+            Chưa rõ
         </span>
                             </td>
 
                             <td>
                                 <span class="badge status-badge"
                                       th:classappend="${favorite.book.status == 'Active'} ? '' : ' unavailable'"
-                                      th:text="${favorite.book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">
-                                    Available
+                                      th:text="${favorite.book.status == 'Active' ? 'Sẵn sàng' : 'Không có sẵn'}">
+                                    Sẵn sàng
                                 </span>
                             </td>
 
@@ -79,8 +79,8 @@
                                 <div class="favorite-actions d-flex flex-column flex-md-row justify-content-md-end">
                                     <button class="btn btn-sm btn-favorite-classic u-width-110px-d76d1bd5"
 
-                                            th:onclick="|showToast('${#messages.msg('book.borrow.comingSoon')}')|">
-                                        <span th:text="#{book.borrow}">Borrow</span>
+                                            onclick="showToast('Chức năng mượn sách đang được phát triển!')">
+                                        Mượn
                                     </button>
 
                                     <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
@@ -88,7 +88,7 @@
                                         <button type="submit"
                                                 class="btn btn-sm btn-outline-danger u-width-110px-d76d1bd5"
                                                >
-                                            <span th:text="#{member.favorites.remove}">Remove</span>
+                                            Bỏ thích
                                         </button>
                                     </form>
                                 </div>
@@ -98,7 +98,7 @@
                         <tr th:if="${favorites == null || favorites.totalElements == 0}">
                             <td colspan="4" class="text-center text-muted py-5">
                                 <i class="bi bi-heart fs-2 d-block mb-2 u-color-8b5a2b-d7f13118"></i>
-                                <span th:text="#{member.favorites.empty}">You have no favorite books yet.</span>
+                                Bạn chưa có sách yêu thích nào.
                             </td>
                         </tr>
                         </tbody>
@@ -108,7 +108,7 @@
                     <ul class="pagination justify-content-center mb-0">
                         <li class="page-item" th:classappend="${favorites.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=0)}"
-                               th:text="#{pagination.first}">First</a>
+                              >Đầu</a>
                         </li>
                         <li class="page-item" th:classappend="${favorites.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.number - 1})}"
@@ -131,7 +131,7 @@
                         </li>
                         <li class="page-item" th:classappend="${favorites.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.totalPages - 1})}"
-                               th:text="#{pagination.last}">Last</a>
+                              >Cuối</a>
                         </li>
                     </ul>
                 </nav>

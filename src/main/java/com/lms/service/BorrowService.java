@@ -18,6 +18,9 @@ public interface BorrowService {
     // Luồng đăng ký mượn trực tuyến (Chờ duyệt)
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, String staffUsername);
+    void rejectPendingRequest(Integer borrowId);
+
+    void confirmPhysicalPickup(Integer borrowId, String staffUsername);
 
     // Luồng YÊU CẦU TRẢ SÁCH VÀ GIA HẠN
     void memberSubmitRenewRequest(Integer borrowDetailId);
@@ -56,4 +59,13 @@ public interface BorrowService {
 
     // Dữ liệu cấu hình hệ thống
     int getMaxBorrowDays();
+
+    void memberSubmitReturnRequest(String username, Integer borrowDetailId);
+    void approveReturnRequest(Integer borrowId);
+
+    // Đăng ký mượn nhiều cuốn trực tuyến
+    Borrow memberSubmitMultiBookBorrowRequest(String username, List<Integer> bookIds, Integer numberOfDays);
+
+    // Tính toán xem trước phí mượn
+    java.math.BigDecimal calculateBorrowFeePreview(String username, List<Integer> bookIds, Integer numberOfDays);
 }

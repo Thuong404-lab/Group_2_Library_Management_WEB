@@ -1,6 +1,5 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
-import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
@@ -43,7 +42,7 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/librarian")
-public class MemberMgmtController extends LocalizedControllerSupport {
+public class MemberMgmtController {
     private static final String TOP_UP_TYPE = "TOP_UP";
     private static final int MEMBER_SEARCH_LIMIT = 5;
 
@@ -108,18 +107,8 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
         memberService.createMember(request);
         redirectAttributes.addFlashAttribute(
-                "success", message("backend.member.created"));
+                "success", "Tạo tài khoản thành viên thành công.");
         return "redirect:/librarian/members";
-    }
-
-    @GetMapping("/members/create/validate")
-    @ResponseBody
-    public Map<String, String> validateMemberCreateFields(
-            @Valid @ModelAttribute CreateMemberAccountRequest request,
-            BindingResult bindingResult) {
-        Map<String, String> errors = bindingErrors(bindingResult);
-        mergeErrors(errors, memberService.validateCreate(request));
-        return errors;
     }
 
     @PostMapping("/members/edit/{id}")
@@ -139,7 +128,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
         memberService.updateMember(id, request);
         redirectAttributes.addFlashAttribute(
-                "success", message("backend.member.updated"));
+                "success", "Cập nhật tài khoản thành viên thành công.");
         return "redirect:/librarian/members";
     }
 
@@ -160,10 +149,10 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @PathVariable Integer id,
             RedirectAttributes redirectAttributes) {
         if (!memberService.deactivateMember(id)) {
-            redirectAttributes.addFlashAttribute("error", message("backend.account.notFound"));
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
         } else {
             redirectAttributes.addFlashAttribute(
-                    "success", message("backend.member.deleted"));
+                    "success", "Xóa tài khoản thành viên thành công.");
         }
         return "redirect:/librarian/members";
     }
@@ -177,7 +166,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             memberService.changeMemberStatus(id, status);
-            redirectAttributes.addFlashAttribute("success", message("backend.account.statusUpdated"));
+            redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -211,7 +200,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             financialService.createFine(memberId, amount, reason);
-            redirectAttributes.addFlashAttribute("success", message("backend.fine.created"));
+            redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -225,7 +214,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         try {
             overdueReminderService.sendReturnReminder(borrowDetailId);
             redirectAttributes.addFlashAttribute(
-                    "success", message("backend.overdue.reminderSent"));
+                    "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
@@ -275,7 +264,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             financialService.topUpMemberAccount(memberPhone, amount);
-            redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
+            redirectAttributes.addFlashAttribute("success", "Nạp tiền vào ví thành viên thành công.");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
@@ -380,16 +369,16 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             data.put("phone", member.getUser().getPhone());
             
             String rawStatus = member.getUser().getStatus().toString();
-            String localizedStatus = message("status.active");
-            if ("Inactive".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.blocked");
-            else if ("Banned".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.banned");
-            data.put("status", localizedStatus);
+            String vnStatus = "Hoạt động";
+            if ("Inactive".equalsIgnoreCase(rawStatus)) vnStatus = "Khóa";
+            else if ("Banned".equalsIgnoreCase(rawStatus)) vnStatus = "Cấm mượn";
+            data.put("status", vnStatus);
             data.put("rawStatus", rawStatus);
             
-            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Standard";
-            if ("Standard".equalsIgnoreCase(tierName)) tierName = message("tier.standard");
-            else if ("Premium".equalsIgnoreCase(tierName)) tierName = message("tier.premium");
-            else if ("VIP".equalsIgnoreCase(tierName)) tierName = message("tier.vip");
+            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Tiêu chuẩn";
+            if ("Standard".equalsIgnoreCase(tierName)) tierName = "Hạng Tiêu Chuẩn";
+            else if ("Premium".equalsIgnoreCase(tierName)) tierName = "Hạng Cao Cấp";
+            else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
             data.put("tier", tierName);
             
         } catch (ApplicationException e) {

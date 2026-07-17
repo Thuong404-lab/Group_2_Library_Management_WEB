@@ -1,6 +1,5 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
-import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
 import com.lms.service.ProfileService;
@@ -20,7 +19,7 @@ import com.lms.config.CustomUserDetails;
  */
 @Controller
 @RequestMapping("/librarian/profile")
-public class LibrarianProfileController extends LocalizedControllerSupport {
+public class LibrarianProfileController {
 
     private final ProfileService profileService;
 
@@ -64,9 +63,9 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
                 sessionUser.setPhone(updatedUser.getPhone());
             }
 
-            redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
+            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());
         }
         return "redirect:/librarian/profile";
     }
@@ -78,14 +77,14 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
         if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
+            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
             return "redirect:/librarian/profile";
         }
 
         try {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
+            redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu thành công!");
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         }

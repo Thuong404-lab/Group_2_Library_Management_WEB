@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title th:text="#{librarian.borrowDesk.title}">Borrow Desk</title>
+    <title>Quầy xử lý mượn sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/create-borrow.css}" />
@@ -14,16 +14,16 @@
 
     <header class="dashboard-page-header">
         <div class="page-title-group">
-            <h1 class="app-page-title" th:text="#{librarian.borrowDesk.heading}">Borrow Desk</h1>
-            <p class="app-page-description" th:text="#{librarian.borrowDesk.description}">Create loans and process requests.</p>
+            <h1 class="app-page-title">Quầy xử lý mượn sách</h1>
+            <p class="app-page-description">Lập phiếu tại quầy và xử lý các yêu cầu mượn, gia hạn, đặt trước của độc giả.</p>
         </div>
     </header>
 
     <div th:if="${successMessage}" class="app-alert app-alert--success mb-4" role="alert">
-        <span th:text="${successMessage}" th:remove="tag">Success message</span>
+        <span th:text="${successMessage}">Thông báo thành công</span>
     </div>
     <div th:if="${errorMessage}" class="app-alert app-alert--danger mb-4" role="alert">
-        <span th:text="${errorMessage}" th:remove="tag">Error message</span>
+        <span th:text="${errorMessage}">Thông báo lỗi</span>
     </div>
 
     <div class="borrow-workspace">
@@ -33,26 +33,26 @@
             <section class="borrow-panel borrow-queue-panel" aria-labelledby="borrowQueueTitle">
                 <div class="borrow-panel-header">
                     <div class="borrow-panel-heading">
-                        <h2 class="app-section-title" id="borrowQueueTitle"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.queue}">Processing Queue</span></h2>
-                        <p class="app-section-description" th:text="#{librarian.borrowDesk.queueHint}">Select a request to view details.</p>
+                        <h2 class="app-section-title" id="borrowQueueTitle"><i class="bi bi-inbox" aria-hidden="true"></i>Hàng đợi xử lý</h2>
+                        <p class="app-section-description">Chọn một yêu cầu để xem và xử lý chi tiết.</p>
                     </div>
                     <ul class="borrow-pill-tabs" id="requestTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="borrows-tab" data-bs-toggle="tab" data-bs-target="#borrows" type="button" role="tab" aria-controls="borrows" aria-selected="true">
-                                <i class="bi bi-cloud-arrow-up"></i> <span th:text="#{librarian.borrowDesk.loanRequests}">Loan Requests</span>
+                                <i class="bi bi-cloud-arrow-up"></i> Đơn mượn
                                 <span class="borrow-tab-badge" th:text="${#lists.size(pendingRequests)}">0</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="renewals-tab" data-bs-toggle="tab" data-bs-target="#renewals" type="button" role="tab" aria-controls="renewals" aria-selected="false">
-                                <i class="bi bi-arrow-repeat"></i> <span th:text="#{librarian.borrowDesk.renewals}">Renewals</span>
+                                <i class="bi bi-arrow-repeat"></i> Gia hạn
                                 <span class="borrow-tab-badge" th:text="${#lists.size(pendingRenewals)}">0</span>
                             </button>
                         </li>
 
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations" type="button" role="tab" aria-controls="reservations" aria-selected="false">
-                                <i class="bi bi-bookmark-star"></i> <span th:text="#{librarian.borrowDesk.reservations}">Reservations</span>
+                                <i class="bi bi-bookmark-star"></i> Đặt trước
                                 <span class="borrow-tab-badge" th:text="${#lists.size(activeReservations)}">0</span>
                             </button>
                         </li>
@@ -71,17 +71,17 @@
                                    th:classappend="${selectedRequest != null && selectedRequest.borrowId == req.borrowId} ? 'borrow-active-request-item' : ''"
                                   >
                                     <div class="borrow-request-heading">
-                                        <h3 class="borrow-request-name" th:text="${req.member.user.fullName}">Member Name</h3>
-                                        <time class="borrow-request-date" th:text="${#temporals.format(req.borrowDate, 'dd/MM/yyyy')}">Submitted date</time>
+                                        <h3 class="borrow-request-name" th:text="${req.member.user.fullName}">Tên Thành Viên</h3>
+                                        <time class="borrow-request-date" th:text="${#temporals.format(req.borrowDate, 'dd/MM/yyyy')}">Ngày gửi</time>
                                     </div>
                                     <div class="borrow-request-meta" th:text="${req.member.user.email}">Email</div>
                                     <div class="borrow-request-footer">
-                                        <span class="status-badge status-pending" th:text="#{status.pendingApproval}">Pending Approval</span>
-                                        <span class="borrow-request-link"><span th:text="#{common.details}">Details</span> <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                                        <span class="status-badge status-pending">Chờ duyệt</span>
+                                        <span class="borrow-request-link">Chi tiết <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
                                     </div>
                                 </a>
                                 <div th:if="${#lists.isEmpty(pendingRequests)}" class="app-empty-state borrow-empty-state">
-                                    <span th:text="#{librarian.borrowDesk.noLoanRequests}">No online loan requests.</span>
+                                    <span>Không có yêu cầu mượn trực tuyến nào.</span>
                                 </div>
                             </div>
                         </div>
@@ -95,17 +95,17 @@
                                    th:classappend="${selectedRenewal != null && selectedRenewal.borrowDetailId == ren.borrowDetailId} ? 'borrow-active-request-item' : ''"
                                   >
                                     <div class="borrow-request-heading">
-                                        <h3 class="borrow-request-name" th:text="${ren.borrow.member.user.fullName}">Member Name</h3>
-                                        <time class="borrow-request-date" th:text="${#temporals.format(ren.borrow.borrowDate, 'dd/MM/yyyy')}">Loan date</time>
+                                        <h3 class="borrow-request-name" th:text="${ren.borrow.member.user.fullName}">Tên Thành Viên</h3>
+                                        <time class="borrow-request-date" th:text="${#temporals.format(ren.borrow.borrowDate, 'dd/MM/yyyy')}">Ngày mượn</time>
                                     </div>
-                                    <div class="borrow-request-meta text-truncate" th:text="${ren.book.title}">Book title</div>
+                                    <div class="borrow-request-meta text-truncate" th:text="${ren.book.title}">Tên sách</div>
                                     <div class="borrow-request-footer">
-                                        <span class="status-badge status-renew-pending" th:text="#{librarian.borrowDesk.pendingRenewal}">Pending Renewal</span>
-                                        <span class="borrow-request-link"><span th:text="#{common.details}">Details</span> <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                                        <span class="status-badge status-renew-pending">Chờ gia hạn</span>
+                                        <span class="borrow-request-link">Chi tiết <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
                                     </div>
                                 </a>
                                 <div th:if="${#lists.isEmpty(pendingRenewals)}" class="app-empty-state borrow-empty-state">
-                                    <span th:text="#{librarian.borrowDesk.noRenewals}">No renewal requests.</span>
+                                    <span>Không có yêu cầu gia hạn nào.</span>
                                 </div>
                             </div>
                         </div>
@@ -120,17 +120,17 @@
                                    th:classappend="${selectedReservation != null && selectedReservation.reservationId == reserve.id} ? 'borrow-active-request-item' : ''"
                                   >
                                     <div class="borrow-request-heading">
-                                        <h3 class="borrow-request-name" th:text="${reserve.memberName}">Member Name</h3>
+                                        <h3 class="borrow-request-name" th:text="${reserve.memberName}">Trần Thị B</h3>
                                         <time class="borrow-request-date" th:text="${#temporals.format(reserve.bookingDate, 'dd/MM/yyyy')}">01/07/2026</time>
                                     </div>
-                                    <div class="borrow-request-meta text-truncate" th:text="${reserve.bookTitle}">Book title</div>
+                                    <div class="borrow-request-meta text-truncate" th:text="${reserve.bookTitle}">Tên sách</div>
                                     <div class="borrow-request-footer">
-                                        <span class="status-badge status-reservation-queue" th:text="#{librarian.borrowDesk.queuePosition(${reserve.queuePosition})}">Queue position: 1</span>
-                                        <span class="borrow-request-link"><span th:text="#{common.details}">Details</span> <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                                        <span class="status-badge status-reservation-queue" th:text="'Hàng đợi số: ' + ${reserve.queuePosition}">Vị trí: 1</span>
+                                        <span class="borrow-request-link">Chi tiết <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
                                     </div>
                                 </a>
                                 <div th:if="${#lists.isEmpty(activeReservations)}" class="app-empty-state borrow-empty-state">
-                                    <span th:text="#{librarian.borrowDesk.noReservations}">The reservation queue is empty.</span>
+                                    <span>Không có danh sách hàng đợi nào.</span>
                                 </div>
                             </div>
                         </div>
@@ -145,33 +145,33 @@
                 <div class="borrow-create-body">
                     <div class="borrow-create-heading">
                         <h2 class="app-section-title" id="borrowCreateTitle">
-                            <i class="bi bi-pencil-square" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.createAtDesk}">Create Loan at Desk</span>
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>Tạo phiếu mượn tại quầy
                         </h2>
-                        <p class="app-section-description" th:text="#{librarian.borrowDesk.createHint}">Enter the member and book barcode information.</p>
+                        <p class="app-section-description">Vui lòng nhập thông tin độc giả và mã vạch sách để tạo phiếu mượn mới.</p>
                     </div>
 
 
 
                     <form th:action="@{/librarian/borrow/review}" method="post" class="row g-3 borrow-create-form" id="offlineBorrowForm">
                         <div class="col-md-7">
-                            <label for="inlineMemberId" class="form-label borrow-form-label"><span th:text="#{librarian.borrowDesk.memberIdentifier}">Email or Phone Number</span> <span class="borrow-required" aria-hidden="true">*</span></label>
-                            <input type="text" id="inlineMemberId" name="memberIdentifier" class="form-control" th:placeholder="#{librarian.borrowDesk.memberPlaceholder}" required th:value="${billMemberIdentifier != null ? billMemberIdentifier : ''}" autocomplete="off" />
+                            <label for="inlineMemberId" class="form-label borrow-form-label">Email hoặc Số điện thoại <span class="borrow-required" aria-hidden="true">*</span></label>
+                            <input type="text" id="inlineMemberId" name="memberIdentifier" class="form-control" placeholder="09xxxx hoặc email@..." required th:value="${billMemberIdentifier != null ? billMemberIdentifier : ''}" autocomplete="off" />
                             <div id="memberInfoBox" class="borrow-member-info borrow-is-hidden" role="status"></div>
                         </div>
                         <div class="col-md-5">
                             <label for="inlineDays" class="form-label borrow-form-label">
-                                <span th:text="#{librarian.borrowDesk.loanDays}">Loan Period</span>
-                                <span class="borrow-limit-badge" th:text="#{librarian.borrowDesk.maximumDays(${maxBorrowDays})}">Maximum 14 days</span>
+                                Số ngày mượn
+                                <span class="borrow-limit-badge" th:text="'Tối đa ' + ${maxBorrowDays} + ' ngày'">Tối đa 14 ngày</span>
                             </label>
                             <input type="number" id="inlineDays" name="numberOfDays" class="form-control" th:value="${billDays != null ? billDays : maxBorrowDays}" min="1" th:max="${maxBorrowDays}" required />
                             <div id="dueDateBox" class="borrow-due-date" aria-live="polite"></div>
                         </div>
                         <div class="col-12">
-                            <label for="scannerInput" class="form-label borrow-form-label"><span th:text="#{librarian.borrowDesk.scanBarcode}">Scan Book Barcode</span> <span class="borrow-required" aria-hidden="true">*</span></label>
+                            <label for="scannerInput" class="form-label borrow-form-label">Quét mã vạch sách <span class="borrow-required" aria-hidden="true">*</span></label>
                             <div class="input-group borrow-scanner-group">
                                 <span class="input-group-text"><i class="bi bi-upc-scan" aria-hidden="true"></i></span>
-                                <input type="text" id="scannerInput" class="form-control" th:placeholder="#{librarian.borrowDesk.scanPlaceholder}" autocomplete="off" />
-                                <button class="borrow-secondary-button" type="button" id="btnAddBarcode" th:text="#{common.add}">Add</button>
+                                <input type="text" id="scannerInput" class="form-control" placeholder="Quét hoặc nhập mã vạch rồi ấn Enter..." autocomplete="off" />
+                                <button class="borrow-secondary-button" type="button" id="btnAddBarcode">Thêm</button>
                             </div>
                             <input type="hidden" id="inlineBarcodes" name="rawBarcodes" required th:value="${billRawBarcodes != null ? billRawBarcodes : ''}" />
                             
@@ -184,9 +184,9 @@
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th th:text="#{book.barcode}">Barcode</th>
-                                            <th th:text="#{book.title}">Book Title</th>
-                                            <th class="borrow-action-column" th:text="#{common.actions}">Actions</th>
+                                            <th>Mã vạch</th>
+                                            <th>Tên sách</th>
+                                            <th class="borrow-action-column">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -197,7 +197,7 @@
                         </div>
                         <div class="col-12 borrow-preview-actions">
                             <button type="submit" class="app-form-primary borrow-preview-button" id="btnPreviewBill">
-                                <i class="bi bi-file-text" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.preview}">Preview Loan</span>
+                                <i class="bi bi-file-text" aria-hidden="true"></i>Xem trước phiếu mượn
                             </button>
                         </div>
                     </form>
@@ -206,40 +206,40 @@
 
             <section th:if="${selectedRequest != null}" class="borrow-panel borrow-detail-panel" aria-labelledby="borrowRequestDetailTitle">
                 <div class="borrow-detail-header">
-                    <h2 class="app-section-title" id="borrowRequestDetailTitle"><i class="bi bi-file-earmark-text" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.loanDetails}">Loan Request Details</span></h2>
+                    <h2 class="app-section-title" id="borrowRequestDetailTitle"><i class="bi bi-file-earmark-text" aria-hidden="true"></i>Bảng thông tin mượn chi tiết</h2>
                     <div class="borrow-detail-header-actions">
-                        <span class="borrow-reference-badge" th:text="#{librarian.borrowDesk.requestCode(${selectedRequest.borrowId})}">Request code</span>
-                        <a th:href="@{/librarian/borrow/create}" class="app-icon-action" th:title="#{common.close}" th:aria-label="#{common.close}">
+                        <span class="borrow-reference-badge" th:text="'MÃ ĐƠN: BRW-' + ${selectedRequest.borrowId}">Mã đơn</span>
+                        <a th:href="@{/librarian/borrow/create}" class="app-icon-action" title="Đóng bảng thông tin" aria-label="Đóng bảng thông tin">
                             <i class="bi bi-x-lg" aria-hidden="true"></i>
                         </a>
                     </div>
                 </div>
                 <div class="borrow-detail-body">
-                    <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.memberInfo}">Member Information</h3>
+                    <h3 class="borrow-subsection-title">Thông tin độc giả</h3>
                     <div class="row g-3 borrow-info-grid">
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{user.fullName}">Full Name</span>
-                            <strong class="borrow-info-value borrow-info-value--prominent" th:text="${selectedRequest.member.user.fullName}">Member Name</strong>
+                            <span class="borrow-info-label">Họ và tên độc giả</span>
+                            <strong class="borrow-info-value borrow-info-value--prominent" th:text="${selectedRequest.member.user.fullName}">Nguyễn Văn A</strong>
                         </div>
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{user.phone}">Phone Number</span>
-                            <strong class="borrow-info-value" th:text="${selectedRequest.member.user.phone != null ? selectedRequest.member.user.phone : #messages.msg('common.notUpdated')}">Not updated</strong>
+                            <span class="borrow-info-label">Số điện thoại / Liên hệ</span>
+                            <strong class="borrow-info-value" th:text="${selectedRequest.member.user.phone != null ? selectedRequest.member.user.phone : 'Chưa cập nhật'}">0901234567</strong>
                         </div>
                     </div>
 
-                    <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.requestedBooks}">Requested Books</h3>
+                    <h3 class="borrow-subsection-title">Danh sách sách đăng ký mượn</h3>
                     <div class="app-table-wrap borrow-detail-table-wrap">
                         <table class="app-table borrow-detail-table">
                             <thead>
                             <tr>
-                                <th th:text="#{book.title}">Book Title</th>
-                                <th th:text="#{book.isbn}">ISBN</th>
-                                <th th:text="#{borrow.expectedDueDate}">Expected Due Date</th>
+                                <th>Tên Cuốn Sách</th>
+                                <th>Mã Định Danh (ISBN)</th>
+                                <th>Hạn Trả Dự Kiến</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:each="detail : ${requestDetails}">
-                                <td class="borrow-table-primary" th:text="${detail.book.title}">Book title</td>
+                                <td class="borrow-table-primary" th:text="${detail.book.title}">Tên cuốn sách</td>
                                 <td class="borrow-table-secondary" th:text="${detail.book.isbn}">ISBN-12345</td>
                                 <td th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">14/07/2026</td>
                             </tr>
@@ -249,14 +249,14 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" th:data-confirm-message="#{librarian.borrowDesk.rejectLoanConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
-                                <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
+                            <button type="button" class="borrow-danger-button" onclick="showConfirmModal('Bạn chắc chắn muốn Từ chối duyệt đơn mượn này?', this)">
+                                Từ chối đơn
                             </button>
                         </form>
 
                         <form th:action="@{/librarian/borrow/approve/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="app-form-primary" th:data-confirm-message="#{librarian.borrowDesk.approveLoanConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
-                                <span th:text="#{librarian.borrowDesk.approveLoan}">Approve Loan</span>
+                            <button type="button" class="app-form-primary" onclick="showConfirmModal('Xác nhận phê duyệt cấp sách vật lý tại quầy cho độc giả?', this)">
+                                Phê duyệt cấp sách
                             </button>
                         </form>
                     </div>
@@ -265,40 +265,40 @@
 
             <section th:if="${selectedRenewal != null}" class="borrow-panel borrow-detail-panel" aria-labelledby="borrowRenewalDetailTitle">
                 <div class="borrow-detail-header">
-                    <h2 class="app-section-title" id="borrowRenewalDetailTitle"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.renewalDetails}">Renewal Details</span></h2>
-                    <span class="borrow-reference-badge" th:text="#{librarian.borrowDesk.detailCode(${selectedRenewal.borrowDetailId})}">Detail code</span>
+                    <h2 class="app-section-title" id="borrowRenewalDetailTitle"><i class="bi bi-arrow-repeat" aria-hidden="true"></i>Bảng thông tin gia hạn chi tiết</h2>
+                    <span class="borrow-reference-badge" th:text="'MÃ CHI TIẾT: BDT-' + ${selectedRenewal.borrowDetailId}">Mã đơn</span>
                 </div>
                 <div class="borrow-detail-body">
-                    <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.memberAndBook}">Member and Book Information</h3>
+                    <h3 class="borrow-subsection-title">Thông tin độc giả &amp; cuốn sách</h3>
                     <div class="row g-3 borrow-info-grid">
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{user.fullName}">Full Name</span>
-                            <strong class="borrow-info-value borrow-info-value--prominent" th:text="${selectedRenewal.borrow.member.user.fullName}">Member Name</strong>
+                            <span class="borrow-info-label">Họ và tên độc giả</span>
+                            <strong class="borrow-info-value borrow-info-value--prominent" th:text="${selectedRenewal.borrow.member.user.fullName}">Nguyễn Văn A</strong>
                         </div>
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{book.title}">Book Title</span>
-                            <strong class="borrow-info-value" th:text="${selectedRenewal.book.title}">Book title</strong>
+                            <span class="borrow-info-label">Tên cuốn sách</span>
+                            <strong class="borrow-info-value" th:text="${selectedRenewal.book.title}">Tên sách</strong>
                         </div>
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{librarian.borrowDesk.currentDueDate}">Current Due Date</span>
+                            <span class="borrow-info-label">Hạn trả cũ</span>
                             <strong class="borrow-info-value borrow-semantic-text--danger" th:text="${#temporals.format(selectedRenewal.dueDate, 'dd/MM/yyyy')}">14/07/2026</strong>
                         </div>
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{librarian.borrowDesk.newDueDate}">New Due Date (7 additional days)</span>
+                            <span class="borrow-info-label">Hạn trả mới (dự kiến thêm 7 ngày)</span>
                             <strong class="borrow-info-value borrow-semantic-text--success" th:text="${#temporals.format(selectedRenewal.dueDate.plusDays(7), 'dd/MM/yyyy')}">21/07/2026</strong>
                         </div>
                     </div>
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/loan/renew/reject/{id}(id=${selectedRenewal.borrowDetailId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" th:data-confirm-message="#{librarian.borrowDesk.rejectRenewalConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
-                                <span th:text="#{librarian.borrowDesk.rejectRenewal}">Reject Renewal</span>
+                            <button type="button" class="borrow-danger-button" onclick="showConfirmModal('Bạn chắc chắn muốn TỪ CHỐI gia hạn cuốn sách này?', this)">
+                                Từ chối gia hạn
                             </button>
                         </form>
 
                         <form th:action="@{/librarian/loan/renew/approve/{id}(id=${selectedRenewal.borrowDetailId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="app-form-primary" th:data-confirm-message="#{librarian.borrowDesk.approveRenewalConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
-                                <span th:text="#{librarian.borrowDesk.approveRenewal}">Approve Renewal</span>
+                            <button type="button" class="app-form-primary" onclick="showConfirmModal('Xác nhận Phê duyệt gia hạn cho cuốn sách này?', this)">
+                                Duyệt gia hạn
                             </button>
                         </form>
                     </div>
@@ -308,40 +308,40 @@
             <!-- BẢNG 4: BẢNG THÔNG TIN CHI TIẾT ĐẶT TRƯỚC (selectedReservation) -->
             <section th:if="${selectedReservation != null}" class="borrow-panel borrow-detail-panel" aria-labelledby="borrowReservationDetailTitle">
                 <div class="borrow-detail-header">
-                    <h2 class="app-section-title" id="borrowReservationDetailTitle"><i class="bi bi-bookmark-star" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.reservationDetails}">Reservation Details</span></h2>
+                    <h2 class="app-section-title" id="borrowReservationDetailTitle"><i class="bi bi-bookmark-star" aria-hidden="true"></i>Chi tiết đặt trước</h2>
                     <div class="borrow-detail-header-actions">
-                        <span class="borrow-reference-badge" th:text="#{librarian.borrowDesk.reservationCode(${selectedReservation.reservationId})}">Reservation code</span>
-                        <a th:href="@{/librarian/borrow/create(tab='reservations')}" class="app-icon-action" th:title="#{common.close}" th:aria-label="#{common.close}">
+                        <span class="borrow-reference-badge" th:text="'MÃ ĐẶT TRƯỚC: RSV-' + ${selectedReservation.reservationId}">Mã đơn</span>
+                        <a th:href="@{/librarian/borrow/create(tab='reservations')}" class="app-icon-action" title="Đóng bảng thông tin" aria-label="Đóng bảng thông tin">
                             <i class="bi bi-x-lg" aria-hidden="true"></i>
                         </a>
                     </div>
                 </div>
                 <div class="borrow-detail-body">
-                    <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.memberInfo}">Member Information</h3>
+                    <h3 class="borrow-subsection-title">Thông tin độc giả</h3>
                     <div class="row g-3 borrow-info-grid">
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{user.fullName}">Full Name</span>
-                            <strong class="borrow-info-value borrow-info-value--prominent" th:text="${selectedReservation.member.user.fullName}">Member Name</strong>
+                            <span class="borrow-info-label">Họ và tên độc giả</span>
+                            <strong class="borrow-info-value borrow-info-value--prominent" th:text="${selectedReservation.member.user.fullName}">Nguyễn Văn A</strong>
                         </div>
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{user.phone}">Phone Number</span>
-                            <strong class="borrow-info-value" th:text="${selectedReservation.member.user.phone != null ? selectedReservation.member.user.phone : #messages.msg('common.notUpdated')}">Not updated</strong>
+                            <span class="borrow-info-label">Số điện thoại / Liên hệ</span>
+                            <strong class="borrow-info-value" th:text="${selectedReservation.member.user.phone != null ? selectedReservation.member.user.phone : 'Chưa cập nhật'}">0901234567</strong>
                         </div>
                     </div>
 
-                    <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.reservedBook}">Reserved Book</h3>
+                    <h3 class="borrow-subsection-title">Sách đăng ký đặt trước</h3>
                     <div class="app-table-wrap borrow-detail-table-wrap">
                         <table class="app-table borrow-detail-table">
                             <thead>
                             <tr>
-                                <th th:text="#{book.title}">Book Title</th>
-                                <th th:text="#{book.isbn}">ISBN</th>
-                                <th th:text="#{reservation.date}">Reservation Date</th>
+                                <th>Tên Cuốn Sách</th>
+                                <th>Mã Định Danh (ISBN)</th>
+                                <th>Ngày Đặt</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr>
-                                <td class="borrow-table-primary" th:text="${selectedReservation.book.title}">Book title</td>
+                                <td class="borrow-table-primary" th:text="${selectedReservation.book.title}">Tên cuốn sách</td>
                                 <td class="borrow-table-secondary" th:text="${selectedReservation.book.isbn}">ISBN-12345</td>
                                 <td th:text="${#temporals.format(selectedReservation.reservationDate, 'dd/MM/yyyy')}">14/07/2026</td>
                             </tr>
@@ -351,14 +351,14 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/reservations/reject/{id}(id=${selectedReservation.reservationId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" th:data-confirm-message="#{librarian.borrowDesk.rejectReservationConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
-                                <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
+                            <button type="button" class="borrow-danger-button" onclick="showConfirmModal('Bạn chắc chắn muốn Từ chối đơn đặt trước này?', this)">
+                                Từ chối đơn
                             </button>
                         </form>
 
                         <form th:action="@{/librarian/reservations/approve/{id}(id=${selectedReservation.reservationId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="app-form-primary" th:data-confirm-message="#{librarian.borrowDesk.approveReservationConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
-                                <span th:text="#{common.approve}">Approve</span>
+                            <button type="button" class="app-form-primary" onclick="showConfirmModal('Xác nhận Phê duyệt (Cấp mượn) cho đơn đặt trước này?', this)">
+                                Phê duyệt
                             </button>
                         </form>
                     </div>
@@ -373,17 +373,17 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title" id="classicConfirmModalLabel" th:text="#{common.confirmAction}">Confirm Action</h2>
-                    <button type="button" class="app-icon-action" data-bs-dismiss="modal" th:aria-label="#{common.close}">
+                    <h2 class="modal-title" id="classicConfirmModalLabel">Xác nhận thao tác</h2>
+                    <button type="button" class="app-icon-action" data-bs-dismiss="modal" aria-label="Đóng">
                         <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p id="confirmModalMessage" class="borrow-confirm-message" th:text="#{common.confirmQuestion}">Are you sure?</p>
+                    <p id="confirmModalMessage" class="borrow-confirm-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="borrow-secondary-button" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                    <button type="button" class="app-form-primary" onclick="submitConfirmModal()" th:text="#{common.confirm}">Confirm</button>
+                    <button type="button" class="borrow-secondary-button" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="app-form-primary" onclick="submitConfirmModal()">Đồng ý</button>
                 </div>
             </div>
         </div>
@@ -432,35 +432,35 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title" id="reviewBillModalLabel" th:text="#{librarian.borrowDesk.reviewTitle}">Loan Confirmation</h2>
-                    <button type="button" class="app-icon-action" data-bs-dismiss="modal" th:aria-label="#{common.close}">
+                    <h2 class="modal-title" id="reviewBillModalLabel">Phiếu xác nhận mượn sách</h2>
+                    <button type="button" class="app-icon-action" data-bs-dismiss="modal" aria-label="Đóng">
                         <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>
                 </div>
                 <div class="modal-body" th:if="${showBillPopup}">
                     <!-- Thông tin Member -->
                     <div class="borrow-review-member">
-                        <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.borrowerInfo}">Borrower Information</h3>
+                        <h3 class="borrow-subsection-title">Thông tin người mượn</h3>
                         <div class="borrow-review-member-name">
                             <i class="bi bi-person-check borrow-semantic-text--success" aria-hidden="true"></i>
-                            <strong th:text="${billMember.user.fullName}">Name</strong>
+                            <strong th:text="${billMember.user.fullName}">Tên</strong>
                         </div>
                         <div class="borrow-review-contact">
-                            <span><i class="bi bi-telephone" aria-hidden="true"></i><span th:text="${billMember.user.phone}">Phone</span></span>
+                            <span><i class="bi bi-telephone" aria-hidden="true"></i><span th:text="${billMember.user.phone}">SĐT</span></span>
                             <span><i class="bi bi-envelope" aria-hidden="true"></i><span th:text="${billMember.user.email}">Email</span></span>
                         </div>
                     </div>
 
                     <!-- Danh sách Sách -->
                     <div class="borrow-review-books">
-                        <h3 class="borrow-subsection-title" th:utext="#{librarian.borrowDesk.borrowList(${billDays})}">Loan List (14 days)</h3>
+                        <h3 class="borrow-subsection-title">Danh sách mượn (<span th:text="${billDays}">14</span> ngày)</h3>
                         <ul class="borrow-review-list">
                             <li class="borrow-review-item" th:each="item : ${billBookItems}">
                                 <div class="borrow-review-book-copy">
-                                    <strong th:text="${item.book.title}">Book title</strong>
-                                    <span><span th:text="#{book.barcode}">Barcode</span>: <span th:text="${item.barcode}">BC001</span></span>
+                                    <strong th:text="${item.book.title}">Tên sách</strong>
+                                    <span>Mã vạch: <span th:text="${item.barcode}">BC001</span></span>
                                 </div>
-                                <span class="status-badge status-approved" th:text="#{status.ready}">Ready</span>
+                                <span class="status-badge status-approved">Sẵn sàng</span>
                             </li>
                         </ul>
                     </div>
@@ -474,14 +474,14 @@
                     </form>
                 </div>
                 <div class="modal-footer" th:if="${showBillPopup}">
-                    <button type="button" class="borrow-secondary-button" data-bs-dismiss="modal" th:text="#{common.edit}">Edit</button>
-                    <button type="submit" class="app-form-primary" form="finalCreateForm" th:text="#{librarian.borrowDesk.confirmCreate}">Create Loan</button>
+                    <button type="button" class="borrow-secondary-button" data-bs-dismiss="modal">Sửa lại</button>
+                    <button type="submit" class="app-form-primary" form="finalCreateForm">Xác nhận tạo phiếu</button>
                 </div>
             </div>
         </div>
     </div>
 
-<script th:inline="javascript">
+<script>
     document.addEventListener("DOMContentLoaded", function() {
         const memberInput = document.getElementById("inlineMemberId");
         const memberInfoBox = document.getElementById("memberInfoBox");
@@ -493,25 +493,6 @@
         const offlineBorrowForm = document.getElementById("offlineBorrowForm");
         const daysInput = document.getElementById("inlineDays");
         const dueDateBox = document.getElementById("dueDateBox");
-        const borrowDeskI18n = {
-            expectedDueDate: /*[[#{borrow.expectedDueDate}]]*/ 'Expected due date',
-            active: /*[[#{status.active}]]*/ 'Active',
-            blocked: /*[[#{status.blocked}]]*/ 'Blocked',
-            status: /*[[#{common.status}]]*/ 'Status',
-            currentlyBorrowed: /*[[#{librarian.borrowDesk.currentlyBorrowed}]]*/ 'Currently borrowed',
-            booksUnit: /*[[#{book.unit}]]*/ 'books',
-            memberNotFound: /*[[#{librarian.borrowDesk.memberNotFound}]]*/ 'No valid member found.',
-            selectMemberFirst: /*[[#{librarian.borrowDesk.selectMemberFirst}]]*/ 'Select a valid member before scanning books.',
-            duplicateBook: /*[[#{librarian.borrowDesk.duplicateBook}]]*/ 'This book has already been scanned.',
-            limitExceeded: /*[[#{librarian.borrowDesk.limitExceeded}]]*/ 'The loan limit has been reached.',
-            unavailableBook: /*[[#{librarian.borrowDesk.unavailableBook}]]*/ 'The book is unavailable.',
-            barcodeNotFound: /*[[#{librarian.borrowDesk.barcodeNotFound}]]*/ 'Barcode not found.',
-            lookupFailed: /*[[#{librarian.borrowDesk.lookupFailed}]]*/ 'Book lookup failed.',
-            coverAlt: /*[[#{book.coverAlt}]]*/ 'Book cover',
-            removeBook: /*[[#{librarian.borrowDesk.removeBook}]]*/ 'Remove book from loan',
-            scanRequired: /*[[#{librarian.borrowDesk.scanRequired}]]*/ 'Scan at least one book barcode.',
-            validMemberRequired: /*[[#{librarian.borrowDesk.validMemberRequired}]]*/ 'Verify a valid member before previewing the loan.'
-        };
         
         let scannedBarcodes = [];
         let maxLimit = 0;
@@ -527,7 +508,7 @@
                     const dd = String(today.getDate()).padStart(2, '0');
                     const mm = String(today.getMonth() + 1).padStart(2, '0');
                     const yyyy = today.getFullYear();
-                    dueDateBox.innerHTML = `<i class="bi bi-calendar-check" aria-hidden="true"></i>${borrowDeskI18n.expectedDueDate}: <strong class="borrow-due-date-value">${dd}/${mm}/${yyyy}</strong>`;
+                    dueDateBox.innerHTML = `<i class="bi bi-calendar-check" aria-hidden="true"></i>Ngày trả dự kiến: <strong class="borrow-due-date-value">${dd}/${mm}/${yyyy}</strong>`;
                 } else {
                     dueDateBox.innerHTML = "";
                 }
@@ -580,15 +561,15 @@
                         memberFound = true;
                         maxLimit = data.maxBorrowLimit;
                         currentBorrowed = data.currentBorrowCount;
-                        let statusHtml = data.status === 'Active' ? `<span class="borrow-semantic-text--success">${borrowDeskI18n.active}</span>` : `<span class="borrow-semantic-text--danger">${borrowDeskI18n.blocked}</span>`;
+                        let statusHtml = data.status === 'Active' ? `<span class="borrow-semantic-text--success">Hoạt động</span>` : `<span class="borrow-semantic-text--danger">Bị khóa</span>`;
                         memberInfoBox.innerHTML = `
                             <strong>${data.fullName}</strong> (${data.memberLevel})<br/>
-                            ${borrowDeskI18n.status}: ${statusHtml}<br/>
-                            ${borrowDeskI18n.currentlyBorrowed}: <strong>${currentBorrowed} / ${maxLimit}</strong> ${borrowDeskI18n.booksUnit}
+                            Trạng thái: ${statusHtml}<br/>
+                            Đang mượn: <strong>${currentBorrowed} / ${maxLimit}</strong> cuốn
                         `;
                         memberInfoBox.classList.remove("borrow-is-hidden");
                     } else {
-                        memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>${borrowDeskI18n.memberNotFound}</span>`;
+                        memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Không tìm thấy độc giả hợp lệ!</span>`;
                         memberInfoBox.classList.remove("borrow-is-hidden");
                     }
                 });
@@ -603,18 +584,18 @@
                 if (!barcode) return;
 
                 if (!memberFound) {
-                    showError(borrowDeskI18n.selectMemberFirst);
+                    showError("Vui lòng nhập và chọn Độc giả hợp lệ trước khi quét sách!");
                     return;
                 }
 
                 if (scannedBarcodes.includes(barcode)) {
-                    showError(borrowDeskI18n.duplicateBook);
+                    showError("Sách này đã được quét rồi!");
                     scannerInput.value = "";
                     return;
                 }
 
                 if (currentBorrowed + scannedBarcodes.length >= maxLimit) {
-                    showError(`${borrowDeskI18n.limitExceeded} (${currentBorrowed}/${maxLimit} ${borrowDeskI18n.booksUnit})`);
+                    showError(`Vượt quá giới hạn! Độc giả này chỉ được mượn tối đa ${maxLimit} cuốn (hiện đã mượn ${currentBorrowed}).`);
                     scannerInput.value = "";
                     return;
                 }
@@ -629,15 +610,15 @@
                                     addBookToList(book.barcode, book.title, book.coverImageUrl);
                                     scannerInput.value = "";
                                 } else {
-                                    showError(`${borrowDeskI18n.unavailableBook} (${borrowDeskI18n.status}: ${book.status})`);
+                                    showError(`Sách hiện không khả dụng (Trạng thái: ${book.status}).`);
                                 }
                             } else {
-                                showError(borrowDeskI18n.barcodeNotFound);
+                                showError("Mã vạch không tồn tại trong hệ thống.");
                             }
                         }
                     })
                     .catch(err => {
-                        showError(borrowDeskI18n.lookupFailed);
+                        showError("Có lỗi xảy ra khi tra cứu sách.");
                     });
             }
 
@@ -660,7 +641,7 @@
                 const image = document.createElement("img");
                 image.className = "borrow-scanned-book-cover";
                 image.src = coverImageUrl;
-                image.alt = `${borrowDeskI18n.coverAlt}: ${title}`;
+                image.alt = `Bìa sách ${title}`;
                 image.loading = "lazy";
                 image.addEventListener("error", function() {
                     image.replaceWith(createBookCover("", title));
@@ -710,8 +691,8 @@
                 const removeButton = document.createElement("button");
                 removeButton.type = "button";
                 removeButton.className = "app-icon-action app-icon-action--delete";
-                removeButton.title = borrowDeskI18n.removeBook;
-                removeButton.setAttribute("aria-label", borrowDeskI18n.removeBook);
+                removeButton.title = "Bỏ sách khỏi phiếu";
+                removeButton.setAttribute("aria-label", "Bỏ sách khỏi phiếu");
                 removeButton.addEventListener("click", function() {
                     removeBook(removeButton, barcode);
                 });
@@ -759,10 +740,10 @@
                 
                 if (scannedBarcodes.length === 0) {
                     e.preventDefault();
-                    showError(borrowDeskI18n.scanRequired);
+                    showError("Vui lòng quét ít nhất một mã vạch sách!");
                 } else if (!memberFound) {
                     e.preventDefault();
-                    scanErrorBox.textContent = borrowDeskI18n.validMemberRequired;
+                    scanErrorBox.textContent = "Vui lòng kiểm tra lại thông tin Độc giả hợp lệ trước khi xem trước phiếu mượn!";
                     scanErrorBox.classList.remove("borrow-is-hidden");
                 }
             });

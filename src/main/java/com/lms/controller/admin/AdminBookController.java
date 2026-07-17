@@ -2,7 +2,6 @@ package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
-import com.lms.controller.LocalizedControllerSupport;
 import com.lms.service.FileUploadService;
 import com.lms.service.InventoryService;
 import com.lms.service.LibrarianDashboardService;
@@ -21,7 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /** Admin copy of librarian book and shelf management. */
 @Controller
 @RequestMapping("/admin")
-public class AdminBookController extends LocalizedControllerSupport {
+public class AdminBookController {
 
     private static final String BOOKS_REDIRECT = "redirect:/admin/books";
 
@@ -64,7 +63,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             String coverImageUrl = storeCover(coverImage);
             inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId,
                     bookCondition, author);
-            success(redirectAttributes, message("backend.inventory.bookAdded"));
+            success(redirectAttributes, "Thêm sách mới thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -82,7 +81,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         try {
             inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId,
                     description, author);
-            success(redirectAttributes, message("backend.inventory.bookUpdated"));
+            success(redirectAttributes, "Cập nhật sách thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -93,7 +92,7 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String deleteBook(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.removeBook(id);
-            success(redirectAttributes, message("backend.inventory.bookDeleted"));
+            success(redirectAttributes, "Xóa sách thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -107,10 +106,10 @@ public class AdminBookController extends LocalizedControllerSupport {
         try {
             if ("genre".equals(type)) {
                 inventoryService.addGenre(categoryId, name);
-                success(redirectAttributes, message("backend.inventory.genreAdded"));
+                success(redirectAttributes, "Thêm thể loại thành công.");
             } else {
                 inventoryService.addCategory(name);
-                success(redirectAttributes, message("backend.inventory.categoryAdded"));
+                success(redirectAttributes, "Thêm danh mục thành công.");
             }
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
@@ -123,7 +122,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             inventoryService.updateCategory(id, name);
-            success(redirectAttributes, message("backend.inventory.categoryUpdated"));
+            success(redirectAttributes, "Cập nhật danh mục thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -134,7 +133,7 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.deleteCategory(id);
-            success(redirectAttributes, message("backend.inventory.categoryDeleted"));
+            success(redirectAttributes, "Xóa danh mục thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -146,7 +145,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             @RequestParam(required = false) Integer categoryId, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.updateGenre(id, name, categoryId);
-            success(redirectAttributes, message("backend.inventory.genreUpdated"));
+            success(redirectAttributes, "Cập nhật thể loại thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -157,7 +156,7 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String deleteGenre(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.deleteGenre(id);
-            success(redirectAttributes, message("backend.inventory.genreDeleted"));
+            success(redirectAttributes, "Xóa thể loại thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -168,7 +167,8 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String audit(RedirectAttributes redirectAttributes) {
         try {
             var summary = inventoryService.performInventoryAudit();
-            success(redirectAttributes, message("backend.inventory.auditCompleted",
+            success(redirectAttributes, String.format(
+                    "Kiểm kê hoàn tất: Available=%d, Borrowed=%d, Lost=%d, Damaged=%d, Disposed=%d.",
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
                     summary.getOrDefault("Disposed", 0L)));
@@ -183,7 +183,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             @RequestParam(required = false) String location, RedirectAttributes redirectAttributes) {
         try {
             storageService.addStorageLocation(shelfName, location);
-            success(redirectAttributes, message("backend.storage.added"));
+            success(redirectAttributes, "Thêm vị trí lưu trữ thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -195,7 +195,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             @RequestParam(required = false) String location, RedirectAttributes redirectAttributes) {
         try {
             storageService.updateStorageLocation(id, shelfName, location);
-            success(redirectAttributes, message("backend.storage.updated"));
+            success(redirectAttributes, "Cập nhật vị trí lưu trữ thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -206,7 +206,7 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String deleteShelf(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             storageService.removeStorageLocation(id);
-            success(redirectAttributes, message("backend.storage.deleted"));
+            success(redirectAttributes, "Xóa vị trí lưu trữ thành công.");
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }

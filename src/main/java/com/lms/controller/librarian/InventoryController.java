@@ -1,6 +1,5 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
-import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.service.FileUploadService;
 import com.lms.service.InventoryService;
@@ -15,7 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 @RequestMapping("/librarian/inventory")
-public class InventoryController extends LocalizedControllerSupport {
+public class InventoryController {
 
     private final InventoryService inventoryService;
     private final FileUploadService fileUploadService;
@@ -53,7 +52,7 @@ public class InventoryController extends LocalizedControllerSupport {
             }
             inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId,
                     bookCondition, author);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.bookAdded"));
+            redirectAttributes.addFlashAttribute("success", "Thêm sách mới thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -78,7 +77,7 @@ public class InventoryController extends LocalizedControllerSupport {
             }
             inventoryService.updateBook(id, title, isbn, genreId, status, coverImageUrl, shelfId,
                     description, author);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.bookUpdated"));
+            redirectAttributes.addFlashAttribute("success", "Cập nhật sách thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -89,7 +88,7 @@ public class InventoryController extends LocalizedControllerSupport {
     public String removeBook(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.removeBook(id);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.bookDeleted"));
+            redirectAttributes.addFlashAttribute("success", "Xóa sách thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -102,7 +101,7 @@ public class InventoryController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             inventoryService.updateBookStatus(id, status);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.bookStatusUpdated"));
+            redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sách thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -122,10 +121,10 @@ public class InventoryController extends LocalizedControllerSupport {
         try {
             if ("genre".equals(type)) {
                 inventoryService.addGenre(categoryId, name);
-                redirectAttributes.addFlashAttribute("success", message("backend.inventory.genreAdded"));
+                redirectAttributes.addFlashAttribute("success", "Thêm thể loại thành công.");
             } else {
                 inventoryService.addCategory(name);
-                redirectAttributes.addFlashAttribute("success", message("backend.inventory.categoryAdded"));
+                redirectAttributes.addFlashAttribute("success", "Thêm danh mục thành công.");
             }
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -139,7 +138,7 @@ public class InventoryController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             inventoryService.updateCategory(id, name);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.categoryUpdated"));
+            redirectAttributes.addFlashAttribute("success", "Cập nhật danh mục thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -153,7 +152,7 @@ public class InventoryController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             inventoryService.updateGenre(id, name, categoryId);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.genreUpdated"));
+            redirectAttributes.addFlashAttribute("success", "Cập nhật thể loại thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -164,7 +163,7 @@ public class InventoryController extends LocalizedControllerSupport {
     public String deleteGenre(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.deleteGenre(id);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.genreDeleted"));
+            redirectAttributes.addFlashAttribute("success", "Xóa thể loại thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -175,7 +174,7 @@ public class InventoryController extends LocalizedControllerSupport {
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.deleteCategory(id);
-            redirectAttributes.addFlashAttribute("success", message("backend.inventory.categoryDeleted"));
+            redirectAttributes.addFlashAttribute("success", "Xóa danh mục thành công.");
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -192,7 +191,7 @@ public class InventoryController extends LocalizedControllerSupport {
         try {
             var summary = inventoryService.performInventoryAudit();
             redirectAttributes.addFlashAttribute("success",
-                    message("backend.inventory.auditCompleted",
+                    String.format("Kiểm kê hoàn tất: Available=%d, Borrowed=%d, Lost=%d, Damaged=%d, Disposed=%d.",
                             summary.getOrDefault("Available", 0L),
                             summary.getOrDefault("Borrowed", 0L),
                             summary.getOrDefault("Lost", 0L),

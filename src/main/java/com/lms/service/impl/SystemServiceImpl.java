@@ -12,8 +12,6 @@ import com.lms.repository.SystemLogRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.service.SystemService;
 import com.lms.service.AuditLogService;
-import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -31,9 +29,6 @@ import java.util.Map;
  */
 @Service
 public class SystemServiceImpl implements SystemService {
-
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final SystemSettingRepository systemSettingRepository;
     private final SystemLogRepository systemLogRepository;
@@ -150,78 +145,78 @@ public class SystemServiceImpl implements SystemService {
                                         Integer bookDisposalConditionThreshold,
                                         BigDecimal depositAmount) {
 
-        validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
-        validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
+        validatePositive(maxBorrowDays, "Số ngày mượn tối đa phải lớn hơn 0.");
+        validatePositive(maxRenewalDays, "Số ngày gia hạn tối đa phải lớn hơn 0.");
         validateAndUpdateTiers(tierBorrowLimits, tierSpendingConditions);
-        validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
-        validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
-        validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
-        validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
-        validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
-        validatePercentage(bookDisposalConditionThreshold, messages.get("backend.settings.disposalThresholdRange"));
-        validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
+        validateZeroOrPositive(borrowFeePerBook, "Phí mượn sách không được âm.");
+        validateZeroOrPositive(finePerDay, "Phí phạt quá hạn không được âm.");
+        validateZeroOrPositive(damageCompensationAmount, "Phí bồi thường không được âm.");
+        validatePercentage(damageCompensationThreshold, "Ngưỡng hư hỏng phải nằm trong khoảng 0-100%.");
+        validateZeroOrPositive(overdueViolationLockLimit, "Số lần quá hạn trước khi khóa không được âm.");
+        validatePercentage(bookDisposalConditionThreshold, "Ngưỡng thanh lý sách phải nằm trong khoảng 0-100%.");
+        validateZeroOrPositive(depositAmount, "Tiền cọc không được âm.");
 
         saveOrUpdateSetting("Max_Borrow_Days",
                 String.valueOf(maxBorrowDays),
-                messages.get("backend.settings.description.maxBorrowDays"));
+                "Số ngày mượn sách tối đa tiêu chuẩn");
 
         saveOrUpdateSetting("Max_Renewal_Days",
                 String.valueOf(maxRenewalDays),
-                messages.get("backend.settings.description.maxRenewalDays"));
+                "Số ngày gia hạn tối đa");
 
         saveOrUpdateSetting("Max_Books_Per_Member",
                 String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
-                messages.get("backend.settings.description.maxBooks"));
+                "Giới hạn mượn lớn nhất trong các hạng thành viên");
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
-                messages.get("backend.settings.description.borrowFee"));
+                "Phí mượn tiêu chuẩn cho mỗi quyển sách mỗi ngày");
 
         saveOrUpdateSetting("Fine_Per_Day",
                 finePerDay.toPlainString(),
-                messages.get("backend.settings.description.finePerDay"));
+                "Phí phạt trễ hạn tính theo ngày cho mỗi cuốn sách");
 
         saveOrUpdateSetting("Damage_Compensation_Amount",
                 damageCompensationAmount.toPlainString(),
-                messages.get("backend.settings.description.compensation"));
+                "Phí bồi thường khi sách hư hỏng nặng");
 
         saveOrUpdateSetting("Damage_Compensation_Threshold",
                 String.valueOf(damageCompensationThreshold),
-                messages.get("backend.settings.description.damageThreshold"));
+                "Ngưỡng phần trăm hư hỏng để tính phí bồi thường");
 
         saveOrUpdateSetting("Overdue_Violation_Lock_Limit",
                 String.valueOf(overdueViolationLockLimit),
-                messages.get("backend.settings.description.overdueLockLimit"));
+                "Số lần quá hạn tối đa trước khi khóa tài khoản thành viên");
 
         saveOrUpdateSetting("Book_Disposal_Condition_Threshold",
                 String.valueOf(bookDisposalConditionThreshold),
-                messages.get("backend.settings.description.disposalThreshold"));
+                "Ngưỡng tình trạng sách cho phép thanh lý");
 
         saveOrUpdateSetting("Deposit_Amount",
                 depositAmount.toPlainString(),
-                messages.get("backend.settings.description.deposit"));
+                "Tiền cọc đặt trước một quyển sách");
 
         auditLogService.log(
                 ActionType.UPDATE_SETTINGS,
-                messages.get("backend.settings.audit.updated"));
+                "Cập nhật chính sách mượn/trả, phí phạt và cấu hình hạng thành viên.");
     }
 
     private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits,
                                         Map<Integer, BigDecimal> tierSpendingConditions) {
         List<MembershipTier> tiers = getMembershipTiers();
         if (tiers.isEmpty()) {
-            throw new ValidationException(messages.get("backend.settings.noTiers"));
+            throw new ValidationException("Chưa có hạng thành viên để cấu hình.");
         }
 
         for (MembershipTier tier : tiers) {
             Integer borrowLimit = tierBorrowLimits == null ? null : tierBorrowLimits.get(tier.getTierId());
             validatePositive(borrowLimit,
-                    messages.get("backend.settings.tierBorrowLimitPositive", tier.getTierName()));
+                    "Số sách tối đa của hạng " + tier.getTierName() + " phải lớn hơn 0.");
             BigDecimal spendingCondition = tierSpendingConditions == null
                     ? null
                     : tierSpendingConditions.get(tier.getTierId());
             validateZeroOrPositive(spendingCondition,
-                    messages.get("backend.settings.tierSpendingNonNegative", tier.getTierName()));
+                    "Mức chi tiêu của hạng " + tier.getTierName() + " không được âm.");
             tier.setBorrowLimit(borrowLimit);
             tier.setCondition(spendingCondition);
         }

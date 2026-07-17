@@ -8,8 +8,6 @@ import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.service.FileUploadService;
 import com.lms.service.ProfileService;
-import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
@@ -21,9 +19,6 @@ import java.util.Optional;
 
 @Service
 public class ProfileServiceImpl implements ProfileService {
-
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
     private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
@@ -57,7 +52,7 @@ public class ProfileServiceImpl implements ProfileService {
         if (staffAccount.isPresent()) {
             return staffAccount.get().getStaff().getUser();
         }
-        throw new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username));
+        throw new ResourceNotFoundException("Account not found for: " + username);
     }
 
     @Override
@@ -87,35 +82,35 @@ public class ProfileServiceImpl implements ProfileService {
     private String validateFullName(String fullNameValue) {
         String fullName = fullNameValue == null ? "" : fullNameValue.trim();
         if (fullName.isEmpty()) {
-            throw new ValidationException(messages.get("validation.fullNameRequired"));
+            throw new ValidationException("Họ và tên không được để trống!");
         }
         if (fullName.length() > 50) {
-            throw new ValidationException(messages.get("validation.fullNameMax"));
+            throw new ValidationException("Họ tên không được vượt quá 50 ký tự.");
         }
         if (!fullName.matches(FULL_NAME_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameLetters"));
+            throw new ValidationException("Họ tên chỉ được chứa chữ cái và khoảng trắng.");
         }
         if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameWords"));
+            throw new ValidationException("Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
         }
         if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameTriple"));
+            throw new ValidationException("Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
         }
         if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameRepeated"));
+            throw new ValidationException("Họ tên không được chỉ gồm một ký tự lặp lại.");
         }
         return fullName;
     }
 
     private void validateAndSetEmail(User user, String email) {
         if (email == null || email.trim().isEmpty()) {
-            throw new ValidationException(messages.get("validation.emailRequired"));
+            throw new ValidationException("Email không được để trống!");
         }
         if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new ValidationException(messages.get("validation.email"));
+            throw new ValidationException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
         if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
-            throw new ConflictException(messages.get("backend.account.emailUsed"));
+            throw new ConflictException("Email đã được sử dụng bởi người dùng khác!");
         }
         user.setEmail(email);
     }
@@ -123,10 +118,10 @@ public class ProfileServiceImpl implements ProfileService {
     private void validateAndSetPhone(User user, String phone) {
         if (phone != null && !phone.trim().isEmpty()) {
             if (!phone.matches("^(0|\\+84)\\d{9}$")) {
-                throw new ValidationException(messages.get("backend.profile.phoneFormat"));
+                throw new ValidationException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
             }
             if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
-                throw new ConflictException(messages.get("backend.account.phoneUsed"));
+                throw new ConflictException("Số điện thoại đã được sử dụng bởi người dùng khác!");
             }
             user.setPhone(phone);
         } else if (phone != null) {
@@ -138,17 +133,17 @@ public class ProfileServiceImpl implements ProfileService {
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
         if (newPassword == null || newPassword.length() < 6) {
-            throw new ValidationException(messages.get("validation.passwordMin"));
+            throw new ValidationException("Mật khẩu mới phải có ít nhất 6 ký tự!");
         }
         
         Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
         if (memberAccount.isPresent()) {
             MemberAccount account = memberAccount.get();
             if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new ValidationException(messages.get("backend.profile.oldPasswordIncorrect"));
+                throw new ValidationException("Mật khẩu cũ không chính xác!");
             }
             if (oldPassword.equals(newPassword)) {
-                throw new ValidationException(messages.get("backend.profile.newPasswordSame"));
+                throw new ValidationException("Mật khẩu mới không được trùng với mật khẩu cũ!");
             }
             account.setPasswordHash(passwordEncoder.encode(newPassword));
             memberAccountRepository.save(account);
@@ -159,16 +154,16 @@ public class ProfileServiceImpl implements ProfileService {
         if (staffAccount.isPresent()) {
             StaffAccount account = staffAccount.get();
             if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new ValidationException(messages.get("backend.profile.oldPasswordIncorrect"));
+                throw new ValidationException("Mật khẩu cũ không chính xác!");
             }
             if (oldPassword.equals(newPassword)) {
-                throw new ValidationException(messages.get("backend.profile.newPasswordSame"));
+                throw new ValidationException("Mật khẩu mới không được trùng với mật khẩu cũ!");
             }
             account.setPasswordHash(passwordEncoder.encode(newPassword));
             staffAccountRepository.save(account);
             return;
         }
 
-        throw new ResourceNotFoundException(messages.get("backend.account.notFound"));
+        throw new ResourceNotFoundException("Không tìm thấy tài khoản!");
     }
 }

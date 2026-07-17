@@ -25,9 +25,7 @@ import com.lms.repository.StaffRepository;
 import com.lms.repository.UserRepository;
 import com.lms.service.AccountService;
 import com.lms.service.AuditLogService;
-import com.lms.service.LocalizedMessageService;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -48,9 +46,6 @@ import java.util.Map;
  */
 @Service
 public class AccountServiceImpl implements AccountService {
-
-    @Autowired
-    private LocalizedMessageService localizedMessageService;
 
     private static final int SYSTEM_ADMIN_ACCOUNT_ID = 1;
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
@@ -136,12 +131,12 @@ public class AccountServiceImpl implements AccountService {
                     .filter(tier -> "Regular".equalsIgnoreCase(tier.getTierName()))
                     .findFirst()
                     .orElseThrow(() -> new AccountFormValidationException(
-                            Map.of("tierId", localizedMessageService.get("backend.account.regularTierNotFound"))));
+                            Map.of("tierId", "Không tìm thấy hạng thành viên Thường.")));
         }
 
         Role role = roleRepository.findByNameIgnoreCase(roleName)
                 .orElseThrow(() -> new DataProcessingException(
-                        localizedMessageService.get("backend.account.roleNotFound", roleName)));
+                        "Không tìm thấy role " + roleName + " trong hệ thống."));
 
         User user = new User();
         user.setFullName(fullName);
@@ -158,7 +153,7 @@ public class AccountServiceImpl implements AccountService {
 
         auditLogService.log(
                 ActionType.CREATE_ACCOUNT,
-                localizedMessageService.get("backend.account.audit.created", username, roleName));
+                "Tạo tài khoản " + username + " với loại " + roleName + ".");
     }
 
     @Override
@@ -187,7 +182,7 @@ public class AccountServiceImpl implements AccountService {
         User user = resolveUser(memberAccount, staffAccount);
 
         if (user == null) {
-            errors.put("_global", localizedMessageService.get("backend.account.notFound"));
+            errors.put("_global", "Không tìm thấy tài khoản.");
             return errors;
         }
 
@@ -203,27 +198,27 @@ public class AccountServiceImpl implements AccountService {
 
         if (staffSource && accountId != null && accountId == SYSTEM_ADMIN_ACCOUNT_ID) {
             if (!"Admin".equals(request.getStaffType())) {
-                errors.put("staffType", localizedMessageService.get("backend.account.systemAdminTypeImmutable"));
+                errors.put("staffType", "Không thể thay đổi loại tài khoản của Admin tổng.");
             }
             if (!"Active".equalsIgnoreCase(request.getStatus())) {
-                errors.put("status", localizedMessageService.get("backend.account.systemAdminMustRemainActive"));
+                errors.put("status", "Admin tổng phải luôn ở trạng thái hoạt động.");
             }
         }
 
         if (!staffSource
                 && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
-            errors.put("tierId", localizedMessageService.get("validation.tier"));
+            errors.put("tierId", "Hạng thành viên không hợp lệ.");
         } else if (staffSource && !"Admin".equals(request.getStaffType())
                 && !"Librarian".equals(request.getStaffType())) {
-            errors.put("staffType", localizedMessageService.get("backend.account.invalidStaffType"));
+            errors.put("staffType", "Loại nhân viên không hợp lệ.");
         }
 
         if (!isValidStatus(request.getStatus())) {
-            errors.put("status", localizedMessageService.get("validation.status"));
+            errors.put("status", "Trạng thái tài khoản không hợp lệ.");
         } else if (staffSource
                 && accountId.equals(currentAccountId)
                 && !"Active".equalsIgnoreCase(request.getStatus())) {
-            errors.put("status", localizedMessageService.get("backend.account.cannotDeactivateSelf"));
+            errors.put("status", "Bạn không thể khóa hoặc vô hiệu hóa tài khoản đang đăng nhập.");
         }
 
         return errors;
@@ -235,15 +230,15 @@ public class AccountServiceImpl implements AccountService {
         if (isStaffSource(source)) {
             if (accountId != null && accountId == SYSTEM_ADMIN_ACCOUNT_ID) {
                 throw new AccountFormValidationException(
-                        Map.of("status", localizedMessageService.get("backend.account.systemAdminCannotDeactivate")));
+                        Map.of("status", "Không thể xóa hoặc vô hiệu hóa tài khoản Admin tổng."));
             }
             if (accountId != null && accountId.equals(currentAccountId)) {
                 throw new AccountFormValidationException(
-                        Map.of("status", localizedMessageService.get("backend.account.cannotDeactivateSelf")));
+                        Map.of("status", "Bạn không thể vô hiệu hóa tài khoản đang đăng nhập."));
             }
             StaffAccount account = staffAccountRepository.findById(accountId)
                     .orElseThrow(() -> new AccountFormValidationException(
-                            Map.of("_global", localizedMessageService.get("backend.account.notFound"))));
+                            Map.of("_global", "Không tìm thấy tài khoản.")));
             account.setStatus("Inactive");
             if (account.getStaff() != null && account.getStaff().getUser() != null) {
                 account.getStaff().getUser().setStatus(UserStatus.Inactive);
@@ -251,13 +246,13 @@ public class AccountServiceImpl implements AccountService {
             staffAccountRepository.save(account);
             auditLogService.log(
                     ActionType.DEACTIVATE_ACCOUNT,
-                    localizedMessageService.get("backend.account.audit.deactivatedStaff", account.getUsername()));
+                    "Vô hiệu hóa tài khoản nhân sự " + account.getUsername() + ".");
             return;
         }
 
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountFormValidationException(
-                        Map.of("_global", localizedMessageService.get("backend.account.notFound"))));
+                        Map.of("_global", "Không tìm thấy tài khoản.")));
         account.setStatus("Inactive");
         if (account.getMember() != null && account.getMember().getUser() != null) {
             account.getMember().getUser().setStatus(UserStatus.Inactive);
@@ -265,16 +260,16 @@ public class AccountServiceImpl implements AccountService {
         memberAccountRepository.save(account);
         auditLogService.log(
                 ActionType.DEACTIVATE_ACCOUNT,
-                localizedMessageService.get("backend.account.audit.deactivatedMember", account.getUsername()));
+                "Vô hiệu hóa tài khoản thành viên " + account.getUsername() + ".");
     }
 
     @Override
     public String getMemberEmail(Integer accountId) {
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.account.memberNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản thành viên."));
         if (account.getUser() == null || account.getUser().getEmail() == null
                 || account.getUser().getEmail().isBlank()) {
-            throw new ValidationException(localizedMessageService.get("backend.account.resetEmailMissing"));
+            throw new ValidationException("Tài khoản thành viên chưa có email để nhận liên kết đặt lại mật khẩu.");
         }
         return account.getUser().getEmail().trim();
     }
@@ -295,36 +290,36 @@ public class AccountServiceImpl implements AccountService {
         validateUsername(username, errors);
 
         if (password.isBlank()) {
-            errors.put("password", localizedMessageService.get("backend.account.passwordRequired"));
+            errors.put("password", "Mật khẩu không được để trống.");
         } else if (password.length() < 6) {
-            errors.put("password", localizedMessageService.get("validation.passwordMin"));
+            errors.put("password", "Mật khẩu phải có ít nhất 6 ký tự.");
         }
 
         if (!"MEMBER".equals(roleName) && !"ADMIN".equals(roleName) && !"LIBRARIAN".equals(roleName)) {
-            errors.put("accountType", localizedMessageService.get("backend.account.invalidAccountType"));
+            errors.put("accountType", "Loại tài khoản không hợp lệ.");
         }
 
         if (!isValidStatus(request.getStatus())) {
-            errors.put("status", localizedMessageService.get("validation.status"));
+            errors.put("status", "Trạng thái tài khoản không hợp lệ.");
         }
 
         if (!errors.containsKey("username")
                 && (memberAccountRepository.existsByUsername(username)
                         || staffAccountRepository.existsByUsername(username))) {
-            errors.put("username", localizedMessageService.get("backend.account.usernameExists"));
+            errors.put("username", "Username đã tồn tại.");
         }
 
         if (!errors.containsKey("email") && userRepository.existsByEmail(email)) {
-            errors.put("email", localizedMessageService.get("backend.account.emailUsed"));
+            errors.put("email", "Email đã được sử dụng.");
         }
 
         if (!errors.containsKey("phone") && userRepository.existsByPhone(phone)) {
-            errors.put("phone", localizedMessageService.get("backend.account.phoneUsed"));
+            errors.put("phone", "Số điện thoại đã được sử dụng.");
         }
 
         if ("MEMBER".equals(roleName)
                 && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
-            errors.put("tierId", localizedMessageService.get("validation.tier"));
+            errors.put("tierId", "Hạng thành viên không hợp lệ.");
         }
 
         return errors;
@@ -372,7 +367,7 @@ public class AccountServiceImpl implements AccountService {
 
     private void updateStaffAccount(AdminAccountUpdateRequest request) {
         StaffAccount account = staffAccountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.account.staffNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản nhân sự."));
         User user = account.getStaff().getUser();
         updateUser(user, request);
 
@@ -387,12 +382,12 @@ public class AccountServiceImpl implements AccountService {
 
         auditLogService.log(
                 ActionType.UPDATE_ACCOUNT,
-                localizedMessageService.get("backend.account.audit.updatedStaff", account.getUsername()));
+                "Cập nhật tài khoản nhân sự " + account.getUsername() + ".");
     }
 
     private void updateMemberAccount(AdminAccountUpdateRequest request) {
         MemberAccount account = memberAccountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.account.memberNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản thành viên."));
         User user = account.getMember().getUser();
         user.setFullName(trim(request.getFullName()));
         user.setEmail(trim(request.getEmail()));
@@ -404,7 +399,7 @@ public class AccountServiceImpl implements AccountService {
 
         auditLogService.log(
                 ActionType.UPDATE_ACCOUNT,
-                localizedMessageService.get("backend.account.audit.updatedMember", account.getUsername()));
+                "Cập nhật tài khoản thành viên " + account.getUsername() + ".");
     }
 
     private void updateUser(User user, AdminAccountUpdateRequest request) {
@@ -426,25 +421,25 @@ public class AccountServiceImpl implements AccountService {
 
     private void validateFullName(String fullName, Map<String, String> errors) {
         if (fullName.isEmpty()) {
-            errors.put("fullName", localizedMessageService.get("validation.fullNameRequired"));
+            errors.put("fullName", "Họ tên không được để trống.");
         } else if (fullName.length() > 50) {
-            errors.put("fullName", localizedMessageService.get("validation.fullNameMax"));
+            errors.put("fullName", "Họ tên không được vượt quá 50 ký tự.");
         } else if (!fullName.matches(FULL_NAME_PATTERN)) {
-            errors.put("fullName", localizedMessageService.get("validation.fullNameLetters"));
+            errors.put("fullName", "Họ tên chỉ được chứa chữ cái và khoảng trắng.");
         } else if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
-            errors.put("fullName", localizedMessageService.get("validation.fullNameWords"));
+            errors.put("fullName", "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
         } else if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
-            errors.put("fullName", localizedMessageService.get("validation.fullNameTriple"));
+            errors.put("fullName", "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
         } else if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
-            errors.put("fullName", localizedMessageService.get("validation.fullNameRepeated"));
+            errors.put("fullName", "Họ tên không được chỉ gồm một ký tự lặp lại.");
         }
     }
 
     private void validateUsername(String username, Map<String, String> errors) {
         if (username.isEmpty()) {
-            errors.put("username", localizedMessageService.get("validation.usernameRequired"));
+            errors.put("username", "Username không được để trống.");
         } else if (!username.matches(USERNAME_PATTERN)) {
-            errors.put("username", localizedMessageService.get("validation.username"));
+            errors.put("username", "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.");
         }
     }
 
@@ -464,37 +459,38 @@ public class AccountServiceImpl implements AccountService {
                         || staffAccountRepository.existsByUsername(username);
 
         if (duplicate) {
-            errors.put("username", localizedMessageService.get("backend.account.usernameExists"));
+            errors.put("username", "Username đã tồn tại.");
         }
     }
 
     private void validateEmail(String email, Map<String, String> errors) {
         if (email.isEmpty()) {
-            errors.put("email", localizedMessageService.get("validation.emailRequired"));
+            errors.put("email", "Email không được để trống.");
         } else if (!email.matches(EMAIL_PATTERN)) {
-            errors.put("email", localizedMessageService.get("validation.email"));
+            errors.put("email", "Email không đúng định dạng.");
         }
     }
 
     private void validateEmailForUpdate(String email, Integer userId, Map<String, String> errors) {
         validateEmail(email, errors);
         if (!errors.containsKey("email") && userRepository.existsByEmailAndIdNot(email, userId)) {
-            errors.put("email", localizedMessageService.get("backend.account.emailUsed"));
+            errors.put("email", "Email đã được sử dụng.");
         }
     }
 
     private void validatePhone(String phone, Map<String, String> errors) {
         if (phone.isEmpty()) {
-            errors.put("phone", localizedMessageService.get("validation.phoneRequired"));
+            errors.put("phone", "Số điện thoại không được để trống.");
         } else if (!phone.matches(PHONE_PATTERN)) {
-            errors.put("phone", localizedMessageService.get("validation.phone"));
+            errors.put("phone",
+                    "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.");
         }
     }
 
     private void validatePhoneForUpdate(String phone, Integer userId, Map<String, String> errors) {
         validatePhone(phone, errors);
         if (!errors.containsKey("phone") && userRepository.existsByPhoneAndIdNot(phone, userId)) {
-            errors.put("phone", localizedMessageService.get("backend.account.phoneUsed"));
+            errors.put("phone", "Số điện thoại đã được sử dụng.");
         }
     }
 
