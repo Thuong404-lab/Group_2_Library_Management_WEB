@@ -111,6 +111,16 @@ public class MemberMgmtController {
         return "redirect:/librarian/members";
     }
 
+    @GetMapping("/members/create/validate")
+    @ResponseBody
+    public Map<String, String> validateMemberCreateFields(
+            @Valid @ModelAttribute CreateMemberAccountRequest request,
+            BindingResult bindingResult) {
+        Map<String, String> errors = bindingErrors(bindingResult);
+        mergeErrors(errors, memberService.validateCreate(request));
+        return errors;
+    }
+
     @PostMapping("/members/edit/{id}")
     public String updateMemberAccount(
             @PathVariable Integer id,

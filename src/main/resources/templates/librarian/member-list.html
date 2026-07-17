@@ -37,7 +37,8 @@
 
                             <div class="modal-body member-modal-body">
                                 <form method="post" th:action="@{/librarian/members/create}" autocomplete="off"
-                                    id="createMemberForm" novalidate>
+                                    id="createMemberForm" novalidate
+                                    th:attr="data-validation-url=@{/librarian/members/create/validate}">
 
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                         th:value="${_csrf.token}">
@@ -196,7 +197,7 @@
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
-                                placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
+                                placeholder="Tìm tên đăng nhập hoặc thông tin người dùng...">
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 aria-label="Lọc theo hạng thành viên">
@@ -217,9 +218,10 @@
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
                             </select>
 
-                            <button class="btn member-search-button text-nowrap" type="submit">
-                                Tìm kiếm
-                            </button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/librarian/members}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Xóa bộ lọc
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -650,6 +652,7 @@
                 }
 
                 const fields = form.querySelectorAll(".validate-field");
+                let isSubmitting = false;
 
                 function getFeedback(field) {
                     return field.parentElement.querySelector(".invalid-feedback");
@@ -766,17 +769,62 @@
                     field.addEventListener("change", clearFieldError);
                 });
 
-                form.addEventListener("submit", function (event) {
+                form.addEventListener("submit", async function (event) {
+                    event.preventDefault();
+                    if (isSubmitting) return;
+                    isSubmitting = true;
                     let isFormValid = true;
                     fields.forEach(function (field) {
                         if (!validateField(field)) {
                             isFormValid = false;
                         }
                     });
-                    if (!isFormValid) {
-                        event.preventDefault();
+                    const submitButton = form.querySelector("button[type='submit']");
+                    submitButton.disabled = true;
+                    try {
+                        const params = new URLSearchParams();
+                        new FormData(form).forEach(function (value, key) {
+                            if (!key.startsWith("_csrf")) params.append(key, value);
+                        });
+                        const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                        params.forEach(function (value, key) { validationUrl.searchParams.append(key, value); });
+                        const response = await fetch(validationUrl.toString(), { headers: { "Accept": "application/json" } });
+                        if (!response.ok) throw new Error("Validation request failed");
+                        const serverErrors = await response.json();
+                        const errors = Object.assign({}, serverErrors, Object.fromEntries(
+                            Array.from(fields).filter(function (field) {
+                                return field.classList.contains("is-invalid");
+                            }).map(function (field) {
+                                return [field.name, getFeedback(field).textContent];
+                            })
+                        ));
+                        Object.entries(errors).forEach(function (entry) {
+                            const field = form.elements.namedItem(entry[0]);
+                            if (field == null || !field.classList) return;
+                            field.classList.remove("is-valid");
+                            field.classList.add("is-invalid");
+                            const feedback = getFeedback(field);
+                            if (feedback != null) feedback.textContent = entry[1];
+                        });
+                        if (Object.keys(errors).length === 0 && isFormValid) form.submit();
+                    } catch (error) {
+                        window.alert("Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại.");
+                    } finally {
+                        submitButton.disabled = false;
+                        isSubmitting = false;
                     }
                 });
+                const createModal = form.closest(".modal");
+                if (createModal != null) {
+                    createModal.addEventListener("hidden.bs.modal", function () {
+                        form.reset();
+                        fields.forEach(function (field) {
+                            field.classList.remove("is-invalid", "is-valid");
+                            const feedback = getFeedback(field);
+                            if (feedback != null) feedback.textContent = "";
+                        });
+                    });
+                }
             });
         </script>
         <script>
@@ -785,6 +833,7 @@
                     const modal = form.closest(".modal");
                     const submitButton = form.querySelector("button[type='submit']");
                     const globalError = form.querySelector(".member-update-global-error");
+                    let isSubmitting = false;
                     let lastFocusedField = null;
 
                     form.querySelectorAll("input, select, textarea").forEach(function (field) {
@@ -902,6 +951,8 @@
 
                     form.addEventListener("submit", async function (event) {
                         event.preventDefault();
+                        if (isSubmitting) return;
+                        isSubmitting = true;
                         clearErrors();
 
                         const localErrors = validateLocally();
@@ -942,11 +993,11 @@
                             });
                         } finally {
                             submitButton.disabled = false;
+                            isSubmitting = false;
                         }
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
-                        form.reset();
                         clearErrors();
                     });
                 });

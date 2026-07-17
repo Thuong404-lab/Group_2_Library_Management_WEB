@@ -6,6 +6,7 @@
     <title>Danh sách Thủ thư</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
@@ -34,15 +35,16 @@
                 <!-- Search & Filter + Back Button -->
                 <div class="member-toolbar">
                     <!-- Search & Filter -->
-                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}">
+                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}"
+                        data-auto-filter-form data-focus-key="librarianStaffFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
-                                placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
-                            <select class="form-select member-filter-select" name="status"
+                                placeholder="Tìm tên đăng nhập hoặc thông tin nhân viên...">
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
                                 aria-label="Lọc theo trạng thái">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
                                 </option>
@@ -51,9 +53,10 @@
                                 </option>
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
                             </select>
-                            <button class="btn member-search-button text-nowrap" type="submit">
-                                Tìm kiếm
-                            </button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/librarian/librarians}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Xóa bộ lọc
+                            </a>
                         </div>
                     </form>
                 </div>
