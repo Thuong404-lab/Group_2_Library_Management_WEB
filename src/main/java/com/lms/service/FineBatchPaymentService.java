@@ -9,6 +9,7 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.payos.PayOsTransactionRepository;
 import com.lms.repository.payos.PayOsWalletRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -20,6 +21,8 @@ import java.util.Locale;
 /** Batch fine payment owned by the aggregate payment flow. */
 @Service
 public class FineBatchPaymentService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private final TransactionRepository transactionRepository;
     private final PayOsTransactionRepository lockedTransactionRepository;
     private final PayOsWalletRepository walletRepository;
@@ -37,7 +40,7 @@ public class FineBatchPaymentService {
         List<Transaction> pending = transactionRepository.findUnpaidFineTransactions(
                 memberId, List.of("FINE", "DAMAGE_FEE"));
         if (pending.isEmpty()) {
-            throw new ConflictException("Không có khoản phạt nào cần thanh toán.");
+            throw new ConflictException(messages.get("backend.payment.noFinesDue"));
         }
         pending.sort(Comparator.comparing(Transaction::getTransactionId));
 
@@ -45,17 +48,17 @@ public class FineBatchPaymentService {
         List<Transaction> lockedFines = new java.util.ArrayList<>();
         for (Transaction candidate : pending) {
             Transaction fine = lockedTransactionRepository.findByIdForUpdate(candidate.getTransactionId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoản phạt."));
+                    .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.fineNotFound")));
             validateFine(fine, memberId);
             total = total.add(fine.getAmount().abs());
             lockedFines.add(fine);
         }
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.financial.walletNotFound")));
         BigDecimal balance = wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance();
         if (balance.compareTo(total) < 0) {
-            throw new ConflictException("Số dư ví không đủ để thanh toán tổng phí phạt.");
+            throw new ConflictException(messages.get("backend.payment.batchInsufficientBalance"));
         }
         wallet.setBalance(balance.subtract(total));
         walletRepository.save(wallet);
@@ -72,14 +75,14 @@ public class FineBatchPaymentService {
     private void validateFine(Transaction fine, Integer memberId) {
         if (fine.getWallet() == null || fine.getWallet().getMember() == null
                 || !memberId.equals(fine.getWallet().getMember().getMemberId())) {
-            throw new ForbiddenException("Khoản phạt không thuộc về thành viên.");
+            throw new ForbiddenException(messages.get("backend.payment.fineMemberMismatch"));
         }
         String type = normalize(fine.getTransactionType());
         String status = normalize(fine.getStatus());
         if ((!"FINE".equals(type) && !"DAMAGE_FEE".equals(type))
                 || "COMPLETED".equals(status) || "PAID".equals(status)
                 || fine.getAmount() == null || fine.getAmount().signum() == 0) {
-            throw new ConflictException("Danh sách phí phạt đã thay đổi. Vui lòng tải lại trang.");
+            throw new ConflictException(messages.get("backend.payment.fineListChanged"));
         }
     }
 

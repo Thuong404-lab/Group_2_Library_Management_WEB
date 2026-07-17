@@ -1,5 +1,6 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.Shelf;
 import com.lms.service.StorageService;
@@ -14,7 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 @RequestMapping("/librarian/storage")
-public class StorageController {
+public class StorageController extends LocalizedControllerSupport {
 
     private final StorageService storageService;
 
@@ -38,7 +39,7 @@ public class StorageController {
             RedirectAttributes redirectAttributes) {
         try {
             storageService.addStorageLocation(shelfName, location);
-            redirectAttributes.addFlashAttribute("success", "Thêm vị trí lưu trữ thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.storage.added"));
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -54,7 +55,7 @@ public class StorageController {
                     return "librarian/storage-form";
                 })
                 .orElseGet(() -> {
-                    redirectAttributes.addFlashAttribute("error", "Không tìm thấy vị trí lưu trữ.");
+                    redirectAttributes.addFlashAttribute("error", message("backend.storage.notFound"));
                     return "redirect:/librarian/dashboard?section=books&subsection=storage";
                 });
     }
@@ -66,7 +67,7 @@ public class StorageController {
             RedirectAttributes redirectAttributes) {
         try {
             storageService.updateStorageLocation(id, shelfName, location);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật vị trí lưu trữ thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.storage.updated"));
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
@@ -77,7 +78,7 @@ public class StorageController {
     public String removeStorageLocation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             storageService.removeStorageLocation(id);
-            redirectAttributes.addFlashAttribute("success", "Xóa vị trí lưu trữ thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.storage.deleted"));
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }

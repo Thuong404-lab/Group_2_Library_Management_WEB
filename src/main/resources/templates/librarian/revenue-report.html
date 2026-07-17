@@ -70,7 +70,7 @@
     <section class="report-finance-grid" th:aria-label="#{librarian.report.revenueMetrics}">
         <article class="report-finance-card app-card">
             <p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Total Revenue</p>
-            <strong class="report-finance-value" th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</strong>
+            <strong class="report-finance-value"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
         </article>
         <article class="report-finance-card app-card">
             <p class="report-stat-label" th:text="#{librarian.report.transactionCount}">Transactions</p>
@@ -78,7 +78,7 @@
         </article>
         <article class="report-finance-card app-card">
             <p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average / Transaction</p>
-            <strong class="report-finance-value" th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</strong>
+            <strong class="report-finance-value"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
         </article>
     </section>
 
@@ -96,9 +96,9 @@
                     <thead><tr><th th:text="#{transaction.type}">Transaction Type</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{transaction.amount}">Amount</th></tr></thead>
                     <tbody>
                     <tr th:each="item : ${report.transactionBreakdown}">
-                        <td class="report-primary-cell" th:text="${item.label}">Phí mượn</td>
+                        <td class="report-primary-cell" th:text="${item.label}">Borrowing Fee</td>
                         <td class="report-number-column" th:text="${item.count}">0</td>
-                        <td class="report-number-column" th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</td>
+                        <td class="report-number-column"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.report.empty}">No revenue data.</span></div></td></tr>
                     </tbody>
@@ -121,7 +121,7 @@
                     <tr th:each="item : ${report.monthlyRevenueStats}">
                         <td class="report-primary-cell" th:text="${item.label}">07/2026</td>
                         <td class="report-number-column" th:text="${item.count}">0</td>
-                        <td class="report-number-column" th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</td>
+                        <td class="report-number-column"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(report.monthlyRevenueStats)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.report.empty}">No revenue data.</span></div></td></tr>
                     </tbody>

@@ -6,6 +6,8 @@ import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.service.MembershipService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
@@ -16,6 +18,8 @@ import java.util.Optional;
 
 @Service
 public class MembershipServiceImpl implements MembershipService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final MemberAccountRepository memberAccountRepository;
@@ -43,7 +47,7 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Member getMemberByUsername(String username) {
         var account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username)));
 
         return account.getMember();
     }
@@ -89,25 +93,25 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public MembershipTier getTierById(Integer id) {
         return membershipTierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Hạng thành viên!"));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.tier.notFound")));
     }
 
     @Override
     public void saveTier(MembershipTier tier) {
         if (tier.getTierName() == null || tier.getTierName().trim().isEmpty()) {
-            throw new ValidationException("Tên hạng thành viên không được để trống!");
+            throw new ValidationException(messages.get("backend.tier.nameRequired"));
         }
         if (tier.getDiscountPercent() != null && (tier.getDiscountPercent().doubleValue() < 0 || tier.getDiscountPercent().doubleValue() > 100)) {
-            throw new ValidationException("Phần trăm giảm giá phải từ 0 đến 100!");
+            throw new ValidationException(messages.get("backend.tier.discountRange"));
         }
         if (tier.getBorrowLimit() != null && tier.getBorrowLimit() < 0) {
-            throw new ValidationException("Giới hạn mượn không được nhỏ hơn 0!");
+            throw new ValidationException(messages.get("backend.tier.borrowLimitNonNegative"));
         }
         if (tier.getCondition() == null) {
-            throw new ValidationException("Điểm/Chi tiêu không được để trống!");
+            throw new ValidationException(messages.get("backend.tier.conditionRequired"));
         }
         if (tier.getCondition().doubleValue() < 0) {
-            throw new ValidationException("Điểm/Chi tiêu không được nhỏ hơn 0!");
+            throw new ValidationException(messages.get("backend.tier.conditionNonNegative"));
         }
         membershipTierRepository.save(tier);
     }
@@ -121,7 +125,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .anyMatch(m -> m.getTier() != null && m.getTier().getTierId().equals(id));
                 
         if (isInUse) {
-            throw new ConflictException("Không thể xóa hạng thành viên đang được sử dụng bởi người dùng!");
+            throw new ConflictException(messages.get("backend.tier.deleteInUse"));
         }
         
         membershipTierRepository.delete(tier);

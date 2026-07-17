@@ -26,7 +26,7 @@ import java.util.Optional;
 @Service
 public class LoanServiceImpl implements LoanService {
     @Autowired
-    private LocalizedMessageService localizedMessageService;
+    private LocalizedMessageService localizedMessageService = LocalizedMessageService.fallback();
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
@@ -72,7 +72,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(readOnly = true)
     public Borrow getLoanDetails(Integer borrowId) {
         return borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn với mã: " + borrowId));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.notFoundById", borrowId)));
     }
 
     // UC-13.2: Xác nhận trả sách trực tiếp bằng quét mã vạch (Barcode) tại quầy
@@ -80,13 +80,13 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void confirmReturn(String barcode) {
         BookItem item = bookItemRepository.findByBarcode(barcode)
-                .orElseThrow(() -> new ResourceNotFoundException("Mã vạch sách vật lý '" + barcode + "' không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", barcode)));
 
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
                         && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus()) || "Return_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch sử mượn hợp lệ ứng với mã vạch sách này!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.activeHistoryNotFound")));
 
         // 1. Cập nhật trạng thái sách vật lý
         item.setStatus(STATUS_AVAILABLE);
@@ -109,7 +109,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void approveOnlineReturn(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn yêu cầu trả!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.returnRequestNotFound")));
 
         List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
         
@@ -148,19 +148,19 @@ public class LoanServiceImpl implements LoanService {
         try {
             if (memberIdentifier != null && memberIdentifier.contains("@")) {
                 member = memberRepository.findByUserEmail(memberIdentifier)
-                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với Email này!"));
+                        .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.memberEmailNotFound")));
             } else {
                 member = memberRepository.findByUserPhone(memberIdentifier)
-                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với số điện thoại này!"));
+                        .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.memberPhoneNotFound")));
             }
         } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
             throw new DataProcessingException(
-                    "Có nhiều độc giả trùng thông tin này! Vui lòng liên hệ quản trị viên để xử lý dữ liệu trùng lặp.", e);
+                    localizedMessageService.get("backend.loan.duplicateMemberData"), e);
         }
 
         Staff staff = staffAccountRepository.findByUsername(staffUsername)
                 .map(StaffAccount::getStaff)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin thủ thư!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.librarianNotFound")));
 
         List<BookItem> bookItemsToBorrow = new ArrayList<>();
         for (String barcode : barcodes) {
@@ -170,20 +170,20 @@ public class LoanServiceImpl implements LoanService {
             BookItem item;
             try {
                 item = bookItemRepository.findByBarcode(trimmedBarcode)
-                        .orElseThrow(() -> new ResourceNotFoundException("Mã vạch " + trimmedBarcode + " không tồn tại!"));
+                        .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", trimmedBarcode)));
             } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
                 throw new DataProcessingException(
-                        "Lỗi CSDL: Có nhiều cuốn sách cùng sử dụng mã vạch " + trimmedBarcode + ". Vui lòng liên hệ Admin!", e);
+                        localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
             }
 
             if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
-                throw new ConflictException("Sách có mã vạch " + trimmedBarcode + " hiện tại không sẵn sàng!");
+                throw new ConflictException(localizedMessageService.get("backend.loan.barcodeUnavailable", trimmedBarcode));
             }
             bookItemsToBorrow.add(item);
         }
 
         if (bookItemsToBorrow.isEmpty()) {
-            throw new ValidationException("Vui lòng nhập ít nhất 1 mã vạch hợp lệ!");
+            throw new ValidationException(localizedMessageService.get("backend.barcode.noneValid"));
         }
 
         long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
@@ -191,7 +191,7 @@ public class LoanServiceImpl implements LoanService {
         int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
 
         if (totalRequestedBooks > maxLimit) {
-            throw new ConflictException("Số lượng sách vượt quá giới hạn mượn của thành viên! (Tối đa " + maxLimit + " cuốn, đang mượn " + currentBorrowCount + " cuốn)");
+            throw new ConflictException(localizedMessageService.get("backend.loan.limitExceeded", maxLimit, currentBorrowCount));
         }
 
         Borrow borrow = new Borrow();
@@ -220,7 +220,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void processBorrowRequest(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy yêu cầu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.requestNotFound")));
         
         borrow.setStatus(STATUS_ACTIVE);
         borrowRepository.save(borrow);
@@ -244,10 +244,10 @@ public class LoanServiceImpl implements LoanService {
     public void processRenewal(Integer borrowDetailId) {
         // ... kept for compatibility if needed, but not used by member anymore ...
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết phiếu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
 
         if (!STATUS_BORROWED.equalsIgnoreCase(detail.getStatus())) {
-            throw new ConflictException("Chỉ sách đang ở trạng thái 'Đang mượn' mới được phép gia hạn!");
+            throw new ConflictException(localizedMessageService.get("backend.loan.renewBorrowedOnly"));
         }
 
         // Đọc cấu hình số lần gia hạn tối đa (mặc định là 2)
@@ -260,7 +260,7 @@ public class LoanServiceImpl implements LoanService {
         }
 
         if (detail.getRenewCount() >= maxRenewals) {
-            throw new ConflictException("Sách này đã được gia hạn tối đa " + maxRenewals + " lần!");
+            throw new ConflictException(localizedMessageService.get("backend.loan.maxRenewals", maxRenewals));
         }
 
         // Đọc cấu hình số ngày gia hạn thêm mỗi lần (mặc định là 7 ngày)
@@ -300,7 +300,7 @@ public class LoanServiceImpl implements LoanService {
     public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String conditionNote, String staffUsername) {
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
         if (activeLoans.isEmpty()) {
-            throw new ResourceNotFoundException("Không tìm thấy lượt mượn nào chưa trả ứng với mã vạch: " + barcode);
+            throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
         }
 
         // Xử lý lượt mượn tìm thấy hợp lệ
@@ -344,10 +344,10 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết phiếu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
 
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
-            throw new ConflictException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
+            throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
         }
 
         int renewDays = 7;
@@ -374,10 +374,10 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void rejectRenewal(Integer borrowDetailId, String staffUsername) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết phiếu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
 
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
-            throw new ConflictException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
+            throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
         }
 
         // Trả về trạng thái cũ: Kiểm tra nếu đã quá hạn thực tế chưa
@@ -497,7 +497,7 @@ public class LoanServiceImpl implements LoanService {
      */
     private void sendInternalNotification(Member member, String title, String content) {
         if (member == null || member.getMemberId() == null) {
-            throw new DataProcessingException("Không thể gửi thông báo vì thiếu thông tin thành viên.");
+            throw new DataProcessingException(localizedMessageService.get("backend.notification.memberMissing"));
         }
         Notification notif = new Notification();
         notif.setTitle(title);

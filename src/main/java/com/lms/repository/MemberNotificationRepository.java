@@ -56,10 +56,13 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
               and (
                     lower(mn.notification.title) like lower(concat('%', :keyword, '%'))
                  or lower(mn.notification.content) like lower(concat('%', :keyword, '%'))
+                 or lower(mn.notification.title) like lower(concat('%', :alternateKeyword, '%'))
+                 or lower(mn.notification.content) like lower(concat('%', :alternateKeyword, '%'))
               )
             order by mn.notification.createdDate desc
             """)
     Page<MemberNotification> findTopupNotifications(@Param("memberId") Integer memberId,
                                                     @Param("keyword") String keyword,
+                                                    @Param("alternateKeyword") String alternateKeyword,
                                                     Pageable pageable);
 }

@@ -110,7 +110,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 model.addAttribute("selectedRequest", selectedBorrow);
                 model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
             } catch (ApplicationException e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin chi tiết: " + e.getMessage());
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
             }
         }
         
@@ -118,7 +118,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             try {
                 model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
             } catch (ApplicationException e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin gia hạn: " + e.getMessage());
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.renewalDetailsFailed", e));
             }
         }
 
@@ -126,7 +126,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             try {
                 model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
             } catch (ApplicationException e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin đặt trước: " + e.getMessage());
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.reservationDetailsFailed", e));
             }
         }
 
@@ -346,16 +346,16 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
                 String rawStatus = item.getStatus();
-                String vnStatus = "Có sẵn";
-                if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = "Đang mượn";
-                else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = "Bị mất";
-                else if ("Maintenance".equalsIgnoreCase(rawStatus)) vnStatus = "Bảo trì";
+                String vnStatus = message("book.status.available");
+                if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.borrowed");
+                else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.lost");
+                else if ("Maintenance".equalsIgnoreCase(rawStatus)) vnStatus = message("backend.book.status.maintenance");
                 
                 data.put("status", vnStatus);
                 data.put("rawStatus", rawStatus);
             } else {
                 data.put("found", false);
-                data.put("error", "Không tồn tại");
+                data.put("error", message("backend.common.notFound"));
             }
             results.add(data);
         }
@@ -389,7 +389,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 response.put("memberLevel", member.getTier().getTierName());
                 maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit() : 0;
             } else {
-                response.put("memberLevel", "Mặc định");
+                response.put("memberLevel", message("backend.member.defaultTier"));
             }
             response.put("maxBorrowLimit", maxBorrowLimit);
             

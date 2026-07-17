@@ -1,5 +1,6 @@
 package com.lms.controller.guest;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,7 +28,7 @@ import org.springframework.data.domain.Page;
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
  */
 @Controller
-public class GuestController {
+public class GuestController extends LocalizedControllerSupport {
 
     private final BookService bookService;
     private final GenreRepository genreRepository;
@@ -179,7 +180,7 @@ public class GuestController {
                         .map(com.lms.entity.Author::getAuthorName)
                         .collect(Collectors.joining(", "));
             } else {
-                authorNames = "Nhiều tác giả";
+                authorNames = message("book.multipleAuthors");
             }
             map.put("authorName", authorNames);
             map.put("thumbnailUrl", book.getCoverImageUrl() != null && !book.getCoverImageUrl().trim().isEmpty() ? book.getCoverImageUrl() : "https://picsum.photos/seed/" + book.getBookId() + "/600/800");

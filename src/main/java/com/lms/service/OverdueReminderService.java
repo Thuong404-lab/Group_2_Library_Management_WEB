@@ -29,7 +29,7 @@ import java.util.Set;
 @Service
 public class OverdueReminderService {
     @Autowired
-    private LocalizedMessageService localizedMessageService;
+    private LocalizedMessageService localizedMessageService = LocalizedMessageService.fallback();
     private static final Set<String> REMINDABLE_STATUSES =
             Set.of("BORROWED", "OVERDUE", "RETURN_PENDING");
     private static final DateTimeFormatter DATE_FORMATTER =
@@ -51,7 +51,7 @@ public class OverdueReminderService {
     @Transactional
     public void sendReturnReminder(Integer borrowDetailId) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lượt mượn cần nhắc."));
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.overdue.loanNotFound")));
 
         validateRemindable(detail);
 
@@ -71,7 +71,7 @@ public class OverdueReminderService {
                 .anyMatch(notification -> notification.getCreatedDate().isAfter(LocalDateTime.now().minusHours(24)));
 
         if (remindedRecently) {
-            throw new ConflictException("Thành viên đã được nhắc về cuốn sách này trong vòng 24 giờ qua.");
+            throw new ConflictException(localizedMessageService.get("backend.overdue.alreadyReminded"));
         }
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
@@ -100,19 +100,19 @@ public class OverdueReminderService {
         if (detail.getBorrow() == null
                 || detail.getBorrow().getMember() == null
                 || detail.getBorrow().getMember().getMemberId() == null) {
-            throw new ValidationException("Lượt mượn không có thông tin thành viên hợp lệ.");
+            throw new ValidationException(localizedMessageService.get("backend.overdue.invalidMember"));
         }
         if (detail.getDueDate() == null
                 || !detail.getDueDate().toLocalDate().isBefore(LocalDate.now())
                 || detail.getReturnDate() != null) {
-            throw new ConflictException("Sách này không còn thuộc danh sách đang quá hạn.");
+            throw new ConflictException(localizedMessageService.get("backend.overdue.noLongerOverdue"));
         }
 
         String status = detail.getStatus() == null
                 ? ""
                 : detail.getStatus().trim().toUpperCase(Locale.ROOT);
         if (!REMINDABLE_STATUSES.contains(status)) {
-            throw new ConflictException("Trạng thái lượt mượn không cho phép gửi nhắc trả sách.");
+            throw new ConflictException(localizedMessageService.get("backend.overdue.statusNotRemindable"));
         }
     }
 }

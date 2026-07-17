@@ -28,7 +28,7 @@
                                 <div class="balance-label opacity-75 mb-1" th:text="#{member.wallet.currentBalance}">Current Balance</div>
                                 <h1 class="balance-value mb-0">
                                     <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span class="balance-unit">VNĐ</span>
+                                    <span class="balance-unit" th:text="#{currency.vnd}">VND</span>
                                 </h1>
                             </div>
                             <i class="bi bi-wallet2 display-6 opacity-50"></i>
@@ -78,7 +78,7 @@
                                 <div class="small text-muted" th:text="#{member.wallet.totalFines}">Total Fines</div>
                                 <div class="fine-total-amount amount-negative">
                                     <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span>đ</span>
+                                    <span th:text="#{currency.vnd}">VND</span>
                                 </div>
                                 <button th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}"
                                         type="button" class="btn btn-pay-fine btn-sm px-3 mt-2"
@@ -114,7 +114,7 @@
                                 <div class="text-end">
                                     <h5 class="amount-negative fine-item-amount-display">
                                         <span th:text="${fine.amount != null ? #numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                        <span>đ</span>
+                                        <span th:text="#{currency.vnd}">VND</span>
                                     </h5>
                                 </div>
                             </div>
@@ -159,7 +159,7 @@
                                             </div>
                                         </div>
                                         <div class="fine-payment-item-amount">
-                                            <span th:text="${fine.amount != null ? #numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
+                                            <span th:text="${fine.amount != null ? #numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
                                         </div>
                                     </div>
                                 </div>
@@ -176,13 +176,13 @@
                             <div class="fine-payment-row">
                                 <span class="text-muted" th:text="#{member.wallet.balance}">Wallet Balance</span>
                                 <span class="fine-payment-value">
-                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
+                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
                                 </span>
                             </div>
                             <div class="fine-payment-row mb-4">
                                 <span class="text-muted" th:text="#{member.wallet.totalPayment}">Total Payment</span>
                                 <span class="fine-payment-value amount-negative">
-                                    <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
+                                    <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
                                 </span>
                             </div>
                             <label class="form-label" th:text="#{payment.method}">Payment Method</label>
@@ -224,7 +224,7 @@
                             <div class="member-wallet-current-balance mb-4">
                                 <span class="text-muted" th:text="#{member.wallet.currentBalance}">Current Balance</span>
                                 <strong>
-                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
+                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
                                 </strong>
                             </div>
                             <label for="memberTopUpAmount" class="form-label" th:text="#{member.wallet.topUpAmount}">Top-up Amount</label>
@@ -234,7 +234,7 @@
                                        th:data-min-message="#{validation.money.minimum('{0}')}"
                                        th:data-max-message="#{validation.money.maximum('{0}')}"
                                        required class="form-control" th:placeholder="#{member.wallet.amountPlaceholder}" autocomplete="off" autofocus/>
-                                <span class="input-group-text finance-currency-unit">VNĐ</span>
+                                <span class="input-group-text finance-currency-unit" th:text="#{currency.vnd}">VND</span>
                             </div>
                             <div class="form-text mb-3" th:text="#{member.wallet.minimumAmount}">Minimum amount: 10,000 VND.</div>
                             <div class="d-flex flex-wrap gap-2" id="memberTopUpQuickAmounts">
@@ -303,7 +303,7 @@
                                     th:classappend="${row.amount != null and row.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
                                     <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
                                     <span th:text="${row.amount != null ? #numbers.formatDecimal(row.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span> đ</span>
+                                    <span th:text="#{currency.vnd}">VND</span>
                                 </td>
                                 <td>
                                     <span class="transaction-status"

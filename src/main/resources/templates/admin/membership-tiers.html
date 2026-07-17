@@ -54,10 +54,10 @@
                             <tr th:each="tier : ${tiers}">
                                 <td class="ps-3 fw-bold u-color-8b5a2b-93ece783" th:text="${'#' + tier.tierId}"></td>
                                     <td class="fw-bold" th:text="${tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tier.tierName)))}"></td>
-                                <td th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 0, 'COMMA', 0, 'POINT') + ' VND' : '0 VND'}"></td>
+                                <td><span th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                                 <td><span class="badge rounded-pill px-3 py-2 text-white admin-membership-tiers-span-background-10"
                                     th:text="${tier.discountPercent + '%'}"></span></td>
-                                <td th:text="${tier.borrowLimit + ' cuốn'}"></td>
+                                <td th:text="#{common.bookCount(${tier.borrowLimit})}">0 books</td>
                                 <td><span th:text="${tier.benefits}"></span></td>
                                 <td class="text-end pe-3">
                                     <button class="btn btn-sm btn-outline-classic me-1"

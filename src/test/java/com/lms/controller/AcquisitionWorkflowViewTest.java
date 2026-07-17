@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -108,10 +109,10 @@ class AcquisitionWorkflowViewTest {
 
     @Test
     @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
-    void rendersLibrarianAcquisitionDashboardWithCurrentDatabase() throws Exception {
+    void redirectsLegacyAcquisitionDashboardUrlToLocalizedPage() throws Exception {
         mockMvc.perform(get("/librarian/dashboard").param("section", "acquisition"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("librarian/dashboard"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/librarian/interaction/acquisition-requests"));
     }
 
     @Test
@@ -130,6 +131,24 @@ class AcquisitionWorkflowViewTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("librarian/acquisition-request-list"))
                 .andExpect(content().string(containsString("Book Acquisition Requests")));
+    }
+
+    @Test
+    @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
+    void rendersLibrarianDirectoryInEnglish() throws Exception {
+        mockMvc.perform(get("/librarian/librarians"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("librarian/librarian-list"))
+                .andExpect(content().string(containsString("View librarian profiles, roles, and account statuses.")));
+    }
+
+    @Test
+    @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
+    void rendersViolationFinesInEnglish() throws Exception {
+        mockMvc.perform(get("/librarian/members/fines"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("librarian/fines"))
+                .andExpect(content().string(containsString("Violation Fine Management")));
     }
 
     @Test

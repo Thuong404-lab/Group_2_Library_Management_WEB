@@ -1,19 +1,26 @@
 package com.lms.enums;
 
+import org.springframework.context.i18n.LocaleContextHolder;
+import java.util.ResourceBundle;
+
 public enum NotificationType {
-    GENERAL("Thông báo chung"),
-    ANNOUNCEMENT("Thông báo quan trọng"),
-    MAINTENANCE("Bảo trì hệ thống"),
-    EVENT("Sự kiện / chương trình"),
-    REMINDER("Nhắc nhở");
+    GENERAL("notification.type.general"),
+    ANNOUNCEMENT("notification.type.announcement"),
+    MAINTENANCE("notification.type.maintenance"),
+    EVENT("notification.type.event"),
+    REMINDER("notification.type.reminder");
 
-    private final String displayName;
+    private final String messageKey;
 
-    NotificationType(String displayName) {
-        this.displayName = displayName;
+    NotificationType(String messageKey) {
+        this.messageKey = messageKey;
     }
 
     public String getDisplayName() {
-        return displayName;
+        return ResourceBundle.getBundle("messages", LocaleContextHolder.getLocale()).getString(messageKey);
+    }
+
+    public String getMessageKey() {
+        return messageKey;
     }
 }

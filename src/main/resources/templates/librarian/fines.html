@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/librarian_base}">
 
 <head>
     <!-- Librarian fine management UI maintained by Pham Kien Quoc. -->
-    <title>Quản lý phạt vi phạm</title>
+    <title th:text="#{librarian.fines.title}">Violation Fines</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/fines.css}" />
   </head>
@@ -13,8 +13,8 @@
     <div layout:fragment="content" th:with="activeMenu='fines'" class="finance-page fines-page">
         <div class="finance-header">
             <div>
-                <h2 class="finance-title">Quản lý phạt vi phạm</h2>
-                <div class="finance-description">Tra cứu thành viên, tạo khoản phạt và theo dõi các vi phạm của độc giả.</div>
+                <h2 class="finance-title" th:text="#{librarian.fines.heading}">Violation Fine Management</h2>
+                <div class="finance-description" th:text="#{librarian.fines.description}">Find members, create fines, and track violations.</div>
             </div>
         </div>
 
@@ -24,16 +24,14 @@
         <div class="card-classic finance-card overdue-summary p-4 mb-4">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
                 <div>
-                    <h5 class="section-title mb-1">Thành viên đang có sách quá hạn</h5>
-                    <div class="text-muted">
-                        Danh sách được tự động tổng hợp theo hạn trả để thủ thư không phải kiểm tra từng thành viên.
-                    </div>
+                    <h5 class="section-title mb-1" th:text="#{librarian.fines.overdueHeading}">Members With Overdue Books</h5>
+                    <div class="text-muted" th:text="#{librarian.fines.overdueDescription}">This list is generated automatically from due dates.</div>
                     <div class="small mt-2">
-                        Mức phạt quá hạn từ cấu hình Admin:
+                        <span th:text="#{librarian.fines.dailyRate}">Daily overdue rate configured by Admin:</span>
                         <strong class="amount-negative">
                             <span
                                 th:text="${finePerDay != null ? #numbers.formatDecimal(finePerDay, 0, 'COMMA', 0, 'POINT') : '5,000'}">5,000</span>
-                            đ/ngày
+                            <span th:text="#{librarian.fines.currencyPerDay}">VND/day</span>
                         </strong>
                     </div>
                 </div>
@@ -41,32 +39,31 @@
                     <div class="overdue-count px-3 py-2">
                         <div class="overdue-count-value" th:text="${overdueMemberCount != null ? overdueMemberCount : 0}">0
                         </div>
-                        <div class="small text-muted">Thành viên</div>
+                        <div class="small text-muted" th:text="#{librarian.fines.members}">Members</div>
                     </div>
                     <div class="overdue-count px-3 py-2">
                         <div class="overdue-count-value"
                             th:text="${overdueViolationCount != null ? overdueViolationCount : 0}">0</div>
-                        <div class="small text-muted">Lượt quá hạn</div>
+                        <div class="small text-muted" th:text="#{librarian.fines.overdueItems}">Overdue Items</div>
                     </div>
                 </div>
             </div>
 
             <div th:if="${overdueViolations == null or #lists.isEmpty(overdueViolations)}"
                 class="empty-state">
-                Hiện không có thành viên nào đang giữ sách quá hạn.
+                <span th:text="#{librarian.fines.noOverdue}">No members currently have overdue books.</span>
             </div>
 
             <div th:if="${overdueViolations != null and !#lists.isEmpty(overdueViolations)}">
                 <div class="row g-2 align-items-center mb-3">
                     <div class="col-lg-7">
                         <input type="search" id="overdueViolationSearch" class="form-control"
-                            placeholder="Tìm theo tên, email, số điện thoại, ID, sách hoặc barcode..."
+                            th:placeholder="#{librarian.fines.overdueSearchPlaceholder}"
                             autocomplete="off">
                     </div>
                     <div class="col-lg-5">
                         <div class="small text-muted text-lg-end">
-                            Chọn “Tạo phạt” để điền sẵn thành viên và lý do. Hãy kiểm tra trước khi lưu để tránh phạt
-                            trùng.
+                            <span th:text="#{librarian.fines.overdueHint}">Choose Create Fine to prefill the member and reason. Check before saving to avoid duplicates.</span>
                         </div>
                     </div>
                 </div>
@@ -75,19 +72,19 @@
                     <table class="table overdue-table align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="ps-3">Thành viên</th>
-                                <th>Sách quá hạn</th>
-                                <th>Hạn trả</th>
-                                <th>Số ngày trễ</th>
-                                <th>Tiền phạt dự kiến</th>
-                                <th class="text-center">Thao tác</th>
+                                <th class="ps-3" th:text="#{librarian.fines.member}">Member</th>
+                                <th th:text="#{librarian.fines.overdueBook}">Overdue Book</th>
+                                <th th:text="#{librarian.fines.dueDate}">Due Date</th>
+                                <th th:text="#{librarian.fines.daysLate}">Days Late</th>
+                                <th th:text="#{librarian.fines.estimatedFine}">Estimated Fine</th>
+                                <th class="text-center" th:text="#{common.actions}">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="overdueViolationRows">
                             <tr th:each="violation : ${overdueViolations}" class="overdue-violation-row"
                                 th:attr="data-search=${#strings.toLowerCase(violation.memberName + ' ' + violation.email + ' ' + violation.phone + ' ' + violation.memberId + ' ' + violation.bookTitle + ' ' + violation.barcode)}">
                                 <td class="ps-3">
-                                    <div class="overdue-member-name" th:text="${violation.memberName}">Nguyễn Văn A</div>
+                                    <div class="overdue-member-name" th:text="${violation.memberName}">Member name</div>
                                     <div class="small text-muted">
                                         ID: <span th:text="${violation.memberId}">1</span>
                                         <span th:if="${violation.email != ''}"> · </span>
@@ -98,49 +95,48 @@
                                         th:text="${violation.phone}">0900000000</div>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold" th:text="${violation.bookTitle}">Tên sách</div>
+                                    <div class="fw-semibold" th:text="${violation.bookTitle}">Book title</div>
                                     <div class="small text-muted" th:if="${violation.barcode != ''}">
                                         Barcode: <span th:text="${violation.barcode}">BC001</span>
                                     </div>
                                 </td>
                                 <td th:text="${#temporals.format(violation.dueDate, 'dd/MM/yyyy')}">01/07/2026</td>
                                 <td>
-                                    <span class="overdue-days-badge" th:text="${violation.overdueDays + ' ngày'}">3
-                                        ngày</span>
+                                    <span class="overdue-days-badge" th:text="#{librarian.fines.days(${violation.overdueDays})}">3 days</span>
                                 </td>
                                 <td>
                                     <strong class="amount-negative">
                                         <span
                                             th:text="${#numbers.formatDecimal(violation.suggestedFineAmount, 0, 'COMMA', 0, 'POINT')}">15,000</span>
-                                        đ
+                                        <span th:text="#{currency.vnd}">VND</span>
                                     </strong>
                                     <div class="small text-muted">
                                         <span
                                             th:text="${#numbers.formatDecimal(violation.finePerDay, 0, 'COMMA', 0, 'POINT')}">5,000</span>
-                                        × <span th:text="${violation.overdueDays}">3</span> ngày
+                                        × <span th:text="${violation.overdueDays}">3</span> <span th:text="#{librarian.fines.dayUnit}">days</span>
                                     </div>
                                 </td>
                                 <td class="text-center">
                                     <div class="overdue-actions">
                                         <form method="post" class="app-confirm-form"
                                             th:action="@{/librarian/members/fines/remind/{borrowDetailId}(borrowDetailId=${violation.borrowDetailId})}"
-                                            data-confirm-title="Xác nhận gửi nhắc trả sách"
-                                            data-confirm-subject-label="Sách quá hạn"
+                                            th:data-confirm-title="#{librarian.fines.reminderConfirmTitle}"
+                                            th:data-confirm-subject-label="#{librarian.fines.overdueBook}"
                                             th:data-confirm-subject="${violation.bookTitle}"
-                                            data-confirm-message="Thông báo nhắc trả sách sẽ được gửi đến thành viên sau khi xác nhận."
-                                            data-confirm-action="Gửi thông báo">
+                                            th:data-confirm-message="#{librarian.fines.reminderConfirmMessage}"
+                                            th:data-confirm-action="#{librarian.fines.sendNotification}">
                                             <input type="hidden" th:if="${_csrf != null}"
                                                 th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                             <button type="submit" class="btn btn-sm btn-remind-overdue overdue-action-tooltip"
-                                                data-bs-title="Nhắc trả sách"
+                                                th:data-bs-title="#{librarian.fines.remindReturn}"
                                                 data-bs-custom-class="overdue-reminder-tooltip"
-                                                data-bs-placement="top" aria-label="Nhắc trả sách">
+                                                data-bs-placement="top" th:aria-label="#{librarian.fines.remindReturn}">
                                                 <i class="bi bi-bell-fill" aria-hidden="true"></i>
                                             </button>
                                         </form>
                                         <button type="button" class="btn btn-sm btn-outline-classic btn-select-violation overdue-action-tooltip"
-                                            data-bs-title="Tạo phạt" data-bs-custom-class="overdue-fine-tooltip"
-                                            data-bs-placement="top" aria-label="Tạo phạt" th:attr="data-member-id=${violation.memberId},
+                                            th:data-bs-title="#{librarian.fines.createFine}" data-bs-custom-class="overdue-fine-tooltip"
+                                            data-bs-placement="top" th:aria-label="#{librarian.fines.createFine}" th:attr="data-member-id=${violation.memberId},
                                                  data-member-name=${violation.memberName},
                                                  data-book-title=${violation.bookTitle},
                                                  data-overdue-days=${violation.overdueDays},
@@ -152,7 +148,7 @@
                             </tr>
                             <tr id="overdueViolationEmpty" class="d-none">
                                 <td colspan="6" class="text-center text-muted py-4">
-                                    Không tìm thấy lượt quá hạn phù hợp.
+                                    <span th:text="#{librarian.fines.noMatchingOverdue}">No matching overdue records found.</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -163,21 +159,21 @@
 
         <div class="card-classic finance-card p-4 mb-4">
                 <h5 class="section-title mb-3">
-                Tạo khoản phạt mới
+                <span th:text="#{librarian.fines.createHeading}">Create a New Fine</span>
             </h5>
             <form method="post" th:action="@{/librarian/members/fines/create}" id="fineForm" class="row g-3">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                     th:value="${_csrf.token}">
                 <div class="col-12">
-                    <label class="form-label">Chọn thành viên</label>
+                    <label class="form-label" th:text="#{librarian.fines.selectMember}">Select Member</label>
                     <input type="text" id="fineMemberSearch" class="form-control mb-2"
-                        placeholder="Tìm theo tên, email, SĐT, mã, trạng thái hoặc hạng thành viên..." autocomplete="off">
-                    <div class="fine-member-search-hint">Nhập tên, email, số điện thoại hoặc mã thành viên để hiển thị kết quả phù hợp.</div>
-                    <div class="fine-member-selection-hint">Bạn cần chọn một thành viên trước khi tạo khoản phạt.</div>
+                        th:placeholder="#{librarian.fines.memberSearchPlaceholder}" autocomplete="off">
+                    <div class="fine-member-search-hint" th:text="#{librarian.fines.memberSearchHint}">Enter member details to display matching results.</div>
+                    <div class="fine-member-selection-hint" th:text="#{librarian.fines.memberSelectionHint}">Select a member before creating a fine.</div>
                     <div class="topup-member-list member-picker p-3 d-none" id="fineMemberList">
                         <label th:each="member : ${fineMembers}"
                             class="form-check topup-member-item fine-member-item mb-2"
-                            th:data-selected-label="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - TV-' + member.memberId}"
+                            th:data-selected-label="${(member.user != null and member.user.fullName != null ? member.user.fullName : #messages.msg('librarian.fines.member')) + ' - TV-' + member.memberId}"
                             th:attr="data-search=${#strings.toLowerCase(
                                 (member.user != null ? member.user.fullName : '') + ' ' +
                                 (member.user != null ? member.user.email : '') + ' ' +
@@ -196,11 +192,11 @@
                                 th:value="${member.memberId}" autocomplete="off">
                             <span class="form-check-label fine-member-info">
                                 <strong class="fine-member-name"
-                                    th:text="${member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên'}">Tên thành viên</strong>
+                                    th:text="${member.user != null and member.user.fullName != null ? member.user.fullName : #messages.msg('librarian.fines.member')}">Member name</strong>
                                 <span class="fine-member-contact">
-                                    <span th:text="${member.user != null and member.user.email != null ? member.user.email : 'Chưa có email'}">email@example.com</span>
+                                    <span th:text="${member.user != null and member.user.email != null ? member.user.email : #messages.msg('common.noEmail')}">email@example.com</span>
                                     <span aria-hidden="true"> · </span>
-                                    <span th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : 'Chưa có số điện thoại'}">0900000000</span>
+                                    <span th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : #messages.msg('common.noPhone')}">0900000000</span>
                                     <span aria-hidden="true"> · </span>
                                     <span th:text="${'TV-' + member.memberId}">TV-1</span>
                                 </span>
@@ -209,33 +205,33 @@
                         <div th:if="${fineMembers == null or #lists.isEmpty(fineMembers)}"
                             class="fine-member-empty">
                             <i class="bi bi-info-circle" aria-hidden="true"></i>
-                            <span>Chưa có thành viên nào trong hệ thống.</span>
+                            <span th:text="#{librarian.fines.noMembers}">There are no members in the system.</span>
                         </div>
                         <div id="fineMemberEmpty" class="fine-member-empty d-none">
                             <i class="bi bi-info-circle" aria-hidden="true"></i>
-                            <span>Không tìm thấy thông tin thành viên phù hợp.</span>
+                            <span th:text="#{librarian.fines.noMatchingMembers}">No matching member information found.</span>
                         </div>
                     </div>
-                    <div id="fineMemberRequired" class="invalid-feedback">Vui lòng chọn một thành viên.</div>
+                    <div id="fineMemberRequired" class="invalid-feedback" th:text="#{librarian.fines.memberRequired}">Please select a member.</div>
                 </div>
                 <div class="col-md-4 fine-entry-field">
-                        <label class="form-label">Số tiền phạt</label>
+                        <label class="form-label" th:text="#{librarian.fines.amount}">Fine Amount</label>
                     <div class="input-group finance-amount-group">
                         <input type="text" inputmode="numeric" class="form-control" name="amount" id="fineAmount"
                             data-vnd-input data-min-amount="1000" th:data-min-message="#{validation.money.minimum('{0}')}" th:data-max-message="#{validation.money.maximum('{0}')}" autocomplete="off">
-                        <span class="input-group-text finance-currency-unit">VNĐ</span>
+                        <span class="input-group-text finance-currency-unit" th:text="#{currency.vnd}">VND</span>
                     </div>
-                    <div id="fineAmountRequired" class="invalid-feedback">Số tiền phạt không được để trống.</div>
+                    <div id="fineAmountRequired" class="invalid-feedback" th:text="#{librarian.fines.amountRequired}">Fine amount is required.</div>
                 </div>
                 <div class="col-md-6 fine-entry-field">
-                        <label class="form-label">Lý do</label>
+                        <label class="form-label" th:text="#{librarian.fines.reason}">Reason</label>
                     <input type="text" class="form-control" name="reason" id="fineReason"
-                        placeholder="Quá hạn, mất sách, hư hỏng...">
-                    <div id="fineReasonRequired" class="invalid-feedback">Lý do phạt không được để trống.</div>
+                        th:placeholder="#{librarian.fines.reasonPlaceholder}">
+                    <div id="fineReasonRequired" class="invalid-feedback" th:text="#{librarian.fines.reasonRequired}">Fine reason is required.</div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end fine-entry-field">
                     <button type="submit" class="btn btn-classic w-100">
-                        Tạo phạt
+                        <span th:text="#{librarian.fines.createFine}">Create Fine</span>
                     </button>
                 </div>
             </form>
@@ -243,16 +239,16 @@
 
         <div class="card-classic finance-card info-panel p-5 text-center">
             <i class="bi bi-info-circle d-block mb-3 text-classic"></i>
-                    <h5 class="fine-history-note-title">Khoản phạt được lưu vào lịch sử giao dịch</h5>
+                    <h5 class="fine-history-note-title" th:text="#{librarian.fines.historyTitle}">Fines are saved to transaction history</h5>
             <p class="text-muted mb-3">
-                Sau khi tạo phạt, thành viên sẽ thấy khoản phạt trong trang ví và có thể thanh toán từ số dư ví.
+                <span th:text="#{librarian.fines.historyDescription}">After a fine is created, the member can see and pay it from their wallet.</span>
             </p>
             <a th:href="@{/librarian/members/transactions(type='FINE')}" class="btn btn-outline-classic">
-                Xem các giao dịch phạt
+                <span th:text="#{librarian.fines.viewTransactions}">View Fine Transactions</span>
             </a>
         </div>
 
-        <script>
+        <script th:inline="javascript">
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".overdue-action-tooltip").forEach(function (button) {
                     const tooltip = new bootstrap.Tooltip(button, { trigger: "hover" });
@@ -277,8 +273,8 @@
             document.querySelectorAll(".btn-select-violation").forEach(function (button) {
                 button.addEventListener("click", function () {
                     const memberId = button.getAttribute("data-member-id");
-                    const memberName = button.getAttribute("data-member-name") || "thành viên";
-                    const bookTitle = button.getAttribute("data-book-title") || "sách";
+                    const memberName = button.getAttribute("data-member-name") || /*[[#{librarian.fines.memberLower}]]*/ "member";
+                    const bookTitle = button.getAttribute("data-book-title") || /*[[#{librarian.fines.bookLower}]]*/ "book";
                     const overdueDays = button.getAttribute("data-overdue-days") || "0";
                     const suggestedFineAmount = button.getAttribute("data-fine-amount") || "";
 
@@ -290,7 +286,7 @@
 
                     const reasonInput = document.getElementById("fineReason");
                     if (reasonInput != null) {
-                        reasonInput.value = "Quá hạn " + overdueDays + " ngày - " + bookTitle;
+                        reasonInput.value = /*[[#{librarian.fines.overdueReasonPrefix}]]*/ "Overdue" + " " + overdueDays + " " + /*[[#{librarian.fines.overdueReasonDays}]]*/ "days -" + " " + bookTitle;
                         reasonInput.classList.remove("is-invalid");
                         document.getElementById("fineReasonRequired")?.classList.remove("d-block");
                     }
@@ -308,7 +304,7 @@
                             document.getElementById("fineAmountRequired")?.classList.remove("d-block");
                         }
                         fineAmount?.focus({ preventScroll: true });
-                        fineAmount?.setAttribute("placeholder", "Nhập mức phạt cho " + memberName);
+                        fineAmount?.setAttribute("placeholder", /*[[#{librarian.fines.amountForPrefix}]]*/ "Enter a fine amount for" + " " + memberName);
                     }
                 });
             });
