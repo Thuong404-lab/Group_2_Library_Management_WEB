@@ -25,13 +25,10 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
             FROM MemberAccount m
             LEFT JOIN m.member member
             LEFT JOIN member.user user
-            LEFT JOIN member.tier tier
             WHERE LOWER(m.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(m.status) LIKE LOWER(CONCAT('%', :keyword, '%'))
                OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
                OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
                OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))
-               OR LOWER(tier.tierName) LIKE LOWER(CONCAT('%', :keyword, '%'))
             """)
     Page<MemberAccount> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
 
@@ -43,11 +40,9 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
             LEFT JOIN member.tier tier
             WHERE (:keyword = ''
                    OR LOWER(m.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(m.status) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(tier.tierName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                   OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:status = '' OR LOWER(m.status) = LOWER(:status))
               AND (:tierName = '' OR LOWER(tier.tierName) = LOWER(:tierName))
             """)

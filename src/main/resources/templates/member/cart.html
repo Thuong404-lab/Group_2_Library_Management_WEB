@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head>
+    <title>Giỏ sách của tôi - LMW</title>
+    <style>
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .bg-classic-soft { background-color: rgba(139, 90, 43, 0.04); }
+        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content" class="container mt-4 mb-5">
+    <h3 class="font-playfair fw-bold mb-4" style="color: #4a3b32;"><i class="bi bi-cart3 me-2" style="color: #8b5a2b;"></i>Giỏ Sách Đăng Ký Mượn</h3>
+
+    <!-- Thông báo Alert -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #e6f4ea; color: #137333;" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMessage}">Thông báo thành công</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fce8e6; color: #c5221f;" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMessage}">Thông báo lỗi</span>
+    </div>
+
+    <div th:if="${cartItems == null || cartItems.isEmpty()}" class="text-center p-5 bg-white border-classic rounded shadow-sm">
+        <i class="bi bi-basket2 text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3 fs-5">Giỏ sách của bạn hiện tại đang trống rỗng.</p>
+        <a href="/books" class="btn text-white mt-2" style="background-color: #8b5a2b;">Khám phá thư viện ngay</a>
+    </div>
+
+    <div th:if="${cartItems != null && !cartItems.isEmpty()}" class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm rounded bg-white p-3">
+                <!-- Chọn tất cả -->
+                <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-light">
+                    <div class="form-check">
+                        <input class="form-check-input border-classic" type="checkbox" id="selectAllBooks" checked style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                        <label class="form-check-label small fw-bold text-muted text-uppercase ms-2 mb-0" for="selectAllBooks" style="cursor: pointer; user-select: none;">
+                            Chọn tất cả sách trong giỏ
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Từng cuốn sách -->
+                <div th:each="book : ${cartItems}" class="d-flex align-items-center justify-content-between p-3 mb-3 border-classic rounded">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input book-select-checkbox border-classic" type="checkbox" name="selectedBookIds" th:value="${book.bookId}" checked style="width: 1.15rem; height: 1.15rem; cursor: pointer;">
+                        </div>
+                        <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/120/160'}"
+                             style="width: 70px; height: 95px; object-fit: cover;" class="rounded shadow-sm" alt="Cover">
+                        <div>
+                            <h6 class="fw-bold m-0 font-playfair text-dark" th:text="${book.title}">Tên sách</h6>
+                            <small class="text-muted d-block my-1"><i class="bi bi-tag-fill me-1"></i><span th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}"></span></small>
+                            <span class="badge bg-success text-white small">Có sẵn vật lý</span>
+                        </div>
+                    </div>
+                    <form th:action="@{/member/cart/remove}" method="post" class="m-0">
+                        <input type="hidden" name="bookId" th:value="${book.bookId}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash3 fs-5"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-classic shadow-sm rounded bg-white p-4">
+                <h5 class="fw-bold font-playfair mb-3 pb-2 border-bottom text-dark">Bảng Tính Phí Dự Kiến</h5>
+
+                <form th:action="@{/member/cart/checkout}" method="get" id="cartForm">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Chọn kỳ hạn mượn sách</label>
+                        <select class="form-select border-classic" name="numberOfDays" id="cartDaysSelect">
+                            <option value="7">7 Ngày</option>
+                            <option value="14" selected>14 Ngày</option>
+                            <option value="30">30 Ngày</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-classic-soft p-3 rounded mb-4 text-dark small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Số lượng đầu sách:</span>
+                            <span class="fw-bold" id="jsCount" th:text="${cartItems.size()}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Đơn giá ngày cơ sở:</span>
+                            <span>5.000đ / ngày</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Ưu đãi hạng hội viên:</span>
+                            <span class="text-success fw-bold" th:text="'-' + ${discountPercent} + '%'">-0%</span>
+                        </div>
+                        <hr class="my-2 border-classic">
+                        <div class="d-flex justify-content-between align-items-center mt-2 text-dark">
+                            <span class="fw-bold">Tổng chi phí dự kiến:</span>
+                            <h5 class="fw-bold text-danger m-0 font-playfair" id="jsTotalFee">0đ</h5>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded border-classic bg-light">
+                        <div class="d-flex justify-content-between small text-dark mb-1">
+                            <span>Số dư ví hiện tại:</span>
+                            <span class="fw-bold font-monospace" th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        </div>
+                        <div id="walletAlert" class="text-danger small fw-bold mt-1 d-none">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Số dư ví không đủ thanh toán!
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn text-white w-100 py-2.5 fw-bold" style="background-color: #8b5a2b;" id="checkoutBtn">Tiến hành lập phiếu</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            const selectDays = document.getElementById("cartDaysSelect");
+            const totalFeeText = document.getElementById("jsTotalFee");
+            const walletAlert = document.getElementById("walletAlert");
+            const checkoutBtn = document.getElementById("checkoutBtn");
+            const cartForm = document.getElementById("cartForm");
+
+            const discountPercent = /*[[${discountPercent}]]*/ 0.0;
+            const walletBalance = /*[[${walletBalance}]]*/ 0.0;
+            const baseFeePerDay = 5000;
+
+            const selectAll = document.getElementById("selectAllBooks");
+            const checkboxes = document.querySelectorAll(".book-select-checkbox");
+
+            function calculateRealtimeFee() {
+                const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
+
+                // Cập nhật số hiển thị
+                const jsCount = document.getElementById("jsCount");
+                if (jsCount) jsCount.textContent = checkedCount;
+
+                if (checkedCount === 0) {
+                    totalFeeText.textContent = "0đ";
+                    checkoutBtn.disabled = true;
+                    walletAlert.classList.add("d-none");
+                    return;
+                }
+
+                const days = parseInt(selectDays.value);
+                const rawFee = checkedCount * days * baseFeePerDay;
+                const finalFee = rawFee * (1 - (discountPercent / 100));
+
+                totalFeeText.textContent = Math.round(finalFee).toLocaleString('vi-VN') + "đ";
+
+                if (walletBalance < finalFee) {
+                    walletAlert.classList.remove("d-none");
+                    checkoutBtn.disabled = true;
+                } else {
+                    walletAlert.classList.add("d-none");
+                    checkoutBtn.disabled = false;
+                }
+            }
+
+            // Xử lý nút chọn tất cả
+            if (selectAll) {
+                selectAll.addEventListener("change", function() {
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                    calculateRealtimeFee();
+                });
+            }
+
+            // Xử lý từng checkbox
+            checkboxes.forEach(cb => {
+                cb.addEventListener("change", function() {
+                    if (selectAll) {
+                        const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
+                        selectAll.checked = (checkedCount === checkboxes.length);
+                    }
+                    calculateRealtimeFee();
+                });
+            });
+
+            // Khi submit form checkout, thêm tham số các sách được tích chọn làm hidden inputs
+            if (cartForm) {
+                cartForm.addEventListener("submit", function(e) {
+                    // Xóa các input cũ
+                    const oldInputs = cartForm.querySelectorAll("input[name='selectedBookIds']");
+                    oldInputs.forEach(input => input.remove());
+
+                    // Lấy tất cả các checkbox đang được check
+                    const checkedCBs = document.querySelectorAll(".book-select-checkbox:checked");
+                    if (checkedCBs.length === 0) {
+                        e.preventDefault();
+                        alert("Vui lòng chọn ít nhất một cuốn sách để lập phiếu mượn.");
+                        return;
+                    }
+
+                    // Append các hidden inputs
+                    checkedCBs.forEach(cb => {
+                        const hiddenInput = document.createElement("input");
+                        hiddenInput.type = "hidden";
+                        hiddenInput.name = "selectedBookIds";
+                        hiddenInput.value = cb.value;
+                        cartForm.appendChild(hiddenInput);
+                    });
+                });
+            }
+
+            if (selectDays) {
+                selectDays.addEventListener("change", calculateRealtimeFee);
+            }
+
+            // Tính toán lần đầu
+            calculateRealtimeFee();
+        });
+    </script>
+</div>
+</body>
+</html>

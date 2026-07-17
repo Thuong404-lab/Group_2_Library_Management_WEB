@@ -133,4 +133,26 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             Integer memberId,
             Pageable pageable);
     List<Transaction> findByBorrow_BorrowId(Integer borrowId);
+
+    // =========================================================================
+    // PHƯƠNG THỨC MỚI: Lấy tất cả giao dịch tài chính phát sinh của Độc giả trong vòng 365 ngày qua
+    // =========================================================================
+    @Query("SELECT t FROM Transaction t " +
+            "WHERE t.wallet.member.memberId = :memberId " +
+            "AND t.transactionDate >= :limitDate " +
+            "ORDER BY t.transactionDate DESC")
+    List<Transaction> findTransactionsByMemberIdLimit365Days(@Param("memberId") Integer memberId, @Param("limitDate") LocalDateTime limitDate);
+
+    @Query("SELECT MIN(t.transactionDate) FROM Transaction t WHERE t.wallet.member.memberId = :memberId")
+    LocalDateTime findMinTransactionDateByMemberId(@Param("memberId") Integer memberId);
+
+    @Query("SELECT t FROM Transaction t " +
+            "WHERE t.wallet.member.memberId = :memberId " +
+            "AND t.transactionDate >= :startDate " +
+            "AND t.transactionDate <= :endDate " +
+            "ORDER BY t.transactionDate DESC")
+    List<Transaction> findTransactionsByMemberIdAndDateRange(
+            @Param("memberId") Integer memberId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

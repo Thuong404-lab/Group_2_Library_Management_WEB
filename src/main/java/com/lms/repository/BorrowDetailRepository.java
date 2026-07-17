@@ -121,4 +121,19 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
            "ORDER BY bd.borrowDetailId DESC")
     List<BorrowDetail> findAllBorrowDetailsWithRelationships();
 
+    @Query("SELECT bd FROM BorrowDetail bd " +
+            "WHERE bd.borrow.member.memberId = :memberId " +
+            "AND bd.borrow.borrowDate >= :limitDate " +
+            "ORDER BY bd.borrow.borrowDate DESC")
+    List<BorrowDetail> findBorrowHistoryLimit365Days(@Param("memberId") Integer memberId, @Param("limitDate") java.time.LocalDateTime limitDate);
+
+    @Query("SELECT bd FROM BorrowDetail bd " +
+            "WHERE bd.borrow.member.memberId = :memberId " +
+            "AND bd.borrow.borrowDate >= :startDate " +
+            "AND bd.borrow.borrowDate <= :endDate " +
+            "ORDER BY bd.borrow.borrowDate DESC")
+    List<BorrowDetail> findBorrowHistoryByDateRange(
+            @Param("memberId") Integer memberId,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate);
 }

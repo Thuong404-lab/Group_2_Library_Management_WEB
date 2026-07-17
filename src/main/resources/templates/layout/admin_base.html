@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}" th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}" th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}" th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
@@ -31,7 +31,7 @@
                 <a th:href="@{/admin/dashboard}" class="menu-link"
                     th:classappend="${activeMenu == 'dashboard'} ? 'active'">
                     <i class="bi bi-grid-1x2-fill menu-icon"></i>
-                    <span class="menu-text">Tổng quan</span>
+                    <span class="menu-text" th:text="#{staff.nav.dashboard}">Dashboard</span>
                 </a>
             </li>
 
@@ -43,7 +43,7 @@
                     aria-controls="adminUserManagementMenu">
                     <span class="d-flex align-items-center">
                         <i class="bi bi-people-fill menu-icon"></i>
-                        <span class="menu-text">Quản lý người dùng</span>
+                    <span class="menu-text" th:text="#{staff.nav.users}">User Management</span>
                     </span>
                     <i class="bi bi-chevron-down ms-auto menu-text u-font-size-0-75rem-8b511f07"></i>
                 </a>
@@ -52,13 +52,13 @@
                     <li class="menu-item my-1">
                         <a th:href="@{/admin/accounts}" class="menu-link py-2"
                             th:classappend="${activeMenu == 'accounts'} ? 'active-submenu'">
-                            <span class="menu-text">Danh sách thành viên</span>
+                            <span class="menu-text" th:text="#{staff.nav.members}">Member List</span>
                         </a>
                     </li>
                     <li class="menu-item my-1">
                         <a th:href="@{/admin/staff}" class="menu-link py-2"
                             th:classappend="${activeMenu == 'staff'} ? 'active-submenu'">
-                            <span class="menu-text">Danh sách nhân sự</span>
+                            <span class="menu-text" th:text="#{admin.nav.staff}">Staff List</span>
                         </a>
                     </li>
                 </ul>
@@ -67,21 +67,21 @@
             <li class="menu-item">
                 <a th:href="@{/admin/books}" class="menu-link" th:classappend="${activeMenu == 'books'} ? 'active'">
                     <i class="bi bi-book-half menu-icon"></i>
-                    <span class="menu-text">Sách</span>
+                    <span class="menu-text" th:text="#{admin.nav.books}">Books</span>
                 </a>
             </li>
 
             <li class="menu-item">
                 <a th:href="@{/admin/reports}" class="menu-link" th:classappend="${activeMenu == 'reports'} ? 'active'">
                     <i class="bi bi-bar-chart-fill menu-icon"></i>
-                    <span class="menu-text">Báo cáo</span>
+                    <span class="menu-text" th:text="#{admin.nav.reports}">Reports</span>
                 </a>
             </li>
 
             <li class="menu-item">
                 <a th:href="@{/admin/payments}" class="menu-link" th:classappend="${activeMenu == 'payments'} ? 'active'">
                     <i class="bi bi-credit-card-2-front-fill menu-icon"></i>
-                    <span class="menu-text">Thanh toán online</span>
+                    <span class="menu-text" th:text="#{admin.nav.onlinePayments}">Online Payments</span>
                 </a>
             </li>
 
@@ -89,7 +89,7 @@
                 <a th:href="@{/admin/system/logs}" class="menu-link"
                     th:classappend="${activeMenu == 'logs'} ? 'active'">
                     <i class="bi bi-journal-text menu-icon"></i>
-                    <span class="menu-text">Nhật ký hệ thống</span>
+                    <span class="menu-text" th:text="#{admin.nav.systemLogs}">System Logs</span>
                 </a>
             </li>
 
@@ -99,7 +99,7 @@
                    >
                     <span>
                         <i class="bi bi-gear-fill menu-icon"></i>
-                        <span class="menu-text">Cài đặt</span>
+                        <span class="menu-text" th:text="#{admin.nav.settings}">Settings</span>
                     </span>
                     <i class="bi bi-chevron-down menu-text u-font-size-0-75rem-8b511f07"></i>
                 </a>
@@ -108,13 +108,13 @@
                     <li>
                         <a th:href="@{/admin/settings}" class="menu-link"
                             th:classappend="${activeMenu == 'settings'} ? 'active-submenu'">
-                            <span class="menu-text">Cấu hình hệ thống</span>
+                            <span class="menu-text" th:text="#{admin.nav.systemSettings}">System Configuration</span>
                         </a>
                     </li>
                     <li>
                         <a th:href="@{/admin/tiers}" class="menu-link"
                             th:classappend="${activeMenu == 'tiers'} ? 'active-submenu'">
-                            <span class="menu-text">Hạng thành viên</span>
+                            <span class="menu-text" th:text="#{admin.nav.membershipTiers}">Membership Tiers</span>
                         </a>
                     </li>
                 </ul>
@@ -133,6 +133,7 @@
             </div>
 
             <div class="topbar-right">
+                <div th:replace="~{fragments/language-switcher :: switcher}"></div>
                 <details class="dropdown admin-user-dropdown">
                     <summary class="user-dropdown-toggle">
                         <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad"
@@ -146,12 +147,12 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 admin-base-ul-border-right-left-08"
                        >
                         <li><a class="dropdown-item py-2" th:href="@{/admin/profile}"><i
-                                    class="bi bi-person-circle me-2 text-classic"></i>Hồ sơ cá nhân</a></li>
+                                    class="bi bi-person-circle me-2 text-classic"></i><span th:text="#{common.profile}">Profile</span></a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
                         <li><a class="dropdown-item py-2 text-danger" th:href="@{/staff-logout}"><i
-                                    class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                                    class="bi bi-box-arrow-right me-2"></i><span th:text="#{nav.logout}">Log out</span></a></li>
                     </ul>
                 </details>
             </div>
@@ -165,6 +166,7 @@
 
     <!-- Scripts -->
     <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+    <script th:replace="~{fragments/language-switcher :: script}"></script>
     <script>
         document.getElementById('sidebarToggle').addEventListener('click', function () {
             document.body.classList.toggle('sidebar-collapsed');

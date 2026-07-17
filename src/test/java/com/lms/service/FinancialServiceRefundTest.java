@@ -15,11 +15,14 @@ import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.impl.FinancialServiceImpl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +44,7 @@ class FinancialServiceRefundTest {
 
     @BeforeEach
     void setUp() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("vi"));
         transactionRepository = mock(TransactionRepository.class);
         walletRepository = mock(WalletRepository.class);
         systemSettingRepository = mock(SystemSettingRepository.class);
@@ -58,6 +62,11 @@ class FinancialServiceRefundTest {
                 notificationRepository,
                 memberNotificationRepository,
                 reservationRepository);
+    }
+
+    @AfterEach
+    void resetLocale() {
+        LocaleContextHolder.resetLocaleContext();
     }
 
     @Test

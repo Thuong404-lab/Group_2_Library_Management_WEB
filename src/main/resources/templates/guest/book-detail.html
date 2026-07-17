@@ -4,7 +4,7 @@
       layout:decorate="~{layout/base}">
 
 <head>
-    <title th:text="${book.title} + ' - Thư Viện Số'">Chi tiết sách</title>
+    <title th:text="#{guest.bookDetail.pageTitle(${book.title})}">Book Details</title>
     <link rel="stylesheet" th:href="@{/css/pages/guest/book-detail.css}" />
   </head>
 
@@ -15,9 +15,9 @@
         <nav aria-label="breadcrumb" class="mb-4 pt-3">
             <ol class="breadcrumb bg-transparent p-0 mb-0">
                 <li class="breadcrumb-item"><a href="/" class="text-decoration-none u-color-8b5a2b-93ece783"><i
-                            class="bi bi-house-door"></i> Sảnh chính</a></li>
-                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none u-color-8b5a2b-93ece783">Khám phá sách</a></li>
-                <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page" th:text="${book.title}">Tên sách</li>
+                            class="bi bi-house-door"></i> <span th:text="#{nav.home}">Home</span></a></li>
+                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none u-color-8b5a2b-93ece783" th:text="#{nav.explore}">Explore Books</a></li>
+                <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page" th:text="${book.title}">Book title</li>
             </ol>
         </nav>
 
@@ -32,36 +32,36 @@
                 <div class="mt-3">
 
                     <span th:class="${book.status == 'Active' ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
-                          th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}">Có sẵn</span>
+                          th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
                 </div>
             </div>
 
             <!-- Book Details -->
             <div class="col-md-8">
-                <div class="badge mb-2 guest-book-detail-div-background-04" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
-                <h2 class="fw-bold mb-1 guest-book-detail-h2-font-family-05" th:text="${book.title}">Tên sách</h2>
+                <div class="badge mb-2 guest-book-detail-div-background-04" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</div>
+                <h2 class="fw-bold mb-1 guest-book-detail-h2-font-family-05" th:text="${book.title}">Book title</h2>
                 <p class="text-muted fs-5 mb-3">
                     <span th:if="${book.authors != null && !book.authors.isEmpty()}"
                           th:each="author, iterStat : ${book.authors}">
                         <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
                     </span>
-                    <span th:if="${book.authors == null || book.authors.isEmpty()}">Khuyết danh</span>
+                    <span th:if="${book.authors == null || book.authors.isEmpty()}" th:text="#{book.unknownAuthor}">Unknown author</span>
                 </p>
 
                 <!-- Stats -->
                 <div class="d-flex gap-4 mb-4">
                     <div class="text-center">
                         <div class="fw-bold fs-4 u-color-ffc107-2cee102e"
-                             th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' ★' : 'Chưa có'}">Chưa có</div>
-                        <div class="small text-muted">Điểm TB</div>
+                             th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' ★' : #messages.msg('common.none')}">None</div>
+                        <div class="small text-muted" th:text="#{guest.bookDetail.averageRating}">Average Rating</div>
                     </div>
                     <div class="text-center">
                         <div class="fw-bold fs-4 u-color-8b5a2b-d7f13118">320</div>
-                        <div class="small text-muted">Trang</div>
+                        <div class="small text-muted" th:text="#{guest.bookDetail.pages}">Pages</div>
                     </div>
                     <div class="text-center">
                         <div class="fw-bold fs-4 guest-book-detail-div-color-08">42</div>
-                        <div class="small text-muted">Lượt mượn</div>
+                        <div class="small text-muted" th:text="#{guest.bookDetail.borrowCount}">Loans</div>
                     </div>
                 </div>
 
@@ -69,28 +69,28 @@
                     <div class="col-sm-6">
                         <ul class="list-unstyled">
                             <li class="mb-2"><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></li>
-                            <li class="mb-2"><strong>Ngôn ngữ:</strong> Tiếng Việt</li>
-                            <li class="mb-2"><strong>Kho:</strong> Kho mượn đọc</li>
-                            <li class="mb-2"><strong>Vị trí:</strong> Kệ A - Ngăn 3</li>
+                            <li class="mb-2"><strong th:text="#{guest.bookDetail.language}">Language:</strong> <span th:text="#{language.vietnamese}">Vietnamese</span></li>
+                            <li class="mb-2"><strong th:text="#{guest.bookDetail.storage}">Storage:</strong> <span th:text="#{guest.bookDetail.readingStorage}">Reading Loan Storage</span></li>
+                            <li class="mb-2"><strong th:text="#{guest.bookDetail.location}">Location:</strong> <span th:text="#{guest.bookDetail.sampleLocation}">Shelf A - Compartment 3</span></li>
                         </ul>
                     </div>
                     <div class="col-sm-6">
                         <ul class="list-unstyled">
-                            <li class="mb-2"><strong>Thể loại:</strong> <span th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}"></span></li>
-                            <li class="mb-2"><strong>Trạng thái:</strong> <span th:class="${book.status == 'Active' ? 'badge bg-success' : 'badge bg-danger'}" th:text="${book.status == 'Active' ? 'Có sẵn' : 'Không có sẵn'}"></span></li>
+                            <li class="mb-2"><strong th:text="#{book.genre}">Genre:</strong> <span th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}"></span></li>
+                            <li class="mb-2"><strong th:text="#{common.status}">Status:</strong> <span th:class="${book.status == 'Active' ? 'badge bg-success' : 'badge bg-danger'}" th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}"></span></li>
                             <li class="mb-2">
-                                <strong>Đánh giá:</strong>
+                                <strong th:text="#{guest.bookDetail.rating}">Rating:</strong>
                                 <span class="text-warning">★</span>
-                                <span class="text-muted" th:text="${reviewCount > 0 ? '(' + #numbers.formatDecimal(averageRating, 1, 1) + ' / 5)' : '(Chưa có đánh giá)'}">(Chưa có đánh giá)</span>
+                                <span class="text-muted" th:text="${reviewCount > 0 ? '(' + #numbers.formatDecimal(averageRating, 1, 1) + ' / 5)' : #messages.msg('guest.bookDetail.noRating')}">(No ratings)</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <h5 class="fw-bold">Mô tả sách</h5>
-                    <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : 'Đang cập nhật mô tả cho cuốn sách này...'}">
-                        Mô tả sách...
+                    <h5 class="fw-bold" th:text="#{guest.bookDetail.description}">Book Description</h5>
+                    <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : #messages.msg('guest.bookDetail.descriptionPending')}">
+                        Book description...
                     </p>
                 </div>
 
@@ -105,20 +105,20 @@
                         <button type="submit"
                                 th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
                             <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
-                            <span th:text="${favoriteBookIds.contains(book.bookId) ? 'Đã yêu thích' : 'Yêu thích'}">Yêu thích</span>
+                            <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
                         </button>
                     </form>
 
                     <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
                         <button type="submit" class="btn btn-outline-classic w-100 py-2">
-                            <i class="bi bi-bookmark me-1"></i> Đặt trước
+                            <i class="bi bi-bookmark me-1"></i> <span th:text="#{guest.bookDetail.reserve}">Reserve</span>
                         </button>
                     </form>
 
                     <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? 'Sách hiện không có sẵn' : ''}">
-                            <i class="bi bi-book me-1"></i> Yêu cầu mượn
+                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : ''}">
+                            <i class="bi bi-book me-1"></i> <span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
                         </button>
                     </form>
                 </div>
@@ -129,7 +129,7 @@
         <div class="mt-5">
             <h4 class="fw-bold mb-4 u-font-family-playfair-display-serif-color-4a3b32-fbccaa2c">
                 <i class="bi bi-chat-square-quote-fill me-2 u-color-8b5a2b-d7f13118"></i>
-                Đánh giá từ bạn đọc
+                <span th:text="#{guest.bookDetail.readerReviews}">Reader Reviews</span>
                 <span class="badge bg-secondary ms-2 fs-6" th:text="${reviewCount}">0</span>
             </h4>
 
@@ -140,7 +140,7 @@
             <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')"
                  th:if="${reviewBorrowEligible and !reviewAlreadySubmitted}">
                 <h5 class="fw-bold mb-4 u-color-4a3b32-8f35ff96">
-                    <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i>Gửi đánh giá sách
+                    <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span>
                 </h5>
                 <form id="bookDetailReviewForm"
                       th:action="@{'/member/interaction/books/' + ${book.bookId} + '/reviews'}"
@@ -150,26 +150,26 @@
                     <input type="hidden" th:field="*{bookId}" th:value="${book.bookId}">
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Số sao</label>
+                        <label class="form-label fw-bold" th:text="#{guest.bookDetail.stars}">Stars</label>
                         <input type="hidden" th:field="*{rating}" id="ratingValue">
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             <div class="rating-picker"
                                  id="memberRatingPicker"
                                  role="radiogroup"
-                                 aria-label="Chon so sao">
-                                <button type="button" class="rating-star" data-value="1" role="radio" aria-label="1 sao" aria-checked="false">
+                                 th:aria-label="#{guest.bookDetail.selectStars}">
+                                <button type="button" class="rating-star" data-value="1" role="radio" th:aria-label="#{guest.bookDetail.starCount(1)}" aria-checked="false">
                                     <i class="bi bi-star-fill"></i>
                                 </button>
-                                <button type="button" class="rating-star" data-value="2" role="radio" aria-label="2 sao" aria-checked="false">
+                                <button type="button" class="rating-star" data-value="2" role="radio" th:aria-label="#{guest.bookDetail.starCount(2)}" aria-checked="false">
                                     <i class="bi bi-star-fill"></i>
                                 </button>
-                                <button type="button" class="rating-star" data-value="3" role="radio" aria-label="3 sao" aria-checked="false">
+                                <button type="button" class="rating-star" data-value="3" role="radio" th:aria-label="#{guest.bookDetail.starCount(3)}" aria-checked="false">
                                     <i class="bi bi-star-fill"></i>
                                 </button>
-                                <button type="button" class="rating-star" data-value="4" role="radio" aria-label="4 sao" aria-checked="false">
+                                <button type="button" class="rating-star" data-value="4" role="radio" th:aria-label="#{guest.bookDetail.starCount(4)}" aria-checked="false">
                                     <i class="bi bi-star-fill"></i>
                                 </button>
-                                <button type="button" class="rating-star" data-value="5" role="radio" aria-label="5 sao" aria-checked="false">
+                                <button type="button" class="rating-star" data-value="5" role="radio" th:aria-label="#{guest.bookDetail.starCount(5)}" aria-checked="false">
                                     <i class="bi bi-star-fill"></i>
                                 </button>
                             </div>
@@ -178,14 +178,14 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Bình luận</label>
+                        <label class="form-label fw-bold" th:text="#{guest.bookDetail.comment}">Comment</label>
                         <textarea class="form-control"
                                   id="bookDetailReviewComment"
                                   rows="5"
                                   th:field="*{comment}"
                                   required minlength="5"
                                   maxlength="1000"
-                                  placeholder="Nhập từ 5–1000 ký tự"
+                                  th:placeholder="#{guest.bookDetail.commentPlaceholder}"
                                   aria-describedby="bookDetailReviewCommentCount bookDetailReviewCommentError"></textarea>
                         <div class="book-review-comment-support"><span id="bookDetailReviewCommentCount" aria-live="polite">0/1000</span></div>
                         <div id="bookDetailReviewCommentError" class="book-review-field-error" role="alert" aria-live="assertive"
@@ -193,7 +193,7 @@
                     </div>
 
                     <button type="submit" class="btn text-white px-4 u-background-8b5a2b-9b8da1d0">
-                        Gửi đánh giá
+                        <span th:text="#{guest.bookDetail.submitReview}">Submit Review</span>
                     </button>
                 </form>
             </div>
@@ -201,24 +201,24 @@
             <div class="review-eligibility-notice" sec:authorize="hasRole('MEMBER')"
                  th:if="${reviewSubmittedSuccess == true}">
                 <div>
-                    <h5>Đã gửi đánh giá thành công.</h5>
-                    <a th:href="@{/member/interaction/reviews}" class="review-eligibility-link">Xem đánh giá của tôi</a>
+                    <h5 th:text="#{guest.bookDetail.reviewSuccess}">Review submitted successfully.</h5>
+                    <a th:href="@{/member/interaction/reviews}" class="review-eligibility-link" th:text="#{guest.bookDetail.myReviews}">View My Reviews</a>
                 </div>
             </div>
 
             <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="!hasRole('MEMBER')">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h5 class="fw-bold mb-1 u-color-4a3b32-8f35ff96">Viết đánh giá của bạn</h5>
-                        <div class="text-muted">Vui lòng đăng nhập bằng tài khoản member để gửi đánh giá.</div>
+                        <h5 class="fw-bold mb-1 u-color-4a3b32-8f35ff96" th:text="#{guest.bookDetail.writeReview}">Write Your Review</h5>
+                        <div class="text-muted" th:text="#{guest.bookDetail.loginToReview}">Log in with a member account to submit a review.</div>
                     </div>
-                    <a th:href="@{/login}" class="btn text-white px-4 guest-book-detail-a-background-13">Đăng nhập</a>
+                    <a th:href="@{/login}" class="btn text-white px-4 guest-book-detail-a-background-13" th:text="#{nav.login}">Log in</a>
                 </div>
             </div>
 
             <div th:if="${bookReviews == null || bookReviews.isEmpty()}"
                  class="bg-white rounded shadow-sm p-4 text-center text-muted">
-                Chưa có đánh giá nào cho cuốn sách này.
+                <span th:text="#{guest.bookDetail.noReviews}">There are no reviews for this book yet.</span>
             </div>
 
             <!-- Danh sách reviews từ DB -->
@@ -230,8 +230,8 @@
 
                              th:text="${review.member != null && review.member.user != null && !#strings.isEmpty(review.member.user.fullName) ? #strings.substring(review.member.user.fullName, 0, 1) : '?'}">N</div>
                         <div>
-                            <div class="fw-bold" th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : 'Bạn đọc'}">Bạn đọc</div>
-                            <div class="small text-muted" th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : 'Chưa rõ ngày'}">15/06/2026</div>
+                            <div class="fw-bold" th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : #messages.msg('guest.bookDetail.reader')}">Reader</div>
+                            <div class="small text-muted" th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : #messages.msg('common.unknownDate')}">Unknown date</div>
                         </div>
                     </div>
                     <div class="text-warning fs-5">
@@ -240,9 +240,7 @@
                     </div>
                 </div>
                 <p class="mb-0 text-muted lh-lg" th:text="${review.comment}">
-                    Cuốn sách cực kỳ hay và bổ ích! Tôi đã đọc nhiều lần và mỗi lần đều rút ra được những bài học mới.
-                    Nguyên tắc của Dale Carnegie áp dụng được trong cả công việc lẫn cuộc sống hàng ngày.
-                    Rất đáng để đọc, đặc biệt là với những ai đang muốn cải thiện kỹ năng giao tiếp.
+                    A thoughtful and useful book with practical lessons for everyday life.
                 </p>
             </div>
 
@@ -253,15 +251,14 @@
                         <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-15"
                             >T</div>
                         <div>
-                            <div class="fw-bold">Trần Thị Bình</div>
+                            <div class="fw-bold">Sample Reader</div>
                             <div class="small text-muted">20/05/2026</div>
                         </div>
                     </div>
                     <div class="text-warning fs-5">★★★★<span class="guest-book-detail-span-color-16">★</span> <span class="text-muted small ms-1">4/5</span></div>
                 </div>
                 <p class="mb-0 text-muted lh-lg">
-                    Sách viết rất dễ đọc, nhiều ví dụ thực tế sinh động. Tuy nhiên một số nội dung có vẻ hơi cũ so với thời đại hiện nay.
-                    Nhìn chung vẫn là một cuốn sách đáng đọc và để trong tủ sách của mình.
+                    The book is easy to read and includes many practical examples.
                 </p>
             </div>
 
@@ -272,15 +269,14 @@
                         <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-17"
                             >L</div>
                         <div>
-                            <div class="fw-bold">Lê Minh Khoa</div>
+                            <div class="fw-bold">Sample Reader</div>
                             <div class="small text-muted">02/04/2026</div>
                         </div>
                     </div>
                     <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
                 </div>
                 <p class="mb-0 text-muted lh-lg">
-                    Kinh điển trong thể loại phát triển bản thân. Tôi đã nghe nhiều người khuyên đọc và giờ đọc xong thì thấy
-                    họ khuyên đúng! Nội dung đơn giản, dễ áp dụng, hiệu quả thực sự.
+                    A classic with straightforward, practical ideas.
                 </p>
             </div>
         </div>
@@ -289,8 +285,15 @@
     </div>
 
     <div layout:fragment="scripts">
-        <script>
+        <script th:inline="javascript">
             (function() {
+                const reviewI18n = {
+                    ratingRequired: /*[[#{guest.bookDetail.validation.ratingRequired}]]*/ "Select a star rating.",
+                    commentRequired: /*[[#{guest.bookDetail.validation.commentRequired}]]*/ "Enter your review.",
+                    commentMin: /*[[#{guest.bookDetail.validation.commentMin}]]*/ "The review must contain at least 5 characters.",
+                    commentMax: /*[[#{guest.bookDetail.validation.commentMax}]]*/ "The review cannot exceed 1000 characters.",
+                    commentLetters: /*[[#{guest.bookDetail.validation.commentLetters}]]*/ "The review cannot contain only numbers or special characters."
+                };
                 const reviewForm = document.getElementById("bookDetailReviewForm");
                 const ratingPicker = document.getElementById("memberRatingPicker");
                 const ratingStars = Array.from(
@@ -366,7 +369,7 @@
 
                 reviewForm.addEventListener("submit", function(event) {
                     if (ratingInput.value.trim() === "") {
-                        setRatingError("Vui lòng chọn đánh giá sao.");
+                        setRatingError(reviewI18n.ratingRequired);
                         event.preventDefault();
                         event.stopPropagation();
                         return;
@@ -376,10 +379,10 @@
                     if (comment != null) comment.value = normalizedComment;
                     updateCommentCount();
                     let commentMessage = "";
-                    if (normalizedComment === "") commentMessage = "Vui lòng nhập nội dung đánh giá.";
-                    else if (normalizedComment.length < 5) commentMessage = "Nội dung đánh giá phải có ít nhất 5 ký tự.";
-                    else if (normalizedComment.length > 1000) commentMessage = "Nội dung đánh giá không được vượt quá 1000 ký tự.";
-                    else if (!/\p{L}/u.test(normalizedComment)) commentMessage = "Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt.";
+                    if (normalizedComment === "") commentMessage = reviewI18n.commentRequired;
+                    else if (normalizedComment.length < 5) commentMessage = reviewI18n.commentMin;
+                    else if (normalizedComment.length > 1000) commentMessage = reviewI18n.commentMax;
+                    else if (!/\p{L}/u.test(normalizedComment)) commentMessage = reviewI18n.commentLetters;
                     if (commentMessage !== "") {
                         setCommentError(commentMessage);
                         event.preventDefault();

@@ -13,10 +13,13 @@ import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.FeedbackRepository;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.service.impl.MemberReviewServiceImpl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.i18n.LocaleContextHolder;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +42,7 @@ class MemberReviewEligibilityServiceTest {
 
     @BeforeEach
     void setUp() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("vi"));
         memberAccountRepository = mock(MemberAccountRepository.class);
         bookRepository = mock(BookRepository.class);
         feedbackRepository = mock(FeedbackRepository.class);
@@ -55,6 +59,11 @@ class MemberReviewEligibilityServiceTest {
 
         when(memberAccountRepository.findByUsername("member7")).thenReturn(Optional.of(account));
         when(bookRepository.findById(11)).thenReturn(Optional.of(book));
+    }
+
+    @AfterEach
+    void resetLocale() {
+        LocaleContextHolder.resetLocaleContext();
     }
 
     @Test

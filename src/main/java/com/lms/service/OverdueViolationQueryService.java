@@ -7,6 +7,7 @@ import com.lms.entity.User;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.SystemSettingRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -23,6 +24,8 @@ import java.util.Set;
  */
 @Service
 public class OverdueViolationQueryService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private static final String FINE_PER_DAY_SETTING_KEY = "Fine_Per_Day";
     private static final BigDecimal DEFAULT_FINE_PER_DAY = BigDecimal.valueOf(5000);
     private static final Set<String> OVERDUE_ELIGIBLE_STATUSES =
@@ -93,11 +96,11 @@ public class OverdueViolationQueryService {
         return new OverdueViolationView(
                 detail.getBorrowDetailId(),
                 member.getMemberId(),
-                user == null || isBlank(user.getFullName()) ? "Thành viên" : user.getFullName(),
+                user == null || isBlank(user.getFullName()) ? messages.get("common.member") : user.getFullName(),
                 user == null ? "" : valueOrEmpty(user.getEmail()),
                 user == null ? "" : valueOrEmpty(user.getPhone()),
                 detail.getBook() == null || isBlank(detail.getBook().getTitle())
-                        ? "Không rõ tên sách"
+                        ? messages.get("backend.book.unknownTitle")
                         : detail.getBook().getTitle(),
                 detail.getBookItem() == null ? "" : valueOrEmpty(detail.getBookItem().getBarcode()),
                 detail.getDueDate(),

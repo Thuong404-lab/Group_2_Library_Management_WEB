@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
@@ -31,6 +32,8 @@ import java.util.List;
 
 @Service
 public class AdminPaymentService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private final PayOsPaymentRepository paymentRepository;
     private final PayOsPaymentAuditLogRepository auditRepository;
@@ -54,7 +57,7 @@ public class AdminPaymentService {
     @Transactional(readOnly = true)
     public PayOsPayment getPayment(Long orderCode) {
         return paymentRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giao dịch thanh toán."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
     }
 
     @Transactional(readOnly = true)
@@ -155,7 +158,7 @@ public class AdminPaymentService {
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
-            throw new DataProcessingException("Không thể tạo file PDF thanh toán.", e);
+            throw new DataProcessingException(messages.get("backend.payment.pdfFailed"), e);
         }
     }
 

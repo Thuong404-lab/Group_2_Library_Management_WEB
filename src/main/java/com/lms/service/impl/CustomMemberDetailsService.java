@@ -3,6 +3,8 @@ package com.lms.service.impl;
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.MemberAccount;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,6 +20,9 @@ import java.util.List;
 @Service
 public class CustomMemberDetailsService implements UserDetailsService {
 
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
     private final MemberAccountRepository memberAccountRepository;
 
     public CustomMemberDetailsService(MemberAccountRepository memberAccountRepository) {
@@ -28,10 +33,11 @@ public class CustomMemberDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         MemberAccount account = memberAccountRepository.findByUsername(username)
                 .orElseGet(() -> memberAccountRepository.findByMember_User_Email(username)
-                        .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản thành viên: " + username)));
+                        .orElseThrow(() -> new UsernameNotFoundException(
+                                messages.get("backend.account.memberUsernameNotFound", username))));
 
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new DisabledException("Tài khoản đã bị khóa hoặc chưa kích hoạt.");
+            throw new DisabledException(messages.get("backend.account.disabled"));
         }
 
         List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_MEMBER"));

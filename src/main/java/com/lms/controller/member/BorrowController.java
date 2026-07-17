@@ -98,6 +98,9 @@ public class BorrowController {
         model.addAttribute("currentMemberName", principal.getName());
         model.addAttribute("selectedBookId", bookId);
 
+        // --- THÊM DÒNG NÀY ĐỂ TRUYỀN DỮ LIỆU SỐ NGÀY MAX XUỐNG GIAO DIỆN ---
+        model.addAttribute("maxBorrowDays", getMaxBorrowDays());
+
         try {
             Book book = bookService.findBookById(bookId);
             if ("Inactive".equalsIgnoreCase(book.getStatus())) {
@@ -122,9 +125,17 @@ public class BorrowController {
             redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa chọn sách để gửi yêu cầu mượn.");
             return "redirect:/";
         }
+
+        // --- THÊM ĐOẠN VALIDATION CHẶN LỖI NHẬP QUÁ NGÀY Ở ĐÂY ---
+        Integer maxDaysAllowed = getMaxBorrowDays();
+        if (numberOfDays < 1 || numberOfDays > maxDaysAllowed) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số ngày mượn không hợp lệ! Bạn chỉ được phép nhập từ 1 đến " + maxDaysAllowed + " ngày.");
+            return "redirect:/member/borrow/create?bookId=" + bookId;
+        }
+
         try {
             borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của ban đang chờ phê duyệt.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của bạn đang chờ phê duyệt.");
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
@@ -254,4 +265,18 @@ public class BorrowController {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+    private Integer getMaxBorrowDays() {
+        return systemSettingRepository.findAll().stream()
+                .filter(setting -> setting.getSettingKey() != null)
+                .filter(setting -> "Max_Borrow_Days".equalsIgnoreCase(setting.getSettingKey()))
+                .map(setting -> setting.getSettingValue())
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .map(Integer::parseInt)
+                .filter(value -> value > 0)
+                .findFirst()
+                .orElse(14); // Giá trị mặc định nếu database chưa có key này
+    }
+
+
 }

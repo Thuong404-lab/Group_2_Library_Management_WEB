@@ -3,7 +3,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "`MemberNotifications`")
+@Table(name = "MemberNotifications")
 public class MemberNotification {
     @EmbeddedId
     private MemberNotificationId id;

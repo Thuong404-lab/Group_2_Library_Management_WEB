@@ -119,7 +119,15 @@ public class BookAcquisitionRequest {
     public void setReferenceUrl(String referenceUrl) { this.referenceUrl = referenceUrl; }
     public AcquisitionRequestStatus getStatus() { return status; }
     public void setStatus(AcquisitionRequestStatus status) { this.status = status; }
-    public String getDecisionNote() { return decisionNote; }
+    public String getDecisionNote() {
+        // Repair the known legacy value that was already damaged while the SQL
+        // Server column was VARCHAR. The database migration changes the column
+        // to NVARCHAR so newly entered Vietnamese text remains intact.
+        if ("Chua có nhà cung c?p phù h?p.".equals(decisionNote)) {
+            return "Chưa có nhà cung cấp phù hợp.";
+        }
+        return decisionNote;
+    }
     public void setDecisionNote(String decisionNote) { this.decisionNote = decisionNote; }
     public LocalDateTime getProcessedDate() { return processedDate; }
     public void setProcessedDate(LocalDateTime processedDate) { this.processedDate = processedDate; }

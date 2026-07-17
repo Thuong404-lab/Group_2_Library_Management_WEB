@@ -8,6 +8,7 @@ public class MemberBorrowDTO {
     private String authorName;
     private String bookImage;
     private String bookIdStr;
+    private String borrowIdStr;
     private LocalDateTime actionDate;
     private LocalDateTime dueDate;
     private LocalDateTime returnDate; // Dành cho tab Lịch sử
@@ -42,4 +43,6 @@ public class MemberBorrowDTO {
     public void setProgressPercentage(int progressPercentage) { this.progressPercentage = progressPercentage; }
     public int getRenewCount() { return renewCount; }
     public void setRenewCount(int renewCount) { this.renewCount = renewCount; }
+    public String getBorrowIdStr() { return borrowIdStr; }
+    public void setBorrowIdStr(String borrowIdStr) { this.borrowIdStr = borrowIdStr; }
 }

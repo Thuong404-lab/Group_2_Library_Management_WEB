@@ -3,7 +3,7 @@
     layout:decorate="~{layout/base}">
 
 <head>
-    <title>Hạng thành viên - Thư Viện LMW</title>
+    <title th:text="#{public.tiers.title}">Membership Tiers - LMW Library</title>
     <link rel="stylesheet" th:href="@{/css/pages/guest/membership-tiers.css}" />
 </head>
 
@@ -13,16 +13,16 @@
             <div class="container text-center">
                 <span class="membership-tiers-eyebrow">
                     <i class="bi bi-stars" aria-hidden="true"></i>
-                    Đặc quyền dành cho bạn
+                    <span th:text="#{public.tiers.eyebrow}">Benefits made for you</span>
                 </span>
-                <h1>Khám phá các hạng thành viên</h1>
-                <p>Mỗi hành trình đọc sách đều xứng đáng được ghi nhận. Khám phá điều kiện và quyền lợi của từng hạng
-                    tại Thư Viện LMW.</p>
+                <h1 th:text="#{public.tiers.heading}">Explore membership tiers</h1>
+                <p th:text="#{public.tiers.description}">Every reading journey deserves recognition. Explore each
+                    tier's requirements and benefits at LMW Library.</p>
             </div>
         </section>
 
         <section class="container membership-tiers-content" aria-labelledby="membership-tier-list-title">
-            <h2 id="membership-tier-list-title" class="sr-only">Danh sách hạng thành viên</h2>
+            <h2 id="membership-tier-list-title" class="sr-only" th:text="#{public.tiers.listTitle}">Membership tier list</h2>
 
             <div class="row membership-tier-grid" th:if="${tiers != null && !tiers.isEmpty()}">
                 <div class="col-lg-3 col-md-6 d-flex" th:each="tier, tierStat : ${tiers}">
@@ -35,27 +35,30 @@
                             </span>
                         </div>
 
-                        <p class="membership-tier-card__label">Hạng thành viên</p>
+                        <p class="membership-tier-card__label" th:text="#{public.tiers.cardLabel}">Membership tier</p>
                         <h3 th:text="${tier.tierName}">Regular</h3>
 
                         <dl class="membership-tier-details">
                             <div class="membership-tier-details__item">
-                                <dt><i class="bi bi-graph-up-arrow" aria-hidden="true"></i>Điều kiện đạt hạng</dt>
-                                <dd th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 1, 'POINT', 0, 'COMMA') + ' VNĐ' : 'Chưa có yêu cầu'}">0 VNĐ</dd>
+                                <dt><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span th:text="#{public.tiers.condition}">Tier requirement</span></dt>
+                                <dd th:if="${tier.condition != null}"
+                                    th:with="formattedCondition=${#numbers.formatDecimal(tier.condition, 1, 'POINT', 0, 'COMMA')}"
+                                    th:text="${#messages.msg('public.tiers.conditionValue', formattedCondition)}">0 VND</dd>
+                                <dd th:unless="${tier.condition != null}" th:text="#{public.tiers.noRequirement}">No requirement</dd>
                             </div>
                             <div class="membership-tier-details__item">
-                                <dt><i class="bi bi-book" aria-hidden="true"></i>Giới hạn mượn</dt>
-                                <dd th:text="${tier.borrowLimit} + ' cuốn'">3 cuốn</dd>
+                                <dt><i class="bi bi-book" aria-hidden="true"></i><span th:text="#{public.tiers.borrowLimit}">Borrowing limit</span></dt>
+                                <dd th:text="${#messages.msg('public.tiers.borrowLimitValue', tier.borrowLimit)}">3 books</dd>
                             </div>
                             <div class="membership-tier-details__item">
-                                <dt><i class="bi bi-percent" aria-hidden="true"></i>Giảm phí mượn</dt>
-                                <dd th:text="${tier.discountPercent} + '%'">0%</dd>
+                                <dt><i class="bi bi-percent" aria-hidden="true"></i><span th:text="#{public.tiers.discount}">Borrowing fee discount</span></dt>
+                                <dd th:text="${#messages.msg('public.tiers.discountValue', tier.discountPercent)}">0%</dd>
                             </div>
                         </dl>
 
                         <div class="membership-tier-benefits">
-                            <h4><i class="bi bi-gift" aria-hidden="true"></i>Quyền lợi chi tiết</h4>
-                            <p th:text="${tier.benefits}">Quyền lợi của hạng thành viên.</p>
+                            <h4><i class="bi bi-gift" aria-hidden="true"></i><span th:text="#{public.tiers.benefits}">Detailed benefits</span></h4>
+                            <p th:text="${tier.benefits}">Membership tier benefits.</p>
                         </div>
                     </article>
                 </div>
@@ -63,8 +66,8 @@
 
             <div class="membership-tiers-empty" th:if="${tiers == null || tiers.isEmpty()}">
                 <i class="bi bi-award" aria-hidden="true"></i>
-                <h3>Chưa có thông tin hạng thành viên</h3>
-                <p>Thông tin các hạng thành viên đang được cập nhật. Vui lòng quay lại sau.</p>
+                <h3 th:text="#{public.tiers.emptyTitle}">No membership tier information yet</h3>
+                <p th:text="#{public.tiers.emptyDescription}">Membership tier information is being updated. Please check back later.</p>
             </div>
 
     </section>

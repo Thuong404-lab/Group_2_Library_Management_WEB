@@ -21,6 +21,8 @@ public interface AccountService {
     // UC-20.1: Tạo tài khoản
     void createAccount(AdminAccountCreateRequest request);
 
+    Map<String, String> validateAccountCreate(AdminAccountCreateRequest request);
+
     // UC-20.2: Cập nhật tài khoản
     void updateAccount(AdminAccountUpdateRequest request, Integer currentAccountId);
 
