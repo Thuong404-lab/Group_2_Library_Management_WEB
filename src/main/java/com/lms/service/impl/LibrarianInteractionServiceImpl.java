@@ -5,6 +5,7 @@ import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.dto.response.LibrarianReviewResponse;
 import com.lms.entity.*;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
 import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.repository.*;
@@ -70,7 +71,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
 
         if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
-            throw new ValidationException("Đánh giá này đã được member xoá nên không thể phản hồi.");
+            throw new ConflictException("Đánh giá này đã được member xoá nên không thể phản hồi.");
         }
 
         String normalizedResponse = request.getResponse() == null ? "" : request.getResponse().strip()
@@ -291,7 +292,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         BookAcquisitionRequest request = bookAcquisitionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề xuất sách."));
         if (request.getStatus() != AcquisitionRequestStatus.PENDING) {
-            throw new ValidationException("Đề xuất này đã được xử lý trước đó.");
+            throw new ConflictException("Đề xuất này đã được xử lý trước đó.");
         }
         return request;
     }

@@ -1,4 +1,5 @@
 package com.lms.controller.guest;
+import com.lms.exception.ApplicationException;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -131,7 +132,7 @@ public class GuestController {
                         memberReviewService.isEligibleToReview(principal.getName(), id));
                 model.addAttribute("reviewAlreadySubmitted",
                         memberReviewService.hasActiveReview(principal.getName(), id));
-            } catch (RuntimeException ignored) {
+            } catch (ApplicationException ignored) {
                 // Non-member authenticated accounts cannot submit member reviews.
             }
         }
@@ -152,7 +153,7 @@ public class GuestController {
 
         try {
             model.addAttribute("favoriteBookIds", memberFavoriteService.getMyFavoriteBookIds(principal.getName()));
-        } catch (RuntimeException e) {
+        } catch (ApplicationException e) {
             model.addAttribute("favoriteBookIds", Collections.emptySet());
         }
     }

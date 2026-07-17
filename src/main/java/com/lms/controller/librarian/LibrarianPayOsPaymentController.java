@@ -1,4 +1,7 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
@@ -36,7 +39,7 @@ public class LibrarianPayOsPaymentController {
             Member member = findMember(memberPhone);
             PayOsPayment payment = paymentService.createTopUpForLibrarian(member, amount);
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", readableMessage(e));
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
             redirectAttributes.addFlashAttribute("amount", amount);
@@ -78,7 +81,7 @@ public class LibrarianPayOsPaymentController {
 
     @GetMapping(value = "/{orderCode}/qr.png", produces = MediaType.IMAGE_PNG_VALUE)
     @ResponseBody
-    public ResponseEntity<byte[]> qrImage(@PathVariable Long orderCode) throws Exception {
+    public ResponseEntity<byte[]> qrImage(@PathVariable Long orderCode) {
         PayOsPayment payment = paymentService.getForStaff(orderCode);
         if (payment.getQrCode() == null || payment.getQrCode().isBlank()) {
             return ResponseEntity.notFound().build();
@@ -89,14 +92,14 @@ public class LibrarianPayOsPaymentController {
 
     private Member findMember(String lookup) {
         if (lookup == null || lookup.isBlank()) {
-            throw new RuntimeException("Vui lòng chọn thành viên.");
+            throw new ValidationException("Vui lòng chọn thành viên.");
         }
         String value = lookup.trim();
         if (value.matches("\\d+")) {
             try {
                 return memberRepository.findById(Integer.valueOf(value))
                         .or(() -> memberRepository.findByUserPhone(value))
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên."));
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên."));
             } catch (NumberFormatException ignored) {
                 // Continue with the other lookup types below.
             }
@@ -104,10 +107,10 @@ public class LibrarianPayOsPaymentController {
         return memberRepository.findByUserPhone(value)
                 .or(() -> memberRepository.findByUserEmail(value))
                 .or(() -> memberRepository.findByAccountUsername(value))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên."));
     }
 
-    private String readableMessage(Exception exception) {
+    private String readableMessage(ApplicationException exception) {
         Throwable current = exception;
         while (current.getCause() != null && (current.getMessage() == null || current.getMessage().isBlank())) {
             current = current.getCause();

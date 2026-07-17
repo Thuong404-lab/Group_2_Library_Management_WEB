@@ -10,6 +10,10 @@ import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ForbiddenException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberNotificationRepository;
@@ -86,22 +90,22 @@ public class FinancialServiceImpl implements FinancialService {
     @Transactional(rollbackFor = Exception.class)
     public void payOverdueFine(Integer memberId, Integer fineId) {
         Transaction fine = transactionRepository.findById(fineId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phạt với ID: " + fineId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoản phạt với ID: " + fineId));
 
         validateTransactionOwner(fine, memberId);
 
         String type = normalize(fine.getTransactionType());
         if (!FINE_TYPE.equals(type) && !DAMAGE_FEE_TYPE.equals(type)) {
-            throw new RuntimeException("Giao dịch này không phải khoản phạt.");
+            throw new ValidationException("Giao dịch này không phải khoản phạt.");
         }
 
         if (isCompletedStatus(fine.getStatus())) {
-            throw new RuntimeException("Khoản phạt này đã được thanh toán.");
+            throw new ConflictException("Khoản phạt này đã được thanh toán.");
         }
 
         BigDecimal fineAmount = amountOrZero(fine.getAmount()).abs();
         if (fineAmount.signum() <= 0) {
-            throw new RuntimeException("Số tiền phạt không hợp lệ.");
+            throw new ValidationException("Số tiền phạt không hợp lệ.");
         }
 
         var wallet = fine.getWallet();
@@ -122,21 +126,21 @@ public class FinancialServiceImpl implements FinancialService {
         Borrow borrow = findBorrowForMember(memberId, borrowId);
 
         if (hasPaidBorrowingFee(memberId, borrowId)) {
-            throw new RuntimeException("Phí mượn của phiếu này đã được thanh toán.");
+            throw new ConflictException("Phí mượn của phiếu này đã được thanh toán.");
         }
 
         String borrowStatus = normalize(borrow.getStatus());
         if (!"ACTIVE".equals(borrowStatus) && !"BORROWING".equals(borrowStatus) && !"OVERDUE".equals(borrowStatus)) {
-            throw new RuntimeException("Chỉ có thể thanh toán phí cho phiếu mượn đã được duyệt.");
+            throw new ConflictException("Chỉ có thể thanh toán phí cho phiếu mượn đã được duyệt.");
         }
 
         BigDecimal feeAmount = calculateBorrowingFeeAmount(borrowId);
         if (feeAmount.signum() <= 0) {
-            throw new RuntimeException("Phí mượn không hợp lệ.");
+            throw new ValidationException("Phí mượn không hợp lệ.");
         }
 
         var wallet = walletRepository.findByMemberMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví của thành viên."));
 
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
         ensureSufficientBalance(currentBalance, feeAmount, "phí mượn");
@@ -152,7 +156,7 @@ public class FinancialServiceImpl implements FinancialService {
     public BigDecimal calculateBorrowingFeeAmount(Integer borrowId) {
         List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
         if (details == null || details.isEmpty()) {
-            throw new RuntimeException("Phiếu mượn không có chi tiết.");
+            throw new ConflictException("Phiếu mượn không có chi tiết.");
         }
 
         BigDecimal perBookPerDay = getBorrowFeePerBookPerDay();
@@ -171,26 +175,26 @@ public class FinancialServiceImpl implements FinancialService {
     @Transactional(rollbackFor = Exception.class)
     public void payReservationDeposit(Integer memberId, Integer reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu đặt trước với ID: " + reservationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy yêu cầu đặt trước với ID: " + reservationId));
 
         if (reservation.getMember() == null
                 || reservation.getMember().getMemberId() == null
                 || !reservation.getMember().getMemberId().equals(memberId)) {
-            throw new RuntimeException("Yêu cầu đặt trước không thuộc về thành viên hiện tại.");
+            throw new ForbiddenException("Yêu cầu đặt trước không thuộc về thành viên hiện tại.");
         }
 
         String reservationStatus = normalize(reservation.getStatus());
         if ("DEPOSIT_PAID".equals(reservationStatus) || "PAID".equals(reservationStatus)) {
-            throw new RuntimeException("Tiền cọc cho yêu cầu đặt trước này đã được thanh toán.");
+            throw new ConflictException("Tiền cọc cho yêu cầu đặt trước này đã được thanh toán.");
         }
         if ("COMPLETED".equals(reservationStatus) || "CANCELED".equals(reservationStatus)
                 || "CANCELLED".equals(reservationStatus) || "REFUNDED".equals(reservationStatus)
                 || "REFUND_PENDING".equals(reservationStatus)) {
-            throw new RuntimeException("Yêu cầu đặt trước này không thể thanh toán tiền cọc.");
+            throw new ConflictException("Yêu cầu đặt trước này không thể thanh toán tiền cọc.");
         }
 
         Wallet wallet = walletRepository.findByMemberMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví của thành viên."));
         BigDecimal depositAmount = getReservationDepositAmount();
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
         ensureSufficientBalance(currentBalance, depositAmount, "tiền cọc đặt trước");
@@ -226,11 +230,11 @@ public class FinancialServiceImpl implements FinancialService {
     @Transactional(rollbackFor = Exception.class)
     public void createFine(Integer memberId, Double amount, String reason) {
         if (amount == null || amount <= 0) {
-            throw new RuntimeException("Số tiền phạt phải lớn hơn 0.");
+            throw new ValidationException("Số tiền phạt phải lớn hơn 0.");
         }
 
         var wallet = walletRepository.findByMemberMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví của thành viên."));
 
         Transaction transaction = saveWalletTransaction(
                 wallet,
@@ -263,10 +267,10 @@ public class FinancialServiceImpl implements FinancialService {
     @Transactional(rollbackFor = Exception.class)
     public void topUpMemberAccount(String memberPhone, Double amount) {
         if (memberPhone == null || memberPhone.trim().isEmpty()) {
-            throw new RuntimeException("Vui lòng nhập email, số điện thoại hoặc ID thành viên.");
+            throw new ValidationException("Vui lòng nhập email, số điện thoại hoặc ID thành viên.");
         }
         if (amount == null || amount <= 0) {
-            throw new RuntimeException("Số tiền nạp phải lớn hơn 0.");
+            throw new ValidationException("Số tiền nạp phải lớn hơn 0.");
         }
 
         Member member = findMemberByLookup(memberPhone.trim());
@@ -291,25 +295,25 @@ public class FinancialServiceImpl implements FinancialService {
     @Transactional(rollbackFor = Exception.class)
     public void requestReservationDepositRefund(Integer memberId, Integer reservationId) {
         Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu đặt trước với ID: " + reservationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu đặt trước với ID: " + reservationId));
 
         if (reservation.getMember() == null
                 || reservation.getMember().getMemberId() == null
                 || !reservation.getMember().getMemberId().equals(memberId)) {
-            throw new RuntimeException("Phiếu đặt trước không thuộc về thành viên hiện tại.");
+            throw new ForbiddenException("Phiếu đặt trước không thuộc về thành viên hiện tại.");
         }
 
         String reservationStatus = normalize(reservation.getStatus());
         if ("REFUND_PENDING".equals(reservationStatus)) {
-            throw new RuntimeException("Yêu cầu hoàn tiền đang chờ thủ thư duyệt.");
+            throw new ConflictException("Yêu cầu hoàn tiền đang chờ thủ thư duyệt.");
         }
         if ("REFUNDED".equals(reservationStatus)) {
-            throw new RuntimeException("Tiền cọc của phiếu này đã được hoàn trước đó.");
+            throw new ConflictException("Tiền cọc của phiếu này đã được hoàn trước đó.");
         }
         if (!"DEPOSIT_PAID".equals(reservationStatus)
                 && !"ACTIVE".equals(reservationStatus)
                 && !"READY".equals(reservationStatus)) {
-            throw new RuntimeException("Chỉ phiếu đã thanh toán tiền cọc mới được yêu cầu hoàn tiền.");
+            throw new ConflictException("Chỉ phiếu đã thanh toán tiền cọc mới được yêu cầu hoàn tiền.");
         }
 
         reservation.setStatus("Refund_Pending");
@@ -320,27 +324,27 @@ public class FinancialServiceImpl implements FinancialService {
     @Transactional(rollbackFor = Exception.class)
     public void refundReservationDeposit(Integer memberId, Integer reservationId) {
         Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu đặt trước với ID: " + reservationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu đặt trước với ID: " + reservationId));
 
         if (reservation.getMember() == null
                 || reservation.getMember().getMemberId() == null
                 || !reservation.getMember().getMemberId().equals(memberId)) {
-            throw new RuntimeException("Phiếu đặt trước không thuộc về thành viên này.");
+            throw new ForbiddenException("Phiếu đặt trước không thuộc về thành viên này.");
         }
 
         String reservationStatus = normalize(reservation.getStatus());
         if ("REFUNDED".equals(reservationStatus)) {
-            throw new RuntimeException("Tiền cọc của phiếu này đã được hoàn trước đó.");
+            throw new ConflictException("Tiền cọc của phiếu này đã được hoàn trước đó.");
         }
         if (!"REFUND_PENDING".equals(reservationStatus)) {
-            throw new RuntimeException("Chỉ có thể hoàn tiền cho yêu cầu đang chờ thủ thư duyệt.");
+            throw new ConflictException("Chỉ có thể hoàn tiền cho yêu cầu đang chờ thủ thư duyệt.");
         }
 
         Wallet wallet = walletRepository.findByMemberMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví của thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví của thành viên."));
         BigDecimal refundAmount = getReservationDepositAmount();
         if (refundAmount.signum() <= 0) {
-            throw new RuntimeException("Số tiền hoàn cọc không hợp lệ.");
+            throw new ValidationException("Số tiền hoàn cọc không hợp lệ.");
         }
 
         BigDecimal newBalance = balanceOf(wallet.getBalance()).add(refundAmount);
@@ -374,12 +378,12 @@ public class FinancialServiceImpl implements FinancialService {
 
     private Borrow findBorrowForMember(Integer memberId, Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với ID: " + borrowId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn với ID: " + borrowId));
 
         if (borrow.getMember() == null
                 || borrow.getMember().getMemberId() == null
                 || !borrow.getMember().getMemberId().equals(memberId)) {
-            throw new RuntimeException("Phiếu mượn không thuộc về thành viên hiện tại.");
+            throw new ForbiddenException("Phiếu mượn không thuộc về thành viên hiện tại.");
         }
 
         return borrow;
@@ -391,17 +395,17 @@ public class FinancialServiceImpl implements FinancialService {
                 Integer memberId = Integer.valueOf(lookup);
                 return memberRepository.findById(memberId)
                         .or(() -> memberRepository.findByUserPhone(lookup))
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với thông tin: " + lookup));
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với thông tin: " + lookup));
             } catch (NumberFormatException ignored) {
                 return memberRepository.findByUserPhone(lookup)
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với thông tin: " + lookup));
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với thông tin: " + lookup));
             }
         }
 
         return memberRepository.findByUserPhone(lookup)
                 .or(() -> memberRepository.findByUserEmail(lookup))
                 .or(() -> memberRepository.findByAccountUsername(lookup))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên với thông tin: " + lookup));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với thông tin: " + lookup));
     }
 
     private Wallet createWalletForMember(Member member) {
@@ -461,7 +465,7 @@ public class FinancialServiceImpl implements FinancialService {
                     .filter(value -> value.signum() > 0)
                     .findFirst()
                     .orElse(DEFAULT_BORROW_FEE_PER_BOOK);
-        } catch (Exception ignored) {
+        } catch (NumberFormatException ignored) {
             return DEFAULT_BORROW_FEE_PER_BOOK;
         }
     }
@@ -489,7 +493,7 @@ public class FinancialServiceImpl implements FinancialService {
                     .filter(value -> value.signum() > 0)
                     .findFirst()
                     .orElse(DEFAULT_DEPOSIT_AMOUNT);
-        } catch (Exception ignored) {
+        } catch (NumberFormatException ignored) {
             return DEFAULT_DEPOSIT_AMOUNT;
         }
     }
@@ -499,7 +503,7 @@ public class FinancialServiceImpl implements FinancialService {
                 || transaction.getWallet().getMember() == null
                 || transaction.getWallet().getMember().getMemberId() == null
                 || !transaction.getWallet().getMember().getMemberId().equals(memberId)) {
-            throw new RuntimeException("Giao dịch không thuộc về thành viên hiện tại.");
+            throw new ForbiddenException("Giao dịch không thuộc về thành viên hiện tại.");
         }
     }
 
@@ -521,7 +525,7 @@ public class FinancialServiceImpl implements FinancialService {
         BigDecimal safeBalance = balanceOf(currentBalance);
         BigDecimal safeRequiredAmount = amountOrZero(requiredAmount).abs();
         if (safeBalance.compareTo(safeRequiredAmount) < 0) {
-            throw new RuntimeException("Số dư ví không đủ để thanh toán " + paymentName
+            throw new ConflictException("Số dư ví không đủ để thanh toán " + paymentName
                     + ". Số dư hiện tại: " + formatMoney(safeBalance)
                     + ", cần thanh toán: " + formatMoney(safeRequiredAmount) + ".");
         }

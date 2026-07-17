@@ -1,4 +1,6 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
+import com.lms.exception.ValidationException;
 
 import com.lms.service.SystemService;
 import org.springframework.stereotype.Controller;
@@ -53,7 +55,7 @@ public class SettingsController {
                     || tierIds.isEmpty()
                     || tierIds.size() != tierBorrowLimits.size()
                     || tierIds.size() != tierSpendingConditions.size()) {
-                throw new IllegalArgumentException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
+                throw new ValidationException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
             }
 
             Map<Integer, Integer> borrowLimitsByTier = new LinkedHashMap<>();
@@ -77,10 +79,8 @@ public class SettingsController {
                     depositAmount);
 
             redirectAttributes.addFlashAttribute("success", "Cập nhật cấu hình thành công.");
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Cập nhật cấu hình thất bại.");
         }
 
         return "redirect:/admin/settings";

@@ -59,7 +59,7 @@ public class PayOsPaymentReconciliationJob {
                 paymentService.reconcileForStaff(orderCode);
                 auditService.resolveReconciliationIssue(orderCode, "SCHEDULED_JOB");
             } catch (Exception exception) {
-                LOGGER.warn("Không thể đối soát đơn KQPay {}: {}", orderCode, exception.getMessage());
+                LOGGER.warn("Không thể đối soát đơn KQPay {}: {}", orderCode, exception.getMessage(), exception);
                 auditService.recordReconciliationFailure(orderCode, exception.getMessage(), "SCHEDULED_JOB");
             }
         }

@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+import com.lms.exception.ApplicationException;
 
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
@@ -40,7 +41,7 @@ public class MembershipController {
             } else {
                 model.addAttribute("tierBenefits", null);
             }
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             model.addAttribute("errorMessage", "Không thể tải quyền lợi thành viên: " + e.getMessage());
         }
 
@@ -90,7 +91,7 @@ public class MembershipController {
             model.addAttribute("amountNeeded", amountNeeded);
             model.addAttribute("allTiers", allTiers);
 
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             model.addAttribute("errorMessage", "Không thể tải thông tin hạng thành viên: " + e.getMessage());
         }
 

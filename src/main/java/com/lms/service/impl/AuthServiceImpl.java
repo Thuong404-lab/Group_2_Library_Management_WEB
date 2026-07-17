@@ -4,6 +4,8 @@ import com.lms.dto.request.RegisterRequest;
 import com.lms.entity.*;
 import com.lms.enums.ActionType;
 import com.lms.exception.AuthException;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.AuthService;
 import com.lms.service.EmailService;
@@ -194,11 +196,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void requestPasswordReset(String email) throws Exception {
-        Optional<User> userOptional = userRepository.findByEmail(email.trim());
+    public void requestPasswordReset(String email) {
+        String normalizedEmail = email == null ? "" : email.trim();
+        if (normalizedEmail.isBlank()) {
+            throw new ValidationException("Email không được để trống.");
+        }
+        Optional<User> userOptional = userRepository.findByEmail(normalizedEmail);
 
         if (userOptional.isEmpty()) {
-            System.out.println("Email not found for password reset: " + email);
             return;
         }
 
@@ -227,39 +232,38 @@ public class AuthServiceImpl implements AuthService {
 
         emailService.sendEmail(user.getEmail(), subject, emailContent);
 
-        System.out.println("Password reset email sent to: " + user.getEmail());
     }
 
     @Override
-    public void validatePasswordResetToken(String token) throws Exception {
+    public void validatePasswordResetToken(String token) {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+            throw new ValidationException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new Exception("Token đặt lại mật khẩu đã hết hạn.");
+            throw new ValidationException("Token đặt lại mật khẩu đã hết hạn.");
         }
     }
 
     @Override
     @Transactional
-    public void resetPassword(String token, String newPassword) throws Exception {
+    public void resetPassword(String token, String newPassword) {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+            throw new ValidationException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new Exception("Token đặt lại mật khẩu đã hết hạn.");
+            throw new ValidationException("Token đặt lại mật khẩu đã hết hạn.");
         }
 
         User user = resetToken.getUser();
@@ -276,7 +280,7 @@ public class AuthServiceImpl implements AuthService {
                 staffAccount.setPasswordHash(passwordEncoder.encode(newPassword));
                 staffAccountRepository.save(staffAccount);
             } else {
-                throw new Exception("Không tìm thấy tài khoản liên kết với người dùng.");
+                throw new DataProcessingException("Không tìm thấy tài khoản liên kết với người dùng.");
             }
         }
 

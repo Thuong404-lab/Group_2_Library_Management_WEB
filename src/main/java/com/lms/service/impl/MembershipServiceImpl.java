@@ -7,6 +7,7 @@ import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.service.MembershipService;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Member getMemberByUsername(String username) {
         var account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Account not found for: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
 
         return account.getMember();
     }
@@ -120,7 +121,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .anyMatch(m -> m.getTier() != null && m.getTier().getTierId().equals(id));
                 
         if (isInUse) {
-            throw new ValidationException("Không thể xóa hạng thành viên đang được sử dụng bởi người dùng!");
+            throw new ConflictException("Không thể xóa hạng thành viên đang được sử dụng bởi người dùng!");
         }
         
         membershipTierRepository.delete(tier);

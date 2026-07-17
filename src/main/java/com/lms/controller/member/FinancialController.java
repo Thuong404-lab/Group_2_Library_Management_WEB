@@ -1,4 +1,7 @@
 package com.lms.controller.member;
+import com.lms.exception.ApplicationException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.UnauthorizedException;
 
 import com.lms.dto.response.BorrowFeeViewData;
 import com.lms.dto.response.MemberTransactionHistoryRow;
@@ -96,7 +99,7 @@ public class FinancialController {
         try {
             financialService.payOverdueFine(member.getMemberId(), fineId);
             redirectAttributes.addFlashAttribute("success", "Đã thanh toán phí phạt thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
@@ -129,7 +132,7 @@ public class FinancialController {
         try {
             financialService.payBorrowingFee(member.getMemberId(), borrowId);
             redirectAttributes.addFlashAttribute("message", "Đã thanh toán phí mượn thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
@@ -145,7 +148,7 @@ public class FinancialController {
         try {
             financialService.payReservationDeposit(member.getMemberId(), reservationId);
             redirectAttributes.addFlashAttribute("successMessage", "Đã thanh toán tiền cọc đặt trước thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
@@ -163,7 +166,7 @@ public class FinancialController {
             redirectAttributes.addFlashAttribute(
                     "successMessage",
                     "Đã gửi yêu cầu hoàn tiền. Vui lòng chờ thủ thư duyệt.");
-        } catch (Exception exception) {
+        } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
 
@@ -418,11 +421,7 @@ public class FinancialController {
         feeViewData.setBorrowStatus(borrow.getStatus());
         feeViewData.setBorrowDate(borrow.getBorrowDate());
 
-        try {
-            feeViewData.setAmount(financialService.calculateBorrowingFeeAmount(borrow.getBorrowId()));
-        } catch (Exception ignored) {
-            feeViewData.setAmount(BigDecimal.ZERO);
-        }
+        feeViewData.setAmount(financialService.calculateBorrowingFeeAmount(borrow.getBorrowId()));
 
         transactionRepository.findLatestCompletedBorrowFee(memberId, borrow.getBorrowId())
                 .ifPresentOrElse(transaction -> markBorrowFeeAsPaid(feeViewData, transaction),
@@ -475,13 +474,13 @@ public class FinancialController {
 
     private Member getCurrentMember(Principal principal) {
         if (principal == null) {
-            throw new RuntimeException("Bạn cần đăng nhập để xem thông tin tài chính");
+            throw new UnauthorizedException("Bạn cần đăng nhập để xem thông tin tài chính");
         }
 
         String usernameOrEmail = principal.getName();
         return memberRepository.findByAccountUsername(usernameOrEmail)
                 .or(() -> memberRepository.findByUserEmail(usernameOrEmail))
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin thành viên hiện tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin thành viên hiện tại"));
     }
 }

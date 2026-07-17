@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
@@ -166,7 +167,7 @@ public class MemberMgmtController {
         try {
             memberService.changeMemberStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         redirectAttributes.addAttribute("page", Math.max(page, 0));
@@ -200,7 +201,7 @@ public class MemberMgmtController {
         try {
             financialService.createFine(memberId, amount, reason);
             redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/librarian/members/fines";
@@ -214,7 +215,7 @@ public class MemberMgmtController {
             overdueReminderService.sendReturnReminder(borrowDetailId);
             redirectAttributes.addFlashAttribute(
                     "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
-        } catch (Exception exception) {
+        } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/librarian/members/fines";
@@ -264,7 +265,7 @@ public class MemberMgmtController {
         try {
             financialService.topUpMemberAccount(memberPhone, amount);
             redirectAttributes.addFlashAttribute("success", "Nạp tiền vào ví thành viên thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
             redirectAttributes.addFlashAttribute("amount", amount);
@@ -380,7 +381,7 @@ public class MemberMgmtController {
             else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
             data.put("tier", tierName);
             
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             data.put("found", false);
             data.put("error", e.getMessage());
         }

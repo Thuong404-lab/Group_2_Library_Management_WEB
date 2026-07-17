@@ -5,10 +5,17 @@ import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.PayOsPaymentFineItem;
 import com.lms.entity.Transaction;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ExternalServiceException;
+import com.lms.exception.ForbiddenException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.PayOsPaymentRepository;
 import com.lms.repository.PayOsPaymentFineItemRepository;
 import com.lms.repository.TransactionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class PayOsPaymentService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PayOsPaymentService.class);
     public static final String TOP_UP = "TOP_UP";
     public static final String FINE = "FINE";
     public static final String FINE_BATCH = "FINE_BATCH";
@@ -87,7 +95,7 @@ public class PayOsPaymentService {
     public PayOsPayment createTopUp(Member member, BigDecimal amount) {
         BigDecimal validAmount = requireWholeVnd(amount);
         if (validAmount.compareTo(MIN_TOP_UP) < 0) {
-            throw new RuntimeException("Số tiền nạp tối thiểu là 10.000 VNĐ.");
+            throw new ValidationException("Số tiền nạp tối thiểu là 10.000 VNĐ.");
         }
         return createPayment(member, TOP_UP, null, validAmount,
                 descriptionWithId("LMW NAP VI ID", "LMW NAP ID", member.getMemberId()),
@@ -98,7 +106,7 @@ public class PayOsPaymentService {
     public PayOsPayment createTopUpForLibrarian(Member member, BigDecimal amount) {
         BigDecimal validAmount = requireWholeVnd(amount);
         if (validAmount.compareTo(MIN_TOP_UP) < 0) {
-            throw new RuntimeException("Số tiền nạp tối thiểu là 10.000 VNĐ.");
+            throw new ValidationException("Số tiền nạp tối thiểu là 10.000 VNĐ.");
         }
         return createPayment(member, TOP_UP, null, validAmount,
                 descriptionWithId("LMW NOP TAI QUAY ID", "LMW NOP QUAY ID", member.getMemberId()),
@@ -108,17 +116,17 @@ public class PayOsPaymentService {
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment createFinePayment(Member member, Integer fineId) {
         Transaction fine = transactionRepository.findById(fineId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phạt."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoản phạt."));
         if (fine.getWallet() == null || fine.getWallet().getMember() == null
                 || !member.getMemberId().equals(fine.getWallet().getMember().getMemberId())) {
-            throw new RuntimeException("Khoản phạt không thuộc về bạn.");
+            throw new ForbiddenException("Khoản phạt không thuộc về bạn.");
         }
         String type = normalize(fine.getTransactionType());
         if (!FINE.equals(type) && !"DAMAGE_FEE".equals(type)) {
-            throw new RuntimeException("Giao dịch không phải khoản phạt.");
+            throw new ValidationException("Giao dịch không phải khoản phạt.");
         }
         if (isCompleted(fine.getStatus())) {
-            throw new RuntimeException("Khoản phạt đã được thanh toán.");
+            throw new ConflictException("Khoản phạt đã được thanh toán.");
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), FINE, fineId);
         if (activePayment != null) {
@@ -134,7 +142,7 @@ public class PayOsPaymentService {
         List<Transaction> fines = transactionRepository.findUnpaidFineTransactions(
                 member.getMemberId(), List.of(FINE, "DAMAGE_FEE"));
         if (fines.isEmpty()) {
-            throw new RuntimeException("Không có khoản phạt nào cần thanh toán.");
+            throw new ConflictException("Không có khoản phạt nào cần thanh toán.");
         }
 
         PayOsPayment activePayment = paymentRepository
@@ -195,8 +203,8 @@ public class PayOsPaymentService {
         try {
             client().paymentRequests().cancel(payment.getOrderCode(), "Danh sach phi phat da thay doi");
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Danh sách phí phạt đã thay đổi nhưng chưa thể hủy mã QR cũ. Vui lòng thử lại.");
+            throw new ExternalServiceException(
+                    "Danh sách phí phạt đã thay đổi nhưng chưa thể hủy mã QR cũ. Vui lòng thử lại.", e);
         }
         String oldStatus = payment.getStatus();
         payment.setStatus("CANCELLED");
@@ -208,16 +216,16 @@ public class PayOsPaymentService {
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment createBorrowFeePayment(Member member, Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn."));
         if (borrow.getMember() == null || !member.getMemberId().equals(borrow.getMember().getMemberId())) {
-            throw new RuntimeException("Phiếu mượn không thuộc về bạn.");
+            throw new ForbiddenException("Phiếu mượn không thuộc về bạn.");
         }
         String status = normalize(borrow.getStatus());
         if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)) {
-            throw new RuntimeException("Phiếu mượn chưa ở trạng thái có thể thanh toán.");
+            throw new ConflictException("Phiếu mượn chưa ở trạng thái có thể thanh toán.");
         }
         if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
-            throw new RuntimeException("Phí mượn đã được thanh toán.");
+            throw new ConflictException("Phí mượn đã được thanh toán.");
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), BORROW_FEE, borrowId);
         if (activePayment != null) {
@@ -232,17 +240,17 @@ public class PayOsPaymentService {
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment createBorrowFeeForLibrarian(Member member, Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn."));
         if (borrow.getMember() == null || !member.getMemberId().equals(borrow.getMember().getMemberId())) {
-            throw new RuntimeException("Phiếu mượn không thuộc về độc giả này.");
+            throw new ForbiddenException("Phiếu mượn không thuộc về độc giả này.");
         }
         String status = normalize(borrow.getStatus());
         if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)
                 && !"PAYMENT_PENDING".equals(status)) {
-            throw new RuntimeException("Phiếu mượn chưa ở trạng thái có thể thanh toán.");
+            throw new ConflictException("Phiếu mượn chưa ở trạng thái có thể thanh toán.");
         }
         if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
-            throw new RuntimeException("Phí mượn đã được thanh toán.");
+            throw new ConflictException("Phí mượn đã được thanh toán.");
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), BORROW_FEE, borrowId);
         if (activePayment != null) {
@@ -257,13 +265,13 @@ public class PayOsPaymentService {
     @Transactional(readOnly = true)
     public PayOsPayment getForMember(Long orderCode, Integer memberId) {
         return paymentRepository.findByOrderCodeAndMemberMemberId(orderCode, memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thanh toán."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn thanh toán."));
     }
 
     @Transactional(readOnly = true)
     public PayOsPayment getForStaff(Long orderCode) {
         return paymentRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thanh toán."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn thanh toán."));
     }
 
     @Transactional(readOnly = true)
@@ -312,7 +320,7 @@ public class PayOsPaymentService {
         }
         if (payOS == null) {
             if (failOnGatewayError) {
-                throw new RuntimeException("PayOS chưa được cấu hình nên không thể đối soát.");
+                throw new ExternalServiceException("PayOS chưa được cấu hình nên không thể đối soát.");
             }
             return current;
         }
@@ -322,8 +330,9 @@ public class PayOsPaymentService {
             remote = client().paymentRequests().get(orderCode);
         } catch (Exception exception) {
             if (failOnGatewayError) {
-                throw new RuntimeException("Không thể lấy trạng thái từ cổng thanh toán: " + exception.getMessage(), exception);
+                throw new ExternalServiceException("Không thể lấy trạng thái từ cổng thanh toán.", exception);
             }
+            LOGGER.warn("Không thể đồng bộ trạng thái đơn KQPay {} trong lượt polling.", orderCode, exception);
             return current;
         }
         if (remote == null || remote.getStatus() == null) {
@@ -331,7 +340,7 @@ public class PayOsPaymentService {
         }
 
         PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thanh toán."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn thanh toán."));
         if ((expectedMemberId != null && !expectedMemberId.equals(payment.getMember().getMemberId()))
                 || (PAID.equalsIgnoreCase(payment.getStatus()) && payment.getTransaction() != null)) {
             return payment;
@@ -361,7 +370,12 @@ public class PayOsPaymentService {
     @Transactional(rollbackFor = Exception.class)
     public void handleWebhook(Webhook webhook) {
         requireConfigured();
-        WebhookData data = client().webhooks().verify(webhook);
+        WebhookData data;
+        try {
+            data = client().webhooks().verify(webhook);
+        } catch (Exception ex) {
+            throw new ValidationException("Chữ ký webhook KQPay không hợp lệ.", ex);
+        }
         if (data == null || data.getOrderCode() == null || !"00".equals(data.getCode())) {
             return;
         }
@@ -372,11 +386,11 @@ public class PayOsPaymentService {
             return;
         }
         if (data.getAmount() == null || payment.getAmount().compareTo(BigDecimal.valueOf(data.getAmount())) != 0) {
-            throw new RuntimeException("Số tiền webhook không khớp với đơn thanh toán.");
+            throw new ConflictException("Số tiền webhook không khớp với đơn thanh toán.");
         }
         if (payment.getPaymentLinkId() != null && data.getPaymentLinkId() != null
                 && !payment.getPaymentLinkId().equals(data.getPaymentLinkId())) {
-            throw new RuntimeException("Mã liên kết thanh toán không khớp.");
+            throw new ConflictException("Mã liên kết thanh toán không khớp.");
         }
 
         String oldStatus = payment.getStatus();
@@ -394,7 +408,7 @@ public class PayOsPaymentService {
                                        BigDecimal amount, String description, String returnPath) {
         requireConfigured();
         if (member == null || member.getMemberId() == null) {
-            throw new RuntimeException("Không tìm thấy thành viên hiện tại.");
+            throw new ResourceNotFoundException("Không tìm thấy thành viên hiện tại.");
         }
 
         long orderCode = ORDER_CODES.incrementAndGet();
@@ -419,7 +433,15 @@ public class PayOsPaymentService {
                 .expiredAt(LocalDateTime.now().plusMinutes(PAYMENT_EXPIRY_MINUTES)
                         .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond())
                 .build();
-        CreatePaymentLinkResponse response = client().paymentRequests().create(request);
+        CreatePaymentLinkResponse response;
+        try {
+            response = client().paymentRequests().create(request);
+        } catch (Exception ex) {
+            throw new ExternalServiceException("Không thể tạo liên kết thanh toán KQPay.", ex);
+        }
+        if (response == null) {
+            throw new ExternalServiceException("Cổng KQPay không trả về thông tin thanh toán.");
+        }
         payment.setPaymentLinkId(response.getPaymentLinkId());
         payment.setCheckoutUrl(response.getCheckoutUrl());
         payment.setQrCode(response.getQrCode());
@@ -456,11 +478,11 @@ public class PayOsPaymentService {
         if (remote.getOrderCode() == null || !payment.getOrderCode().equals(remote.getOrderCode())
                 || remote.getAmount() == null || expected.compareTo(BigDecimal.valueOf(remote.getAmount())) != 0
                 || remote.getAmountPaid() == null || expected.compareTo(BigDecimal.valueOf(remote.getAmountPaid())) != 0) {
-            throw new RuntimeException("Thông tin thanh toán KQPay không khớp với đơn hàng.");
+            throw new ConflictException("Thông tin thanh toán KQPay không khớp với đơn hàng.");
         }
         if (payment.getPaymentLinkId() != null && remote.getId() != null
                 && !payment.getPaymentLinkId().equals(remote.getId())) {
-            throw new RuntimeException("Mã liên kết KQPay không khớp.");
+            throw new ConflictException("Mã liên kết KQPay không khớp.");
         }
     }
 
@@ -470,7 +492,8 @@ public class PayOsPaymentService {
 
     private void requireConfigured() {
         if (clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()) {
-            throw new RuntimeException("KQPay chưa được cấu hình. Hãy thiết lập PAYOS_CLIENT_ID, PAYOS_API_KEY và PAYOS_CHECKSUM_KEY.");
+            throw new ExternalServiceException(
+                    "KQPay chưa được cấu hình. Hãy thiết lập PAYOS_CLIENT_ID, PAYOS_API_KEY và PAYOS_CHECKSUM_KEY.");
         }
     }
 
@@ -483,11 +506,11 @@ public class PayOsPaymentService {
 
     private BigDecimal requireWholeVnd(BigDecimal amount) {
         if (amount == null) {
-            throw new RuntimeException("Số tiền không hợp lệ.");
+            throw new ValidationException("Số tiền không hợp lệ.");
         }
         BigDecimal value = amount.stripTrailingZeros();
         if (value.signum() <= 0 || value.scale() > 0 || value.compareTo(MAX_PAYMENT) > 0) {
-            throw new RuntimeException("Số tiền phải là số nguyên VNĐ từ 1 đến 500.000.000.");
+            throw new ValidationException("Số tiền phải là số nguyên VNĐ từ 1 đến 500.000.000.");
         }
         return value;
     }

@@ -5,6 +5,7 @@ import com.lms.entity.Member;
 import com.lms.entity.Notification;
 import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.exception.ValidationException;
+import com.lms.exception.ConflictException;
 import com.lms.repository.*;
 import com.lms.service.impl.LibrarianInteractionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,7 +99,7 @@ class BookAcquisitionWorkflowServiceTest {
         when(requestRepository.findById(1)).thenReturn(Optional.of(request));
 
         assertThatThrownBy(() -> service.approveBookAcquisitionRequest(1))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("đã được xử lý");
         verify(requestRepository, never()).save(any());
     }

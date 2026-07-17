@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.Member;
@@ -87,7 +88,7 @@ public class LibrarianMemberDetailController {
         try {
             financialService.refundReservationDeposit(memberId, reservationId);
             redirectAttributes.addFlashAttribute("success", "Đã duyệt và hoàn tiền cọc vào ví thành viên.");
-        } catch (RuntimeException exception) {
+        } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         if ("refunds".equals(returnTo)) {

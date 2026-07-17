@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
@@ -81,7 +82,7 @@ public class LibrarianInteractionController {
             flash.addFlashAttribute("success", isEditing
                     ? "Đã chỉnh sửa phản hồi thành công."
                     : "Đã phản hồi đánh giá thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
@@ -96,7 +97,7 @@ public class LibrarianInteractionController {
         try {
             librarianInteractionService.deleteReview(feedbackId);
             flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
 
@@ -129,7 +130,7 @@ public class LibrarianInteractionController {
         try {
             librarianInteractionService.sendNotificationToMembers(request, principal.getName());
             flash.addFlashAttribute("success", "Đã gửi thông báo thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
@@ -154,7 +155,7 @@ public class LibrarianInteractionController {
         try {
             librarianInteractionService.approveBookAcquisitionRequest(requestId);
             flash.addFlashAttribute("success", "Đã duyệt đề xuất bổ sung sách.");
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/librarian/dashboard?section=acquisition";
@@ -167,7 +168,7 @@ public class LibrarianInteractionController {
         try {
             librarianInteractionService.rejectBookAcquisitionRequest(requestId, reason);
             flash.addFlashAttribute("success", "Đã từ chối đề xuất bổ sung sách.");
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/librarian/dashboard?section=acquisition";

@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class AccountFormValidationException extends RuntimeException {
+public class AccountFormValidationException extends ValidationException {
     private final Map<String, String> fieldErrors;
 
     public AccountFormValidationException(Map<String, String> fieldErrors) {

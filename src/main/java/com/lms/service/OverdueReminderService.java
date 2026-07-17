@@ -5,6 +5,9 @@ import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.NotificationRepository;
@@ -45,7 +48,7 @@ public class OverdueReminderService {
     @Transactional
     public void sendReturnReminder(Integer borrowDetailId) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lượt mượn cần nhắc."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lượt mượn cần nhắc."));
 
         validateRemindable(detail);
 
@@ -65,7 +68,7 @@ public class OverdueReminderService {
                 .anyMatch(notification -> notification.getCreatedDate().isAfter(LocalDateTime.now().minusHours(24)));
 
         if (remindedRecently) {
-            throw new IllegalStateException("Thành viên đã được nhắc về cuốn sách này trong vòng 24 giờ qua.");
+            throw new ConflictException("Thành viên đã được nhắc về cuốn sách này trong vòng 24 giờ qua.");
         }
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
@@ -98,19 +101,19 @@ public class OverdueReminderService {
         if (detail.getBorrow() == null
                 || detail.getBorrow().getMember() == null
                 || detail.getBorrow().getMember().getMemberId() == null) {
-            throw new IllegalArgumentException("Lượt mượn không có thông tin thành viên hợp lệ.");
+            throw new ValidationException("Lượt mượn không có thông tin thành viên hợp lệ.");
         }
         if (detail.getDueDate() == null
                 || !detail.getDueDate().toLocalDate().isBefore(LocalDate.now())
                 || detail.getReturnDate() != null) {
-            throw new IllegalStateException("Sách này không còn thuộc danh sách đang quá hạn.");
+            throw new ConflictException("Sách này không còn thuộc danh sách đang quá hạn.");
         }
 
         String status = detail.getStatus() == null
                 ? ""
                 : detail.getStatus().trim().toUpperCase(Locale.ROOT);
         if (!REMINDABLE_STATUSES.contains(status)) {
-            throw new IllegalStateException("Trạng thái lượt mượn không cho phép gửi nhắc trả sách.");
+            throw new ConflictException("Trạng thái lượt mượn không cho phép gửi nhắc trả sách.");
         }
     }
 }

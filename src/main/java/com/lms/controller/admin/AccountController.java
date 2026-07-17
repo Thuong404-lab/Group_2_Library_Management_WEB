@@ -1,4 +1,5 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.AdminAccountCreateRequest;
@@ -158,7 +159,7 @@ public class AccountController {
             authService.requestPasswordReset(email);
             redirectAttributes.addFlashAttribute("success",
                     "Đã gửi liên kết đặt lại mật khẩu đến email " + email + ".");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error",
                     e.getMessage() == null || e.getMessage().isBlank()
                             ? "Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại."

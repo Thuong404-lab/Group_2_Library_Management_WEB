@@ -1,6 +1,10 @@
 package com.lms.service;
 
 import com.lms.entity.*;
+import com.lms.exception.ConflictException;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ForbiddenException;
+import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.NotificationRepository;
 import com.lms.repository.PayOsPaymentFineItemRepository;
@@ -54,7 +58,7 @@ public class PayOsSettlementService {
             case PayOsPaymentService.FINE -> settleFine(payment);
             case PayOsPaymentService.FINE_BATCH -> settleFineBatch(payment);
             case PayOsPaymentService.BORROW_FEE -> settleBorrowFee(payment);
-            default -> throw new RuntimeException("Loại thanh toán KQPay không được hỗ trợ.");
+            default -> throw new DataProcessingException("Loại thanh toán KQPay không được hỗ trợ.");
         };
     }
 
@@ -76,18 +80,18 @@ public class PayOsSettlementService {
 
     private Transaction settleFine(PayOsPayment payment) {
         Transaction fine = transactionRepository.findByIdForUpdate(payment.getReferenceId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phạt."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoản phạt."));
         validateOwner(fine, payment.getMember().getMemberId());
         String type = normalize(fine.getTransactionType());
         if (!"FINE".equals(type) && !"DAMAGE_FEE".equals(type)) {
-            throw new RuntimeException("Giao dịch không phải khoản phạt.");
+            throw new ConflictException("Giao dịch không phải khoản phạt.");
         }
         if (isCompleted(fine.getStatus())) {
-            throw new RuntimeException("Khoản phạt đã được thanh toán.");
+            throw new ConflictException("Khoản phạt đã được thanh toán.");
         }
         BigDecimal amount = requirePositiveWholeVnd(payment.getAmount());
         if (fine.getAmount() == null || fine.getAmount().abs().compareTo(amount) != 0) {
-            throw new RuntimeException("Số tiền khoản phạt đã thay đổi.");
+            throw new ConflictException("Số tiền khoản phạt đã thay đổi.");
         }
         fine.setAmount(amount.negate());
         fine.setStatus(COMPLETED);
@@ -99,7 +103,7 @@ public class PayOsSettlementService {
         List<PayOsPaymentFineItem> items = fineItemRepository
                 .findByPaymentPaymentIdOrderByFineTransactionTransactionId(payment.getPaymentId());
         if (items.isEmpty()) {
-            throw new RuntimeException("Đơn thanh toán không có khoản phạt.");
+            throw new DataProcessingException("Đơn thanh toán không có khoản phạt.");
         }
 
         BigDecimal total = BigDecimal.ZERO;
@@ -107,15 +111,15 @@ public class PayOsSettlementService {
         for (PayOsPaymentFineItem item : items) {
             Integer fineId = item.getFineTransaction().getTransactionId();
             Transaction fine = transactionRepository.findByIdForUpdate(fineId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phạt #" + fineId + "."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoản phạt #" + fineId + "."));
             validateOwner(fine, payment.getMember().getMemberId());
             String type = normalize(fine.getTransactionType());
             if ((!"FINE".equals(type) && !"DAMAGE_FEE".equals(type)) || isCompleted(fine.getStatus())) {
-                throw new RuntimeException("Khoản phạt #" + fineId + " không còn khả dụng.");
+                throw new ConflictException("Khoản phạt #" + fineId + " không còn khả dụng.");
             }
             BigDecimal snapshot = requirePositiveWholeVnd(item.getAmountSnapshot());
             if (fine.getAmount() == null || fine.getAmount().abs().compareTo(snapshot) != 0) {
-                throw new RuntimeException("Số tiền khoản phạt #" + fineId + " đã thay đổi.");
+                throw new ConflictException("Số tiền khoản phạt #" + fineId + " đã thay đổi.");
             }
             total = total.add(snapshot);
             fine.setAmount(snapshot.negate());
@@ -127,7 +131,7 @@ public class PayOsSettlementService {
             }
         }
         if (total.compareTo(payment.getAmount()) != 0) {
-            throw new RuntimeException("Tổng tiền phạt không khớp với đơn KQPay.");
+            throw new ConflictException("Tổng tiền phạt không khớp với đơn KQPay.");
         }
         return first;
     }
@@ -136,24 +140,24 @@ public class PayOsSettlementService {
         Integer memberId = payment.getMember().getMemberId();
         Integer borrowId = payment.getReferenceId();
         Borrow borrow = borrowRepository.findByIdForUpdate(borrowId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn."));
         if (borrow.getMember() == null || !memberId.equals(borrow.getMember().getMemberId())) {
-            throw new RuntimeException("Phiếu mượn không thuộc về thành viên.");
+            throw new ForbiddenException("Phiếu mượn không thuộc về thành viên.");
         }
         String status = normalize(borrow.getStatus());
         if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)
                 && !"PAYMENT_PENDING".equals(status)) {
-            throw new RuntimeException("Phiếu mượn không thể thanh toán.");
+            throw new ConflictException("Phiếu mượn không thể thanh toán.");
         }
         if (transactionRepository.hasCompletedBorrowFee(memberId, borrowId)) {
-            throw new RuntimeException("Phí mượn đã được thanh toán.");
+            throw new ConflictException("Phí mượn đã được thanh toán.");
         }
         BigDecimal amount = requirePositiveWholeVnd(payment.getAmount());
         if (financialService.calculateBorrowingFeeAmount(borrowId).compareTo(amount) != 0) {
-            throw new RuntimeException("Phí mượn đã thay đổi, vui lòng tạo lại mã QR.");
+            throw new ConflictException("Phí mượn đã thay đổi, vui lòng tạo lại mã QR.");
         }
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví thành viên."));
         Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate());
         borrowService.activatePendingBankBorrow(borrowId);
         return transaction;
@@ -204,14 +208,14 @@ public class PayOsSettlementService {
     private void validateOwner(Transaction transaction, Integer memberId) {
         if (transaction.getWallet() == null || transaction.getWallet().getMember() == null
                 || !memberId.equals(transaction.getWallet().getMember().getMemberId())) {
-            throw new RuntimeException("Khoản phí không thuộc về thành viên.");
+            throw new ForbiddenException("Khoản phí không thuộc về thành viên.");
         }
     }
 
     private BigDecimal requirePositiveWholeVnd(BigDecimal amount) {
         BigDecimal value = amount == null ? BigDecimal.ZERO : amount.stripTrailingZeros();
         if (value.signum() <= 0 || value.scale() > 0) {
-            throw new RuntimeException("Số tiền KQPay không hợp lệ.");
+            throw new DataProcessingException("Số tiền KQPay không hợp lệ.");
         }
         return value;
     }

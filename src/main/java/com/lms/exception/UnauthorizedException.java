@@ -1,7 +1,9 @@
 package com.lms.exception;
 
-public class UnauthorizedException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class UnauthorizedException extends ApplicationException {
     public UnauthorizedException(String message) {
-        super(message);
+        super(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập", message);
     }
 }

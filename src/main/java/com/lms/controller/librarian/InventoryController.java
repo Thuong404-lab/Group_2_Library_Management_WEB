@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.service.FileUploadService;
 import com.lms.service.InventoryService;
@@ -52,7 +53,7 @@ public class InventoryController {
             inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId,
                     bookCondition, author);
             redirectAttributes.addFlashAttribute("success", "Thêm sách mới thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
@@ -77,7 +78,7 @@ public class InventoryController {
             inventoryService.updateBook(id, title, isbn, genreId, status, coverImageUrl, shelfId,
                     description, author);
             redirectAttributes.addFlashAttribute("success", "Cập nhật sách thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
@@ -88,10 +89,8 @@ public class InventoryController {
         try {
             inventoryService.removeBook(id);
             redirectAttributes.addFlashAttribute("success", "Xóa sách thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
-        } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("error", "Không thể xóa sách này vì có bản sách đang được mượn hoặc sách đã có lịch sử mượn trả trong hệ thống.");
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
@@ -103,7 +102,7 @@ public class InventoryController {
         try {
             inventoryService.updateBookStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sách thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
@@ -127,7 +126,7 @@ public class InventoryController {
                 inventoryService.addCategory(name);
                 redirectAttributes.addFlashAttribute("success", "Thêm danh mục thành công.");
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
@@ -140,7 +139,7 @@ public class InventoryController {
         try {
             inventoryService.updateCategory(id, name);
             redirectAttributes.addFlashAttribute("success", "Cập nhật danh mục thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
@@ -154,7 +153,7 @@ public class InventoryController {
         try {
             inventoryService.updateGenre(id, name, categoryId);
             redirectAttributes.addFlashAttribute("success", "Cập nhật thể loại thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
@@ -165,7 +164,7 @@ public class InventoryController {
         try {
             inventoryService.deleteGenre(id);
             redirectAttributes.addFlashAttribute("success", "Xóa thể loại thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
@@ -176,7 +175,7 @@ public class InventoryController {
         try {
             inventoryService.deleteCategory(id);
             redirectAttributes.addFlashAttribute("success", "Xóa danh mục thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
@@ -198,7 +197,7 @@ public class InventoryController {
                             summary.getOrDefault("Lost", 0L),
                             summary.getOrDefault("Damaged", 0L),
                             summary.getOrDefault("Disposed", 0L)));
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";

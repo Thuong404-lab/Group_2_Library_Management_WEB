@@ -1,7 +1,9 @@
 package com.lms.exception;
 
-public class ForbiddenException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class ForbiddenException extends ApplicationException {
     public ForbiddenException(String message) {
-        super(message);
+        super(HttpStatus.FORBIDDEN, "Không có quyền truy cập", message);
     }
 }

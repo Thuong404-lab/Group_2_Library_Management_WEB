@@ -13,6 +13,9 @@ import com.lms.entity.User;
 import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
 import com.lms.exception.AccountFormValidationException;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
@@ -132,7 +135,8 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Role role = roleRepository.findByNameIgnoreCase(roleName)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy role " + roleName + " trong database."));
+                .orElseThrow(() -> new DataProcessingException(
+                        "Không tìm thấy role " + roleName + " trong hệ thống."));
 
         User user = new User();
         user.setFullName(fullName);
@@ -262,10 +266,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public String getMemberEmail(Integer accountId) {
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản thành viên."));
         if (account.getUser() == null || account.getUser().getEmail() == null
                 || account.getUser().getEmail().isBlank()) {
-            throw new IllegalArgumentException("Tài khoản thành viên chưa có email để nhận liên kết đặt lại mật khẩu.");
+            throw new ValidationException("Tài khoản thành viên chưa có email để nhận liên kết đặt lại mật khẩu.");
         }
         return account.getUser().getEmail().trim();
     }
@@ -361,7 +365,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void updateStaffAccount(AdminAccountUpdateRequest request) {
-        StaffAccount account = staffAccountRepository.findById(request.getAccountId()).orElseThrow();
+        StaffAccount account = staffAccountRepository.findById(request.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản nhân sự."));
         User user = account.getStaff().getUser();
         updateUser(user, request);
 
@@ -380,7 +385,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void updateMemberAccount(AdminAccountUpdateRequest request) {
-        MemberAccount account = memberAccountRepository.findById(request.getAccountId()).orElseThrow();
+        MemberAccount account = memberAccountRepository.findById(request.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản thành viên."));
         User user = account.getMember().getUser();
         user.setFullName(trim(request.getFullName()));
         user.setEmail(trim(request.getEmail()));
@@ -510,7 +516,7 @@ public class AccountServiceImpl implements AccountService {
     private UserStatus toUserStatus(String status) {
         try {
             return UserStatus.valueOf(status);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return UserStatus.Active;
         }
     }
