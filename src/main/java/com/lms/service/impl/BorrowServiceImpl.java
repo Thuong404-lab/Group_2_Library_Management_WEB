@@ -816,6 +816,7 @@ public class BorrowServiceImpl implements BorrowService {
             dto.setId(res.getReservationId());
             dto.setBookTitle(res.getBook().getTitle());
             dto.setAuthorName(getAuthorNames(res.getBook()));
+            dto.setBookImage(res.getBook().getCoverImageUrl());
             dto.setBookIdStr("RES-" + res.getBook().getBookId());
             dto.setActionDate(res.getReservationDate());
             if (res.getReservationDate() != null) {
@@ -846,6 +847,7 @@ public class BorrowServiceImpl implements BorrowService {
         dto.setId(detail.getBorrowDetailId());
         dto.setBookTitle(detail.getBook().getTitle());
         dto.setAuthorName(getAuthorNames(detail.getBook()));
+        dto.setBookImage(detail.getBook().getCoverImageUrl());
         dto.setBookIdStr(detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "Chưa cấp mã");
         if (detail.getBorrow() != null) {
             dto.setBorrowIdStr("BOR-" + detail.getBorrow().getBorrowId());

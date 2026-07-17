@@ -525,7 +525,7 @@ public class LibrarianBorrowController {
         model.addAttribute("accountUsername", account != null ? account.getUsername() : "Chưa có");
         model.addAttribute("accountStatus", account != null ? account.getStatus() : "Inactive");
         model.addAttribute("walletBalance", wallet != null && wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO);
-        
+
         model.addAttribute("totalBorrows", totalBorrows);
         model.addAttribute("completedBorrows", completedBorrows);
         model.addAttribute("activeBorrows", activeBorrows);

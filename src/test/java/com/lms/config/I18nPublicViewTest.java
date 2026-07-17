@@ -49,6 +49,25 @@ class I18nPublicViewTest {
     }
 
     @Test
+    void membershipTierPageUsesEnglishByDefault() throws Exception {
+        mockMvc.perform(get("/membership-tiers"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Explore membership tiers")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tier requirement")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Điều kiện đạt hạng"))));
+    }
+
+    @Test
+    void membershipTierPageCanSwitchToVietnamese() throws Exception {
+        mockMvc.perform(get("/membership-tiers").param("lang", "vi"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().value(WebMvcConfig.LOCALE_COOKIE_NAME, "vi"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Khám phá các hạng thành viên")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Điều kiện đạt hạng")));
+    }
+
+    @Test
     void bookDetailUsesEnglishByDefault() throws Exception {
         var books = bookRepository.findAll();
         org.junit.jupiter.api.Assumptions.assumeFalse(books.isEmpty(), "Current database has no books");

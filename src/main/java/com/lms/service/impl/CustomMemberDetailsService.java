@@ -32,7 +32,9 @@ public class CustomMemberDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(messages.get("backend.account.memberUsernameNotFound", username)));
+                .orElseGet(() -> memberAccountRepository.findByMember_User_Email(username)
+                        .orElseThrow(() -> new UsernameNotFoundException(
+                                messages.get("backend.account.memberUsernameNotFound", username))));
 
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
             throw new DisabledException(messages.get("backend.account.disabled"));
