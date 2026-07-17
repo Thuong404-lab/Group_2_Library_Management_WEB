@@ -1,4 +1,7 @@
 package com.lms.controller.member;
+import com.lms.exception.ApplicationException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.UnauthorizedException;
 
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
@@ -92,7 +95,7 @@ public class PayOsPaymentController {
 
     @GetMapping(value = "/{orderCode}/qr.png", produces = MediaType.IMAGE_PNG_VALUE)
     @ResponseBody
-    public ResponseEntity<byte[]> qrImage(@PathVariable Long orderCode, Principal principal) throws Exception {
+    public ResponseEntity<byte[]> qrImage(@PathVariable Long orderCode, Principal principal) {
         PayOsPayment payment = payOsPaymentService.getForMember(orderCode, currentMember(principal).getMemberId());
         if (payment.getQrCode() == null || payment.getQrCode().isBlank()) {
             return ResponseEntity.notFound().build();
@@ -106,7 +109,7 @@ public class PayOsPaymentController {
         try {
             PayOsPayment payment = creator.create();
             return "redirect:/member/payments/payos/" + payment.getOrderCode();
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", readableMessage(e));
             return "redirect:" + errorRedirect;
         }
@@ -114,16 +117,16 @@ public class PayOsPaymentController {
 
     private Member currentMember(Principal principal) {
         if (principal == null) {
-            throw new RuntimeException("Bạn cần đăng nhập để thanh toán.");
+            throw new UnauthorizedException("Bạn cần đăng nhập để thanh toán.");
         }
         String login = principal.getName();
         return memberRepository.findByAccountUsername(login)
                 .or(() -> memberRepository.findByUserEmail(login))
                 .or(() -> memberRepository.findByUserPhone(login))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên hiện tại."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên hiện tại."));
     }
 
-    private String readableMessage(Exception exception) {
+    private String readableMessage(ApplicationException exception) {
         Throwable current = exception;
         while (current.getCause() != null && (current.getMessage() == null || current.getMessage().isBlank())) {
             current = current.getCause();

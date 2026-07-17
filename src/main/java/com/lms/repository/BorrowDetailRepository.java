@@ -59,18 +59,18 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
 
-    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending', 'Approved')")
+    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending', 'Approved', 'Waiting_Pickup')")
     long countActiveBorrowedBooks(@Param("memberId") Integer memberId);
 
-    @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue', 'Approved')")
+    @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue', 'Approved', 'Waiting_Pickup')")
     List<BorrowDetail> findActiveBorrowDetailsByUsername(@Param("username") String username);
 
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status = 'Returned'")
     List<BorrowDetail> findReturnedBorrowDetailsByUsername(@Param("username") String username);
 
-    // BỔ SUNG & CẬP NHẬT 1: Lấy danh sách sách hiện tại bao gồm cả Pending và Return_Pending (Vấn đề 7)
+    // BỔ SUNG & CẬP NHẬT 1: Lấy danh sách sách hiện tại bao gồm cả Pending, Waiting_Pickup và Return_Pending (Vấn đề 7)
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
-            "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending', 'Approved') ORDER BY bd.dueDate ASC")
+            "AND bd.status IN ('Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Approved') ORDER BY bd.dueDate ASC")
     List<BorrowDetail> findCurrentBorrowsByMemberId(@Param("memberId") Integer memberId);
 
     // BỔ SUNG 2: Lấy lịch sử mượn trả trong vòng 1 tháng gần đây (Hiển thị tab Lịch sử)
@@ -131,4 +131,21 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             @Param("memberId") Integer memberId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    @Query(value = """
+            select count(*)
+            from dbo.BorrowDetails bd
+            join dbo.Borrows b on b.borrow_id = bd.borrow_id
+            where b.member_id = :memberId
+              and bd.book_id = :bookId
+              and upper(ltrim(rtrim(bd.status))) in (
+                    'BORROWED',
+                    'OVERDUE',
+                    'RETURN_PENDING',
+                    'RENEW_PENDING',
+                    'RETURNED'
+              )
+            """, nativeQuery = true)
+    long countEligibleReviewBorrows(@Param("memberId") Integer memberId,
+                                    @Param("bookId") Integer bookId);
 }

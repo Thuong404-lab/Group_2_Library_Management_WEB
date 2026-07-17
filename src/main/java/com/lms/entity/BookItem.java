@@ -2,7 +2,7 @@ package com.lms.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "`BookItems`")
+@Table(name = "BookItems")
 public class BookItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer bookItemId;

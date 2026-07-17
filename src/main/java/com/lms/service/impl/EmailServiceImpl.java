@@ -1,8 +1,10 @@
 package com.lms.service.impl;
 
+import com.lms.exception.ExternalServiceException;
 import com.lms.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,10 @@ public class EmailServiceImpl implements EmailService {
         // Cần cấu hình spring.mail.username trong application.properties
         // message.setFrom("your-email@example.com"); // Có thể set từ đây hoặc cấu hình trong properties
 
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (MailException ex) {
+            throw new ExternalServiceException("Không thể gửi email. Vui lòng thử lại sau.", ex);
+        }
     }
 }

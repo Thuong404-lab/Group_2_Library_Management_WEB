@@ -7,17 +7,20 @@ import com.lms.dto.response.ReturnRequestDTO;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Reservation;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface BorrowService {
     // Luồng mượn trực tiếp tại quầy
     Borrow processBorrowing(BorrowRequest request, String librarianUsername);
+    Borrow activatePendingBankBorrow(Integer borrowId);
+    void cancelPendingBankBorrow(Integer borrowId, String paymentStatus);
 
     // Luồng đăng ký mượn trực tuyến (Chờ duyệt)
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, String staffUsername);
+    void rejectPendingRequest(Integer borrowId);
+
+    void confirmPhysicalPickup(Integer borrowId, String staffUsername);
 
     // Luồng YÊU CẦU TRẢ SÁCH VÀ GIA HẠN
     void memberSubmitRenewRequest(Integer borrowDetailId);
@@ -56,13 +59,13 @@ public interface BorrowService {
 
     // Dữ liệu cấu hình hệ thống
     int getMaxBorrowDays();
+
     void memberSubmitReturnRequest(String username, Integer borrowDetailId);
     void approveReturnRequest(Integer borrowId);
+
     // Đăng ký mượn nhiều cuốn trực tuyến
     Borrow memberSubmitMultiBookBorrowRequest(String username, List<Integer> bookIds, Integer numberOfDays);
 
     // Tính toán xem trước phí mượn
-    BigDecimal calculateBorrowFeePreview(String username, List<Integer> bookIds, Integer numberOfDays);
-
-
+    java.math.BigDecimal calculateBorrowFeePreview(String username, List<Integer> bookIds, Integer numberOfDays);
 }

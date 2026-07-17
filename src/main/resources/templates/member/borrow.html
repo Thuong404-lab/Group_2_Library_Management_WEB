@@ -5,174 +5,27 @@
 <head>
     <title>Mượn / Trả Sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f7f5; /* Nền giấy beige sáng đồng bộ */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .font-playfair {
-            font-family: 'Playfair Display', serif;
-        }
-
-        .page-title {
-            color: #4a3b32;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-        }
-
-        /* --- CARD VÀ BẢNG THÔNG TIN --- */
-        .card-classic {
-            border: none;
-            border-radius: 10px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-
-        .table-classic thead th {
-            background-color: rgba(139, 90, 43, 0.04);
-            color: #4a3b32;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            border-bottom: 2px solid #4a3b32;
-            letter-spacing: 0.3px;
-        }
-
-        .table-classic tbody tr {
-            background-color: #fdfbf7; /* Màu nền kem giấy */
-            border-bottom: 1px dashed rgba(139, 90, 43, 0.15);
-        }
-
-        /* --- TABS PILLS DI CHUYỂN STYLE CLASSIC --- */
-        .nav-pills-classic .nav-link {
-            color: #8b5a2b !important;
-            background-color: transparent;
-            border: 1px solid rgba(139, 90, 43, 0.3);
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            margin-right: 8px;
-        }
-
-        .nav-pills-classic .nav-link.active,
-        .nav-pills-classic .nav-link:hover {
-            color: #ffffff !important;
-            background-color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
-        }
-
-        .nav-pills-classic .badge-tab {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: inherit;
-        }
-        .nav-pills-classic .nav-link:not(.active) .badge-tab {
-            background-color: rgba(139, 90, 43, 0.1);
-            color: #8b5a2b;
-        }
-
-        /* --- TIẾN TRÌNH PROGRESS BAR --- */
-        .progress-classic {
-            height: 5px;
-            background-color: #e2e8f0;
-            border-radius: 10px;
-        }
-        .bg-classic-progress {
-            background-color: #8b5a2b !important;
-        }
-
-        /* --- BADGES TRẠNG THÁI CLASSIC --- */
-        .badge-classic-status {
-            background-color: rgba(139, 90, 43, 0.1);
-            color: #8b5a2b;
-            border: 1px solid rgba(139, 90, 43, 0.3);
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge-classic-success {
-            background-color: #f0fff4;
-            color: #2f855a;
-            border: 1px solid #9ae6b4;
-        }
-        .badge-classic-warn {
-            background-color: #fffaf0;
-            color: #b7791f;
-            border: 1px solid #fbd38d;
-        }
-        .badge-classic-danger {
-            background-color: #fff5f5;
-            color: #c53030;
-            border: 1px solid #feb2b2;
-        }
-
-        /* --- HỆ THỐNG NÚT BẤM --- */
-        .btn-classic-primary {
-            background: #8b5a2b !important;
-            border: 1px solid #8b5a2b !important;
-            color: #ffffff !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            padding: 0.45rem 1.25rem;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-primary:hover {
-            background: #74481f !important;
-            border-color: #74481f !important;
-        }
-
-        .btn-classic-outline {
-            background: transparent !important;
-            border: 1px solid rgba(139, 90, 43, 0.5) !important;
-            color: #8b5a2b !important;
-            font-weight: 500;
-            border-radius: 4px !important;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-outline:hover {
-            background: rgba(139, 90, 43, 0.08) !important;
-            border-color: #8b5a2b !important;
-        }
-
-        .btn-classic-danger-outline {
-            background: transparent !important;
-            border: 1px solid rgba(220, 53, 69, 0.4) !important;
-            color: #dc3545 !important;
-            font-weight: 500;
-            border-radius: 4px !important;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-danger-outline:hover {
-            background: #dc3545 !important;
-            color: #ffffff !important;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/member/borrow.css}" />
+  </head>
 
 <body>
 <div layout:fragment="content" class="container mt-4 mb-5">
 
     <!-- Thông báo Alert hệ thống -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Thông báo thành công</span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: #2f855a;"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close u-color-2f855a-3ab9db54" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Thông báo lỗi</span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: #c53030;"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close u-color-c53030-c575d87d" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </div>
 
     <!-- Tiêu đề trang đầu mục -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="page-title mb-0"><i class="bi bi-journal-bookmark-fill me-2" style="color: #8b5a2b;"></i>Quản lý Mượn / Trả</h2>
+        <h2 class="page-title mb-0"><i class="bi bi-journal-bookmark-fill me-2 u-color-8b5a2b-93ece783"></i>Quản lý Mượn / Trả</h2>
         <a th:href="@{/}" class="btn btn-classic-primary"><i class="bi bi-search me-1"></i> Mượn sách mới</a>
     </div>
 
@@ -220,21 +73,21 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:if="${booksData == null || #lists.isEmpty(booksData)}">
+                        <tr th:if="${#lists.isEmpty(booksData)}">
                             <td colspan="7" class="text-center py-4 text-muted fst-italic">Hiện tại bạn không mượn cuốn sách nào.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border" alt="Book" style="width: 42px; height: 58px; object-fit: cover; border-color: rgba(139,90,43,0.15)!important;">
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
                                     <div>
-                                        <h6 class="mb-0 fw-bold font-playfair" style="color: #2c1e16;" th:text="${item.bookTitle}">Tên Sách</h6>
+                                        <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Tên Sách</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-muted fw-medium" th:text="${item.borrowIdStr != null ? item.borrowIdStr : '-'}">BOR-096</td>
+                            <td class="text-muted fw-semibold" th:text="${item.borrowIdStr}">BOR-10023</td>
                             <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10023</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">10/11/2026</td>
                             <td>
@@ -247,16 +100,18 @@
                                     <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-success">Đang mượn</span>
                                     <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger">Quá hạn</span>
                                     <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt mượn</span>
-                                    <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status" style="background-color: #edf2f7; color: #4a5568; border-color: #cbd5e0;">Chờ duyệt trả</span>
-                                    <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">Chờ duyệt gia hạn</span>
-                                    <span th:if="${item.status == 'Approved'}" class="badge badge-classic-status" style="background-color: #e2f0fd; color: #1a73e8; border-color: #adc1f9;"><i class="bi bi-clock-history me-1"></i>Chờ nhận bản vật lý</span>
-
+                                    <span th:if="${item.status == 'Waiting_Pickup'}" class="badge badge-classic-status" style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i>Chờ nhận sách vật lý
+                                    </span>
+                                    <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-08">Chờ duyệt trả</span>
+                                    <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-09">Chờ duyệt gia hạn</span>
+                                    <small th:if="${item.status == 'Waiting_Pickup'}" class="text-primary d-block mt-1" style="font-size:0.8rem;"><i class="bi bi-info-circle me-1"></i>Vui lòng đến quầy thư viện để nhận sách</small>
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="'(Còn ' + ${item.daysLeft} + ' ngày)'"></small>
                                 </div>
-                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending' and item.status != 'Approved'}" 
+                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending' && item.status != 'Waiting_Pickup'}"
                                      th:title="'Thời gian mượn: Đã qua ' + ${item.progressPercentage} + '%'" data-bs-toggle="tooltip">
                                     <div class="progress-bar" role="progressbar"
-                                         th:style="'width: ' + ${item.progressPercentage} + '%'"
+                                         th:data-presentation-width="${item.progressPercentage}"
                                          th:classappend="${item.daysLeft <= 2 || item.status == 'Overdue'} ? 'bg-danger' : 'bg-classic-progress'"
                                          th:aria-valuenow="${item.progressPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
@@ -266,11 +121,10 @@
                                     <!-- Nút trả sách đã bị ẩn theo yêu cầu hệ thống không cần nữa -->
 
                                     <!-- Hiển thị nhãn khi đang chờ thủ thư xử lý -->
-                                    <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
-                                    <span th:if="${item.status == 'Approved'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-clock-history me-1"></i>Chờ nhận bản vật lý...</span>
+                                    <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm u-font-size-0-85rem-4908cb0a"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
-                                        <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action" 
+                                        <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action"
                                                 th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"
                                                 th:title="${item.renewCount >= 2 ? 'Đã hết lượt gia hạn (tối đa 2 lần)' : (item.status == 'Overdue' ? 'Không thể gia hạn sách quá hạn' : 'Gia hạn sách thêm 7 ngày')}"
                                                 th:attr="data-form-id='renewForm_' + ${item.id}">
@@ -296,16 +150,16 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:if="${booksData == null || #lists.isEmpty(booksData)}">
+                        <tr th:if="${#lists.isEmpty(booksData)}">
                             <td colspan="5" class="text-center py-4 text-muted fst-italic">Không có sách đặt trước nào đang hoạt động.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border" alt="Book" style="width: 42px; height: 58px; object-fit: cover; border-color: rgba(139,90,43,0.15)!important;">
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
                                     <div>
-                                        <h6 class="mb-0 fw-bold font-playfair" style="color: #2c1e16;" th:text="${item.bookTitle}">Tên Sách</h6>
+                                        <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Tên Sách</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
                                     </div>
                                 </div>
@@ -314,16 +168,21 @@
                             <td><strong class="text-dark" th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">21/11/2026</strong></td>
                             <td>
                                 <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ chuẩn bị</span>
+                                <span th:if="${item.status == 'Deposit_Paid'}" class="badge badge-classic-status badge-classic-warn">Đã cọc - chờ duyệt</span>
+                                <span th:if="${item.status == 'Refund_Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt hoàn tiền</span>
                                 <span th:if="${item.status == 'Active' || item.status == 'Ready'}" class="badge badge-classic-status badge-classic-success"><i class="bi bi-bell me-1"></i>Đã phê duyệt (Chờ lấy)</span>
                                 <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status badge-classic-danger">Đã hủy</span>
                                 <span th:if="${item.status == 'Completed'}" class="badge badge-classic-status">Đã nhận sách</span>
                             </td>
                             <td class="text-end pe-4">
                                 <!-- Form thực hiện Hủy đặt trước -->
-                                <form th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${item.id})}" method="post" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-danger">Hủy đặt</button>
-                                </form>
-                                <span th:unless="${item.status == 'Active' || item.status == 'Pending' || item.status == 'Ready'}" class="text-muted">-</span>
+                                <button th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
+                                        type="button" class="btn reservation-cancel-action"
+                                        data-toggle="modal"
+                                        th:data-target="${'#cancelReservationModal' + item.id}">
+                                    Hủy đặt
+                                </button>
+                                <span th:unless="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}" class="text-muted">-</span>
                             </td>
                         </tr>
                         </tbody>
@@ -343,31 +202,31 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:if="${booksData == null || #lists.isEmpty(booksData)}">
+                        <tr th:if="${#lists.isEmpty(booksData)}">
                             <td colspan="7" class="text-center py-4 text-muted fst-italic">Không tìm thấy lịch sử mượn trả trong vòng 1 tháng qua.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border" alt="Book" style="width: 42px; height: 58px; object-fit: cover; border-color: rgba(139,90,43,0.15)!important;">
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
                                     <div>
-                                        <h6 class="mb-0 fw-bold font-playfair" style="color: #2c1e16;" th:text="${item.bookTitle}">Tên Sách</h6>
+                                        <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Tên Sách</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Tác giả</small>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-muted fw-medium" th:text="${item.borrowIdStr != null ? item.borrowIdStr : '-'}">BOR-096</td>
+                            <td class="text-muted fw-semibold" th:text="${item.borrowIdStr}">BOR-10023</td>
                             <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10012</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">01/10/2026</td>
                             <td class="text-muted" th:text="${item.returnDate != null ? #temporals.format(item.returnDate, 'dd/MM/yyyy') : '-'}">10/10/2026</td>
                             <td>
                                 <span th:if="${item.status == 'Returned'}" class="badge badge-classic-status">Đã trả</span>
                                 <span th:if="${item.status == 'Lost'}" class="badge badge-classic-status badge-classic-danger"><i class="bi bi-exclamation-octagon me-1"></i>Làm mất</span>
-                                <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status" style="background-color: #f7fafc;">Đã hủy</span>
+                                <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status member-borrow-span-background-12">Đã hủy</span>
                             </td>
                             <td class="text-end pe-4">
-                                <a th:href="@{/}" class="btn btn-classic-outline" style="padding: 0.35rem 0.9rem; font-size: 0.85rem;"><i class="bi bi-arrow-repeat me-1"></i>Mượn lại</a>
+                                <a th:href="@{/}" class="btn btn-classic-outline member-borrow-a-padding-font-size-13"><i class="bi bi-arrow-repeat me-1"></i>Mượn lại</a>
                             </td>
                         </tr>
                         </tbody>
@@ -377,23 +236,80 @@
             </div>
         </div>
     </div>
+    <th:block th:if="${activeTab == 'reserved'}">
+        <div th:each="item : ${booksData}"
+             th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
+             class="modal fade cancel-reservation-modal"
+             th:id="${'cancelReservationModal' + item.id}"
+             tabindex="-1"
+             role="dialog"
+             th:aria-labelledby="${'cancelReservationModalTitle' + item.id}"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="modal-title" th:id="${'cancelReservationModalTitle' + item.id}">Xác nhận hủy đặt trước</h2>
+                            <p>Kiểm tra thông tin trước khi xác nhận.</p>
+                        </div>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="cancel-reservation-summary">
+                            <div>
+                                <small>Sách đặt trước</small>
+                                <strong th:text="${item.bookTitle}">Tên sách</strong>
+                                <span th:text="${item.authorName}">Tác giả</span>
+                            </div>
+                            <div>
+                                <small>Mã phiếu</small>
+                                <strong th:text="${'RES-' + item.id}">RES-1</strong>
+                            </div>
+                        </div>
+
+                        <div th:if="${item.status == 'Pending'}" class="cancel-reservation-message">
+                            Phiếu này chưa thanh toán tiền cọc. Sau khi xác nhận, yêu cầu đặt trước sẽ được hủy ngay.
+                        </div>
+                        <div th:unless="${item.status == 'Pending'}" class="cancel-reservation-message is-refund">
+                            Phiếu đã thanh toán tiền cọc. Sau khi xác nhận, hệ thống sẽ chuyển sang
+                            <strong>Chờ duyệt hoàn tiền</strong>. Tiền chỉ được cộng lại vào ví khi thủ thư duyệt.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn cancel-reservation-secondary" data-dismiss="modal">Quay lại</button>
+                        <form th:if="${item.status == 'Pending'}"
+                              th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${item.id})}"
+                              method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn cancel-reservation-confirm">Xác nhận hủy đặt</button>
+                        </form>
+                        <form th:unless="${item.status == 'Pending'}"
+                              th:action="@{/member/financial/deposit/{reservationId}/refund-request(reservationId=${item.id})}"
+                              method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn cancel-reservation-confirm">Gửi yêu cầu hoàn tiền</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
     <!-- Modal Xác Nhận Gia Hạn (Vanilla JS) -->
-    <div class="modal fade" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+    <div class="modal fade member-borrow-div-background-14" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(139, 90, 43, 0.15);">
-                <div class="modal-header" style="background-color: rgba(139, 90, 43, 0.05); border-bottom: 1px solid rgba(139, 90, 43, 0.1); border-radius: 12px 12px 0 0;">
-                    <h5 class="modal-title font-playfair" id="renewConfirmModalLabel" style="color: #8b5a2b; font-weight: 700;"><i class="bi bi-question-circle me-2"></i>Xác nhận gia hạn</h5>
-                    <button type="button" class="close" onclick="hideRenewModal()" aria-label="Close" style="color: #8b5a2b; opacity: 1;">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+            <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
+                <div class="modal-header member-borrow-div-background-border-bottom-border-radius-16">
+                    <h5 class="modal-title font-playfair member-borrow-h5-color-font-weight-17" id="renewConfirmModalLabel"><i class="bi bi-question-circle me-2"></i>Xác nhận gia hạn</h5>
                 </div>
                 <div class="modal-body text-center py-4">
-                    <i class="bi bi-clock-history mb-3" style="font-size: 3.5rem; color: #8b5a2b; opacity: 0.9;"></i>
-                    <p class="mb-1 mt-2" style="color: #4a3b32; font-size: 1.15rem; font-weight: 500;">Bạn có chắc chắn muốn gia hạn sách này?</p>
-                    <p class="text-muted mb-0" style="font-size: 0.95rem;">Hạn trả sách sẽ được cộng thêm <strong style="color: #8b5a2b;">7 ngày</strong>.</p>
+                    <i class="bi bi-clock-history mb-3 member-borrow-i-font-size-color-opacity-19"></i>
+                    <p class="mb-1 mt-2 member-borrow-p-color-font-size-font-weight-20">Bạn có chắc chắn muốn gia hạn sách này?</p>
+                    <p class="text-muted mb-0 u-font-size-0-95rem-b8088cad">Hạn trả sách sẽ được cộng thêm <strong class="u-color-8b5a2b-93ece783">7 ngày</strong>.</p>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid rgba(139, 90, 43, 0.1); justify-content: center; gap: 10px;">
-                    <button type="button" class="btn btn-light px-4" onclick="hideRenewModal()" style="border-radius: 6px; font-weight: 500;">Hủy bỏ</button>
+                <div class="modal-footer member-borrow-div-border-top-justify-gap-22">
+                    <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9" onclick="hideRenewModal()">Hủy bỏ</button>
                     <button type="button" class="btn btn-classic-primary px-4" id="confirmRenewBtn">Đồng ý gia hạn</button>
                 </div>
             </div>
@@ -401,22 +317,19 @@
     </div>
 
     <!-- Modal Xác Nhận Trả Sách (Vanilla JS) -->
-    <div class="modal fade" id="returnConfirmModal" tabindex="-1" role="dialog" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+    <div class="modal fade member-borrow-div-background-14" id="returnConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(139, 90, 43, 0.15);">
-                <div class="modal-header" style="background-color: rgba(139, 90, 43, 0.05); border-bottom: 1px solid rgba(139, 90, 43, 0.1); border-radius: 12px 12px 0 0;">
-                    <h5 class="modal-title font-playfair" style="color: #8b5a2b; font-weight: 700;"><i class="bi bi-question-circle me-2"></i>Xác nhận trả sách</h5>
-                    <button type="button" class="close" onclick="hideReturnModal()" aria-label="Close" style="color: #8b5a2b; opacity: 1;">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+            <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
+                <div class="modal-header member-borrow-div-background-border-bottom-border-radius-16">
+                    <h5 class="modal-title font-playfair member-borrow-h5-color-font-weight-17"><i class="bi bi-question-circle me-2"></i>Xác nhận trả sách</h5>
                 </div>
                 <div class="modal-body text-center py-4">
-                    <i class="bi bi-box-arrow-in-right mb-3" style="font-size: 3.5rem; color: #ffc107; opacity: 0.9;"></i>
-                    <p class="mb-1 mt-2" style="color: #4a3b32; font-size: 1.15rem; font-weight: 500;">Bạn muốn gửi yêu cầu trả cuốn sách này?</p>
-                    <p class="text-muted mb-0" style="font-size: 0.95rem;">Yêu cầu sẽ được gửi tới thủ thư để chờ xác nhận.</p>
+                    <i class="bi bi-box-arrow-in-right mb-3 member-borrow-i-font-size-color-opacity-24"></i>
+                    <p class="mb-1 mt-2 member-borrow-p-color-font-size-font-weight-20">Bạn muốn gửi yêu cầu trả cuốn sách này?</p>
+                    <p class="text-muted mb-0 u-font-size-0-95rem-b8088cad">Yêu cầu sẽ được gửi tới thủ thư để chờ xác nhận.</p>
                 </div>
-                <div class="modal-footer" style="border-top: 1px solid rgba(139, 90, 43, 0.1); justify-content: center; gap: 10px;">
-                    <button type="button" class="btn btn-light px-4" onclick="hideReturnModal()" style="border-radius: 6px; font-weight: 500;">Hủy bỏ</button>
+                <div class="modal-footer member-borrow-div-border-top-justify-gap-22">
+                    <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9" onclick="hideReturnModal()">Hủy bỏ</button>
                     <button type="button" class="btn btn-warning px-4" id="confirmReturnBtn">Đồng ý trả sách</button>
                 </div>
             </div>
@@ -453,7 +366,7 @@
                 }
                 return;
             }
-            
+
             // Xử lý nút đóng Modal Gia hạn
             if (e.target.closest('#renewConfirmModal .close') || e.target.closest('#renewConfirmModal .btn-light')) {
                 var modal = document.getElementById('renewConfirmModal');
@@ -469,7 +382,7 @@
                 setTimeout(function() { modal.style.display = 'none'; }, 300);
                 currentReturnFormId = null;
             }
-            
+
             // Xử lý nút Đồng ý Gia hạn
             if (e.target.closest('#confirmRenewBtn')) {
                 if (currentRenewFormId) {

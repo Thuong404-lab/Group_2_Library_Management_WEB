@@ -6,95 +6,37 @@
 
 <head>
     <title>Cài đặt</title>
-    <style>
-        .settings-form {
-            row-gap: 1.75rem;
-        }
-
-        .settings-form .form-label {
-            color: #4a3b32 !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.025em;
-            margin-bottom: 0.55rem;
-        }
-
-        .settings-form .form-text {
-            color: #91877f !important;
-            font-size: 0.82rem;
-            line-height: 1.45;
-            margin-top: 0.45rem;
-        }
-
-        .settings-section-title {
-            padding-top: 0.5rem;
-            margin-top: 0.35rem;
-            border-top: 1px solid rgba(139, 90, 43, 0.18);
-        }
-
-        .settings-section-title:first-of-type {
-            border-top: 0;
-            padding-top: 0;
-            margin-top: 0;
-        }
-
-        .settings-section-title h6 {
-            color: #6b4423 !important;
-            font-size: 1.05rem;
-        }
-
-        .setting-field {
-            height: 100%;
-        }
-
-        .tier-limit-box {
-            height: 100%;
-            padding: 1rem;
-            border: 1px solid rgba(139, 90, 43, 0.18);
-            border-radius: 8px;
-            background: #fdfbf7;
-        }
-
-        .subsection-label {
-            color: #4a3b32;
-            font-weight: 700;
-        }
-
-        .money-input {
-            font-variant-numeric: tabular-nums;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/settings.css}" />
+  </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu='settings'">
+<div layout:fragment="content" th:with="activeMenu='settings'" class="settings-page">
 
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div class="settings-header">
         <div>
-            <h2 class="fw-bold mb-1"
-                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+            <h2 class="settings-title">
                 Cài đặt Hệ thống
             </h2>
-            <div class="text-muted">
+            <div class="settings-description">
                 Cấu hình chính sách mượn, trả và phạt
             </div>
         </div>
     </div>
 
-    <div class="alert alert-success shadow-sm border-0" th:if="${success}">
+    <div class="alert alert-success" th:if="${success}">
         <i class="bi bi-check-circle me-2"></i>
         <span th:text="${success}">Cập nhật thành công.</span>
     </div>
 
-    <div class="alert alert-danger shadow-sm border-0" th:if="${error}">
+    <div class="alert alert-danger" th:if="${error}">
         <i class="bi bi-exclamation-triangle me-2"></i>
         <span th:text="${error}">Có lỗi xảy ra.</span>
     </div>
 
-    <div class="card-classic shadow-sm">
-        <div class="card-header bg-white border-bottom border-color p-4">
-            <h5 class="fw-bold mb-0"
-                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+    <div class="card-classic">
+        <div class="card-header">
+            <h5 class="settings-card-title"
+               >
                 <i class="bi bi-sliders me-2 text-classic"></i>
                 Cấu hình chính sách mượn/trả
             </h5>
@@ -140,6 +82,47 @@
                            min="1"
                            required
                            th:value="${settingMap['Max_Renewal_Days'] != null ? settingMap['Max_Renewal_Days'] : 7}">
+                </div>
+
+                <div class="col-12 settings-section-title">
+                    <h6 class="fw-bold text-classic mb-0">
+                        <i class="bi bi-award me-1"></i>
+                        Giới hạn theo hạng thành viên
+                    </h6>
+                </div>
+
+                <div class="col-12" th:if="${#lists.isEmpty(membershipTiers)}">
+                    <div class="alert alert-warning mb-0">
+                        Chưa có hạng thành viên để cấu hình.
+                    </div>
+                </div>
+
+                <div class="col-md-6" th:each="tier : ${membershipTiers}">
+                    <div class="border rounded-3 p-3 h-100">
+                        <h6 class="fw-bold text-classic mb-3" th:text="${tier.tierName}">Hạng thành viên</h6>
+                        <input type="hidden" name="tierIds" th:value="${tier.tierId}">
+
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            Số sách được mượn tối đa
+                        </label>
+                        <input name="tierBorrowLimits"
+                               type="number"
+                               class="form-control mb-3"
+                               min="1"
+                               required
+                               th:value="${tier.borrowLimit != null ? tier.borrowLimit : 1}">
+
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            Mức chi tiêu để đạt hạng
+                        </label>
+                        <input name="tierSpendingConditions"
+                               type="text"
+                               inputmode="numeric"
+                               class="form-control money-input"
+                               required
+                               th:value="${tier.condition != null ? tier.condition : 0}">
+                        <div class="form-text">VNĐ</div>
+                    </div>
                 </div>
 
                 <div class="col-12 settings-section-title">
@@ -257,7 +240,7 @@
                 </div>
 
                 <div class="col-12">
-                    <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
+                <hr class="settings-divider">
                 </div>
 
                 <div class="col-12 d-flex justify-content-end">

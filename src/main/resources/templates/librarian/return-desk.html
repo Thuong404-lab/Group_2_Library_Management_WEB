@@ -1,160 +1,92 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
+
 <head>
     <title>Bàn tiếp nhận trả sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/return-desk.css}" />
+
+    <!-- CSS tùy chỉnh giúp nút checkbox đồng bộ tông màu nâu cổ điển -->
     <style>
-        .classic-card {
-            border: 1px solid rgba(139, 90, 43, 0.18) !important;
-            border-radius: 10px !important;
-            background-color: #ffffff !important;
-            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
-            overflow: hidden;
-        }
-        .classic-card .card-header {
-            background: #ffffff !important;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.18) !important;
-            padding-top: 1.25rem;
-            padding-bottom: 1.25rem;
-        }
-        .card-title-custom {
-            color: #4a3b32;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        .classic-table thead th {
-            background: rgba(139, 90, 43, 0.04) !important;
-            color: #4a3b32 !important;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-            padding: 0.75rem 1.25rem !important;
-            vertical-align: middle !important;
-        }
-        .classic-table tbody td {
-            white-space: nowrap;
-            padding: 0.75rem 1.25rem !important;
-            vertical-align: middle !important;
-        }
-        .classic-table tbody tr {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #dee2e6 !important;
-        }
+        /* Tăng nhẹ kích thước và đổi màu viền mặc định cho tinh tế */
         .classic-table .form-check-input {
-            position: relative !important;
-            margin-left: 0 !important;
-            margin-top: 0 !important;
-            display: inline-block !important;
             width: 1.25rem;
             height: 1.25rem;
-            border: 2px solid rgba(139, 90, 43, 0.4);
-            border-radius: 4px;
+            border: 2px solid #b89c7d !important;
             cursor: pointer;
-            transition: all 0.2s ease;
-            background-color: #ffffff;
-            vertical-align: middle !important;
+            transition: all 0.2s ease-in-out;
         }
+
+        /* Hiệu ứng khi rê chuột qua (hover) */
+        .classic-table .form-check-input:hover {
+            border-color: #8b5a2b !important;
+            box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.15) !important;
+        }
+
+        /* Trạng thái khi được chọn (Checked) - Đổi sang màu nâu chủ đạo */
         .classic-table .form-check-input:checked {
             background-color: #8b5a2b !important;
             border-color: #8b5a2b !important;
         }
+
+        /* Hiệu ứng viền focus khi click chọn */
         .classic-table .form-check-input:focus {
-            box-shadow: 0 0 0 0.25rem rgba(139, 90, 43, 0.2) !important;
             border-color: #8b5a2b !important;
+            box-shadow: 0 0 0 0.25rem rgba(139, 90, 43, 0.25) !important;
         }
-        .btn-classic-primary {
-            background: #8b5a2b !important;
-            border: 1px solid #8b5a2b !important;
-            color: #ffffff !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-primary:hover {
-            background: #74481f !important;
-            border-color: #74481f !important;
-            color: #ffffff !important;
-        }
-        .btn-classic-outline {
-            background: transparent !important;
-            border: 1px solid rgba(139, 90, 43, 0.5) !important;
-            color: #8b5a2b !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-outline:hover {
-            background: rgba(139, 90, 43, 0.08) !important;
-            border-color: #8b5a2b !important;
-        }
-        .scan-input {
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            background-color: #ffffff;
-            color: #4a3b32;
-            font-size: 1.05rem;
-            transition: all 0.2s ease;
-        }
-        .scan-input:focus {
-            border-color: #8b5a2b;
-            box-shadow: 0 0 0 0.2rem rgba(139, 90, 43, 0.15);
-            background-color: #fff;
-        }
-        .badge-classic { background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.3); border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; }
-        .result-card { border-left: 4px solid #8b5a2b !important; }
-        .status-badge.status-overdue {
-            background-color: #fff5f5;
-            color: #c53030;
-            border: 1px solid #feb2b2;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+
+        /* Đảm bảo toàn bộ ô trong dòng được căn giữa hoàn hảo theo chiều dọc */
+        .classic-table th, .classic-table td {
+            vertical-align: middle;
         }
     </style>
 </head>
+
 <body>
 <div layout:fragment="content" th:with="activeMenu='borrow-return'">
 
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #f0fff4; color: #2f855a;" role="alert">
+    <div th:if="${successMessage}"
+         class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379"
+         role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Thành công</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fff5f5; color: #c53030;" role="alert">
+    <div th:if="${errorMessage}"
+         class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe"
+         role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Lỗi</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <!-- Page Header -->
+    <div
+            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Bàn tiếp nhận trả sách</h2>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Bàn tiếp nhận trả sách</h2>
             <div class="text-muted">Tiếp nhận sách hoàn trả và đánh giá tình trạng sách tại quầy thư viện.</div>
         </div>
     </div>
 
+    <!-- Barcode Search Card -->
     <div class="card classic-card shadow-sm mb-4">
         <div class="card-header">
-            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2" style="color: #8b5a2b;"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
+            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2 u-color-8b5a2b-93ece783"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
         </div>
         <div class="card-body p-4 bg-white">
             <form th:action="@{/librarian/loan/returns/search}" method="get" class="row g-3 align-items-end">
                 <div class="col-md-9">
-                    <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Tra cứu phiếu mượn (Barcode, Mã phiếu hoặc SĐT)</label>
-                    <input type="text" name="query" th:value="${searchedQuery}"
-                           class="form-control scan-input"
-                           placeholder="Nhập mã vạch sách (Ví dụ: BI-1002), mã phiếu mượn (BOR-12) hoặc số điện thoại độc giả..."
-                           autofocus required autocomplete="off" />
+                    <label
+                            class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Mã vạch (Barcode) của cuốn sách</label>
+                    <input type="text" name="barcode" th:value="${searchedBarcode}" class="form-control scan-input"
+                           placeholder="Ví dụ: BI-1002 hoặc quét trực tiếp bằng thiết bị..." autofocus required
+                           autocomplete="off" />
                 </div>
                 <div class="col-md-3">
-                    <button type="submit" class="btn w-100 fw-bold btn-classic-primary" style="padding: 0.5rem 1rem;">
+                    <button type="submit"
+                            class="btn w-100 fw-bold btn-classic-primary librarian-return-desk-button-padding-07">
                         <i class="bi bi-search me-1"></i>Tìm đơn mượn
                     </button>
                 </div>
@@ -162,158 +94,175 @@
         </div>
     </div>
 
-    <!-- 1. Trạng thái chưa tìm kiếm -->
-    <div th:if="${groupedResults == null}" class="card classic-card shadow-sm mb-4 text-center py-5">
-        <div class="card-body">
-            <i class="bi bi-qr-code-scan" style="font-size: 3rem; color: #8b5a2b; opacity: 0.5;"></i>
-            <h5 class="mt-3 text-muted">Nhập thông tin tra cứu để bắt đầu</h5>
-            <p class="text-muted small">Hỗ trợ quét/nhập Mã vạch sách, Mã phiếu mượn (BOR-X hoặc X), hoặc Số điện thoại của thành viên.</p>
+    <!-- Search Results Card -->
+    <div class="card classic-card shadow-sm mb-4 result-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title-custom mb-0">
+                <i class="bi bi-file-earmark-text me-2 u-color-8b5a2b-93ece783"></i>
+                Kết quả tra cứu:
+                <span class="font-monospace ms-1 u-color-8b5a2b-93ece783"
+                      th:text="${searchedQuery != null ? searchedQuery : searchedBarcode}">BI-1002</span>
+            </h5>
+            <button type="button" id="bulkReturnBtn" class="btn btn-classic-primary px-3 py-1 fw-bold"
+                    data-bs-toggle="modal" data-bs-target="#confirmReturnModal" disabled>
+                Tiếp nhận trả sách đã chọn
+            </button>
         </div>
-    </div>
-
-    <!-- 2. Trạng thái không tìm thấy kết quả -->
-    <div th:if="${groupedResults != null and #maps.isEmpty(groupedResults)}" class="card classic-card shadow-sm mb-4 text-center py-5">
-        <div class="card-body">
-            <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: #c53030; opacity: 0.8;"></i>
-            <h5 class="mt-3 text-danger">Không tìm thấy kết quả</h5>
-            <p class="text-muted small" th:text="'Không tìm thấy lượt mượn hoạt động nào phù hợp với từ khóa: &quot;' + ${searchedQuery} + '&quot;'"></p>
-        </div>
-    </div>
-
-    <!-- 3. Hiển thị danh sách phiếu mượn gom nhóm -->
-    <div th:if="${groupedResults != null and !#maps.isEmpty(groupedResults)}" th:each="entry : ${groupedResults}" class="card classic-card shadow-sm mb-4">
-        <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center py-3" style="border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;">
-            <div>
-                <span class="badge-classic me-2">Phiếu mượn: <strong th:text="'BOR-' + ${entry.key.borrowId}">BOR-1</strong></span>
-                <span class="text-muted me-3">| Ngày mượn: <strong th:text="${entry.key.borrowDate != null ? #temporals.format(entry.key.borrowDate, 'dd/MM/yyyy HH:mm') : 'Chưa rõ'}">15/06/2026</strong></span>
-                <span class="badge" th:classappend="${entry.key.status == 'Active' ? 'bg-success' : 'bg-warning'}" th:text="${entry.key.status}">Active</span>
-            </div>
-            <div class="text-end">
-                <span class="fw-bold text-dark me-2" th:text="${entry.key.member?.user?.fullName}">Nguyễn Văn An</span>
-                <small class="text-muted" th:text="'(' + ${entry.key.member?.user?.phone} + ' - ' + ${entry.key.member?.user?.email} + ')'">(0912345678 - an@gmail.com)</small>
-            </div>
-        </div>
-
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 classic-table">
                 <thead>
                 <tr>
-                    <th class="text-center" style="width: 60px; min-width: 60px;">
-                        <input type="checkbox" class="form-check-input select-all-checkbox" th:data-borrow-id="${entry.key.borrowId}" onclick="toggleSelectAll(this)" />
+                    <th style="width: 60px; text-align: center;">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <input type="checkbox" id="selectAll" class="form-check-input" />
+                        </div>
                     </th>
-                    <th>Mã Barcode</th>
-                    <th>Họ tên Độc giả</th>
-                    <th>Email &amp; SĐT</th>
+                    <th>Mã phiếu mượn</th>
+                    <th>Thông tin Độc giả</th>
+                    <th>Mã sách</th>
+                    <th>Tên nhan đề sách</th>
                     <th>Ngày mượn</th>
-                    <th>Nhan đề sách đang giữ</th>
-                    <th>Hạn trả</th>
-                    <th>Số lần gia hạn</th>
-                    <th>Trạng thái</th>
+                    <th>Hạn trả quy định</th>
                     <th class="text-end pe-4">Hành động xử lý</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="detail : ${entry.value}">
-                    <td class="text-center">
-                        <input type="checkbox" class="form-check-input book-checkbox" th:data-borrow-id="${entry.key.borrowId}" name="selectedBarcodes" th:value="${detail.bookItem?.barcode}" onclick="updateBatchButtonState(this)" />
+                <tr th:each="detail : ${searchResults}">
+                    <td style="width: 60px; text-align: center;">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <input type="checkbox" class="form-check-input select-item" th:value="${detail.bookItem.barcode}" />
+                        </div>
                     </td>
                     <td>
-                        <span class="font-monospace fw-bold text-dark" th:text="${detail.bookItem?.barcode}">BI-1002</span>
+                                <span class="font-monospace fw-bold u-color-8b5a2b-93ece783"
+                                      th:text="'BOR-' + ${detail.borrow.borrowId}">BOR-1</span>
                     </td>
                     <td>
-                        <div class="fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif;" th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
+                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d"
+                             th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
+                        <small class="text-muted"
+                               th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
                     </td>
                     <td>
-                        <div class="small" th:text="${detail.borrow.member?.user?.email}">an@gmail.com</div>
-                        <div class="small text-muted" th:text="${detail.borrow.member?.user?.phone}">0912345678</div>
+                                <span class="font-monospace text-dark fw-semibold"
+                                      th:text="${detail.bookItem?.barcode}">BC001-001</span>
                     </td>
                     <td>
-                        <span class="small text-dark" th:text="${detail.borrow.borrowDate != null ? #temporals.format(detail.borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'Chưa rõ'}">15/06/2026</span>
+                        <div class="fw-semibold text-dark" th:text="${detail.book.title}">Tên cuốn sách</div>
+                        <small class="text-muted" th:text="'Gia hạn: ' + ${detail.renewCount} + ' lần'"></small>
                     </td>
                     <td>
-                        <div class="fw-semibold text-dark" th:text="${detail.book?.title}">Tên cuốn sách</div>
-                        <small class="text-muted" th:text="'Vị trí: ' + ${detail.bookItem?.shelf?.shelfName ?: 'Chưa xếp kệ'}">Kệ A1</small>
+                                <span class="fw-semibold text-dark"
+                                      th:text="${detail.borrow.borrowDate != null ? #temporals.format(detail.borrow.borrowDate, 'dd/MM/yyyy') : '-'}">10/07/2026</span>
                     </td>
                     <td>
-                        <span class="fw-bold text-dark" th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
+                                <span class="fw-bold text-dark"
+                                      th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
                         <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}"
                               class="status-badge status-overdue ms-1">Quá hạn</span>
                     </td>
-                    <td>
-                        <span class="badge bg-light text-dark border" th:text="${detail.renewCount} + ' lần'">0 lần</span>
+                    <td class="text-end pe-4">
+                        <button type="button"
+                                class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
+                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
+                                th:data-barcode="${detail.bookItem.barcode}">
+                            Tiếp nhận trả sách
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${searchResults == null}">
+                    <td colspan="8" class="py-4 text-center text-muted">
+                        Quét hoặc nhập mã vạch để tìm phiếu mượn cần hoàn trả.
+                    </td>
+                </tr>
+                <tr th:if="${searchResults != null and #lists.isEmpty(searchResults)}">
+                    <td colspan="8" class="py-4 text-center text-muted">
+                        Không có phiếu mượn đang hoạt động cho mã vạch này.
+                    </td>
+                </tr>
+                <tr th:if="${false}">
+                    <td style="width: 60px; text-align: center;">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <input type="checkbox" class="form-check-input" disabled />
+                        </div>
                     </td>
                     <td>
-                        <span class="badge" th:classappend="${detail.status == 'Borrowed' ? 'bg-info' : (detail.status == 'Overdue' ? 'bg-danger' : 'bg-warning')}" th:text="${detail.status}">Borrowed</span>
+                        <span class="font-monospace fw-bold u-color-8b5a2b-93ece783">BOR-1002</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d">Nguyễn Văn A</div>
+                        <small class="text-muted">nva@gmail.com</small>
+                    </td>
+                    <td>
+                        <span class="font-monospace text-dark fw-semibold">BC001-002</span>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">Nhà Giả Kim (Bản Đặc Biệt)</div>
+                        <small class="text-muted">Gia hạn: 0 lần</small>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark">17/07/2026</span>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark">20/07/2026</span>
                     </td>
                     <td class="text-end pe-4">
-                        <button type="button" class="btn btn-classic-outline px-3 py-1 btn-sm"
-                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
-                                th:data-barcode="${detail.bookItem?.barcode}"
-                                th:data-title="${detail.book?.title}"
-                                onclick="setupSingleReturn(this)"
-                                style="font-size: 0.85rem;">
-                            <i class="bi bi-arrow-return-left me-1"></i>Nhận sách
+                        <button type="button"
+                                class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
+                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal">
+                            Tiếp nhận trả sách
                         </button>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
-        <div class="card-footer bg-white border-top py-3 px-4 d-flex justify-content-between align-items-center">
-            <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>Chọn các sách để làm thủ tục nhận trả hàng loạt.</span>
-            <button type="button" th:id="'btnBatch-' + ${entry.key.borrowId}" 
-                    class="btn btn-classic-primary btn-sm px-4 fw-bold disabled" 
-                    data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
-                    th:data-borrow-id="${entry.key.borrowId}"
-                    onclick="setupBatchReturn(this)">
-                <i class="bi bi-box-arrow-in-down me-1"></i>Trả các sách đã chọn (<span th:id="'count-' + ${entry.key.borrowId}">0</span>)
-            </button>
-        </div>
     </div>
 
-    <!-- Modal đánh giá trả sách (Dùng chung cho cả Đơn lẻ & Hàng loạt) -->
-    <div class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
+    <!-- Confirm Return Modal -->
+    <div th:if="${searchResults != null and !#lists.isEmpty(searchResults)}" class="modal fade"
+         id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
-                <!-- Container động để đưa vào các thẻ input ẩn chứa barcode(s) -->
-                <div id="modalBarcodesContainer"></div>
-                
-                <div class="modal-header" style="background-color: #fdfbf7; border-bottom: 1px dashed rgba(139, 90, 43, 0.2);">
-                    <h5 class="modal-title fw-bold" id="confirmReturnModalLabel" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+            <form th:action="@{/librarian/loan/returns/confirm}" method="post"
+                  class="modal-content border-0 shadow u-border-radius-12px-overflow-hidden-83c08529">
+                <div id="barcodeInputsContainer">
+                    <input type="hidden" name="barcodes" th:value="${searchedBarcode}">
+                </div>
+                <div
+                        class="modal-header u-background-color-fdfbf7-border-bottom-1px-dashed-rgba-139-90-43-0-2-518871f5">
+                    <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                        id="confirmReturnModalLabel">
                         Biên bản đánh giá hoàn sách nhập kho
                     </h5>
                 </div>
-                <div class="modal-body p-4" style="background-color: #fdfbf7;">
-                    <!-- Thông tin các sách được chọn -->
-                    <div class="alert alert-info border-0 mb-4 py-3 px-3" style="background-color: rgba(139, 90, 43, 0.05); color: #4a3b32; border-left: 4px solid #8b5a2b !important;">
-                        <div class="d-flex align-items-start">
-                            <i class="bi bi-book-half me-2 mt-1" style="color: #8b5a2b; font-size: 1.1rem;"></i>
-                            <div id="modalBookTitleInfo" class="small">Chưa chọn cuốn sách nào...</div>
-                        </div>
-                    </div>
-
+                <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Ngày trả thực tế <span class="text-danger">*</span></label>
+                        <label
+                                class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Ngày trả thực tế <span class="text-danger">*</span></label>
                         <input type="date" name="returnDate" th:value="${defaultReturnDate}"
                                class="form-control scan-input" required />
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
-                        <select name="conditionNote" id="conditionNote" class="form-select scan-input" required onchange="toggleDamageNote(this.value)">
-                            <option value="Tốt — Sách nguyên vẹn, sạch đẹp">Tốt — Sách nguyên vẹn, sạch đẹp</option>
-                            <option value="Hư hỏng nhẹ — Quăn mép, sờn bìa, vết rách nhỏ">Hư hỏng nhẹ — Quăn mép, sờn bìa, vết rách nhỏ</option>
-                            <option value="Hư hỏng nặng — Rách trang lớn, ướt hỏng, mất trang">Hư hỏng nặng — Rách trang lớn, ướt hỏng, mất trang</option>
-                            <option value="Mất sách — Không hoàn trả được (Cần bồi thường)">Mất sách — Không hoàn trả được (Cần bồi thường)</option>
+                        <label
+                                class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
+                        <select name="conditionNote" class="form-select scan-input" required>
+                            <option value="Tốt - Sách nguyên vẹn, sạch đẹp">Tốt / Nguyên vẹn, sạch đẹp</option>
+                            <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ">Hư hỏng nhẹ (Quăn mép, sờn bìa, vết rách nhỏ)</option>
+                            <option value="Mất hoặc Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng">Mất hoặc hư hỏng nặng (Cần bồi thường)</option>
                         </select>
                     </div>
-                    <div class="mb-2" id="damageNoteSection">
-                        <label class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">Ghi chú chi tiết hư hỏng <span id="damageNoteRequired" class="text-danger d-none">*</span> <span id="damageNoteOptional" class="text-muted">(Tùy chọn)</span></label>
-                        <textarea class="form-control scan-input" name="conditionNoteAdditional" id="conditionNoteAdditional" rows="3" placeholder="Nhập mô tả cụ thể về tình trạng hư hỏng, vị trí hỏng, hoặc thông tin bồi thường..."></textarea>
+                    <div class="mb-2">
+                        <label
+                                class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Ghi chú chi tiết thêm (Tùy chọn)</label>
+                        <textarea class="form-control scan-input" name="conditionNoteAdditional" rows="3"
+                                  placeholder="Nhập thêm mô tả cụ thể về hư hỏng nếu có..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer" style="background-color: #fdfbf7; border-top: 1px dashed rgba(139, 90, 43, 0.2);">
+                <div
+                        class="modal-footer u-background-color-fdfbf7-border-top-1px-dashed-rgba-139-90-43-0-2-72a5c67f">
                     <button type="button" class="btn btn-classic-outline px-4" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-classic-primary px-4 fw-bold" style="margin-right: 0 !important;">
+                    <button type="submit"
+                            class="btn btn-classic-primary px-4 fw-bold u-margin-right-0-important-5a8785f5">
                         Xác nhận &amp; Hoàn kho
                     </button>
                 </div>
@@ -321,139 +270,83 @@
         </div>
     </div>
 
-<script>
-    function toggleDamageNote(value) {
-        const damageNoteSection = document.getElementById('damageNoteSection');
-        const damageNoteRequired = document.getElementById('damageNoteRequired');
-        const damageNoteOptional = document.getElementById('damageNoteOptional');
-        const damageNoteTextarea = document.getElementById('conditionNoteAdditional');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const itemCheckboxes = document.querySelectorAll('.select-item');
+            const bulkReturnBtn = document.getElementById('bulkReturnBtn');
+            const barcodeContainer = document.getElementById('barcodeInputsContainer');
 
-        if (value && value.startsWith('Tốt')) {
-            damageNoteSection.style.opacity = '0.5';
-            damageNoteRequired.classList.add('d-none');
-            damageNoteOptional.classList.remove('d-none');
-            damageNoteTextarea.placeholder = 'Nhập thêm mô tả cụ thể nếu có...';
-        } else {
-            damageNoteSection.style.opacity = '1';
-            damageNoteRequired.classList.remove('d-none');
-            damageNoteOptional.classList.add('d-none');
-            damageNoteTextarea.placeholder = 'Nhập mô tả cụ thể về tình trạng hư hỏng, vị trí hỏng, hoặc thông tin bồi thường...';
-            damageNoteTextarea.focus();
-        }
-    }
-
-    function toggleSelectAll(selectAllCb) {
-        const borrowId = selectAllCb.getAttribute('data-borrow-id');
-        const checkboxes = document.querySelectorAll(`input.book-checkbox[data-borrow-id="${borrowId}"]`);
-        checkboxes.forEach(cb => {
-            cb.checked = selectAllCb.checked;
-        });
-        updateBatchButton(borrowId);
-    }
-
-    function updateBatchButtonState(cb) {
-        const borrowId = cb.getAttribute('data-borrow-id');
-        const allCheckbox = document.querySelector(`.select-all-checkbox[data-borrow-id="${borrowId}"]`);
-        const checkboxes = document.querySelectorAll(`input.book-checkbox[data-borrow-id="${borrowId}"]`);
-        const checkedCount = document.querySelectorAll(`input.book-checkbox[data-borrow-id="${borrowId}"]:checked`).length;
-
-        if (allCheckbox) {
-            allCheckbox.checked = (checkedCount === checkboxes.length);
-        }
-        updateBatchButton(borrowId);
-    }
-
-    function updateBatchButton(borrowId) {
-        const checkedCount = document.querySelectorAll(`input.book-checkbox[data-borrow-id="${borrowId}"]:checked`).length;
-        const btn = document.getElementById(`btnBatch-${borrowId}`);
-        const countSpan = document.getElementById(`count-${borrowId}`);
-
-        if (countSpan) countSpan.innerText = checkedCount;
-        if (btn) {
-            if (checkedCount > 0) {
-                btn.classList.remove('disabled');
-            } else {
-                btn.classList.add('disabled');
+            // Handle master checkbox
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                    toggleBulkButton();
+                });
             }
-        }
-    }
 
-    // Khi mở modal, reset và thiết lập form hành động
-    // Thiết lập dữ liệu khi click nút Trả đơn lẻ
-    function setupSingleReturn(button) {
-        const btn = button.closest('button');
-        if (!btn) return;
-        const barcode = btn.getAttribute('data-barcode');
-        const title = btn.getAttribute('data-title');
-
-        const form = document.querySelector('#confirmReturnModal form');
-        const container = document.getElementById('modalBarcodesContainer');
-        const titleInfo = document.getElementById('modalBookTitleInfo');
-
-        if (form && container && titleInfo) {
-            form.setAttribute('action', '/librarian/loan/returns/confirm');
-            container.innerHTML = `<input type="hidden" name="barcode" value="${barcode}">`;
-            titleInfo.innerHTML = `Sách trả: <span class="fw-bold">${title}</span> <span class="font-monospace text-muted">(${barcode})</span>`;
-        }
-        
-        const select = document.getElementById('conditionNote');
-        if (select) toggleDamageNote(select.value);
-    }
-
-    // Thiết lập dữ liệu khi click nút Trả hàng loạt
-    function setupBatchReturn(button) {
-        const btn = button.closest('button');
-        if (!btn) return;
-        const borrowId = btn.getAttribute('data-borrow-id');
-        const checkboxes = document.querySelectorAll(`input.book-checkbox[data-borrow-id="${borrowId}"]:checked`);
-
-        const form = document.querySelector('#confirmReturnModal form');
-        const container = document.getElementById('modalBarcodesContainer');
-        const titleInfo = document.getElementById('modalBookTitleInfo');
-
-        if (form && container && titleInfo) {
-            form.setAttribute('action', '/librarian/loan/returns/confirm-batch');
-            container.innerHTML = '';
-
-            let titles = [];
-            checkboxes.forEach(cb => {
-                const bc = cb.value;
-                container.innerHTML += `<input type="hidden" name="barcodes" value="${bc}">`;
-
-                const row = cb.closest('tr');
-                const titleText = row.querySelector('.fw-semibold').innerText;
-                titles.push(`<li>${titleText} <span class="font-monospace text-muted">(${bc})</span></li>`);
+            // Handle individual checkboxes
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = Array.from(itemCheckboxes).every(c => c.checked);
+                    }
+                    toggleBulkButton();
+                });
             });
 
-            titleInfo.innerHTML = `<strong>Nhận trả hàng loạt (${checkboxes.length} cuốn sách):</strong><ul class="mb-0 ps-3 mt-1">${titles.join('')}</ul>`;
-        }
-        
-        const select = document.getElementById('conditionNote');
-        if (select) toggleDamageNote(select.value);
-    }
+            function toggleBulkButton() {
+                if (bulkReturnBtn) {
+                    const checkedCount = Array.from(itemCheckboxes).filter(c => c.checked).length;
+                    if (checkedCount > 0) {
+                        bulkReturnBtn.removeAttribute('disabled');
+                        bulkReturnBtn.innerText = `Tiếp nhận trả sách đã chọn (${checkedCount})`;
+                    } else {
+                        bulkReturnBtn.setAttribute('disabled', 'disabled');
+                        bulkReturnBtn.innerText = 'Tiếp nhận trả sách đã chọn';
+                    }
+                }
+            }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('confirmReturnModal');
-        if (modal) {
-            modal.addEventListener('show.bs.modal', function (event) {
-                const select = document.getElementById('conditionNote');
-                if (select) toggleDamageNote(select.value);
-            });
+            // Modal show event handler
+            const confirmReturnModal = document.getElementById('confirmReturnModal');
+            if (confirmReturnModal) {
+                confirmReturnModal.addEventListener('show.bs.modal', function(event) {
+                    // Clear previous inputs
+                    barcodeContainer.innerHTML = '';
 
-            // Ngăn chặn submit form nếu chưa chọn bất kỳ mã barcode nào (tránh lỗi 500)
-            const form = modal.querySelector('form');
-            if (form) {
-                form.addEventListener('submit', function (e) {
-                    const container = document.getElementById('modalBarcodesContainer');
-                    if (!container || !container.innerHTML.trim()) {
-                        e.preventDefault();
-                        alert('Vui lòng chọn sách cần trả trước khi xác nhận!');
+                    const triggerButton = event.relatedTarget;
+                    if (!triggerButton) return;
+
+                    if (triggerButton.id === 'bulkReturnBtn') {
+                        // Bulk return: get all checked checkboxes
+                        const checkedCheckboxes = Array.from(itemCheckboxes).filter(c => c.checked);
+                        checkedCheckboxes.forEach(cb => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'barcodes';
+                            input.value = cb.value;
+                            barcodeContainer.appendChild(input);
+                        });
+                    } else {
+                        // Individual return: get barcode from the clicked button's attribute
+                        const barcode = triggerButton.getAttribute('data-barcode');
+                        if (barcode) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'barcodes';
+                            input.value = barcode;
+                            barcodeContainer.appendChild(input);
+                        }
                     }
                 });
             }
-        }
-    });
-</script>
+        });
+    </script>
+
 </div>
 </body>
+
 </html>

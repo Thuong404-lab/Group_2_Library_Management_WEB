@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 public class MemberReviewSubmitRequest {
     @NotNull(message = "Vui lòng chọn sách")
@@ -15,7 +16,8 @@ public class MemberReviewSubmitRequest {
     private Integer rating;
 
     @NotBlank(message = "Vui lòng nhập nội dung đánh giá")
-    @Size(max = 1000, message = "Nội dung đánh giá tối đa 1000 ký tự")
+    @Size(min = 5, max = 1000, message = "Nội dung đánh giá phải có từ 5 đến 1000 ký tự")
+    @Pattern(regexp = "(?s).*\\p{L}.*", message = "Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt")
     private String comment;
 
     public MemberReviewSubmitRequest() {

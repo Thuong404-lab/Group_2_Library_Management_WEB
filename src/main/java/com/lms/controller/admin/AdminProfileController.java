@@ -1,4 +1,5 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
 
 import com.lms.entity.User;
 import com.lms.service.ProfileService;
@@ -66,7 +67,7 @@ public class AdminProfileController {
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
         }
         return "redirect:/admin/profile";
@@ -87,10 +88,8 @@ public class AdminProfileController {
         try {
             profileService.changePassword(principal.getName(), oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("passwordSuccess", "Đổi mật khẩu thành công!");
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("passwordError", "Lỗi trong quá trình đổi mật khẩu.");
         }
         return "redirect:/admin/profile";
     }

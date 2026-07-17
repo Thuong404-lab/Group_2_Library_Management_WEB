@@ -2,7 +2,7 @@ package com.lms.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 @Entity
-@Table(name = "`MembershipTiers`")
+@Table(name = "MembershipTiers")
 public class MembershipTier {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tier_id")

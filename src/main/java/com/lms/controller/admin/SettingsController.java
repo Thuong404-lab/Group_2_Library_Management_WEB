@@ -1,4 +1,6 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
+import com.lms.exception.ValidationException;
 
 import com.lms.service.SystemService;
 import org.springframework.stereotype.Controller;
@@ -37,9 +39,9 @@ public class SettingsController {
     @PostMapping("/policies")
     public String updateBorrowingPolicies(@RequestParam Integer maxBorrowDays,
             @RequestParam Integer maxRenewalDays,
-            @RequestParam List<Integer> tierIds,
-            @RequestParam List<Integer> tierBorrowLimits,
-            @RequestParam List<BigDecimal> tierSpendingConditions,
+            @RequestParam(required = false) List<Integer> tierIds,
+            @RequestParam(required = false) List<Integer> tierBorrowLimits,
+            @RequestParam(required = false) List<BigDecimal> tierSpendingConditions,
             @RequestParam BigDecimal borrowFeePerBook,
             @RequestParam BigDecimal finePerDay,
             @RequestParam BigDecimal damageCompensationAmount,
@@ -49,9 +51,11 @@ public class SettingsController {
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
-            if (tierIds.size() != tierBorrowLimits.size()
+            if (tierIds == null || tierBorrowLimits == null || tierSpendingConditions == null
+                    || tierIds.isEmpty()
+                    || tierIds.size() != tierBorrowLimits.size()
                     || tierIds.size() != tierSpendingConditions.size()) {
-                throw new IllegalArgumentException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
+                throw new ValidationException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
             }
 
             Map<Integer, Integer> borrowLimitsByTier = new LinkedHashMap<>();
@@ -75,10 +79,8 @@ public class SettingsController {
                     depositAmount);
 
             redirectAttributes.addFlashAttribute("success", "Cập nhật cấu hình thành công.");
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Cập nhật cấu hình thất bại.");
         }
 
         return "redirect:/admin/settings";

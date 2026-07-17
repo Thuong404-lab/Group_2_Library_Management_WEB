@@ -7,88 +7,30 @@
 
 <head>
     <title>Tổng quan Thủ thư</title>
-
-    <style>
-        .lib-section {
-            display: none;
-        }
-
-        .lib-section.active {
-            display: block;
-        }
-
-        .dashboard-section-nav {
-            gap: .75rem;
-            overflow-x: auto;
-            padding-bottom: .25rem;
-        }
-
-        .dashboard-section-link {
-            border: 1px solid rgba(139, 90, 43, 0.18);
-            border-radius: 999px;
-            color: #6b5648;
-            background: #fff;
-            font-weight: 700;
-            padding: .65rem 1rem;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: all .15s ease-in-out;
-        }
-
-        .dashboard-section-link:hover,
-        .dashboard-section-link.active {
-            background: #4a3b32;
-            border-color: #4a3b32;
-            color: #fff;
-        }
-
-        .member-list-scroll {
-            max-height: 260px;
-            overflow-y: auto;
-        }
-
-        .review-reply-box {
-            min-width: 260px;
-        }
-
-        .table-fixed-action {
-            min-width: 260px;
-        }
-
-        .dashboard-stat-card {
-            width: 92%;
-            margin: 0 auto;
-            min-height: 100px;
-        }
-
-        .validate-field.is-invalid,
-        .validate-group.is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-            background-image: none !important;
-        }
-
-        .validate-field.is-valid,
-        .validate-group.is-valid {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
-            background-image: none !important;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
+  </head>
 
 <body>
-    <div layout:fragment="content"
-        th:with="activeMenu='dashboard', currentSection=${param.section != null ? param.section[0] : 'overview'}, currentSubSection=${param.subsection != null ? param.subsection[0] : ''}">
+    <div layout:fragment="content" class="librarian-dashboard-page"
+        th:classappend="${param.section != null && param.section[0] == 'reviews'} ? ' canonical-management-page book-reviews-page' : (${param.section != null && param.section[0] == 'notifications'} ? ' canonical-management-page notification-compose-page' : (${param.section != null && param.section[0] == 'acquisition'} ? ' canonical-management-page acquisition-requests-page' : (${param.section != null && param.section[0] == 'books' && param.subsection != null && param.subsection[0] == 'inventory'} ? ' canonical-management-page book-inventory-page' : '')))"
+        th:with="activeMenu=${param.section != null && param.section[0] == 'reviews' ? 'reviews' : (param.section != null && param.section[0] == 'notifications' ? 'notifications' : (param.section != null && param.section[0] == 'acquisition' ? 'suggestions' : (param.section != null && param.section[0] == 'books' ? 'books' : 'dashboard')))}, currentSection=${param.section != null ? param.section[0] : 'overview'}, currentSubSection=${param.subsection != null ? param.subsection[0] : ''}">
 
         <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom dashboard-page-header"
+            th:classappend="${currentSection != 'reviews' && currentSection != 'notifications' && currentSection != 'acquisition' && !(currentSection == 'books' && currentSubSection == 'inventory')} ? ' u-border-color-rgba-139-90-43-0-2-important-f8e732ba' : ''"
+           >
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                <div class="app-page-eyebrow" th:if="${currentSection == 'reviews'}">TƯƠNG TÁC ĐỘC GIẢ</div>
+                <div class="app-page-eyebrow" th:if="${currentSection == 'notifications'}">TƯƠNG TÁC ĐỘC GIẢ</div>
+                <div class="app-page-eyebrow" th:if="${currentSection == 'acquisition'}">PHÁT TRIỂN BỘ SƯU TẬP</div>
+                <div class="app-page-eyebrow"
+                    th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">QUẢN LÝ TÀI NGUYÊN</div>
+                <h2 class="app-page-title"
+                    th:classappend="${currentSection != 'reviews' && currentSection != 'notifications' && currentSection != 'acquisition' && !(currentSection == 'books' && currentSubSection == 'inventory')} ? ' fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336' : ''">
                     <span th:if="${currentSection == 'notifications'}">Gửi thông báo</span>
                     <span th:if="${currentSection == 'reviews'}">Đánh giá sách</span>
-                    <span th:if="${currentSection == 'acquisition'}">Đề xuất mua sách</span>
+                    <span th:if="${currentSection == 'acquisition'}">Đề xuất bổ sung sách</span>
                     <span th:if="${currentSection == 'users'}">Quản lý người dùng</span>
                     <span th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">Quản lý kho
                         sách</span>
@@ -99,328 +41,368 @@
                         th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'users' || currentSection == 'books' || currentSection == 'reports'}">Tổng
                         quan</span>
                 </h2>
-                <div class="text-muted" th:if="${currentSection == 'notifications'}">
+                <div class="app-page-description" th:if="${currentSection == 'notifications'}">
                     Thủ thư gửi thông báo đến toàn bộ hoặc một nhóm độc giả.
                 </div>
-                <div class="text-muted" th:if="${currentSection == 'reviews'}">
+                <div class="app-page-description" th:if="${currentSection == 'reviews'}">
                     Xem, phản hồi và xoá đánh giá của độc giả.
                 </div>
-                <div class="text-muted" th:if="${currentSection == 'acquisition'}">
+                <div class="app-page-description" th:if="${currentSection == 'acquisition'}">
                     Xem danh sách sách do độc giả đề xuất.
                 </div>
                 <div class="text-muted" th:if="${currentSection == 'reports'}">
                     Theo dõi các chỉ số mượn trả, thành viên và doanh thu thư viện.
                 </div>
+                <div class="text-muted" th:if="${currentSection == 'users'}">
+                    Theo dõi và quản lý tài khoản thành viên, thủ thư trong hệ thống.
+                </div>
+                <div class="app-page-description"
+                    th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">
+                    Thêm, cập nhật và quản lý đầu sách, bản sách trong kho thư viện.
+                </div>
                 <div class="text-muted"
-                    th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports'}">
-                    Cập nhật:
+                    th:if="${currentSection == 'books' && currentSubSection == 'storage'}">
+                    Tạo mới, cập nhật và quản lý các vị trí lưu trữ sách.
+                </div>
+                <div class="text-muted"
+                    th:unless="${currentSection == 'notifications' || currentSection == 'reviews' || currentSection == 'acquisition' || currentSection == 'reports' || currentSection == 'users' || (currentSection == 'books' && (currentSubSection == 'inventory' || currentSubSection == 'storage'))}">
+                    Hôm nay:
                     <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
             </div>
         </div>
 
-        <div th:if="${success}" class="alert alert-success shadow-sm" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
+        <div th:if="${success}" class="alert"
+            th:classappend="${currentSection == 'reviews' || currentSection == 'notifications' || currentSection == 'acquisition' || (currentSection == 'books' && currentSubSection == 'inventory')} ? ' app-alert app-alert--success' : ' alert-success shadow-sm'"
+            th:text="${success}"></div>
+        <div th:if="${error}" class="alert"
+            th:classappend="${currentSection == 'reviews' || currentSection == 'notifications' || currentSection == 'acquisition' || (currentSection == 'books' && currentSubSection == 'inventory')} ? ' app-alert app-alert--danger' : ' alert-danger shadow-sm'"
+            th:text="${error}"></div>
 
         <!-- Overview -->
         <section id="section-overview" class="lib-section"
             th:classappend="${currentSection == 'overview'} ? ' active' : ''">
+            <nav class="overview-quick-actions" aria-label="Thao tác nhanh">
+                <a th:href="@{/librarian/borrow/create}" class="overview-quick-action overview-quick-action--primary">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    <span>Tạo phiếu mượn</span>
+                </a>
+                <a th:href="@{/librarian/loan/returns}" class="overview-quick-action">
+                    <i class="bi bi-upc-scan" aria-hidden="true"></i>
+                    <span>Xác nhận trả sách</span>
+                </a>
+                <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-quick-action">
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    <span>Lịch mượn trả</span>
+                </a>
+            </nav>
+
             <!-- Statistics Cards -->
-            <div class="row row-cols-5 g-3 mb-5">
+            <div class="overview-kpi-grid">
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #0d6efd !important;">
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
-                                <i class="bi bi-book fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0"
-                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
-                                    Tổng Đầu Sách
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalBookCount}">0</h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--neutral">
+                    <div class="overview-kpi-icon"><i class="bi bi-journal-arrow-up" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Phiếu đang mượn</p>
+                        <strong class="overview-kpi-value" th:text="${activeBorrows}">0</strong>
+                        <span class="overview-kpi-caption">Phiếu đang hoạt động</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #198754 !important;">
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
-                                <i class="bi bi-check2-square fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0"
-                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
-                                    Bản sách sẵn có
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${availableItems}">0</h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--success">
+                    <div class="overview-kpi-icon"><i class="bi bi-check2-square" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Bản sách sẵn có</p>
+                        <strong class="overview-kpi-value" th:text="${availableItems}">0</strong>
+                        <span class="overview-kpi-caption">Có thể cấp mượn</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #0dcaf0 !important;">
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0;">
-                                <i class="bi bi-journal-arrow-up fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0"
-                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
-                                    Đang Mượn
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--warning">
+                    <div class="overview-kpi-icon"><i class="bi bi-bookmark-star" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Đặt trước chờ xử lý</p>
+                        <strong class="overview-kpi-value" th:text="${pendingReservations}">0</strong>
+                        <span class="overview-kpi-caption">Yêu cầu cần theo dõi</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #fd7e14 !important;">
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
-                                <i class="bi bi-clock-history fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0"
-                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
-                                    Yêu cầu mượn
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${pendingReservations}">0
-                                </h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--danger">
+                    <div class="overview-kpi-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Bản sách quá hạn</p>
+                        <strong class="overview-kpi-value" th:text="${overdueDetails}">0</strong>
+                        <span class="overview-kpi-caption">Cần liên hệ độc giả</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="col">
-                    <div class="card-classic dashboard-stat-card h-100 py-3 px-3 border-0 shadow-sm"
-                        style="border-left: 4px solid #dc3545 !important;">
-                        <div class="d-flex align-items-center h-100">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">
-                                <i class="bi bi-exclamation-triangle fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 text-center">
-                                <div class="text-muted small text-uppercase fw-bold mb-0"
-                                    style="min-height: 38px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
-                                    Quá hạn mượn
-                                </div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${overdueDetails}">0
-                                </h3>
-                            </div>
-                        </div>
+                <article class="overview-kpi-card overview-kpi-card--neutral">
+                    <div class="overview-kpi-icon"><i class="bi bi-book" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label">Tổng đầu sách</p>
+                        <strong class="overview-kpi-value" th:text="${totalBookCount}">0</strong>
+                        <span class="overview-kpi-caption">Đầu sách trong hệ thống</span>
                     </div>
-                </div>
+                </article>
             </div>
 
 
             <!-- Main Dashboard Content -->
-            <div class="row g-4">
+            <div class="overview-content-grid">
                 <!-- Sắp đến hạn trả -->
-                <div class="col-lg-8">
-                    <div class="card-classic h-100 shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                <i class="bi bi-calendar-event me-2 text-classic"></i> Sắp đến hạn trả (7 ngày tới)
-                            </h5>
+                <section class="overview-panel overview-due-panel" aria-labelledby="dueSoonTitle">
+                    <header class="overview-panel-header">
+                        <div>
+                            <h2 class="overview-panel-title" id="dueSoonTitle">
+                                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                                Sắp đến hạn trả
+                            </h2>
+                            <p class="overview-panel-description">Các bản sách đến hạn trong 7 ngày tới.</p>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light text-uppercase small text-muted">
+                        <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-panel-link">
+                            Xem lịch mượn trả <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    </header>
+                    <div class="overview-table-wrap">
+                        <table class="overview-table">
+                            <colgroup>
+                                <col class="overview-index-column">
+                                <col>
+                                <col class="overview-date-column">
+                                <col class="overview-status-column">
+                            </colgroup>
+                            <thead>
                                         <tr>
-                                            <th class="ps-4">STT</th>
+                                            <th>STT</th>
                                             <th>Thông tin</th>
                                             <th>Ngày đến hạn</th>
                                             <th>Trạng thái</th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="detail, iterStat : ${dueSoonDetails}">
-                                            <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
-                                            <td>
-                                                <div class="fw-bold text-dark" th:text="${detail.book != null ? detail.book.title : 'N/A'}">Tên sách</div>
-                                                <div class="small text-muted" th:text="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null ? detail.borrow.member.user.fullName : 'N/A'}">Người mượn</div>
-                                            </td>
-                                            <td class="fw-bold"
-                                                th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'N/A'}">
-                                                N/A</td>
-                                            <td>
-                                                <span class="badge bg-warning text-dark border"
-                                                    th:text="${detail.status}">Borrowed</span>
-                                            </td>
-                                        </tr>
-                                        <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
-                                            <td colspan="4" class="text-center text-muted py-5">
-                                                <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
-                                                Không có sách nào sắp đến hạn.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                            </thead>
+                            <tbody>
+                                <tr th:each="detail, iterStat : ${dueSoonDetails}">
+                                    <td class="overview-index-cell" th:text="${iterStat.index + 1}">1</td>
+                                    <td>
+                                        <strong class="overview-book-title"
+                                                th:text="${detail.book != null ? detail.book.title : 'Chưa rõ tên sách'}">Tên sách</strong>
+                                        <span class="overview-member-name"
+                                              th:text="${detail.borrow != null && detail.borrow.member != null && detail.borrow.member.user != null ? detail.borrow.member.user.fullName : 'Chưa rõ độc giả'}">Người mượn</span>
+                                    </td>
+                                    <td class="overview-due-date"
+                                        th:text="${detail.dueDate != null ? #temporals.format(detail.dueDate, 'dd/MM/yyyy') : 'Chưa rõ'}">
+                                        17/07/2026
+                                    </td>
+                                    <td><span class="overview-status-badge">Đang mượn</span></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(dueSoonDetails)}">
+                                    <td colspan="4" class="overview-empty-cell">
+                                        <div class="overview-empty-state">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                            <strong>Chưa có sách sắp đến hạn</strong>
+                                            <span>Danh sách sẽ hiển thị các bản sách đến hạn trong 7 ngày tới.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
+                </section>
 
                 <!-- Hoạt động gần đây -->
-                <div class="col-lg-4">
-                    <div class="card-classic h-100 shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                <i class="bi bi-activity me-2 text-classic"></i> Hoạt động gần đây
-                            </h5>
+                <section class="overview-panel overview-activity-panel" aria-labelledby="recentActivityTitle">
+                    <header class="overview-panel-header">
+                        <div>
+                            <h2 class="overview-panel-title" id="recentActivityTitle">
+                                <i class="bi bi-activity" aria-hidden="true"></i>
+                                Hoạt động gần đây
+                            </h2>
+                            <p class="overview-panel-description">Năm lượt mượn được ghi nhận gần nhất.</p>
                         </div>
-                        <div class="card-body p-4">
-                            <div th:if="${#lists.isEmpty(recentBorrows)}" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                Chưa có hoạt động mượn sách nào.
-                            </div>
+                    </header>
 
-                            <div class="d-flex mb-3 pb-3 border-bottom" th:each="borrow, iterStat : ${recentBorrows}"
-                                style="border-color: rgba(139, 90, 43, 0.1) !important;">
-                                <div class="flex-shrink-0">
-                                    <img th:if="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}" 
-                                         th:src="${borrow.borrow.member.user.avatar}" 
-                                         class="rounded-circle border" 
-                                         style="width: 40px; height: 40px; object-fit: cover;" 
-                                         alt="Avatar">
-                                    <div th:unless="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
-                                        class="rounded-circle text-white d-flex align-items-center justify-content-center"
-                                        style="width: 40px; height: 40px; font-weight: bold; background-color: #8b5a2b;"
-                                        th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? #strings.substring(borrow.borrow.member.user.fullName, 0, 1) : 'N'}">
-                                        N
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 fw-bold"
-                                        th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? borrow.borrow.member.user.fullName : 'Người dùng ẩn danh'}">
-                                        Người dùng</h6>
-                                    <div class="text-muted small">
-                                        <i class="bi bi-box-arrow-right me-1"></i> Đã mượn: <span th:text="${borrow.book.title}">Sách</span> ·
-                                        <span
-                                            th:text="${borrow.borrow.borrowDate != null ? #temporals.format(borrow.borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Hôm
-                                            nay</span>
-                                    </div>
-                                </div>
+                    <div class="overview-activity-list">
+                        <div th:if="${#lists.isEmpty(recentBorrows)}" class="overview-empty-state">
+                            <i class="bi bi-inbox" aria-hidden="true"></i>
+                            <strong>Chưa có hoạt động mượn sách</strong>
+                            <span>Hoạt động mới sẽ xuất hiện tại đây.</span>
+                        </div>
+
+                        <article class="overview-activity-item" th:each="borrow : ${recentBorrows}">
+                            <img th:if="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
+                                 th:src="${borrow.borrow.member.user.avatar}"
+                                 th:alt="${'Ảnh của ' + borrow.borrow.member.user.fullName}"
+                                 class="overview-activity-avatar">
+                            <div th:unless="${borrow.borrow.member != null && borrow.borrow.member.user != null && borrow.borrow.member.user.avatar != null && !borrow.borrow.member.user.avatar.isEmpty()}"
+                                 class="overview-activity-avatar overview-activity-avatar--fallback"
+                                 aria-hidden="true"
+                                 th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null && !#strings.isEmpty(borrow.borrow.member.user.fullName) ? #strings.substring(borrow.borrow.member.user.fullName, 0, 1) : 'N'}">
+                                N
                             </div>
-                        </div>
-                        <div class="card-footer bg-white border-top text-center p-3 border-color"
-                            th:if="${!#lists.isEmpty(recentBorrows)}">
-                            <a th:href="@{/librarian/reports}" class="text-decoration-none fw-bold text-classic">Xem tất
-                                cả
-                            <a th:href="@{/librarian/loan/borrow-schedule}" class="text-decoration-none fw-bold text-classic">Xem tất cả
-                                hoạt động <i class="bi bi-arrow-right"></i></a>
-                        </div>
+                            <div class="overview-activity-copy">
+                                <strong class="overview-activity-member"
+                                        th:text="${borrow.borrow.member != null && borrow.borrow.member.user != null ? borrow.borrow.member.user.fullName : 'Chưa rõ độc giả'}">
+                                    Người dùng
+                                </strong>
+                                <p class="overview-activity-description">
+                                    Đã mượn
+                                    <span th:text="${borrow.book != null ? borrow.book.title : 'Chưa rõ tên sách'}">Tên sách</span>
+                                </p>
+                                <time class="overview-activity-time"
+                                      th:text="${borrow.borrow.borrowDate != null ? #temporals.format(borrow.borrow.borrowDate, 'dd/MM/yyyy · HH:mm') : 'Chưa rõ thời gian'}">
+                                    17/07/2026 · 10:30
+                                </time>
+                            </div>
+                        </article>
                     </div>
-                </div>
+
+                    <footer class="overview-panel-footer" th:if="${!#lists.isEmpty(recentBorrows)}">
+                        <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-panel-link">
+                            Xem tất cả hoạt động <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    </footer>
+                </section>
             </div>
         </section>
 
         <!-- Notifications -->
         <section id="section-notifications" class="lib-section"
             th:classappend="${currentSection == 'notifications'} ? ' active' : ''">
-
-            <div class="card-classic shadow-sm mb-4">
-                <div class="card-body p-4">
+            <div class="app-card notification-compose-card">
+                <div class="notification-compose-body">
                     <form th:action="@{/librarian/interaction/notifications}" th:object="${notificationRequest}"
                         method="post" id="notificationForm" novalidate>
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                             th:value="${_csrf.token}">
 
-                        <div class="row g-4">
-                            <div class="col-lg-5">
-                                <label class="form-label fw-bold">Đối tượng nhận</label>
-                                <div class="border rounded-3 p-3 bg-light validate-group" id="recipientTypeGroup"
+                        <div class="notification-form-grid">
+                            <div class="notification-recipient-column">
+                                <label class="notification-form-label">Đối tượng nhận</label>
+                                <div class="notification-choice-group validate-group" id="recipientTypeGroup"
                                     th:classappend="${notificationFieldErrors != null and notificationFieldErrors['recipientType'] != null} ? 'is-invalid'">
-                                    <div class="form-check mb-2">
+                                    <div class="notification-choice">
                                         <input class="form-check-input" type="radio" th:field="*{recipientType}"
                                             value="ALL" id="recipientAll">
                                         <label class="form-check-label" for="recipientAll">Gửi cho tất cả Member</label>
                                     </div>
-                                    <div class="form-check">
+                                    <div class="notification-choice">
                                         <input class="form-check-input" type="radio" th:field="*{recipientType}"
                                             value="SELECTED" id="recipientSelected">
                                         <label class="form-check-label" for="recipientSelected">Gửi cho Member được
                                             chọn</label>
                                     </div>
                                 </div>
-                                <div class="invalid-feedback d-block"
+                                <div class="invalid-feedback notification-validation-message"
                                     th:text="${notificationFieldErrors != null ? notificationFieldErrors['recipientType'] : ''}">
                                 </div>
 
-                                <div class="mt-4" id="memberListBox">
-                                    <label class="form-label fw-bold">Chọn Member</label>
-                                    <input type="text" id="memberSearchInput" class="form-control mb-2"
-                                        placeholder="Nhập tên Member để tìm...">
+                                <div class="notification-member-section" id="memberListBox">
+                                    <label class="notification-form-label" for="memberSearchInput">Chọn Member</label>
+                                    <input type="text" id="memberSearchInput" class="notification-control"
+                                        placeholder="Nhập email hoặc số điện thoại để tìm..."
+                                        autocomplete="off" aria-controls="memberIdsGroup" aria-describedby="memberSearchHint">
 
-                                    <div class="border rounded-3 p-3 member-list-scroll validate-group"
+                                    <p id="memberSearchHint" class="notification-helper-text">
+                                        Nhập email hoặc số điện thoại để hiển thị kết quả phù hợp.
+                                    </p>
+
+                                    <div class="notification-member-list member-list-scroll validate-group"
                                         id="memberIdsGroup"
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
-                                        <div th:each="member : ${members}" class="form-check member-item mb-2"
-                                            th:attr="data-member-name=${member.user != null && member.user.fullName != null ? #strings.toLowerCase(member.user.fullName) : ''}">
+                                        <div th:each="member : ${members}" class="notification-member-item member-item"
+                                            th:data-member-email="${member.user != null && member.user.email != null ? #strings.toLowerCase(#strings.trim(member.user.email)) : ''}"
+                                            th:data-member-phone="${member.user != null && member.user.phone != null ? #strings.trim(member.user.phone) : ''}">
                                             <input class="form-check-input member-checkbox" type="checkbox"
                                                 name="memberIds" th:value="${member.memberId}"
+                                                th:id="${'notificationMember-' + member.memberId}"
                                                 th:checked="${notificationRequest != null and notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
-                                            <label class="form-check-label"
-                                                th:text="${member.user != null ? member.user.fullName + ' - ID: ' + member.memberId : 'Member ID: ' + member.memberId}">
-                                                Member name
+                                            <label class="form-check-label" th:for="${'notificationMember-' + member.memberId}">
+                                                <strong th:text="${member.user != null ? member.user.fullName : 'Member ID: ' + member.memberId}">Member name</strong>
+                                                <small th:if="${member.user != null}"
+                                                    th:text="${(member.user.email != null ? member.user.email : 'Chưa có email') + ' · ' + (member.user.phone != null ? member.user.phone : 'Chưa có số điện thoại')}">email · phone</small>
                                             </label>
                                         </div>
 
                                         <div th:if="${members == null || members.isEmpty()}"
-                                            class="text-center text-muted py-4">
-                                            <i class="bi bi-person-x fs-3 d-block mb-2"></i>
-                                            Chưa có member nào trong hệ thống.
+                                            class="notification-empty-state">
+                                            <i class="bi bi-person-x" aria-hidden="true"></i>
+                                            <span>Chưa có member nào trong hệ thống.</span>
+                                        </div>
+                                        <div id="memberSearchEmpty" class="notification-member-search-empty" hidden>
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            <span>Không tìm thấy email/số điện thoại phù hợp.</span>
                                         </div>
                                     </div>
 
-                                    <small class="text-muted d-block mt-2">
+                                    <p class="notification-helper-text">
                                         Chỉ cần chọn Member nếu bạn chọn "Gửi cho Member được chọn".
-                                    </small>
-                                    <div class="invalid-feedback d-block"
+                                    </p>
+                                    <div class="invalid-feedback notification-validation-message"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['memberIds'] : ''}">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="col-lg-7">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Tiêu đề</label>
-                                    <input type="text" class="form-control validate-field" th:field="*{title}" required
-                                        placeholder="Nhập tiêu đề thông báo"
+                            <div class="notification-message-column">
+                                <div class="notification-field">
+                                    <label class="notification-form-label" for="notificationType">Loại thông báo</label>
+                                    <select id="notificationType" name="notificationType"
+                                        class="notification-control validate-field"
+                                        required
+                                        th:classappend="${notificationFieldErrors != null and notificationFieldErrors['notificationType'] != null} ? 'is-invalid'">
+                                        <option value="" disabled hidden
+                                            th:selected="${notificationRequest == null or notificationRequest.notificationType == null}">Chọn loại thông báo</option>
+                                        <option th:each="type : ${notificationTypes}" th:value="${type}"
+                                            th:selected="${notificationRequest != null and notificationRequest.notificationType == type}"
+                                            th:text="${type.displayName}">Thông báo chung</option>
+                                    </select>
+                                    <div class="invalid-feedback notification-validation-message"
+                                        th:text="${notificationFieldErrors != null ? notificationFieldErrors['notificationType'] : ''}">
+                                    </div>
+                                </div>
+
+                                <div class="notification-field">
+                                    <label class="notification-form-label" for="notificationSender">Người nhập</label>
+                                    <input type="text" id="notificationSender" class="notification-control"
+                                        th:value="${currentUser != null ? currentUser.fullName : #authentication.name}"
+                                        readonly aria-readonly="true">
+                                    <p class="notification-helper-text">Tự động lấy từ tài khoản thủ thư đang đăng nhập.</p>
+                                </div>
+
+                                <div class="notification-field">
+                                    <label class="notification-form-label" for="title">Tiêu đề</label>
+                                    <input type="text" class="notification-control validate-field" th:field="*{title}" required
+                                        minlength="5" maxlength="150" aria-describedby="titleCharacterCount titleValidationMessage"
+                                        placeholder="Nhập từ 5–150 ký tự"
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
-                                    <div class="invalid-feedback"
+                                    <div class="notification-field-support">
+                                        <span id="titleCharacterCount" class="notification-character-count" aria-live="polite">0/150</span>
+                                    </div>
+
+                                    <div id="titleValidationMessage" class="invalid-feedback notification-validation-message"
+                                        role="alert" aria-live="assertive"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['title'] : ''}">
                                     </div>
                                 </div>
 
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold">Nội dung</label>
-                                    <textarea class="form-control validate-field" rows="8" th:field="*{content}"
-                                        required placeholder="Nhập nội dung thông báo"
+                                <div class="notification-field">
+                                    <label class="notification-form-label" for="content">Nội dung</label>
+                                    <textarea class="notification-textarea validate-field"
+                                        rows="8" th:field="*{content}"
+                                        required minlength="10" maxlength="2000" aria-describedby="contentCharacterCount contentValidationMessage"
+                                        placeholder="Nhập từ 10–2000 ký tự; nội dung không được giống hoàn toàn tiêu đề."
                                         th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
-                                    <div class="invalid-feedback"
+                                    <div class="notification-field-support">
+                                        <span id="contentCharacterCount" class="notification-character-count" aria-live="polite">0/2000</span>
+                                    </div>
+                                    <div id="contentValidationMessage" class="invalid-feedback notification-validation-message"
+                                        role="alert" aria-live="assertive"
                                         th:text="${notificationFieldErrors != null ? notificationFieldErrors['content'] : ''}">
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-classic px-4">
-                                    <i class="bi bi-send me-1"></i>Gửi thông báo
-                                </button>
+                                <div class="notification-form-actions">
+                                    <button type="submit" class="btn btn-classic notification-submit">Gửi thông báo</button>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -428,113 +410,146 @@
             </div>
         </section>
         <!-- Reviews -->
-        <section id="section-reviews" class="lib-section"
+        <section id="section-reviews" class="lib-section book-reviews-section"
             th:classappend="${currentSection == 'reviews'} ? ' active' : ''">
-            <div class="card-classic shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle stable-table-layout">
-                            <colgroup>
-                                <col style="width: 27%">
-                                <col style="width: 9%">
-                                <col style="width: 8%">
-                                <col style="width: 9%">
-                                <col style="width: 17%">
-                                <col style="width: 30%">
-                            </colgroup>
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th class="ps-3">Sách</th>
-                                    <th>Người gửi</th>
-                                    <th>Đánh giá</th>
-                                    <th>Nội dung</th>
-                                    <th>Phản hồi của thủ thư</th>
-                                    <th class="text-end pe-3 table-fixed-action">Thao tác</th>
-                                </tr>
-                            </thead>
+            <div class="app-card review-management-card">
+                <div class="review-management-header">
+                    <div>
+                        <h3 class="app-section-title">Danh sách đánh giá</h3>
+                        <p class="app-section-description">Theo dõi nội dung và phản hồi của độc giả theo từng đầu sách.</p>
+                    </div>
+                    <span class="review-count" th:if="${reviews != null}"
+                        th:text="${reviews.totalElements + ' đánh giá'}">0 đánh giá</span>
+                </div>
+                <div class="app-table-wrap">
+                    <table class="app-table review-management-table">
+                        <colgroup>
+                            <col class="review-book-column">
+                            <col class="review-member-column">
+                            <col class="review-rating-column">
+                            <col class="review-comment-column">
+                            <col class="review-response-column">
+                            <col class="review-actions-column">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Sách</th>
+                                <th>Người gửi</th>
+                                <th>Đánh giá</th>
+                                <th>Nội dung</th>
+                                <th>Phản hồi của thủ thư</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
 
-                            <tbody th:if="${reviews != null && reviews.totalElements > 0}">
-                                <tr th:each="review : ${reviews.content}">
-                                    <td class="ps-3 fw-bold" th:text="${review.bookTitle}">Tên sách</td>
-                                    <td th:text="${review.memberName}">Người gửi</td>
-                                    <td>
-                                        <span class="badge bg-warning text-dark border">
-                                            <i class="bi bi-star-fill me-1"></i>
-                                            <span th:text="${review.rating + ' sao'}">5 sao</span>
-                                        </span>
-                                    </td>
-                                    <td th:text="${review.comment}">Nội dung</td>
-                                    <td>
-                                        <div th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
-                                            class="fw-semibold" th:text="${review.librarianResponse}">
-                                            Phản hồi
+                        <tbody th:if="${reviews != null && reviews.totalElements > 0}">
+                            <tr th:each="review : ${reviews.content}">
+                                <td class="review-book-title" th:text="${review.bookTitle}">Tên sách</td>
+                                <td th:text="${review.memberName}">Người gửi</td>
+                                <td>
+                                    <span class="review-rating-badge">
+                                        <i class="bi bi-star-fill" aria-hidden="true"></i>
+                                        <span th:text="${review.rating + ' sao'}">5 sao</span>
+                                    </span>
+                                </td>
+                                <td class="review-comment" th:text="${review.comment}">Nội dung</td>
+                                <td>
+                                    <div th:if="${review.librarianResponse != null && !review.librarianResponse.isBlank()}"
+                                        class="review-response-text" th:text="${review.librarianResponse}">
+                                        Phản hồi
+                                    </div>
+                                    <span
+                                        th:if="${review.status == 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
+                                        class="review-helper-text">Member đã xoá</span>
+                                    <span
+                                        th:if="${review.status != 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
+                                        class="review-helper-text">Chưa phản hồi</span>
+                                </td>
+                                <td class="review-action-cell">
+                                    <form class="app-detached-form"
+                                        th:id="${'reviewDeleteForm-' + review.feedbackId}"
+                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                                        method="post">
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    </form>
+                                    <form th:if="${review.status != 'DELETED_BY_MEMBER'}"
+                                        th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
+                                        method="post" class="review-reply-box review-reply-form" novalidate>
+                                        <input type="hidden" th:if="${_csrf != null}"
+                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <textarea name="response"
+                                            class="form-control validate-field review-response-input" rows="2"
+                                            required minlength="5" maxlength="1000"
+                                            th:placeholder="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Chỉnh sửa phản hồi (5–1000 ký tự)' : 'Nhập từ 5–1000 ký tự'"
+                                            th:attr="aria-describedby=${'reviewResponseCount-' + review.feedbackId + ' reviewResponseError-' + review.feedbackId}"
+                                            th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
+                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : (review.librarianResponse != null ? review.librarianResponse : '')}"></textarea>
+                                        <div class="review-response-support">
+                                            <span class="review-response-count" th:id="${'reviewResponseCount-' + review.feedbackId}" aria-live="polite">0/1000</span>
                                         </div>
-                                        <span
-                                            th:if="${review.status == 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
-                                            class="text-muted">Member đã xoá</span>
-                                        <span
-                                            th:if="${review.status != 'DELETED_BY_MEMBER' && (review.librarianResponse == null || review.librarianResponse.isBlank())}"
-                                            class="text-muted">Chưa phản hồi</span>
-                                    </td>
-                                    <td class="pe-3 table-fixed-action">
-                                        <form th:if="${review.status != 'DELETED_BY_MEMBER'}"
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
-                                            method="post" class="review-reply-box mb-2" novalidate>
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <textarea name="response"
-                                                class="form-control form-control-sm validate-field mb-2" rows="2"
-                                                placeholder="Nhập phản hồi..."
-                                                th:classappend="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null and reviewReplyErrors['response'] != null} ? 'is-invalid'"
-                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyValues != null ? reviewReplyValues['response'] : ''}"></textarea>
-                                            <div class="invalid-feedback d-block"
-                                                th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
-                                            </div>
-                                            <button type="submit" class="btn btn-sm btn-classic w-100">
+                                        <div class="invalid-feedback review-validation-message" role="alert" aria-live="assertive"
+                                            th:id="${'reviewResponseError-' + review.feedbackId}"
+                                            th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}">
+                                        </div>
+                                        <div class="app-form-actions">
+                                            <button type="submit" class="app-form-primary"
+                                                th:text="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Lưu chỉnh sửa' : 'Phản hồi'">
                                                 Phản hồi
                                             </button>
-                                        </form>
-                                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
-                                            class="text-muted small mb-2">
-                                            Member đã xoá đánh giá này, không thể phản hồi.
-                                        </div>
-
-                                        <form
-                                            th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
-                                            method="post"
-                                            onsubmit="return confirm('Bạn có chắc muốn xoá đánh giá này không?');">
-                                            <input type="hidden" th:if="${_csrf != null}"
-                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                                Xoá
+                                            <button type="button" class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
+                                                data-bs-toggle="modal" data-bs-target="#librarianDeleteReviewModal"
+                                                th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
+                                                th:data-book-title="${review.bookTitle}"
+                                                th:data-member-name="${review.memberName}"
+                                                title="Xoá đánh giá" aria-label="Xoá đánh giá">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            </tbody>
+                                        </div>
+                                    </form>
+                                    <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                                        class="review-deleted-note">
+                                        Member đã xoá đánh giá này, không thể phản hồi.
+                                    </div>
+                                    <div class="app-form-actions app-form-actions--end"
+                                        th:if="${review.status == 'DELETED_BY_MEMBER'}">
+                                        <button type="button" class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
+                                            data-bs-toggle="modal" data-bs-target="#librarianDeleteReviewModal"
+                                            th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
+                                            th:data-book-title="${review.bookTitle}"
+                                            th:data-member-name="${review.memberName}"
+                                            title="Xoá đánh giá" aria-label="Xoá đánh giá">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
 
-                            <tbody th:if="${reviews == null || reviews.totalElements == 0}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-5">
-                                        <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i>
-                                        Hiện chưa có đánh giá nào.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <nav th:if="${reviews != null && reviews.totalPages > 1}" class="mt-3"
+                        <tbody th:if="${reviews == null || reviews.totalElements == 0}">
+                            <tr>
+                                <td colspan="6" class="review-empty-cell">
+                                    <div class="app-empty-state">
+                                        <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                                        <span>Hiện chưa có đánh giá nào.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav th:if="${reviews != null && reviews.totalPages > 1}" class="app-pagination-nav"
                         th:with="startPage=${reviews.totalPages <= 10 ? 0 : (reviews.number < 9 ? 0 : (reviews.number - 8 > reviews.totalPages - 10 ? reviews.totalPages - 10 : reviews.number - 8))}, endPage=${startPage + 9 < reviews.totalPages ? startPage + 9 : reviews.totalPages - 1}">
-                        <ul class="pagination justify-content-center mb-0">
+                        <ul class="pagination app-pagination">
                             <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=0,requestPage=${requests != null ? requests.number : 0})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                   >Đầu</a>
                             </li>
                             <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number - 1},requestPage=${requests != null ? requests.number : 0})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
+                                   ><i class="bi bi-chevron-left"></i></a>
                             </li>
                             <li class="page-item disabled" th:if="${startPage > 0}">
                                 <span class="page-link">…</span>
@@ -543,8 +558,7 @@
                                 th:classappend="${i == reviews.number ? 'active' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${i},requestPage=${requests != null ? requests.number : 0})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == reviews.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                    th:text="${i + 1}">1</a>
                             </li>
                             <li class="page-item disabled" th:if="${endPage < reviews.totalPages - 1}">
                                 <span class="page-link">…</span>
@@ -552,79 +566,126 @@
                             <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.number + 1},requestPage=${requests != null ? requests.number : 0})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-right"></i></a>
+                                   ><i class="bi bi-chevron-right"></i></a>
                             </li>
                             <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='reviews',reviewPage=${reviews.totalPages - 1},requestPage=${requests != null ? requests.number : 0})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                   >Cuối</a>
                             </li>
                         </ul>
-                    </nav>
+                </nav>
+            </div>
+
+            <div class="modal fade librarian-review-delete-modal" id="librarianDeleteReviewModal" tabindex="-1"
+                aria-labelledby="librarianDeleteReviewModalLabel" aria-describedby="librarianDeleteReviewModalDescription"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title" id="librarianDeleteReviewModalLabel">Xoá đánh giá?</h2>
+                            <button type="button" class="librarian-review-modal-close" data-bs-dismiss="modal" aria-label="Đóng">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="librarianDeleteReviewModalDescription">
+                                Đánh giá của <strong id="librarianDeleteReviewMember"></strong> cho sách
+                                <strong id="librarianDeleteReviewBook"></strong> sẽ bị xoá khỏi hệ thống.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="librarian-review-modal-cancel" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="librarian-review-modal-confirm" id="librarianConfirmDeleteReview">Xoá đánh giá</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
         <!-- Book Suggestions -->
         <section id="section-acquisition" class="lib-section"
             th:classappend="${currentSection == 'acquisition'} ? ' active' : ''">
-
-            <div class="card-classic shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle stable-table-layout">
+            <div class="app-card acquisition-requests-card">
+                <div class="acquisition-requests-header">
+                    <div>
+                        <h3 class="app-section-title">Danh sách đề xuất bổ sung sách</h3>
+                        <p class="app-section-description">Xem xét thông tin, nhu cầu của độc giả và phản hồi từng đề xuất.</p>
+                    </div>
+                    <span class="acquisition-request-count" th:if="${requests != null}"
+                        th:text="${requests.totalElements + ' đề xuất'}">0 đề xuất</span>
+                </div>
+                    <div class="app-table-wrap">
+                        <table class="app-table acquisition-requests-table">
                             <colgroup>
-                                <col style="width: 6%">
-                                <col style="width: 25%">
-                                <col style="width: 20%">
-                                <col style="width: 25%">
-                                <col style="width: 24%">
+                                <col class="acquisition-book-col">
+                                <col class="acquisition-requester-col">
+                                <col class="acquisition-reason-col">
+                                <col class="acquisition-status-col">
+                                <col class="acquisition-actions-col">
                             </colgroup>
-                            <thead class="table-light text-uppercase small text-muted">
+                            <thead>
                                 <tr>
-                                    <th class="ps-3">Mã</th>
-                                    <th>Tên sách</th>
-                                    <th>Tác giả</th>
+                                    <th>Thông tin sách</th>
                                     <th>Người đề xuất</th>
-                                    <th>Ngày đề xuất</th>
+                                    <th>Lý do đề xuất</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
                                 </tr>
                             </thead>
 
                             <tbody th:if="${requests != null && requests.totalElements > 0}">
                                 <tr th:each="request : ${requests.content}">
-                                    <td class="ps-3 fw-bold" th:text="${request.requestId}">1</td>
-                                    <td th:text="${request.title}">Tên sách</td>
-                                    <td th:text="${request.author}">Tác giả</td>
-                                    <td
-                                        th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : 'Không rõ'}">
-                                        Người đề xuất</td>
-                                    <td
-                                        th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">
-                                        Ngày đề xuất</td>
+                                    <td class="acquisition-book-info">
+                                        <strong th:text="${request.title}">Tên sách</strong>
+                                        <span class="acquisition-book-author" th:text="${request.author}">Tác giả</span>
+                                        <span class="acquisition-book-edition" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></span>
+                                        <span class="acquisition-book-edition" th:if="${request.publisher != null || request.publicationYear != null}">
+                                            <span th:if="${request.publisher != null}" th:text="${request.publisher}"></span>
+                                            <span th:if="${request.publisher != null && request.publicationYear != null}"> · </span>
+                                            <span th:if="${request.publicationYear != null}" th:text="${request.publicationYear}"></span>
+                                        </span>
+                                        <a th:if="${request.referenceUrl != null}" th:href="${request.referenceUrl}" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Link tham khảo</a>
+                                    </td>
+                                    <td class="acquisition-requester">
+                                        <strong th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : 'Không rõ'}">Người đề xuất</strong>
+                                        <time th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Ngày đề xuất</time>
+                                    </td>
+                                    <td class="acquisition-reason" th:text="${request.requestReason != null ? request.requestReason : 'Đề xuất cũ chưa có lý do.'}">Lý do đề xuất</td>
+                                    <td><span class="status-badge" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? 'Chờ duyệt' : (request.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Đã từ chối')}">Chờ duyệt</span><small class="acquisition-decision-note" th:if="${request.status.name() == 'REJECTED'}" th:text="${request.decisionNote}"></small></td>
+                                    <td class="acquisition-actions">
+                                        <div th:if="${request.status.name() == 'PENDING'}" class="acquisition-action-group">
+                                            <form th:action="@{/librarian/interaction/acquisition-requests/{id}/approve(id=${request.requestId})}" method="post"><button type="submit" class="acquisition-approve-action">Duyệt</button></form>
+                                            <button type="button" class="acquisition-reject-action" data-bs-toggle="modal" data-bs-target="#rejectAcquisitionModal" th:data-reject-url="@{/librarian/interaction/acquisition-requests/{id}/reject(id=${request.requestId})}" th:data-book-title="${request.title}">Từ chối</button>
+                                        </div>
+                                        <span th:if="${request.status.name() != 'PENDING'}" class="acquisition-processed-date" th:text="${request.processedDate != null ? #temporals.format(request.processedDate, 'dd/MM/yyyy HH:mm') : ''}"></span>
+                                    </td>
                                 </tr>
                             </tbody>
 
                             <tbody th:if="${requests == null || requests.totalElements == 0}">
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-5">
-                                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                        Chưa có đề xuất mua sách nào.
+                                    <td colspan="5" class="acquisition-empty-cell">
+                                        <div class="app-empty-state">
+                                            <i class="bi bi-inbox" aria-hidden="true"></i>
+                                            <span>Chưa có đề xuất bổ sung sách nào.</span>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <nav th:if="${requests != null && requests.totalPages > 1}" class="mt-3"
+                    <nav th:if="${requests != null && requests.totalPages > 1}" class="app-pagination-nav"
                         th:with="startPage=${requests.totalPages <= 10 ? 0 : (requests.number < 9 ? 0 : (requests.number - 8 > requests.totalPages - 10 ? requests.totalPages - 10 : requests.number - 8))}, endPage=${startPage + 9 < requests.totalPages ? startPage + 9 : requests.totalPages - 1}">
-                        <ul class="pagination justify-content-center mb-0">
+                        <ul class="pagination app-pagination">
                             <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=0)}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                   >Đầu</a>
                             </li>
                             <li class="page-item" th:classappend="${requests.first} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.number - 1})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-left"></i></a>
+                                   ><i class="bi bi-chevron-left"></i></a>
                             </li>
                             <li class="page-item disabled" th:if="${startPage > 0}">
                                 <span class="page-link">…</span>
@@ -633,8 +694,7 @@
                                 th:classappend="${i == requests.number ? 'active' : ''}">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${i})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == requests.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                    th:text="${i + 1}">1</a>
                             </li>
                             <li class="page-item disabled" th:if="${endPage < requests.totalPages - 1}">
                                 <span class="page-link">…</span>
@@ -642,16 +702,18 @@
                             <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.number + 1})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-chevron-right"></i></a>
+                                   ><i class="bi bi-chevron-right"></i></a>
                             </li>
                             <li class="page-item" th:classappend="${requests.last} ? 'disabled'">
                                 <a class="page-link"
                                     th:href="@{/librarian/dashboard(section='acquisition',reviewPage=${reviews != null ? reviews.number : 0},requestPage=${requests.totalPages - 1})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                   >Cuối</a>
                             </li>
                         </ul>
                     </nav>
-                </div>
+            </div>
+            <div class="modal fade acquisition-reject-modal" id="rejectAcquisitionModal" tabindex="-1" aria-labelledby="rejectAcquisitionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel">Từ chối đề xuất</h2><p id="rejectAcquisitionBookTitle"></p></div><button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" aria-label="Đóng"><i class="bi bi-x-lg"></i></button></div><form id="rejectAcquisitionForm" method="post" novalidate><div class="modal-body"><label for="rejectAcquisitionReason">Lý do từ chối</label><textarea id="rejectAcquisitionReason" name="reason" required minlength="5" maxlength="500" placeholder="Nhập từ 5–500 ký tự" aria-describedby="rejectAcquisitionReasonCount rejectAcquisitionReasonError"></textarea><div class="acquisition-reason-support"><span id="rejectAcquisitionReasonCount" aria-live="polite">0/500</span></div><div id="rejectAcquisitionReasonError" class="acquisition-field-error" role="alert" aria-live="assertive"></div></div><div class="modal-footer"><button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal">Hủy</button><button type="submit" class="acquisition-modal-reject">Từ chối đề xuất</button></div></form></div></div>
             </div>
         </section>
 
@@ -660,61 +722,61 @@
 
             <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}">
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 shadow-sm border-0"
-                        style="border-left: 4px solid #8b5a2b !important;">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d"
+                       >
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 librarian-dashboard-div-width-height-background-29"
+                               >
                                 <i class="bi bi-book fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Tổng đầu sách</div>
-                                <h3 class="fw-bold mb-0 fs-4 text-classic" th:text="${totalBookCount}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${totalBookCount}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 shadow-sm border-0"
-                        style="border-left: 4px solid #198754 !important;">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6"
+                       >
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-25-135-84-0-1-color-198754-c23022eb"
+                               >
                                 <i class="bi bi-collection fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Danh mục</div>
-                                <h3 class="fw-bold mb-0 fs-4 text-success" th:text="${totalCategories}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${totalCategories}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 shadow-sm border-0"
-                        style="border-left: 4px solid #0d6efd !important;">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0 u-border-left-4px-solid-0d6efd-important-64ac16c1"
+                       >
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-13-110-253-0-1-color-0d6efd-e5954655"
+                               >
                                 <i class="bi bi-tags fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Thể loại</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #0d6efd;" th:text="${totalGenres}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${totalGenres}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 shadow-sm border-0"
-                        style="border-left: 4px solid #fd7e14 !important;">
+                    <div class="card-classic h-100 p-4 shadow-sm border-0 u-border-left-4px-solid-fd7e14-important-0fa630a5"
+                       >
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(253, 126, 20, 0.1); color: #fd7e14;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-253-126-20-0-1-color-fd7e14-8d4d646a"
+                               >
                                 <i class="bi bi-check-circle fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Sẵn sàng</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #fd7e14;"
+                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80"
                                     th:text="${inventoryStatusCounts['Available']} ?: 0">0</h3>
                             </div>
                         </div>
@@ -726,9 +788,8 @@
             <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}"
                 id="bookSubSectionCards">
                 <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4"
-                        style="transition: all 0.2s; border-left: 4px solid #8b5a2b !important; background-color: rgba(139, 90, 43, 0.05);">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <div class="card-classic h-100 shadow-sm p-4">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-book me-2 text-classic"></i> Quản lý kho sách
                         </h5>
                         <p class="text-muted mb-3">Thêm, sửa, xoá và quản lý số lượng sách trong kho.</p>
@@ -740,9 +801,8 @@
                 </div>
 
                 <div class="col-lg-6">
-                    <div class="card-classic h-100 shadow-sm p-4"
-                        style="transition: all 0.2s; border-left: 4px solid #6c757d !important; background-color: rgba(108, 117, 125, 0.04);">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                    <div class="card-classic h-100 shadow-sm p-4">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-bookshelf me-2 text-classic"></i> Quản lý kệ sách
                         </h5>
                         <p class="text-muted mb-3">Tạo mới, chỉnh sửa vị trí và xóa các kệ lưu trữ sách.</p>
@@ -754,35 +814,26 @@
                 </div>
             </div>
 
-            <!-- Nút quay lại khi đang ở subsection -->
-            <div th:if="${currentSubSection == 'inventory' || currentSubSection == 'storage'}" class="mb-3">
-                <a th:href="@{/librarian/dashboard(section='books')}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i> Quay lại Quản lý sách
-                </a>
-            </div>
-
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
-            <div class="card-classic shadow-sm mb-4" th:if="${currentSubSection == 'inventory'}">
-                <div class="card-body p-4">
+            <div class="app-card book-inventory-card" th:if="${currentSubSection == 'inventory'}">
+                <div class="book-inventory-body">
                     <div id="bookInventoryPanel">
-                        <div class="nav d-flex flex-wrap gap-3 mb-4" id="inventory-tab" role="tablist">
-                            <button class="nav-link btn btn-classic btn-sm active text-white me-2" id="nav-books-tab"
+                        <div class="nav inventory-tabs" id="inventory-tab" role="tablist"
+                           >
+                            <button class="nav-link category-tab active" id="nav-books-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-books" type="button" role="tab"
-                                aria-controls="nav-books" aria-selected="true"
-                                onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-categories-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-categories-tab').classList.remove('text-white'); document.getElementById('nav-audit-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-audit-tab').classList.remove('text-white');">
-                                <i class="bi bi-book me-1"></i>Kho sách
+                                aria-controls="nav-books" aria-selected="true">
+                                Kho sách
                             </button>
-                            <button class="nav-link btn btn-outline-classic btn-sm me-2" id="nav-categories-tab"
+                            <button class="nav-link category-tab" id="nav-categories-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-categories" type="button" role="tab"
-                                aria-controls="nav-categories" aria-selected="false"
-                                onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-books-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-books-tab').classList.remove('text-white'); document.getElementById('nav-audit-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-audit-tab').classList.remove('text-white');">
-                                <i class="bi bi-tags me-1"></i>Danh mục & thể loại
+                                aria-controls="nav-categories" aria-selected="false">
+                                Danh mục &amp; thể loại
                             </button>
-                            <button class="nav-link btn btn-outline-classic btn-sm" id="nav-audit-tab"
+                            <button class="nav-link category-tab" id="nav-audit-tab"
                                 data-bs-toggle="tab" data-bs-target="#nav-audit" type="button" role="tab"
-                                aria-controls="nav-audit" aria-selected="false"
-                                onclick="this.classList.replace('btn-outline-classic', 'btn-classic'); this.classList.add('text-white'); document.getElementById('nav-books-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-books-tab').classList.remove('text-white'); document.getElementById('nav-categories-tab').classList.replace('btn-classic', 'btn-outline-classic'); document.getElementById('nav-categories-tab').classList.remove('text-white');">
-                                <i class="bi bi-card-checklist me-1"></i>Kiểm kê kho
+                                aria-controls="nav-audit" aria-selected="false">
+                                Kiểm kê kho
                             </button>
                         </div>
 
@@ -805,11 +856,11 @@
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
                                             <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                th:src="${book.coverImageUrl}" alt="Bìa sách" class="rounded border"
-                                                style="width: 40px; height: 56px; object-fit: cover;">
+                                                th:src="${book.coverImageUrl}" alt="Bìa sách" class="rounded border u-width-40px-height-56px-object-fit-cover-8457e107"
+                                               >
                                             <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                class="bg-light rounded border d-flex align-items-center justify-content-center text-muted"
-                                                style="width: 40px; height: 56px;">
+                                                class="bg-light rounded border d-flex align-items-center justify-content-center text-muted u-width-40px-height-56px-0055c9ad"
+                                               >
                                                 <i class="bi bi-book"></i>
                                             </div>
                                         </td>
@@ -852,18 +903,29 @@
                             <div class="tab-pane fade show active" id="nav-books" role="tabpanel"
                                 aria-labelledby="nav-books-tab" tabindex="0">
 
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i>Danh sách
-                                        đầu sách</h5>
-                                    <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                <div class="app-table-toolbar">
+                                    <div>
+                                        <h3 class="app-section-title">Danh sách đầu sách</h3>
+                                        <p class="app-section-description">Quản lý thông tin, trạng thái và các bản sách trong kho.</p>
+                                    </div>
+                                    <button type="button" class="app-primary-action" data-bs-toggle="modal"
                                         data-bs-target="#addBookModal">
-                                        <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
+                                        Thêm sách mới
                                     </button>
                                 </div>
 
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light text-uppercase small text-muted">
+                                <div class="app-table-wrap">
+                                    <table class="app-table app-table--three-actions book-inventory-table">
+                                        <colgroup>
+                                            <col class="inventory-index-col">
+                                            <col class="inventory-cover-col">
+                                            <col class="inventory-book-col">
+                                            <col class="inventory-isbn-col">
+                                            <col class="inventory-description-col">
+                                            <col class="inventory-status-col">
+                                            <col class="app-action-col">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
                                                 <th>STT</th>
                                                 <th>Ảnh</th>
@@ -871,33 +933,33 @@
                                                 <th>ISBN</th>
                                                 <th>Mô tả</th>
                                                 <th>Trạng thái</th>
-                                                <th class="text-end">Thao tác</th>
+                                                <th class="app-action-column">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr th:each="book, iterStat : ${books.content}">
-                                                <td class="ps-3 fw-bold"
+                                                <td class="inventory-index"
                                                     th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                                 <td>
                                                     <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
                                                         th:src="${book.coverImageUrl}" alt="Bìa sách"
-                                                        class="rounded border"
-                                                        style="width: 40px; height: 56px; object-fit: cover;">
+                                                        class="inventory-book-cover"
+                                                       >
                                                     <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                        class="bg-light rounded border d-flex align-items-center justify-content-center text-muted"
-                                                        style="width: 40px; height: 56px;">
+                                                        class="inventory-book-cover inventory-book-cover--placeholder"
+                                                       >
                                                         <i class="bi bi-book"></i>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="fw-bold text-classic" th:text="${book.title}">Tên sách
+                                                    <div class="inventory-book-title" th:text="${book.title}">Tên sách
                                                     </div>
-                                                    <div class="small text-muted"
+                                                    <div class="inventory-book-genre"
                                                         th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">
                                                         Thể loại</div>
                                                 </td>
-                                                <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
-                                                <td class="small text-muted text-truncate" style="max-width: 250px;"
+                                                <td class="inventory-isbn" th:text="${book.isbn}">ISBN</td>
+                                                <td class="inventory-description"
                                                     th:text="${!#strings.isEmpty(book.description) ? book.description : 'Chưa có mô tả'}"
                                                     th:title="${book.description}">Mô tả
                                                 </td>
@@ -906,29 +968,34 @@
                                                         th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
                                                         th:text="${book.status}">Active</span>
                                                 </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-info me-1"
-                                                        data-bs-toggle="modal"
+                                                <td class="app-action-column">
+                                                    <div class="app-row-actions">
+                                                    <button type="button" class="app-icon-action app-icon-action--view" data-bs-toggle="modal"
                                                         th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
-                                                        title="Xem bản sách">
-                                                        <i class="bi bi-eye"></i>
+                                                        title="Xem bản sách" aria-label="Xem bản sách">
+                                                        <i class="bi bi-eye" aria-hidden="true"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-classic me-1"
+                                                    <button type="button" class="app-icon-action app-icon-action--edit"
                                                         data-bs-toggle="modal"
-                                                        th:data-bs-target="${'#editBookModal' + book.bookId}">
-                                                        <i class="bi bi-pencil-square"></i>
+                                                        th:data-bs-target="${'#editBookModal' + book.bookId}"
+                                                        title="Sửa sách" aria-label="Sửa sách">
+                                                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    <button type="button" class="app-icon-action app-icon-action--delete"
                                                         data-bs-toggle="modal"
-                                                        th:data-bs-target="${'#deleteBookModal' + book.bookId}">
-                                                        <i class="bi bi-trash"></i>
+                                                        th:data-bs-target="${'#deleteBookModal' + book.bookId}"
+                                                        title="Xoá sách" aria-label="Xoá sách">
+                                                        <i class="bi bi-trash" aria-hidden="true"></i>
                                                     </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <tr th:if="${books == null || books.totalElements == 0}">
-                                                <td colspan="7" class="text-center text-muted py-5">
-                                                    <i class="bi bi-book fs-2 d-block mb-2"></i>
-                                                    Chưa có sách trong kho.
+                                                <td colspan="7" class="inventory-empty-cell">
+                                                    <div class="app-empty-state">
+                                                        <i class="bi bi-book" aria-hidden="true"></i>
+                                                        <span>Chưa có sách trong kho.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -936,24 +1003,24 @@
                                 </div>
 
                                 <!-- Pagination -->
-                                <div class="mt-4 d-flex justify-content-center"
+                                <div class="app-pagination-region"
                                     th:if="${books != null && books.totalPages > 1}"
                                     th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}">
                                     <nav
                                         th:with="endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
-                                        <ul class="pagination mb-0">
+                                        <ul class="pagination app-pagination">
                                             <!-- First page -->
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=0)}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                                   >Đầu</a>
                                             </li>
 
                                             <!-- Previous page -->
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number - 1})}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                                   ><i
                                                         class="bi bi-chevron-left"></i></a>
                                             </li>
 
@@ -966,8 +1033,7 @@
                                                 th:classappend="${i == books.number ? 'active' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${i})}"
-                                                    th:text="${i + 1}"
-                                                    th:style="${i == books.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                                    th:text="${i + 1}">1</a>
                                             </li>
 
                                             <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
@@ -978,7 +1044,7 @@
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number + 1})}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                                   ><i
                                                         class="bi bi-chevron-right"></i></a>
                                             </li>
 
@@ -986,7 +1052,7 @@
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.totalPages - 1})}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                                   >Cuối</a>
                                             </li>
                                         </ul>
                                     </nav>
@@ -995,53 +1061,59 @@
 
                             <div class="tab-pane fade" id="nav-categories" role="tabpanel"
                                 aria-labelledby="nav-categories-tab" tabindex="0">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i>Danh sách
-                                        thể loại và danh mục</h5>
+                                <div class="app-table-toolbar category-management-toolbar">
                                     <div>
-                                        <button type="button" class="btn btn-classic btn-sm me-2" data-bs-toggle="modal"
+                                        <h3 class="app-section-title">Danh sách danh mục và thể loại</h3>
+                                        <p class="app-section-description">Tổ chức đầu sách theo nhóm nội dung và thể loại.</p>
+                                    </div>
+                                    <div class="category-toolbar-actions">
+                                        <button type="button" class="app-primary-action" data-bs-toggle="modal"
                                             data-bs-target="#addCategoryModal">
-                                            <i class="bi bi-folder-plus me-1"></i>Thêm danh mục
+                                            Thêm danh mục
                                         </button>
-                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                        <button type="button" class="app-secondary-action" data-bs-toggle="modal"
                                             data-bs-target="#addGenreModal">
-                                            <i class="bi bi-bookmark-plus me-1"></i>Thêm thể loại
+                                            Thêm thể loại
                                         </button>
                                     </div>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle border">
-                                        <thead class="table-light">
+                                <div class="app-table-wrap">
+                                    <table class="app-table app-table--two-actions category-management-table">
+                                        <colgroup>
+                                            <col class="category-name-col">
+                                            <col class="app-action-col">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
                                                 <th>Danh mục / Thể loại</th>
-                                                <th class="text-center" style="width: 150px;">Thao tác</th>
+                                                <th class="app-action-column">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <th:block th:each="category : ${categories}">
                                                 <!-- Category Row -->
-                                                <tr class="bg-white" style="cursor: pointer;" data-bs-toggle="collapse"
+                                                <tr class="category-row" data-bs-toggle="collapse"
                                                     th:data-bs-target="'.category-genres-' + ${category.categoryId}"
                                                     aria-expanded="false">
-                                                    <td class="fw-bold" style="color: #4a3b32;">
-
+                                                    <td class="category-name">
                                                         <span th:text="${category.categoryName}">Văn học</span>
-                                                        <i class="bi bi-chevron-down ms-2 small text-muted"></i>
+                                                        <i class="bi bi-chevron-down category-toggle-icon" aria-hidden="true"></i>
                                                     </td>
-                                                    <td class="text-center" onclick="event.stopPropagation()">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary me-1"
+                                                    <td class="app-action-column" onclick="event.stopPropagation()">
+                                                        <div class="app-row-actions">
+                                                        <button type="button" class="app-icon-action app-icon-action--edit"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#editCategoryModal' + ${category.categoryId}"
-                                                            title="Sửa danh mục">
-                                                            <i class="bi bi-pencil-square"></i>
+                                                            title="Sửa danh mục" aria-label="Sửa danh mục">
+                                                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        <button type="button" class="app-icon-action app-icon-action--delete"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#deleteCategoryModal' + ${category.categoryId}"
-                                                            title="Xóa danh mục">
-                                                            <i class="bi bi-trash"></i>
+                                                            title="Xóa danh mục" aria-label="Xóa danh mục">
+                                                            <i class="bi bi-trash" aria-hidden="true"></i>
                                                         </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                                 <!-- Genres Rows -->
@@ -1049,32 +1121,34 @@
                                                     th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
                                                     class="collapse"
                                                     th:classappend="'category-genres-' + ${category.categoryId}">
-                                                    <td style="padding-left: 2.5rem;">
-                                                        <span class="text-muted me-2 font-monospace"></span>
-                                                        <span th:text="${genre.genreName}" class="fw-medium">Tiểu thuyết
+                                                    <td class="genre-name">
+                                                        <span th:text="${genre.genreName}">Tiểu thuyết
                                                             văn học</span>
                                                     </td>
-                                                    <td class="text-center">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary me-1"
+                                                    <td class="app-action-column">
+                                                        <div class="app-row-actions">
+                                                        <button type="button" class="app-icon-action app-icon-action--edit"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#editGenreModal' + ${genre.genreId}"
-                                                            title="Sửa">
-                                                            <i class="bi bi-pencil-square"></i>
+                                                            title="Sửa thể loại" aria-label="Sửa thể loại">
+                                                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        <button type="button" class="app-icon-action app-icon-action--delete"
                                                             data-bs-toggle="modal"
                                                             th:data-bs-target="'#deleteGenreModal' + ${genre.genreId}"
-                                                            title="Xóa">
-                                                            <i class="bi bi-trash"></i>
+                                                            title="Xóa thể loại" aria-label="Xóa thể loại">
+                                                            <i class="bi bi-trash" aria-hidden="true"></i>
                                                         </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </th:block>
                                             <tr th:if="${#lists.isEmpty(categories)}">
-                                                <td colspan="2" class="text-center py-4 text-muted">
-                                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                                    Chưa có danh mục nào.
+                                                <td colspan="2" class="category-empty-cell">
+                                                    <div class="app-empty-state">
+                                                        <i class="bi bi-inbox" aria-hidden="true"></i>
+                                                        <span>Chưa có danh mục nào.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -1083,10 +1157,22 @@
                             </div> <!-- tab-pane #nav-categories -->
 
                             <div class="tab-pane fade" id="nav-audit" role="tabpanel">
-
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light text-uppercase small text-muted">
+                                <div class="app-table-toolbar audit-toolbar">
+                                    <div>
+                                        <h3 class="app-section-title">Kiểm kê kho sách</h3>
+                                        <p class="app-section-description">Đối chiếu tổng số bản sách và số lượng đang được mượn.</p>
+                                    </div>
+                                </div>
+                                <div class="app-table-wrap">
+                                    <table class="app-table inventory-audit-table">
+                                        <colgroup>
+                                            <col class="audit-index-col">
+                                            <col class="audit-cover-col">
+                                            <col class="audit-book-col">
+                                            <col class="audit-total-col">
+                                            <col class="audit-borrowed-col">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
                                                 <th>STT</th>
                                                 <th>Ảnh</th>
@@ -1097,60 +1183,62 @@
                                         </thead>
                                         <tbody>
                                             <tr th:each="book, iterStat : ${books.content}">
-                                                <td class="ps-3 fw-bold"
+                                                <td class="inventory-index"
                                                     th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                                 <td>
                                                     <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
                                                         th:src="${book.coverImageUrl}" alt="Bìa sách"
-                                                        class="rounded border"
-                                                        style="width: 40px; height: 56px; object-fit: cover;">
+                                                        class="inventory-book-cover"
+                                                       >
                                                     <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                        class="bg-light rounded border d-flex align-items-center justify-content-center text-muted"
-                                                        style="width: 40px; height: 56px;">
+                                                        class="inventory-book-cover inventory-book-cover--placeholder"
+                                                       >
                                                         <i class="bi bi-book"></i>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="fw-bold text-classic" th:text="${book.title}">Tên sách
+                                                    <div class="inventory-book-title" th:text="${book.title}">Tên sách
                                                     </div>
-                                                    <div class="small text-muted"
+                                                    <div class="inventory-book-genre"
                                                         th:text="${book.genre != null ? book.genre.genreName : 'Chưa có thể loại'}">
                                                         Thể loại</div>
                                                 </td>
                                                 <td>
-                                                    <span class="fw-bold text-classic"
+                                                    <span class="audit-value"
                                                         th:text="${bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0}">0</span>
                                                 </td>
                                                 <td>
-                                                    <span class="fw-bold text-muted"
+                                                    <span class="audit-value audit-value--muted"
                                                         th:text="${bookBorrowedQuantities[book.bookId] != null ? bookBorrowedQuantities[book.bookId] : 0}">0</span>
                                                 </td>
                                             </tr>
                                             <tr th:if="${books == null || books.totalElements == 0}">
-                                                <td colspan="5" class="text-center text-muted py-5">
-                                                    <i class="bi bi-book fs-2 d-block mb-2"></i>
-                                                    Chưa có sách trong kho.
+                                                <td colspan="5" class="audit-empty-cell">
+                                                    <div class="app-empty-state">
+                                                        <i class="bi bi-book" aria-hidden="true"></i>
+                                                        <span>Chưa có sách trong kho.</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <div class="mt-4 d-flex justify-content-center"
+                                <div class="app-pagination-region"
                                     th:if="${books != null && books.totalPages > 1}"
                                     th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}">
                                     <nav
                                         th:with="endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
-                                        <ul class="pagination mb-0">
+                                        <ul class="pagination app-pagination">
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=0)}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                                   >Đầu</a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number - 1})}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                                   ><i
                                                         class="bi bi-chevron-left"></i></a>
                                             </li>
                                             <li class="page-item disabled" th:if="${startPage > 0}">
@@ -1160,8 +1248,7 @@
                                                 th:classappend="${i == books.number ? 'active' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${i})}"
-                                                    th:text="${i + 1}"
-                                                    th:style="${i == books.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                                    th:text="${i + 1}">1</a>
                                             </li>
                                             <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
                                                 <span class="page-link">…</span>
@@ -1169,13 +1256,13 @@
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number + 1})}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                                   ><i
                                                         class="bi bi-chevron-right"></i></a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                     th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.totalPages - 1})}"
-                                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                                   >Cuối</a>
                                             </li>
                                         </ul>
                                     </nav>
@@ -1220,9 +1307,9 @@
                     aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-0 shadow">
-                            <div class="modal-header border-bottom border-color" style="background-color: #fdfbf7;">
-                                <h5 class="modal-title fw-bold" id="addCategoryModalLabel"
-                                    style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" id="addCategoryModalLabel"
+                                   >
                                     <i class="bi bi-folder-plus me-2 text-classic"></i>Thêm danh mục
                                 </h5>
                             </div>
@@ -1253,9 +1340,9 @@
                     aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-0 shadow">
-                            <div class="modal-header border-bottom border-color" style="background-color: #fdfbf7;">
-                                <h5 class="modal-title fw-bold" id="addGenreModalLabel"
-                                    style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" id="addGenreModalLabel"
+                                   >
                                     <i class="bi bi-bookmark-plus me-2 text-classic"></i>Thêm thể loại
                                 </h5>
                             </div>
@@ -1294,9 +1381,9 @@
                     aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content border-0 shadow">
-                            <div class="modal-header border-bottom border-color" style="background-color: #fdfbf7;">
-                                <h5 class="modal-title fw-bold" id="addBookModalLabel"
-                                    style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                            <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" id="addBookModalLabel"
+                                   >
                                     <i class="bi bi-book me-2 text-classic"></i>Thêm sách mới
                                 </h5>
 
@@ -1371,10 +1458,10 @@
                                             <label class="form-label fw-bold small text-muted text-uppercase">Ảnh bìa
                                                 sách <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <label for="addBookCoverInput" class="btn btn-outline-secondary mb-0"
-                                                    style="white-space:nowrap;">Chọn ảnh</label>
-                                                <span class="form-control text-muted" id="addBookCoverFileName"
-                                                    style="cursor:default;">Chưa chọn ảnh nào</span>
+                                                <label for="addBookCoverInput" class="btn btn-outline-secondary mb-0 librarian-dashboard-label-white-space-45"
+                                                   >Chọn ảnh</label>
+                                                <span class="form-control text-muted librarian-dashboard-span-cursor-46" id="addBookCoverFileName"
+                                                   >Chưa chọn ảnh nào</span>
                                                 <input type="file" name="coverImage" accept="image/*"
                                                     id="addBookCoverInput" class="d-none"
                                                     onchange="previewAddBookCover(event); updateAddBookFileName(this)">
@@ -1382,9 +1469,9 @@
                                             <div class="invalid-feedback" id="addBookCoverError">Vui lòng chọn ảnh bìa
                                                 sách.
                                             </div>
-                                            <div class="mt-2" id="addBookCoverPreview" style="display:none;">
+                                            <div class="mt-2 u-display-none-d0466aa3" id="addBookCoverPreview">
                                                 <img id="addBookCoverImg" src="#" alt="Xem trước ảnh bìa"
-                                                    style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid #ddd;object-fit:cover;">
+                                                    class="u-max-height-160px-max-width-100-border-radius-8px-border-1px-solid-ddd-ob-646b7764">
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -1413,9 +1500,9 @@
                         tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
-                                <div class="modal-header border-bottom border-color" style="background-color: #fdfbf7;">
-                                    <h5 class="modal-title fw-bold"
-                                        style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                    <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336"
+                                       >
                                         <i class="bi bi-pencil-square me-2 text-classic"></i>Sửa Danh mục
                                     </h5>
                                 </div>
@@ -1615,7 +1702,7 @@
                                                         <img th:src="${book.coverImageUrl}"
                                                             th:id="'editCoverCurrent' + ${book.bookId}"
                                                             alt="Ảnh bìa hiện tại"
-                                                            style="height:100px;width:75px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+                                                            class="u-height-100px-width-75px-object-fit-cover-border-radius-6px-border-1px-so-eeb48d2c">
                                                     </div>
                                                     <div class="flex-grow-1">
                                                         <div class="text-muted small mb-1"
@@ -1625,13 +1712,13 @@
                                                             accept="image/*"
                                                             th:id="'editBookCoverInput' + ${book.bookId}"
                                                             th:onchange="'previewEditBookCover(event, \'' + ${book.bookId} + '\')'">
-                                                        <div class="mt-2"
+                                                        <div class="mt-2 u-display-none-d0466aa3"
                                                             th:id="'editBookCoverPreview' + ${book.bookId}"
-                                                            style="display:none;">
+                                                           >
                                                             <div class="text-muted small mb-1">Xem trước:</div>
                                                             <img th:id="'editBookCoverImg' + ${book.bookId}" src="#"
                                                                 alt="Xem trước ảnh bìa"
-                                                                style="max-height:100px;max-width:100%;border-radius:6px;border:1px solid #ddd;object-fit:cover;">
+                                                                class="u-max-height-100px-max-width-100-border-radius-6px-border-1px-solid-ddd-ob-00913d30">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1688,9 +1775,9 @@
                         th:aria-labelledby="${'viewCopiesModalLabel' + book.bookId}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content border-0 shadow">
-                                <div class="modal-header border-bottom border-color" style="background-color: #fdfbf7;">
-                                    <h5 class="modal-title fw-bold" th:id="${'viewCopiesModalLabel' + book.bookId}"
-                                        style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                                <div class="modal-header border-bottom border-color u-background-color-fdfbf7-71083b05">
+                                    <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" th:id="${'viewCopiesModalLabel' + book.bookId}"
+                                       >
                                         <i class="bi bi-eye me-2 text-info"></i>
                                         Danh sách bản sách &ndash; <span th:text="${book.title}">Tên sách</span>
                                     </h5>
@@ -1701,7 +1788,7 @@
                                         <table class="table table-hover align-middle mb-0">
                                             <thead class="table-light text-uppercase small text-muted">
                                                 <tr>
-                                                    <th class="ps-3" style="width:60px;">STT</th>
+                                                    <th class="ps-3 librarian-dashboard-th-width-51">STT</th>
                                                     <th>Mã bản sách</th>
                                                     <th>Tình trạng</th>
                                                 </tr>
@@ -1709,7 +1796,7 @@
                                             <tbody>
                                                 <tr th:each="item, iStat : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId] : {}}">
                                                     <td class="ps-3 text-muted fw-semibold" th:text="${iStat.index + 1}">1</td>
-                                                    <td class="fw-bold font-monospace" style="color:#4a3b32;" th:text="${item.barcode}">BC001-001</td>
+                                                    <td class="fw-bold font-monospace u-color-4a3b32-8f35ff96" th:text="${item.barcode}">BC001-001</td>
                                                     <td>
                                                         <span th:if="${item.status == 'Available'}" class="badge bg-success">Sẵn có</span>
                                                         <span th:if="${item.status == 'Borrowed'}" class="badge bg-primary">Đang mượn</span>
@@ -1729,13 +1816,7 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div class="mt-3 d-flex gap-3 flex-wrap" style="font-size:0.8rem; color:#6c757d;">
-                                        <span><span class="badge bg-success me-1">&nbsp;</span>Sẵn có</span>
-                                        <span><span class="badge bg-primary me-1">&nbsp;</span>Đang mượn</span>
-                                        <span><span class="badge bg-danger me-1">&nbsp;</span>Mất</span>
-                                        <span><span class="badge bg-warning text-dark me-1">&nbsp;</span>Hư hỏng</span>
-                                        <span><span class="badge bg-secondary me-1">&nbsp;</span>Đã thanh lý</span>
-                                    </div>
+
                                 </div>
                                 <div class="modal-footer border-top bg-light">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
@@ -1748,16 +1829,28 @@
 
 
             <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
-                <div class="card-classic shadow-sm">
-                    <div class="card-header bg-white border-bottom p-4 border-color">
-                        <h5 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                            <i class="bi bi-archive me-2 text-classic"></i>Quản lý kệ sách
-                        </h5>
-                        <div class="text-muted small">Quản lý vị trí lưu trữ</div>
+                <div class="card-classic shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom p-4 border-color d-flex justify-content-between align-items-center gap-3">
+                        <div>
+                            <h5 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                                <i class="bi bi-archive me-2 text-classic"></i>Danh sách kệ sách
+                            </h5>
+                            <div class="text-muted small">Quản lý vị trí lưu trữ</div>
+                        </div>
+                        <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal"
+                            data-bs-target="#addStorageModal">
+                            Thêm vị trí mới
+                        </button>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0 stable-table-layout">
+                                <colgroup>
+                                    <col class="u-width-8-5966c0f2">
+                                    <col class="librarian-dashboard-col-width-53">
+                                    <col class="librarian-dashboard-col-width-53">
+                                    <col class="librarian-dashboard-col-width-54">
+                                </colgroup>
                                 <thead class="table-light text-uppercase small text-muted">
                                     <tr>
                                         <th>STT</th>
@@ -1860,12 +1953,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-white border-top p-4 border-color text-end">
-                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#addStorageModal">
-                            Thêm vị trí mới
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Storage Modals -->
@@ -1903,36 +1990,36 @@
         </section>
 
         <!-- Users -->
-        <section id="section-users" class="lib-section" th:classappend="${currentSection == 'users'} ? ' active' : ''">
+        <!-- <section id="section-users" class="lib-section" th:classappend="${currentSection == 'users'} ? ' active' : ''">
 
             <div class="row g-4 mb-4">
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #198754 !important;">
+                    <div class="card-classic h-100 p-4 border-0 shadow-sm u-border-left-4px-solid-198754-important-8dcb64f6"
+                       >
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1); color: #198754;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-25-135-84-0-1-color-198754-c23022eb"
+                               >
                                 <i class="bi bi-people fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Tổng Thành Viên</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
+                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${totalMembers}">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #0d6efd !important;">
+                    <div class="card-classic h-100 p-4 border-0 shadow-sm u-border-left-4px-solid-0d6efd-important-64ac16c1"
+                       >
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
-                                style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 u-width-48px-height-48px-background-color-rgba-13-110-253-0-1-color-0d6efd-e5954655"
+                               >
                                 <i class="bi bi-person-badge fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="text-muted small text-uppercase fw-bold mb-0">Tổng thủ thư</div>
-                                <h3 class="fw-bold mb-0 fs-4" style="color: #2c1e16;" th:text="${totalLibrarians}">0
+                                <h3 class="fw-bold mb-0 fs-4 u-color-2c1e16-5ab7ae80" th:text="${totalLibrarians}">0
                                 </h3>
                             </div>
                         </div>
@@ -1943,7 +2030,7 @@
             <div class="row g-4">
                 <div class="col-lg-6">
                     <div class="card-classic h-100 shadow-sm p-4">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-people me-2 text-classic"></i> Danh sách thành viên
                         </h5>
                         <p class="text-muted mb-3">Tạo, cập nhật và xóa tài khoản thành viên.</p>
@@ -1955,7 +2042,7 @@
 
                 <div class="col-lg-6">
                     <div class="card-classic h-100 shadow-sm p-4">
-                        <h5 class="fw-bold mb-2" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-person-badge me-2 text-classic"></i> Danh sách thủ thư
                         </h5>
                         <p class="text-muted mb-3">Xem danh sách thủ thư đang làm việc trong hệ thống.</p>
@@ -1965,7 +2052,7 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </section> -->
 
         <!-- Reports -->
         <section id="section-reports" class="lib-section"
@@ -1973,31 +2060,31 @@
 
             <div class="row g-4 mb-4">
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #0d6efd !important;">
+                    <div class="card-classic h-100 p-4 border-0 shadow-sm u-border-left-4px-solid-0d6efd-important-64ac16c1"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Đang mượn</div>
-                        <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${activeBorrows}">0</h3>
+                        <h3 class="fw-bold mb-0 u-color-2c1e16-5ab7ae80" th:text="${activeBorrows}">0</h3>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #fd7e14 !important;">
+                    <div class="card-classic h-100 p-4 border-0 shadow-sm u-border-left-4px-solid-fd7e14-important-0fa630a5"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Chờ đặt trước</div>
-                        <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${pendingReservations}">0</h3>
+                        <h3 class="fw-bold mb-0 u-color-2c1e16-5ab7ae80" th:text="${pendingReservations}">0</h3>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #dc3545 !important;">
+                    <div class="card-classic h-100 p-4 border-0 shadow-sm u-border-left-4px-solid-dc3545-important-49da6d79"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Quá hạn</div>
                         <h3 class="fw-bold mb-0 text-danger" th:text="${overdueDetails}">0</h3>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card-classic h-100 p-4 border-0 shadow-sm"
-                        style="border-left: 4px solid #198754 !important;">
+                    <div class="card-classic h-100 p-4 border-0 shadow-sm u-border-left-4px-solid-198754-important-8dcb64f6"
+                       >
                         <div class="text-muted small text-uppercase fw-bold mb-1">Thành viên</div>
-                        <h3 class="fw-bold mb-0" style="color: #2c1e16;" th:text="${totalMembers}">0</h3>
+                        <h3 class="fw-bold mb-0 u-color-2c1e16-5ab7ae80" th:text="${totalMembers}">0</h3>
                     </div>
                 </div>
             </div>
@@ -2127,12 +2214,12 @@
                 }
 
                 if (selected != null && selected.checked) {
-                    memberListBox.style.display = "block";
+                    memberListBox.classList.remove("is-hidden");
                     checkboxes.forEach(function (checkbox) {
                         checkbox.disabled = false;
                     });
                 } else {
-                    memberListBox.style.display = "none";
+                    memberListBox.classList.add("is-hidden");
                     checkboxes.forEach(function (checkbox) {
                         checkbox.checked = false;
                         checkbox.disabled = true;
@@ -2143,17 +2230,30 @@
             function filterMembers() {
                 const searchInput = document.getElementById("memberSearchInput");
                 const memberItems = document.querySelectorAll(".member-item");
+                const memberList = document.getElementById("memberIdsGroup");
+                const emptyState = document.getElementById("memberSearchEmpty");
 
-                if (searchInput == null) {
+                if (searchInput == null || memberList == null) {
                     return;
                 }
 
                 const keyword = searchInput.value.toLowerCase().trim();
+                const normalizedPhoneKeyword = keyword.replace(/[^0-9+]/g, "");
+                let visibleCount = 0;
 
                 memberItems.forEach(function (item) {
-                    const memberName = item.getAttribute("data-member-name") || "";
-                    item.style.display = memberName.includes(keyword) ? "block" : "none";
+                    const memberEmail = (item.getAttribute("data-member-email") || "").toLowerCase().trim();
+                    const memberPhone = (item.getAttribute("data-member-phone") || "").replace(/[^0-9+]/g, "");
+                    const checkbox = item.querySelector(".member-checkbox");
+                    const matchesEmail = memberEmail.includes(keyword);
+                    const matchesPhone = normalizedPhoneKeyword !== "" && memberPhone.includes(normalizedPhoneKeyword);
+                    const visible = keyword !== "" ? matchesEmail || matchesPhone : checkbox != null && checkbox.checked;
+                    item.classList.toggle("is-filtered-out", !visible);
+                    if (visible) visibleCount++;
                 });
+
+                memberList.classList.toggle("is-search-inactive", keyword === "" && visibleCount === 0);
+                if (emptyState != null) emptyState.hidden = keyword === "" || visibleCount > 0;
             }
 
             function validateIsbn(inputElement) {
@@ -2286,6 +2386,15 @@
                 }
             }
 
+            function updateNotificationCharacterCount(input, counterId, maximum) {
+                const counter = document.getElementById(counterId);
+                if (input == null || counter == null) return;
+                const length = input.value.length;
+                counter.textContent = length + "/" + maximum;
+                counter.classList.toggle("is-near-limit", length >= Math.floor(maximum * 0.9) && length < maximum);
+                counter.classList.toggle("is-limit-reached", length >= maximum);
+            }
+
             function validateNotificationForm(event) {
                 const form = document.getElementById("notificationForm");
                 if (form == null) {
@@ -2297,12 +2406,14 @@
                 const recipientSelected = document.getElementById("recipientSelected");
                 const recipientTypeGroup = document.getElementById("recipientTypeGroup");
                 const memberIdsGroup = document.getElementById("memberIdsGroup");
+                const notificationTypeInput = form.querySelector("[name='notificationType']");
                 const titleInput = form.querySelector("[name='title']");
                 const contentInput = form.querySelector("[name='content']");
                 const selectedMembers = form.querySelectorAll(".member-checkbox:checked");
 
                 clearInlineError(recipientTypeGroup);
                 clearInlineError(memberIdsGroup);
+                clearInlineError(notificationTypeInput);
                 clearInlineError(titleInput);
                 clearInlineError(contentInput);
 
@@ -2321,15 +2432,45 @@
                     setInlineValid(memberIdsGroup);
                 }
 
-                if (titleInput != null && titleInput.value.trim() === "") {
+                if (notificationTypeInput == null || notificationTypeInput.value === "") {
+                    setInlineError(notificationTypeInput, "Vui lòng chọn loại thông báo.");
+                    isValid = false;
+                } else {
+                    setInlineValid(notificationTypeInput);
+                }
+
+                const normalizedTitle = titleInput == null ? "" : titleInput.value.trim().replace(/\s+/g, " ");
+                const normalizedContent = contentInput == null ? "" : contentInput.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+
+                if (titleInput != null) titleInput.value = normalizedTitle;
+                if (contentInput != null) contentInput.value = normalizedContent;
+                updateNotificationCharacterCount(titleInput, "titleCharacterCount", 150);
+                updateNotificationCharacterCount(contentInput, "contentCharacterCount", 2000);
+
+                if (normalizedTitle === "") {
                     setInlineError(titleInput, "Tiêu đề không được để trống.");
+                    isValid = false;
+                } else if (normalizedTitle.length < 5) {
+                    setInlineError(titleInput, "Tiêu đề phải có ít nhất 5 ký tự.");
+                    isValid = false;
+                } else if (normalizedTitle.length > 150) {
+                    setInlineError(titleInput, "Tiêu đề không được vượt quá 150 ký tự.");
                     isValid = false;
                 } else {
                     setInlineValid(titleInput);
                 }
 
-                if (contentInput != null && contentInput.value.trim() === "") {
+                if (normalizedContent === "") {
                     setInlineError(contentInput, "Nội dung không được để trống.");
+                    isValid = false;
+                } else if (normalizedContent.length < 10) {
+                    setInlineError(contentInput, "Nội dung phải có ít nhất 10 ký tự.");
+                    isValid = false;
+                } else if (normalizedContent.length > 2000) {
+                    setInlineError(contentInput, "Nội dung không được vượt quá 2000 ký tự.");
+                    isValid = false;
+                } else if (normalizedContent.toLocaleLowerCase("vi") === normalizedTitle.toLocaleLowerCase("vi")) {
+                    setInlineError(contentInput, "Nội dung không được giống hoàn toàn tiêu đề.");
                     isValid = false;
                 } else {
                     setInlineValid(contentInput);
@@ -2343,18 +2484,125 @@
 
             function validateReviewReplyForms() {
                 document.querySelectorAll(".review-reply-box").forEach(function (form) {
-                    form.addEventListener("submit", function (event) {
-                        const response = form.querySelector("textarea[name='response']");
-                        clearInlineError(response);
+                    const response = form.querySelector("textarea[name='response']");
+                    const counter = form.querySelector(".review-response-count");
 
-                        if (response != null && response.value.trim() === "") {
+                    function updateReplyCounter() {
+                        if (response == null || counter == null) return;
+                        counter.textContent = response.value.length + "/1000";
+                        counter.classList.toggle("is-near-limit", response.value.length >= 900 && response.value.length < 1000);
+                        counter.classList.toggle("is-limit-reached", response.value.length >= 1000);
+                    }
+
+                    updateReplyCounter();
+                    if (response != null) {
+                        response.addEventListener("input", function () {
+                            updateReplyCounter();
+                            clearInlineError(response);
+                        });
+                    }
+
+                    form.addEventListener("submit", function (event) {
+                        clearInlineError(response);
+                        const normalizedResponse = response == null ? "" : response.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                        if (response != null) response.value = normalizedResponse;
+                        updateReplyCounter();
+
+                        if (normalizedResponse === "") {
                             setInlineError(response, "Nội dung phản hồi không được để trống.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        } else if (normalizedResponse.length < 5) {
+                            setInlineError(response, "Nội dung phản hồi phải có ít nhất 5 ký tự.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        } else if (normalizedResponse.length > 1000) {
+                            setInlineError(response, "Nội dung phản hồi không được vượt quá 1000 ký tự.");
+                            event.preventDefault();
+                            event.stopPropagation();
+                        } else if (!/\p{L}/u.test(normalizedResponse)) {
+                            setInlineError(response, "Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt.");
                             event.preventDefault();
                             event.stopPropagation();
                         } else {
                             setInlineValid(response);
                         }
                     });
+                });
+            }
+
+            function initializeReviewDeleteModal() {
+                const modal = document.getElementById("librarianDeleteReviewModal");
+                const memberName = document.getElementById("librarianDeleteReviewMember");
+                const bookTitle = document.getElementById("librarianDeleteReviewBook");
+                const confirmButton = document.getElementById("librarianConfirmDeleteReview");
+                let deleteForm = null;
+
+                if (modal == null || memberName == null || bookTitle == null || confirmButton == null) {
+                    return;
+                }
+
+                document.querySelectorAll(".librarian-review-delete-trigger").forEach(function (trigger) {
+                    trigger.addEventListener("click", function () {
+                        deleteForm = document.getElementById(trigger.dataset.deleteFormId);
+                        memberName.textContent = trigger.dataset.memberName || "member này";
+                        bookTitle.textContent = trigger.dataset.bookTitle || "cuốn sách này";
+                    });
+                });
+
+                confirmButton.addEventListener("click", function () {
+                    if (deleteForm != null) {
+                        deleteForm.submit();
+                    }
+                });
+
+                modal.addEventListener("hidden.bs.modal", function () {
+                    deleteForm = null;
+                });
+            }
+
+            function initializeAcquisitionRejectModal() {
+                const form = document.getElementById("rejectAcquisitionForm");
+                const title = document.getElementById("rejectAcquisitionBookTitle");
+                const reason = document.getElementById("rejectAcquisitionReason");
+                const error = document.getElementById("rejectAcquisitionReasonError");
+                const counter = document.getElementById("rejectAcquisitionReasonCount");
+                if (form == null || title == null || reason == null || error == null || counter == null) return;
+                function updateReasonCounter() {
+                    counter.textContent = reason.value.length + "/500";
+                    counter.classList.toggle("is-near-limit", reason.value.length >= 450 && reason.value.length < 500);
+                    counter.classList.toggle("is-limit-reached", reason.value.length >= 500);
+                }
+                document.querySelectorAll(".acquisition-reject-action").forEach(function (trigger) {
+                    trigger.addEventListener("click", function () {
+                        form.action = trigger.dataset.rejectUrl;
+                        title.textContent = trigger.dataset.bookTitle || "";
+                        reason.value = "";
+                        reason.classList.remove("is-invalid");
+                        error.textContent = "";
+                        updateReasonCounter();
+                    });
+                });
+                form.addEventListener("submit", function (event) {
+                    const normalizedReason = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                    reason.value = normalizedReason;
+                    updateReasonCounter();
+                    let message = "";
+                    if (normalizedReason === "") message = "Lý do từ chối không được để trống.";
+                    else if (normalizedReason.length < 5) message = "Lý do từ chối phải có ít nhất 5 ký tự.";
+                    else if (normalizedReason.length > 500) message = "Lý do từ chối không được vượt quá 500 ký tự.";
+                    else if (!/\p{L}/u.test(normalizedReason)) message = "Lý do từ chối không được chỉ gồm số hoặc ký tự đặc biệt.";
+                    if (message !== "") {
+                        event.preventDefault();
+                        reason.classList.add("is-invalid");
+                        error.textContent = message;
+                        reason.focus();
+                    }
+                });
+                reason.addEventListener("input", function () {
+                    this.classList.remove("is-invalid");
+                    error.textContent = "";
+                    updateReasonCounter();
                 });
             }
 
@@ -2374,14 +2622,36 @@
 
                 if (notificationForm != null) {
                     notificationForm.addEventListener("submit", validateNotificationForm);
+                    const titleInput = notificationForm.querySelector("[name='title']");
+                    const contentInput = notificationForm.querySelector("[name='content']");
+                    updateNotificationCharacterCount(titleInput, "titleCharacterCount", 150);
+                    updateNotificationCharacterCount(contentInput, "contentCharacterCount", 2000);
+                    if (titleInput != null) {
+                        titleInput.addEventListener("input", function () {
+                            updateNotificationCharacterCount(titleInput, "titleCharacterCount", 150);
+                            clearInlineError(titleInput);
+                        });
+                    }
+                    if (contentInput != null) {
+                        contentInput.addEventListener("input", function () {
+                            updateNotificationCharacterCount(contentInput, "contentCharacterCount", 2000);
+                            clearInlineError(contentInput);
+                        });
+                    }
                 }
 
                 validateReviewReplyForms();
+                initializeReviewDeleteModal();
+                initializeAcquisitionRejectModal();
 
                 const memberSearchInput = document.getElementById("memberSearchInput");
 
                 if (memberSearchInput != null) {
                     memberSearchInput.addEventListener("input", filterMembers);
+                    document.querySelectorAll(".member-checkbox").forEach(function (checkbox) {
+                        checkbox.addEventListener("change", filterMembers);
+                    });
+                    filterMembers();
                 }
             });
         </script>

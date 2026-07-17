@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.entity.User;
 import com.lms.service.ProfileService;
@@ -63,7 +64,7 @@ public class LibrarianProfileController {
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());
         }
         return "redirect:/librarian/profile";
@@ -84,10 +85,8 @@ public class LibrarianProfileController {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu thành công!");
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("passwordError", "Có lỗi hệ thống xảy ra, vui lòng thử lại.");
         }
         return "redirect:/librarian/profile";
     }

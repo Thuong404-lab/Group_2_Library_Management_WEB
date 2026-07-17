@@ -2,25 +2,29 @@ package com.lms.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "Transactions")
 public class Transaction {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer transactionId;
+
     @ManyToOne
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
+
     @ManyToOne
     @JoinColumn(name = "borrow_id")
     private Borrow borrow;
-    @ManyToOne
-    @JoinColumn(name = "reservation_id")
-    private Reservation reservation;
+
     @Column(nullable = false, length = 50)
     private String transactionType;
+
     @Column(precision = 18, scale = 2, nullable = false)
     private BigDecimal amount;
+
     private LocalDateTime transactionDate;
+
     @Column(length = 50)
     private String status = "Completed";
 
@@ -43,8 +47,6 @@ public class Transaction {
     public void setWallet(Wallet wallet) { this.wallet = wallet; }
     public Borrow getBorrow() { return borrow; }
     public void setBorrow(Borrow borrow) { this.borrow = borrow; }
-    public Reservation getReservation() { return reservation; }
-    public void setReservation(Reservation reservation) { this.reservation = reservation; }
     public String getTransactionType() { return transactionType; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
     public BigDecimal getAmount() { return amount; }

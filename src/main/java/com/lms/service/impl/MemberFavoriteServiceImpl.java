@@ -3,6 +3,7 @@ package com.lms.service.impl;
 import com.lms.entity.*;
 import com.lms.enums.ActionType;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.AuditLogService;
@@ -61,7 +62,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
         FavoritesId id = new FavoritesId(member.getMemberId(), book.getBookId());
         if (favoritesRepository.existsById(id)) {
-            throw new ValidationException("Sách này đã có trong danh sách yêu thích.");
+            throw new ConflictException("Sách này đã có trong danh sách yêu thích.");
         }
 
         Favorites favorites = new Favorites();
@@ -111,7 +112,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Reservation reserveBook(String username, Integer bookId) throws Exception {
+    public Reservation reserveBook(String username, Integer bookId) {
         Member member = getMemberByUsername(username);
 
         Book book = bookRepository.findById(bookId)
@@ -119,7 +120,7 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
 
         if (reservationRepository.existsActiveReservationForMemberAndBook(
                 member.getMemberId(), book.getBookId(), List.of("PENDING", "DEPOSIT_PAID", "READY"))) {
-            throw new ValidationException("Bạn đã có yêu cầu đặt trước đang hoạt động cho sách này.");
+            throw new ConflictException("Bạn đã có yêu cầu đặt trước đang hoạt động cho sách này.");
         }
 
         Reservation reservation = new Reservation();
