@@ -83,7 +83,7 @@
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
-                                placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
+                                placeholder="Tìm tên đăng nhập hoặc thông tin người dùng...">
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 aria-label="Lọc theo hạng thành viên">
@@ -104,7 +104,10 @@
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
                             </select>
 
-                            <button class="btn member-search-button text-nowrap" type="submit">Tìm kiếm</button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/accounts}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Xóa bộ lọc
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -156,21 +159,21 @@
                                 </td>
 
                                 <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                    <span class="badge"
+                                    <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
                                         th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
-                                    <span class="badge"
+                                    <span class="membership-tier-badge membership-tier-badge--empty"
                                         th:if="${member == null || member.tier == null}">
                                         N/A
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge" th:classappend="${
+                                    <span class="status-badge" th:classappend="${
               account.status == 'Active' ? 'status-active' :
               account.status == 'Blocked' ? 'status-blocked' :
               'status-inactive'
@@ -189,11 +192,11 @@
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <!-- Update Modal -->
-                                    <div class="modal fade text-start"
+                                    <div class="modal fade text-start member-form-modal"
                                         th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
                                         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                         th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
-                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                             <div class="modal-content">
                                                 <form method="post" class="member-update-form" novalidate
                                                     th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
@@ -319,9 +322,9 @@
                                                     </div>
 
                                                     <div class="modal-footer member-modal-footer">
-                                                        <button type="button" class="btn btn-secondary"
+                                                        <button type="button" class="btn member-modal-secondary member-update-cancel"
                                                             data-bs-dismiss="modal">Hủy bỏ</button>
-                                                        <button type="submit" class="btn btn-classic">
+                                                        <button type="submit" class="btn member-modal-primary">
                                                             Lưu thay đổi
                                                         </button>
                                                     </div>
@@ -487,7 +490,7 @@
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted">Hạng thành viên</div>
                                                                     <span
-                                                                        class="badge"
+                                                                        class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
                                                                         th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
                                                                         th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
@@ -495,7 +498,7 @@
                                                                     </span>
 
                                                                     <span
-                                                                        class="badge"
+                                                                        class="membership-tier-badge membership-tier-badge--empty"
                                                                         th:if="${member == null || member.tier == null}">
                                                                         N/A
                                                                     </span>
@@ -603,7 +606,15 @@
                     const modal = form.closest(".modal");
                     const submitButton = form.querySelector("button[type='submit']");
                     const globalError = form.querySelector(".member-update-global-error");
+                    let isSubmitting = false;
                     let lastFocusedField = null;
+
+                    submitButton.addEventListener("click", function (event) {
+                        if (isSubmitting) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        }
+                    });
 
                     form.querySelectorAll("input, select, textarea").forEach(function (field) {
                         field.addEventListener("focus", function () {
@@ -667,10 +678,6 @@
                             }
                         });
 
-                        if (lastFocusedField != null
-                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
-                            lastFocusedField.focus();
-                        }
                     }
 
                     function validateLocally() {
@@ -720,6 +727,8 @@
 
                     form.addEventListener("submit", async function (event) {
                         event.preventDefault();
+                        if (isSubmitting) return;
+                        isSubmitting = true;
                         clearErrors();
 
                         const localErrors = validateLocally();
@@ -757,12 +766,19 @@
                             }));
                         } finally {
                             submitButton.disabled = false;
+                            isSubmitting = false;
                         }
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
+                        clearErrors();
+                    });
+                    modal.querySelector(".member-update-cancel")?.addEventListener("click", function () {
                         form.reset();
                         clearErrors();
+                    });
+                    modal.addEventListener("hide.bs.modal", function (event) {
+                        if (isSubmitting) event.preventDefault();
                     });
                 });
             });

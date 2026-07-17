@@ -87,6 +87,21 @@ public class AccountController {
         }
     }
 
+    @GetMapping("/create/validate")
+    @ResponseBody
+    public Map<String, String> validateAccountCreate(
+            @RequestParam(required = false, defaultValue = "") String fullName,
+            @RequestParam(required = false, defaultValue = "") String email,
+            @RequestParam(required = false, defaultValue = "") String phone,
+            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam(required = false, defaultValue = "") String password,
+            @RequestParam(required = false, defaultValue = "") String accountType,
+            @RequestParam(required = false) Integer tierId,
+            @RequestParam(required = false, defaultValue = "Active") String status) {
+        return accountService.validateAccountCreate(new AdminAccountCreateRequest(
+                fullName, email, phone, username, password, accountType, tierId, status));
+    }
+
     @GetMapping("/edit/{id}/validate")
     @ResponseBody
     public Map<String, String> validateAccountUpdate(
