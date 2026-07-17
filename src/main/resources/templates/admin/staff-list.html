@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/staff-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
@@ -71,28 +72,32 @@
                 </div>
                 <!-- Search & Filter -->
                 <div class="member-toolbar">
-                    <form class="member-search-form" method="get" th:action="@{/admin/staff}">
+                    <form class="member-search-form" method="get" th:action="@{/admin/staff}"
+                        data-auto-filter-form data-focus-key="adminStaffFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
                                 th:placeholder="#{admin.staff.searchPlaceholder}">
-                            <select class="form-select member-filter-select" name="staffType"
+                            <select class="form-select member-filter-select" name="staffType" data-auto-submit
                                 th:aria-label="#{admin.staff.filterType}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStaffType)}" th:text="#{admin.staff.allTypes}">All Types</option>
                                 <option value="Librarian" th:selected="${selectedStaffType == 'Librarian'}" th:text="#{role.librarian}">Librarian</option>
                                 <option value="Admin" th:selected="${selectedStaffType == 'Admin'}">Admin</option>
                             </select>
-                            <select class="form-select member-filter-select" name="status"
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{admin.accounts.filterStatus}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{common.allStatuses}">All Statuses</option>
                                 <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{account.status.active}">Active</option>
                                 <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{account.status.inactive}">Inactive</option>
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{account.status.blocked}">Blocked</option>
                             </select>
-                            <button class="btn member-search-button text-nowrap" type="submit" th:text="#{common.search}">Search</button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/staff}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -142,7 +147,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 staff-type-badge"
+                                    <span class="staff-type-badge"
                                         th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}"
                                         th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                         Librarian
@@ -150,15 +155,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 staff-status-badge"
+                                    <span class="status-badge"
                                         th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
-          staff.user.status.name() == 'Active' ? 'staff-status-active' :
-          staff.user.status.name() == 'Blocked' ? 'staff-status-blocked' :
-          'staff-status-other'
+          staff.user.status.name() == 'Active' ? 'status-active' :
+          staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+          'status-inactive'
       }" th:text="${staff.user.status.name() == 'Active' ? #messages.msg('account.status.active') : (staff.user.status.name() == 'Blocked' ? #messages.msg('account.status.blocked') : #messages.msg('account.status.inactive'))}">
                                         Active
                                     </span>
-                                    <span class="badge rounded-pill px-3 py-2 staff-status-badge staff-status-other"
+                                    <span class="status-badge status-inactive"
                                         th:if="${staff.user == null || staff.user.status == null}">
                                         N/A
                                     </span>
@@ -185,14 +190,15 @@
                                         </button>
 
                                         <!-- Update Modal -->
-                                        <div class="modal fade text-start"
+                                    <div class="modal text-start member-form-modal"
                                             th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
                                             aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                             th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
-                                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post" class="staff-update-form" novalidate
-                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}">
+                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
+                                                        th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='staff')}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -425,7 +431,7 @@
                                                                     <div class="col-md-6">
                                                                         <div class="small text-muted" th:text="#{admin.staff.type}">Staff Type</div>
                                                                         <span
-                                                                            class="badge rounded-pill px-3 py-2 staff-type-badge"
+                                                                            class="staff-type-badge"
                                                                             th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}"
                                                                             th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                                                             Librarian
@@ -436,7 +442,7 @@
                                                         </div>
 
                                                         <div class="modal-footer member-modal-footer">
-                                                            <button type="button" class="btn btn-light"
+                                                            <button type="button" class="btn btn-light member-update-cancel"
                                                                 data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
                                                             <button type="submit" class="btn btn-danger" th:text="#{admin.accounts.confirmDelete}">Delete Account</button>
                                                         </div>
@@ -536,7 +542,15 @@
                     const modal = form.closest(".modal");
                     const submitButton = form.querySelector("button[type='submit']");
                     const globalError = form.querySelector(".staff-update-global-error");
+                    let isSubmitting = false;
                     let lastFocusedField = null;
+
+                    submitButton.addEventListener("click", function (event) {
+                        if (isSubmitting) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        }
+                    });
 
                     form.querySelectorAll("input, select, textarea").forEach(function (field) {
                         field.addEventListener("focus", function () {
@@ -600,10 +614,6 @@
                             }
                         });
 
-                        if (lastFocusedField != null
-                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
-                            lastFocusedField.focus();
-                        }
                     }
 
                     function validateLocally() {
@@ -651,23 +661,61 @@
                         return errors;
                     }
 
-                    form.addEventListener("submit", function (event) {
+                    form.addEventListener("submit", async function (event) {
                         event.preventDefault();
+                        if (isSubmitting) return;
+                        isSubmitting = true;
                         clearErrors();
 
                         const localErrors = validateLocally();
-                        if (Object.keys(localErrors).length > 0) {
-                            showErrors(localErrors);
-                            return;
-                        }
-
                         submitButton.disabled = true;
-                        form.submit();
+                        try {
+                            const params = new URLSearchParams();
+                            new FormData(form).forEach(function (value, key) {
+                                if (key !== "source" && !key.startsWith("_csrf")) {
+                                    params.append(key, value);
+                                }
+                            });
+
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
+                                headers: { "Accept": "application/json" }
+                            });
+                            if (!response.ok) {
+                                throw new Error("Validation request failed");
+                            }
+
+                            const serverErrors = await response.json();
+                            const errors = Object.assign({}, serverErrors, localErrors);
+                            if (Object.keys(errors).length > 0) {
+                                showErrors(errors);
+                                return;
+                            }
+
+                            form.submit();
+                        } catch (error) {
+                            showErrors(Object.assign({}, localErrors, {
+                                _global: "Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại."
+                            }));
+                        } finally {
+                            submitButton.disabled = false;
+                            isSubmitting = false;
+                        }
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
                         form.reset();
                         clearErrors();
+                    });
+                    modal.querySelector(".member-update-cancel")?.addEventListener("click", function () {
+                        form.reset();
+                        clearErrors();
+                    });
+                    modal.addEventListener("hide.bs.modal", function (event) {
+                        if (isSubmitting) event.preventDefault();
                     });
                 });
             });
