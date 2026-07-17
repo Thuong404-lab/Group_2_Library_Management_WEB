@@ -1,6 +1,7 @@
 package com.lms.service.impl;
 
 import com.lms.entity.Book;
+import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.AuthorRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.CategoryRepository;
@@ -107,6 +108,7 @@ public class BookServiceImpl implements BookService {
     // UC-3: Xem chi tiết sách
     @Override
     public Book findBookById(Integer id) {
-        return bookRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy sách với ID: " + id));
+        return bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
     }
 }

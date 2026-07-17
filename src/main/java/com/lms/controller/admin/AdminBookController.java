@@ -55,12 +55,10 @@ public class AdminBookController {
             @RequestParam(required = false) String description,
             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(required = false) Integer shelfId,
-            @RequestParam(required = false) String bookCondition,
-            @RequestParam(required = false) String authorName,
             RedirectAttributes redirectAttributes) {
         try {
             String coverImageUrl = storeCover(coverImage);
-            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId, bookCondition, authorName);
+            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId);
             success(redirectAttributes, "Thêm sách mới thành công.");
         } catch (IllegalArgumentException ex) {
             error(redirectAttributes, ex);
@@ -73,11 +71,9 @@ public class AdminBookController {
             @RequestParam String isbn, @RequestParam Integer genreId, @RequestParam String status,
             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(required = false) Integer shelfId,
-            @RequestParam(required = false) String description,
-            @RequestParam(required = false) String author,
             RedirectAttributes redirectAttributes) {
         try {
-            inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId, description, author);
+            inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId);
             success(redirectAttributes, "Cập nhật sách thành công.");
         } catch (IllegalArgumentException ex) {
             error(redirectAttributes, ex);

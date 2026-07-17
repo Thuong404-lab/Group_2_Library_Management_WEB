@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
@@ -10,6 +11,8 @@ import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.dto.response.MemberListViewData;
 import com.lms.service.LibrarianMemberService;
+import com.lms.service.OverdueReminderService;
+import com.lms.service.OverdueViolationQueryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,29 +50,40 @@ public class MemberMgmtController {
     private final FinancialService financialService;
     private final TransactionRepository transactionRepository;
     private final MemberRepository memberRepository;
+    private final OverdueReminderService overdueReminderService;
+    private final OverdueViolationQueryService overdueViolationQueryService;
 
     public MemberMgmtController(LibrarianMemberService memberService,
                                 FinancialService financialService,
                                 TransactionRepository transactionRepository,
-                                MemberRepository memberRepository) {
+                                MemberRepository memberRepository,
+                                OverdueReminderService overdueReminderService,
+                                OverdueViolationQueryService overdueViolationQueryService) {
         this.memberService = memberService;
         this.financialService = financialService;
         this.transactionRepository = transactionRepository;
         this.memberRepository = memberRepository;
+        this.overdueReminderService = overdueReminderService;
+        this.overdueViolationQueryService = overdueViolationQueryService;
     }
 
     @GetMapping("/members")
     public String viewMemberList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "") String tier,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        MemberListViewData data = memberService.getMemberList(page, keyword);
+        MemberListViewData data = memberService.getMemberList(page, keyword, status, tier);
         model.addAttribute("accounts", data.accounts());
         model.addAttribute("memberByUserId", data.memberByUserId());
         model.addAttribute("tiers", data.tiers());
+        model.addAttribute("memberSummary", data.summaryCounts());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedTier", tier);
         addCurrentUser(model, userDetails);
         return "librarian/member-list";
     }
@@ -153,7 +167,7 @@ public class MemberMgmtController {
         try {
             memberService.changeMemberStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         redirectAttributes.addAttribute("page", Math.max(page, 0));
@@ -165,8 +179,15 @@ public class MemberMgmtController {
     public String manageFines(@RequestParam(required = false, defaultValue = "") String memberKeyword,
                               Model model,
                               @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAttribute("memberKeyword", memberKeyword);
-        model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
+        var overdueViolations = overdueViolationQueryService.getActiveOverdueViolations();
+        model.addAttribute("fineMembers", memberRepository.findAll());
+        model.addAttribute("overdueViolations", overdueViolations);
+        model.addAttribute("finePerDay", overdueViolationQueryService.getConfiguredFinePerDay());
+        model.addAttribute("overdueViolationCount", overdueViolations.size());
+        model.addAttribute("overdueMemberCount", overdueViolations.stream()
+                .map(violation -> violation.memberId())
+                .distinct()
+                .count());
         addCurrentUser(model, userDetails);
         return "librarian/fines";
     }
@@ -180,8 +201,22 @@ public class MemberMgmtController {
         try {
             financialService.createFine(memberId, amount, reason);
             redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/librarian/members/fines";
+    }
+
+    @PostMapping("/members/fines/remind/{borrowDetailId}")
+    public String remindOverdueMember(
+            @PathVariable Integer borrowDetailId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            overdueReminderService.sendReturnReminder(borrowDetailId);
+            redirectAttributes.addFlashAttribute(
+                    "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/librarian/members/fines";
     }
@@ -202,14 +237,22 @@ public class MemberMgmtController {
         return "librarian/transactions";
     }
 
+    @GetMapping("/members/refunds")
+    public String viewPendingRefunds(Model model,
+                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        model.addAttribute("pendingRefundRequests", financialService.getPendingReservationDepositRefunds());
+        model.addAttribute("reservationDepositAmount", financialService.getReservationDepositAmount());
+        addCurrentUser(model, userDetails);
+        return "librarian/refunds";
+    }
+
     @GetMapping("/members/topup")
     public String showTopupDesk(Model model,
                                 @RequestParam(required = false, defaultValue = "") String memberKeyword,
                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
         addTopupDeskStats(model);
         model.addAttribute("recentTopups", transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
-        model.addAttribute("memberKeyword", memberKeyword);
-        model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
+        model.addAttribute("topupMembers", memberRepository.findAll());
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
     }
@@ -222,7 +265,7 @@ public class MemberMgmtController {
         try {
             financialService.topUpMemberAccount(memberPhone, amount);
             redirectAttributes.addFlashAttribute("success", "Nạp tiền vào ví thành viên thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
             redirectAttributes.addFlashAttribute("amount", amount);
@@ -338,7 +381,7 @@ public class MemberMgmtController {
             else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
             data.put("tier", tierName);
             
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             data.put("found", false);
             data.put("error", e.getMessage());
         }

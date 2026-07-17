@@ -1,53 +1,40 @@
-# 📚 Library Management Web (LMW)
+# Library Management Web
 
-![Java](https://img.shields.io/badge/Java-21-blue?logo=java)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-brightgreen?logo=spring-boot)
-![SQL Server](https://img.shields.io/badge/SQL_Server-2019+-red?logo=microsoft-sql-server)
-![Thymeleaf](https://img.shields.io/badge/Thymeleaf-HTML5-green)
+A web-based library management system for administrators, librarians, and members.
 
-A professional, web-based Library Management Web developed for the SWP391 course. This system streamlines library operations, including book inventory, member borrowing/returning cycles, financial tracking (fines/deposits), and comprehensive reporting.
+## Key Features
 
----
+- Account, role, catalog, and inventory management.
+- Book reservations, borrowing, renewals, and returns.
+- Fine management, payments, and PayOS reconciliation.
+- Book reviews, notifications, reports, and PDF export.
 
-## ✨ Key Features
+## Technology Stack
 
-* **Authentication & Roles:** Secure login with role-based access control (Admin, Librarian, Member, Guest).
-* **Catalog & Inventory:** Browse, search, and manage books, categories, and physical storage locations.
-* **Borrowing Cycle:** Seamless process for reserving, borrowing, extending, and returning books.
-* **Financial Module:** Automated calculation of late fines, damage compensation, and member wallet top-ups.
-* **Engagement:** Book reviews, ratings, and email/system notifications.
-* **Administration:** Detailed statistical reports, user management, and system data backups.
+- Java 17, Spring Boot 3.3, Spring Security, Spring Data JPA
+- Thymeleaf, Bootstrap 5, JavaScript
+- Microsoft SQL Server
+- Cloudinary, Spring Mail, PayOS, iText
 
-## 🛠️ Technology Stack
+## Setup
 
-* **Backend:** Java 17, Spring Boot 3, Spring Security, Spring Data JPA (Hibernate)
-* **Frontend:** Thymeleaf, Bootstrap 5, Vanilla JS/CSS
-* **Database:** Microsoft SQL Server
-* **Integrations:** Cloudinary (Images), Spring Mail (Notifications), iText 7 (PDF Export)
+Requirements: Java 17 and SQL Server 2019 or later.
 
----
+1. Initialize the database with `database/LMW.sql`.
+2. Apply the required migration scripts from the `database` directory.
+3. Configure the database connection and service credentials in `src/main/resources/application-dev.properties`.
+4. Start the application:
 
-## Getting Started
-
-Follow these steps to set up the project locally.
-
-### 1. Prerequisites
-* **Java 17** or higher
-* **Maven 3.8+**
-* **SQL Server 2019+**
-
-### 2. Database Setup
-1. Open SQL Server Management Studio (SSMS).
-2. Execute the script located at `database/LibraryManagementSystem_FIXED.sql` to generate the schema and mock data.
-
-### 3. Environment Configuration
-Duplicate the example configuration file:
-```bash
-cp src/main/resources/application-dev.properties.example src/main/resources/application-dev.properties
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
-Update `application-dev.properties` với thông tin Database, Cloudinary API keys, và Mail configurations của bạn.
 
-### 4. Run the Application
-```bash
-mvn spring-boot:run
+Open `http://localhost:8081` in your browser.
+
+## Testing
+
+```powershell
+.\mvnw.cmd test
 ```
+
+Do not commit passwords or API keys to the repository.

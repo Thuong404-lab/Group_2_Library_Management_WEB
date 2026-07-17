@@ -15,7 +15,7 @@ public interface MemberFavoriteService {
     List<Favorites> getMyFavorites(String username);
     Page<Favorites> getMyFavorites(String username, Pageable pageable);
     Set<Integer> getMyFavoriteBookIds(String username);
-    Reservation reserveBook(String username, Integer bookId) throws Exception;
+    Reservation reserveBook(String username, Integer bookId);
 
     // BỔ SUNG THÊM VÀO ĐÂY ĐỂ PHỤC VỤ ĐỀ CỬ:
     List<Book> getFavoriteBooksByMember(String username);

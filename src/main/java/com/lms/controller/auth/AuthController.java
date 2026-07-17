@@ -1,4 +1,5 @@
 package com.lms.controller.auth;
+import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.ForgotPasswordRequest;
 import com.lms.dto.request.RegisterRequest;
@@ -56,8 +57,7 @@ public class AuthController {
         } catch (AuthException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
             return "redirect:/register";
-        } catch (Exception e) {
-            System.out.println("Lỗi Server: " + e.getMessage());
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMsg", "Hệ thống đang bảo trì, vui lòng thử lại sau!");
             return "redirect:/register";
         }
@@ -83,9 +83,9 @@ public class AuthController {
         try {
             authService.requestPasswordReset(forgotPasswordRequest.getEmail());
             redirectAttributes.addFlashAttribute("successMsg",
-                    "Nếu email của bạn tồn tại trong hệ thống, một liên kết đặt lại mật khẩu đã được gửi đến email của bạn.");
+                    "Liên kết đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn. Vui lòng kiểm tra hộp thư để tiếp tục.");
             return "redirect:/forgot-password";
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
             return "redirect:/forgot-password";
         }
@@ -115,7 +115,7 @@ public class AuthController {
             request.setToken(token);
             model.addAttribute("resetPasswordRequest", request);
             return "reset-password";
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             session.removeAttribute("passwordResetToken");
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
             return "redirect:/login";
@@ -148,7 +148,7 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("successMsg",
                     "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập.");
             return "redirect:/login";
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             session.removeAttribute("passwordResetToken");
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
             return "redirect:/login";

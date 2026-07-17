@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.entity.Shelf;
 import com.lms.service.StorageService;
@@ -38,7 +39,7 @@ public class StorageController {
         try {
             storageService.addStorageLocation(shelfName, location);
             redirectAttributes.addFlashAttribute("success", "Thêm vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=storage";
@@ -66,7 +67,7 @@ public class StorageController {
         try {
             storageService.updateStorageLocation(id, shelfName, location);
             redirectAttributes.addFlashAttribute("success", "Cập nhật vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=storage";
@@ -77,7 +78,7 @@ public class StorageController {
         try {
             storageService.removeStorageLocation(id);
             redirectAttributes.addFlashAttribute("success", "Xóa vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/librarian/dashboard?section=books&subsection=storage";

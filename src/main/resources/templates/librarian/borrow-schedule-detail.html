@@ -1,160 +1,169 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/librarian_base}">
+
 <head>
-    <title>Chi tiết Phiếu Mượn</title>
-    <style>
-        .section-title {
-            color: #8b5a2b;
-            font-family: 'Playfair Display', serif;
-            font-weight: bold;
-            font-size: 1.25rem;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.2);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-        }
-        .section-title i {
-            margin-right: 0.5rem;
-        }
-        .avatar-circle {
-            width: 65px;
-            height: 65px;
-            background-color: #8b5a2b;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            font-family: 'Playfair Display', serif;
-            margin-right: 15px;
-            box-shadow: 0 4px 6px rgba(139, 90, 43, 0.2);
-        }
-        .classic-table th {
-            background-color: rgba(139, 90, 43, 0.08) !important;
-            color: #4a3b32;
-            font-weight: 700;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
-            padding: 12px;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        .classic-table td {
-            vertical-align: middle;
-            background-color: transparent !important;
-            border-bottom: 1px dashed rgba(139, 90, 43, 0.2) !important;
-            padding: 12px;
-            font-size: 0.95rem;
-        }
-    </style>
+    <title>Chi tiết phiếu mượn</title>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-schedule-detail.css}" />
 </head>
+
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-schedule'">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
-        <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Chi Tiết Mượn Trả</h2>
-            <div class="text-muted small">Xem chi tiết thông tin phiếu mượn và các giao dịch liên quan.</div>
-        </div>
-        <div>
-            <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-classic-outline px-4 py-2" style="border-radius: 6px; font-weight: 500;">
-                <i class="bi bi-arrow-left me-2"></i>Quay lại
+    <div layout:fragment="content" th:with="activeMenu='borrow-schedule'"
+        class="canonical-management-page borrow-schedule-detail-page">
+        <header class="detail-page-header">
+            <div class="detail-page-heading">
+                <p class="app-page-eyebrow">Quản lý mượn trả</p>
+                <h1 class="app-page-title">Chi tiết mượn trả</h1>
+                <p class="app-page-description">Xem thông tin phiếu mượn, sách đã mượn và các giao dịch liên quan.</p>
+            </div>
+            <a th:href="@{/librarian/loan/borrow-schedule}" class="detail-back-button">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                <span>Quay lại</span>
             </a>
-        </div>
-    </div>
+        </header>
 
-    <div class="row g-5 mt-2">
-        <!-- Left Column -->
-        <div class="col-lg-4">
-            <h5 class="section-title"><i class="bi bi-person-fill"></i>Thông tin độc giả</h5>
-            <div class="d-flex align-items-center mb-4">
-                <div class="avatar-circle">R</div>
-                <div>
-                    <div class="fw-bold fs-5" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Ridotoji Jikika</div>
-                    <span class="badge text-white mt-1" style="background-color: #8b5a2b; font-weight: normal; padding: 4px 10px;">Regular</span>
+        <main class="loan-detail-layout" aria-label="Chi tiết phiếu mượn">
+            <aside class="detail-card reader-summary-card" aria-labelledby="reader-summary-title">
+                <div class="detail-card-header">
+                    <div>
+                        <h2 id="reader-summary-title" class="app-section-title">Thông tin độc giả</h2>
+                        <p class="app-section-description">Người đứng tên trên phiếu mượn.</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="mb-3">
-                <small class="text-muted d-block" style="font-size: 0.85rem;">Mã độc giả</small>
-                <div class="text-dark">TV-22</div>
-            </div>
-            <div class="mb-3">
-                <small class="text-muted d-block" style="font-size: 0.85rem;">Địa chỉ Email</small>
-                <div class="text-dark">jikikaridotoji@gmail.com</div>
-            </div>
-            <div class="mb-3">
-                <small class="text-muted d-block" style="font-size: 0.85rem;">Số điện thoại</small>
-                <div class="text-dark fst-italic text-muted">Chưa cập nhật</div>
-            </div>
-        </div>
-        
-        <!-- Right Column -->
-        <div class="col-lg-8">
-            <h5 class="section-title"><i class="bi bi-calendar2-check-fill"></i>Thông tin mượn trả</h5>
-            <div class="row mb-5">
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <small class="text-muted d-block" style="font-size: 0.85rem;">Ngày mượn</small>
-                    <div class="text-dark">12/07/2026 18:49</div>
-                </div>
-                <div class="col-md-6">
-                    <small class="text-muted d-block" style="font-size: 0.85rem;">Thủ thư phụ trách</small>
-                    <div class="text-dark">Admin</div>
-                </div>
-            </div>
-            
-            <h5 class="section-title"><i class="bi bi-book-half"></i>Danh sách sách mượn</h5>
-            <div class="table-responsive mb-5">
-                <table class="table classic-table mb-0 text-center">
-                    <thead>
-                        <tr>
-                            <th class="text-start">Tên sách</th>
-                            <th>Mã vạch (Barcode)</th>
-                            <th>Hạn trả</th>
-                            <th>Ngày trả thực tế</th>
-                            <th>Gia hạn</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="text-start">
-                                <div class="fw-bold" style="color: #4a3b32;">Cho Tôi Xin Một Vé Đi Tuổi Thơ</div>
-                                <small class="text-muted">Nguyễn Nhật Ánh</small>
-                            </td>
-                            <td><span class="font-monospace" style="color: #8b5a2b; font-size: 0.9rem;">BC014-001</span></td>
-                            <td>26/07/2026</td>
-                            <td>12/07/2026<br><small class="text-muted">18:50</small></td>
-                            <td>0 lần</td>
-                            <td><span class="badge bg-success text-white" style="font-weight: normal; padding: 4px 8px; border-radius: 4px;">Đã trả</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
 
-            <h5 class="section-title"><i class="bi bi-wallet2"></i>Giao dịch liên quan</h5>
-            <div class="table-responsive mb-4">
-                <table class="table classic-table mb-0 text-center">
-                    <thead>
-                        <tr>
-                            <th>Mã GD</th>
-                            <th>Loại giao dịch</th>
-                            <th>Số tiền</th>
-                            <th>Thời gian</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="5" class="py-4 text-muted" style="font-size: 0.9rem;">Không có giao dịch tài chính phát sinh cho phiếu mượn này.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="reader-summary-body">
+                    <div class="reader-identity">
+                        <div class="reader-avatar" aria-hidden="true">R</div>
+                        <div class="reader-identity-copy">
+                            <p class="reader-name">Ridotoji Jikika</p>
+                            <span class="reader-tier">Regular</span>
+                        </div>
+                    </div>
+
+                    <dl class="detail-list">
+                        <div class="detail-list-item">
+                            <dt>Mã độc giả</dt>
+                            <dd>TV-22</dd>
+                        </div>
+                        <div class="detail-list-item">
+                            <dt>Địa chỉ email</dt>
+                            <dd class="detail-value-break">jikikaridotoji@gmail.com</dd>
+                        </div>
+                        <div class="detail-list-item">
+                            <dt>Số điện thoại</dt>
+                            <dd class="detail-value-muted">Chưa cập nhật</dd>
+                        </div>
+                    </dl>
+                </div>
+            </aside>
+
+            <div class="loan-detail-content">
+                <section class="detail-card" aria-labelledby="loan-overview-title">
+                    <div class="detail-card-header">
+                        <div>
+                            <h2 id="loan-overview-title" class="app-section-title">Thông tin mượn trả</h2>
+                            <p class="app-section-description">Thông tin ghi nhận khi lập phiếu.</p>
+                        </div>
+                    </div>
+                    <dl class="loan-overview-grid">
+                        <div class="overview-item">
+                            <dt>Ngày mượn</dt>
+                            <dd><time datetime="2026-07-12T18:49">12/07/2026 18:49</time></dd>
+                        </div>
+                        <div class="overview-item">
+                            <dt>Thủ thư phụ trách</dt>
+                            <dd>Admin</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="detail-card" aria-labelledby="borrowed-books-title">
+                    <div class="detail-card-header detail-card-header--with-meta">
+                        <div>
+                            <h2 id="borrowed-books-title" class="app-section-title">Danh sách sách mượn</h2>
+                            <p class="app-section-description">Chi tiết thời hạn và trạng thái của từng cuốn sách.</p>
+                        </div>
+                        <span class="record-count">1 cuốn sách</span>
+                    </div>
+
+                    <div class="app-table-wrap">
+                        <table class="app-table borrowed-books-table">
+                            <caption class="visually-hidden">Danh sách sách thuộc phiếu mượn</caption>
+                            <colgroup>
+                                <col class="book-title-column" />
+                                <col class="barcode-column" />
+                                <col class="due-date-column" />
+                                <col class="returned-date-column" />
+                                <col class="renewal-column" />
+                                <col class="loan-status-column" />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Tên sách</th>
+                                    <th scope="col">Mã vạch</th>
+                                    <th scope="col">Hạn trả</th>
+                                    <th scope="col">Ngày trả thực tế</th>
+                                    <th scope="col">Gia hạn</th>
+                                    <th scope="col">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-label="Tên sách">
+                                        <span class="book-title">Cho Tôi Xin Một Vé Đi Tuổi Thơ</span>
+                                        <span class="book-author">Nguyễn Nhật Ánh</span>
+                                    </td>
+                                    <td data-label="Mã vạch"><span class="book-barcode">BC014-001</span></td>
+                                    <td data-label="Hạn trả"><time datetime="2026-07-26">26/07/2026</time></td>
+                                    <td data-label="Ngày trả thực tế">
+                                        <time datetime="2026-07-12T18:50">12/07/2026 <span class="return-time">18:50</span></time>
+                                    </td>
+                                    <td data-label="Gia hạn">0 lần</td>
+                                    <td data-label="Trạng thái">
+                                        <span class="status-badge status-returned">Đã hoàn trả</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="detail-card" aria-labelledby="transactions-title">
+                    <div class="detail-card-header">
+                        <div>
+                            <h2 id="transactions-title" class="app-section-title">Giao dịch liên quan</h2>
+                            <p class="app-section-description">Các khoản thu phát sinh từ phiếu mượn này.</p>
+                        </div>
+                    </div>
+
+                    <div class="app-table-wrap">
+                        <table class="app-table transaction-table">
+                            <caption class="visually-hidden">Danh sách giao dịch liên quan đến phiếu mượn</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Mã giao dịch</th>
+                                    <th scope="col">Loại giao dịch</th>
+                                    <th scope="col">Số tiền</th>
+                                    <th scope="col">Thời gian</th>
+                                    <th scope="col">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="empty-table-cell">
+                                        <div class="app-empty-state">
+                                            <p>Không có giao dịch tài chính phát sinh cho phiếu mượn này.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
-        </div>
+        </main>
     </div>
-</div>
 </body>
+
 </html>

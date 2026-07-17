@@ -3,275 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title layout:title-pattern="$CONTENT_TITLE - Librarian">Librarian Dashboard</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --sidebar-bg: #4a3b32; /* Dark brown */
-            --sidebar-hover: #5a4b42;
-            --sidebar-active: #8b5a2b; /* Classic accent brown */
-            --page-bg: #fdfbf7; /* Cream */
-            --text-main: #2c1e16;
-            --border-color: rgba(139, 90, 43, 0.2);
-            --header-bg: #ffffff;
-        }
-
-        body {
-            background-color: var(--page-bg);
-            color: var(--text-main);
-            font-family: 'Lora', Georgia, serif;
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        h1, h2, h3, h4, h5, h6, .navbar-brand, .sidebar-brand {
-            font-family: 'Playfair Display', serif;
-        }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            color: #fdfbf7;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1000;
-            transition: width 0.3s;
-        }
-
-        body.sidebar-collapsed .sidebar {
-            width: 70px;
-        }
-
-        .sidebar-header {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            border-bottom: 1px solid rgba(253, 251, 247, 0.1);
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .sidebar-brand {
-            color: #fdfbf7;
-            text-decoration: none;
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sidebar-brand,
-        .sidebar-brand:hover,
-        .sidebar-brand:focus {
-            color: #fdfbf7;
-            text-decoration: none;
-        }
-
-        .sidebar-menu {
-            flex: 1;
-            overflow-y: auto;
-            padding-top: 15px;
-            list-style: none;
-            margin: 0;
-            padding-left: 0;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE and Edge */
-        }
-        .sidebar-menu::-webkit-scrollbar {
-            display: none; /* Safari and Chrome */
-        }
-
-        .menu-item {
-            margin-bottom: 4px;
-        }
-
-        .menu-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: #e6dfd7;
-            text-decoration: none;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .menu-link,
-        .menu-link:hover,
-        .menu-link:focus,
-        .menu-link:active {
-            text-decoration: none;
-        }
-
-        .menu-link:hover {
-            background-color: var(--sidebar-hover);
-            color: #fdfbf7;
-        }
-
-        .menu-link.active {
-            background-color: var(--sidebar-active);
-            color: #ffffff;
-            font-weight: 600;
-            border-left: 4px solid #dcb38a;
-        }
-
-        #borrowMenu .menu-link {
-            color: #e6dfd7 !important;
-            font-weight: 400;
-        }
-
-        #borrowMenu .menu-link:hover {
-            color: #fdfbf7 !important;
-            background-color: var(--sidebar-hover);
-        }
-
-        #borrowMenu .menu-link.active-submenu {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
-
-        #financeMenu .menu-link {
-            color: #e6dfd7 !important;
-            font-weight: 400;
-        }
-
-        #financeMenu .menu-link:hover {
-            color: #fdfbf7 !important;
-            background-color: var(--sidebar-hover);
-        }
-
-        #financeMenu .menu-link.active-submenu {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
-
-        .menu-icon {
-            font-size: 1.1rem;
-            min-width: 30px;
-            text-align: center;
-            margin-right: 10px;
-        }
-
-        body.sidebar-collapsed .menu-text {
-            display: none;
-        }
-
-        /* Topbar Styling */
-        .main-wrapper {
-            flex: 1;
-            margin-left: 250px;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            transition: margin-left 0.3s;
-        }
-
-        body.sidebar-collapsed .main-wrapper {
-            margin-left: 70px;
-        }
-
-        .topbar {
-            height: 60px;
-            background-color: var(--header-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-        }
-
-        .toggle-btn {
-            background: transparent;
-            border: none;
-            color: #8b5a2b;
-            font-size: 1.25rem;
-            cursor: pointer;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-dropdown-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: var(--sidebar-active);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        /* Content Area */
-        .content-area {
-            padding: 24px;
-            flex: 1;
-        }
-
-        /* Common Utility Classes for Classic Theme */
-        .btn-classic {
-            background-color: #8b5a2b;
-            color: #fdfbf7;
-            border: none;
-        }
-        .btn-classic:hover {
-            background-color: #6b4423;
-            color: #fdfbf7;
-        }
-        .btn-outline-classic {
-            border: 1px solid #8b5a2b;
-            color: #8b5a2b;
-            background-color: transparent;
-        }
-        .btn-outline-classic:hover {
-            background-color: #8b5a2b;
-            color: #fdfbf7;
-        }
-        .card-classic {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(139, 90, 43, 0.05);
-        }
-        .text-classic {
-            color: #8b5a2b !important;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/layouts/librarian-base.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
+      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+  </head>
 <body>
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <a th:href="@{/librarian/dashboard}" class="sidebar-brand">
-            <i class="bi bi-book-half" style="color: #dcb38a;"></i>
+            <i class="bi bi-book-half u-color-dcb38a-c310609e"></i>
             <span class="menu-text">LMW Librarian</span>
         </a>
     </div>
@@ -284,27 +31,27 @@
         </li>
 
         <li class="menu-item">
-            <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-journal-bookmark-fill menu-icon"></i>
                     <span class="menu-text">Quản lý mượn, trả</span>
                 </div>
-                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
             <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Lịch mượn trả chi tiết</span>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Lịch mượn trả chi tiết</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Xử lý yêu cầu mượn</span>
+                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Quầy mượn sách</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/loan/returns}" class="menu-link py-2" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''" style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Xác nhận trả sách</span>
+                    <a th:href="@{/librarian/loan/returns}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Xác nhận trả sách</span>
                     </a>
             </ul>
         </li>
@@ -326,7 +73,7 @@
         <li class="menu-item">
             <a th:href="@{/librarian/dashboard(section='acquisition')}" class="menu-link" th:classappend="${activeMenu == 'suggestions'} ? 'active'">
                 <i class="bi bi-plus-square-fill menu-icon"></i>
-                <span class="menu-text">Đề xuất mua sách</span>
+                <span class="menu-text">Đề xuất bổ sung sách</span>
             </a>
         </li>
 
@@ -338,49 +85,79 @@
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/dashboard(section='users')}" class="menu-link" th:classappend="${activeMenu == 'users'} ? 'active'">
-                <i class="bi bi-people-fill menu-icon"></i>
-                <span class="menu-text">Quản lý người dùng</span>
+            <a href="#userManagementMenu" data-bs-toggle="collapse"
+                class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
+                th:attr="aria-expanded=${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'}"
+                aria-controls="userManagementMenu">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-people-fill menu-icon"></i>
+                    <span class="menu-text">Quản lý người dùng</span>
+                </div>
+                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
+            <ul class="collapse list-unstyled ps-4" id="userManagementMenu"
+                th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'show'">
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${activeMenu == 'members'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Danh sách thành viên</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/librarians}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${activeMenu == 'librarians'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Danh sách thủ thư</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/dashboard(section='reports')}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
+            <a th:href="@{/librarian/reports}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
                 <i class="bi bi-graph-up menu-icon"></i>
-                <span class="menu-text">Thống kê</span>
+                <span class="menu-text">Báo cáo và thống kê</span>
             </a>
         </li>
         <li class="menu-item">
-            <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link"
-               th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'active'"
-               style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+               th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'active'"
+              >
                 <div class="d-flex align-items-center">
                     <i class="bi bi-wallet2 menu-icon"></i>
                     <span class="menu-text">Tài chính</span>
                 </div>
-                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
             <ul class="collapse list-unstyled ps-4" id="financeMenu"
-                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines'} ? 'show'">
+                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'show'">
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/topup}" class="menu-link py-2"
+                    <a th:href="@{/librarian/members/topup}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                        th:classappend="${activeMenu == 'topup'} ? 'active-submenu' : ''"
-                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Nạp tiền</span>
+                      >
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Nạp tiền</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/transactions}" class="menu-link py-2"
+                    <a th:href="@{/librarian/members/transactions}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                        th:classappend="${activeMenu == 'transactions'} ? 'active-submenu' : ''"
-                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Lịch sử giao dịch</span>
+                      >
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Quản lý giao dịch</span>
                     </a>
                 </li>
                 <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/fines}" class="menu-link py-2"
+                    <a th:href="@{/librarian/members/fines}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                        th:classappend="${activeMenu == 'fines'} ? 'active-submenu' : ''"
-                       style="background: transparent; border-left: none; min-height: auto; padding-left: 50px;">
-                        <span class="menu-text" style="font-size: 0.95rem;">Phí phạt</span>
+                      >
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Phí phạt</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/members/refunds}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                       th:classappend="${activeMenu == 'refunds'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad">Duyệt hoàn tiền</span>
                     </a>
                 </li>
             </ul>
@@ -401,14 +178,14 @@
         <div class="topbar-right">
             <div class="dropdown">
                 <div class="user-dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="user-avatar p-0 overflow-hidden" style="border: 2px solid #8b5a2b;">
-                        <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0" style="background-color: #8b5a2b; color: white;"></i>
-                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0" style="object-fit: cover;">
+                    <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad">
+                        <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
+                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
                     </div>
                     <span sec:authorize="isAuthenticated()" sec:authentication="name">Librarian</span>
-                    <i class="bi bi-chevron-down ms-1" style="font-size: 0.8rem; color: #8b5a2b;"></i>
+                    <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8"></i>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="border: 1px solid var(--border-color) !important;">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 librarian-base-ul-border-10">
                     <li><a class="dropdown-item py-2" th:href="@{/librarian/profile}"><i class="bi bi-person-circle me-2 text-classic"></i>Hồ sơ cá nhân</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item py-2 text-danger" th:href="@{/staff-logout}"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
@@ -430,5 +207,7 @@
         document.body.classList.toggle('sidebar-collapsed');
     });
 </script>
+    <script th:src="@{/js/dynamic-presentation.js}"></script>
+    <script th:src="@{/js/confirmation-dialog.js}"></script>
 </body>
 </html>

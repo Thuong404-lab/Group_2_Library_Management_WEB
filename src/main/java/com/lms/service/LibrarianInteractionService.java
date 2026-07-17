@@ -14,15 +14,19 @@ public interface LibrarianInteractionService {
 
     Page<LibrarianReviewResponse> getReviewsForModeration(String status, Pageable pageable);
 
-    void replyReview(Integer feedbackId, LibrarianReviewReplyRequest request);
+    boolean replyReview(Integer feedbackId, LibrarianReviewReplyRequest request);
 
     void deleteReview(Integer feedbackId);
 
-    void sendNotificationToMembers(LibrarianNotificationSendRequest request);
+    void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
 
     List<Member> getAllMembers();
 
     Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
+
+    void approveBookAcquisitionRequest(Integer requestId);
+
+    void rejectBookAcquisitionRequest(Integer requestId, String reason);
 
 
 }

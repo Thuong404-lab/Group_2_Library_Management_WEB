@@ -4,6 +4,8 @@ import com.lms.dto.request.RegisterRequest;
 import com.lms.entity.*;
 import com.lms.enums.ActionType;
 import com.lms.exception.AuthException;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.AuthService;
 import com.lms.service.EmailService;
@@ -23,6 +25,11 @@ import java.util.UUID;
  */
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
+    private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
+    private static final String FULL_NAME_TRIPLE_REPEAT_PATTERN = ".*([\\p{L}])\\1\\1.*";
+    private static final String FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN = "^([\\p{L}])\\1+$";
 
     private final UserRepository userRepository;
     private final MemberAccountRepository memberAccountRepository;
@@ -75,9 +82,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Mật khẩu phải có ít nhất 6 ký tự!");
         }
 
-        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-            throw new AuthException("Họ và tên không được để trống!");
-        }
+        validateFullName(request.getFullName());
 
         if (request.getEmail() == null
                 || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
@@ -105,10 +110,32 @@ public class AuthServiceImpl implements AuthService {
 
         createCoreAccount(
                 request.getUsername(),
-                request.getFullName(),
+                request.getFullName().trim(),
                 encodedPassword,
                 request.getEmail(),
                 request.getPhone());
+    }
+
+    private void validateFullName(String fullNameValue) throws AuthException {
+        String fullName = fullNameValue == null ? "" : fullNameValue.trim();
+        if (fullName.isEmpty()) {
+            throw new AuthException("Họ và tên không được để trống!");
+        }
+        if (fullName.length() > 50) {
+            throw new AuthException("Họ tên không được vượt quá 50 ký tự.");
+        }
+        if (!fullName.matches(FULL_NAME_PATTERN)) {
+            throw new AuthException("Họ tên chỉ được chứa chữ cái và khoảng trắng.");
+        }
+        if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
+            throw new AuthException("Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.");
+        }
+        if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
+            throw new AuthException("Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.");
+        }
+        if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
+            throw new AuthException("Họ tên không được chỉ gồm một ký tự lặp lại.");
+        }
     }
 
     private void createAndSaveLog(Integer userId,
@@ -169,11 +196,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void requestPasswordReset(String email) throws Exception {
-        Optional<User> userOptional = userRepository.findByEmail(email.trim());
+    public void requestPasswordReset(String email) {
+        String normalizedEmail = email == null ? "" : email.trim();
+        if (normalizedEmail.isBlank()) {
+            throw new ValidationException("Email không được để trống.");
+        }
+        Optional<User> userOptional = userRepository.findByEmail(normalizedEmail);
 
         if (userOptional.isEmpty()) {
-            System.out.println("Email not found for password reset: " + email);
             return;
         }
 
@@ -202,39 +232,38 @@ public class AuthServiceImpl implements AuthService {
 
         emailService.sendEmail(user.getEmail(), subject, emailContent);
 
-        System.out.println("Password reset email sent to: " + user.getEmail());
     }
 
     @Override
-    public void validatePasswordResetToken(String token) throws Exception {
+    public void validatePasswordResetToken(String token) {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+            throw new ValidationException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new Exception("Token đặt lại mật khẩu đã hết hạn.");
+            throw new ValidationException("Token đặt lại mật khẩu đã hết hạn.");
         }
     }
 
     @Override
     @Transactional
-    public void resetPassword(String token, String newPassword) throws Exception {
+    public void resetPassword(String token, String newPassword) {
         Optional<PasswordResetToken> resetTokenOptional = passwordResetTokenRepository.findByToken(token);
 
         if (resetTokenOptional.isEmpty()) {
-            throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+            throw new ValidationException("Token đặt lại mật khẩu không hợp lệ.");
         }
 
         PasswordResetToken resetToken = resetTokenOptional.get();
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            throw new Exception("Token đặt lại mật khẩu đã hết hạn.");
+            throw new ValidationException("Token đặt lại mật khẩu đã hết hạn.");
         }
 
         User user = resetToken.getUser();
@@ -251,7 +280,7 @@ public class AuthServiceImpl implements AuthService {
                 staffAccount.setPasswordHash(passwordEncoder.encode(newPassword));
                 staffAccountRepository.save(staffAccount);
             } else {
-                throw new Exception("Không tìm thấy tài khoản liên kết với người dùng.");
+                throw new DataProcessingException("Không tìm thấy tài khoản liên kết với người dùng.");
             }
         }
 

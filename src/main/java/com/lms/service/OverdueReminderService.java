@@ -1,0 +1,119 @@
+package com.lms.service;
+
+import com.lms.entity.BorrowDetail;
+import com.lms.entity.Member;
+import com.lms.entity.MemberNotification;
+import com.lms.entity.MemberNotificationId;
+import com.lms.entity.Notification;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
+import com.lms.repository.BorrowDetailRepository;
+import com.lms.repository.MemberNotificationRepository;
+import com.lms.repository.NotificationRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.Set;
+
+/**
+ * Sends read-only overdue reminders without creating a fine transaction.
+ * Maintained by Pham Kien Quoc for the fine-management flow.
+ */
+@Service
+public class OverdueReminderService {
+    private static final Set<String> REMINDABLE_STATUSES =
+            Set.of("BORROWED", "OVERDUE", "RETURN_PENDING");
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private final BorrowDetailRepository borrowDetailRepository;
+    private final NotificationRepository notificationRepository;
+    private final MemberNotificationRepository memberNotificationRepository;
+
+    public OverdueReminderService(
+            BorrowDetailRepository borrowDetailRepository,
+            NotificationRepository notificationRepository,
+            MemberNotificationRepository memberNotificationRepository) {
+        this.borrowDetailRepository = borrowDetailRepository;
+        this.notificationRepository = notificationRepository;
+        this.memberNotificationRepository = memberNotificationRepository;
+    }
+
+    @Transactional
+    public void sendReturnReminder(Integer borrowDetailId) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lượt mượn cần nhắc."));
+
+        validateRemindable(detail);
+
+        Member member = detail.getBorrow().getMember();
+        long overdueDays = Math.max(
+                ChronoUnit.DAYS.between(detail.getDueDate().toLocalDate(), LocalDate.now()),
+                1L);
+        String reminderMarker = "Mã lượt mượn: #" + detail.getBorrowDetailId();
+
+        boolean remindedRecently = memberNotificationRepository
+                .findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
+                        member.getMemberId(),
+                        reminderMarker)
+                .stream()
+                .map(MemberNotification::getNotification)
+                .filter(notification -> notification != null && notification.getCreatedDate() != null)
+                .anyMatch(notification -> notification.getCreatedDate().isAfter(LocalDateTime.now().minusHours(24)));
+
+        if (remindedRecently) {
+            throw new ConflictException("Thành viên đã được nhắc về cuốn sách này trong vòng 24 giờ qua.");
+        }
+
+        String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
+                ? "sách đang mượn"
+                : detail.getBook().getTitle();
+
+        Notification notification = new Notification();
+        notification.setTitle("Nhắc nhở trả sách quá hạn");
+        notification.setContent(
+                "Sách \"" + bookTitle + "\" đã quá hạn " + overdueDays
+                        + " ngày (hạn trả " + detail.getDueDate().format(DATE_FORMATTER) + "). "
+                        + "Vui lòng mang sách đến thư viện để hoàn trả sớm. "
+                        + "Phí quá hạn sẽ được tính theo số ngày trễ tại thời điểm xử lý trả sách. "
+                        + reminderMarker + ".");
+        notification.setCreatedDate(LocalDateTime.now());
+        notification.setStatus("Active");
+        notification = notificationRepository.save(notification);
+
+        MemberNotification memberNotification = new MemberNotification();
+        memberNotification.setId(new MemberNotificationId(
+                member.getMemberId(),
+                notification.getNotificationId()));
+        memberNotification.setMember(member);
+        memberNotification.setNotification(notification);
+        memberNotification.setIsRead(false);
+        memberNotificationRepository.save(memberNotification);
+    }
+
+    private void validateRemindable(BorrowDetail detail) {
+        if (detail.getBorrow() == null
+                || detail.getBorrow().getMember() == null
+                || detail.getBorrow().getMember().getMemberId() == null) {
+            throw new ValidationException("Lượt mượn không có thông tin thành viên hợp lệ.");
+        }
+        if (detail.getDueDate() == null
+                || !detail.getDueDate().toLocalDate().isBefore(LocalDate.now())
+                || detail.getReturnDate() != null) {
+            throw new ConflictException("Sách này không còn thuộc danh sách đang quá hạn.");
+        }
+
+        String status = detail.getStatus() == null
+                ? ""
+                : detail.getStatus().trim().toUpperCase(Locale.ROOT);
+        if (!REMINDABLE_STATUSES.contains(status)) {
+            throw new ConflictException("Trạng thái lượt mượn không cho phép gửi nhắc trả sách.");
+        }
+    }
+}

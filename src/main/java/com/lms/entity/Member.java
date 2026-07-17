@@ -11,7 +11,7 @@ public class Member {
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tier_id")
     private MembershipTier tier;
 

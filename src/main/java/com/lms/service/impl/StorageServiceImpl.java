@@ -1,5 +1,8 @@
 package com.lms.service.impl;
 
+import com.lms.exception.ConflictException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.entity.Shelf;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.ShelfRepository;
@@ -39,11 +42,11 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void addStorageLocation(String shelfName, String location) {
         if (shelfName == null || shelfName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên vị trí không được để trống.");
+            throw new ValidationException("Tên vị trí không được để trống.");
         }
         String normalizedShelfName = shelfName.trim();
         if (shelfRepository.existsByShelfNameIgnoreCase(normalizedShelfName)) {
-            throw new IllegalArgumentException("Tên vị trí đã tồn tại.");
+            throw new ConflictException("Tên vị trí đã tồn tại.");
         }
         Shelf shelf = new Shelf();
         shelf.setShelfName(normalizedShelfName);
@@ -54,17 +57,17 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void updateStorageLocation(Integer shelfId, String shelfName, String location) {
         if (shelfId == null) {
-            throw new IllegalArgumentException("Id vị trí không hợp lệ.");
+            throw new ValidationException("Id vị trí không hợp lệ.");
         }
         if (shelfName == null || shelfName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên vị trí không được để trống.");
+            throw new ValidationException("Tên vị trí không được để trống.");
         }
         Shelf shelf = shelfRepository.findById(shelfId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy vị trí lưu trữ."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vị trí lưu trữ."));
         String normalizedShelfName = shelfName.trim();
         if (!shelf.getShelfName().equalsIgnoreCase(normalizedShelfName)
                 && shelfRepository.existsByShelfNameIgnoreCase(normalizedShelfName)) {
-            throw new IllegalArgumentException("Tên vị trí đã tồn tại.");
+            throw new ConflictException("Tên vị trí đã tồn tại.");
         }
         shelf.setShelfName(normalizedShelfName);
         shelf.setLocation(location == null ? null : location.trim());
@@ -74,10 +77,10 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void removeStorageLocation(Integer shelfId) {
         if (!shelfRepository.existsById(shelfId)) {
-            throw new IllegalArgumentException("Vị trí lưu trữ không tồn tại.");
+            throw new ResourceNotFoundException("Vị trí lưu trữ không tồn tại.");
         }
         if (bookItemRepository.countByShelf_ShelfId(shelfId) > 0) {
-            throw new IllegalStateException("Không thể xóa vị trí đang chứa sách.");
+            throw new ConflictException("Không thể xóa vị trí đang chứa sách.");
         }
         shelfRepository.deleteById(shelfId);
     }

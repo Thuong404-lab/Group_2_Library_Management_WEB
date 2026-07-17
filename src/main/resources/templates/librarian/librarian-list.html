@@ -4,83 +4,75 @@
 
 <head>
     <title>Danh sách Thủ thư</title>
-    <style>
-        .btn-view-detail {
-            color: #78909c;
-            background-color: transparent;
-            border-color: #78909c;
-        }
-
-        .btn-view-detail:hover,
-        .btn-view-detail:focus {
-            color: #ffffff;
-            background-color: #78909c;
-            border-color: #78909c;
-        }
-
-        .view-detail-tooltip .tooltip-inner {
-            color: #ffffff !important;
-            background-color: #78909c !important;
-        }
-
-        .view-detail-tooltip.bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: #78909c !important;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='librarians'">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div layout:fragment="content" th:with="activeMenu='librarians'"
+        class="member-management-page librarian-management-page">
+        <header class="member-page-header">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Danh sách Thủ
-                    thư</h2>
-                <div class="text-muted">Quản lý nhân viên thư viện và tài khoản thủ thư</div>
+                <h1 class="member-page-title">Danh sách thủ thư</h1>
+                <p class="member-page-description">Theo dõi hồ sơ, loại nhân viên và trạng thái tài khoản thủ thư.</p>
             </div>
-        </div>
+        </header>
 
-        <div class="card-classic shadow-sm mb-4">
-            <div class="card-body p-4">
+        <section class="member-data-card">
+            <div class="member-data-card-body">
+                <div class="member-summary-chips" aria-label="Tổng quan thủ thư">
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> thủ
+                        thư</span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong> hoạt
+                        động</span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['inactive'] : 0}">0</strong>
+                        ngừng hoạt động</span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['blocked'] : 0}">0</strong> bị
+                        khóa</span>
+                </div>
 
                 <!-- Search & Filter + Back Button -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="member-toolbar">
                     <!-- Search & Filter -->
-                    <form class="d-flex align-items-center" style="gap: 12px; width: 60%;" method="get"
-                        th:action="@{/librarian/librarians}">
-                        <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0" style="color: #8b5a2b;">
+                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}">
+                        <div class="input-group member-search-group">
+                            <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword"
                                 th:value="${keyword}"
                                 placeholder="Tìm username, thông tin người dùng, loại nhân viên hoặc trạng thái...">
-
-                            <button class="btn btn-classic ms-2 rounded text-nowrap" type="submit">
+                            <select class="form-select member-filter-select" name="status"
+                                aria-label="Lọc theo trạng thái">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
+                                </option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động
+                                </option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
+                            </select>
+                            <button class="btn member-search-button text-nowrap" type="submit">
                                 Tìm kiếm
                             </button>
                         </div>
-                        <a class="btn btn-light border shadow-sm text-nowrap" th:href="@{/librarian/librarians}">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Tải lại
-                        </a>
                     </form>
-
-                    <!-- Back Button -->
-                    <div>
-                        <a class="btn btn-outline-secondary shadow-sm text-nowrap"
-                            th:href="@{/librarian/dashboard(section='users')}">
-                            <i class="bi bi-arrow-left me-1"></i> Trở về
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Table -->
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light text-uppercase small text-muted">
+                <div class="table-responsive member-table-wrap">
+                    <table class="table table-hover align-middle stable-table-layout member-table">
+                        <colgroup>
+                            <col class="u-width-7-2d9383cf">
+                            <col class="u-width-16-9fe033fb">
+                            <col class="librarian-librarian-list-col-width-07">
+                            <col class="librarian-librarian-list-col-width-08">
+                            <col class="u-width-17-9278e232">
+                            <col class="u-width-15-f7f760e2">
+                        </colgroup>
+                        <thead>
                             <tr>
                                 <th class="ps-3">STT</th>
-                                <th>Username</th>
+                                <th>Tên đăng nhập</th>
                                 <th>Thông tin nhân viên</th>
                                 <th>Loại nhân viên</th>
                                 <th>Trạng thái</th>
@@ -132,57 +124,48 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
-                                        style="background-color: #5bc0de;" th:text="${staff.staffType}">
-                                        Librarian
+                                    <span class="librarian-role-badge"
+                                        th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
+                                        Thủ thư
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                    <span class="status-badge"
                                         th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
-                              staff.user.status.name() == 'Active' ? 'bg-success' :
-                              staff.user.status.name() == 'Blocked' ? 'bg-danger' :
-                              'bg-secondary'
-                          }" th:text="${staff.user.status}">
-                                        Active
+                              staff.user.status.name() == 'Active' ? 'status-active' :
+                              staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+                              'status-inactive'
+                          }" th:text="${staff.user.status.name() == 'Active' ? 'Hoạt động' : (staff.user.status.name() == 'Inactive' ? 'Ngừng hoạt động' : (staff.user.status.name() == 'Blocked' ? 'Bị khóa' : staff.user.status))}">
+                                        Hoạt động
                                     </span>
 
-                                    <span class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                    <span class="status-badge status-unknown"
                                         th:if="${staff.user == null || staff.user.status == null}">
                                         N/A
                                     </span>
                                 </td>
 
-                                <td class="text-end pe-3">
-                                    <button type="button" class="btn btn-sm btn-view-detail view-detail-tooltip-trigger"
-                                        data-bs-toggle="modal"
-                                        th:data-bs-target="${'#viewStaffModal' + staff.staffId}"
+                                <td class="text-end pe-3 member-actions">
+                                    <button type="button" class="member-icon-action view-detail-tooltip-trigger"
+                                        data-bs-toggle="modal" th:data-bs-target="${'#viewStaffModal' + staff.staffId}"
                                         data-bs-title="Xem chi tiết" data-bs-custom-class="view-detail-tooltip"
                                         aria-label="Xem chi tiết">
                                         <i class="bi bi-eye"></i>
                                     </button>
 
                                     <!-- View Staff Modal -->
-                                    <div class="modal fade text-start" th:id="${'viewStaffModal' + staff.staffId}"
-                                        tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow">
+                                    <div class="modal fade text-start librarian-detail-modal"
+                                        th:id="${'viewStaffModal' + staff.staffId}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                            <div class="modal-content">
 
-                                                <div class="modal-header border-bottom border-color"
-                                                    style="background-color: #fdfbf7;">
-                                                    <h5 class="modal-title fw-bold"
-                                                        style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                                        <i class="bi bi-person-badge me-2 text-classic"></i>
-                                                        Chi tiết thủ thư
-                                                    </h5>
-
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close">
-                                                    </button>
+                                                <div class="modal-header member-modal-header">
+                                                    <h5 class="modal-title member-modal-title-accent">Chi tiết thủ
+                                                        thư</h5>
                                                 </div>
 
-                                                <div class="modal-body p-4">
+                                                <div class="modal-body member-modal-body">
                                                     <div class="row g-3">
 
                                                         <div class="col-md-6">
@@ -246,18 +229,17 @@
                                                                 Trạng thái
                                                             </div>
 
-                                                            <span class="badge rounded-pill px-3 py-2 text-white"
+                                                            <span class="status-badge"
                                                                 th:if="${staff.user != null && staff.user.status != null}"
                                                                 th:classappend="${
-                                                      staff.user.status.name() == 'Active' ? 'bg-success' :
-                                                      staff.user.status.name() == 'Blocked' ? 'bg-danger' :
-                                                      'bg-secondary'
-                                                  }" th:text="${staff.user.status}">
-                                                                Active
+                                                      staff.user.status.name() == 'Active' ? 'status-active' :
+                                                      staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+                                                      'status-inactive'
+                                                  }" th:text="${staff.user.status.name() == 'Active' ? 'Hoạt động' : (staff.user.status.name() == 'Inactive' ? 'Ngừng hoạt động' : (staff.user.status.name() == 'Blocked' ? 'Bị khóa' : staff.user.status))}">
+                                                                Hoạt động
                                                             </span>
 
-                                                            <span
-                                                                class="badge rounded-pill px-3 py-2 bg-secondary text-white"
+                                                            <span class="status-badge status-unknown"
                                                                 th:if="${staff.user == null || staff.user.status == null}">
                                                                 N/A
                                                             </span>
@@ -267,17 +249,16 @@
                                                             <div class="small text-muted text-uppercase fw-bold">
                                                                 Loại nhân viên
                                                             </div>
-                                                            <span class="badge rounded-pill px-3 py-2 text-white"
-                                                                style="background-color: #5bc0de;"
-                                                                th:text="${staff.staffType}">
-                                                                Librarian
+                                                            <span class="librarian-role-badge"
+                                                                th:text="${staff.staffType == 'Librarian' ? 'Thủ thư' : (staff.staffType == 'Admin' ? 'Quản trị viên' : staff.staffType)}">
+                                                                Thủ thư
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div class="modal-footer border-top-0 pt-3">
-                                                    <button type="button" class="btn btn-light border shadow-sm"
+                                                <div class="modal-footer member-modal-footer">
+                                                    <button type="button" class="btn member-modal-secondary"
                                                         data-bs-dismiss="modal">
                                                         Đóng
                                                     </button>
@@ -300,24 +281,22 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="card-footer bg-white border-top p-3 d-flex justify-content-center"
-                    th:if="${staffPage.totalPages > 1}"
+                <div class="member-pagination app-pagination-region" th:if="${staffPage.totalPages > 1}"
                     th:with="startPage=${staffPage.totalPages <= 10 ? 0 : (staffPage.number < 9 ? 0 : (staffPage.number - 8 > staffPage.totalPages - 10 ? staffPage.totalPages - 10 : staffPage.number - 8))}">
                     <nav
                         th:with="endPage=${startPage + 9 < staffPage.totalPages ? startPage + 9 : staffPage.totalPages - 1}">
-                        <ul class="pagination mb-0">
+                        <ul class="pagination app-pagination">
 
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
-                                <a class="page-link" th:href="@{/librarian/librarians(page=0, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Đầu</a>
+                                <a class="page-link"
+                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword}, status=${selectedStatus})}">Đầu</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                    th:href="@{/librarian/librarians(page=${staffPage.number - 1}, keyword=${keyword}, status=${selectedStatus})}"><i
                                         class="bi bi-chevron-left"></i></a>
                             </li>
 
@@ -328,9 +307,9 @@
                             <!-- Sliding window: at most 10 page numbers -->
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == staffPage.number ? 'active' : ''}">
-                                <a class="page-link" th:href="@{/librarian/librarians(page=${i}, keyword=${keyword})}"
-                                    th:text="${i + 1}"
-                                    th:style="${i == staffPage.number ? 'background-color: #8b5a2b; border-color: #8b5a2b; color: white;' : 'color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);'}">1</a>
+                                <a class="page-link"
+                                    th:href="@{/librarian/librarians(page=${i}, keyword=${keyword}, status=${selectedStatus})}"
+                                    th:text="${i + 1}">1</a>
                             </li>
 
                             <li class="page-item disabled" th:if="${endPage < staffPage.totalPages - 1}">
@@ -340,23 +319,21 @@
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);"><i
+                                    th:href="@{/librarian/librarians(page=${staffPage.number + 1}, keyword=${keyword}, status=${selectedStatus})}"><i
                                         class="bi bi-chevron-right"></i></a>
                             </li>
 
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword})}"
-                                    style="color: #8b5a2b; border-color: rgba(139, 90, 43, 0.2);">Cuối</a>
+                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus})}">Cuối</a>
                             </li>
                         </ul>
                     </nav>
                 </div>
 
             </div>
-        </div>
+        </section>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".view-detail-tooltip-trigger").forEach(function (button) {

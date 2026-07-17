@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+import com.lms.exception.ApplicationException;
 
 import com.lms.repository.BookRepository;
 import com.lms.service.MemberFavoriteService;
@@ -14,6 +15,7 @@ import java.security.Principal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.lms.dto.request.MemberReviewSubmitRequest;
+import com.lms.dto.request.MemberReviewUpdateRequest;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import jakarta.validation.Valid;
@@ -26,7 +28,7 @@ import com.lms.service.MemberBookAcquisitionService;
 @RequestMapping("/member/interaction")
 public class MemberInteractionController {
 
-    private static final int PAGE_SIZE = 5;
+    private static final int PAGE_SIZE = 10;
 
     private final MemberNotificationService memberNotificationService;
     private final MemberReviewService memberReviewService;
@@ -47,13 +49,14 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/notifications")
-    public String viewNotifications(Model model, Principal principal) {
-        memberNotificationService.markAllNotificationsAsRead(principal.getName());
-
-        model.addAttribute(
-                "notifications",
-                memberNotificationService.getMyNotifications(principal.getName())
-        );
+    public String viewNotifications(Model model,
+                                    Principal principal) {
+        var notifications = memberNotificationService.getAllMyNotifications(principal.getName());
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("systemNotifications", notifications.stream()
+                .filter(notification -> !Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
+        model.addAttribute("librarianNotifications", notifications.stream()
+                .filter(notification -> Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
         model.addAttribute("showNotificationBell", false);
 
         return "member/notifications";
@@ -66,13 +69,32 @@ public class MemberInteractionController {
         return "OK";
     }
 
+    @GetMapping("/notifications/{notificationId}/mark-read")
+    @ResponseBody
+    public Map<String, Long> markNotificationAsRead(@PathVariable Integer notificationId,
+                                                     Principal principal) {
+        return Map.of("unreadCount",
+                memberNotificationService.markNotificationAsRead(principal.getName(), notificationId));
+    }
+
     @GetMapping("/reviews")
     public String showReviewForm(Model model,
                                  Principal principal,
-                                 @RequestParam(defaultValue = "0") int page) {
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(required = false) Integer editReviewId) {
         if (!model.containsAttribute("reviewRequest")) {
             model.addAttribute("reviewRequest", new MemberReviewSubmitRequest());
         }
+        if (editReviewId != null && !model.containsAttribute("reviewEditRequest")) {
+            try {
+                model.addAttribute("reviewEditRequest",
+                        memberReviewService.getMyReviewForEdit(principal.getName(), editReviewId));
+            } catch (ApplicationException e) {
+                model.addAttribute("error", e.getMessage());
+                editReviewId = null;
+            }
+        }
+        model.addAttribute("editReviewId", editReviewId);
         model.addAttribute("books", bookRepository.findAll());
         model.addAttribute("myReviews", memberReviewService.getMyReviews(
                 principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
@@ -99,7 +121,7 @@ public class MemberInteractionController {
             flash.addFlashAttribute("success",
                     "Đã gửi đánh giá thành công.");
             return "redirect:/member/interaction/reviews";
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("books", bookRepository.findAll());
             model.addAttribute("myReviews", memberReviewService.getMyReviews(
@@ -127,13 +149,46 @@ public class MemberInteractionController {
 
         try {
             memberReviewService.submitReview(principal.getName(), request);
-            flash.addFlashAttribute("success", "Đã gửi đánh giá thành công.");
-        } catch (ValidationException | ResourceNotFoundException e) {
+            flash.addFlashAttribute("reviewSubmittedSuccess", true);
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewRequest", request);
         }
 
         return "redirect:/books/" + bookId;
+    }
+
+    @PostMapping("/reviews/{feedbackId}/edit")
+    public String updateMyReview(@PathVariable("feedbackId") Integer feedbackId,
+                                 @Valid @ModelAttribute("reviewEditRequest") MemberReviewUpdateRequest request,
+                                 BindingResult bindingResult,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 Principal principal,
+                                 RedirectAttributes flash) {
+        int safePage = Math.max(0, page);
+
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getAllErrors().isEmpty()
+                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    : bindingResult.getAllErrors().get(0).getDefaultMessage();
+            flash.addFlashAttribute("error", message);
+            flash.addFlashAttribute("reviewEditRequest", request);
+            flash.addAttribute("page", safePage);
+            flash.addAttribute("editReviewId", feedbackId);
+            return "redirect:/member/interaction/reviews";
+        }
+
+        try {
+            memberReviewService.updateMyReview(principal.getName(), feedbackId, request);
+            flash.addFlashAttribute("success", "Đã cập nhật đánh giá thành công.");
+        } catch (ApplicationException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+            flash.addFlashAttribute("reviewEditRequest", request);
+            flash.addAttribute("editReviewId", feedbackId);
+        }
+
+        flash.addAttribute("page", safePage);
+        return "redirect:/member/interaction/reviews";
     }
 
     @PostMapping("/reviews/{feedbackId}/delete")
@@ -143,7 +198,7 @@ public class MemberInteractionController {
         try {
             memberReviewService.deleteMyReview(principal.getName(), feedbackId);
             flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
 
@@ -151,10 +206,14 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/acquisition-requests/new")
-    public String showBookAcquisitionRequestForm(Model model) {
+    public String showBookAcquisitionRequestForm(Model model,
+                                                 Principal principal,
+                                                 @RequestParam(defaultValue = "0") int page) {
         if (!model.containsAttribute("acquisitionRequest")) {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
+        model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
 
         return "member/book-acquisition-request";
     }
@@ -168,6 +227,8 @@ public class MemberInteractionController {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
 
@@ -176,8 +237,10 @@ public class MemberInteractionController {
             flash.addFlashAttribute("success", "Đã gửi đề xuất sách thành công.");
             return "redirect:/member/interaction/acquisition-requests/new";
 
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
+            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
     }
@@ -200,25 +263,16 @@ public class MemberInteractionController {
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             @RequestHeader(value = "Referer", required = false) String referer) {
 
-        System.out.println(">>> ĐÃ VÀO CONTROLLER ADD FAVORITE: BookID = " + bookId);
-
         try {
             memberFavoriteService.addToFavorites(principal.getName(), bookId);
             if (isAjax(requestedWith)) {
                 return org.springframework.http.ResponseEntity.ok(favoriteJson(true, "Đã thêm vào danh sách yêu thích!"));
             }
             flash.addFlashAttribute("success", "Đã thêm vào yêu thích!");
-        } catch (ValidationException e) {
-            e.printStackTrace();
-            if (isAjax(requestedWith)) {
-                return org.springframework.http.ResponseEntity.ok(favoriteJson(true, e.getMessage()));
-            }
-            flash.addFlashAttribute("error", e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ApplicationException e) {
             if (isAjax(requestedWith)) {
                 return org.springframework.http.ResponseEntity
-                        .badRequest()
+                        .status(e.getStatus())
                         .body(favoriteJson(false, e.getMessage()));
             }
             flash.addFlashAttribute("error", e.getMessage());
@@ -239,8 +293,7 @@ public class MemberInteractionController {
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);
             flash.addFlashAttribute("success", "Đã bỏ sách khỏi danh sách yêu thích!");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
 

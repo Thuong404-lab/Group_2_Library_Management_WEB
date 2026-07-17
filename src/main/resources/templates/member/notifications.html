@@ -1,58 +1,137 @@
 <!doctype html>
-<html
-  xmlns:th="http://www.thymeleaf.org"
-  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-  layout:decorate="~{layout/base}"
->
-  <body>
-    <main layout:fragment="content">
-      <div class="container mt-4">
-        <h2>Thông báo của tôi</h2>
-        <hr />
-
-        <div
-          th:if="${success}"
-          class="alert alert-success"
-          th:text="${success}"
-        ></div>
-        <div
-          th:if="${error}"
-          class="alert alert-danger"
-          th:text="${error}"
-        ></div>
-
-        <table class="table table-striped table-hover mt-3">
-          <thead class="table-dark">
-            <tr>
-              <th>Tiêu đề</th>
-              <th>Nội dung</th>
-              <th>Ngày gửi</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr th:each="notification : ${notifications}">
-              <td th:text="${notification.title}">Tiêu đề</td>
-
-              <td th:text="${notification.content}">Nội dung</td>
-
-              <td
-                th:text="${#temporals.format(notification.sentDate, 'dd/MM/yyyy HH:mm')}"
-              >
-                Ngày gửi
-              </td>
-            </tr>
-
-            <tr th:if="${notifications == null || notifications.isEmpty()}">
-              <td colspan="3" class="text-center">
-                Bạn chưa có thông báo nào.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <a th:href="@{/}" class="btn btn-secondary"> Quay lại </a>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head>
+  <title>Thông báo của tôi</title>
+  <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
+</head>
+<body>
+<main layout:fragment="content" class="member-notifications-page">
+  <div class="member-notifications-container">
+    <header class="member-notifications-header">
+      <div>
+        <span class="member-notifications-eyebrow">TRUNG TÂM THÔNG BÁO</span>
+        <h1>Thông báo của tôi</h1>
+        <p>Cập nhật mới nhất từ thư viện về hoạt động và tài khoản của bạn.</p>
+        <div class="member-notifications-summary" aria-label="Tổng quan thông báo">
+          <span><strong th:text="${notifications != null ? notifications.size() : 0}">0</strong> thông báo</span>
+          <span><strong th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</strong> từ thủ thư</span>
+          <span><strong th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</strong> từ hệ thống</span>
+        </div>
       </div>
-    </main>
-  </body>
+      <a th:href="@{/}" class="member-notifications-back"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Về trang chủ</span></a>
+    </header>
+
+    <div th:if="${success}" class="member-notifications-alert is-success" th:text="${success}"></div>
+    <div th:if="${error}" class="member-notifications-alert is-error" th:text="${error}"></div>
+
+    <section class="member-notifications-card" aria-labelledby="notification-list-title">
+      <div class="member-notification-toolbar">
+        <div class="member-notification-toolbar-copy">
+          <h2 id="notification-list-title">Tất cả thông báo</h2>
+          <p>Duyệt thông báo theo nguồn và loại nội dung.</p>
+        </div>
+        <div class="member-notification-source-tabs" role="tablist" aria-label="Nguồn thông báo">
+          <button type="button" id="librarianNotificationsTab" class="is-active" data-notification-source="librarian" role="tab" aria-selected="true" aria-controls="memberNotificationsList"><i class="bi bi-person-badge" aria-hidden="true"></i><span>Thông báo từ thủ thư</span><b th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</b></button>
+          <button type="button" id="systemNotificationsTab" data-notification-source="system" role="tab" aria-selected="false" aria-controls="memberNotificationsList"><i class="bi bi-gear" aria-hidden="true"></i><span>Thông báo từ hệ thống</span><b th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</b></button>
+        </div>
+        <label class="member-notification-type-filter" for="notificationTypeFilter">
+          <span>Lọc theo loại</span>
+          <select id="notificationTypeFilter">
+            <option value="ALL">Tất cả loại thông báo</option>
+            <option value="GENERAL">Thông báo chung</option>
+            <option value="ANNOUNCEMENT">Thông báo quan trọng</option>
+            <option value="MAINTENANCE">Bảo trì hệ thống</option>
+            <option value="EVENT">Sự kiện / chương trình</option>
+            <option value="REMINDER">Nhắc nhở</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="memberNotificationsList" class="member-notifications-list" role="tabpanel" aria-live="polite" th:if="${notifications != null && !notifications.isEmpty()}">
+        <article class="member-notification-row"
+                 th:each="notification : ${notifications}"
+                 th:id="'notification-' + ${notification.notificationId}"
+                 th:data-source="${notification.fromLibrarian} ? 'librarian' : 'system'"
+                 th:data-type="${notification.notificationType.name()}"
+                 th:classappend="${notification.read == false} ? ' is-unread'">
+          <span class="member-notification-row-icon" aria-hidden="true"><i th:class="${notification.fromLibrarian} ? 'bi bi-person-badge' : 'bi bi-gear'"></i></span>
+          <div class="member-notification-row-content">
+            <div class="member-notification-row-meta">
+              <span class="member-notification-row-type" th:text="${notification.notificationType.displayName}">Thông báo chung</span>
+              <span class="member-notification-unread-label" th:if="${notification.read == false}"><i aria-hidden="true"></i> Chưa đọc</span>
+            </div>
+            <h3 th:text="${notification.title}">Tiêu đề</h3>
+            <p class="member-notification-content" th:text="${notification.content}">Nội dung</p>
+            <button type="button" class="member-notification-content-toggle" hidden aria-expanded="false">Xem thêm</button>
+          </div>
+          <time class="member-notification-row-time" th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Ngày gửi</time>
+        </article>
+      </div>
+      <div id="notificationFilterEmpty" class="member-notifications-empty member-notifications-empty--compact" hidden><span><i class="bi bi-bell-slash" aria-hidden="true"></i></span><p>Không có thông báo phù hợp với bộ lọc.</p></div>
+      <div class="member-notifications-empty" th:if="${notifications == null || notifications.isEmpty()}"><span><i class="bi bi-bell" aria-hidden="true"></i></span><h2>Chưa có thông báo</h2><p>Các cập nhật mới từ thư viện sẽ xuất hiện tại đây.</p></div>
+    </section>
+  </div>
+</main>
+<th:block layout:fragment="scripts">
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var source = new URLSearchParams(window.location.search).get("source") || "librarian";
+      var typeFilter = document.getElementById("notificationTypeFilter");
+      var tabs = Array.from(document.querySelectorAll("[data-notification-source]"));
+      var rows = Array.from(document.querySelectorAll(".member-notification-row[data-source]"));
+      var empty = document.getElementById("notificationFilterEmpty");
+
+      function applyFilters() {
+        var type = typeFilter.value;
+        var visibleCount = 0;
+        rows.forEach(function (row) {
+          var visible = row.dataset.source === source && (source === "system" || type === "ALL" || row.dataset.type === type);
+          row.hidden = !visible;
+          if (visible) visibleCount++;
+        });
+        tabs.forEach(function (tab) {
+          var active = tab.dataset.notificationSource === source;
+          tab.classList.toggle("is-active", active);
+          tab.setAttribute("aria-selected", String(active));
+        });
+        typeFilter.closest("label").hidden = source !== "librarian";
+        empty.hidden = visibleCount !== 0;
+        requestAnimationFrame(updateContentToggles);
+      }
+
+      function updateContentToggles() {
+        rows.filter(function (row) { return !row.hidden; }).forEach(function (row) {
+          var content = row.querySelector(".member-notification-content");
+          var toggle = row.querySelector(".member-notification-content-toggle");
+          if (!content || !toggle || content.classList.contains("is-expanded")) return;
+          toggle.hidden = content.scrollHeight <= content.clientHeight + 1;
+        });
+      }
+
+      document.querySelectorAll(".member-notification-content-toggle").forEach(function (toggle) {
+        toggle.addEventListener("click", function () {
+          var content = toggle.previousElementSibling;
+          var expanded = content.classList.toggle("is-expanded");
+          toggle.setAttribute("aria-expanded", String(expanded));
+          toggle.textContent = expanded ? "Thu gọn" : "Xem thêm";
+        });
+      });
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          source = tab.dataset.notificationSource;
+          applyFilters();
+        });
+      });
+      typeFilter.addEventListener("change", applyFilters);
+
+      var requestedId = new URLSearchParams(window.location.search).get("notificationId");
+      var requested = requestedId ? document.getElementById("notification-" + requestedId) : null;
+      if (requested) source = requested.dataset.source;
+      applyFilters();
+      if (requested) requestAnimationFrame(function () { requested.scrollIntoView({behavior: "smooth", block: "center"}); });
+    });
+  </script>
+</th:block>
+</body>
 </html>

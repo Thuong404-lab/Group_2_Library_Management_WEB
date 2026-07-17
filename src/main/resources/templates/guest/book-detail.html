@@ -5,75 +5,19 @@
 
 <head>
     <title th:text="${book.title} + ' - Thư Viện Số'">Chi tiết sách</title>
-    <style>
-        .review-card { border-left: 3px solid #8b5a2b; }
-        .write-review-box { border-left: 4px solid #8b5a2b; }
-        .btn-classic-borrow {
-            background-color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
-            color: #ffffff !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-borrow:hover {
-            background-color: #74481f !important;
-            border-color: #74481f !important;
-        }
-        .btn-outline-classic {
-            color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
-            background-color: transparent !important;
-            transition: all 0.2s ease;
-        }
-        .btn-outline-classic:hover, .btn-outline-classic.active {
-            color: #ffffff !important;
-            background-color: #8b5a2b !important;
-            border-color: #8b5a2b !important;
-        }
-        .rating-picker {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .rating-star {
-            width: 2.4rem;
-            height: 2.4rem;
-            border: 0;
-            background: transparent;
-            color: #adb5bd;
-            cursor: pointer;
-            font-size: 1.85rem;
-            line-height: 1;
-            padding: 0;
-            transition: color 0.15s ease, transform 0.15s ease;
-        }
-        .rating-star:hover,
-        .rating-star.active {
-            color: #ffc107;
-        }
-        .rating-star:hover {
-            transform: translateY(-1px) scale(1.08);
-        }
-        .rating-star:focus,
-        .rating-star:focus-visible {
-            outline: none;
-            box-shadow: none;
-        }
-        .rating-picker.is-invalid .rating-star {
-            color: #dc3545;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/guest/book-detail.css}" />
+  </head>
 
 <body>
     <div layout:fragment="content" class="container mt-4 mb-5">
-        
+
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4 pt-3">
             <ol class="breadcrumb bg-transparent p-0 mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none" style="color: #8b5a2b;"><i
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none u-color-8b5a2b-93ece783"><i
                             class="bi bi-house-door"></i> Sảnh chính</a></li>
-                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none" style="color: #8b5a2b;">Khám phá sách</a></li>
-                <li class="breadcrumb-item active fw-bold" aria-current="page" style="color: #4a3b32;" th:text="${book.title}">Tên sách</li>
+                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none u-color-8b5a2b-93ece783">Khám phá sách</a></li>
+                <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page" th:text="${book.title}">Tên sách</li>
             </ol>
         </nav>
 
@@ -83,7 +27,7 @@
             <!-- Book Cover -->
             <div class="col-md-4 text-center mb-4 mb-md-0">
                 <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
-                     class="img-fluid rounded shadow" th:alt="${book.title}" style="max-height: 380px; object-fit: cover;">
+                     class="img-fluid rounded shadow guest-book-detail-img-max-height-fit-03" th:alt="${book.title}">
                 <div class="mt-3">
 
                     <span th:class="${book.status == 'Active' ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
@@ -93,8 +37,8 @@
 
             <!-- Book Details -->
             <div class="col-md-8">
-                <div class="badge mb-2" style="background:#8b5a2b;color:white;" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
-                <h2 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;" th:text="${book.title}">Tên sách</h2>
+                <div class="badge mb-2 guest-book-detail-div-background-04" th:text="${book.genre != null ? book.genre.genreName : 'Kinh điển'}">Thể loại</div>
+                <h2 class="fw-bold mb-1 guest-book-detail-h2-font-family-05" th:text="${book.title}">Tên sách</h2>
                 <p class="text-muted fs-5 mb-3">
                     <span th:if="${book.authors != null && !book.authors.isEmpty()}"
                           th:each="author, iterStat : ${book.authors}">
@@ -106,16 +50,16 @@
                 <!-- Stats -->
                 <div class="d-flex gap-4 mb-4">
                     <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#ffc107;"
+                        <div class="fw-bold fs-4 u-color-ffc107-2cee102e"
                              th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' ★' : 'Chưa có'}">Chưa có</div>
                         <div class="small text-muted">Điểm TB</div>
                     </div>
                     <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#8b5a2b;">320</div>
+                        <div class="fw-bold fs-4 u-color-8b5a2b-d7f13118">320</div>
                         <div class="small text-muted">Trang</div>
                     </div>
                     <div class="text-center">
-                        <div class="fw-bold fs-4" style="color:#198754;">42</div>
+                        <div class="fw-bold fs-4 guest-book-detail-div-color-08">42</div>
                         <div class="small text-muted">Lượt mượn</div>
                     </div>
                 </div>
@@ -149,7 +93,7 @@
                     </p>
                 </div>
 
-                <hr style="border-color: rgba(139,90,43,0.2);">
+                <hr class="guest-book-detail-hr-border-color-09">
 
                 <!-- Action Buttons -->
                 <div class="d-flex mt-3 flex-wrap">
@@ -182,8 +126,8 @@
 
         <!-- ====================== REVIEWS SECTION ====================== -->
         <div class="mt-5">
-            <h4 class="fw-bold mb-4" style="font-family:'Playfair Display',serif; color:#4a3b32;">
-                <i class="bi bi-chat-square-quote-fill me-2" style="color:#8b5a2b;"></i>
+            <h4 class="fw-bold mb-4 u-font-family-playfair-display-serif-color-4a3b32-fbccaa2c">
+                <i class="bi bi-chat-square-quote-fill me-2 u-color-8b5a2b-d7f13118"></i>
                 Đánh giá từ bạn đọc
                 <span class="badge bg-secondary ms-2 fs-6" th:text="${reviewCount}">0</span>
             </h4>
@@ -192,9 +136,10 @@
             <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
             <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
 
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')">
-                <h5 class="fw-bold mb-4" style="color:#4a3b32;">
-                    <i class="bi bi-pencil-square me-2" style="color:#8b5a2b;"></i>Gửi đánh giá sách
+            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')"
+                 th:if="${reviewBorrowEligible and !reviewAlreadySubmitted}">
+                <h5 class="fw-bold mb-4 u-color-4a3b32-8f35ff96">
+                    <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i>Gửi đánh giá sách
                 </h5>
                 <form id="bookDetailReviewForm"
                       th:action="@{'/member/interaction/books/' + ${book.bookId} + '/reviews'}"
@@ -234,26 +179,39 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold">Bình luận</label>
                         <textarea class="form-control"
+                                  id="bookDetailReviewComment"
                                   rows="5"
                                   th:field="*{comment}"
+                                  required minlength="5"
                                   maxlength="1000"
-                                  placeholder="Nhập nội dung đánh giá"></textarea>
-                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}"></div>
+                                  placeholder="Nhập từ 5–1000 ký tự"
+                                  aria-describedby="bookDetailReviewCommentCount bookDetailReviewCommentError"></textarea>
+                        <div class="book-review-comment-support"><span id="bookDetailReviewCommentCount" aria-live="polite">0/1000</span></div>
+                        <div id="bookDetailReviewCommentError" class="book-review-field-error" role="alert" aria-live="assertive"
+                             th:text="${#fields.hasErrors('comment') ? #fields.errors('comment')[0] : ''}"></div>
                     </div>
 
-                    <button type="submit" class="btn text-white px-4" style="background:#8b5a2b">
+                    <button type="submit" class="btn text-white px-4 u-background-8b5a2b-9b8da1d0">
                         Gửi đánh giá
                     </button>
                 </form>
             </div>
 
+            <div class="review-eligibility-notice" sec:authorize="hasRole('MEMBER')"
+                 th:if="${reviewSubmittedSuccess == true}">
+                <div>
+                    <h5>Đã gửi đánh giá thành công.</h5>
+                    <a th:href="@{/member/interaction/reviews}" class="review-eligibility-link">Xem đánh giá của tôi</a>
+                </div>
+            </div>
+
             <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="!hasRole('MEMBER')">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h5 class="fw-bold mb-1" style="color:#4a3b32;">Viết đánh giá của bạn</h5>
+                        <h5 class="fw-bold mb-1 u-color-4a3b32-8f35ff96">Viết đánh giá của bạn</h5>
                         <div class="text-muted">Vui lòng đăng nhập bằng tài khoản member để gửi đánh giá.</div>
                     </div>
-                    <a th:href="@{/login}" class="btn text-white px-4" style="background-color:#8b5a2b;">Đăng nhập</a>
+                    <a th:href="@{/login}" class="btn text-white px-4 guest-book-detail-a-background-13">Đăng nhập</a>
                 </div>
             </div>
 
@@ -267,8 +225,8 @@
             <div th:each="review : ${bookReviews}" class="bg-white rounded shadow-sm p-4 mb-3 review-card">
                 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#8b5a2b;font-size:1.1rem;"
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-14"
+
                              th:text="${review.member != null && review.member.user != null && !#strings.isEmpty(review.member.user.fullName) ? #strings.substring(review.member.user.fullName, 0, 1) : '?'}">N</div>
                         <div>
                             <div class="fw-bold" th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : 'Bạn đọc'}">Bạn đọc</div>
@@ -291,14 +249,14 @@
             <div class="bg-white rounded shadow-sm p-4 mb-3 review-card" th:remove="all">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#4a3b32;font-size:1.1rem;">T</div>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-15"
+                            >T</div>
                         <div>
                             <div class="fw-bold">Trần Thị Bình</div>
                             <div class="small text-muted">20/05/2026</div>
                         </div>
                     </div>
-                    <div class="text-warning fs-5">★★★★<span style="color:#ccc;">★</span> <span class="text-muted small ms-1">4/5</span></div>
+                    <div class="text-warning fs-5">★★★★<span class="guest-book-detail-span-color-16">★</span> <span class="text-muted small ms-1">4/5</span></div>
                 </div>
                 <p class="mb-0 text-muted lh-lg">
                     Sách viết rất dễ đọc, nhiều ví dụ thực tế sinh động. Tuy nhiên một số nội dung có vẻ hơi cũ so với thời đại hiện nay.
@@ -310,8 +268,8 @@
             <div class="bg-white rounded shadow-sm p-4 mb-3 review-card" th:remove="all">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width:44px;height:44px;background:#6c757d;font-size:1.1rem;">L</div>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-17"
+                            >L</div>
                         <div>
                             <div class="fw-bold">Lê Minh Khoa</div>
                             <div class="small text-muted">02/04/2026</div>
@@ -338,6 +296,9 @@
                     document.querySelectorAll("#memberRatingPicker .rating-star")
                 );
                 const ratingInput = document.getElementById("ratingValue");
+                const comment = document.getElementById("bookDetailReviewComment");
+                const commentError = document.getElementById("bookDetailReviewCommentError");
+                const commentCount = document.getElementById("bookDetailReviewCommentCount");
 
                 if (reviewForm == null || ratingPicker == null || ratingInput == null) {
                     return;
@@ -376,6 +337,18 @@
                     clearRatingError();
                 }
 
+                function updateCommentCount() {
+                    if (comment == null || commentCount == null) return;
+                    commentCount.textContent = comment.value.length + "/1000";
+                    commentCount.classList.toggle("is-near-limit", comment.value.length >= 900 && comment.value.length < 1000);
+                    commentCount.classList.toggle("is-limit-reached", comment.value.length >= 1000);
+                }
+
+                function setCommentError(message) {
+                    if (comment != null) comment.classList.add("is-invalid");
+                    if (commentError != null) commentError.textContent = message;
+                }
+
                 ratingStars.forEach((star) => {
                     star.addEventListener("click", function() {
                         setRating(Number(this.dataset.value));
@@ -398,21 +371,30 @@
                         return;
                     }
 
-                    const comment = reviewForm.querySelector("[name='comment']");
-                    if (comment != null && comment.value.trim() === "") {
-                        comment.classList.add("is-invalid");
+                    const normalizedComment = comment == null ? "" : comment.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                    if (comment != null) comment.value = normalizedComment;
+                    updateCommentCount();
+                    let commentMessage = "";
+                    if (normalizedComment === "") commentMessage = "Vui lòng nhập nội dung đánh giá.";
+                    else if (normalizedComment.length < 5) commentMessage = "Nội dung đánh giá phải có ít nhất 5 ký tự.";
+                    else if (normalizedComment.length > 1000) commentMessage = "Nội dung đánh giá không được vượt quá 1000 ký tự.";
+                    else if (!/\p{L}/u.test(normalizedComment)) commentMessage = "Nội dung đánh giá không được chỉ gồm số hoặc ký tự đặc biệt.";
+                    if (commentMessage !== "") {
+                        setCommentError(commentMessage);
                         event.preventDefault();
                         event.stopPropagation();
                     }
                 });
 
-                const comment = reviewForm.querySelector("[name='comment']");
                 if (comment != null) {
                     comment.addEventListener("input", function() {
                         this.classList.remove("is-invalid");
+                        if (commentError != null) commentError.textContent = "";
+                        updateCommentCount();
                     });
                 }
 
+                updateCommentCount();
                 setRating(Number(ratingInput.value) || 0);
             })();
         </script>

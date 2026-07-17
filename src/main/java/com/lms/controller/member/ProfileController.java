@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+import com.lms.exception.ApplicationException;
 
 import com.lms.entity.User;
 import com.lms.entity.Member;
@@ -25,7 +26,7 @@ import com.lms.config.CustomUserDetails;
 @RequestMapping("/member")
 public class ProfileController {
 
-    private static final int PAGE_SIZE = 5;
+    private static final int PAGE_SIZE = 10;
 
     private final ProfileService profileService;
     private final MemberFavoriteService memberFavoriteService;
@@ -51,19 +52,13 @@ public class ProfileController {
         }
 
         String username = principal.getName();
-        try {
-            User member = profileService.getProfile(username);
-            model.addAttribute("member", member);
-            Member membership = membershipService.getMemberByUsername(username);
-            model.addAttribute("membership", membership);
-            model.addAttribute("activeBorrowsCount",
-                    borrowDetailRepository.countActiveBorrowedBooks(membership.getMemberId()));
-            // Thông tin Account và Wallet có thể lấy trực tiếp thông qua liên kết thực thể member.getAccount() / member.getWallet() ở giao diện Thymeleaf
-            return "member/profile";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Không thể tải hồ sơ: " + e.getMessage());
-            return "error/500";
-        }
+        User member = profileService.getProfile(username);
+        model.addAttribute("member", member);
+        Member membership = membershipService.getMemberByUsername(username);
+        model.addAttribute("membership", membership);
+        model.addAttribute("activeBorrowsCount",
+                borrowDetailRepository.countActiveBorrowedBooks(membership.getMemberId()));
+        return "member/profile";
     }
 
     // UC-4.2: Update Profile Information
@@ -97,7 +92,7 @@ public class ProfileController {
             
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
             return "redirect:/member/profile?updated";
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
             return "redirect:/member/profile";
         }
@@ -125,10 +120,8 @@ public class ProfileController {
             profileService.changePassword(username, oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu hệ thống thành công!");
             return "redirect:/member/profile?passwordChanged";
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("passwordError", "Có lỗi xảy ra trong quá trình đổi mật khẩu.");
         }
         return "redirect:/member/profile";
     }
