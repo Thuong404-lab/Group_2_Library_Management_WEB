@@ -27,10 +27,11 @@
                     <i class="bi bi-exclamation-circle me-2"></i><span th:text="${errorMsg}"></span>
                 </div>
 
-                <form th:action="@{/register}" th:object="${registerRequest}" method="post">
+                <form th:action="@{/register}" th:object="${registerRequest}" method="post" class="needs-validation" novalidate>
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" id="fullName" th:field="*{fullName}" placeholder="Họ và tên" maxlength="50" required autofocus>
                         <label for="fullName">Họ và tên</label>
+                        <div class="invalid-feedback">Vui lòng nhập họ và tên hợp lệ.</div>
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -38,12 +39,14 @@
                             <div class="form-floating">
                                 <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="Tên đăng nhập" required>
                                 <label for="username">Tên đăng nhập</label>
+                                <div class="invalid-feedback">Vui lòng nhập tên đăng nhập (3-20 ký tự).</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-floating">
                                 <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="Mật khẩu" required>
                                 <label for="password">Mật khẩu</label>
+                                <div class="invalid-feedback">Vui lòng nhập mật khẩu (ít nhất 6 ký tự).</div>
                             </div>
                         </div>
                     </div>
@@ -53,12 +56,14 @@
                             <div class="form-floating">
                                 <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" required>
                                 <label for="email">Email</label>
+                                <div class="invalid-feedback">Vui lòng nhập email hợp lệ.</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-floating">
                                 <input type="tel" class="form-control" id="phone" th:field="*{phone}" placeholder="Số điện thoại" required>
                                 <label for="phone">Số điện thoại</label>
+                                <div class="invalid-feedback">Vui lòng nhập số điện thoại hợp lệ (10 số).</div>
                             </div>
                         </div>
                     </div>
@@ -74,5 +79,23 @@
             </div>
         </div>
     </div>
+
+    <!-- Bootstrap Validation Script -->
+    <script>
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
 </body>
 </html>

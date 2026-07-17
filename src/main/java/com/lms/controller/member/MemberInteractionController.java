@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+import com.lms.exception.ApplicationException;
 
 import com.lms.repository.BookRepository;
 import com.lms.service.MemberFavoriteService;
@@ -88,7 +89,7 @@ public class MemberInteractionController {
             try {
                 model.addAttribute("reviewEditRequest",
                         memberReviewService.getMyReviewForEdit(principal.getName(), editReviewId));
-            } catch (ValidationException | ResourceNotFoundException e) {
+            } catch (ApplicationException e) {
                 model.addAttribute("error", e.getMessage());
                 editReviewId = null;
             }
@@ -120,7 +121,7 @@ public class MemberInteractionController {
             flash.addFlashAttribute("success",
                     "Đã gửi đánh giá thành công.");
             return "redirect:/member/interaction/reviews";
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("books", bookRepository.findAll());
             model.addAttribute("myReviews", memberReviewService.getMyReviews(
@@ -149,7 +150,7 @@ public class MemberInteractionController {
         try {
             memberReviewService.submitReview(principal.getName(), request);
             flash.addFlashAttribute("reviewSubmittedSuccess", true);
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewRequest", request);
         }
@@ -180,7 +181,7 @@ public class MemberInteractionController {
         try {
             memberReviewService.updateMyReview(principal.getName(), feedbackId, request);
             flash.addFlashAttribute("success", "Đã cập nhật đánh giá thành công.");
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewEditRequest", request);
             flash.addAttribute("editReviewId", feedbackId);
@@ -197,7 +198,7 @@ public class MemberInteractionController {
         try {
             memberReviewService.deleteMyReview(principal.getName(), feedbackId);
             flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
 
@@ -236,7 +237,7 @@ public class MemberInteractionController {
             flash.addFlashAttribute("success", "Đã gửi đề xuất sách thành công.");
             return "redirect:/member/interaction/acquisition-requests/new";
 
-        } catch (ValidationException | ResourceNotFoundException e) {
+        } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
                     principal.getName(), PageRequest.of(0, PAGE_SIZE)));
@@ -262,25 +263,16 @@ public class MemberInteractionController {
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             @RequestHeader(value = "Referer", required = false) String referer) {
 
-        System.out.println(">>> ĐÃ VÀO CONTROLLER ADD FAVORITE: BookID = " + bookId);
-
         try {
             memberFavoriteService.addToFavorites(principal.getName(), bookId);
             if (isAjax(requestedWith)) {
                 return org.springframework.http.ResponseEntity.ok(favoriteJson(true, "Đã thêm vào danh sách yêu thích!"));
             }
             flash.addFlashAttribute("success", "Đã thêm vào yêu thích!");
-        } catch (ValidationException e) {
-            e.printStackTrace();
-            if (isAjax(requestedWith)) {
-                return org.springframework.http.ResponseEntity.ok(favoriteJson(true, e.getMessage()));
-            }
-            flash.addFlashAttribute("error", e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ApplicationException e) {
             if (isAjax(requestedWith)) {
                 return org.springframework.http.ResponseEntity
-                        .badRequest()
+                        .status(e.getStatus())
                         .body(favoriteJson(false, e.getMessage()));
             }
             flash.addFlashAttribute("error", e.getMessage());
@@ -301,8 +293,7 @@ public class MemberInteractionController {
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);
             flash.addFlashAttribute("success", "Đã bỏ sách khỏi danh sách yêu thích!");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
 

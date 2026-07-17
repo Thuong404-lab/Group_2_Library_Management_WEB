@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.Member;
@@ -18,10 +19,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 /**
  * Read-only member detail flow linked from the librarian member list.
@@ -56,7 +55,7 @@ public class LibrarianMemberDetailController {
                                    Model model,
                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Không tìm thấy thành viên."));
+                .orElseThrow(() -> new com.lms.exception.ForbiddenException("Không tìm thấy thành viên hoặc bạn không có quyền xem thông tin này."));
 
         int safePage = Math.max(page, 0);
         String selectedType = type == null ? "" : type.trim();
@@ -89,7 +88,7 @@ public class LibrarianMemberDetailController {
         try {
             financialService.refundReservationDeposit(memberId, reservationId);
             redirectAttributes.addFlashAttribute("success", "Đã duyệt và hoàn tiền cọc vào ví thành viên.");
-        } catch (RuntimeException exception) {
+        } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         if ("refunds".equals(returnTo)) {

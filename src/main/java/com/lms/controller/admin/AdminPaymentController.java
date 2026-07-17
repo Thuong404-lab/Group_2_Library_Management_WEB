@@ -1,4 +1,5 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.PaymentSearchCriteria;
 import com.lms.dto.response.ReportExport;
@@ -87,7 +88,7 @@ public class AdminPaymentController {
             auditService.resolveReconciliationIssue(orderCode, "ADMIN");
             redirectAttributes.addFlashAttribute("successMessage",
                     "Đối soát hoàn tất. Trạng thái hiện tại: " + refreshed.getStatus());
-        } catch (Exception exception) {
+        } catch (ApplicationException exception) {
             auditService.recordReconciliationFailure(orderCode, exception.getMessage(), "ADMIN");
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

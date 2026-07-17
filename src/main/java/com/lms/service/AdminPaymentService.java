@@ -7,6 +7,8 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.UnitValue;
 import com.lms.dto.request.PaymentSearchCriteria;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ResourceNotFoundException;
 import com.lms.dto.response.ReportExport;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.PayOsPaymentAuditLog;
@@ -52,7 +54,7 @@ public class AdminPaymentService {
     @Transactional(readOnly = true)
     public PayOsPayment getPayment(Long orderCode) {
         return paymentRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch thanh toán."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giao dịch thanh toán."));
     }
 
     @Transactional(readOnly = true)
@@ -153,7 +155,7 @@ public class AdminPaymentService {
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
-            throw new IllegalStateException("Không thể tạo file PDF thanh toán.", e);
+            throw new DataProcessingException("Không thể tạo file PDF thanh toán.", e);
         }
     }
 

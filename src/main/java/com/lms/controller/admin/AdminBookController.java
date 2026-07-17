@@ -1,4 +1,5 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.service.FileUploadService;
@@ -63,7 +64,7 @@ public class AdminBookController {
             inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId,
                     bookCondition, author);
             success(redirectAttributes, "Thêm sách mới thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -81,7 +82,7 @@ public class AdminBookController {
             inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId,
                     description, author);
             success(redirectAttributes, "Cập nhật sách thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -92,7 +93,7 @@ public class AdminBookController {
         try {
             inventoryService.removeBook(id);
             success(redirectAttributes, "Xóa sách thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -110,7 +111,7 @@ public class AdminBookController {
                 inventoryService.addCategory(name);
                 success(redirectAttributes, "Thêm danh mục thành công.");
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -122,7 +123,7 @@ public class AdminBookController {
         try {
             inventoryService.updateCategory(id, name);
             success(redirectAttributes, "Cập nhật danh mục thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT + "?tab=categories";
@@ -133,7 +134,7 @@ public class AdminBookController {
         try {
             inventoryService.deleteCategory(id);
             success(redirectAttributes, "Xóa danh mục thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT + "?tab=categories";
@@ -145,7 +146,7 @@ public class AdminBookController {
         try {
             inventoryService.updateGenre(id, name, categoryId);
             success(redirectAttributes, "Cập nhật thể loại thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT + "?tab=categories";
@@ -156,7 +157,7 @@ public class AdminBookController {
         try {
             inventoryService.deleteGenre(id);
             success(redirectAttributes, "Xóa thể loại thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT + "?tab=categories";
@@ -171,7 +172,7 @@ public class AdminBookController {
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
                     summary.getOrDefault("Disposed", 0L)));
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -183,7 +184,7 @@ public class AdminBookController {
         try {
             storageService.addStorageLocation(shelfName, location);
             success(redirectAttributes, "Thêm vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -195,7 +196,7 @@ public class AdminBookController {
         try {
             storageService.updateStorageLocation(id, shelfName, location);
             success(redirectAttributes, "Cập nhật vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -206,7 +207,7 @@ public class AdminBookController {
         try {
             storageService.removeStorageLocation(id);
             success(redirectAttributes, "Xóa vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;

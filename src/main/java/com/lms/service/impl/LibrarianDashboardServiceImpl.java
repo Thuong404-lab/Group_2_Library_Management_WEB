@@ -119,7 +119,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").descending())));
         data.put("shelves", storageService.getAllStorageLocations());
         Page<Book> booksPage = bookRepository
-                .findAllWithAuthors(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+                .findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+        booksPage.forEach(book -> {
+            if (book.getAuthors() != null) {
+                book.getAuthors().size();
+            }
+        });
         data.put("books", booksPage);
 
         Map<Integer, Integer> bookShelves = new HashMap<>();

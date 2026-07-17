@@ -10,6 +10,9 @@ import com.lms.entity.Role;
 import com.lms.entity.User;
 import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
@@ -129,13 +132,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     public void createMember(CreateMemberAccountRequest request) {
         Map<String, String> errors = validateCreate(request);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(errors.values().iterator().next());
+            throw new ValidationException(errors.values().iterator().next());
         }
 
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
+                .orElseThrow(() -> new ValidationException("Hạng thành viên không hợp lệ."));
         Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy role MEMBER trong database."));
+                .orElseThrow(() -> new DataProcessingException("Không tìm thấy role MEMBER trong hệ thống."));
 
         User user = new User();
         user.setFullName(trim(request.getFullName()));
@@ -203,11 +206,11 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     public void updateMember(Integer accountId, UpdateMemberAccountRequest request) {
         Map<String, String> errors = validateUpdate(accountId, request);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(errors.values().iterator().next());
+            throw new ValidationException(errors.values().iterator().next());
         }
 
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
         User user = account.getMember().getUser();
 
         user.setFullName(trim(request.getFullName()));
@@ -243,10 +246,10 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     @Transactional
     public void changeMemberStatus(Integer accountId, String status) {
         if (!"Active".equals(status) && !"Inactive".equals(status) && !"Blocked".equals(status)) {
-            throw new IllegalArgumentException("Trạng thái tài khoản không hợp lệ.");
+            throw new ValidationException("Trạng thái tài khoản không hợp lệ.");
         }
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
         applyStatus(account, status);
         memberAccountRepository.save(account);
     }
@@ -265,7 +268,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     private UserStatus toUserStatus(String status) {
         try {
             return UserStatus.valueOf(status);
-        } catch (Exception ignored) {
+        } catch (IllegalArgumentException ignored) {
             return UserStatus.Active;
         }
     }

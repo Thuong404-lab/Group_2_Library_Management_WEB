@@ -32,23 +32,29 @@
                 <div class="brand-subtitle">Dành cho Admin & Thủ thư</div>
 
                 <div th:if="${param.error}" class="alert alert-danger mb-4" role="alert">
-                    Tài khoản hoặc mật khẩu quản trị không chính xác. Hoặc bạn không có quyền truy cập.
+                    <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null}">
+                        <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}">Tài khoản hoặc mật khẩu quản trị không chính xác.</span>
+                        <span th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}" th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"></span>
+                    </span>
+                    <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION == null}">Tài khoản hoặc mật khẩu quản trị không chính xác. Hoặc bạn không có quyền truy cập.</span>
                 </div>
                 <div th:if="${param.logout}" class="alert alert-success mb-4" role="alert">
                     Bạn đã đăng xuất khỏi hệ thống quản trị an toàn.
                 </div>
 
-                <form th:action="@{/staff-login}" method="post">
+                <form th:action="@{/staff-login}" method="post" class="needs-validation" novalidate>
                     <div class="mb-4">
                         <label for="username" class="form-label">Tài khoản nhân viên</label>
                         <input type="text" class="form-control" id="username" name="username"
                             placeholder="Nhập username" required autocomplete="username">
+                        <div class="invalid-feedback">Vui lòng nhập tài khoản quản trị.</div>
                     </div>
 
                     <div class="mb-4">
                         <label for="password" class="form-label">Mật khẩu</label>
                         <input type="password" class="form-control" id="password" name="password" placeholder="••••••••"
                             required autocomplete="current-password">
+                        <div class="invalid-feedback">Vui lòng nhập mật khẩu.</div>
                     </div>
 
                     <button class="btn btn-primary-custom w-100" type="submit">Truy Cập Hệ Thống</button>
@@ -62,6 +68,23 @@
 
     </div>
 
+    <!-- Bootstrap Validation Script -->
+    <script>
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
 </body>
 
 </html>

@@ -6,6 +6,7 @@ import com.lms.entity.BookAcquisitionRequest;
 import com.lms.entity.Member;
 import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.BookAcquisitionRequestRepository;
@@ -59,7 +60,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
         if (bookAcquisitionRequestRepository.existsByMember_MemberIdAndTitleIgnoreCaseAndStatusIn(
                 member.getMemberId(), title,
                 List.of(AcquisitionRequestStatus.PENDING, AcquisitionRequestStatus.APPROVED))) {
-            throw new ValidationException("Bạn đã đề xuất sách này rồi.");
+            throw new ConflictException("Bạn đã đề xuất sách này rồi.");
         }
 
         if (request.getPublicationYear() != null && request.getPublicationYear() > Year.now().getValue()) {
@@ -119,7 +120,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
             URI uri = URI.create(referenceUrl);
             if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
                     || uri.getHost() == null || uri.getHost().isBlank()) {
-                throw new IllegalArgumentException();
+                throw new ValidationException("Giao thức URL không hợp lệ.");
             }
         } catch (IllegalArgumentException ex) {
             throw new ValidationException("Link tham khảo phải là địa chỉ http:// hoặc https:// hợp lệ.");

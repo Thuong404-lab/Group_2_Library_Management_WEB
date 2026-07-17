@@ -7,6 +7,8 @@ import com.lms.entity.Book;
 import com.lms.entity.Feedback;
 import com.lms.entity.Member;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ForbiddenException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.BookRepository;
@@ -65,7 +67,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
 
         if (feedbackRepository.existsByMember_MemberIdAndBook_BookIdAndStatusNot(
                 member.getMemberId(), book.getBookId(), DELETED_BY_MEMBER_STATUS)) {
-            throw new ValidationException("Bạn đã đánh giá sách này rồi.");
+            throw new ConflictException("Bạn đã đánh giá sách này rồi.");
         }
 
         Feedback feedback = new Feedback();
@@ -98,15 +100,21 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Transactional(readOnly = true)
     public Page<Feedback> getMyReviews(String username, Pageable pageable) {
         MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
 
         Member member = account.getMember();
         if (member == null) {
-            throw new ResourceNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘á»™c giáº£ vá»›i tÃ i khoáº£n: " + username);
+            throw new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username);
         }
 
-        return feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
+        Page<Feedback> reviews = feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
                 member.getMemberId(), DELETED_BY_MEMBER_STATUS, pageable);
+        reviews.forEach(review -> {
+            if (review.getBook() != null && review.getBook().getAuthors() != null) {
+                review.getBook().getAuthors().size();
+            }
+        });
+        return reviews;
     }
 
     @Override
@@ -181,7 +189,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
 
         if (feedback.getMember() == null || !member.getMemberId().equals(feedback.getMember().getMemberId())) {
-            throw new ValidationException("Bạn không có quyền xoá đánh giá này.");
+            throw new ForbiddenException("Bạn không có quyền xoá đánh giá này.");
         }
 
         feedback.setStatus(DELETED_BY_MEMBER_STATUS);
@@ -207,7 +215,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
 
         if (feedback.getMember() == null
                 || !member.getMemberId().equals(feedback.getMember().getMemberId())) {
-            throw new ValidationException("Bạn không có quyền chỉnh sửa đánh giá này.");
+            throw new ForbiddenException("Bạn không có quyền chỉnh sửa đánh giá này.");
         }
 
         if (feedback.getLibrarianResponse() != null
@@ -217,7 +225,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         }
 
         if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
-            throw new ValidationException("Không thể chỉnh sửa đánh giá đã xóa.");
+            throw new ConflictException("Không thể chỉnh sửa đánh giá đã xóa.");
         }
         return feedback;
     }

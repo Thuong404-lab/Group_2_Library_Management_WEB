@@ -1,4 +1,5 @@
 package com.lms.controller;
+import com.lms.exception.ApplicationException;
 
 import com.lms.service.PayOsPaymentService;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +23,8 @@ public class PayOsWebhookController {
         try {
             payOsPaymentService.handleWebhook(webhook);
             return ResponseEntity.ok(Map.of("message", "Webhook processed"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid webhook"));
+        } catch (ApplicationException e) {
+            return ResponseEntity.status(e.getStatus()).body(Map.of("message", "Invalid webhook"));
         }
     }
 }

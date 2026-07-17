@@ -7,6 +7,7 @@ import com.lms.entity.Feedback;
 import com.lms.entity.Member;
 import com.lms.entity.MemberAccount;
 import com.lms.exception.ValidationException;
+import com.lms.exception.ForbiddenException;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.FeedbackRepository;
@@ -158,7 +159,7 @@ class MemberReviewEligibilityServiceTest {
         request.setComment("Nội dung mới");
 
         assertThatThrownBy(() -> service.updateMyReview("member7", 21, request))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("không có quyền chỉnh sửa");
 
         verify(feedbackRepository, never()).save(feedback);
