@@ -1,5 +1,6 @@
 package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
 import com.lms.entity.Member;
@@ -24,7 +25,7 @@ import com.lms.config.CustomUserDetails;
  */
 @Controller
 @RequestMapping("/member")
-public class ProfileController {
+public class ProfileController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
 
@@ -90,10 +91,10 @@ public class ProfileController {
                 sessionUser.setPhone(updatedUser.getPhone());
             }
             
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
             return "redirect:/member/profile?updated";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
             return "redirect:/member/profile";
         }
     }
@@ -111,14 +112,14 @@ public class ProfileController {
 
         // Kiểm tra khớp mật khẩu gõ lại ngay tại Controller trước khi gọi xuống Service
         if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+            redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
             return "redirect:/member/profile";
         }
 
         try {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu hệ thống thành công!");
+            redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
             return "redirect:/member/profile?passwordChanged";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());

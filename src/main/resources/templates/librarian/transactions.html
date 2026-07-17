@@ -3,7 +3,7 @@
       layout:decorate="~{layout/librarian_base}">
 <head>
     <!-- UC-14.3 UI maintained by Pham Kien Quoc. -->
-    <title>Quản lý giao dịch</title>
+    <title th:text="#{librarian.transactions.title}">Transaction Management</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
     <script defer th:src="@{/js/auto-filter.js}"></script>
   </head>
@@ -11,8 +11,8 @@
 <div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page">
     <div class="finance-header">
         <div>
-            <h2 class="finance-title">Quản lý giao dịch</h2>
-            <div class="finance-description">Theo dõi giao dịch ví, phí mượn, phí phạt và nạp tiền trong hệ thống.</div>
+            <h2 class="finance-title" th:text="#{librarian.transactions.heading}">Transaction Management</h2>
+            <div class="finance-description" th:text="#{librarian.transactions.description}">Track wallet transactions, borrowing fees, fines, and top-ups.</div>
         </div>
     </div>
 
@@ -20,40 +20,40 @@
         <form method="get" th:action="@{/librarian/members/transactions}" class="row g-3 align-items-end" data-auto-filter-form>
             <div class="col-md-4 transaction-type-filter">
                 <select name="type" class="form-select" data-auto-submit>
-                    <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao dịch</option>
-                    <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
-                    <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
-                    <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}">Tiền cọc</option>
-                    <option value="FINE" th:selected="${selectedType == 'FINE'}">Phí phạt</option>
-                    <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}">Phí hư hỏng</option>
-                    <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
+                    <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{member.wallet.allTransactions}">All Transactions</option>
+                    <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
+                    <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}" th:text="#{transaction.type.borrowFee}">Borrowing Fee</option>
+                    <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}" th:text="#{transaction.type.deposit}">Deposit</option>
+                    <option value="FINE" th:selected="${selectedType == 'FINE'}" th:text="#{transaction.type.fine}">Fine</option>
+                    <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage Fee</option>
+                    <option value="REFUND" th:selected="${selectedType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</option>
                 </select>
             </div>
 
             <div class="col-auto transaction-filter-submit">
-                <button type="submit" class="btn btn-classic px-4">Lọc</button>
+                <button type="submit" class="btn btn-classic px-4" th:text="#{common.filter}">Filter</button>
             </div>
             <div class="col-auto transaction-reset-filter">
-                <a th:href="@{/librarian/members/transactions}" class="btn btn-outline-secondary">Xóa lọc</a>
+                <a th:href="@{/librarian/members/transactions}" class="btn btn-outline-secondary" th:text="#{common.clearFilter}">Clear Filter</a>
             </div>
         </form>
     </div>
 
     <div class="card-classic finance-card">
         <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="empty-state">
-            Chưa có giao dịch nào.
+            <span th:text="#{transaction.empty}">No transactions found.</span>
         </div>
 
         <div class="app-table-wrap" th:if="${transactions != null and !#lists.isEmpty(transactions)}">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                 <tr>
-                    <th class="ps-4">Mã GD</th>
-                    <th>Thành viên</th>
-                    <th>Ngày giờ</th>
-                    <th>Loại</th>
-                    <th>Số tiền</th>
-                    <th>Trạng thái</th>
+                    <th class="ps-4" th:text="#{transaction.code}">Transaction ID</th>
+                    <th th:text="#{common.member}">Member</th>
+                    <th th:text="#{common.dateTime}">Date &amp; Time</th>
+                    <th th:text="#{transaction.type}">Type</th>
+                    <th th:text="#{transaction.amount}">Amount</th>
+                    <th th:text="#{common.status}">Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -61,12 +61,12 @@
                     <td class="transaction-code ps-4" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</td>
                     <td>
                             <div class="transaction-member-name"
-                             th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Không rõ'}">
-                            Thành viên
+                             th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('common.unknown')}">
+                            Member
                         </div>
                         <div class="small text-muted"
-                             th:text="${transaction.wallet != null and transaction.wallet.member != null ? 'Mã thành viên: ' + transaction.wallet.member.memberId : ''}">
-                            Mã thành viên
+                             th:text="${transaction.wallet != null and transaction.wallet.member != null ? #messages.msg('member.idValue', transaction.wallet.member.memberId) : ''}">
+                            Member ID
                         </div>
                     </td>
                     <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
@@ -78,12 +78,12 @@
                                   (${transaction.transactionType == 'FINE'} ? ' type-fine' :
                                   (${transaction.transactionType == 'DAMAGE_FEE'} ? ' type-damage-fee' :
                                   (${transaction.transactionType == 'REFUND'} ? ' type-refund' : ' type-default')))))"
-                              th:text="${transaction.transactionType == 'TOP_UP' ? 'Nạp tiền' :
-                                  (transaction.transactionType == 'BORROW_FEE' ? 'Phí mượn' :
-                                  (transaction.transactionType == 'DEPOSIT' ? 'Tiền cọc' :
-                                  (transaction.transactionType == 'FINE' ? 'Phí phạt' :
-                                  (transaction.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng' :
-                                  (transaction.transactionType == 'REFUND' ? 'Hoàn tiền' : transaction.transactionType)))))}">Loại giao dịch</span>
+                              th:text="${transaction.transactionType == 'TOP_UP' ? #messages.msg('transaction.type.topUp') :
+                                  (transaction.transactionType == 'BORROW_FEE' ? #messages.msg('transaction.type.borrowFee') :
+                                  (transaction.transactionType == 'DEPOSIT' ? #messages.msg('transaction.type.deposit') :
+                                  (transaction.transactionType == 'FINE' ? #messages.msg('transaction.type.fine') :
+                                  (transaction.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') :
+                                  (transaction.transactionType == 'REFUND' ? #messages.msg('transaction.type.refund') : #messages.msg('transaction.type.other'))))))}">Transaction Type</span>
                     </td>
                     <td class="transaction-amount"
                         th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
@@ -94,7 +94,7 @@
                     <td>
                         <span class="status-badge"
                               th:classappend="${transaction.status == 'Completed' ? 'status-completed' : (transaction.status == 'Failed' ? 'status-rejected' : (transaction.status == 'Canceled' ? 'status-canceled' : 'status-pending'))}"
-                              th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : (transaction.status == 'Pending' ? 'Chờ xử lý' : (transaction.status == 'Failed' ? 'Thất bại' : (transaction.status == 'Canceled' ? 'Đã hủy' : transaction.status)))}">Hoàn tất</span>
+                              th:text="${transaction.status == 'Completed' ? #messages.msg('transaction.status.completed') : (transaction.status == 'Pending' ? #messages.msg('transaction.status.pending') : (transaction.status == 'Failed' ? #messages.msg('transaction.status.failed') : (transaction.status == 'Canceled' ? #messages.msg('transaction.status.canceled') : transaction.status)))}">Completed</span>
                     </td>
                 </tr>
                 </tbody>
@@ -103,15 +103,15 @@
 
         <div class="app-pagination-region" th:if="${transactionPage != null and transactionPage.totalPages > 1}"
              th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))}">
-            <nav aria-label="Phân trang giao dịch" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
+            <nav th:aria-label="#{transaction.pagination}" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
                 <ul class="pagination app-pagination">
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=0,type=${selectedType})}">Đầu</a></li>
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number-1},type=${selectedType})}" aria-label="Trang trước"><i class="bi bi-chevron-left"></i></a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=0,type=${selectedType})}" th:text="#{pagination.first}">First</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number-1},type=${selectedType})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left"></i></a></li>
                     <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
                     <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${i},type=${selectedType})}" th:text="${i+1}">1</a></li>
                     <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">…</span></li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number+1},type=${selectedType})}" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a></li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}">Cuối</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number+1},type=${selectedType})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right"></i></a></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}" th:text="#{pagination.last}">Last</a></li>
                 </ul>
             </nav>
         </div>

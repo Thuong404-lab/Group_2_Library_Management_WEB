@@ -220,19 +220,19 @@ public class FinancialController {
         return new MemberTransactionHistoryRow(
                 "#TXN-" + transaction.getTransactionId(),
                 transaction.getTransactionDate(),
-                transactionTypeLabel(transaction.getTransactionType()),
+                transactionTypeMessageKey(transaction.getTransactionType()),
                 transaction.getAmount(),
-                completed ? "Hoàn tất" : transaction.getStatus(),
+                transactionStatusMessageKey(transaction.getStatus()),
                 completed);
     }
 
     private MemberTransactionHistoryRow toHistoryRow(PayOsPayment payment) {
         String typeLabel = switch (payment.getPurpose()) {
-            case "TOP_UP" -> "Nạp tiền qua KQPay";
-            case "BORROW_FEE" -> "Thanh toán phí mượn qua KQPay";
-            case "FINE" -> "Thanh toán phí phạt qua KQPay";
-            case "FINE_BATCH" -> "Thanh toán tổng phí phạt qua KQPay";
-            default -> "Thanh toán qua KQPay";
+            case "TOP_UP" -> "transaction.type.kqpayTopUp";
+            case "BORROW_FEE" -> "transaction.type.kqpayBorrowFee";
+            case "FINE" -> "transaction.type.kqpayFine";
+            case "FINE_BATCH" -> "transaction.type.kqpayFineBatch";
+            default -> "transaction.type.kqpay";
         };
         BigDecimal amount = payment.getAmount();
         if (!"TOP_UP".equalsIgnoreCase(payment.getPurpose()) && amount != null) {
@@ -243,22 +243,34 @@ public class FinancialController {
                 payment.getPaidAt() != null ? payment.getPaidAt() : payment.getCreatedAt(),
                 typeLabel,
                 amount,
-                "Hoàn tất",
+                "transaction.status.completed",
                 true);
     }
 
-    private String transactionTypeLabel(String transactionType) {
+    private String transactionTypeMessageKey(String transactionType) {
         if (transactionType == null) {
-            return "Khác";
+            return "transaction.type.other";
         }
         return switch (transactionType.toUpperCase()) {
-            case "TOP_UP" -> "Nạp tiền vào ví";
-            case "BORROW_FEE" -> "Phí mượn sách";
-            case "DEPOSIT" -> "Tiền cọc đặt trước";
-            case "FINE" -> "Phí phạt";
-            case "DAMAGE_FEE" -> "Phí hư hỏng";
-            case "REFUND" -> "Hoàn tiền";
-            default -> transactionType;
+            case "TOP_UP" -> "transaction.type.topUp";
+            case "BORROW_FEE" -> "transaction.type.borrowFee";
+            case "DEPOSIT" -> "transaction.type.deposit";
+            case "FINE" -> "transaction.type.fine";
+            case "DAMAGE_FEE" -> "transaction.type.damageFee";
+            case "REFUND" -> "transaction.type.refund";
+            default -> "transaction.type.other";
+        };
+    }
+
+    private String transactionStatusMessageKey(String status) {
+        if (status == null) {
+            return "transaction.status.pending";
+        }
+        return switch (status.trim().toUpperCase()) {
+            case "COMPLETED", "PAID" -> "transaction.status.completed";
+            case "FAILED" -> "transaction.status.failed";
+            case "CANCELED", "CANCELLED" -> "transaction.status.canceled";
+            default -> "transaction.status.pending";
         };
     }
 

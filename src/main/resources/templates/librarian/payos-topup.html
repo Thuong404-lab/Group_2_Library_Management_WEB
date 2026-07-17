@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title th:text="${payment.purpose == 'TOP_UP' ? 'Phiếu nạp tiền KQPay' : 'Phiếu thanh toán phí mượn KQPay'}">Phiếu nạp tiền KQPay</title>
+    <title th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupTitle') : #messages.msg('librarian.payos.borrowFeeTitle')}">KQPay Top-up</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
     <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
 </head>
@@ -10,54 +10,54 @@
 <div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page">
     <section class="payos-receipt">
         <header class="payos-receipt-header">
-            <h2 th:text="${payment.purpose == 'TOP_UP' ? 'Phiếu Nạp Tiền Thành Viên' : 'Phiếu Thanh Toán Phí Mượn'}">Phiếu Nạp Tiền Thành Viên</h2>
+                <h2 th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHeading') : #messages.msg('librarian.payos.borrowFeeHeading')}">Member Top-up</h2>
         </header>
 
         <div class="payos-receipt-body">
             <div class="payos-customer-box">
-                <span class="payos-customer-label">Tài khoản thành viên:</span>
+                <span class="payos-customer-label" th:text="#{librarian.payos.memberAccount}">Member Account:</span>
                 <p class="payos-customer-value"
-                   th:text="${payment.member.user != null ? payment.member.user.email : 'Thành viên'}">
+                      th:text="${payment.member.user != null ? payment.member.user.email : #messages.msg('common.member')}">
                     member@example.com
                 </p>
             </div>
 
             <div class="payos-section-bar">
-                <h3 class="payos-section-title"
-                    th:text="${payment.purpose == 'TOP_UP' ? 'Thông tin đơn nạp tiền' : 'Thông tin thanh toán phí mượn'}">
-                    Thông tin đơn nạp tiền
+                    <h3 class="payos-section-title"
+                        th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupInfo') : #messages.msg('librarian.payos.borrowFeeInfo')}">
+                        Top-up Information
                 </h3>
                 <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending"
-                      th:text="${payment.purpose == 'TOP_UP' ? 'Đang chờ thanh toán' : 'Phiếu đang chờ thanh toán'}">Đang chờ thanh toán</span>
-                <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid">Đã thanh toán</span>
+                          th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('payos.status.pending') : #messages.msg('librarian.payos.requestPending')}">Awaiting Payment</span>
+                    <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid" th:text="#{payment.status.paid}">Paid</span>
                 <span th:if="${payment.status != 'PAID' and payment.status != 'PENDING'}"
                       class="payos-status payos-status-failed"
-                      th:text="${payment.status == 'EXPIRED' ? 'Mã QR đã hết hạn' : (payment.status == 'CANCELLED' ? 'Đã hủy' : 'Thanh toán thất bại')}">
-                    Thanh toán thất bại
+                          th:text="${payment.status == 'EXPIRED' ? #messages.msg('payos.status.expired') : (payment.status == 'CANCELLED' ? #messages.msg('transaction.status.canceled') : #messages.msg('payos.status.failed'))}">
+                        Payment Failed
                 </span>
             </div>
 
             <div class="payos-receipt-grid" th:classappend="${payment.status != 'PENDING'} ? ' no-qr' : ''">
                 <div class="payos-detail-card">
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label">Thành viên</span>
+                        <span class="payos-detail-label" th:text="#{common.member}">Member</span>
                         <span class="payos-detail-value"
-                              th:text="${payment.member.user != null ? payment.member.user.fullName : 'Thành viên'}">Thành viên</span>
+                              th:text="${payment.member.user != null ? payment.member.user.fullName : #messages.msg('common.member')}">Member</span>
                     </div>
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label">Mã thành viên</span>
+                        <span class="payos-detail-label" th:text="#{librarian.payos.memberId}">Member ID</span>
                         <span class="payos-detail-value" th:text="${'#' + payment.member.memberId}">#1</span>
                     </div>
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label">Mã đơn KQPay</span>
+                        <span class="payos-detail-label" th:text="#{payos.orderCode}">KQPay Order Code</span>
                         <span class="payos-detail-value" th:text="${payment.orderCode}">1</span>
                     </div>
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label">Thời gian tạo</span>
+                        <span class="payos-detail-label" th:text="#{payos.createdAt}">Created At</span>
                         <span class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
                     </div>
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="${payment.purpose == 'TOP_UP' ? 'Số tiền nạp' : 'Số tiền thanh toán'}">Số tiền nạp</span>
+                        <span class="payos-detail-label" th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupAmount') : #messages.msg('librarian.payos.paymentAmount')}">Top-up Amount</span>
                         <span class="payos-detail-value payos-total">
                             <span th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
                         </span>
@@ -67,27 +67,27 @@
                 <div class="payos-qr-card" th:if="${payment.status == 'PENDING'}">
                     <div class="payos-qr-frame">
                         <img th:src="@{/librarian/payments/payos/{orderCode}/qr.png(orderCode=${payment.orderCode})}"
-                             alt="Mã QR thanh toán KQPay"/>
+                         th:alt="#{payos.qrAlt}"/>
                     </div>
-                    <div class="payos-qr-title">Đưa mã này cho thành viên quét</div>
-                    <div class="payos-qr-note">Không thay đổi số tiền hoặc nội dung chuyển khoản.</div>
+                    <div class="payos-qr-title" th:text="#{librarian.payos.showQr}">Ask the member to scan this code</div>
+                    <div class="payos-qr-note" th:text="#{payos.qrHint}">Do not change the amount or transfer description.</div>
                     <div class="kqpay-countdown" data-kqpay-countdown
                          th:attr="data-expires-at=${paymentExpiresAt}">
-                        <span data-kqpay-label>Mã QR hết hạn sau</span>
+                        <span data-kqpay-label th:text="#{payos.expiresIn}">QR code expires in</span>
                         <strong data-kqpay-time>05:00</strong>
                     </div>
                 </div>
             </div>
 
-            <p class="payos-help" th:text="${payment.purpose == 'TOP_UP' ? 'ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.' : 'ⓘ Phiếu mượn chỉ được kích hoạt sau khi KQPay xác nhận đã nhận tiền.'}">ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.</p>
+                <p class="payos-help" th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHelp') : #messages.msg('librarian.payos.borrowHelp')}">Wallet updates after payment.</p>
 
             <div th:if="${payment.status == 'PAID'}" class="payos-success">
-                <span th:text="${payment.purpose == 'TOP_UP' ? 'Đã cộng tiền vào ví thành viên thành công.' : 'Tạo phiếu mượn thành công.'}">Đã cộng tiền vào ví thành viên thành công.</span>
-                <span th:if="${payment.transaction != null}">Mã giao dịch: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
+                    <span th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupSuccess') : #messages.msg('librarian.payos.borrowSuccess')}">Completed successfully.</span>
+                    <span th:if="${payment.transaction != null}"><span th:text="#{transaction.code}">Transaction ID</span>: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
             </div>
 
             <div class="payos-receipt-actions">
-                <a th:href="@{${payment.purpose == 'TOP_UP' ? '/librarian/members/topup' : '/librarian/borrow/create'}}" class="payos-btn-secondary" th:text="${payment.purpose == 'TOP_UP' ? 'Quay lại quầy nạp tiền' : 'Quay lại quầy lập phiếu'}">Quay lại quầy nạp tiền</a>
+                <a th:href="@{${payment.purpose == 'TOP_UP' ? '/librarian/members/topup' : '/librarian/borrow/create'}}" class="payos-btn-secondary" th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.backTopup') : #messages.msg('librarian.payos.backBorrow')}">Back</a>
             </div>
         </div>
     </section>

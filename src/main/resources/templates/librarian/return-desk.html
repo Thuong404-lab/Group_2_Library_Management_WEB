@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Bàn tiếp nhận trả sách</title>
+    <title th:text="#{librarian.returnDesk.title}">Book Return Desk</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/return-desk.css}" />
   </head>
@@ -12,40 +12,40 @@
 
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Thành công</span>
+        <span th:text="${successMessage}">Success</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Lỗi</span>
+        <span th:text="${errorMessage}">Error</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
         <div>
-            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Bàn tiếp nhận trả sách</h2>
-            <div class="text-muted">Tiếp nhận sách hoàn trả và đánh giá tình trạng sách tại quầy thư viện.</div>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336" th:text="#{librarian.returnDesk.heading}">Book Return Desk</h2>
+            <div class="text-muted" th:text="#{librarian.returnDesk.description}">Receive returned books and assess their condition at the library desk.</div>
         </div>
     </div>
 
     <!-- Barcode Search Card -->
     <div class="card classic-card shadow-sm mb-4">
         <div class="card-header">
-            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2 u-color-8b5a2b-93ece783"></i>Quét hoặc nhập mã vạch cuốn sách hoàn trả</h5>
+            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{librarian.returnDesk.scanTitle}">Scan or enter the returned book barcode</span></h5>
         </div>
         <div class="card-body p-4 bg-white">
             <form th:action="@{/librarian/loan/returns/search}" method="get" class="row g-3 align-items-end">
                 <div class="col-md-9">
-                    <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Mã vạch (Barcode) của cuốn sách</label>
+                    <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.barcode}">Book Barcode</label>
                     <input type="text" name="barcode" th:value="${searchedBarcode}"
                            class="form-control scan-input"
-                           placeholder="Ví dụ: BI-1002 hoặc quét trực tiếp bằng thiết bị..."
+                           th:placeholder="#{librarian.returnDesk.barcodePlaceholder}"
                            autofocus required autocomplete="off" />
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn w-100 fw-bold btn-classic-primary librarian-return-desk-button-padding-07">
-                        <i class="bi bi-search me-1"></i>Tìm đơn mượn
+                        <i class="bi bi-search me-1"></i><span th:text="#{librarian.returnDesk.search}">Find Loan</span>
                     </button>
                 </div>
             </form>
@@ -57,7 +57,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title-custom mb-0">
                 <i class="bi bi-file-earmark-text me-2 u-color-8b5a2b-93ece783"></i>
-                Kết quả tra cứu cho mã sách:
+                <span th:text="#{librarian.returnDesk.results}">Search results for barcode:</span>
                 <span class="font-monospace ms-1 u-color-8b5a2b-93ece783" th:text="${searchedBarcode}">BI-1002</span>
             </h5>
         </div>
@@ -65,11 +65,11 @@
             <table class="table table-hover align-middle mb-0 classic-table">
                 <thead>
                 <tr>
-                    <th class="ps-4">Mã Đơn Cha</th>
-                    <th>Thông tin Độc giả</th>
-                    <th>Nhan đề sách đang giữ</th>
-                    <th>Hạn trả quy định</th>
-                    <th class="text-end pe-4">Hành động xử lý</th>
+                    <th class="ps-4" th:text="#{librarian.returnDesk.parentLoan}">Parent Loan ID</th>
+                    <th th:text="#{librarian.returnDesk.memberInfo}">Member Information</th>
+                    <th th:text="#{librarian.returnDesk.bookHeld}">Book Held</th>
+                    <th th:text="#{loan.dueDate}">Due Date</th>
+                    <th class="text-end pe-4" th:text="#{common.actions}">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -82,30 +82,30 @@
                         <small class="text-muted" th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
                     </td>
                     <td>
-                        <div class="fw-semibold text-dark" th:text="${detail.book.title}">Tên cuốn sách</div>
-                        <small class="text-muted" th:text="'Gia hạn: ' + ${detail.renewCount} + ' lần'"></small>
+                        <div class="fw-semibold text-dark" th:text="${detail.book.title}">Book Title</div>
+                        <small class="text-muted" th:text="#{librarian.returnDesk.renewals(${detail.renewCount})}"></small>
                     </td>
                     <td>
                         <span class="fw-bold text-dark" th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
                         <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}"
-                              class="status-badge status-overdue ms-1">Quá hạn</span>
+                              class="status-badge status-overdue ms-1" th:text="#{loan.status.overdue}">Overdue</span>
                     </td>
                     <td class="text-end pe-4">
                         <button type="button" class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
                                 data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
                                >
-                            Tiếp nhận trả sách
+                            <span th:text="#{librarian.returnDesk.receive}">Receive Returned Book</span>
                         </button>
                     </td>
                 </tr>
                 <tr th:if="${searchResults == null}">
                     <td colspan="5" class="py-4 text-center text-muted">
-                        Quét hoặc nhập mã vạch để tìm phiếu mượn cần hoàn trả.
+                        <span th:text="#{librarian.returnDesk.searchHint}">Scan or enter a barcode to find the loan to return.</span>
                     </td>
                 </tr>
                 <tr th:if="${searchResults != null and #lists.isEmpty(searchResults)}">
                     <td colspan="5" class="py-4 text-center text-muted">
-                        Không có phiếu mượn đang hoạt động cho mã vạch này.
+                        <span th:text="#{librarian.returnDesk.noActiveLoan}">No active loan was found for this barcode.</span>
                     </td>
                 </tr>
                 <tr th:if="${false}">
@@ -144,32 +144,32 @@
                 <input type="hidden" name="barcode" th:value="${searchedBarcode}">
                 <div class="modal-header u-background-color-fdfbf7-border-bottom-1px-dashed-rgba-139-90-43-0-2-518871f5">
                     <h5 class="modal-title fw-bold u-color-4a3b32-font-family-playfair-display-serif-70239336" id="confirmReturnModalLabel">
-                        Biên bản đánh giá hoàn sách nhập kho
+                        <span th:text="#{librarian.returnDesk.assessment}">Returned Book Condition Assessment</span>
                     </h5>
                 </div>
                 <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Ngày trả thực tế <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c"><span th:text="#{loan.actualReturnDate}">Actual Return Date</span> <span class="text-danger">*</span></label>
                         <input type="date" name="returnDate" th:value="${defaultReturnDate}"
                                class="form-control scan-input" required />
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Tình trạng sách sau khi tiếp nhận <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c"><span th:text="#{librarian.returnDesk.condition}">Book Condition After Return</span> <span class="text-danger">*</span></label>
                         <select name="conditionNote" class="form-select scan-input" required>
-                            <option value="Tốt - Sách nguyên vẹn, sạch đẹp">Tốt / Nguyên vẹn, sạch đẹp</option>
-                            <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ">Hư hỏng nhẹ (Quăn mép, sờn bìa, vết rách nhỏ)</option>
-                            <option value="Mất hoặc Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng">Mất hoặc hư hỏng nặng (Cần bồi thường)</option>
+                            <option value="Tốt - Sách nguyên vẹn, sạch đẹp" th:text="#{book.condition.good}">Good / Intact and clean</option>
+                            <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                            <option value="Mất hoặc Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng" th:text="#{book.condition.severeDamage}">Lost or severely damaged</option>
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">Ghi chú chi tiết thêm (Tùy chọn)</label>
-                        <textarea class="form-control scan-input" name="conditionNoteAdditional" rows="3" placeholder="Nhập thêm mô tả cụ thể về hư hỏng nếu có..."></textarea>
+                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.additionalNotes}">Additional Notes (Optional)</label>
+                        <textarea class="form-control scan-input" name="conditionNoteAdditional" rows="3" th:placeholder="#{librarian.returnDesk.notesPlaceholder}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer u-background-color-fdfbf7-border-top-1px-dashed-rgba-139-90-43-0-2-72a5c67f">
-                    <button type="button" class="btn btn-classic-outline px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="button" class="btn btn-classic-outline px-4" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
                     <button type="submit" class="btn btn-classic-primary px-4 fw-bold u-margin-right-0-important-5a8785f5">
-                        Xác nhận &amp; Hoàn kho
+                        <span th:text="#{librarian.returnDesk.confirm}">Confirm &amp; Return to Storage</span>
                     </button>
                 </div>
             </form>

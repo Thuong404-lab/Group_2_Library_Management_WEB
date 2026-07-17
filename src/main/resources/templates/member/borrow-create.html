@@ -17,14 +17,14 @@
 
     <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Thành công</span>
+            <span th:text="${successMessage}">Success</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
     <div class="card card-classic shadow-sm">
         <div class="card-header card-header-classic py-3 text-center">
             <h5 class="mb-0 fw-bold font-playfair">
-                <i class="bi bi-file-earmark-text me-2"></i>Phiếu Đăng Ký Mượn Sách Trực Tuyến
+                    <i class="bi bi-file-earmark-text me-2"></i><span th:text="#{member.borrowCreate.title}">Online Book Loan Request</span>
             </h5>
         </div>
         <div class="card-body p-4 u-background-color-fdfbf7-71083b05">
@@ -34,39 +34,39 @@
                 <div class="mb-4 p-3 rounded-2 text-muted member-borrow-create-div-background-border-03"
                     >
                     <small class="d-block fw-bold text-uppercase mb-1 member-borrow-create-small-color-letter-spacing-04"
-                          >Tài khoản đăng ký:</small>
+                             th:text="#{member.borrowCreate.account}">Requesting Account:</small>
                     <span class="text-dark fw-semibold fs-5 u-font-family-playfair-display-serif-53670465"
 
                           th:text="${currentMemberName}">Username</span>
                 </div>
 
                 <div class="mb-4" th:if="${selectedBook != null}">
-                    <label class="form-label fw-bold mb-2 u-color-4a3b32-1ba01220">Sách mượn</label>
+                    <label class="form-label fw-bold mb-2 u-color-4a3b32-1ba01220" th:text="#{member.borrowCreate.book}">Book</label>
                     <div class="p-3 rounded-2 bg-white border">
-                        <div class="fw-bold" th:text="${selectedBook.title}">Tên sách</div>
-                        <small class="text-muted" th:text="${selectedBook.isbn != null ? 'ISBN: ' + selectedBook.isbn : 'Chưa có ISBN'}">ISBN</small>
+                            <div class="fw-bold" th:text="${selectedBook.title}">Book Title</div>
+                            <small class="text-muted" th:text="${selectedBook.isbn != null ? 'ISBN: ' + selectedBook.isbn : #messages.msg('book.isbn.missing')}">ISBN</small>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold mb-2 u-color-4a3b32-1ba01220">Thời gian mượn mong muốn</label>
+                    <label class="form-label fw-bold mb-2 u-color-4a3b32-1ba01220" th:text="#{member.borrowCreate.duration}">Preferred Loan Period</label>
                     <select class="form-control member-borrow-create-select-border-radius-border-height-07" name="numberOfDays"
                            >
-                        <option value="7">Mượn ngắn hạn (7 ngày)</option>
-                        <option value="14" selected>Mượn tiêu chuẩn (14 ngày)</option>
-                        <option value="30">Mượn dài hạn (30 ngày)</option>
+                        <option value="7" th:text="#{member.borrowCreate.shortTerm}">Short-term (7 days)</option>
+                        <option value="14" selected th:text="#{member.borrowCreate.standard}">Standard (14 days)</option>
+                        <option value="30" th:text="#{member.borrowCreate.longTerm}">Long-term (30 days)</option>
                     </select>
                     <div class="form-text text-muted mt-2 fst-italic u-font-size-0-85rem-4908cb0a">
                         <i class="bi bi-info-circle me-1"></i>
-                        Sau khi gửi, phiếu sẽ ở trạng thái chờ duyệt. Vui lòng đợi thông báo xác nhận từ thủ thư.
+                    <span th:text="#{member.borrowCreate.notice}">After submission, the request will await librarian approval.</span>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-end border-top pt-4 mt-2">
 
-                    <a th:href="@{/member/dashboard}" class="btn btn-classic-outline">Hủy bỏ</a>
+                    <a th:href="@{/member/dashboard}" class="btn btn-classic-outline" th:text="#{common.cancel}">Cancel</a>
                     <button type="submit" class="btn btn-classic-primary fw-bold u-margin-right-0-important-5a8785f5">
-                        Gửi yêu cầu phê duyệt
+                        <span th:text="#{member.borrowCreate.submit}">Submit for Approval</span>
                     </button>
                 </div>
             </form>

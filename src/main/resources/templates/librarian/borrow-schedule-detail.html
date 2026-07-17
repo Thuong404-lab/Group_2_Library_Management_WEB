@@ -4,7 +4,7 @@
     layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <title>Chi tiết phiếu mượn</title>
+    <title th:text="#{librarian.scheduleDetail.title}">Loan Details</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-schedule-detail.css}" />
 </head>
 
@@ -13,22 +13,22 @@
         class="canonical-management-page borrow-schedule-detail-page">
         <header class="detail-page-header">
             <div class="detail-page-heading">
-                <p class="app-page-eyebrow">Quản lý mượn trả</p>
-                <h1 class="app-page-title">Chi tiết mượn trả</h1>
-                <p class="app-page-description">Xem thông tin phiếu mượn, sách đã mượn và các giao dịch liên quan.</p>
+            <p class="app-page-eyebrow" th:text="#{librarian.scheduleDetail.eyebrow}">LOAN MANAGEMENT</p>
+            <h1 class="app-page-title" th:text="#{librarian.scheduleDetail.heading}">Loan Details</h1>
+            <p class="app-page-description" th:text="#{librarian.scheduleDetail.description}">View the loan, books, and related transactions.</p>
             </div>
             <a th:href="@{/librarian/loan/borrow-schedule}" class="detail-back-button">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                <span>Quay lại</span>
+            <span th:text="#{common.back}">Back</span>
             </a>
         </header>
 
-        <main class="loan-detail-layout" aria-label="Chi tiết phiếu mượn">
+    <main class="loan-detail-layout" th:aria-label="#{librarian.scheduleDetail.title}">
             <aside class="detail-card reader-summary-card" aria-labelledby="reader-summary-title">
                 <div class="detail-card-header">
                     <div>
-                        <h2 id="reader-summary-title" class="app-section-title">Thông tin độc giả</h2>
-                        <p class="app-section-description">Người đứng tên trên phiếu mượn.</p>
+                    <h2 id="reader-summary-title" class="app-section-title" th:text="#{librarian.scheduleDetail.memberInfo}">Member Information</h2>
+                    <p class="app-section-description" th:text="#{librarian.scheduleDetail.memberDescription}">The member named on this loan.</p>
                     </div>
                 </div>
 
@@ -43,16 +43,16 @@
 
                     <dl class="detail-list">
                         <div class="detail-list-item">
-                            <dt>Mã độc giả</dt>
+                    <dt th:text="#{librarian.payos.memberId}">Member ID</dt>
                             <dd>TV-22</dd>
                         </div>
                         <div class="detail-list-item">
-                            <dt>Địa chỉ email</dt>
+                    <dt th:text="#{member.profile.email}">Email Address</dt>
                             <dd class="detail-value-break">jikikaridotoji@gmail.com</dd>
                         </div>
                         <div class="detail-list-item">
-                            <dt>Số điện thoại</dt>
-                            <dd class="detail-value-muted">Chưa cập nhật</dd>
+                    <dt th:text="#{member.profile.phone}">Phone Number</dt>
+                    <dd class="detail-value-muted" th:text="#{common.notUpdated}">Not updated</dd>
                         </div>
                     </dl>
                 </div>
@@ -62,17 +62,17 @@
                 <section class="detail-card" aria-labelledby="loan-overview-title">
                     <div class="detail-card-header">
                         <div>
-                            <h2 id="loan-overview-title" class="app-section-title">Thông tin mượn trả</h2>
-                            <p class="app-section-description">Thông tin ghi nhận khi lập phiếu.</p>
+                    <h2 id="loan-overview-title" class="app-section-title" th:text="#{librarian.scheduleDetail.loanInfo}">Loan Information</h2>
+                    <p class="app-section-description" th:text="#{librarian.scheduleDetail.loanDescription}">Information recorded when the loan was created.</p>
                         </div>
                     </div>
                     <dl class="loan-overview-grid">
                         <div class="overview-item">
-                            <dt>Ngày mượn</dt>
+                    <dt th:text="#{loan.borrowDate}">Borrow Date</dt>
                             <dd><time datetime="2026-07-12T18:49">12/07/2026 18:49</time></dd>
                         </div>
                         <div class="overview-item">
-                            <dt>Thủ thư phụ trách</dt>
+                    <dt th:text="#{librarian.scheduleDetail.librarian}">Librarian in Charge</dt>
                             <dd>Admin</dd>
                         </div>
                     </dl>
@@ -81,15 +81,15 @@
                 <section class="detail-card" aria-labelledby="borrowed-books-title">
                     <div class="detail-card-header detail-card-header--with-meta">
                         <div>
-                            <h2 id="borrowed-books-title" class="app-section-title">Danh sách sách mượn</h2>
-                            <p class="app-section-description">Chi tiết thời hạn và trạng thái của từng cuốn sách.</p>
+                    <h2 id="borrowed-books-title" class="app-section-title" th:text="#{librarian.scheduleDetail.books}">Borrowed Books</h2>
+                    <p class="app-section-description" th:text="#{librarian.scheduleDetail.booksDescription}">Due dates and status for each book.</p>
                         </div>
-                        <span class="record-count">1 cuốn sách</span>
+                <span class="record-count" th:text="#{book.count(1)}">1 book</span>
                     </div>
 
                     <div class="app-table-wrap">
                         <table class="app-table borrowed-books-table">
-                            <caption class="visually-hidden">Danh sách sách thuộc phiếu mượn</caption>
+                    <caption class="visually-hidden" th:text="#{librarian.scheduleDetail.booksCaption}">Books in this loan</caption>
                             <colgroup>
                                 <col class="book-title-column" />
                                 <col class="barcode-column" />
@@ -100,28 +100,28 @@
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th scope="col">Tên sách</th>
-                                    <th scope="col">Mã vạch</th>
-                                    <th scope="col">Hạn trả</th>
-                                    <th scope="col">Ngày trả thực tế</th>
-                                    <th scope="col">Gia hạn</th>
-                                    <th scope="col">Trạng thái</th>
+                            <th scope="col" th:text="#{book.title}">Book Title</th>
+                            <th scope="col" th:text="#{librarian.returnDesk.barcode}">Barcode</th>
+                            <th scope="col" th:text="#{loan.dueDate}">Due Date</th>
+                            <th scope="col" th:text="#{loan.actualReturnDate}">Actual Return Date</th>
+                            <th scope="col" th:text="#{loan.renew}">Renewals</th>
+                            <th scope="col" th:text="#{common.status}">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td data-label="Tên sách">
-                                        <span class="book-title">Cho Tôi Xin Một Vé Đi Tuổi Thơ</span>
-                                        <span class="book-author">Nguyễn Nhật Ánh</span>
+                            <span class="book-title" th:text="#{book.sample.title}">Book title</span>
+                            <span class="book-author" th:text="#{book.sample.author}">Author name</span>
                                     </td>
                                     <td data-label="Mã vạch"><span class="book-barcode">BC014-001</span></td>
                                     <td data-label="Hạn trả"><time datetime="2026-07-26">26/07/2026</time></td>
                                     <td data-label="Ngày trả thực tế">
                                         <time datetime="2026-07-12T18:50">12/07/2026 <span class="return-time">18:50</span></time>
                                     </td>
-                                    <td data-label="Gia hạn">0 lần</td>
-                                    <td data-label="Trạng thái">
-                                        <span class="status-badge status-returned">Đã hoàn trả</span>
+                        <td data-label="Renewals" th:text="#{librarian.returnDesk.renewals(0)}">0 renewals</td>
+                        <td data-label="Status">
+                            <span class="status-badge status-returned" th:text="#{loan.status.returned}">Returned</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -132,28 +132,28 @@
                 <section class="detail-card" aria-labelledby="transactions-title">
                     <div class="detail-card-header">
                         <div>
-                            <h2 id="transactions-title" class="app-section-title">Giao dịch liên quan</h2>
-                            <p class="app-section-description">Các khoản thu phát sinh từ phiếu mượn này.</p>
+                    <h2 id="transactions-title" class="app-section-title" th:text="#{librarian.scheduleDetail.transactions}">Related Transactions</h2>
+                    <p class="app-section-description" th:text="#{librarian.scheduleDetail.transactionsDescription}">Charges generated by this loan.</p>
                         </div>
                     </div>
 
                     <div class="app-table-wrap">
                         <table class="app-table transaction-table">
-                            <caption class="visually-hidden">Danh sách giao dịch liên quan đến phiếu mượn</caption>
+                    <caption class="visually-hidden" th:text="#{librarian.scheduleDetail.transactionsCaption}">Transactions related to this loan</caption>
                             <thead>
                                 <tr>
-                                    <th scope="col">Mã giao dịch</th>
-                                    <th scope="col">Loại giao dịch</th>
-                                    <th scope="col">Số tiền</th>
-                                    <th scope="col">Thời gian</th>
-                                    <th scope="col">Trạng thái</th>
+                            <th scope="col" th:text="#{transaction.code}">Transaction ID</th>
+                            <th scope="col" th:text="#{transaction.type}">Transaction Type</th>
+                            <th scope="col" th:text="#{transaction.amount}">Amount</th>
+                            <th scope="col" th:text="#{common.dateTime}">Time</th>
+                            <th scope="col" th:text="#{common.status}">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td colspan="5" class="empty-table-cell">
                                         <div class="app-empty-state">
-                                            <p>Không có giao dịch tài chính phát sinh cho phiếu mượn này.</p>
+                        <p th:text="#{librarian.scheduleDetail.noTransactions}">No financial transactions were generated for this loan.</p>
                                         </div>
                                     </td>
                                 </tr>

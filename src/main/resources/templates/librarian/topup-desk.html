@@ -4,7 +4,7 @@
 
 <head>
     <!-- Librarian top-up desk UI maintained by Pham Kien Quoc. -->
-    <title>Nạp tiền tại quầy</title>
+    <title th:text="#{librarian.topupDesk.title}">Top Up at Desk</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/topup-desk.css}" />
   </head>
@@ -13,8 +13,8 @@
     <div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page topup-desk-page">
         <div class="finance-header">
             <div>
-                <h2 class="finance-title">Nạp tiền tại quầy</h2>
-                <div class="finance-description">Tra cứu thành viên, cộng tiền vào ví điện tử và tạo giao dịch nạp tiền.</div>
+                <h2 class="finance-title" th:text="#{librarian.topupDesk.heading}">Top Up at Desk</h2>
+                <div class="finance-description" th:text="#{librarian.topupDesk.description}">Find a member and add funds to the wallet.</div>
             </div>
         </div>
 
@@ -30,20 +30,20 @@
                         th:value="${_csrf.token}">
 
                     <h5 class="section-title mb-4">
-                        Nạp tiền cho thành viên
+                                <span th:text="#{librarian.topupDesk.formTitle}">Top Up Member Wallet</span>
                     </h5>
 
                     <div class="mb-4">
-                        <label class="form-label">Chọn thành viên</label>
+                                <label class="form-label" th:text="#{librarian.topupDesk.selectMember}">Select Member</label>
                         <input type="text" id="topupMemberSearch" class="form-control mb-2"
-                            placeholder="Tìm theo tên, email, SĐT, mã, trạng thái hoặc hạng thành viên..."
+                                       th:placeholder="#{librarian.topupDesk.searchPlaceholder}"
                             autocomplete="off">
-                        <div class="topup-member-search-hint">Nhập tên, email, số điện thoại hoặc mã thành viên để hiển thị kết quả phù hợp.</div>
-                        <div class="topup-member-selection-hint">Bạn cần chọn một thành viên trước khi thực hiện nạp tiền.</div>
+                                <div class="topup-member-search-hint" th:text="#{librarian.topupDesk.searchHint}">Enter member information to search.</div>
+                                <div class="topup-member-selection-hint" th:text="#{librarian.topupDesk.selectionHint}">Select a member before topping up.</div>
 
                         <div class="topup-member-list p-3 d-none" id="topupMemberList">
                             <label th:each="member : ${topupMembers}" class="form-check topup-member-item mb-2"
-                                th:data-selected-label="${(member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên') + ' - TV-' + member.memberId}"
+                                             th:data-selected-label="${(member.user != null and member.user.fullName != null ? member.user.fullName : #messages.msg('role.member')) + ' - TV-' + member.memberId}"
                                 th:attr="data-search=${#strings.toLowerCase(
                                     (member.user != null ? member.user.fullName : '') + ' ' +
                                     (member.user != null ? member.user.email : '') + ' ' +
@@ -64,11 +64,11 @@
                                     autocomplete="off">
                                 <span class="form-check-label topup-member-info">
                                     <strong class="topup-member-name"
-                                        th:text="${member.user != null and member.user.fullName != null ? member.user.fullName : 'Thành viên'}">Tên thành viên</strong>
+                                                        th:text="${member.user != null and member.user.fullName != null ? member.user.fullName : #messages.msg('role.member')}">Member name</strong>
                                     <span class="topup-member-contact">
-                                        <span th:text="${member.user != null and member.user.email != null ? member.user.email : 'Chưa có email'}">email@example.com</span>
+                                                    <span th:text="${member.user != null and member.user.email != null ? member.user.email : #messages.msg('common.noEmail')}">email@example.com</span>
                                         <span aria-hidden="true"> · </span>
-                                        <span th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : 'Chưa có số điện thoại'}">0900000000</span>
+                                                    <span th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : #messages.msg('common.noPhone')}">0900000000</span>
                                         <span aria-hidden="true"> · </span>
                                         <span th:text="${'TV-' + member.memberId}">TV-1</span>
                                     </span>
@@ -78,28 +78,28 @@
                             <div th:if="${topupMembers == null or #lists.isEmpty(topupMembers)}"
                                 class="topup-member-empty">
                                 <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                <span>Chưa có thành viên nào trong hệ thống.</span>
+                                            <span th:text="#{librarian.topupDesk.noMembers}">No members in the system.</span>
                             </div>
                             <div id="topupMemberEmpty" class="topup-member-empty d-none">
                                 <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                <span>Không tìm thấy thông tin thành viên phù hợp.</span>
+                                            <span th:text="#{librarian.topupDesk.noMatches}">No matching members found.</span>
                             </div>
                         </div>
                         <div id="topupMemberRequired" class="invalid-feedback">
-                            Vui lòng chọn một thành viên.
+                                    <span th:text="#{librarian.topupDesk.memberRequired}">Please select a member.</span>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label">Số tiền nạp</label>
+                                <label class="form-label" th:text="#{librarian.topupDesk.amount}">Top-up Amount</label>
                         <div class="input-group finance-amount-group">
                             <input type="text" inputmode="numeric" class="form-control" name="amount" id="topupAmount"
-                                th:value="${amount != null ? amount : ''}" placeholder="Nhập số tiền"
+                                       th:value="${amount != null ? amount : ''}" th:placeholder="#{librarian.topupDesk.amountPlaceholder}"
                                 data-vnd-input data-min-amount="10000" autocomplete="off">
                             <span class="input-group-text finance-currency-unit librarian-topup-desk-span-background-02">VNĐ</span>
                         </div>
                         <div id="topupAmountRequired" class="invalid-feedback">
-                            Số tiền nạp không được để trống.
+                                    <span th:text="#{librarian.topupDesk.amountRequired}">Top-up amount is required.</span>
                         </div>
                         <div class="quick-amount-options mt-2 d-flex flex-wrap">
                             <button type="button" class="btn btn-sm btn-outline-secondary"
@@ -114,29 +114,29 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label">Phương thức ghi nhận</label>
+                                <label class="form-label" th:text="#{librarian.topupDesk.method}">Payment Method</label>
                         <div class="topup-method-options">
                             <div class="form-check topup-method-option">
                                 <input class="form-check-input" type="radio" name="payMethod" id="payCash" value="cash"
                                     checked>
                                 <label class="form-check-label" for="payCash">
-                                    Tiền mặt
+                                        <span th:text="#{payment.cash}">Cash</span>
                                 </label>
                             </div>
                             <div class="form-check topup-method-option">
                                 <input class="form-check-input" type="radio" name="payMethod" id="payTransfer"
                                     value="transfer">
                                 <label class="form-check-label" for="payTransfer">
-                                    Chuyển khoản KQPay
+                                        <span th:text="#{payment.kqpay}">KQPay Transfer</span>
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <div class="finance-actions d-flex">
-                        <button type="reset" class="btn app-secondary-action flex-grow-1">Hủy</button>
+                                <button type="reset" class="btn app-secondary-action flex-grow-1" th:text="#{common.cancel}">Cancel</button>
                         <button type="submit" class="btn btn-confirm-topup flex-grow-1" id="topupSubmitButton">
-                            <span>Xác nhận thanh toán</span>
+                                    <span th:text="#{librarian.topupDesk.confirmPayment}">Confirm Payment</span>
                         </button>
                     </div>
                 </form>
@@ -144,12 +144,12 @@
 
             <div class="col-lg-5">
                 <div class="card-classic finance-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Nạp tiền hôm nay</h5>
+                            <h5 class="section-title mb-3" th:text="#{librarian.topupDesk.today}">Today's Top-ups</h5>
                     <div class="summary-panel d-flex justify-content-between mb-3 p-3 rounded">
                         <div class="text-center">
                             <div class="topup-stat-value"
                                 th:text="${todayTopupCount != null ? todayTopupCount : 0}">0</div>
-                            <div class="text-muted small">Giao dịch</div>
+                                    <div class="text-muted small" th:text="#{transaction.transactions}">Transactions</div>
                         </div>
                         <div class="text-center">
                             <div class="topup-stat-value">
@@ -157,13 +157,13 @@
                                     th:text="${todayTopupTotal != null ? #numbers.formatDecimal(todayTopupTotal, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                 VNĐ
                             </div>
-                            <div class="text-muted small">Tổng nạp</div>
+                                    <div class="text-muted small" th:text="#{librarian.topupDesk.totalAmount}">Total Top-up</div>
                         </div>
                     </div>
 
                     <div th:if="${todayTopups == null or #lists.isEmpty(todayTopups)}"
                         class="text-muted text-center py-4">
-                        Hôm nay chưa có giao dịch nạp tiền.
+                                    <span th:text="#{librarian.topupDesk.noToday}">No top-up transactions today.</span>
                     </div>
 
                     <div th:if="${todayTopups != null and !#lists.isEmpty(todayTopups)}" class="border-top pt-3">
@@ -171,8 +171,8 @@
                             class="d-flex justify-content-between align-items-center py-2 border-bottom">
                             <div>
                                 <div class="topup-transaction-name"
-                                    th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
-                                    Thành viên
+                                                 th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('role.member')}">
+                                                Member
                                 </div>
                                 <div class="text-muted librarian-topup-desk-div-font-size-05"
                                     th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'HH:mm dd/MM') : '-'}">
@@ -188,18 +188,18 @@
                 </div>
 
                 <div class="card-classic finance-card p-4">
-                    <h5 class="section-title mb-3">10 giao dịch nạp gần nhất</h5>
+                            <h5 class="section-title mb-3" th:text="#{librarian.topupDesk.recent}">10 Most Recent Top-ups</h5>
                     <div th:if="${recentTopups == null or #lists.isEmpty(recentTopups)}"
                         class="text-muted text-center py-4">
-                        Chưa có lịch sử nạp tiền.
+                                <span th:text="#{librarian.topupDesk.noHistory}">No top-up history.</span>
                     </div>
                     <div th:if="${recentTopups != null and !#lists.isEmpty(recentTopups)}">
                         <div th:each="transaction : ${recentTopups}"
                             class="d-flex justify-content-between align-items-center py-2 border-bottom">
                             <div>
                                 <div class="topup-transaction-name"
-                                    th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Thành viên'}">
-                                    Thành viên
+                                                 th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('role.member')}">
+                                                Member
                                 </div>
                                 <div class="text-muted librarian-topup-desk-div-font-size-05"
                                     th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">

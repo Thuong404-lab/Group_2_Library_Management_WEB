@@ -4,7 +4,7 @@
 
 <head>
     <!-- UC-8.1 and UC-8.4 UI maintained by Pham Kien Quoc. -->
-    <title>Ví & Lịch sử giao dịch</title>
+    <title th:text="#{member.wallet.title}">Wallet &amp; Transaction History</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/member/wallet.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
@@ -13,7 +13,7 @@
 <body>
     <div layout:fragment="content" class="container finance-page wallet-page">
         <div class="finance-header">
-            <h2 class="page-title mb-0">Ví & Phí Phạt</h2>
+            <h2 class="page-title mb-0" th:text="#{member.wallet.heading}">Wallet &amp; Fines</h2>
         </div>
 
         <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
@@ -25,7 +25,7 @@
                     <div class="card-body p-4 d-flex flex-column justify-content-between">
                         <div class="d-flex justify-content-between align-items-start mb-4">
                             <div>
-                                <div class="balance-label opacity-75 mb-1">Số dư hiện tại</div>
+                                <div class="balance-label opacity-75 mb-1" th:text="#{member.wallet.currentBalance}">Current Balance</div>
                                 <h1 class="balance-value mb-0">
                                     <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                     <span class="balance-unit">VNĐ</span>
@@ -35,28 +35,28 @@
                         </div>
                         <div class="wallet-balance-info mb-4">
                             <div>
-                                <div class="small mb-1">Trạng thái ví</div>
+                                <div class="small mb-1" th:text="#{member.wallet.status}">Wallet Status</div>
                                 <div class="fw-semibold">
-                                    <span class="wallet-status-dot" aria-hidden="true"></span>Đang hoạt động
+                                    <span class="wallet-status-dot" aria-hidden="true"></span><span th:text="#{member.wallet.active}">Active</span>
                                 </div>
                             </div>
                             <div class="wallet-balance-note">
-                                Dùng để thanh toán phí mượn sách, phí phạt và các giao dịch tại thư viện.
+                                <span th:text="#{member.wallet.description}">Used to pay borrowing fees, fines, and other library transactions.</span>
                             </div>
                         </div>
                         <div class="balance-actions">
                             <button type="button" class="btn app-primary-action"
                                     data-toggle="modal" data-target="#memberTopUpModal">
-                                <i class="bi bi-plus-circle me-1"></i> Nạp tiền
+                                <i class="bi bi-plus-circle me-1"></i> <span th:text="#{wallet.topUp}">Top Up</span>
                             </button>
                             <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn btn-wallet-light px-4">
-                                <i class="bi bi-clock-history me-1"></i> Lịch sử nạp
+                                <i class="bi bi-clock-history me-1"></i> <span th:text="#{member.wallet.topUpHistory}">Top-up History</span>
                             </a>
                             <a th:href="@{/member/borrow/reservations}" class="btn btn-wallet-light px-4">
-                                Hoàn tiền
+                                <span th:text="#{transaction.type.refund}">Refund</span>
                             </a>
                             <a th:href="@{/member/financial/transactions}" class="btn btn-wallet-outline px-4">
-                                Tất cả giao dịch
+                                <span th:text="#{member.wallet.allTransactions}">All Transactions</span>
                             </a>
                         </div>
                     </div>
@@ -70,12 +70,12 @@
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                             <div>
                                 <h5 class="section-title mb-1">
-                                    Phí phạt chưa thanh toán
+                                    <span th:text="#{member.wallet.unpaidFines}">Unpaid Fines</span>
                                 </h5>
-                                <div class="text-muted small">Các khoản phạt quá hạn hoặc hư hỏng đang chờ xử lý.</div>
+                                <div class="text-muted small" th:text="#{member.wallet.unpaidFinesDescription}">Overdue or damage fines awaiting payment.</div>
                             </div>
                             <div class="text-end">
-                                <div class="small text-muted">Tổng phạt</div>
+                                <div class="small text-muted" th:text="#{member.wallet.totalFines}">Total Fines</div>
                                 <div class="fine-total-amount amount-negative">
                                     <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                                     <span>đ</span>
@@ -83,7 +83,7 @@
                                 <button th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}"
                                         type="button" class="btn btn-pay-fine btn-sm px-3 mt-2"
                                         data-toggle="modal" data-target="#finePaymentModal">
-                                    Thanh toán tổng
+                                    <span th:text="#{member.wallet.payAll}">Pay All</span>
                                 </button>
                             </div>
                         </div>
@@ -92,9 +92,9 @@
                             <div th:if="${unpaidFines == null or #lists.isEmpty(unpaidFines)}" class="fine-empty-state">
                                 <div>
                                     <div class="fine-empty-icon" aria-hidden="true">&#10003;</div>
-                                    <div class="fine-empty-title">Bạn không có khoản phí phạt nào</div>
+                                    <div class="fine-empty-title" th:text="#{member.wallet.noFines}">You have no outstanding fines</div>
                                     <div class="fine-empty-note">
-                                        Tài khoản hiện không có phí quá hạn hoặc phí hư hỏng sách cần thanh toán.
+                                        <span th:text="#{member.wallet.noFinesDescription}">Your account has no overdue or book damage fees to pay.</span>
                                     </div>
                                 </div>
                             </div>
@@ -103,12 +103,12 @@
                                  class="fine-item d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 mb-3">
                                 <div>
                                     <h6 class="fine-item-title"
-                                        th:text="${fine.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng sách' : 'Phí phạt quá hạn'}">
-                                        Phí phạt quá hạn
+                                        th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">
+                                        Overdue Fine
                                     </h6>
                                     <small class="text-muted"
-                                           th:text="${fine.transactionDate != null ? 'Phát sinh ngày: ' + #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm') : 'Chưa rõ ngày phát sinh'}">
-                                        Phát sinh ngày
+                                           th:text="${fine.transactionDate != null ? #messages.msg('member.wallet.incurredAt', #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm')) : #messages.msg('member.wallet.unknownDate')}">
+                                        Incurred at
                                     </small>
                                 </div>
                                 <div class="text-end">
@@ -129,8 +129,8 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <div>
-                            <h5 class="modal-title" id="finePaymentModalLabel">Phiếu Thanh Toán Phí Phạt</h5>
-                            <div class="small opacity-75">Kiểm tra phiếu và chọn phương thức thanh toán</div>
+                            <h5 class="modal-title" id="finePaymentModalLabel" th:text="#{member.wallet.finePayment}">Fine Payment</h5>
+                            <div class="small opacity-75" th:text="#{member.wallet.finePaymentDescription}">Review the details and select a payment method</div>
                         </div>
                     </div>
                     <form method="post" id="finePaymentForm"
@@ -140,22 +140,22 @@
                         <div class="modal-body">
                             <div class="fine-payment-layout">
                             <div class="fine-payment-ticket mb-0">
-                                <div class="fine-payment-label">Tài khoản thanh toán</div>
+                                <div class="fine-payment-label" th:text="#{member.wallet.paymentAccount}">Payment Account</div>
                                 <div class="fine-payment-account" th:text="${#authentication.principal.name}">
                                     member@example.com
                                 </div>
-                                <div class="fine-payment-label">Chi tiết các khoản phạt</div>
+                                <div class="fine-payment-label" th:text="#{member.wallet.fineDetails}">Fine Details</div>
                                 <div class="fine-payment-items">
                                     <div class="fine-payment-item" th:each="fine : ${unpaidFines}">
                                         <div>
                                             <div class="fine-payment-item-title">
                                                 <span th:text="${'#' + fine.transactionId}">#1</span>
                                                 <span> - </span>
-                                                <span th:text="${fine.transactionType == 'DAMAGE_FEE' ? 'Phiếu phạt hư hỏng sách' : 'Phiếu phạt quá hạn'}">Phiếu phạt quá hạn</span>
+                                                <span th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('member.wallet.damageFineTicket') : #messages.msg('member.wallet.overdueFineTicket')}">Overdue fine ticket</span>
                                             </div>
                                             <div class="small text-muted"
-                                                 th:text="${fine.transactionDate != null ? 'Phát sinh: ' + #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm') : 'Chưa rõ ngày phát sinh'}">
-                                                Phát sinh
+                                                 th:text="${fine.transactionDate != null ? #messages.msg('member.wallet.incurred', #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm')) : #messages.msg('member.wallet.unknownDate')}">
+                                                Incurred
                                             </div>
                                         </div>
                                         <div class="fine-payment-item-amount">
@@ -166,44 +166,44 @@
                             </div>
 
                             <div class="fine-payment-side">
-                            <h6 class="fine-payment-summary-title">Tóm tắt thanh toán</h6>
+                            <h6 class="fine-payment-summary-title" th:text="#{member.wallet.paymentSummary}">Payment Summary</h6>
                             <div class="fine-payment-row">
-                                <span class="text-muted">Số khoản phạt</span>
+                                <span class="text-muted" th:text="#{member.wallet.fineCount}">Number of Fines</span>
                                 <span class="fine-payment-value">
-                                    <span th:text="${unpaidFines != null ? #lists.size(unpaidFines) : 0}">0</span> khoản
+                                    <span th:text="#{member.wallet.fineCountValue(${unpaidFines != null ? #lists.size(unpaidFines) : 0})}">0 fines</span>
                                 </span>
                             </div>
                             <div class="fine-payment-row">
-                                <span class="text-muted">Số dư ví</span>
+                                <span class="text-muted" th:text="#{member.wallet.balance}">Wallet Balance</span>
                                 <span class="fine-payment-value">
                                     <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
                                 </span>
                             </div>
                             <div class="fine-payment-row mb-4">
-                                <span class="text-muted">Tổng thanh toán</span>
+                                <span class="text-muted" th:text="#{member.wallet.totalPayment}">Total Payment</span>
                                 <span class="fine-payment-value amount-negative">
                                     <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
                                 </span>
                             </div>
-                            <label class="form-label">Phương thức thanh toán</label>
+                            <label class="form-label" th:text="#{payment.method}">Payment Method</label>
                             <div class="fine-payment-method mb-2">
                                 <div class="form-check mb-0">
                                     <input class="form-check-input" type="radio" name="finePayMethod" id="finePayWallet" value="wallet" checked>
-                                    <label class="form-check-label" for="finePayWallet">Ví thành viên</label>
+                                    <label class="form-check-label" for="finePayWallet" th:text="#{payment.method.wallet}">Member Wallet</label>
                                 </div>
                             </div>
                             <div class="fine-payment-method">
                                 <div class="form-check mb-0">
                                     <input class="form-check-input" type="radio" name="finePayMethod" id="finePayPayOs" value="payos">
-                                    <label class="form-check-label" for="finePayPayOs">Chuyển khoản KQPay</label>
+                                    <label class="form-check-label" for="finePayPayOs" th:text="#{payment.method.kqpay}">KQPay Transfer</label>
                                 </div>
                             </div>
                             </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn app-secondary-action" data-dismiss="modal">Hủy bỏ</button>
-                            <button type="submit" class="btn btn-pay-fine">Xác nhận thanh toán</button>
+                            <button type="button" class="btn app-secondary-action" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                            <button type="submit" class="btn btn-pay-fine" th:text="#{payment.confirm}">Confirm Payment</button>
                         </div>
                     </form>
                 </div>
@@ -215,26 +215,26 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <div>
-                            <h5 class="modal-title" id="memberTopUpModalLabel">Nạp tiền vào ví</h5>
-                            <div class="small opacity-75">Thanh toán bằng mã QR KQPay</div>
+                            <h5 class="modal-title" id="memberTopUpModalLabel" th:text="#{member.wallet.topUpTitle}">Top Up Wallet</h5>
+                            <div class="small opacity-75" th:text="#{member.wallet.topUpQr}">Pay using a KQPay QR code</div>
                         </div>
                     </div>
                     <form method="post" th:action="@{/member/payments/payos/top-up}" id="memberTopUpForm">
                         <div class="modal-body">
                             <div class="member-wallet-current-balance mb-4">
-                                <span class="text-muted">Số dư hiện tại</span>
+                                <span class="text-muted" th:text="#{member.wallet.currentBalance}">Current Balance</span>
                                 <strong>
                                     <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> VNĐ
                                 </strong>
                             </div>
-                            <label for="memberTopUpAmount" class="form-label">Số tiền muốn nạp</label>
+                            <label for="memberTopUpAmount" class="form-label" th:text="#{member.wallet.topUpAmount}">Top-up Amount</label>
                             <div class="input-group finance-amount-group mb-2">
                                 <input id="memberTopUpAmount" name="amount" type="text" inputmode="numeric"
                                        data-vnd-input data-min-amount="10000" data-max-amount="500000000"
-                                       required class="form-control" placeholder="Nhập số tiền" autocomplete="off" autofocus/>
+                                       required class="form-control" th:placeholder="#{member.wallet.amountPlaceholder}" autocomplete="off" autofocus/>
                                 <span class="input-group-text finance-currency-unit">VNĐ</span>
                             </div>
-                            <div class="form-text mb-3">Số tiền tối thiểu 10.000 VNĐ.</div>
+                            <div class="form-text mb-3" th:text="#{member.wallet.minimumAmount}">Minimum amount: 10,000 VND.</div>
                             <div class="d-flex flex-wrap gap-2" id="memberTopUpQuickAmounts">
                                 <button type="button" class="btn btn-outline-secondary btn-sm mr-2 mb-2" data-amount="50000">50.000</button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm mr-2 mb-2" data-amount="100000">100.000</button>
@@ -243,8 +243,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn app-secondary-action" data-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn app-primary-action">Thanh toán</button>
+                            <button type="button" class="btn app-secondary-action" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                            <button type="submit" class="btn app-primary-action" th:text="#{payment.pay}">Pay</button>
                         </div>
                     </form>
                 </div>
@@ -254,18 +254,18 @@
         <div class="card classic-card mt-4">
             <div class="card-header classic-card-header">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <h5 class="section-title mb-0">Lịch sử giao dịch</h5>
+                    <h5 class="section-title mb-0" th:text="#{transaction.history}">Transaction History</h5>
                     <form method="get" th:action="@{/member/financial/transactions}" class="transaction-filter d-flex" data-auto-filter-form>
-                        <select name="type" class="form-select" aria-label="Lọc loại giao dịch" data-auto-submit>
-                            <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả</option>
-                            <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
-                            <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
-                            <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}">Tiền cọc</option>
-                            <option value="FINE" th:selected="${selectedType == 'FINE'}">Phí phạt</option>
-                            <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}">Phí hư hỏng</option>
-                            <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
+                        <select name="type" class="form-select" th:aria-label="#{transaction.filterType}" data-auto-submit>
+                            <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{common.all}">All</option>
+                            <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
+                            <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}" th:text="#{transaction.type.borrowFee}">Borrowing Fee</option>
+                            <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}" th:text="#{transaction.type.deposit}">Deposit</option>
+                            <option value="FINE" th:selected="${selectedType == 'FINE'}" th:text="#{transaction.type.fine}">Fine</option>
+                            <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage Fee</option>
+                            <option value="REFUND" th:selected="${selectedType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</option>
                         </select>
-                        <button type="submit" class="btn btn-classic px-4">Lọc</button>
+                        <button type="submit" class="btn btn-classic px-4" th:text="#{common.filter}">Filter</button>
                     </form>
                 </div>
             </div>
@@ -273,7 +273,7 @@
             <div class="card-body">
                 <div th:if="${historyRows == null or #lists.isEmpty(historyRows)}"
                      class="text-center text-muted py-5">
-                    Chưa có giao dịch nào.
+                    <span th:text="#{transaction.empty}">No transactions found.</span>
                 </div>
 
                 <div class="table-responsive"
@@ -281,11 +281,11 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Mã GD</th>
-                                <th>Ngày giờ</th>
-                                <th>Loại giao dịch</th>
-                                <th>Số tiền</th>
-                                <th>Trạng thái</th>
+                                <th th:text="#{transaction.code}">Transaction ID</th>
+                                <th th:text="#{common.dateTime}">Date &amp; Time</th>
+                                <th th:text="#{transaction.type}">Transaction Type</th>
+                                <th th:text="#{transaction.amount}">Amount</th>
+                                <th th:text="#{common.status}">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -296,7 +296,7 @@
                                 <td th:text="${row.occurredAt != null ? #temporals.format(row.occurredAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">
                                     01/01/2026 08:00
                                 </td>
-                                <td th:text="${row.typeLabel}">Loại giao dịch</td>
+                                <td th:text="${#messages.msg(row.typeLabel)}">Transaction Type</td>
                                 <td class="wallet-transaction-amount"
                                     th:classappend="${row.amount != null and row.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
                                     <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
@@ -306,7 +306,7 @@
                                 <td>
                                     <span class="transaction-status"
                                           th:classappend="${row.completed} ? ' status-completed' : ' status-pending'"
-                                          th:text="${row.statusLabel}">Hoàn tất</span>
+                                      th:text="${#messages.msg(row.statusLabel)}">Completed</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -315,15 +315,15 @@
 
                 <div class="app-pagination-region" th:if="${transactionPage != null && transactionPage.totalPages > 1}"
                      th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))}">
-                    <nav aria-label="Phân trang giao dịch" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
+                    <nav th:aria-label="#{transaction.pagination}" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
                         <ul class="pagination app-pagination">
-                            <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=0,type=${selectedType})}">Đầu</a></li>
-                            <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.number-1},type=${selectedType})}" aria-label="Trang trước"><i class="bi bi-chevron-left"></i></a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=0,type=${selectedType})}" th:text="#{pagination.first}">First</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.number-1},type=${selectedType})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left"></i></a></li>
                             <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/member/financial/transactions(page=${i},type=${selectedType})}" th:text="${i+1}">1</a></li>
                             <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">…</span></li>
-                            <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.number+1},type=${selectedType})}" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a></li>
-                            <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}">Cuối</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.number+1},type=${selectedType})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right"></i></a></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}" th:text="#{pagination.last}">Last</a></li>
                         </ul>
                     </nav>
                 </div>
