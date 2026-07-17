@@ -18,6 +18,8 @@ import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.ReportService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,8 @@ import java.util.Map;
  */
 @Service
 public class ReportServiceImpl implements ReportService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private static final String COMPLETED_STATUS = "Completed";
 
     private final BorrowRepository borrowRepository;
@@ -395,7 +399,7 @@ public class ReportServiceImpl implements ReportService {
         LocalDate today = LocalDate.now();
         if ((fromDate != null && fromDate.isAfter(today))
                 || (toDate != null && toDate.isAfter(today))) {
-            throw new ValidationException("Ngày báo cáo không được lớn hơn ngày hiện tại.");
+            throw new ValidationException(messages.get("backend.report.futureDate"));
         }
         LocalDate normalizedToDate = toDate == null ? LocalDate.now() : toDate;
         LocalDate normalizedFromDate = fromDate == null ? normalizedToDate.minusDays(29) : fromDate;
@@ -409,21 +413,21 @@ public class ReportServiceImpl implements ReportService {
 
     private String displayTransactionType(String transactionType) {
         if (transactionType == null) {
-            return "Unknown";
+            return messages.get("transaction.type.other");
         }
         switch (transactionType) {
             case "TOP_UP":
-                return "Top up";
+                return messages.get("transaction.type.topUp");
             case "BORROW_FEE":
-                return "Borrow fee";
+                return messages.get("transaction.type.borrowFee");
             case "DEPOSIT":
-                return "Deposit";
+                return messages.get("transaction.type.deposit");
             case "FINE":
-                return "Fine";
+                return messages.get("transaction.type.fine");
             case "DAMAGE_FEE":
-                return "Damage fee";
+                return messages.get("transaction.type.damageFee");
             case "REFUND":
-                return "Refund";
+                return messages.get("transaction.type.refund");
             default:
                 return transactionType;
         }

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập Quản trị - Thư Viện Cổ Điển</title>
+    <title th:text="#{staffLogin.title}">Staff Login - Library Management System</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
@@ -20,48 +20,49 @@
         <!-- Left Side: Image (Staff) -->
         <div class="login-image">
             <div class="image-text">
-                <h2>Hệ Thống Quản Trị</h2>
-                <p>Nơi vận hành và kiểm soát toàn bộ hoạt động của Thư Viện Cổ Điển một cách chính xác và hiệu quả nhất.</p>
+                <h2 th:text="#{staffLogin.hero.title}">Library Administration</h2>
+                <p th:text="#{staffLogin.hero.description}">Operate and oversee all library activities accurately and efficiently.</p>
             </div>
         </div>
 
         <!-- Right Side: Form -->
         <div class="login-form-wrapper">
             <div class="login-form">
-                <div class="brand-logo">Cổng Nhân Viên</div>
-                <div class="brand-subtitle">Dành cho Admin & Thủ thư</div>
+                <div th:replace="~{fragments/language-switcher :: switcher}"></div>
+                <div class="brand-logo" th:text="#{staffLogin.portal}">Staff Portal</div>
+                <div class="brand-subtitle" th:text="#{staffLogin.audience}">For administrators and librarians</div>
 
                 <div th:if="${param.error}" class="alert alert-danger mb-4" role="alert">
                     <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null}">
-                        <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}">Tài khoản hoặc mật khẩu quản trị không chính xác.</span>
+                        <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}" th:text="#{staffLogin.invalidCredentials}">Incorrect staff username or password.</span>
                         <span th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}" th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"></span>
                     </span>
-                    <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION == null}">Tài khoản hoặc mật khẩu quản trị không chính xác. Hoặc bạn không có quyền truy cập.</span>
+                    <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION == null}" th:text="#{staffLogin.accessDenied}">Incorrect staff username or password, or you do not have permission to access this area.</span>
                 </div>
                 <div th:if="${param.logout}" class="alert alert-success mb-4" role="alert">
-                    Bạn đã đăng xuất khỏi hệ thống quản trị an toàn.
+                    <span th:text="#{staffLogin.logoutSuccess}">You have safely logged out of the administration system.</span>
                 </div>
 
                 <form th:action="@{/staff-login}" method="post" class="needs-validation" novalidate>
                     <div class="mb-4">
-                        <label for="username" class="form-label">Tài khoản nhân viên</label>
+                        <label for="username" class="form-label" th:text="#{staffLogin.username}">Staff username</label>
                         <input type="text" class="form-control" id="username" name="username"
-                            placeholder="Nhập username" required autocomplete="username">
-                        <div class="invalid-feedback">Vui lòng nhập tài khoản quản trị.</div>
+                            th:placeholder="#{staffLogin.username.placeholder}" placeholder="Enter username" required autocomplete="username">
+                        <div class="invalid-feedback" th:text="#{staffLogin.username.required}">Please enter your staff username.</div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="password" class="form-label">Mật khẩu</label>
+                        <label for="password" class="form-label" th:text="#{auth.password}">Password</label>
                         <input type="password" class="form-control" id="password" name="password" placeholder="••••••••"
                             required autocomplete="current-password">
-                        <div class="invalid-feedback">Vui lòng nhập mật khẩu.</div>
+                        <div class="invalid-feedback" th:text="#{auth.password.required}">Please enter your password.</div>
                     </div>
 
-                    <button class="btn btn-primary-custom w-100" type="submit">Truy Cập Hệ Thống</button>
+                    <button class="btn btn-primary-custom w-100" type="submit" th:text="#{staffLogin.submit}">Access System</button>
                 </form>
 
                 <div class="text-center">
-                    <a th:href="@{/login}" class="back-link">← Quay lại trang Đăng nhập cho Khách</a>
+                    <a th:href="@{/login}" class="back-link"><span aria-hidden="true">←</span> <span th:text="#{staffLogin.backToMember}">Back to guest and member login</span></a>
                 </div>
             </div>
         </div>
@@ -69,6 +70,7 @@
     </div>
 
     <!-- Bootstrap Validation Script -->
+    <script th:replace="~{fragments/language-switcher :: script}"></script>
     <script>
         (function () {
             'use strict'

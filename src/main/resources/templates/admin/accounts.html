@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title>Quản lý tài khoản thành viên</title>
+    <title th:text="#{admin.accounts.title}">Member Account Management</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/accounts.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
@@ -13,15 +13,13 @@
     <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page">
         <header class="member-page-header">
             <div>
-                <h1 class="member-page-title">Danh sách người dùng</h1>
-                <p class="member-page-description">
-                    Danh sách và thông tin tài khoản người dùng thư viện
-                </p>
+                <h1 class="member-page-title" th:text="#{admin.accounts.heading}">User Accounts</h1>
+                <p class="member-page-description" th:text="#{admin.accounts.description}">Library user account information</p>
             </div>
             <div class="member-page-actions">
                 <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
                     data-bs-target="#createMemberAccountModal">
-                    Tạo tài khoản mới
+                    <span th:text="#{admin.accounts.create}">Create Account</span>
                 </button>
             </div>
         </header>
@@ -33,7 +31,7 @@
                     <div class="modal-header member-modal-header">
                         <h5 class="modal-title member-modal-title-accent"
                             id="createMemberAccountModalLabel">
-                            <i class="bi bi-person-plus-fill me-2 text-classic"></i>Tạo tài khoản thành viên
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i><span th:text="#{admin.accounts.createMember}">Create Member Account</span>
                         </h5>
                     </div>
                     <div class="modal-body member-modal-body">
@@ -52,26 +50,22 @@
 
         <!-- Alerts -->
         <div class="alert alert-warning" th:if="${param.notFound != null}">
-            <i class="bi bi-exclamation-circle me-2"></i>Không tìm thấy tài khoản.
+            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{admin.accounts.notFound}">Account not found.</span>
         </div>
         <div class="alert alert-danger" th:if="${error != null}">
-            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Lỗi</span>
+            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Error</span>
         </div>
         <div class="alert alert-success" th:if="${success != null}">
-            <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Thao tác thành công.</span>
+            <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Operation completed successfully.</span>
         </div>
 
         <section class="member-data-card">
             <div class="member-data-card-body">
-                <div class="member-summary-chips" aria-label="Tổng quan thành viên">
-                    <span><strong th:text="${memberSummary != null ? memberSummary['total'] : 0}">0</strong> thành
-                        viên</span>
-                    <span><strong th:text="${memberSummary != null ? memberSummary['active'] : 0}">0</strong> hoạt
-                        động</span>
-                    <span><strong th:text="${memberSummary != null ? memberSummary['inactive'] : 0}">0</strong> ngừng
-                        hoạt động</span>
-                    <span><strong th:text="${memberSummary != null ? memberSummary['blocked'] : 0}">0</strong> bị
-                        khóa</span>
+                <div class="member-summary-chips" th:aria-label="#{admin.accounts.summary}">
+                    <span th:text="#{librarian.members.total(${memberSummary != null ? memberSummary['total'] : 0})}">0 members</span>
+                    <span th:text="#{librarian.members.active(${memberSummary != null ? memberSummary['active'] : 0})}">0 active</span>
+                    <span th:text="#{librarian.members.inactive(${memberSummary != null ? memberSummary['inactive'] : 0})}">0 inactive</span>
+                    <span th:text="#{librarian.members.blocked(${memberSummary != null ? memberSummary['blocked'] : 0})}">0 blocked</span>
                 </div>
                 <!-- Search & Filter -->
                 <div class="member-toolbar">
@@ -83,28 +77,29 @@
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
-                                placeholder="Tìm username, thông tin người dùng, hạng hoặc trạng thái...">
+                                th:placeholder="#{admin.accounts.searchPlaceholder}">
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
-                                aria-label="Lọc theo hạng thành viên">
-                                <option value="" th:selected="${#strings.isEmpty(selectedTier)}">Tất cả hạng</option>
-                                <option value="Regular" th:selected="${selectedTier == 'Regular'}">Thường</option>
-                                <option value="Silver" th:selected="${selectedTier == 'Silver'}">Bạc</option>
-                                <option value="Gold" th:selected="${selectedTier == 'Gold'}">Vàng</option>
-                                <option value="Diamond" th:selected="${selectedTier == 'Diamond'}">Kim cương</option>
+                                th:aria-label="#{admin.accounts.filterTier}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedTier)}" th:text="#{admin.accounts.allTiers}">All Tiers</option>
+                                <option value="Regular" th:selected="${selectedTier == 'Regular'}" th:text="#{tier.regular}">Regular</option>
+                                <option value="Silver" th:selected="${selectedTier == 'Silver'}" th:text="#{tier.silver}">Silver</option>
+                                <option value="Gold" th:selected="${selectedTier == 'Gold'}" th:text="#{tier.gold}">Gold</option>
+                                <option value="Diamond" th:selected="${selectedTier == 'Diamond'}" th:text="#{tier.diamond}">Diamond</option>
                             </select>
 
                             <select class="form-select member-filter-select" name="status" data-auto-submit
-                                aria-label="Lọc theo trạng thái">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}">Tất cả trạng thái
-                                </option>
-                                <option value="Active" th:selected="${selectedStatus == 'Active'}">Hoạt động</option>
-                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}">Ngừng hoạt động
-                                </option>
-                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}">Bị khóa</option>
+                                th:aria-label="#{admin.accounts.filterStatus}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{common.allStatuses}">All Statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{account.status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{account.status.inactive}">Inactive</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{account.status.blocked}">Blocked</option>
                             </select>
 
-                            <button class="btn member-search-button text-nowrap" type="submit">Tìm kiếm</button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/accounts}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -121,12 +116,12 @@
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
-                                <th class="ps-3">STT</th>
-                                <th>Tên đăng nhập</th>
-                                <th>Thông tin người dùng</th>
-                                <th>Hạng thành viên</th>
-                                <th>Trạng thái</th>
-                                <th class="text-end pe-3">Hành động</th>
+                                <th class="ps-3" th:text="#{common.number}">No.</th>
+                                <th th:text="#{member.profile.username}">Username</th>
+                                <th th:text="#{admin.accounts.userInfo}">User Information</th>
+                                <th th:text="#{member.profile.tier}">Membership Tier</th>
+                                <th th:text="#{common.status}">Status</th>
+                                <th class="text-end pe-3" th:text="#{common.actions}">Actions</th>
                             </tr>
                         </thead>
 
@@ -140,7 +135,7 @@
                                 </td>
                                 <td>
                                     <div th:if="${account.user != null}">
-                                        <div class="fw-bold" th:text="${account.user.fullName}">Họ tên</div>
+                                        <div class="fw-bold" th:text="${account.user.fullName}">Full name</div>
                                         <div class="small text-muted">
                                             <i class="bi bi-envelope me-1"> </i>
                                             <span th:text="${account.user.email}">email</span>
@@ -151,31 +146,31 @@
                                         </div>
                                     </div>
                                     <div th:unless="${account.user != null}" class="fst-italic text-muted small">
-                                        Chưa cập nhật thông tin
+                                        <span th:text="#{common.notUpdated}">Not updated</span>
                                     </div>
                                 </td>
 
                                 <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
-                                    <span class="badge"
+                                    <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
-                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
+                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
                                         th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
-                                    <span class="badge"
+                                    <span class="membership-tier-badge membership-tier-badge--empty"
                                         th:if="${member == null || member.tier == null}">
                                         N/A
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="badge" th:classappend="${
+                                    <span class="status-badge" th:classappend="${
               account.status == 'Active' ? 'status-active' :
               account.status == 'Blocked' ? 'status-blocked' :
               'status-inactive'
-          }" th:text="${account.status == 'Active' ? 'Hoạt động' : (account.status == 'Inactive' ? 'Ngừng hoạt động' : (account.status == 'Blocked' ? 'Bị khóa' : account.status))}">
-                                        Hoạt động
+          }" th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('account.status.inactive') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
+                                        Active
                                     </span>
                                 </td>
 
@@ -184,16 +179,16 @@
                                     <button type="button" class="member-icon-action account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#updateMemberModal' + account.accountId}"
-                                        data-bs-title="Cập nhật tài khoản" data-bs-custom-class="update-account-tooltip"
-                                        aria-label="Cập nhật">
+                                        th:data-bs-title="#{admin.accounts.update}" data-bs-custom-class="update-account-tooltip"
+                                        th:aria-label="#{common.update}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <!-- Update Modal -->
-                                    <div class="modal fade text-start"
+                                    <div class="modal fade text-start member-form-modal"
                                         th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
                                         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                         th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
-                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                             <div class="modal-content">
                                                 <form method="post" class="member-update-form" novalidate
                                                     th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
@@ -206,7 +201,7 @@
                                                         <h5
                                                             class="modal-title member-modal-title-accent">
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
-                                                            Cập nhật tài khoản
+                                                            <span th:text="#{admin.accounts.update}">Update Account</span>
                                                         </h5>
 
                                                     </div>
@@ -218,16 +213,16 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Họ tên <span class="required-marker">*</span>
+                                                                    <span th:text="#{member.profile.fullName}">Full Name</span> <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
-                                                                    maxlength="50" data-label="Họ tên"
+                                                                    maxlength="50" th:data-label="#{member.profile.fullName}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (account.user != null ? account.user.fullName : '')}"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="fullName"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
-                                                                    Họ tên không được để trống.
+                                                                    <span th:text="#{validation.fullNameRequired}">Full name is required.</span>
                                                                 </div>
                                                             </div>
 
@@ -243,24 +238,24 @@
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="username"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
-                                                                    Username không được để trống.
+                                                                    <span th:text="#{validation.usernameRequired}">Username is required.</span>
                                                                 </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Số điện thoại <span class="required-marker">*</span>
+                                                                    <span th:text="#{member.profile.phone}">Phone Number</span> <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
-                                                                    data-label="Số điện thoại" required
+                                                                    th:data-label="#{member.profile.phone}" required
                                                                     pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
                                                                     inputmode="numeric"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                 <div class="invalid-feedback" data-error-for="phone"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
-                                                                    Số điện thoại không hợp lệ.
+                                                                    <span th:text="#{validation.phone}">Invalid phone number.</span>
                                                                 </div>
                                                             </div>
 
@@ -277,25 +272,25 @@
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="email"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
-                                                                    Email không hợp lệ.
+                                                                    <span th:text="#{validation.email}">Invalid email.</span>
                                                                 </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Hạng thành viên
+                                                                    <span th:text="#{member.profile.tier}">Membership Tier</span>
                                                                 </label>
                                                                 <div class="member-readonly-field" role="textbox"
                                                                     aria-readonly="true"
-                                                                    th:text="${member == null || member.tier == null ? 'Chưa xếp hạng' : (member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName))))}">
-                                                                    Thường
+                                                                    th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
+                                                                    Regular
                                                                 </div>
                                                                 <input type="hidden" name="tierId"
                                                                     th:value="${member != null and member.tier != null ? member.tier.tierId : ''}">
                                                                 <div class="invalid-feedback" data-error-for="tierId"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['tierId'] : ''}">
-                                                                    Vui lòng chọn hạng thành viên.
+                                                                    <span th:text="#{validation.tier}">Invalid membership tier.</span>
                                                                 </div>
                                                             </div>
 
@@ -303,12 +298,12 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Trạng thái
+                                                                    <span th:text="#{common.status}">Status</span>
                                                                 </label>
                                                                 <div class="member-readonly-field" role="textbox"
                                                                     aria-readonly="true"
-                                                                    th:text="${account.status == 'Active' ? 'Hoạt động' : (account.status == 'Inactive' ? 'Ngừng hoạt động' : (account.status == 'Blocked' ? 'Bị khóa' : account.status))}">
-                                                                    Hoạt động
+                                                                    th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('account.status.inactive') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
+                                                                    Active
                                                                 </div>
                                                                 <input type="hidden" name="status"
                                                                     th:value="${account.status}">
@@ -319,10 +314,10 @@
                                                     </div>
 
                                                     <div class="modal-footer member-modal-footer">
-                                                        <button type="button" class="btn btn-secondary"
-                                                            data-bs-dismiss="modal">Hủy bỏ</button>
-                                                        <button type="submit" class="btn btn-classic">
-                                                            Lưu thay đổi
+                                                        <button type="button" class="btn member-modal-secondary member-update-cancel"
+                                                            data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn member-modal-primary">
+                                                            <span th:text="#{common.saveChanges}">Save Changes</span>
                                                         </button>
                                                     </div>
                                                 </form>
@@ -334,9 +329,9 @@
                                         th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
                                         class="member-icon-action account-action-tooltip" data-bs-toggle="modal"
                                         th:data-bs-target="${'#resetPasswordMemberModal' + account.accountId}"
-                                        data-bs-title="Gửi link đặt lại mật khẩu"
+                                        th:data-bs-title="#{admin.accounts.sendReset}"
                                         data-bs-custom-class="reset-password-tooltip"
-                                        aria-label="Gửi link đặt lại mật khẩu">
+                                        th:aria-label="#{admin.accounts.sendReset}">
                                         <i class="bi bi-key"></i>
                                     </button>
 
@@ -354,14 +349,13 @@
                                                     <div class="modal-header member-modal-header">
                                                         <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118">
                                                             <i class="bi bi-key-fill me-2"></i>
-                                                            Xác nhận gửi liên kết đặt lại mật khẩu
+                                                            <span th:text="#{admin.accounts.resetConfirmTitle}">Confirm Password Reset Link</span>
                                                         </h5>
                                                     </div>
 
                                                     <div class="modal-body member-modal-body">
                                                         <p class="mb-3">
-                                                            Liên kết đặt lại mật khẩu sẽ được gửi đến email hiện tại của
-                                                            thành viên và có hiệu lực trong 24 giờ.
+                                                            <span th:text="#{admin.accounts.resetConfirmMessage}">The password reset link will be sent to the member's current email and remain valid for 24 hours.</span>
                                                         </p>
                                                         <div class="account-info-panel">
                                                             <div class="row g-3">
@@ -376,13 +370,12 @@
                                                                         id</div>
                                                                 </div>
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Họ tên:</div>
+                                                                    <div class="small text-muted" th:text="#{member.profile.fullName}">Full Name:</div>
                                                                     <div class="fw-bold"
-                                                                        th:text="${account.user.fullName}">họ tên</div>
+                                                                        th:text="${account.user.fullName}">full name</div>
                                                                 </div>
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Email nhận liên kết:
-                                                                    </div>
+                                                                    <div class="small text-muted" th:text="#{admin.accounts.resetEmail}">Reset Email:</div>
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
                                                                         <span
@@ -395,9 +388,9 @@
 
                                                     <div class="modal-footer member-modal-footer">
                                                         <button type="button" class="btn btn-light"
-                                                            data-bs-dismiss="modal">Hủy</button>
+                                                            data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
                                                         <button type="submit" class="btn btn-classic">
-                                                            <i class="bi bi-send me-1"></i>Đồng ý gửi
+                                                            <i class="bi bi-send me-1"></i><span th:text="#{admin.accounts.confirmSend}">Send Link</span>
                                                         </button>
                                                     </div>
                                                 </form>
@@ -409,8 +402,8 @@
                                         class="member-icon-action member-icon-action-danger account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
-                                        data-bs-title="Xóa tài khoản" data-bs-custom-class="delete-account-tooltip"
-                                        aria-label="Xóa">
+                                        th:data-bs-title="#{admin.accounts.delete}" data-bs-custom-class="delete-account-tooltip"
+                                        th:aria-label="#{common.delete}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                     <!-- Delete Modal -->
@@ -428,14 +421,13 @@
                                                     <div class="modal-header member-modal-header">
                                                         <h5 class="modal-title member-modal-title-accent">
                                                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                                            Xác nhận xóa tài khoản
+                                                            <span th:text="#{admin.accounts.deleteConfirmTitle}">Confirm Account Deletion</span>
                                                         </h5>
                                                     </div>
 
                                                     <div class="modal-body member-modal-body">
                                                         <p class="mb-3">
-                                                            Bạn có chắc chắn muốn xóa tài khoản này không?
-                                                            Thao tác này không thể hoàn tác.</p>
+                                                            <span th:text="#{admin.accounts.deleteConfirmMessage}">Are you sure you want to delete this account? This action cannot be undone.</span></p>
                                                         <div class="account-info-panel">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
@@ -454,10 +446,10 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Họ tên: </div>
+                                                                    <div class="small text-muted" th:text="#{member.profile.fullName}">Full Name:</div>
                                                                     <div class="fw-bold"
-                                                                        th:text="${account.user != null ? account.user.fullName : 'Không có họ tên'}">
-                                                                        họ và tên
+                                                                        th:text="${account.user != null ? account.user.fullName : #messages.msg('librarian.members.noName')}">
+                                                                        full name
                                                                     </div>
                                                                 </div>
 
@@ -466,36 +458,36 @@
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
                                                                         <span
-                                                                            th:text="${account.user != null ? account.user.email : 'Không có email'}">
+                                                                            th:text="${account.user != null ? account.user.email : #messages.msg('common.noEmail')}">
                                                                             email
                                                                         </span>
                                                                     </div>
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Số điện thoại: </div>
+                                                                    <div class="small text-muted" th:text="#{member.profile.phone}">Phone Number:</div>
                                                                     <div>
                                                                         <i
                                                                             class="bi bi-telephone me-1 text-classic"></i>
                                                                         <span
-                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : 'Không có SĐT'}">
+                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : #messages.msg('common.noPhone')}">
                                                                             phone
                                                                         </span>
                                                                     </div>
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Hạng thành viên</div>
+                                                                    <div class="small text-muted" th:text="#{member.profile.tier}">Membership Tier</div>
                                                                     <span
-                                                                        class="badge"
+                                                                        class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
-                                                                        th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
+                                                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
                                                                         th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                                                         Standard
                                                                     </span>
 
                                                                     <span
-                                                                        class="badge"
+                                                                        class="membership-tier-badge membership-tier-badge--empty"
                                                                         th:if="${member == null || member.tier == null}">
                                                                         N/A
                                                                     </span>
@@ -507,8 +499,8 @@
 
                                                     <div class="modal-footer member-modal-footer">
                                                         <button type="button" class="btn btn-light"
-                                                            data-bs-dismiss="modal">Hủy</button>
-                                                        <button type="submit" class="btn app-danger-action">Đồng ý xóa</button>
+                                                            data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn app-danger-action" th:text="#{admin.accounts.confirmDelete}">Delete Account</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -520,7 +512,7 @@
                             <tr th:if="${#lists.isEmpty(accounts.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox empty-state-icon d-block mb-2"></i>
-                                    Không có tài khoản nào.
+                                    <span th:text="#{admin.accounts.empty}">No accounts found.</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -537,7 +529,7 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/accounts(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">Đầu</a>
+                                    th:href="@{/admin/accounts(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}" th:text="#{common.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
@@ -577,7 +569,7 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/accounts(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">Cuối</a>
+                                    th:href="@{/admin/accounts(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}" th:text="#{common.last}">Last</a>
                             </li>
                         </ul>
                     </nav>
@@ -585,7 +577,7 @@
             </div>
         </section>
 
-        <script>
+        <script th:inline="javascript">
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
                     const tooltip = new bootstrap.Tooltip(button, {
@@ -597,13 +589,21 @@
                 });
             });
         </script>
-        <script>
+        <script th:inline="javascript">
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".member-update-form").forEach(function (form) {
                     const modal = form.closest(".modal");
                     const submitButton = form.querySelector("button[type='submit']");
                     const globalError = form.querySelector(".member-update-global-error");
+                    let isSubmitting = false;
                     let lastFocusedField = null;
+
+                    submitButton.addEventListener("click", function (event) {
+                        if (isSubmitting) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        }
+                    });
 
                     form.querySelectorAll("input, select, textarea").forEach(function (field) {
                         field.addEventListener("focus", function () {
@@ -667,10 +667,6 @@
                             }
                         });
 
-                        if (lastFocusedField != null
-                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
-                            lastFocusedField.focus();
-                        }
                     }
 
                     function validateLocally() {
@@ -681,45 +677,47 @@
                         const phone = form.elements.phone.value.trim();
 
                         if (fullName === "") {
-                            errors.fullName = "Họ tên không được để trống.";
+                            errors.fullName = /*[[#{validation.fullNameRequired}]]*/ "Full name is required.";
                         }
                         if (fullName.length > 50) {
-                            errors.fullName = "Họ tên không được vượt quá 50 ký tự.";
+                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name cannot exceed 50 characters.";
                         } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
-                            errors.fullName = "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
+                            errors.fullName = /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
                         } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
-                            errors.fullName = "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.";
+                            errors.fullName = /*[[#{validation.fullNameWords}]]*/ "Full name may contain at most 8 words and 15 characters per word.";
                         } else if (/([\p{L}])\1\1/u.test(fullName)) {
-                            errors.fullName = "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.";
+                            errors.fullName = /*[[#{validation.fullNameTriple}]]*/ "Full name cannot repeat a character three times in a row.";
                         } else if (/^([\p{L}])\1+$/u.test(fullName)) {
-                            errors.fullName = "Họ tên không được chỉ gồm một ký tự lặp lại.";
+                            errors.fullName = /*[[#{validation.fullNameRepeated}]]*/ "Full name cannot consist of one repeated character.";
                         }
                         if (username === "") {
-                            errors.username = "Username không được để trống.";
+                            errors.username = /*[[#{validation.usernameRequired}]]*/ "Username is required.";
                         } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-                            errors.username = "Username phải từ 3-20 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới.";
+                            errors.username = /*[[#{validation.username}]]*/ "Username must contain 3-20 letters, numbers, or underscores.";
                         }
                         if (email === "") {
-                            errors.email = "Email không được để trống.";
+                            errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
                         } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
-                            errors.email = "Email không đúng định dạng.";
+                            errors.email = /*[[#{validation.email}]]*/ "Invalid email format.";
                         }
                         if (phone === "") {
-                            errors.phone = "Số điện thoại không được để trống.";
+                            errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
                         } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
-                            errors.phone = "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0";
+                            errors.phone = /*[[#{validation.phone}]]*/ "Phone number must contain exactly 10 digits and start with 0.";
                         }
                         if (form.elements.tierId.value === "") {
-                            errors.tierId = "Hạng thành viên không hợp lệ.";
+                            errors.tierId = /*[[#{validation.tier}]]*/ "Invalid membership tier.";
                         }
                         if (form.elements.status.value === "") {
-                            errors.status = "Trạng thái tài khoản không hợp lệ.";
+                            errors.status = /*[[#{validation.status}]]*/ "Invalid account status.";
                         }
                         return errors;
                     }
 
                     form.addEventListener("submit", async function (event) {
                         event.preventDefault();
+                        if (isSubmitting) return;
+                        isSubmitting = true;
                         clearErrors();
 
                         const localErrors = validateLocally();
@@ -753,16 +751,23 @@
                             form.submit();
                         } catch (error) {
                             showErrors(Object.assign({}, localErrors, {
-                                _global: "Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại."
+                                _global: /*[[#{validation.unavailable}]]*/ "Unable to validate data right now. Please try again."
                             }));
                         } finally {
                             submitButton.disabled = false;
+                            isSubmitting = false;
                         }
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
+                        clearErrors();
+                    });
+                    modal.querySelector(".member-update-cancel")?.addEventListener("click", function () {
                         form.reset();
                         clearErrors();
+                    });
+                    modal.addEventListener("hide.bs.modal", function (event) {
+                        if (isSubmitting) event.preventDefault();
                     });
                 });
             });

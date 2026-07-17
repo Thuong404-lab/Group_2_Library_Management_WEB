@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/admin_base}">
 
 <head>
@@ -14,10 +14,10 @@
             <div class="p-3 p-md-4 d-flex align-items-center justify-content-between position-relative z-1">
                 <div class="text-white w-100">
                     <h2 class="fw-bold mb-2 fs-3 font-playfair">
-                        Xin chào, <span th:text="${currentUser?.fullName != null ? currentUser.fullName : 'Admin'}">Admin</span>!
+                        <span th:text="${#messages.msg('admin.dashboard.greeting', currentUser?.fullName != null ? currentUser.fullName : 'Admin')}">Hello, Admin!</span>
                     </h2>
                     <p class="mb-0 fs-6 opacity-75">
-                        Chào mừng bạn quay trở lại. Hệ thống thư viện đang hoạt động ổn định. Hôm nay là <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">24/06/2026</span>.
+                        <span th:text="${#messages.msg('admin.dashboard.welcome', #temporals.format(currentDate, 'dd/MM/yyyy'))}">Welcome back. The library system is operating normally.</span>
                     </p>
                 </div>
             </div>
@@ -30,7 +30,7 @@
         <div th:if="${error}" class="alert alert-danger shadow-sm" th:text="${error}"></div>
 
             <h5 class="fw-bold mb-3 mt-4 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                <i class="bi bi-bar-chart-fill me-2 text-classic"></i>Thống kê tổng quan
+                <i class="bi bi-bar-chart-fill me-2 text-classic"></i><span th:text="#{admin.dashboard.overview}">Overview Statistics</span>
             </h5>
             <!-- Statistics Cards -->
             <div class="row row-cols-6 g-3 mb-5">
@@ -44,7 +44,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0">
-                                    Đầu Sách
+                                    <span th:text="#{admin.dashboard.bookTitles}">Book Titles</span>
                                 </div>
                                 <h3 class="fw-bold mb-0 fs-4 stat-number u-color-2c1e16-5ab7ae80" th:text="${totalBooks}">0</h3>
                             </div>
@@ -61,7 +61,7 @@
                                 <i class="bi bi-check2-square fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0">Bản sách
+                                <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0" th:text="#{admin.dashboard.bookCopies}">Book Copies
                                 </div>
                                 <h3 class="fw-bold mb-0 fs-4 stat-number u-color-2c1e16-5ab7ae80" th:text="${availableItems}">0</h3>
                             </div>
@@ -79,7 +79,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0">
-                                    Thành Viên
+                                    <span th:text="#{admin.dashboard.members}">Members</span>
                                 </div>
                                 <h3 class="fw-bold mb-0 fs-4 stat-number u-color-2c1e16-5ab7ae80" th:text="${totalMembers}">0</h3>
                             </div>
@@ -96,7 +96,7 @@
                                 <i class="bi bi-journal-arrow-up fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0">Đang Mượn
+                                <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0" th:text="#{admin.dashboard.activeLoans}">Active Loans
                                 </div>
                                 <h3 class="fw-bold mb-0 fs-4 stat-number u-color-2c1e16-5ab7ae80" th:text="${activeBorrows}">0</h3>
                             </div>
@@ -113,7 +113,7 @@
                                 <i class="bi bi-person-badge fs-4"></i>
                             </div>
                             <div class="flex-grow-1 text-center">
-                                <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0">Nhân Sự</div>
+                                <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0" th:text="#{admin.dashboard.staff}">Staff</div>
                                 <h3 class="fw-bold mb-0 fs-4 stat-number u-color-2c1e16-5ab7ae80" th:text="${totalStaff}">0</h3>
                             </div>
                         </div>
@@ -130,7 +130,7 @@
                             </div>
                             <div class="flex-grow-1 text-center">
                                 <div class="dashboard-stat-label text-muted small text-uppercase fw-bold mb-0">
-                                    Doanh thu
+                                    <span th:text="#{admin.dashboard.revenue}">Revenue</span>
                                 </div>
                                 <h3 class="fw-bold mb-0 fs-4 stat-number u-color-2c1e16-5ab7ae80" th:text="${totalRevenue != null ? (totalRevenue >= 1000000 ? #numbers.formatDecimal(totalRevenue / 1000000.0, 1, 1, 'POINT') + 'M' : (totalRevenue >= 1000 ? #numbers.formatDecimal(totalRevenue / 1000.0, 1, 1, 'POINT') + 'K' : totalRevenue)) : '0'}">0</h3>
                             </div>
@@ -146,7 +146,7 @@
                     <div class="card-classic h-100 shadow-sm">
                         <div class="card-header bg-white border-bottom p-4 border-color">
                             <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                <i class="bi bi-bar-chart-line me-2 text-classic"></i>Thống kê mượn/trả 6 tháng qua
+                                <i class="bi bi-bar-chart-line me-2 text-classic"></i><span th:text="#{admin.dashboard.loanChart}">Loans and Returns in the Last 6 Months</span>
                             </h5>
                         </div>
                         <div class="card-body p-4">
@@ -160,13 +160,13 @@
                     <div class="card-classic h-100 shadow-sm">
                         <div class="card-header bg-white border-bottom p-4 border-color">
                             <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                <i class="bi bi-activity me-2 text-classic"></i> Nhật ký hệ thống
+                                <i class="bi bi-activity me-2 text-classic"></i> <span th:text="#{admin.dashboard.systemLog}">System Log</span>
                             </h5>
                         </div>
                         <div class="card-body p-4">
                             <div th:if="${#lists.isEmpty(recentLogs)}" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                <p>Chưa có hoạt động nào</p>
+                                <p th:text="#{admin.dashboard.noActivity}">There is no recent activity.</p>
                             </div>
                             <div th:unless="${#lists.isEmpty(recentLogs)}">
                                 <div class="d-flex mb-3 pb-3 border-bottom admin-dashboard-div-border-color-20"
@@ -185,13 +185,12 @@
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="mb-1 fw-bold"
-                                            th:text="${log.user?.fullName != null ? log.user.fullName : 'Hệ thống'}">
-                                            Người dùng</h6>
+                                            th:text="${log.user?.fullName != null ? log.user.fullName : #messages.msg('admin.dashboard.system')}">
+                                            User</h6>
                                         <div class="text-muted small">
-                                            <span th:text="${log.description}">Hành động</span> ·
+                                            <span th:text="${log.description}">Action</span> ·
                                             <span
-                                                th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Hôm
-                                                nay</span>
+                                                th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Today</span>
                                         </div>
                                     </div>
                                 </div>
@@ -199,8 +198,7 @@
                         </div>
                         <div class="card-footer bg-white border-top text-center p-3 border-color"
                             th:if="${!#lists.isEmpty(recentLogs)}">
-                            <a th:href="@{/admin/system/logs}" class="text-decoration-none fw-bold text-classic">Xem tất cả
-                                hoạt động <i class="bi bi-arrow-right"></i></a>
+                            <a th:href="@{/admin/system/logs}" class="text-decoration-none fw-bold text-classic"><span th:text="#{admin.dashboard.viewActivity}">View all activity</span> <i class="bi bi-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>
@@ -224,7 +222,7 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'Số phiếu mượn',
+                            label: /*[[#{admin.dashboard.loanCount}]]*/ 'Number of loans',
                             data: data,
                             backgroundColor: 'rgba(139, 90, 43, 0.7)',
                             borderColor: 'rgba(139, 90, 43, 1)',

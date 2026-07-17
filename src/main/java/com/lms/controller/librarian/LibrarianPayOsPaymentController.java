@@ -2,6 +2,7 @@ package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/librarian/payments/payos")
-public class LibrarianPayOsPaymentController {
+public class LibrarianPayOsPaymentController extends LocalizedControllerSupport {
     private final PayOsPaymentService paymentService;
     private final MemberRepository memberRepository;
 
@@ -51,7 +52,7 @@ public class LibrarianPayOsPaymentController {
     public String paymentReturn(@RequestParam(required = false) Long orderCode,
                                 RedirectAttributes redirectAttributes) {
         if (orderCode == null) {
-            redirectAttributes.addFlashAttribute("error", "Không xác định được đơn thanh toán KQPay.");
+            redirectAttributes.addFlashAttribute("error", message("backend.payment.orderUnknown"));
             return "redirect:/librarian/members/topup";
         }
         paymentService.getForStaff(orderCode);
@@ -87,19 +88,20 @@ public class LibrarianPayOsPaymentController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG)
-                .body(PayOsQrImageRenderer.render(payment.getQrCode()));
+                .body(PayOsQrImageRenderer.render(payment.getQrCode(),
+                        message("backend.payment.qrPngUnsupported"), message("backend.payment.qrRenderFailed")));
     }
 
     private Member findMember(String lookup) {
         if (lookup == null || lookup.isBlank()) {
-            throw new ValidationException("Vui lòng chọn thành viên.");
+            throw new ValidationException(message("backend.payment.memberRequired"));
         }
         String value = lookup.trim();
         if (value.matches("\\d+")) {
             try {
                 return memberRepository.findById(Integer.valueOf(value))
                         .or(() -> memberRepository.findByUserPhone(value))
-                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên."));
+                        .orElseThrow(() -> new ResourceNotFoundException(message("backend.payment.memberNotFound")));
             } catch (NumberFormatException ignored) {
                 // Continue with the other lookup types below.
             }
@@ -107,7 +109,7 @@ public class LibrarianPayOsPaymentController {
         return memberRepository.findByUserPhone(value)
                 .or(() -> memberRepository.findByUserEmail(value))
                 .or(() -> memberRepository.findByAccountUsername(value))
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException(message("backend.payment.memberNotFound")));
     }
 
     private String readableMessage(ApplicationException exception) {
@@ -115,6 +117,6 @@ public class LibrarianPayOsPaymentController {
         while (current.getCause() != null && (current.getMessage() == null || current.getMessage().isBlank())) {
             current = current.getCause();
         }
-        return current.getMessage() == null ? "Không thể tạo mã QR KQPay." : current.getMessage();
+        return current.getMessage() == null ? message("backend.payment.qrCreateFailed") : current.getMessage();
     }
 }

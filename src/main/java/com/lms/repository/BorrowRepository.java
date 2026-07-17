@@ -38,7 +38,9 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
 
     // 1. Phân trang lọc theo trạng thái (Status)
     Page<Borrow> findByStatus(String status, Pageable pageable);
-    List<Borrow> findByStatus(String status);
+
+    // 1b. Lấy toàn bộ theo trạng thái (không phân trang) - dùng cho scheduled job
+    List<Borrow> findAllByStatus(String status);
 
     // 2. Phân trang lọc theo từ khóa tìm kiếm (Keyword: fullName, email, phone hoặc borrowId)
     @Query("SELECT b FROM Borrow b WHERE " +
@@ -59,8 +61,5 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
     List<Borrow> findByMember_User_Phone(String phone);
 
     @Query("SELECT MIN(b.borrowDate) FROM Borrow b WHERE b.member.memberId = :memberId")
-    LocalDateTime findMinBorrowDateByMemberId(@Param("memberId") Integer memberId);
-
+    java.time.LocalDateTime findMinBorrowDateByMemberId(@Param("memberId") Integer memberId);
 }
-
-

@@ -3,7 +3,7 @@
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layout/base}">
 
 <head>
-    <title>Danh sách Sách - Thư Viện Số</title>
+    <title th:text="#{catalog.title}">Book Catalog - Library Management System</title>
     <link rel="stylesheet" th:href="@{/css/pages/guest/books.css}" />
   </head>
 
@@ -15,8 +15,8 @@
             <nav aria-label="breadcrumb" class="mb-4 pt-3">
                 <ol class="breadcrumb bg-transparent p-0 mb-0">
                     <li class="breadcrumb-item"><a href="/" class="text-decoration-none u-color-8b5a2b-93ece783"><i
-                                class="bi bi-house-door"></i> Sảnh chính</a></li>
-                    <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page">Khám phá sách
+                                class="bi bi-house-door"></i> <span th:text="#{nav.home}">Home</span></a></li>
+                    <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page" th:text="#{footer.exploreBooks}">Explore books
                     </li>
                 </ol>
             </nav>
@@ -35,45 +35,45 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336"
                                    ><i
-                                        class="bi bi-funnel me-2 u-color-8b5a2b-93ece783"></i>Bộ lọc</h5>
+                                        class="bi bi-funnel me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{catalog.filters}">Filters</span></h5>
                                 <a href="/books" class="btn btn-sm btn-link text-decoration-none p-0 u-color-8b5a2b-93ece783"
-                                   >Xóa bộ lọc</a>
+                                   th:text="#{catalog.clearFilters}">Clear filters</a>
                             </div>
 
                             <!-- Lọc theo Danh mục -->
                             <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
-                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80">Danh mục thể loại</h6>
+                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80" th:text="#{catalog.genre}">Genre</h6>
                                 <div class="form-check mb-1" th:each="genre : ${genres}">
                                     <input class="form-check-input" type="radio" name="genreId"
                                         th:value="${genre.genreId}" th:id="'genre' + ${genre.genreId}"
                                         th:checked="${selectedGenreId == genre.genreId}" onchange="this.form.submit()">
                                     <label class="form-check-label text-muted d-flex justify-content-between"
                                         th:for="'genre' + ${genre.genreId}">
-                                        <span th:text="${genre.genreName}">Văn học</span>
+                                        <span th:text="${genre.genreName}">Literature</span>
                                     </label>
                                 </div>
                             </div>
 
                             <!-- Lọc theo Tình trạng -->
                             <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
-                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80">Tình trạng sách</h6>
+                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80" th:text="#{catalog.availability}">Availability</h6>
                                 <div class="form-check mb-1">
                                     <input class="form-check-input" type="radio" name="status" id="status1"
                                         value="Active" th:checked="${selectedStatus == 'Active'}"
                                         onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted" for="status1">Sẵn sàng (Còn sách)</label>
+                                    <label class="form-check-label text-muted" for="status1" th:text="#{book.status.availableWithCopies}">Available (copies in stock)</label>
                                 </div>
                                 <div class="form-check mb-1">
                                     <input class="form-check-input" type="radio" name="status" id="status2"
                                         value="Inactive" th:checked="${selectedStatus == 'Inactive'}"
                                         onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted" for="status2">Không có sẵn</label>
+                                    <label class="form-check-label text-muted" for="status2" th:text="#{book.status.unavailable}">Unavailable</label>
                                 </div>
                             </div>
 
                             <!-- Button Lọc -->
                             <button type="submit" class="btn btn-classic w-100 rounded-pill fw-bold py-2 shadow-sm u-font-family-playfair-display-serif-53670465"
-                               >Áp dụng bộ lọc</button>
+                               th:text="#{catalog.applyFilters}">Apply Filters</button>
                         </div>
                     </form>
                 </div>
@@ -88,8 +88,8 @@
                             <input type="hidden" name="sort" th:if="${sort != null}" th:value="${sort}">
                             <span class="input-group-text bg-white border-0 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
                             <input type="text" id="booksSearchInput" name="keyword" th:value="${keyword}"
-                                class="form-control border-0 py-2" placeholder="Tìm kiếm trong danh mục..." autocomplete="off">
-                            <button class="btn px-4 fw-bold guest-books-button-background-color-border-09" type="submit">TÌM</button>
+                                class="form-control border-0 py-2" th:placeholder="#{catalog.search.placeholder}" placeholder="Search this catalog..." autocomplete="off">
+                            <button class="btn px-4 fw-bold guest-books-button-background-color-border-09" type="submit" th:text="#{book.search.action}">Search</button>
                         </form>
 
                         <!-- Dropdown Overlay -->
@@ -102,8 +102,10 @@
                     </div>
 
                     <!-- JS for Compact Live Search -->
-                    <script>
+                    <script th:inline="javascript">
                         document.addEventListener("DOMContentLoaded", function() {
+                            const catalogLoadingMessage = /*[[#{catalog.loading}]]*/ 'Searching...';
+                            const catalogEmptyMessage = /*[[#{book.search.empty}]]*/ 'No matching books found.';
                             const searchInput = document.getElementById('booksSearchInput');
                             const searchDropdown = document.getElementById('booksSearchDropdown');
                             const suggestionList = document.getElementById('booksSuggestionList');
@@ -124,7 +126,7 @@
 
                                 searchDropdown.style.display = 'block';
                                 clearTimeout(timeoutId);
-                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Đang tìm...</div>';
+                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small"><div class="spinner-border spinner-border-sm me-2" role="status"></div> ' + catalogLoadingMessage + '</div>';
 
                                 timeoutId = setTimeout(() => {
                                     fetch('/api/books/search/suggest?keyword=' + encodeURIComponent(keyword))
@@ -132,7 +134,7 @@
                                         .then(data => {
                                             suggestionList.innerHTML = '';
                                             if (data.length === 0) {
-                                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small">Không tìm thấy sách.</div>';
+                                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small">' + catalogEmptyMessage + '</div>';
                                                 return;
                                             }
                                             data.forEach(book => {
@@ -160,20 +162,19 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm guest-books-div-background-border-14"
                        >
                         <div class="d-flex align-items-center mb-2 mb-md-0">
-                            <span class="text-muted me-3">Đang hiển thị <strong class="u-color-4a3b32-1ba01220"
-                                    th:text="${bookPage != null ? bookPage.totalElements : 0}">0</strong> kết quả</span>
+                            <span class="text-muted me-3" th:text="#{catalog.resultCount(${bookPage != null ? bookPage.totalElements : 0})}">Showing 0 results</span>
 
                         </div>
                         <div class="d-flex align-items-center">
-                            <label class="text-muted small me-2 text-nowrap mb-0">Sắp xếp theo:</label>
+                            <label class="text-muted small me-2 text-nowrap mb-0" th:text="#{catalog.sortBy}">Sort by:</label>
                             <select class="form-select form-select-sm fw-medium rounded-pill px-3 guest-books-select-min-width-background-border-15"
 
                                 onchange="document.getElementById('hiddenSort').value = this.value; document.getElementById('filterForm').submit();">
-                                <option value="newest" th:selected="${sort == 'newest' || sort == null}">Mới nhất
+                                <option value="newest" th:selected="${sort == 'newest' || sort == null}" th:text="#{catalog.sort.newest}">Newest
                                 </option>
-                                <option value="oldest" th:selected="${sort == 'oldest'}">Cũ nhất</option>
-                                <option value="title_asc" th:selected="${sort == 'title_asc'}">Tên: A - Z</option>
-                                <option value="title_desc" th:selected="${sort == 'title_desc'}">Tên: Z - A</option>
+                                <option value="oldest" th:selected="${sort == 'oldest'}" th:text="#{catalog.sort.oldest}">Oldest</option>
+                                <option value="title_asc" th:selected="${sort == 'title_asc'}" th:text="#{catalog.sort.titleAsc}">Title: A - Z</option>
+                                <option value="title_desc" th:selected="${sort == 'title_desc'}" th:text="#{catalog.sort.titleDesc}">Title: Z - A</option>
                             </select>
                         </div>
                     </div>
@@ -195,23 +196,22 @@
                                     <span
                                         class="position-absolute top-0 end-0 m-2 badge bg-white text-primary shadow-sm rounded-pill px-2 py-1"
                                         th:if="${book.status == 'Active'}"><i
-                                            class="bi bi-check-circle-fill me-1"></i>Sẵn sàng</span>
+                                            class="bi bi-check-circle-fill me-1"></i><span th:text="#{book.status.available}">Available</span></span>
 
                                     <!-- Hover Actions (Requires custom CSS to animate, but inline works for demo) -->
                                     <div class="position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 opacity-0 overlay-hover transition-base guest-books-div-opacity-transition-cursor-19"
-                                         onclick="event.stopPropagation()">
+                                       >
                                         <a th:href="@{'/books/' + ${book.bookId}}"
                                             class="btn btn-light rounded-pill mb-2 fw-bold w-75"><i
-                                                class="bi bi-eye me-1"></i> Xem chi tiết</a>
-                                        <form sec:authorize="isAuthenticated()" th:action="@{/member/cart/add}" method="post" class="w-75 mb-0">
-                                            <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                                            <button type="submit" class="btn rounded-pill fw-bold w-100 mb-2 guest-books-button-background-color-border-20" th:disabled="${book.status != 'Active'}">
-                                                <i class="bi bi-cart-plus me-1"></i> Mượn sách
-                                            </button>
-                                        </form>
+                                                class="bi bi-eye me-1"></i> <span th:text="#{book.details}">View Details</span></a>
+                                        <button sec:authorize="isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
+
+                                            th:onclick="|showToast('#{book.borrow.comingSoon}')|"><i
+                                                class="bi bi-cart-plus me-1"></i> <span th:text="#{book.borrow}">Borrow Book</span></button>
                                         <button sec:authorize="!isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
+
                                             onclick="window.location.href='/login'"><i class="bi bi-cart-plus me-1"></i>
-                                            Mượn sách</button>
+                                            <span th:text="#{book.borrow}">Borrow Book</span></button>
                                     </div>
                                 </div>
 
@@ -219,20 +219,18 @@
                                     <!-- Thể loại -->
                                     <span class="text-uppercase fw-bold mb-2 guest-books-span-font-size-color-letter-spacing-21"
 
-                                        th:text="${book.genre != null ? book.genre.genreName : 'Chưa phân loại'}">THỂ
-                                        LOẠI</span>
+                                        th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">UNCATEGORIZED</span>
 
                                     <h5 class="card-title fw-bold mb-1 guest-books-h5-color-font-size-display-22"
 
-                                        th:text="${book.title}">Tên cuốn sách</h5>
+                                        th:text="${book.title}">Book title</h5>
 
                                     <!-- Tác giả -->
                                     <p class="text-muted small mb-3">
                                         <i class="bi bi-pen me-1"></i>
                                         <span th:if="${book.authors != null && !book.authors.isEmpty()}"
-                                            th:text="${book.authors.iterator().next().authorName}">Tên tác giả</span>
-                                        <span th:unless="${book.authors != null && !book.authors.isEmpty()}">Nhiều tác
-                                            giả</span>
+                                            th:text="${book.authors.iterator().next().authorName}">Author name</span>
+                                        <span th:unless="${book.authors != null && !book.authors.isEmpty()}" th:text="#{book.multipleAuthors}">Multiple authors</span>
                                     </p>
 
                                     <div
@@ -256,7 +254,7 @@
                             <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic border-0 shadow-sm rounded-pill mx-1 px-3 py-2 text-dark"
                                     th:href="@{/books(page=0, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
-                                    Đầu
+                                    <span th:text="#{pagination.first}">First</span>
                                 </a>
                             </li>
                             <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
@@ -286,7 +284,7 @@
                             <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic border-0 shadow-sm rounded-pill mx-1 px-3 py-2 text-dark"
                                     th:href="@{/books(page=${bookPage.totalPages - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
-                                    Cuối
+                                    <span th:text="#{pagination.last}">Last</span>
                                 </a>
                             </li>
                         </ul>

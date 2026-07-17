@@ -1,8 +1,7 @@
 package com.lms.entity;
 import jakarta.persistence.*;
-
 @Entity
-@Table(name = "BookItems")
+@Table(name = "`BookItems`")
 public class BookItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer bookItemId;
@@ -16,12 +15,9 @@ public class BookItem {
     private String barcode;
     @Column(length = 50)
     private String status = "Available";
-
-    @Column(name = "book_condition", columnDefinition = "NVARCHAR(50)")
+    
+    @Column(columnDefinition = "NVARCHAR(50)")
     private String bookCondition = "Mới";
-
-    @Column(name = "damage_note", columnDefinition = "NVARCHAR(255)")
-    private String damageNote;
 
     public BookItem() {
     }
@@ -47,6 +43,10 @@ public class BookItem {
     public void setStatus(String status) { this.status = status; }
     public String getBookCondition() { return bookCondition; }
     public void setBookCondition(String bookCondition) { this.bookCondition = bookCondition; }
+
+    @Column(name = "damage_note", columnDefinition = "NVARCHAR(255)")
+    private String damageNote;
+
     public String getDamageNote() { return damageNote; }
     public void setDamageNote(String damageNote) { this.damageNote = damageNote; }
 }

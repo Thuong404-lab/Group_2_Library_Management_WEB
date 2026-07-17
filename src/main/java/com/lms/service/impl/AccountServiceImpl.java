@@ -274,7 +274,8 @@ public class AccountServiceImpl implements AccountService {
         return account.getUser().getEmail().trim();
     }
 
-    private Map<String, String> validateAccountCreate(AdminAccountCreateRequest request) {
+    @Override
+    public Map<String, String> validateAccountCreate(AdminAccountCreateRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
         String fullName = trim(request.getFullName());
         String email = trim(request.getEmail());
