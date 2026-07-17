@@ -3,6 +3,8 @@ package com.lms.service.impl;
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.StaffAccount;
 import com.lms.repository.StaffAccountRepository;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,6 +20,9 @@ import java.util.List;
 @Service
 public class CustomStaffDetailsService implements UserDetailsService {
 
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
     private final StaffAccountRepository staffAccountRepository;
 
     public CustomStaffDetailsService(StaffAccountRepository staffAccountRepository) {
@@ -27,10 +32,10 @@ public class CustomStaffDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         StaffAccount account = staffAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản nhân viên: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException(messages.get("backend.account.staffUsernameNotFound", username)));
 
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new DisabledException("Tài khoản đã bị khóa hoặc chưa kích hoạt.");
+            throw new DisabledException(messages.get("backend.account.disabled"));
         }
 
         List<GrantedAuthority> authorities = account.getRoles().stream()

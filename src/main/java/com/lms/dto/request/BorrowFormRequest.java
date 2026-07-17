@@ -6,12 +6,12 @@ import jakarta.validation.constraints.NotNull;
 
 public class BorrowFormRequest {
 
-    @NotNull(message = "Vui lòng chọn sách cần mượn")
+    @NotNull(message = "{validation.borrow.bookRequired}")
     private Integer bookId;
 
-    @NotNull(message = "Vui lòng nhập số ngày mượn")
-    @Min(value = 1, message = "Số ngày mượn tối thiểu là 1 ngày")
-    @Max(value = 90, message = "Số ngày mượn tối đa không quá 90 ngày")
+    @NotNull(message = "{validation.borrow.daysRequired}")
+    @Min(value = 1, message = "{validation.borrow.daysMinimum}")
+    @Max(value = 90, message = "{validation.borrow.daysMaximum}")
     private Integer numberOfDays; // Số ngày mượn mong muốn (Ví dụ mặc định: 14 ngày)
 
     public BorrowFormRequest() {

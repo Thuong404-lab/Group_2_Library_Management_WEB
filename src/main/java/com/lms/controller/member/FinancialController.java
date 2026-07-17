@@ -51,7 +51,8 @@ import java.util.Comparator;
 public class FinancialController {
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
-    private static final String TOP_UP_NOTIFICATION_KEYWORD = "nạp tiền";
+    private static final String TOP_UP_NOTIFICATION_KEYWORD_VI = "nạp tiền";
+    private static final String TOP_UP_NOTIFICATION_KEYWORD_EN = "top-up";
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MARK_ALL_READ_LIMIT = 1000;
 
@@ -308,7 +309,8 @@ public class FinancialController {
         Member member = getCurrentMember(principal);
         Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
                 member.getMemberId(),
-                TOP_UP_NOTIFICATION_KEYWORD,
+                TOP_UP_NOTIFICATION_KEYWORD_VI,
+                TOP_UP_NOTIFICATION_KEYWORD_EN,
                 pageRequest(page, DEFAULT_PAGE_SIZE));
 
         model.addAttribute("notificationPage", notificationPage);
@@ -341,7 +343,8 @@ public class FinancialController {
         Member member = getCurrentMember(principal);
         Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
                 member.getMemberId(),
-                TOP_UP_NOTIFICATION_KEYWORD,
+                TOP_UP_NOTIFICATION_KEYWORD_VI,
+                TOP_UP_NOTIFICATION_KEYWORD_EN,
                 pageRequest(0, MARK_ALL_READ_LIMIT));
 
         for (MemberNotification memberNotification : notificationPage.getContent()) {

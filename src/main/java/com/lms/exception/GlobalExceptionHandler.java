@@ -7,6 +7,10 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
@@ -38,24 +42,29 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final String ERROR_VIEW = "error";
+    private static final MessageSource FALLBACK_MESSAGES = createFallbackMessages();
+
+    @Autowired(required = false)
+    private MessageSource messageSource;
 
     @ExceptionHandler(ApplicationException.class)
     public Object handleApplicationException(ApplicationException ex, HttpServletRequest request) {
         logExpected(ex, request);
-        return render(ex.getStatus(), ex.getErrorTitle(), ex.getMessage(), request);
+        return render(ex.getStatus(), applicationTitle(ex), ex.getMessage(), request);
     }
 
     @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class,
             EntityNotFoundException.class, NoSuchElementException.class})
     public Object handleNotFound(Exception ex, HttpServletRequest request) {
-        return render(HttpStatus.NOT_FOUND, "Không tìm thấy dữ liệu",
-                "Đường dẫn hoặc dữ liệu bạn yêu cầu không tồn tại.", request);
+        return render(HttpStatus.NOT_FOUND, message("error.notFound.title"),
+                message("error.notFound.message"), request);
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
@@ -67,15 +76,15 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getDefaultMessage())
                 .filter(value -> value != null && !value.isBlank())
                 .findFirst()
-                .orElse("Dữ liệu gửi lên không hợp lệ.");
-        return render(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", message, request);
+                .orElse(message("error.validation.submittedInvalid"));
+        return render(HttpStatus.BAD_REQUEST, message("error.validation.title"), message, request);
     }
 
     @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
             ServletRequestBindingException.class, HttpMessageNotReadableException.class,
             HandlerMethodValidationException.class, IllegalArgumentException.class})
     public Object handleBadRequest(Exception ex, HttpServletRequest request) {
-        String message = "Tham số yêu cầu không hợp lệ.";
+        String message = message("error.validation.parametersInvalid");
         if (ex instanceof ConstraintViolationException constraintException) {
             message = constraintException.getConstraintViolations().stream()
                     .map(violation -> violation.getMessage())
@@ -85,50 +94,50 @@ public class GlobalExceptionHandler {
         } else if (ex instanceof IllegalArgumentException) {
             message = readableMessage(ex, message);
         }
-        return render(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", message, request);
+        return render(HttpStatus.BAD_REQUEST, message("error.validation.title"), message, request);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public Object handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
-        return render(HttpStatus.CONFLICT, "Dữ liệu xung đột",
-                readableMessage(ex, "Thao tác không thể thực hiện ở trạng thái hiện tại."), request);
+        return render(HttpStatus.CONFLICT, message("error.conflict.title"),
+                readableMessage(ex, message("error.conflict.state")), request);
     }
 
     @ExceptionHandler({DataIntegrityViolationException.class, OptimisticLockingFailureException.class})
     public Object handleDataConflict(Exception ex, HttpServletRequest request) {
         LOGGER.warn("Data conflict at {}", request.getRequestURI(), ex);
-        return render(HttpStatus.CONFLICT, "Dữ liệu xung đột",
-                "Dữ liệu đã thay đổi hoặc đang được sử dụng. Vui lòng tải lại và thử lại.", request);
+        return render(HttpStatus.CONFLICT, message("error.conflict.title"),
+                message("error.conflict.dataChanged"), request);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public Object handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
-        return render(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập",
-                "Vui lòng đăng nhập để thực hiện chức năng này.", request);
+        return render(HttpStatus.UNAUTHORIZED, message("error.unauthorized.title"),
+                message("error.unauthorized.message"), request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public Object handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
-        return render(HttpStatus.FORBIDDEN, "Không có quyền truy cập",
-                "Bạn không có quyền thực hiện chức năng này.", request);
+        return render(HttpStatus.FORBIDDEN, message("error.forbidden.title"),
+                message("error.forbidden.message"), request);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public Object handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
-        return render(HttpStatus.METHOD_NOT_ALLOWED, "Phương thức không được hỗ trợ",
-                "Phương thức HTTP này không được hỗ trợ cho đường dẫn hiện tại.", request);
+        return render(HttpStatus.METHOD_NOT_ALLOWED, message("error.methodNotAllowed.title"),
+                message("error.methodNotAllowed.message"), request);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public Object handleUnsupportedMedia(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
-        return render(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Định dạng không được hỗ trợ",
-                "Định dạng dữ liệu gửi lên không được hệ thống hỗ trợ.", request);
+        return render(HttpStatus.UNSUPPORTED_MEDIA_TYPE, message("error.unsupportedMedia.title"),
+                message("error.unsupportedMedia.message"), request);
     }
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public Object handleNotAcceptable(HttpMediaTypeNotAcceptableException ex, HttpServletRequest request) {
-        return render(HttpStatus.NOT_ACCEPTABLE, "Định dạng phản hồi không được hỗ trợ",
-                "Hệ thống không thể trả dữ liệu theo định dạng được yêu cầu.", request);
+        return render(HttpStatus.NOT_ACCEPTABLE, message("error.notAcceptable.title"),
+                message("error.notAcceptable.message"), request);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
@@ -144,16 +153,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({MaxUploadSizeExceededException.class, MultipartException.class})
     public Object handleMultipart(Exception ex, HttpServletRequest request) {
-        return render(HttpStatus.PAYLOAD_TOO_LARGE, "Tệp tải lên không hợp lệ",
-                "Tệp tải lên quá lớn hoặc không đúng định dạng.", request);
+        return render(HttpStatus.PAYLOAD_TOO_LARGE, message("error.upload.title"),
+                message("error.upload.message"), request);
     }
 
     @ExceptionHandler(Exception.class)
     public Object handleGeneralException(Exception ex, HttpServletRequest request) {
         LOGGER.error("Unexpected error while handling {} {}",
                 request.getMethod(), request.getRequestURI(), ex);
-        return render(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống",
-                "Đã xảy ra lỗi phía máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên.", request);
+        return render(HttpStatus.INTERNAL_SERVER_ERROR, message("error.system.title"),
+                message("error.system.message"), request);
     }
 
     private Object render(HttpStatus status, String title, String message, HttpServletRequest request) {
@@ -184,6 +193,32 @@ public class GlobalExceptionHandler {
 
     private String readableMessage(Exception ex, String fallback) {
         return ex.getMessage() == null || ex.getMessage().isBlank() ? fallback : ex.getMessage();
+    }
+
+    private String applicationTitle(ApplicationException exception) {
+        if (exception instanceof ResourceNotFoundException) return message("error.notFound.title");
+        if (exception instanceof ValidationException) return message("error.validation.title");
+        if (exception instanceof ConflictException) return message("error.conflict.title");
+        if (exception instanceof ForbiddenException) return message("error.forbidden.title");
+        if (exception instanceof UnauthorizedException) return message("error.unauthorized.title");
+        if (exception instanceof ExternalServiceException) return message("error.external.title");
+        if (exception instanceof FileStorageException) return message("error.fileStorage.title");
+        if (exception instanceof DataProcessingException) return message("error.dataProcessing.title");
+        String title = exception.getErrorTitle();
+        return title != null && title.startsWith("error.") ? message(title) : title;
+    }
+
+    private String message(String key, Object... arguments) {
+        MessageSource source = messageSource == null ? FALLBACK_MESSAGES : messageSource;
+        Locale locale = messageSource == null ? Locale.forLanguageTag("vi") : LocaleContextHolder.getLocale();
+        return source.getMessage(key, arguments, locale);
+    }
+
+    private static MessageSource createFallbackMessages() {
+        ResourceBundleMessageSource source = new ResourceBundleMessageSource();
+        source.setBasename("messages");
+        source.setDefaultEncoding("UTF-8");
+        return source;
     }
 
     private void logExpected(ApplicationException ex, HttpServletRequest request) {
