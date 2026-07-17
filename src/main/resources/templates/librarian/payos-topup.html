@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Phiếu nạp tiền KQPay</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
+    <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
+</head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page py-4">
+    <section class="payos-receipt">
+        <header class="payos-receipt-header">
+            <h2>Phiếu Nạp Tiền Thành Viên</h2>
+        </header>
+
+        <div class="payos-receipt-body">
+            <div class="payos-customer-box">
+                <span class="payos-customer-label">Tài khoản thành viên:</span>
+                <p class="payos-customer-value"
+                   th:text="${payment.member.user != null ? payment.member.user.email : 'Thành viên'}">
+                    member@example.com
+                </p>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="payos-section-title">Thông tin đơn nạp tiền</h3>
+                <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending">Đang chờ thanh toán</span>
+                <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid">Đã thanh toán</span>
+                <span th:if="${payment.status != 'PAID' and payment.status != 'PENDING'}"
+                      class="payos-status payos-status-failed"
+                      th:text="${payment.status == 'EXPIRED' ? 'Mã QR đã hết hạn' : (payment.status == 'CANCELLED' ? 'Đã hủy' : 'Thanh toán thất bại')}">
+                    Thanh toán thất bại
+                </span>
+            </div>
+
+            <div class="payos-receipt-grid" th:classappend="${payment.status != 'PENDING'} ? ' no-qr' : ''">
+                <div class="payos-detail-card">
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Thành viên</span>
+                        <span class="payos-detail-value"
+                              th:text="${payment.member.user != null ? payment.member.user.fullName : 'Thành viên'}">Thành viên</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Mã thành viên</span>
+                        <span class="payos-detail-value" th:text="${'#' + payment.member.memberId}">#1</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Mã đơn KQPay</span>
+                        <span class="payos-detail-value" th:text="${payment.orderCode}">1</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Thời gian tạo</span>
+                        <span class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label">Số tiền nạp</span>
+                        <span class="payos-detail-value payos-total">
+                            <span th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </span>
+                    </div>
+                </div>
+
+                <div class="payos-qr-card" th:if="${payment.status == 'PENDING'}">
+                    <div class="payos-qr-frame">
+                        <img th:src="@{/librarian/payments/payos/{orderCode}/qr.png(orderCode=${payment.orderCode})}"
+                             alt="Mã QR nạp tiền KQPay"/>
+                    </div>
+                    <div class="payos-qr-title">Đưa mã này cho thành viên quét</div>
+                    <div class="payos-qr-note">Không thay đổi số tiền hoặc nội dung chuyển khoản.</div>
+                    <div class="kqpay-countdown" data-kqpay-countdown
+                         th:attr="data-expires-at=${paymentExpiresAt}">
+                        <span data-kqpay-label>Mã QR hết hạn sau</span>
+                        <strong data-kqpay-time>05:00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <p class="payos-help">ⓘ Ví thành viên sẽ được cộng tự động sau khi KQPay xác nhận thanh toán thành công.</p>
+
+            <div th:if="${payment.status == 'PAID'}" class="payos-success">
+                Đã cộng tiền vào ví thành viên thành công.
+                <span th:if="${payment.transaction != null}">Mã giao dịch: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
+            </div>
+
+            <div class="payos-receipt-actions">
+                <a th:href="@{/librarian/members/topup}" class="payos-btn-secondary">Quay lại quầy nạp tiền</a>
+            </div>
+        </div>
+    </section>
+
+    <script th:if="${payment.status == 'PENDING'}" th:src="@{/js/kqpay-countdown.js}"></script>
+    <script th:if="${payment.status == 'PENDING'}" th:inline="javascript">
+        (() => {
+            const statusUrl = /*[[@{/librarian/payments/payos/{orderCode}/status(orderCode=${payment.orderCode})}]]*/ '';
+            let attempts = 0;
+            const timer = setInterval(async () => {
+                if (++attempts > 60) { clearInterval(timer); return; }
+                try {
+                    const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}});
+                    if (response.ok && (await response.json()).status !== 'PENDING') {
+                        clearInterval(timer);
+                        window.location.reload();
+                    }
+                } catch (_) { /* retry while the counter page is open */ }
+            }, 5000);
+        })();
+    </script>
+</div>
+</body>
+</html>

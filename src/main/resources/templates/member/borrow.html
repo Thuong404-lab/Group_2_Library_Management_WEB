@@ -211,6 +211,7 @@
                         <thead>
                         <tr>
                             <th class="ps-4 border-0">Tên Sách</th>
+                            <th class="border-0">Mã Đơn</th>
                             <th class="border-0">Mã sách (ID)</th>
                             <th class="border-0">Ngày mượn</th>
                             <th class="border-0">Hạn trả</th>
@@ -220,7 +221,7 @@
                         </thead>
                         <tbody>
                         <tr th:if="${booksData == null || #lists.isEmpty(booksData)}">
-                            <td colspan="6" class="text-center py-4 text-muted fst-italic">Hiện tại bạn không mượn cuốn sách nào.</td>
+                            <td colspan="7" class="text-center py-4 text-muted fst-italic">Hiện tại bạn không mượn cuốn sách nào.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
@@ -233,6 +234,7 @@
                                     </div>
                                 </div>
                             </td>
+                            <td class="text-muted fw-medium" th:text="${item.borrowIdStr != null ? item.borrowIdStr : '-'}">BOR-096</td>
                             <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10023</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">10/11/2026</td>
                             <td>
@@ -247,10 +249,11 @@
                                     <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn">Chờ duyệt mượn</span>
                                     <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status" style="background-color: #edf2f7; color: #4a5568; border-color: #cbd5e0;">Chờ duyệt trả</span>
                                     <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">Chờ duyệt gia hạn</span>
+                                    <span th:if="${item.status == 'Approved'}" class="badge badge-classic-status" style="background-color: #e2f0fd; color: #1a73e8; border-color: #adc1f9;"><i class="bi bi-clock-history me-1"></i>Chờ nhận bản vật lý</span>
 
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="'(Còn ' + ${item.daysLeft} + ' ngày)'"></small>
                                 </div>
-                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending'}" 
+                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending' and item.status != 'Approved'}" 
                                      th:title="'Thời gian mượn: Đã qua ' + ${item.progressPercentage} + '%'" data-bs-toggle="tooltip">
                                     <div class="progress-bar" role="progressbar"
                                          th:style="'width: ' + ${item.progressPercentage} + '%'"
@@ -264,6 +267,7 @@
 
                                     <!-- Hiển thị nhãn khi đang chờ thủ thư xử lý -->
                                     <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt...</span>
+                                    <span th:if="${item.status == 'Approved'}" class="text-muted fst-italic font-size-sm" style="font-size: 0.85rem;"><i class="bi bi-clock-history me-1"></i>Chờ nhận bản vật lý...</span>
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
                                         <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action" 
@@ -330,6 +334,7 @@
                         <thead>
                         <tr>
                             <th class="ps-4 border-0">Tên Sách</th>
+                            <th class="border-0">Mã Đơn</th>
                             <th class="border-0">Mã Sách</th>
                             <th class="border-0">Ngày mượn</th>
                             <th class="border-0">Ngày trả thực tế</th>
@@ -339,7 +344,7 @@
                         </thead>
                         <tbody>
                         <tr th:if="${booksData == null || #lists.isEmpty(booksData)}">
-                            <td colspan="6" class="text-center py-4 text-muted fst-italic">Không tìm thấy lịch sử mượn trả trong vòng 1 tháng qua.</td>
+                            <td colspan="7" class="text-center py-4 text-muted fst-italic">Không tìm thấy lịch sử mượn trả trong vòng 1 tháng qua.</td>
                         </tr>
                         <tr th:each="item : ${booksData}">
                             <td class="ps-4">
@@ -352,6 +357,7 @@
                                     </div>
                                 </div>
                             </td>
+                            <td class="text-muted fw-medium" th:text="${item.borrowIdStr != null ? item.borrowIdStr : '-'}">BOR-096</td>
                             <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10012</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">01/10/2026</td>
                             <td class="text-muted" th:text="${item.returnDate != null ? #temporals.format(item.returnDate, 'dd/MM/yyyy') : '-'}">10/10/2026</td>

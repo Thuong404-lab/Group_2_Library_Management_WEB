@@ -10,6 +10,8 @@ import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.dto.response.MemberListViewData;
 import com.lms.service.LibrarianMemberService;
+import com.lms.service.OverdueReminderService;
+import com.lms.service.OverdueViolationQueryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,15 +49,21 @@ public class MemberMgmtController {
     private final FinancialService financialService;
     private final TransactionRepository transactionRepository;
     private final MemberRepository memberRepository;
+    private final OverdueReminderService overdueReminderService;
+    private final OverdueViolationQueryService overdueViolationQueryService;
 
     public MemberMgmtController(LibrarianMemberService memberService,
                                 FinancialService financialService,
                                 TransactionRepository transactionRepository,
-                                MemberRepository memberRepository) {
+                                MemberRepository memberRepository,
+                                OverdueReminderService overdueReminderService,
+                                OverdueViolationQueryService overdueViolationQueryService) {
         this.memberService = memberService;
         this.financialService = financialService;
         this.transactionRepository = transactionRepository;
         this.memberRepository = memberRepository;
+        this.overdueReminderService = overdueReminderService;
+        this.overdueViolationQueryService = overdueViolationQueryService;
     }
 
     @GetMapping("/members")
@@ -165,8 +173,15 @@ public class MemberMgmtController {
     public String manageFines(@RequestParam(required = false, defaultValue = "") String memberKeyword,
                               Model model,
                               @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAttribute("memberKeyword", memberKeyword);
-        model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
+        var overdueViolations = overdueViolationQueryService.getActiveOverdueViolations();
+        model.addAttribute("fineMembers", memberRepository.findAll());
+        model.addAttribute("overdueViolations", overdueViolations);
+        model.addAttribute("finePerDay", overdueViolationQueryService.getConfiguredFinePerDay());
+        model.addAttribute("overdueViolationCount", overdueViolations.size());
+        model.addAttribute("overdueMemberCount", overdueViolations.stream()
+                .map(violation -> violation.memberId())
+                .distinct()
+                .count());
         addCurrentUser(model, userDetails);
         return "librarian/fines";
     }
@@ -182,6 +197,20 @@ public class MemberMgmtController {
             redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/librarian/members/fines";
+    }
+
+    @PostMapping("/members/fines/remind/{borrowDetailId}")
+    public String remindOverdueMember(
+            @PathVariable Integer borrowDetailId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            overdueReminderService.sendReturnReminder(borrowDetailId);
+            redirectAttributes.addFlashAttribute(
+                    "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/librarian/members/fines";
     }
@@ -208,8 +237,7 @@ public class MemberMgmtController {
                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
         addTopupDeskStats(model);
         model.addAttribute("recentTopups", transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
-        model.addAttribute("memberKeyword", memberKeyword);
-        model.addAttribute("memberSearchResults", searchMembers(memberKeyword));
+        model.addAttribute("topupMembers", memberRepository.findAll());
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
     }

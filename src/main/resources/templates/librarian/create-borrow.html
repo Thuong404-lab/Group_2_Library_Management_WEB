@@ -217,6 +217,12 @@
             font-weight: 700;
             padding: 0 4px;
         }
+
+        .list-group-item.is-hidden {
+            display: none !important;
+        }
+        .is-hidden { display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -245,6 +251,13 @@
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <h5 class="card-title-custom mb-0"><i class="bi bi-inbox-fill me-2"></i>Hàng đợi xử lý</h5>
                     </div>
+
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search" style="color: #8b5a2b;"></i></span>
+                        <input type="text" id="searchInput" class="form-control border-start-0"
+                               placeholder="Tìm kiếm tên, SĐT hoặc mã..." oninput="filterRequests()">
+                    </div>
+
                     <ul class="classic-pill-tabs" id="requestTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="borrows-tab" data-bs-toggle="tab" data-bs-target="#borrows" type="button" role="tab" aria-controls="borrows" aria-selected="true">
@@ -258,7 +271,6 @@
                                 <span class="tab-badge" th:text="${#lists.size(pendingRenewals)}">0</span>
                             </button>
                         </li>
-
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations" type="button" role="tab" aria-controls="reservations" aria-selected="false">
                                 <i class="bi bi-bookmark-star"></i> Đặt trước
@@ -267,10 +279,10 @@
                         </li>
                     </ul>
                 </div>
-                
+
                 <div class="card-body p-0">
                     <div class="tab-content scrollable-list" id="requestTabsContent">
-                        
+
                         <!-- TAB: ĐƠN MƯỢN ONLINE -->
                         <div class="tab-pane fade show active" id="borrows" role="tabpanel" aria-labelledby="borrows-tab">
                             <div class="list-group list-group-flush">
@@ -283,7 +295,12 @@
                                         <h6 class="mb-0 fw-bold" style="color: #2c1e16; font-family: 'Playfair Display', serif;" th:text="${req.member.user.fullName}">Tên Thành Viên</h6>
                                         <small class="text-muted" th:text="${#temporals.format(req.borrowDate, 'dd/MM/yyyy')}">Ngày gửi</small>
                                     </div>
-                                    <div class="small text-muted mb-2" th:text="${req.member.user.email}">Email</div>
+
+                                    <div class="small text-muted mb-1" th:text="${req.member.user.email}">Email</div>
+
+                                    <div class="small text-muted mb-2">
+                                        <i class="bi bi-telephone me-1"></i><span th:text="${req.member.user.phone}">SĐT</span>
+                                    </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="status-badge status-pending">Chờ duyệt cấp sách</span>
                                         <span class="small fw-semibold" style="color: #8b5a2b;">Chi tiết <i class="bi bi-chevron-right small"></i></span>
@@ -323,7 +340,7 @@
                         <!-- TAB: HÀNG ĐỢI ĐẶT TRƯỚC -->
                         <div class="tab-pane fade" id="reservations" role="tabpanel" aria-labelledby="reservations-tab">
                             <div class="list-group list-group-flush">
-                                <a th:each="reserve : ${activeReservations}" 
+                                <a th:each="reserve : ${activeReservations}"
                                    th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
                                    class="list-group-item list-group-item-action py-3 px-3 border-bottom bg-transparent"
                                    th:classappend="${selectedReservation != null && selectedReservation.reservationId == reserve.id} ? 'active-request-item' : ''"
@@ -368,7 +385,7 @@
                         </div>
                         <div class="col-md-5">
                             <label for="inlineDays" class="form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.4px;">
-                                Số ngày mượn 
+                                Số ngày mượn
                                 <span class="badge ms-1 fw-normal" style="background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.2); font-size: 0.7rem; text-transform: none;" th:text="'Tối đa ' + ${maxBorrowDays} + ' ngày'">Tối đa 14 ngày</span>
                             </label>
                             <input type="number" id="inlineDays" name="numberOfDays" class="form-control" th:value="${billDays != null ? billDays : maxBorrowDays}" min="1" th:max="${maxBorrowDays}" />
@@ -612,7 +629,47 @@
                 myModal.show();
             }
         });
+        function filterRequests() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toLowerCase();
+
+            // Tìm tab đang active
+            var activeTabContent = document.querySelector(".tab-pane.show.active");
+            if (!activeTabContent) return;
+
+            var items = activeTabContent.querySelectorAll(".list-group-item");
+            var found = false; // Biến đánh dấu xem có kết quả nào không
+
+            items.forEach(function(item) {
+                var textContent = item.textContent || item.innerText;
+                if (textContent.toLowerCase().includes(filter)) {
+                    item.classList.remove("is-hidden");
+                    found = true; // Tìm thấy ít nhất 1 kết quả
+                } else {
+                    item.classList.add("is-hidden");
+                }
+            });
+
+            // Xử lý thông báo "Không tìm thấy"
+            var noResultMsg = activeTabContent.querySelector(".no-result-msg");
+            if (!found) {
+                // Nếu không tìm thấy và chưa có thông báo, thì tạo mới
+                if (!noResultMsg) {
+                    var msgDiv = document.createElement("div");
+                    msgDiv.className = "no-result-msg text-center py-4 text-muted small fst-italic";
+                    msgDiv.textContent = "Không tìm thấy đơn hàng nào khớp với từ khóa.";
+                    activeTabContent.querySelector(".list-group").appendChild(msgDiv);
+                }
+            } else {
+                // Nếu tìm thấy kết quả thì xóa thông báo (nếu có)
+                if (noResultMsg) {
+                    noResultMsg.remove();
+                }
+            }
+        }
     </script>
+
+
 
     <!-- Modal Review Bill -->
     <div class="modal fade" id="reviewBillModal" tabindex="-1" aria-labelledby="reviewBillModalLabel" aria-hidden="true" data-bs-backdrop="static">
@@ -633,7 +690,7 @@
                             <span class="fw-bold text-dark fs-5" th:text="${billMember.user.fullName}">Tên</span>
                         </div>
                         <div class="text-muted small">
-                            <i class="bi bi-telephone me-1"></i> <span th:text="${billMember.user.phone}">SĐT</span> | 
+                            <i class="bi bi-telephone me-1"></i> <span th:text="${billMember.user.phone}">SĐT</span> |
                             <i class="bi bi-envelope me-1"></i> <span th:text="${billMember.user.email}">Email</span>
                         </div>
                     </div>

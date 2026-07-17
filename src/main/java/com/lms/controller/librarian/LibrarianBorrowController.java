@@ -5,13 +5,14 @@ import com.lms.entity.Borrow;
 import com.lms.entity.Member;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Transaction;
+import com.lms.entity.MemberAccount;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.repository.MemberAccountRepository;
-import com.lms.service.BorrowService;
+import com.lms.service.LoanService;
 import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,13 +25,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Controller
 public class LibrarianBorrowController {
 
-    private final BorrowService borrowService;
+    private final LoanService loanService;
     private final BorrowRepository borrowRepository;
     private final MemberRepository memberRepository;
     private final com.lms.repository.BookItemRepository bookItemRepository;
@@ -39,14 +42,15 @@ public class LibrarianBorrowController {
     private final WalletRepository walletRepository;
     private final MemberAccountRepository memberAccountRepository;
 
-    public LibrarianBorrowController(BorrowService borrowService, BorrowRepository borrowRepository,
+    public LibrarianBorrowController(LoanService loanService,
+                                     BorrowRepository borrowRepository,
                                      MemberRepository memberRepository,
                                      com.lms.repository.BookItemRepository bookItemRepository,
                                      BorrowDetailRepository borrowDetailRepository,
                                      TransactionRepository transactionRepository,
                                      WalletRepository walletRepository,
                                      MemberAccountRepository memberAccountRepository) {
-        this.borrowService = borrowService;
+        this.loanService = loanService;
         this.borrowRepository = borrowRepository;
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
@@ -56,111 +60,262 @@ public class LibrarianBorrowController {
         this.memberAccountRepository = memberAccountRepository;
     }
 
-    @GetMapping("/librarian/borrow/list")
-    public String listAllBorrows(@RequestParam(value = "page", defaultValue = "0") int page,
-                                 @RequestParam(value = "size", defaultValue = "50") int size,
+    @GetMapping("/librarian/loan/borrow-schedule")
+    public String listAllBorrows(@RequestParam(value = "tab", defaultValue = "history") String tab,
+                                 @RequestParam(value = "page", defaultValue = "0") int page,
+                                 @RequestParam(value = "size", defaultValue = "10") int size,
                                  @RequestParam(value = "keyword", required = false) String keyword,
                                  Model model) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("memberId").ascending());
-        Page<Member> memberPage;
+        if ("slips".equalsIgnoreCase(tab)) {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("borrowId").descending());
+            Page<Borrow> borrowPage;
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String kw = keyword.trim();
-            memberPage = memberRepository.findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(kw, kw, kw, pageable);
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                borrowPage = borrowRepository.findByKeyword(keyword.trim(), pageable);
+            } else {
+                borrowPage = borrowRepository.findAll(pageable);
+            }
+
+            java.util.Map<Integer, List<BorrowDetail>> detailsByBorrowId = new java.util.HashMap<>();
+            for (Borrow b : borrowPage.getContent()) {
+                detailsByBorrowId.put(b.getBorrowId(), loanService.getBorrowDetailsByBorrowId(b.getBorrowId()));
+            }
+
+            model.addAttribute("borrows", borrowPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", borrowPage.getTotalPages());
+            model.addAttribute("totalItems", borrowPage.getTotalElements());
+            model.addAttribute("keyword", keyword);
+            model.addAttribute("detailsByBorrowId", detailsByBorrowId);
+            model.addAttribute("activeTab", "slips");
         } else {
-            memberPage = memberRepository.findAll(pageable);
+            Pageable pageable = PageRequest.of(page, size, Sort.by("memberId").ascending());
+            Page<Member> memberPage;
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = keyword.trim();
+                memberPage = memberRepository.findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(kw, kw, kw, pageable);
+            } else {
+                memberPage = memberRepository.findAll(pageable);
+            }
+
+            model.addAttribute("members", memberPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", memberPage.getTotalPages());
+            model.addAttribute("totalItems", memberPage.getTotalElements());
+            model.addAttribute("keyword", keyword);
+            model.addAttribute("activeTab", "history");
         }
 
-        // Đổ toàn bộ tham số đồng bộ ra view borrow-list.html
-        model.addAttribute("members", memberPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", memberPage.getTotalPages());
-        model.addAttribute("totalItems", memberPage.getTotalElements());
-        model.addAttribute("keyword", keyword);
-
-        return "librarian/borrow-list";
+        return "librarian/borrow-schedule";
     }
 
-    // Xem chi tiết lịch sử mượn trả & giao dịch tài chính của thành viên cụ thể
+    @PostMapping("/librarian/borrow/collect/{borrowId}")
+    public String collectBorrowBooks(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
+        try {
+            loanService.confirmCollection(borrowId);
+            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận độc giả đã nhận sách vật lý thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());
+        }
+        return "redirect:/librarian/loan/borrow-schedule?tab=slips";
+    }
+
     @GetMapping("/librarian/borrow/member/{memberId}")
-    public String viewMemberHistory(@PathVariable("memberId") Integer memberId, Model model) {
+    public String viewMemberHistory(
+            @PathVariable("memberId") Integer memberId,
+            @RequestParam(value = "startDate", required = false) String startDateStr,
+            @RequestParam(value = "endDate", required = false) String endDateStr,
+            Model model) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy độc giả với ID: " + memberId));
 
-        // Lấy danh sách phiếu mượn của thành viên
-        List<Borrow> borrowHistory = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
+        String fullName = "N/A";
+        String email = "N/A";
+        String phone = "N/A";
 
-        // Lưu bản đồ các chi tiết sách và giao dịch theo từng phiếu mượn để Thymeleaf dễ lặp
-        Map<Integer, List<BorrowDetail>> detailsByBorrowId = new HashMap<>();
-        Map<Integer, List<Transaction>> transactionsByBorrowId = new HashMap<>();
-
-        for (Borrow borrow : borrowHistory) {
-            List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
-            detailsByBorrowId.put(borrow.getBorrowId(), details);
-
-            List<Transaction> transactions = transactionRepository.findByBorrow_BorrowId(borrow.getBorrowId());
-            transactionsByBorrowId.put(borrow.getBorrowId(), transactions);
+        if (member.getUser() != null) {
+            fullName = member.getUser().getFullName() != null ? member.getUser().getFullName() : "N/A";
+            email = member.getUser().getEmail() != null ? member.getUser().getEmail() : "N/A";
+            phone = member.getUser().getPhone() != null ? member.getUser().getPhone() : "Chưa cập nhật";
         }
 
-        // Lấy số dư ví thành viên
+        // Tìm mốc thời gian tạo tài khoản (dựa trên hoạt động sớm nhất của member)
+        java.time.LocalDateTime earliestBorrow = borrowRepository.findMinBorrowDateByMemberId(memberId);
+        java.time.LocalDateTime earliestTx = transactionRepository.findMinTransactionDateByMemberId(memberId);
+        java.time.LocalDateTime accountCreatedDate = java.time.LocalDateTime.now();
+        if (earliestBorrow != null && earliestBorrow.isBefore(accountCreatedDate)) {
+            accountCreatedDate = earliestBorrow;
+        }
+        if (earliestTx != null && earliestTx.isBefore(accountCreatedDate)) {
+            accountCreatedDate = earliestTx;
+        }
+
+        java.time.LocalDateTime minAvailableDateTime = accountCreatedDate.with(java.time.LocalTime.MIN);
+        java.time.LocalDateTime maxAvailableDateTime = java.time.LocalDateTime.now().with(java.time.LocalTime.MAX);
+        java.time.format.DateTimeFormatter dateFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        String minDateStr = minAvailableDateTime.format(dateFormatter);
+        String maxDateStr = maxAvailableDateTime.format(dateFormatter);
+
+        java.time.LocalDateTime startDateTime = minAvailableDateTime;
+        java.time.LocalDateTime endDateTime = maxAvailableDateTime;
+
+        if (startDateStr != null && !startDateStr.trim().isEmpty()) {
+            try {
+                java.time.LocalDateTime parsedStart = java.time.LocalDate.parse(startDateStr.trim(), dateFormatter).atStartOfDay();
+                if (!parsedStart.isBefore(minAvailableDateTime) && !parsedStart.isAfter(maxAvailableDateTime)) {
+                    startDateTime = parsedStart;
+                }
+            } catch (Exception e) {
+                // Bỏ qua lỗi định dạng
+            }
+        }
+        if (endDateStr != null && !endDateStr.trim().isEmpty()) {
+            try {
+                java.time.LocalDateTime parsedEnd = java.time.LocalDate.parse(endDateStr.trim(), dateFormatter).atTime(java.time.LocalTime.MAX);
+                if (!parsedEnd.isBefore(minAvailableDateTime) && !parsedEnd.isAfter(maxAvailableDateTime)) {
+                    endDateTime = parsedEnd;
+                }
+            } catch (Exception e) {
+                // Bỏ qua lỗi định dạng
+            }
+        }
+
+        if (startDateTime.isAfter(endDateTime)) {
+            java.time.LocalDateTime temp = startDateTime;
+            startDateTime = endDateTime.with(java.time.LocalTime.MIN);
+            endDateTime = temp.with(java.time.LocalTime.MAX);
+        }
+
+        String selectedStartDate = startDateTime.format(dateFormatter);
+        String selectedEndDate = endDateTime.format(dateFormatter);
+
+        // 1. Tải danh sách tất cả các đơn Borrow của member theo thứ tự mới nhất lên đầu và lọc theo ngày
+        List<Borrow> borrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
+        if (borrows == null) {
+            borrows = new ArrayList<>();
+        }
+        final java.time.LocalDateTime finalStart = startDateTime;
+        final java.time.LocalDateTime finalEnd = endDateTime;
+        borrows = borrows.stream()
+                .filter(b -> b.getBorrowDate() != null && !b.getBorrowDate().isBefore(finalStart) && !b.getBorrowDate().isAfter(finalEnd))
+                .collect(Collectors.toList());
+
+        List<BorrowDetail> details = loanService.getMemberBorrowDetailsByDateRange(memberId, startDateTime, endDateTime);
+        List<Transaction> transactions = loanService.getMemberTransactionsByDateRange(memberId, startDateTime, endDateTime);
+
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(memberId)
                 .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
                 .orElse(BigDecimal.ZERO);
 
-        // Lấy tên đăng nhập tài khoản thành viên
-        String accountUsername = memberAccountRepository
-                .findByMember_User_Id(member.getUser().getId())
-                .map(acc -> acc.getUsername())
-                .orElse("N/A");
-        String accountStatus = memberAccountRepository
-                .findByMember_User_Id(member.getUser().getId())
-                .map(acc -> acc.getStatus())
-                .orElse("N/A");
+        String accountUsername = "N/A";
+        String accountStatus = "N/A";
+
+        try {
+            java.util.Optional<MemberAccount> optAccount = memberAccountRepository.findByMember(member);
+            if (optAccount.isPresent()) {
+                accountUsername = optAccount.get().getUsername();
+                accountStatus = optAccount.get().getStatus() != null ? optAccount.get().getStatus().toString() : "N/A";
+            } else if (member.getUser() != null) {
+                java.util.Optional<MemberAccount> optAccountByUserId = memberAccountRepository.findByMember_User_Id(member.getUser().getId());
+                if (optAccountByUserId.isPresent()) {
+                    accountUsername = optAccountByUserId.get().getUsername();
+                    accountStatus = optAccountByUserId.get().getStatus() != null ? optAccountByUserId.get().getStatus().toString() : "N/A";
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi nạp Account: " + e.getMessage());
+        }
+
+        Map<Integer, String> authorMap = new HashMap<>();
+        if (details != null) {
+            for (BorrowDetail d : details) {
+                String authorName = "Không rõ tác giả";
+                try {
+                    if (d.getBookItem() != null && d.getBookItem().getBook() != null
+                            && d.getBookItem().getBook().getAuthors() != null
+                            && !d.getBookItem().getBook().getAuthors().isEmpty()) {
+                        authorName = d.getBookItem().getBook().getAuthors().iterator().next().getAuthorName();
+                    } else if (d.getBook() != null && d.getBook().getAuthors() != null
+                            && !d.getBook().getAuthors().isEmpty()) {
+                        authorName = d.getBook().getAuthors().iterator().next().getAuthorName();
+                    }
+                } catch (Exception e) {
+                    // Tránh lỗi Lazy Loading
+                }
+                if (d.getBorrowDetailId() != null) {
+                    authorMap.put(d.getBorrowDetailId(), authorName);
+                }
+            }
+        }
+
+        // 2. Phân nhóm BorrowDetail và Transaction theo Borrow ID cha để truyền ra View
+        Map<Integer, List<BorrowDetail>> detailsByBorrowId = (details != null) ?
+                details.stream().filter(d -> d.getBorrow() != null).collect(Collectors.groupingBy(d -> d.getBorrow().getBorrowId())) : new HashMap<>();
+
+        Map<Integer, List<Transaction>> transactionsByBorrowId = (transactions != null) ?
+                transactions.stream().filter(t -> t.getBorrow() != null).collect(Collectors.groupingBy(t -> t.getBorrow().getBorrowId())) : new HashMap<>();
 
         model.addAttribute("member", member);
-        model.addAttribute("borrows", borrowHistory);
+        model.addAttribute("fullName", fullName);
+        model.addAttribute("email", email);
+        model.addAttribute("phone", phone);
+
+        // Đăng ký các biến Model yêu cầu bởi view borrow-member-detail.html
+        model.addAttribute("borrows", borrows);
         model.addAttribute("detailsByBorrowId", detailsByBorrowId);
         model.addAttribute("transactionsByBorrowId", transactionsByBorrowId);
+
+        model.addAttribute("details", details != null ? details : new ArrayList<>());
+        model.addAttribute("authorMap", authorMap);
+        model.addAttribute("transactions", transactions != null ? transactions : new ArrayList<>());
         model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("accountUsername", accountUsername);
         model.addAttribute("accountStatus", accountStatus);
-        model.addAttribute("totalBorrows", borrowHistory.size());
-        model.addAttribute("completedBorrows", borrowHistory.stream()
-                .filter(b -> "Returned".equalsIgnoreCase(b.getStatus())).count());
-        model.addAttribute("activeBorrows", borrowHistory.stream()
-                .filter(b -> !"Returned".equalsIgnoreCase(b.getStatus())).count());
+
+        model.addAttribute("minDate", minDateStr);
+        model.addAttribute("maxDate", maxDateStr);
+        model.addAttribute("startDate", selectedStartDate);
+        model.addAttribute("endDate", selectedEndDate);
+
+        long completedCount = 0;
+        long activeCount = 0;
+        if (details != null) {
+            completedCount = details.stream().filter(d -> "Returned".equalsIgnoreCase(d.getStatus())).count();
+            activeCount = details.stream().filter(d -> !"Returned".equalsIgnoreCase(d.getStatus())).count();
+        }
+
+        model.addAttribute("totalBorrows", borrows.size());
+        model.addAttribute("completedBorrows", completedCount);
+        model.addAttribute("activeBorrows", activeCount);
 
         return "librarian/borrow-member-detail";
     }
 
-    // Quầy mượn sách tích hợp đồng bộ danh sách online (Master-Detail) đúng mô hình chia đôi màn hình
     @GetMapping("/librarian/borrow/create")
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
                                        @RequestParam(value = "renewId", required = false) Integer renewId,
                                        @RequestParam(value = "reservationId", required = false) Integer reservationId,
                                        Model model) {
+
         model.addAttribute("borrowRequest", new BorrowRequest());
-        model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
+        model.addAttribute("maxBorrowDays", 14);
 
-        // Bước 1: Lấy danh sách thành viên gửi đơn mượn trực tuyến đang chờ phê duyệt (Hiện ở cột trái)
-        model.addAttribute("pendingRequests", borrowService.getAllPendingRequests());
+        Page<Borrow> pendingPage = borrowRepository.findByStatus("Pending", Pageable.unpaged());
+        List<Borrow> pendingRequests = pendingPage != null ? pendingPage.getContent() : new ArrayList<>();
+        model.addAttribute("pendingRequests", pendingRequests);
 
-        // Lấy danh sách yêu cầu gia hạn chờ duyệt
-        model.addAttribute("pendingRenewals", borrowService.getPendingRenewalRequests());
+        model.addAttribute("pendingRenewals", loanService.getAllPendingRenewals() != null ? loanService.getAllPendingRenewals() : new ArrayList<>());
+        model.addAttribute("pendingReturnRequests", new ArrayList<>());
+        model.addAttribute("activeReservations", new ArrayList<>());
 
-        // Đổi tên thuộc tính từ 'returnRequests' -> 'pendingReturnRequests' và bọc qua DTO phù hợp với template
-        model.addAttribute("pendingReturnRequests", borrowService.getPendingReturnRequestDTOs());
-
-        // Đổi tên thuộc tính từ 'pendingReservations' -> 'activeReservations' và bọc qua DTO phù hợp với template
-        model.addAttribute("activeReservations", borrowService.getPendingReservationDTOs());
-
-        // Bước 2 & 3: Khi click chọn 1 member, nạp thông tin chi tiết và danh sách sách muốn mượn qua cột phải
         if (requestId != null) {
             try {
-                Borrow selectedBorrow = borrowService.getBorrowById(requestId);
+                Borrow selectedBorrow = loanService.getLoanDetails(requestId);
                 model.addAttribute("selectedRequest", selectedBorrow);
-                model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                model.addAttribute("requestDetails", loanService.getBorrowDetailsByBorrowId(requestId));
             } catch (Exception e) {
                 model.addAttribute("errorMessage", "Không thể lấy thông tin chi tiết: " + e.getMessage());
             }
@@ -168,29 +323,19 @@ public class LibrarianBorrowController {
 
         if (renewId != null) {
             try {
-                model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
+                model.addAttribute("selectedRenewal", borrowDetailRepository.findById(renewId).orElse(null));
             } catch (Exception e) {
                 model.addAttribute("errorMessage", "Không thể lấy thông tin gia hạn: " + e.getMessage());
-            }
-        }
-
-        if (reservationId != null) {
-            try {
-                model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
-            } catch (Exception e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin đặt trước: " + e.getMessage());
             }
         }
 
         return "librarian/create-borrow";
     }
 
-    // CHỨC NĂNG PHÊ DUYỆT ĐƠN MƯỢN ONLINE: Chuyển đổi trạng thái từ Pending -> Active
     @PostMapping("/librarian/borrow/approve/{borrowId}")
     public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId, Principal principal, RedirectAttributes redirectAttributes) {
         try {
-            String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.approvePendingRequest(borrowId, staffUsername);
+            loanService.processBorrowRequest(borrowId);
             redirectAttributes.addFlashAttribute("successMessage", "Đã phê duyệt và cấp sách vật lý thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Phê duyệt thất bại: " + e.getMessage());
@@ -198,42 +343,38 @@ public class LibrarianBorrowController {
         return "redirect:/librarian/borrow/create";
     }
 
-    // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
     @PostMapping("/librarian/borrow/reject/{borrowId}")
     public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
         try {
-            borrowService.updateStatus(borrowId, "Rejected");
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối cấp sách cho yêu cầu trực tuyến này.");
+            Borrow borrow = borrowRepository.findById(borrowId)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn mượn"));
+            borrow.setStatus("Rejected");
+            borrowRepository.save(borrow);
+
+            List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
+            for (BorrowDetail detail : details) {
+                detail.setStatus("Rejected");
+                borrowDetailRepository.save(detail);
+                if (detail.getBookItem() != null) {
+                    com.lms.entity.BookItem item = detail.getBookItem();
+                    item.setStatus("Available");
+                    bookItemRepository.save(item);
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối cấp sách thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";
     }
 
-
-    // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
-    @PostMapping("/librarian/reservations/reject/{id}")
-    public String rejectReservationRequest(@PathVariable("id") Integer id, Principal principal, RedirectAttributes redirectAttributes) {
-        try {
-            String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.rejectReservationRequest(id, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối đơn đặt trước thành công.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thất bại: " + e.getMessage());
-        }
-        return "redirect:/librarian/borrow/create";
-    }
-
-
-
-    // Xem trước thông tin phiếu mượn (Review Bill)
     @PostMapping("/librarian/borrow/review")
     public String reviewCreateBorrow(@RequestParam("memberIdentifier") String memberIdentifier,
                                      @RequestParam("numberOfDays") Integer numberOfDays,
                                      @RequestParam("rawBarcodes") String rawBarcodes,
                                      RedirectAttributes redirectAttributes) {
         try {
-            // 1. Tìm thành viên
             java.util.Optional<com.lms.entity.Member> optMember = memberRepository.findByUserEmail(memberIdentifier.trim());
             if (optMember.isEmpty()) {
                 optMember = memberRepository.findByUserPhone(memberIdentifier.trim());
@@ -248,7 +389,6 @@ public class LibrarianBorrowController {
                 return "redirect:/librarian/borrow/create";
             }
 
-            // 2. Kiểm tra mã vạch
             if (rawBarcodes == null || rawBarcodes.trim().isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng nhập ít nhất một mã vạch!");
                 return "redirect:/librarian/borrow/create";
@@ -272,12 +412,6 @@ public class LibrarianBorrowController {
                 validItems.add(item);
             }
 
-            if (validItems.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Không có mã vạch hợp lệ nào được nhập!");
-                return "redirect:/librarian/borrow/create";
-            }
-
-            // 3. Truyền dữ liệu sang giao diện popup
             redirectAttributes.addFlashAttribute("showBillPopup", true);
             redirectAttributes.addFlashAttribute("billMember", member);
             redirectAttributes.addFlashAttribute("billBookItems", validItems);
@@ -291,38 +425,20 @@ public class LibrarianBorrowController {
         return "redirect:/librarian/borrow/create";
     }
 
-    // Xử lý tạo phiếu mượn trực tiếp bằng mã vạch (Barcode) quét tại quầy sau khi xác nhận Bill
     @PostMapping("/librarian/borrow/create")
     public String processCreateBorrow(@ModelAttribute("borrowRequest") BorrowRequest request,
                                       @RequestParam(value = "rawBarcodes", required = false) String rawBarcodes,
                                       Principal principal,
                                       RedirectAttributes redirectAttributes) {
         try {
-            if (rawBarcodes != null && !rawBarcodes.trim().isEmpty()) {
-                request.setBarcodes(Arrays.asList(rawBarcodes.split("\\s*,\\s*")));
-            }
+            String raw = (rawBarcodes != null) ? rawBarcodes : request.getMemberIdentifier();
+            List<String> barcodes = Arrays.asList(raw.split("\\s*,\\s*"));
             String librarianUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.processBorrowing(request, librarianUsername);
+
+            loanService.processBorrowDesk(request.getMemberIdentifier(), barcodes, librarianUsername);
             redirectAttributes.addFlashAttribute("successMessage", "Tạo phiếu mượn trực tiếp tại quầy thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());
-        }
-        return "redirect:/librarian/borrow/create";
-    }
-
-    // ==========================================
-    // ĐÃ XÓA PHƯƠNG THỨC memberRequestReturn BỊ TRÙNG MAPPING TẠI ĐÂY
-    // ==========================================
-
-    // ĐỒNG BỘ ENDPOINT THEO FORM HTML PHẦN 2: Phê duyệt đặt giữ chỗ trước từ Thủ thư
-    @PostMapping("/librarian/reservations/approve/{reservationId}")
-    public String approveReservationRequest(@PathVariable("reservationId") Integer reservationId, Principal principal, RedirectAttributes redirectAttributes) {
-        try {
-            String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.approveReservationRequest(reservationId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt đơn đặt trước sách thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Duyệt thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";
     }

@@ -54,4 +54,11 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
             "LOWER(b.member.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "CAST(b.borrowId AS string) LIKE CONCAT('%', :keyword, '%'))")
     Page<Borrow> findByStatusAndKeyword(@Param("status") String status, @Param("keyword") String keyword, Pageable pageable);
+
+    List<Borrow> findByMember_User_Phone(String phone);
+
+    @Query("SELECT MIN(b.borrowDate) FROM Borrow b WHERE b.member.memberId = :memberId")
+    LocalDateTime findMinBorrowDateByMemberId(@Param("memberId") Integer memberId);
 }
+
+

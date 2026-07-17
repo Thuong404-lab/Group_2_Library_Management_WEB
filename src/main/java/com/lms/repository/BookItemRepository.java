@@ -19,6 +19,5 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     List<BookItem> findByBook_BookId(Integer bookId);
 
-    Optional<BookItem> findFirstByBook_BookIdAndStatus(Integer bookId, String status);
-    
+    Optional<BookItem> findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(Integer bookId, String status);
 }

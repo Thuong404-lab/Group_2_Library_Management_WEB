@@ -49,7 +49,7 @@ public class BorrowServiceImpl implements BorrowService {
                              NotificationRepository notificationRepository,
                              MemberNotificationRepository memberNotificationRepository,
                              WalletRepository walletRepository,
-                             TransactionRepository transactionRepository) { // Thêm vào tham số nhận
+                             TransactionRepository transactionRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -96,11 +96,43 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         int borrowDays = normalizeBorrowDays(request.getNumberOfDays());
+
+        // === TÍNH TOÁN & KHẤU TRỪ VÍ KHI THỰC HIỆN MƯỢN TRỰC TIẾP ===
+        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví điện tử của độc giả!"));
+
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000));
+        double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+        BigDecimal discountFactor = BigDecimal.valueOf(1.0 - (discountPercent / 100.0));
+        BigDecimal totalFee = feePerBookPerDay
+                .multiply(BigDecimal.valueOf(bookItemsToBorrow.size()))
+                .multiply(BigDecimal.valueOf(borrowDays))
+                .multiply(discountFactor);
+
+        if (wallet.getBalance().compareTo(totalFee) < 0) {
+            throw new IllegalArgumentException("Số dư ví không đủ để thanh toán phí mượn sách! Cần: "
+                    + totalFee + " VND, hiện có: " + wallet.getBalance() + " VND.");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(totalFee));
+        walletRepository.save(wallet);
+
         Borrow borrow = new Borrow();
         borrow.setMember(member);
         borrow.setBorrowDate(LocalDateTime.now());
         borrow.setStatus("Active");
         borrow = borrowRepository.save(borrow);
+
+        Transaction feeTxn = new Transaction();
+        feeTxn.setWallet(wallet);
+        feeTxn.setBorrow(borrow);
+        feeTxn.setTransactionType("BORROW_FEE");
+        feeTxn.setAmount(totalFee.negate()); // Lưu số tiền âm theo đúng yêu cầu
+        feeTxn.setTransactionDate(LocalDateTime.now());
+        feeTxn.setStatus("Completed");
+        transactionRepository.save(feeTxn);
+        // ====================================================================
 
         for (BookItem item : bookItemsToBorrow) {
             BorrowDetail detail = new BorrowDetail();
@@ -142,15 +174,13 @@ public class BorrowServiceImpl implements BorrowService {
         BorrowDetail detail = new BorrowDetail();
         detail.setBorrow(borrow);
         detail.setBook(book);
-        
+
         List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
-        BookItem availableItem = items.stream()
-                .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Đầu sách này hiện tại không còn bản sách vật lý nào sẵn sàng!"));
-        detail.setBookItem(availableItem);
-        availableItem.setStatus("Pending");
-        bookItemRepository.save(availableItem);
+        boolean hasAvailableItem = items.stream()
+                .anyMatch(item -> "Available".equalsIgnoreCase(item.getStatus()));
+        if (!hasAvailableItem) {
+            throw new IllegalArgumentException("Đầu sách này hiện tại không còn bản sách vật lý nào sẵn sàng!");
+        }
 
         detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
         detail.setStatus("Pending");
@@ -172,15 +202,13 @@ public class BorrowServiceImpl implements BorrowService {
 
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
 
-        // === TRỪ TIỀN PHÍ MƯỢN KHI LIBRARIAN PHÊ DUYỆT ===
         Member member = borrow.getMember();
         Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví điện tử của độc giả!"));
 
-        // Tính số ngày mượn từ chi tiết đầu tiên (dueDate - borrowDate)
-        int borrowDays = 14; // mặc định
+        int borrowDays = 14;
         if (!details.isEmpty() && details.get(0).getDueDate() != null && borrow.getBorrowDate() != null) {
-            long days = java.time.temporal.ChronoUnit.DAYS.between(borrow.getBorrowDate(), details.get(0).getDueDate());
+            long days = ChronoUnit.DAYS.between(borrow.getBorrowDate(), details.get(0).getDueDate());
             borrowDays = (int) Math.max(1, days);
         }
 
@@ -205,11 +233,10 @@ public class BorrowServiceImpl implements BorrowService {
         feeTxn.setWallet(wallet);
         feeTxn.setBorrow(borrow);
         feeTxn.setTransactionType("BORROW_FEE");
-        feeTxn.setAmount(totalFee);
+        feeTxn.setAmount(totalFee.negate()); // SỬA ĐỔI: Thay đổi sang số âm lưu trữ
         feeTxn.setTransactionDate(LocalDateTime.now());
         feeTxn.setStatus("Completed");
         transactionRepository.save(feeTxn);
-        // ===================================================
 
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
@@ -350,7 +377,6 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException("Ban da co mot yeu cau dat truoc cuon sach nay va dang cho xu ly!");
         }
 
-        // === TRỪ TIỀN CỌC KHI MEMBER ĐẶT TRƯỚC ===
         BigDecimal depositAmount = getDepositAmountSetting();
         Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ví điện tử của bạn! Vui lòng liên hệ thủ thư."));
@@ -358,7 +384,6 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException("Số dư ví không đủ để đặt cọc! Cần " + depositAmount
                     + " VND, hiện có " + wallet.getBalance() + " VND. Vui lòng nạp thêm tiền vào ví.");
         }
-        // ==========================================
 
         Reservation reservation = new Reservation();
         reservation.setMember(member);
@@ -367,7 +392,6 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setStatus("Pending");
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        // Trừ tiền cọc & ghi giao dịch sau khi reservation đã được tạo
         wallet.setBalance(wallet.getBalance().subtract(depositAmount));
         walletRepository.save(wallet);
 
@@ -375,7 +399,7 @@ public class BorrowServiceImpl implements BorrowService {
         depositTxn.setWallet(wallet);
         depositTxn.setReservation(savedReservation);
         depositTxn.setTransactionType("DEPOSIT");
-        depositTxn.setAmount(depositAmount);
+        depositTxn.setAmount(depositAmount.negate()); // Cũng lưu số âm đối với cọc (tiền tạm giữ ra khỏi ví)
         depositTxn.setTransactionDate(LocalDateTime.now());
         depositTxn.setStatus("Completed");
         transactionRepository.save(depositTxn);
@@ -417,9 +441,7 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setStatus("Canceled");
         reservationRepository.save(reservation);
 
-        // === HOÀN TIỀN CỌC KHI MEMBER HỦY ĐẶT TRƯỚC ===
         refundDeposit(reservation, "Bạn đã hủy đặt trước sách '" + reservation.getBook().getTitle() + "'.");
-        // =================================================
     }
 
     @Override
@@ -467,8 +489,8 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getBorrowsByMemberAndStatus(String username, String status) {
         Integer id = getMemberIdByUsername(username);
         return id == null ? new ArrayList<>() : borrowRepository.findAll().stream()
-                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()) && status.equalsIgnoreCase(b.getStatus()))
-                .toList();
+                                                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()) && status.equalsIgnoreCase(b.getStatus()))
+                                                .toList();
     }
 
     @Override
@@ -508,16 +530,12 @@ public class BorrowServiceImpl implements BorrowService {
         for (BorrowDetail detail : details) {
             detail.setStatus(status);
             borrowDetailRepository.save(detail);
-            // Khi bị từ chối: trả lại trạng thái Available cho bản sách vật lý đã giữ
             if (detail.getBookItem() != null && "Rejected".equalsIgnoreCase(status)) {
                 BookItem item = detail.getBookItem();
                 item.setStatus("Available");
                 bookItemRepository.save(item);
             }
         }
-        // Lưu ý: Khi từ chối đơn mượn Pending, không cần hoàn tiền vì phí mượn
-        // chỉ bị trừ tại thời điểm librarian PHÊ DUYỆT (approvePendingRequest),
-        // không phải lúc member gửi yêu cầu.
     }
 
     @Override
@@ -540,8 +558,8 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getAllBorrowHistoryByMember(String username) {
         Integer id = getMemberIdByUsername(username);
         return id == null ? new ArrayList<>() : borrowRepository.findAll().stream()
-                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()))
-                .toList();
+                                                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()))
+                                                .toList();
     }
 
     @Override
@@ -554,7 +572,8 @@ public class BorrowServiceImpl implements BorrowService {
                         || "Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
                         || "Return_Pending".equalsIgnoreCase(d.getStatus())
-                        || "Renew_Pending".equalsIgnoreCase(d.getStatus()))
+                        || "Renew_Pending".equalsIgnoreCase(d.getStatus())
+                        || "Approved".equalsIgnoreCase(d.getStatus()))
                 .map(this::toMemberBorrowDTO)
                 .toList();
     }
@@ -616,6 +635,9 @@ public class BorrowServiceImpl implements BorrowService {
             dto.setProgressPercentage(Math.min(100, Math.max(0, progress)));
         }
         dto.setRenewCount(detail.getRenewCount() != null ? detail.getRenewCount() : 0);
+        if (detail.getBorrow() != null) {
+            dto.setBorrowIdStr("BOR-" + detail.getBorrow().getBorrowId());
+        }
         return dto;
     }
 
@@ -687,11 +709,10 @@ public class BorrowServiceImpl implements BorrowService {
     public void repairExistingData() {
         try {
             List<BorrowDetail> nullItemDetails = borrowDetailRepository.findAll().stream()
-                    .filter(d -> d.getBookItem() == null && 
-                            ("Borrowed".equalsIgnoreCase(d.getStatus()) 
-                             || "Overdue".equalsIgnoreCase(d.getStatus()) 
-                             || "Return_Pending".equalsIgnoreCase(d.getStatus())
-                             || "Pending".equalsIgnoreCase(d.getStatus())))
+                    .filter(d -> d.getBookItem() == null &&
+                            ("Borrowed".equalsIgnoreCase(d.getStatus())
+                                    || "Overdue".equalsIgnoreCase(d.getStatus())
+                                    || "Return_Pending".equalsIgnoreCase(d.getStatus())))
                     .toList();
             for (BorrowDetail detail : nullItemDetails) {
                 List<BookItem> items = bookItemRepository.findByBook_BookId(detail.getBook().getBookId());
@@ -701,11 +722,7 @@ public class BorrowServiceImpl implements BorrowService {
                         .orElse(null);
                 if (availableItem != null) {
                     detail.setBookItem(availableItem);
-                    if ("Pending".equalsIgnoreCase(detail.getStatus())) {
-                        availableItem.setStatus("Pending");
-                    } else {
-                        availableItem.setStatus("Borrowed");
-                    }
+                    availableItem.setStatus("Borrowed");
                     bookItemRepository.save(availableItem);
                     borrowDetailRepository.save(detail);
                 }
@@ -714,6 +731,7 @@ public class BorrowServiceImpl implements BorrowService {
             System.err.println("Failed to repair existing data: " + e.getMessage());
         }
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void rejectReservationRequest(Integer reservationId, String staffUsername) {
@@ -725,9 +743,7 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setStatus("Rejected");
         reservationRepository.save(reservation);
 
-        // === HOÀN TIỀN CỌC KHI LIBRARIAN TỪ CHỐI ===
         refundDeposit(reservation, "Thủ thư đã từ chối yêu cầu đặt trước sách '" + reservation.getBook().getTitle() + "'.");
-        // ============================================
     }
 
     @Override
@@ -740,7 +756,6 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<BorrowDetail> getPendingRenewalRequests() {
-        // Lay tat ca cac chi tiet phieu muon dang o trang thai cho gia han
         return borrowDetailRepository.findAll().stream()
                 .filter(d -> "Renew_Pending".equalsIgnoreCase(d.getStatus()))
                 .toList();
@@ -755,14 +770,9 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     public int getMaxBorrowDays() {
-        // Goi lai ham doc cau hinh he thong san co cua ban
         return getPositiveIntSetting("MAX_BORROW_DAYS", 14);
     }
 
-    /**
-     * Đọc số tiền cọc đặt trước từ cấu hình hệ thống (key: Deposit_Amount).
-     * Mặc định 50.000 VND nếu chưa cấu hình.
-     */
     private BigDecimal getDepositAmountSetting() {
         try {
             return systemSettingRepository.findAll().stream()
@@ -779,11 +789,6 @@ public class BorrowServiceImpl implements BorrowService {
         }
     }
 
-    /**
-     * Hoàn tiền cọc đặt trước cho member khi reservation bị từ chối hoặc bị hủy.
-     * Tìm transaction DEPOSIT gốc tương ứng với reservation và hoàn lại số tiền đó.
-     * Ghi nhận transaction REFUND_DEPOSIT và gửi thông báo nội bộ cho member.
-     */
     private void refundDeposit(Reservation reservation, String reason) {
         List<Transaction> depositTxns = transactionRepository.findAll().stream()
                 .filter(t -> t.getReservation() != null
@@ -793,7 +798,8 @@ public class BorrowServiceImpl implements BorrowService {
 
         for (Transaction originalTxn : depositTxns) {
             Wallet wallet = originalTxn.getWallet();
-            BigDecimal refundAmount = originalTxn.getAmount();
+            // Lấy trị tuyệt đối của số tiền cọc gốc để cộng hoàn trả lại vào ví
+            BigDecimal refundAmount = originalTxn.getAmount().abs();
 
             wallet.setBalance(wallet.getBalance().add(refundAmount));
             walletRepository.save(wallet);
@@ -802,7 +808,7 @@ public class BorrowServiceImpl implements BorrowService {
             refundTxn.setWallet(wallet);
             refundTxn.setReservation(reservation);
             refundTxn.setTransactionType("REFUND_DEPOSIT");
-            refundTxn.setAmount(refundAmount);
+            refundTxn.setAmount(refundAmount); // Hoàn tiền vào ví mang dấu dương (+)
             refundTxn.setTransactionDate(LocalDateTime.now());
             refundTxn.setStatus("Completed");
             transactionRepository.save(refundTxn);
@@ -821,21 +827,15 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin độc giả!"));
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
-
-        // Đọc cấu hình phí cơ bản mặc định từ hệ thống (Vd: FEE_PER_BOOK_PER_DAY = 5000 VND)
         BigDecimal feePerBookPerDay = BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000));
-
-        // Đọc tỷ lệ chiết khấu từ hạng thành viên (Vd: hạng Vàng giảm 10% thì discountPercent = 10)
         double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
                 ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
         BigDecimal discountFactor = BigDecimal.valueOf(1.0 - (discountPercent / 100.0));
 
-        BigDecimal totalFee = feePerBookPerDay
+        return feePerBookPerDay
                 .multiply(BigDecimal.valueOf(bookIds.size()))
                 .multiply(BigDecimal.valueOf(borrowDays))
                 .multiply(discountFactor);
-
-        return totalFee;
     }
 
     @Override
@@ -848,42 +848,35 @@ public class BorrowServiceImpl implements BorrowService {
         Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin độc giả!"));
 
-        // 1. Kiểm tra giới hạn mượn
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowed + bookIds.size() > maxLimit) {
-            throw new IllegalArgumentException("Yêu cầu bị từ chối! Số lượng sách đăng ký vượt quá giới hạn mượn còn lại của bạn (Tối đa còn: " + (maxLimit - currentBorrowed) + " cuốn).");
+            throw new IllegalArgumentException("Yêu cầu bị từ chối! Số lượng sách vượt quá giới hạn.");
         }
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
 
-        // 2. Khởi tạo phiếu mượn - KHÔNG trừ tiền ở đây.
-        // Tiền sẽ chỉ bị trừ khi LIBRARIAN PHÊ DUYỆT (approvePendingRequest)
         Borrow borrow = new Borrow();
         borrow.setMember(member);
         borrow.setBorrowDate(LocalDateTime.now());
         borrow.setStatus("Pending");
         borrow = borrowRepository.save(borrow);
 
-        // 3. Tìm bản sách vật lý khả dụng và thiết lập BorrowDetail
         List<String> titles = new ArrayList<>();
         for (Integer bookId : bookIds) {
             Book book = bookRepository.findById(bookId)
                     .orElseThrow(() -> new IllegalArgumentException("Sách mang mã số #" + bookId + " không tồn tại!"));
 
             List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
-            BookItem availableItem = items.stream()
-                    .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Đầu sách '" + book.getTitle() + "' hiện tại đã hết bản vật lý sẵn sàng!"));
-
-            availableItem.setStatus("Pending");
-            bookItemRepository.save(availableItem);
+            boolean hasAvailableItem = items.stream()
+                    .anyMatch(item -> "Available".equalsIgnoreCase(item.getStatus()));
+            if (!hasAvailableItem) {
+                throw new IllegalArgumentException("Đầu sách '" + book.getTitle() + "' hiện tại đã hết bản vật lý sẵn sàng!");
+            }
 
             BorrowDetail detail = new BorrowDetail();
             detail.setBorrow(borrow);
             detail.setBook(book);
-            detail.setBookItem(availableItem);
             detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
             detail.setStatus("Pending");
             detail.setRenewCount(0);
@@ -892,12 +885,10 @@ public class BorrowServiceImpl implements BorrowService {
             titles.add(book.getTitle());
         }
 
-        // 4. Ghi nhật ký hệ thống (Audit Log)
         auditLogService.log(ActionType.REQUEST_BORROW,
                 "Độc giả " + username + " đã đăng ký mượn " + bookIds.size() + " cuốn sách: "
                         + String.join(", ", titles) + " trong vòng " + borrowDays + " ngày. Đang chờ thủ thư phê duyệt.");
 
         return borrow;
     }
-
 }

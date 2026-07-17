@@ -59,10 +59,10 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
 
-    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending')")
+    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending', 'Approved')")
     long countActiveBorrowedBooks(@Param("memberId") Integer memberId);
 
-    @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue')")
+    @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue', 'Approved')")
     List<BorrowDetail> findActiveBorrowDetailsByUsername(@Param("username") String username);
 
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status = 'Returned'")
@@ -70,7 +70,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
 
     // BỔ SUNG & CẬP NHẬT 1: Lấy danh sách sách hiện tại bao gồm cả Pending và Return_Pending (Vấn đề 7)
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
-            "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending') ORDER BY bd.dueDate ASC")
+            "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending', 'Approved') ORDER BY bd.dueDate ASC")
     List<BorrowDetail> findCurrentBorrowsByMemberId(@Param("memberId") Integer memberId);
 
     // BỔ SUNG 2: Lấy lịch sử mượn trả trong vòng 1 tháng gần đây (Hiển thị tab Lịch sử)
@@ -100,4 +100,35 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     // =========================================================================
     @Query("SELECT bd FROM BorrowDetail bd ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findRecentActivities(Pageable pageable);
-}
+
+    // =========================================================================
+    // FIX: Thêm phương thức lấy toàn bộ danh sách mượn kèm các mối quan hệ liên quan
+    // để phục vụ tính toán vi phạm quá hạn (OverdueViolationQueryService)
+    // =========================================================================
+    @Query("SELECT bd FROM BorrowDetail bd " +
+            "LEFT JOIN FETCH bd.book " +
+            "LEFT JOIN FETCH bd.bookItem " +
+            "LEFT JOIN FETCH bd.borrow b " +
+            "LEFT JOIN FETCH b.member m " +
+            "LEFT JOIN FETCH m.user")
+    List<BorrowDetail> findAllBorrowDetailsWithRelationships();
+
+    // =========================================================================
+    // PHƯƠNG THỨC MỚI: Lấy tất cả lịch sử sách mượn của Độc giả trong giới hạn 365 ngày qua
+    // =========================================================================
+    @Query("SELECT bd FROM BorrowDetail bd " +
+            "WHERE bd.borrow.member.memberId = :memberId " +
+            "AND bd.borrow.borrowDate >= :limitDate " +
+            "ORDER BY bd.borrow.borrowDate DESC")
+    List<BorrowDetail> findBorrowHistoryLimit365Days(@Param("memberId") Integer memberId, @Param("limitDate") LocalDateTime limitDate);
+
+    @Query("SELECT bd FROM BorrowDetail bd " +
+            "WHERE bd.borrow.member.memberId = :memberId " +
+            "AND bd.borrow.borrowDate >= :startDate " +
+            "AND bd.borrow.borrowDate <= :endDate " +
+            "ORDER BY bd.borrow.borrowDate DESC")
+    List<BorrowDetail> findBorrowHistoryByDateRange(
+            @Param("memberId") Integer memberId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+}

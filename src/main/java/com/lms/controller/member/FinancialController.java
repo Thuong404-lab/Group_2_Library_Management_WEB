@@ -1,16 +1,20 @@
 package com.lms.controller.member;
 
 import com.lms.dto.response.BorrowFeeViewData;
+import com.lms.dto.response.MemberTransactionHistoryRow;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
+import com.lms.entity.PayOsPayment;
 import com.lms.entity.Transaction;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.PayOsPaymentRepository;
+import com.lms.repository.PayOsPaymentFineItemRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
@@ -31,6 +35,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Comparator;
 
 /**
  * Member financial UC flows maintained by Pham Kien Quoc:
@@ -52,6 +59,8 @@ public class FinancialController {
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final FinancialService financialService;
+    private final PayOsPaymentRepository payOsPaymentRepository;
+    private final PayOsPaymentFineItemRepository payOsPaymentFineItemRepository;
 
     public FinancialController(TransactionRepository transactionRepository,
                                MemberNotificationRepository memberNotificationRepository,
@@ -59,7 +68,9 @@ public class FinancialController {
                                WalletRepository walletRepository,
                                BorrowRepository borrowRepository,
                                BorrowDetailRepository borrowDetailRepository,
-                               FinancialService financialService) {
+                               FinancialService financialService,
+                               PayOsPaymentRepository payOsPaymentRepository,
+                               PayOsPaymentFineItemRepository payOsPaymentFineItemRepository) {
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
@@ -67,6 +78,8 @@ public class FinancialController {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.financialService = financialService;
+        this.payOsPaymentRepository = payOsPaymentRepository;
+        this.payOsPaymentFineItemRepository = payOsPaymentFineItemRepository;
     }
 
     @GetMapping("/fines")
@@ -147,16 +160,124 @@ public class FinancialController {
         Member member = getCurrentMember(principal);
         Page<Transaction> transactionPage = financialService.getTransactionHistory(member.getMemberId(), page, type);
         List<Transaction> unpaidFines = getUnpaidFines(member.getMemberId());
+        List<PayOsPayment> kqpayPayments = page == 0
+                ? getKqPayHistory(member.getMemberId(), type)
+                : List.of();
+        Set<Integer> aggregatedFineIds = getAggregatedFineIds(kqpayPayments);
+        List<Transaction> visibleTransactions = transactionPage.getContent().stream()
+                .filter(transaction -> !aggregatedFineIds.contains(transaction.getTransactionId()))
+                .toList();
+        List<MemberTransactionHistoryRow> historyRows = buildHistoryRows(visibleTransactions, kqpayPayments);
 
         model.addAttribute("walletBalance", getWalletBalance(member.getMemberId()));
         model.addAttribute("unpaidFines", unpaidFines);
         model.addAttribute("totalUnpaidFines", totalAbsAmount(unpaidFines));
         model.addAttribute("transactionPage", transactionPage);
-        model.addAttribute("transactions", transactionPage.getContent());
+        model.addAttribute("transactions", visibleTransactions);
+        model.addAttribute("historyRows", historyRows);
         model.addAttribute("currentPage", page);
         model.addAttribute("selectedType", type);
+        model.addAttribute("kqpayPayments", kqpayPayments);
 
         return "member/wallet";
+    }
+
+    private List<MemberTransactionHistoryRow> buildHistoryRows(List<Transaction> transactions,
+                                                                 List<PayOsPayment> payments) {
+        List<MemberTransactionHistoryRow> rows = new ArrayList<>();
+        transactions.stream().map(this::toHistoryRow).forEach(rows::add);
+        payments.stream().map(this::toHistoryRow).forEach(rows::add);
+        rows.sort(Comparator.comparing(
+                MemberTransactionHistoryRow::occurredAt,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        return rows;
+    }
+
+    private MemberTransactionHistoryRow toHistoryRow(Transaction transaction) {
+        boolean completed = "Completed".equalsIgnoreCase(transaction.getStatus())
+                || "Paid".equalsIgnoreCase(transaction.getStatus());
+        return new MemberTransactionHistoryRow(
+                "#TXN-" + transaction.getTransactionId(),
+                transaction.getTransactionDate(),
+                transactionTypeLabel(transaction.getTransactionType()),
+                transaction.getAmount(),
+                completed ? "Hoàn tất" : transaction.getStatus(),
+                completed);
+    }
+
+    private MemberTransactionHistoryRow toHistoryRow(PayOsPayment payment) {
+        String typeLabel = switch (payment.getPurpose()) {
+            case "TOP_UP" -> "Nạp tiền qua KQPay";
+            case "BORROW_FEE" -> "Thanh toán phí mượn qua KQPay";
+            case "FINE" -> "Thanh toán phí phạt qua KQPay";
+            case "FINE_BATCH" -> "Thanh toán tổng phí phạt qua KQPay";
+            default -> "Thanh toán qua KQPay";
+        };
+        BigDecimal amount = payment.getAmount();
+        if (!"TOP_UP".equalsIgnoreCase(payment.getPurpose()) && amount != null) {
+            amount = amount.abs().negate();
+        }
+        return new MemberTransactionHistoryRow(
+                "#KQ-" + payment.getPaymentId(),
+                payment.getPaidAt() != null ? payment.getPaidAt() : payment.getCreatedAt(),
+                typeLabel,
+                amount,
+                "Hoàn tất",
+                true);
+    }
+
+    private String transactionTypeLabel(String transactionType) {
+        if (transactionType == null) {
+            return "Khác";
+        }
+        return switch (transactionType.toUpperCase()) {
+            case "TOP_UP" -> "Nạp tiền vào ví";
+            case "BORROW_FEE" -> "Phí mượn sách";
+            case "DEPOSIT" -> "Tiền cọc đặt trước";
+            case "FINE" -> "Phí phạt";
+            case "DAMAGE_FEE" -> "Phí hư hỏng";
+            case "REFUND" -> "Hoàn tiền";
+            default -> transactionType;
+        };
+    }
+
+    private List<PayOsPayment> getKqPayHistory(Integer memberId, String selectedType) {
+        return payOsPaymentRepository
+                .findTop10ByMemberMemberIdAndStatusOrderByPaidAtDesc(memberId, "PAID")
+                .stream()
+                .filter(payment -> "FINE_BATCH".equalsIgnoreCase(payment.getPurpose()))
+                .filter(payment -> matchesKqPayHistoryFilter(payment.getPurpose(), selectedType))
+                .toList();
+    }
+
+    private Set<Integer> getAggregatedFineIds(List<PayOsPayment> payments) {
+        List<Long> paymentIds = payments.stream()
+                .map(PayOsPayment::getPaymentId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        if (paymentIds.isEmpty()) {
+            return Set.of();
+        }
+        Set<Integer> transactionIds = new HashSet<>();
+        payOsPaymentFineItemRepository.findByPaymentPaymentIdIn(paymentIds).forEach(item -> {
+            if (item.getFineTransaction() != null && item.getFineTransaction().getTransactionId() != null) {
+                transactionIds.add(item.getFineTransaction().getTransactionId());
+            }
+        });
+        return transactionIds;
+    }
+
+    private boolean matchesKqPayHistoryFilter(String purpose, String selectedType) {
+        if (selectedType == null || selectedType.isBlank()) {
+            return true;
+        }
+        return switch (selectedType.trim().toUpperCase()) {
+            case "TOP_UP" -> "TOP_UP".equalsIgnoreCase(purpose);
+            case "BORROW_FEE" -> "BORROW_FEE".equalsIgnoreCase(purpose);
+            case "FINE", "DAMAGE_FEE" -> "FINE".equalsIgnoreCase(purpose)
+                    || "FINE_BATCH".equalsIgnoreCase(purpose);
+            default -> false;
+        };
     }
 
     @GetMapping("/topup-notifications")

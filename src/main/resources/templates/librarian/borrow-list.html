@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Lịch Sử Mượn Trả Độc Giả</title>
+    <title>Danh Sách Phiếu Mượn Sách</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { background-color: #f8f7f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -50,6 +50,43 @@
         .classic-table tbody tr:hover {
             background-color: rgba(139, 90, 43, 0.02) !important;
         }
+        .badge-status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+        .badge-status-active {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border: 1px solid #bbdefb;
+        }
+        .badge-status-returned {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #c8e6c9;
+        }
+        .badge-status-overdue {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .badge-status-pending {
+            background-color: #fff8e1;
+            color: #f57f17;
+            border: 1px solid #ffe082;
+        }
+        .badge-status-rejected {
+            background-color: #f5f5f5;
+            color: #616161;
+            border: 1px solid #e0e0e0;
+        }
+        .badge-status-return-pending {
+            background-color: #e0f7fa;
+            color: #006064;
+            border: 1px solid #b2ebf2;
+        }
         .form-control-classic {
             border: 1px solid rgba(139, 90, 43, 0.2);
             color: #4a3b32;
@@ -79,17 +116,30 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: rgba(139, 90, 43, 0.2) !important;">
         <div>
-            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Lịch sử Mượn Trả & Tài chính Độc giả</h2>
-            <div class="text-muted small">Xem và theo dõi toàn bộ thông tin tài khoản, lịch sử mượn trả và giao dịch ví tiền của từng độc giả.</div>
+            <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý Lịch Mượn/Trả</h2>
+            <div class="text-muted small">Quản lý toàn bộ các phiếu mượn sách lưu hành của độc giả và điều phối phân trang hệ thống.</div>
         </div>
     </div>
 
+
+
     <div class="card-classic mb-4 p-3">
         <form class="row g-3 align-items-center" method="get" th:action="@{/librarian/borrow/list}">
-            <div class="col-md-9">
+            <div class="col-md-3">
+                <select name="status" class="form-select form-control-classic">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Active" th:selected="${status == 'Active'}">Đang mượn (Active)</option>
+                    <option value="Returned" th:selected="${status == 'Returned'}">Đã hoàn thành (Returned)</option>
+                    <option value="Overdue" th:selected="${status == 'Overdue'}">Quá hạn (Overdue)</option>
+                    <option value="Pending" th:selected="${status == 'Pending'}">Chờ duyệt (Pending)</option>
+                    <option value="Rejected" th:selected="${status == 'Rejected'}">Đã từ chối (Rejected)</option>
+                    <option value="Return_Pending" th:selected="${status == 'Return_Pending'}">Độc giả xin trả (Return_Pending)</option>
+                </select>
+            </div>
+            <div class="col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-white text-classic border-end-0" style="border-color: rgba(139, 90, 43, 0.2);"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0 form-control-classic" name="keyword" th:value="${keyword}" placeholder="Nhập tên độc giả, email, hoặc số điện thoại để tìm kiếm...">
+                    <input type="text" class="form-control border-start-0 ps-0 form-control-classic" name="keyword" th:value="${keyword}" placeholder="Nhập tên độc giả, email, số điện thoại hoặc mã phiếu...">
                 </div>
             </div>
             <div class="col-md-3 d-flex gap-2">
@@ -104,66 +154,45 @@
                 <thead>
                 <tr>
                     <th class="ps-4" style="width: 60px;">STT</th>
-                    <th>Mã thẻ</th>
+                    <th>Mã Phiếu</th>
                     <th>Thông tin Độc giả</th>
-                    <th>Hạng thành viên</th>
-                    <th>Trạng thái tài khoản</th>
-                    <th class="text-end pe-4" style="width: 220px;">Hành động</th>
+                    <th>Ngày mượn</th>
+                    <th>Trạng thái phiếu</th>
+                    <th class="text-end pe-4">Hành động</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="member, iter : ${members}">
+                <tr th:each="borrow, iter : ${borrows}">
                     <td class="ps-4 text-muted" th:text="${currentPage * 10 + iter.index + 1}">1</td>
                     <td>
-                        <a th:href="@{/librarian/borrow/member/{id}(id=${member.memberId})}"
+                        <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}"
                            class="fw-bold text-classic text-decoration-none"
-                           th:text="'MEM-' + ${member.memberId}">MEM-1</a>
+                           th:text="'BOR-' + ${borrow.borrowId}">BOR-1</a>
                     </td>
                     <td>
-                        <div class="fw-bold text-dark" th:text="${member.user?.fullName}">Nguyễn Văn An</div>
-                        <div class="small text-muted" th:text="${member.user?.email}">an.nv@gmail.com</div>
-                        <div class="small text-muted" th:text="${member.user?.phone}">0912345678</div>
+                        <div class="fw-bold text-dark" th:text="${borrow.member?.user?.fullName}">Nguyễn Văn An</div>
+                        <div class="small text-muted" th:text="${borrow.member?.user?.email}">an.nv@gmail.com</div>
                     </td>
+                    <td th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">12/07/2026 10:00</td>
                     <td>
-                        <span class="badge rounded-pill px-3 py-2 text-white"
-                              th:if="${member.tier != null}"
-                              th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
-                              th:style="${
-                                  member.tier.tierName == 'Regular' ? 'background-color: #6c757d;' :
-                                  member.tier.tierName == 'Silver' ? 'background-color: #6c8ea4;' :
-                                  member.tier.tierName == 'Gold' ? 'background-color: #c8942d;' :
-                                  member.tier.tierName == 'Diamond' ? 'background-color: #6f42c1;' :
-                                  'background-color: #8b5a2b;'
-                              }">Standard</span>
-                        <span class="badge rounded-pill px-3 py-2 bg-secondary text-white" th:if="${member.tier == null}">N/A</span>
-                    </td>
-                    <td>
-                        <span class="status-badge"
-                              th:classappend="${
-                                member.user?.status?.name() == 'Active' ? 'status-active' :
-                                member.user?.status?.name() == 'Blocked' ? 'status-blocked' :
-                                'status-inactive'
-                              }"
-                              th:text="${
-                                member.user?.status?.name() == 'Active' ? 'Hoạt động' :
-                                member.user?.status?.name() == 'Inactive' ? 'Ngừng hoạt động' :
-                                member.user?.status?.name() == 'Blocked' ? 'Bị khóa' :
-                                'N/A'
-                              }">
-                            Hoạt động
-                        </span>
+                        <span th:if="${borrow.status == 'Active'}" class="status-badge status-active">Đang mượn</span>
+                        <span th:if="${borrow.status == 'Returned'}" class="status-badge status-returned">Đã hoàn thành</span>
+                        <span th:if="${borrow.status == 'Overdue'}" class="status-badge status-overdue">Quá hạn</span>
+                        <span th:if="${borrow.status == 'Pending'}" class="status-badge status-pending">Chờ phê duyệt</span>
+                        <span th:if="${borrow.status == 'Rejected'}" class="status-badge status-rejected">Đã từ chối</span>
+                        <span th:if="${borrow.status == 'Return_Pending'}" class="status-badge status-return-pending">Độc giả xin trả</span>
                     </td>
                     <td class="text-end pe-4">
-                        <a th:href="@{/librarian/borrow/member/{id}(id=${member.memberId})}" class="btn btn-sm btn-outline-classic">
-                            <i class="bi bi-journal-text me-1"></i>Xem lịch sử chi tiết
+                        <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}" class="btn btn-sm btn-outline-classic">
+                            <i class="bi bi-eye-fill me-1"></i>Xem lịch sử chi tiết
                         </a>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(members)}">
+                <tr th:if="${#lists.isEmpty(borrows)}">
                     <td colspan="6" class="text-center py-5">
                         <div class="text-muted fst-italic">
                             <i class="bi bi-folder-x fs-1 d-block mb-3 text-classic"></i>
-                            Không tìm thấy độc giả nào phù hợp với bộ lọc tìm kiếm.
+                            Không tìm thấy phiếu mượn sách nào phù hợp với bộ lọc tìm kiếm.
                         </div>
                     </td>
                 </tr>
@@ -175,12 +204,12 @@
             <div class="small text-muted">
                 Hiển thị bản ghi từ <span th:text="${currentPage * 10 + 1}">1</span> đến
                 <span th:text="${(currentPage + 1) * 10 > totalItems ? totalItems : (currentPage + 1) * 10}">10</span>
-                trong tổng số <span th:text="${totalItems}">50</span> độc giả
+                trong tổng số <span th:text="${totalItems}">50</span> phiếu
             </div>
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
-                        <a class="page-link text-classic" th:href="@{/librarian/borrow/list(page=${currentPage - 1}, keyword=${keyword})}" aria-label="Previous">
+                        <a class="page-link text-classic" th:href="@{/librarian/borrow/list(page=${currentPage - 1}, status=${status}, keyword=${keyword})}" aria-label="Previous">
                             <span aria-hidden="true">&laquo; Trước</span>
                         </a>
                     </li>
@@ -189,12 +218,12 @@
                         th:classappend="${pageNum == currentPage} ? 'active' : ''">
                         <a class="page-link"
                            th:classappend="${pageNum == currentPage} ? 'bg-classic border-classic text-white' : 'text-classic'"
-                           th:href="@{/librarian/borrow/list(page=${pageNum}, keyword=${keyword})}"
+                           th:href="@{/librarian/borrow/list(page=${pageNum}, status=${status}, keyword=${keyword})}"
                            th:text="${pageNum + 1}">1</a>
                     </li>
 
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
-                        <a class="page-link text-classic" th:href="@{/librarian/borrow/list(page=${currentPage + 1}, keyword=${keyword})}" aria-label="Next">
+                        <a class="page-link text-classic" th:href="@{/librarian/borrow/list(page=${currentPage + 1}, status=${status}, keyword=${keyword})}" aria-label="Next">
                             <span aria-hidden="true">Sau &raquo;</span>
                         </a>
                     </li>

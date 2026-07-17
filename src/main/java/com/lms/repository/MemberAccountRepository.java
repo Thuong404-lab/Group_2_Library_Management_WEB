@@ -1,5 +1,6 @@
 package com.lms.repository;
 
+import com.lms.entity.Member;
 import com.lms.entity.MemberAccount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,7 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
     Optional<MemberAccount> findByUsername(String username);
     Optional<MemberAccount> findByMember_User_Email(String email);
     Optional<MemberAccount> findByMember_User_Id(Integer userId);
+    Optional<MemberAccount> findByMemberMemberId(Integer memberId);
     boolean existsByUsername(String username);
     boolean existsByUsernameAndIdNot(String username, Integer id);
 
@@ -32,4 +34,5 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
                OR LOWER(tier.tierName) LIKE LOWER(CONCAT('%', :keyword, '%'))
             """)
     Page<MemberAccount> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
+    java.util.Optional<MemberAccount> findByMember(Member member);
 }
