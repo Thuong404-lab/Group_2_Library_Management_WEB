@@ -27,7 +27,8 @@ public class CustomMemberDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản thành viên: " + username));
+                .orElseGet(() -> memberAccountRepository.findByMember_User_Email(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản thành viên: " + username)));
 
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
             throw new DisabledException("Tài khoản đã bị khóa hoặc chưa kích hoạt.");

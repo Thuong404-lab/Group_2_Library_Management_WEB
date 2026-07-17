@@ -9,6 +9,7 @@ import com.lms.service.BookService;
 import com.lms.repository.GenreRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MemberReviewService;
+import com.lms.service.MembershipService;
 
 import java.security.Principal;
 import java.util.Collections;
@@ -33,15 +34,18 @@ public class GuestController {
     private final GenreRepository genreRepository;
     private final MemberFavoriteService memberFavoriteService;
     private final MemberReviewService memberReviewService;
+    private final MembershipService membershipService;
 
     public GuestController(BookService bookService,
                            GenreRepository genreRepository,
                            MemberFavoriteService memberFavoriteService,
-                           MemberReviewService memberReviewService) {
+                           MemberReviewService memberReviewService,
+                           MembershipService membershipService) {
         this.bookService = bookService;
         this.genreRepository = genreRepository;
         this.memberFavoriteService = memberFavoriteService;
         this.memberReviewService = memberReviewService;
+        this.membershipService = membershipService;
     }
 
     // Trang chủ
@@ -106,6 +110,12 @@ public class GuestController {
     @GetMapping("/about")
     public String aboutPage() {
         return "guest/about";
+    }
+
+    @GetMapping("/membership-tiers")
+    public String membershipTiersPage(Model model) {
+        model.addAttribute("tiers", membershipService.getAllTiers());
+        return "guest/membership-tiers";
     }
 
     // UC-3: View Book Detail - Xem chi tiết một quyển sách

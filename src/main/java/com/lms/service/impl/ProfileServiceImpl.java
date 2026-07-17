@@ -116,17 +116,16 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private void validateAndSetPhone(User user, String phone) {
-        if (phone != null && !phone.trim().isEmpty()) {
-            if (!phone.matches("^(0|\\+84)\\d{9}$")) {
-                throw new ValidationException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
-            }
-            if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
-                throw new ConflictException("Số điện thoại đã được sử dụng bởi người dùng khác!");
-            }
-            user.setPhone(phone);
-        } else if (phone != null) {
-            user.setPhone("");
+        if (phone == null || phone.trim().isEmpty()) {
+            throw new ValidationException("Số điện thoại không được để trống!");
         }
+        if (!phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+            throw new ValidationException("Số điện thoại không hợp lệ");
+        }
+        if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
+            throw new ConflictException("Số điện thoại đã được sử dụng bởi người dùng khác!");
+        }
+        user.setPhone(phone);
     }
 
     @Override

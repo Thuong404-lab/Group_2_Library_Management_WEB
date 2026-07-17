@@ -89,8 +89,8 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Email không hợp lệ (phải đúng định dạng, ví dụ: ten@gmail.com)!");
         }
 
-        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)[0-9]{9}$")) {
-            throw new AuthException("Số điện thoại không hợp lệ (phải gồm 10 số và bắt đầu bằng 0 hoặc +84)!");
+        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+            throw new AuthException("Số điện thoại không hợp lệ");
         }
 
 

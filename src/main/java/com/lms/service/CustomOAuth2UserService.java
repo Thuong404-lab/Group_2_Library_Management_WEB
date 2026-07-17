@@ -31,7 +31,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         MemberAccount account = memberAccountRepository.findByMember_User_Email(email).orElse(null);
         if (account == null) {
-            account = authService.createCoreAccount(email, name, "", email, "");
+            String baseUsername = email.substring(0, email.indexOf("@"));
+            String generatedUsername = baseUsername;
+            int suffix = 1;
+            
+            while (memberAccountRepository.existsByUsername(generatedUsername)) {
+                generatedUsername = baseUsername + suffix;
+                suffix++;
+            }
+            
+            account = authService.createCoreAccount(generatedUsername, name, "", email, "");
         }
         java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>(oAuth2User.getAuthorities());
         authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_MEMBER"));

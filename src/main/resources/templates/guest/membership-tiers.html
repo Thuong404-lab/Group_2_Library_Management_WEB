@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/base}">
+
+<head>
+    <title>Hạng thành viên - Thư Viện LMW</title>
+    <link rel="stylesheet" th:href="@{/css/pages/guest/membership-tiers.css}" />
+</head>
+
+<body>
+    <div layout:fragment="content" class="membership-tiers-page">
+        <section class="membership-tiers-hero">
+            <div class="container text-center">
+                <span class="membership-tiers-eyebrow">
+                    <i class="bi bi-stars" aria-hidden="true"></i>
+                    Đặc quyền dành cho bạn
+                </span>
+                <h1>Khám phá các hạng thành viên</h1>
+                <p>Mỗi hành trình đọc sách đều xứng đáng được ghi nhận. Khám phá điều kiện và quyền lợi của từng hạng
+                    tại Thư Viện LMW.</p>
+            </div>
+        </section>
+
+        <section class="container membership-tiers-content" aria-labelledby="membership-tier-list-title">
+            <h2 id="membership-tier-list-title" class="sr-only">Danh sách hạng thành viên</h2>
+
+            <div class="row membership-tier-grid" th:if="${tiers != null && !tiers.isEmpty()}">
+                <div class="col-lg-3 col-md-6 d-flex" th:each="tier, tierStat : ${tiers}">
+                    <article class="membership-tier-card">
+                        <div class="membership-tier-card__top">
+                            <span class="membership-tier-card__number"
+                                th:text="${#numbers.formatInteger(tierStat.count, 2)}">01</span>
+                            <span class="membership-tier-card__icon" aria-hidden="true">
+                                <i class="bi bi-award-fill"></i>
+                            </span>
+                        </div>
+
+                        <p class="membership-tier-card__label">Hạng thành viên</p>
+                        <h3 th:text="${tier.tierName}">Regular</h3>
+
+                        <dl class="membership-tier-details">
+                            <div class="membership-tier-details__item">
+                                <dt><i class="bi bi-graph-up-arrow" aria-hidden="true"></i>Điều kiện đạt hạng</dt>
+                                <dd th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 1, 'POINT', 0, 'COMMA') + ' VNĐ' : 'Chưa có yêu cầu'}">0 VNĐ</dd>
+                            </div>
+                            <div class="membership-tier-details__item">
+                                <dt><i class="bi bi-book" aria-hidden="true"></i>Giới hạn mượn</dt>
+                                <dd th:text="${tier.borrowLimit} + ' cuốn'">3 cuốn</dd>
+                            </div>
+                            <div class="membership-tier-details__item">
+                                <dt><i class="bi bi-percent" aria-hidden="true"></i>Giảm phí mượn</dt>
+                                <dd th:text="${tier.discountPercent} + '%'">0%</dd>
+                            </div>
+                        </dl>
+
+                        <div class="membership-tier-benefits">
+                            <h4><i class="bi bi-gift" aria-hidden="true"></i>Quyền lợi chi tiết</h4>
+                            <p th:text="${tier.benefits}">Quyền lợi của hạng thành viên.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div class="membership-tiers-empty" th:if="${tiers == null || tiers.isEmpty()}">
+                <i class="bi bi-award" aria-hidden="true"></i>
+                <h3>Chưa có thông tin hạng thành viên</h3>
+                <p>Thông tin các hạng thành viên đang được cập nhật. Vui lòng quay lại sau.</p>
+            </div>
+
+    </section>
+</div>
+</body>
+
+</html>

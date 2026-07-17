@@ -50,7 +50,7 @@ public class AccountServiceImpl implements AccountService {
     private static final int SYSTEM_ADMIN_ACCOUNT_ID = 1;
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@"
             + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
-    private static final String PHONE_PATTERN = "^(?!0{10}$)0\\d{9}$";
+    private static final String PHONE_PATTERN = "^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$";
     private static final String USERNAME_PATTERN = "[a-zA-Z0-9_]{3,20}";
     private static final String FULL_NAME_PATTERN = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$";
     private static final String FULL_NAME_WORD_PATTERN = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$";
@@ -482,7 +482,7 @@ public class AccountServiceImpl implements AccountService {
             errors.put("phone", "Số điện thoại không được để trống.");
         } else if (!phone.matches(PHONE_PATTERN)) {
             errors.put("phone",
-                    "Số điện thoại phải gồm đúng 10 chữ số, bắt đầu bằng số 0 và không được toàn số 0.");
+                    "Số điện thoại không hợp lệ");
         }
     }
 
