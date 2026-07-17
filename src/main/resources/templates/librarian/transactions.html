@@ -5,21 +5,21 @@
     <!-- UC-14.3 UI maintained by Pham Kien Quoc. -->
     <title>Quản lý giao dịch</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-</head>
+    <script defer th:src="@{/js/auto-filter.js}"></script>
+  </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page">
-    <div class="finance-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom"
-         style="border-color: rgba(139,90,43,0.2) !important;">
+    <div class="finance-header">
         <div>
-            <h2 class="fw-bold mb-1">Quản lý giao dịch</h2>
-            <div class="text-muted">Theo dõi giao dịch ví, phí mượn, phí phạt và nạp tiền trong hệ thống.</div>
+            <h2 class="finance-title">Quản lý giao dịch</h2>
+            <div class="finance-description">Theo dõi giao dịch ví, phí mượn, phí phạt và nạp tiền trong hệ thống.</div>
         </div>
     </div>
 
     <div class="card-classic finance-card p-4 mb-4">
-        <form method="get" th:action="@{/librarian/members/transactions}" class="row g-3 align-items-end">
+        <form method="get" th:action="@{/librarian/members/transactions}" class="row g-3 align-items-end" data-auto-filter-form>
             <div class="col-md-4 transaction-type-filter">
-                <select name="type" class="form-select">
+                <select name="type" class="form-select" data-auto-submit>
                     <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao dịch</option>
                     <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
                     <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
@@ -29,7 +29,7 @@
                     <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
                 </select>
             </div>
-                
+
             <div class="col-auto transaction-filter-submit">
                 <button type="submit" class="btn btn-classic px-4">Lọc</button>
             </div>
@@ -39,12 +39,12 @@
         </form>
     </div>
 
-    <div class="card-classic finance-card overflow-hidden">
-        <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="text-center text-muted py-5">
+    <div class="card-classic finance-card">
+        <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="empty-state">
             Chưa có giao dịch nào.
         </div>
 
-        <div class="table-responsive" th:if="${transactions != null and !#lists.isEmpty(transactions)}">
+        <div class="app-table-wrap" th:if="${transactions != null and !#lists.isEmpty(transactions)}">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                 <tr>
@@ -58,9 +58,9 @@
                 </thead>
                 <tbody>
                 <tr th:each="transaction : ${transactions}">
-                    <td class="transaction-code ps-4 fw-bold" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</td>
+                    <td class="transaction-code ps-4" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</td>
                     <td>
-                        <div class="fw-bold"
+                            <div class="transaction-member-name"
                              th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : 'Không rõ'}">
                             Thành viên
                         </div>
@@ -85,8 +85,8 @@
                                   (transaction.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng' :
                                   (transaction.transactionType == 'REFUND' ? 'Hoàn tiền' : transaction.transactionType)))))}">Loại giao dịch</span>
                     </td>
-                    <td class="fw-bold"
-                        th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' text-success' : ' text-danger'">
+                    <td class="transaction-amount"
+                        th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
                         <span th:text="${transaction.amount != null and transaction.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
                         <span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                         VNĐ
@@ -101,20 +101,20 @@
             </table>
         </div>
 
-        <nav th:if="${transactionPage != null and transactionPage.totalPages > 1}" class="p-3" aria-label="Phân trang giao dịch">
-            <ul class="pagination justify-content-center mb-0">
-                <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/members/transactions(page=${currentPage - 1}, type=${selectedType})}">Trước</a>
-                </li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(0, transactionPage.totalPages - 1)}"
-                    th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/librarian/members/transactions(page=${i}, type=${selectedType})}" th:text="${i + 1}">1</a>
-                </li>
-                <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/members/transactions(page=${currentPage + 1}, type=${selectedType})}">Sau</a>
-                </li>
-            </ul>
-        </nav>
+        <div class="app-pagination-region" th:if="${transactionPage != null and transactionPage.totalPages > 1}"
+             th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))}">
+            <nav aria-label="Phân trang giao dịch" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
+                <ul class="pagination app-pagination">
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=0,type=${selectedType})}">Đầu</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number-1},type=${selectedType})}" aria-label="Trang trước"><i class="bi bi-chevron-left"></i></a></li>
+                    <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${i},type=${selectedType})}" th:text="${i+1}">1</a></li>
+                    <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">…</span></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number+1},type=${selectedType})}" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}">Cuối</a></li>
+                </ul>
+            </nav>
+        </div>
     </div>
 </div>
 </body>

@@ -6,12 +6,30 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
     long countByStatusIgnoreCase(String status);
+
+    @Query(value = """
+            select count(*)
+            from dbo.BorrowDetails bd
+            join dbo.Borrows b on b.borrow_id = bd.borrow_id
+            where b.member_id = :memberId
+              and bd.book_id = :bookId
+              and upper(ltrim(rtrim(bd.status))) in (
+                    'BORROWED',
+                    'OVERDUE',
+                    'RETURN_PENDING',
+                    'RENEW_PENDING',
+                    'RETURNED'
+              )
+            """, nativeQuery = true)
+    long countEligibleReviewBorrows(@Param("memberId") Integer memberId,
+                                    @Param("bookId") Integer bookId);
 
     @Query("select count(bd) " +
             "from BorrowDetail bd " +
@@ -59,7 +77,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
 
-    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending')")
+    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Payment_Pending', 'Borrowed', 'Overdue', 'Return_Pending')")
     long countActiveBorrowedBooks(@Param("memberId") Integer memberId);
 
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue')")
@@ -88,6 +106,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "AND bd.returnDate >= :startOfDay AND bd.returnDate <= :endOfDay ORDER BY bd.returnDate DESC")
     List<BorrowDetail> findReturnedBooksToday(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
 
+    @EntityGraph(attributePaths = {"borrow.member.user", "book"})
     @Query("SELECT bd FROM BorrowDetail bd ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findRecentActivities(Pageable pageable);
 

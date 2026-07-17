@@ -1,0 +1,428 @@
+/* Presentation owner for templates/layout/librarian_base.html */
+
+:root {
+            /* Canonical application design tokens from DESIGN-claude.md. */
+            --app-color-primary: #cc785c;
+            --app-color-primary-active: #a9583e;
+            --app-color-accent-amber: #e8a55a;
+            --app-color-ink: #141413;
+            --app-color-body: #3d3d3a;
+            --app-color-body-strong: #252523;
+            --app-color-muted: #6c6a64;
+            --app-color-muted-soft: #8e8b82;
+            --app-color-hairline: #e6dfd8;
+            --app-color-hairline-soft: #ebe6df;
+            --app-color-canvas: #faf9f5;
+            --app-color-surface-soft: #f5f0e8;
+            --app-color-surface-card: #efe9de;
+            --app-color-on-dark: #faf9f5;
+            --app-color-application-primary: #8b5a2b;
+            --app-color-application-primary-hover: #6b4423;
+            --app-color-application-primary-active: #58371d;
+            --app-color-application-primary-disabled: #c9b8a7;
+            --app-color-focus-coral-ring: rgba(204, 120, 92, 0.2);
+            --app-color-focus-application-ring: rgba(139, 90, 43, 0.22);
+            --app-color-warning-soft: #fbf3d9;
+            --app-color-warning-border: #eadfb8;
+            --app-color-warning-ink: #795d12;
+            --app-color-success: #5db872;
+            --app-color-success-soft: #e7f4ea;
+            --app-color-success-border: #bddfc5;
+            --app-color-success-ink: #2f6f3e;
+            --app-color-error: #c64545;
+            --app-color-danger-soft: #f8e5e2;
+            --app-color-danger-border: #e8caca;
+            --app-color-danger-ink: #923b36;
+            --app-color-overlay-shadow: 0 18px 48px rgba(20, 20, 19, 0.18);
+            --app-color-overlay-backdrop: rgba(20, 20, 19, 0.56);
+            --app-font-display: Copernicus, "Tiempos Headline", "Playfair Display", "Cormorant Garamond", Garamond, serif;
+            --app-font-ui: StyreneB, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --app-radius-md: 8px;
+            --app-radius-lg: 12px;
+            --app-radius-pill: 9999px;
+            --sidebar-bg: #4a3b32; /* Dark brown */
+            --sidebar-hover: #5a4b42;
+            --sidebar-active: #8b5a2b; /* Classic accent brown */
+            --page-bg: #fdfbf7; /* Cream */
+            --text-main: #2c1e16;
+            --border-color: rgba(139, 90, 43, 0.2);
+            --header-bg: #ffffff;
+        }
+
+        body {
+            background-color: var(--page-bg);
+            color: var(--text-main);
+            font-family: 'Lora', Georgia, serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6, .navbar-brand, .sidebar-brand {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: #fdfbf7;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            transition: width 0.3s;
+        }
+
+        body.sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(253, 251, 247, 0.1);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar-brand {
+            color: #fdfbf7;
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .sidebar-brand i {
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .sidebar-brand,
+        .sidebar-brand:hover,
+        .sidebar-brand:focus {
+            color: #fdfbf7;
+            text-decoration: none;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 15px;
+            list-style: none;
+            margin: 0;
+            padding-left: 0;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        .sidebar-menu::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
+        }
+
+        .menu-item {
+            margin-bottom: 4px;
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #e6dfd7;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .menu-link,
+        .menu-link:hover,
+        .menu-link:focus,
+        .menu-link:active {
+            text-decoration: none;
+        }
+
+        .menu-link:hover {
+            background-color: var(--sidebar-hover);
+            color: #fdfbf7;
+        }
+
+        .menu-link.active {
+            background-color: var(--sidebar-active);
+            color: #ffffff;
+            font-weight: 600;
+            border-left: 4px solid #dcb38a;
+        }
+
+        #borrowMenu .menu-link {
+            color: #e6dfd7 !important;
+            font-weight: 400;
+        }
+
+        #borrowMenu .menu-link:hover {
+            color: #fdfbf7 !important;
+            background-color: var(--sidebar-hover);
+        }
+
+        #borrowMenu .menu-link.active-submenu {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        #financeMenu .menu-link {
+            color: #e6dfd7 !important;
+            font-weight: 400;
+        }
+
+        #financeMenu .menu-link:hover {
+            color: #fdfbf7 !important;
+            background-color: var(--sidebar-hover);
+        }
+
+        #financeMenu .menu-link.active-submenu {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        .menu-icon {
+            font-size: 1.1rem;
+            min-width: 30px;
+            text-align: center;
+            margin-right: 10px;
+        }
+
+        body.sidebar-collapsed .menu-text {
+            display: none;
+        }
+
+        body.sidebar-collapsed .menu-link {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        body.sidebar-collapsed .sidebar-header {
+            padding: 0;
+            justify-content: center;
+        }
+
+        body.sidebar-collapsed .sidebar-brand {
+            gap: 0;
+            justify-content: center;
+            width: 100%;
+        }
+
+        body.sidebar-collapsed .menu-icon,
+        body.sidebar-collapsed .sidebar-brand i {
+            margin-right: 0;
+        }
+
+        body.sidebar-collapsed .menu-link > .bi-chevron-down,
+        body.sidebar-collapsed .sidebar-menu .collapse {
+            display: none !important;
+        }
+
+        /* Topbar Styling */
+        .main-wrapper {
+            flex: 1;
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            transition: margin-left 0.3s;
+        }
+
+        body.sidebar-collapsed .main-wrapper {
+            margin-left: 70px;
+        }
+
+        .topbar {
+            height: 60px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: #8b5a2b;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--sidebar-active);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 24px;
+            flex: 1;
+        }
+
+        /* Common Utility Classes for Classic Theme */
+        .btn-classic {
+            background-color: #8b5a2b;
+            color: #fdfbf7;
+            border: none;
+        }
+        .btn-classic:hover {
+            background-color: #6b4423;
+            color: #fdfbf7;
+        }
+        .btn-outline-classic {
+            border: 1px solid #8b5a2b;
+            color: #8b5a2b;
+            background-color: transparent;
+        }
+        .btn-outline-classic:hover {
+            background-color: #8b5a2b;
+            color: #fdfbf7;
+        }
+        .card-classic {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(139, 90, 43, 0.05);
+        }
+        .text-classic {
+            color: #8b5a2b !important;
+        }
+
+        /* Shared semantic status palette. Keep identical states identical everywhere. */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: auto;
+            min-width: 0;
+            height: auto;
+            padding: 0.5rem 1rem;
+            box-sizing: border-box;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            color: #ffffff !important;
+            font-size: 0.75em;
+            font-weight: 600;
+            line-height: 1;
+            vertical-align: baseline;
+            white-space: nowrap;
+        }
+
+        .status-active,
+        .status-approved,
+        .status-completed,
+        .status-returned {
+            background-color: #587442 !important;
+            border-color: #476036 !important;
+        }
+
+        .status-blocked,
+        .status-overdue,
+        .status-rejected {
+            background-color: #b44336 !important;
+            border-color: #96362c !important;
+        }
+
+        .status-inactive,
+        .status-canceled,
+        .status-disposed,
+        .status-hidden,
+        .status-unknown {
+            background-color: #77716c !important;
+            border-color: #625d59 !important;
+        }
+
+        .status-pending,
+        .status-renew-pending {
+            background-color: #b98532 !important;
+            border-color: #9b6e28 !important;
+        }
+
+        .status-borrowed {
+            background-color: #4f6d7a !important;
+            border-color: #405b67 !important;
+        }
+
+        .status-return-pending {
+            background-color: #6f8f91 !important;
+            border-color: #5b7779 !important;
+        }
+        /* Shared pagination: keep page numbers and navigation controls aligned. */
+        .pagination {
+            align-items: center;
+        }
+
+        .pagination .page-link {
+            min-width: 42px;
+            height: 42px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            color: #8b5a2b;
+            border-color: rgba(139, 90, 43, 0.2);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #8b5a2b;
+            border-color: #8b5a2b;
+            color: #fff;
+        }
+
+        /* Prevent table columns from shifting when changing pages. */
+        .stable-table-layout {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+.librarian-base-i-font-size-03 {
+    font-size: 0.8rem;
+}
+
+.librarian-base-a-background-border-left-min-height-04 {
+    background: transparent; border-left: none; min-height: auto; padding-left: 50px;
+}
+
+.librarian-base-ul-border-10 {
+    border: 1px solid var(--border-color) !important;
+}

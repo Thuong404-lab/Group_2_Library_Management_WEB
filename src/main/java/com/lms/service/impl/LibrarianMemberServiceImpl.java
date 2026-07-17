@@ -10,6 +10,9 @@ import com.lms.entity.Role;
 import com.lms.entity.User;
 import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
@@ -63,12 +66,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public MemberListViewData getMemberList(int page, String keyword) {
+    public MemberListViewData getMemberList(int page, String keyword, String status, String tier) {
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("id").ascending());
         String normalizedKeyword = trim(keyword);
-        Page<MemberAccount> accounts = normalizedKeyword.isEmpty()
-                ? memberAccountRepository.findAll(pageable)
-                : memberAccountRepository.searchMemberAccounts(normalizedKeyword, pageable);
+        String normalizedStatus = trim(status);
+        String normalizedTier = trim(tier);
+        Page<MemberAccount> accounts = memberAccountRepository.searchMemberAccountsWithFilters(
+                normalizedKeyword, normalizedStatus, normalizedTier, pageable);
 
         Map<Integer, Member> memberByUserId = new HashMap<>();
         for (MemberAccount account : accounts.getContent()) {
@@ -77,7 +81,16 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
                         .ifPresent(member -> memberByUserId.put(account.getMember().getUser().getId(), member));
             }
         }
-        return new MemberListViewData(accounts, memberByUserId, getMembershipTiers());
+        return new MemberListViewData(accounts, memberByUserId, getMembershipTiers(), getMemberSummaryCounts());
+    }
+
+    private Map<String, Long> getMemberSummaryCounts() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("total", memberAccountRepository.count());
+        counts.put("active", memberAccountRepository.countByStatusIgnoreCase("Active"));
+        counts.put("inactive", memberAccountRepository.countByStatusIgnoreCase("Inactive"));
+        counts.put("blocked", memberAccountRepository.countByStatusIgnoreCase("Blocked"));
+        return counts;
     }
 
     @Override
@@ -119,13 +132,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     public void createMember(CreateMemberAccountRequest request) {
         Map<String, String> errors = validateCreate(request);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(errors.values().iterator().next());
+            throw new ValidationException(errors.values().iterator().next());
         }
 
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
+                .orElseThrow(() -> new ValidationException("Hạng thành viên không hợp lệ."));
         Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy role MEMBER trong database."));
+                .orElseThrow(() -> new DataProcessingException("Không tìm thấy role MEMBER trong hệ thống."));
 
         User user = new User();
         user.setFullName(trim(request.getFullName()));
@@ -193,29 +206,20 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     public void updateMember(Integer accountId, UpdateMemberAccountRequest request) {
         Map<String, String> errors = validateUpdate(accountId, request);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(errors.values().iterator().next());
+            throw new ValidationException(errors.values().iterator().next());
         }
 
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
-        MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new IllegalArgumentException("Hạng thành viên không hợp lệ."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
         User user = account.getMember().getUser();
 
         user.setFullName(trim(request.getFullName()));
         user.setEmail(trim(request.getEmail()));
         user.setPhone(trim(request.getPhone()));
-        user.setStatus(toUserStatus(request.getStatus()));
         account.setUsername(trim(request.getUsername()));
-        account.setStatus(request.getStatus());
-
-        Member member = memberRepository.findByUserId(user.getId()).orElse(new Member());
-        member.setUser(user);
-        member.setTier(tier);
 
         userRepository.save(user);
         memberAccountRepository.save(account);
-        memberRepository.save(member);
 
         auditLogService.log(
                 ActionType.UPDATE_ACCOUNT,
@@ -242,10 +246,10 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     @Transactional
     public void changeMemberStatus(Integer accountId, String status) {
         if (!"Active".equals(status) && !"Inactive".equals(status) && !"Blocked".equals(status)) {
-            throw new IllegalArgumentException("Trạng thái tài khoản không hợp lệ.");
+            throw new ValidationException("Trạng thái tài khoản không hợp lệ.");
         }
         MemberAccount account = memberAccountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
         applyStatus(account, status);
         memberAccountRepository.save(account);
     }
@@ -264,7 +268,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     private UserStatus toUserStatus(String status) {
         try {
             return UserStatus.valueOf(status);
-        } catch (Exception ignored) {
+        } catch (IllegalArgumentException ignored) {
             return UserStatus.Active;
         }
     }

@@ -1,6 +1,10 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.exception.ConflictException;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ResourceNotFoundException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LoanService;
 import org.springframework.stereotype.Service;
@@ -64,7 +68,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(readOnly = true)
     public Borrow getLoanDetails(Integer borrowId) {
         return borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phiếu mượn với mã: " + borrowId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mượn với mã: " + borrowId));
     }
 
     // UC-13.2: Xác nhận trả sách trực tiếp bằng quét mã vạch (Barcode) tại quầy
@@ -72,13 +76,13 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void confirmReturn(String barcode) {
         BookItem item = bookItemRepository.findByBarcode(barcode)
-                .orElseThrow(() -> new IllegalArgumentException("Mã vạch sách vật lý '" + barcode + "' không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Mã vạch sách vật lý '" + barcode + "' không tồn tại!"));
 
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
                         && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus()) || "Return_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lịch sử mượn hợp lệ ứng với mã vạch sách này!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch sử mượn hợp lệ ứng với mã vạch sách này!"));
 
         // 1. Cập nhật trạng thái sách vật lý
         item.setStatus(STATUS_AVAILABLE);
@@ -101,7 +105,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void approveOnlineReturn(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn yêu cầu trả!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn yêu cầu trả!"));
 
         List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
         
@@ -140,18 +144,19 @@ public class LoanServiceImpl implements LoanService {
         try {
             if (memberIdentifier != null && memberIdentifier.contains("@")) {
                 member = memberRepository.findByUserEmail(memberIdentifier)
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thành viên với Email này!"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với Email này!"));
             } else {
                 member = memberRepository.findByUserPhone(memberIdentifier)
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thành viên với số điện thoại này!"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên với số điện thoại này!"));
             }
         } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
-            throw new IllegalArgumentException("Có nhiều độc giả trùng thông tin này! Vui lòng liên hệ quản trị viên để xử lý dữ liệu trùng lặp.");
+            throw new DataProcessingException(
+                    "Có nhiều độc giả trùng thông tin này! Vui lòng liên hệ quản trị viên để xử lý dữ liệu trùng lặp.", e);
         }
 
         Staff staff = staffAccountRepository.findByUsername(staffUsername)
                 .map(StaffAccount::getStaff)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin thủ thư!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin thủ thư!"));
 
         List<BookItem> bookItemsToBorrow = new ArrayList<>();
         for (String barcode : barcodes) {
@@ -161,19 +166,20 @@ public class LoanServiceImpl implements LoanService {
             BookItem item;
             try {
                 item = bookItemRepository.findByBarcode(trimmedBarcode)
-                        .orElseThrow(() -> new IllegalArgumentException("Mã vạch " + trimmedBarcode + " không tồn tại!"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Mã vạch " + trimmedBarcode + " không tồn tại!"));
             } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
-                throw new IllegalArgumentException("Lỗi CSDL: Có nhiều cuốn sách cùng sử dụng mã vạch " + trimmedBarcode + ". Vui lòng liên hệ Admin!");
+                throw new DataProcessingException(
+                        "Lỗi CSDL: Có nhiều cuốn sách cùng sử dụng mã vạch " + trimmedBarcode + ". Vui lòng liên hệ Admin!", e);
             }
 
             if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
-                throw new IllegalArgumentException("Sách có mã vạch " + trimmedBarcode + " hiện tại không sẵn sàng!");
+                throw new ConflictException("Sách có mã vạch " + trimmedBarcode + " hiện tại không sẵn sàng!");
             }
             bookItemsToBorrow.add(item);
         }
 
         if (bookItemsToBorrow.isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 mã vạch hợp lệ!");
+            throw new ValidationException("Vui lòng nhập ít nhất 1 mã vạch hợp lệ!");
         }
 
         long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
@@ -181,7 +187,7 @@ public class LoanServiceImpl implements LoanService {
         int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
 
         if (totalRequestedBooks > maxLimit) {
-            throw new IllegalArgumentException("Số lượng sách vượt quá giới hạn mượn của thành viên! (Tối đa " + maxLimit + " cuốn, đang mượn " + currentBorrowCount + " cuốn)");
+            throw new ConflictException("Số lượng sách vượt quá giới hạn mượn của thành viên! (Tối đa " + maxLimit + " cuốn, đang mượn " + currentBorrowCount + " cuốn)");
         }
 
         Borrow borrow = new Borrow();
@@ -210,7 +216,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void processBorrowRequest(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy yêu cầu mượn!"));
         
         borrow.setStatus(STATUS_ACTIVE);
         borrowRepository.save(borrow);
@@ -234,10 +240,10 @@ public class LoanServiceImpl implements LoanService {
     public void processRenewal(Integer borrowDetailId) {
         // ... kept for compatibility if needed, but not used by member anymore ...
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết phiếu mượn!"));
 
         if (!STATUS_BORROWED.equalsIgnoreCase(detail.getStatus())) {
-            throw new IllegalArgumentException("Chỉ sách đang ở trạng thái 'Đang mượn' mới được phép gia hạn!");
+            throw new ConflictException("Chỉ sách đang ở trạng thái 'Đang mượn' mới được phép gia hạn!");
         }
 
         // Đọc cấu hình số lần gia hạn tối đa (mặc định là 2)
@@ -246,11 +252,11 @@ public class LoanServiceImpl implements LoanService {
         if (setting.isPresent()) {
             try {
                 maxRenewals = Integer.parseInt(setting.get().getSettingValue());
-            } catch (Exception ignored) { /* Ignored by design */ }
+            } catch (NumberFormatException ignored) { /* Use the documented default. */ }
         }
 
         if (detail.getRenewCount() >= maxRenewals) {
-            throw new IllegalArgumentException("Sách này đã được gia hạn tối đa " + maxRenewals + " lần!");
+            throw new ConflictException("Sách này đã được gia hạn tối đa " + maxRenewals + " lần!");
         }
 
         // Đọc cấu hình số ngày gia hạn thêm mỗi lần (mặc định là 7 ngày)
@@ -259,32 +265,20 @@ public class LoanServiceImpl implements LoanService {
         if (renewDaysSetting.isPresent()) {
             try {
                 renewDays = Integer.parseInt(renewDaysSetting.get().getSettingValue());
-            } catch (Exception ignored) { /* Ignored by design */ }
+            } catch (NumberFormatException ignored) { /* Use the documented default. */ }
         }
 
         detail.setDueDate(detail.getDueDate().plusDays(renewDays));
         detail.setRenewCount(detail.getRenewCount() + 1);
         borrowDetailRepository.save(detail);
 
-        try {
-            Member member = detail.getBorrow().getMember();
-            if (member != null && member.getMemberId() != null) {
-                Notification notif = new Notification();
-                notif.setTitle("Gia hạn sách thành công");
-                notif.setContent("Cuốn sách '" + detail.getBook().getTitle() + "' đã được gia hạn thêm " + renewDays + " ngày. Hạn trả mới của bạn là: " + detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
-                notif.setCreatedDate(LocalDateTime.now());
-                notif.setStatus("Active");
-                Notification saved = notificationRepository.save(notif);
-
-                MemberNotification mn = new MemberNotification();
-                mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
-                mn.setMember(member);
-                mn.setNotification(saved);
-                mn.setIsRead(false);
-                memberNotificationRepository.save(mn);
-            }
-        } catch (Exception e) {
-            // Log if needed
+        Member member = detail.getBorrow().getMember();
+        if (member != null && member.getMemberId() != null) {
+            sendInternalNotification(member, "Gia hạn sách thành công",
+                    "Cuốn sách '" + detail.getBook().getTitle() + "' đã được gia hạn thêm "
+                            + renewDays + " ngày. Hạn trả mới của bạn là: "
+                            + detail.getDueDate().format(
+                                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".");
         }
     }
 
@@ -304,7 +298,7 @@ public class LoanServiceImpl implements LoanService {
     public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String conditionNote, String staffUsername) {
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
         if (activeLoans.isEmpty()) {
-            throw new IllegalArgumentException("Không tìm thấy lượt mượn nào chưa trả ứng với mã vạch: " + barcode);
+            throw new ResourceNotFoundException("Không tìm thấy lượt mượn nào chưa trả ứng với mã vạch: " + barcode);
         }
 
         // Xử lý lượt mượn tìm thấy hợp lệ
@@ -348,10 +342,10 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết phiếu mượn!"));
 
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
-            throw new IllegalArgumentException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
+            throw new ConflictException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
         }
 
         int renewDays = 7;
@@ -359,7 +353,7 @@ public class LoanServiceImpl implements LoanService {
         if (renewDaysSetting.isPresent()) {
             try {
                 renewDays = Integer.parseInt(renewDaysSetting.get().getSettingValue());
-            } catch (Exception ignored) { }
+            } catch (NumberFormatException ignored) { /* Use the documented default. */ }
         }
 
         detail.setDueDate(detail.getDueDate().plusDays(renewDays));
@@ -378,10 +372,10 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void rejectRenewal(Integer borrowDetailId, String staffUsername) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chi tiết phiếu mượn!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết phiếu mượn!"));
 
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
-            throw new IllegalArgumentException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
+            throw new ConflictException("Yêu cầu này không ở trạng thái chờ duyệt gia hạn!");
         }
 
         // Trả về trạng thái cũ: Kiểm tra nếu đã quá hạn thực tế chưa
@@ -431,7 +425,7 @@ public class LoanServiceImpl implements LoanService {
                 if (rateSetting.isPresent()) {
                     try {
                         fineRate = new BigDecimal(rateSetting.get().getSettingValue());
-                    } catch (Exception ignored) { /* Ignored by design */ }
+                    } catch (NumberFormatException ignored) { /* Use the documented default. */ }
                 }
                 
                 BigDecimal fineAmount = fineRate.multiply(new BigDecimal(overdueDays));
@@ -500,20 +494,21 @@ public class LoanServiceImpl implements LoanService {
      * Tạo thông báo hệ thống và gửi cho độc giả
      */
     private void sendInternalNotification(Member member, String title, String content) {
-        try {
-            Notification notif = new Notification();
-            notif.setTitle(title);
-            notif.setContent(content);
-            notif.setCreatedDate(LocalDateTime.now());
-            notif.setStatus(STATUS_ACTIVE);
-            Notification saved = notificationRepository.save(notif);
+        if (member == null || member.getMemberId() == null) {
+            throw new DataProcessingException("Không thể gửi thông báo vì thiếu thông tin thành viên.");
+        }
+        Notification notif = new Notification();
+        notif.setTitle(title);
+        notif.setContent(content);
+        notif.setCreatedDate(LocalDateTime.now());
+        notif.setStatus(STATUS_ACTIVE);
+        Notification saved = notificationRepository.save(notif);
 
-            MemberNotification mn = new MemberNotification();
-            mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
-            mn.setMember(member);
-            mn.setNotification(saved);
-            mn.setIsRead(false);
-            memberNotificationRepository.save(mn);
-        } catch (Exception ignored) { /* Ignored by design */ }
+        MemberNotification mn = new MemberNotification();
+        mn.setId(new MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
+        mn.setMember(member);
+        mn.setNotification(saved);
+        mn.setIsRead(false);
+        memberNotificationRepository.save(mn);
     }
 }

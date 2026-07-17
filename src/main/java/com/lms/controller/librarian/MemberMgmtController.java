@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
@@ -70,14 +71,19 @@ public class MemberMgmtController {
     public String viewMemberList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false, defaultValue = "") String tier,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        MemberListViewData data = memberService.getMemberList(page, keyword);
+        MemberListViewData data = memberService.getMemberList(page, keyword, status, tier);
         model.addAttribute("accounts", data.accounts());
         model.addAttribute("memberByUserId", data.memberByUserId());
         model.addAttribute("tiers", data.tiers());
+        model.addAttribute("memberSummary", data.summaryCounts());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedTier", tier);
         addCurrentUser(model, userDetails);
         return "librarian/member-list";
     }
@@ -161,7 +167,7 @@ public class MemberMgmtController {
         try {
             memberService.changeMemberStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         redirectAttributes.addAttribute("page", Math.max(page, 0));
@@ -195,7 +201,7 @@ public class MemberMgmtController {
         try {
             financialService.createFine(memberId, amount, reason);
             redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/librarian/members/fines";
@@ -209,7 +215,7 @@ public class MemberMgmtController {
             overdueReminderService.sendReturnReminder(borrowDetailId);
             redirectAttributes.addFlashAttribute(
                     "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
-        } catch (Exception exception) {
+        } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/librarian/members/fines";
@@ -231,6 +237,15 @@ public class MemberMgmtController {
         return "librarian/transactions";
     }
 
+    @GetMapping("/members/refunds")
+    public String viewPendingRefunds(Model model,
+                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        model.addAttribute("pendingRefundRequests", financialService.getPendingReservationDepositRefunds());
+        model.addAttribute("reservationDepositAmount", financialService.getReservationDepositAmount());
+        addCurrentUser(model, userDetails);
+        return "librarian/refunds";
+    }
+
     @GetMapping("/members/topup")
     public String showTopupDesk(Model model,
                                 @RequestParam(required = false, defaultValue = "") String memberKeyword,
@@ -250,7 +265,7 @@ public class MemberMgmtController {
         try {
             financialService.topUpMemberAccount(memberPhone, amount);
             redirectAttributes.addFlashAttribute("success", "Nạp tiền vào ví thành viên thành công.");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
             redirectAttributes.addFlashAttribute("amount", amount);
@@ -366,7 +381,7 @@ public class MemberMgmtController {
             else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
             data.put("tier", tierName);
             
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             data.put("found", false);
             data.put("error", e.getMessage());
         }

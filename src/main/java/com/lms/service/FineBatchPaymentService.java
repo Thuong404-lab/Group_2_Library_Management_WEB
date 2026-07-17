@@ -2,6 +2,9 @@ package com.lms.service;
 
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ForbiddenException;
+import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.payos.PayOsTransactionRepository;
 import com.lms.repository.payos.PayOsWalletRepository;
@@ -34,7 +37,7 @@ public class FineBatchPaymentService {
         List<Transaction> pending = transactionRepository.findUnpaidFineTransactions(
                 memberId, List.of("FINE", "DAMAGE_FEE"));
         if (pending.isEmpty()) {
-            throw new RuntimeException("Không có khoản phạt nào cần thanh toán.");
+            throw new ConflictException("Không có khoản phạt nào cần thanh toán.");
         }
         pending.sort(Comparator.comparing(Transaction::getTransactionId));
 
@@ -42,17 +45,17 @@ public class FineBatchPaymentService {
         List<Transaction> lockedFines = new java.util.ArrayList<>();
         for (Transaction candidate : pending) {
             Transaction fine = lockedTransactionRepository.findByIdForUpdate(candidate.getTransactionId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phạt."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khoản phạt."));
             validateFine(fine, memberId);
             total = total.add(fine.getAmount().abs());
             lockedFines.add(fine);
         }
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví thành viên."));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ví thành viên."));
         BigDecimal balance = wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance();
         if (balance.compareTo(total) < 0) {
-            throw new RuntimeException("Số dư ví không đủ để thanh toán tổng phí phạt.");
+            throw new ConflictException("Số dư ví không đủ để thanh toán tổng phí phạt.");
         }
         wallet.setBalance(balance.subtract(total));
         walletRepository.save(wallet);
@@ -69,14 +72,14 @@ public class FineBatchPaymentService {
     private void validateFine(Transaction fine, Integer memberId) {
         if (fine.getWallet() == null || fine.getWallet().getMember() == null
                 || !memberId.equals(fine.getWallet().getMember().getMemberId())) {
-            throw new RuntimeException("Khoản phạt không thuộc về thành viên.");
+            throw new ForbiddenException("Khoản phạt không thuộc về thành viên.");
         }
         String type = normalize(fine.getTransactionType());
         String status = normalize(fine.getStatus());
         if ((!"FINE".equals(type) && !"DAMAGE_FEE".equals(type))
                 || "COMPLETED".equals(status) || "PAID".equals(status)
                 || fine.getAmount() == null || fine.getAmount().signum() == 0) {
-            throw new RuntimeException("Danh sách phí phạt đã thay đổi. Vui lòng tải lại trang.");
+            throw new ConflictException("Danh sách phí phạt đã thay đổi. Vui lòng tải lại trang.");
         }
     }
 

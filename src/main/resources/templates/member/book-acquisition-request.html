@@ -1,144 +1,53 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
-
-<head>
-    <title>De xuat bo sung sach</title>
-    <style>
-        .member-page {
-            max-width: 1250px;
-        }
-
-        .member-page-title {
-            color: #4a3b32;
-            font-family: 'Playfair Display', serif;
-        }
-
-        .member-form-card {
-            background: #fff;
-            border: 1px solid rgba(139, 90, 43, 0.14);
-            border-left: 4px solid #8b5a2b;
-            border-radius: 8px;
-        }
-
-        .validate-field.is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-        }
-
-        .validate-field.is-valid {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
-        }
-    </style>
-</head>
-
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head><title>Đề xuất bổ sung sách</title><link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css}" /></head>
 <body>
-<div layout:fragment="content" class="container member-page mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <div>
-            <h2 class="member-page-title font-weight-bold mb-1">
-                &#272;&#7873; xu&#7845;t b&#7893; sung s&#225;ch
-            </h2>
-            <div class="text-muted">G&#7917;i t&#234;n s&#225;ch b&#7841;n mu&#7889;n th&#432; vi&#7879;n b&#7893; sung v&#224;o kho.</div>
-        </div>
-    </div>
-
-    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-
-    <div class="member-form-card shadow-sm p-4">
-        <h5 class="font-weight-bold mb-4" style="color:#4a3b32;">
-            <i class="bi bi-pencil-square mr-2" style="color:#8b5a2b;"></i>G&#7917;i &#273;&#7873; xu&#7845;t m&#7899;i
-        </h5>
-
-        <form id="acquisitionRequestForm"
-              th:action="@{/member/interaction/acquisition-requests}"
-              th:object="${acquisitionRequest}"
-              method="post">
-            <div class="form-group mb-3">
-                <label for="title" class="font-weight-bold small text-muted text-uppercase">
-                    T&#234;n s&#225;ch <span class="text-danger">*</span>
-                </label>
-                <input type="text"
-                       id="title"
-                       class="form-control mt-1 validate-field"
-                       th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
-                       th:field="*{title}"
-                       maxlength="255"
-                       placeholder="Nhập tên sách muốn đề xuất">
-                <div id="titleFeedback"
-                     class="invalid-feedback d-block"
-                     th:if="${#fields.hasErrors('title')}"
-                     th:errors="*{title}">
-                </div>
+<div layout:fragment="content" class="container acquisition-page">
+    <header class="member-page-header">
+        <div><span class="member-page-eyebrow">PHÁT TRIỂN BỘ SƯU TẬP</span><h1>Đề xuất bổ sung sách</h1><p>Gửi tên sách bạn muốn thư viện bổ sung vào kho.</p></div>
+        <a th:href="@{/books}" class="member-secondary-action"><i class="bi bi-arrow-left"></i>Khám phá sách</a>
+    </header>
+    <div th:if="${success}" class="member-alert is-success" th:text="${success}"></div>
+    <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
+    <section class="member-form-card" aria-labelledby="acquisition-form-title">
+        <div class="member-form-heading"><span><i class="bi bi-journal-plus"></i></span><div><h2 id="acquisition-form-title">Gửi đề xuất mới</h2><p>Thông tin rõ ràng sẽ giúp thư viện tìm đúng đầu sách.</p></div></div>
+        <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
+            <div class="member-form-grid">
+                <div class="member-form-field"><label for="title">Tên sách <span aria-hidden="true">*</span></label><input type="text" id="title" class="validate-field" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" th:field="*{title}" required minlength="2" maxlength="255" placeholder="Nhập từ 2–255 ký tự"><div id="titleFeedback" class="member-field-error" th:text="${#fields.hasErrors('title') ? #fields.errors('title')[0] : ''}"></div></div>
+                <div class="member-form-field"><label for="author">Tác giả <span aria-hidden="true">*</span></label><input type="text" id="author" th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'" th:field="*{author}" required minlength="2" maxlength="255" placeholder="Nhập từ 2–255 ký tự"><div id="authorFeedback" class="member-field-error" th:text="${#fields.hasErrors('author') ? #fields.errors('author')[0] : ''}"></div></div>
+                <div class="member-form-field"><label for="isbn">ISBN</label><input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" placeholder="Ví dụ: 9786040100014"><div id="isbnFeedback" class="member-field-error" th:text="${#fields.hasErrors('isbn') ? #fields.errors('isbn')[0] : ''}"></div></div>
+                <div class="member-form-field"><label for="publisher">Nhà xuất bản</label><input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" placeholder="Nhập nhà xuất bản"><div id="publisherFeedback" class="member-field-error" th:text="${#fields.hasErrors('publisher') ? #fields.errors('publisher')[0] : ''}"></div></div>
+                <div class="member-form-field"><label for="publicationYear">Năm xuất bản</label><input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" placeholder="Nhập năm xuất bản"><div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div></div>
+                <div class="member-form-field member-form-field--full"><label for="requestReason">Lý do đề xuất <span aria-hidden="true">*</span></label><textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" placeholder="Nhập từ 10–1000 ký tự"></textarea><div class="member-field-support"><span id="requestReasonCount" aria-live="polite">0/1000</span></div><div id="requestReasonFeedback" class="member-field-error" th:text="${#fields.hasErrors('requestReason') ? #fields.errors('requestReason')[0] : ''}"></div></div>
+                <div class="member-form-field member-form-field--full"><label for="referenceUrl">Link tham khảo</label><input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://..."><div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div></div>
             </div>
-
-            <div class="form-group mb-4">
-                <label for="author" class="font-weight-bold small text-muted text-uppercase">
-                    T&#225;c gi&#7843;
-                </label>
-                <input type="text"
-                       id="author"
-                       class="form-control mt-1"
-                       th:field="*{author}"
-                       maxlength="255">
-            </div>
-
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn text-white font-weight-bold px-4" style="background:#8b5a2b;">
-                    G&#7917;i &#273;&#7873; xu&#7845;t
-                </button>
-            </div>
+            <div class="member-form-actions"><button type="submit" class="member-primary-action">Gửi đề xuất</button></div>
         </form>
-    </div>
-
+    </section>
+    <section class="member-request-history" aria-labelledby="request-history-title">
+        <div class="member-request-history-heading"><h2 id="request-history-title">Đề xuất của tôi</h2><span th:text="${myAcquisitionRequests.totalElements + ' đề xuất'}">0 đề xuất</span></div>
+        <div class="member-request-list" th:if="${myAcquisitionRequests.totalElements > 0}">
+            <article class="member-request-item" th:each="request : ${myAcquisitionRequests.content}">
+                <div><h3 th:text="${request.title}">Tên sách</h3><p><span th:text="${request.author}">Tác giả</span><span th:if="${request.publisher != null}" th:text="${' · ' + request.publisher}"></span></p></div>
+                <p class="member-request-isbn" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></p>
+                <div class="member-request-meta"><span class="request-status" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? 'Chờ duyệt' : (request.status.name() == 'APPROVED' ? 'Đã duyệt' : 'Đã từ chối')}">Chờ duyệt</span><time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time></div>
+                <p class="member-request-decision" th:if="${request.status.name() == 'REJECTED'}"><strong>Lý do từ chối:</strong> <span th:text="${request.decisionNote}"></span></p>
+            </article>
+        </div>
+        <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}">Bạn chưa gửi đề xuất nào.</div>
+        <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}" aria-label="Phân trang đề xuất">
+            <a th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}"><i class="bi bi-chevron-left"></i></a>
+            <span th:text="${(myAcquisitionRequests.number + 1) + ' / ' + myAcquisitionRequests.totalPages}">1 / 1</span>
+            <a th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}"><i class="bi bi-chevron-right"></i></a>
+        </nav>
+    </section>
     <script>
-        const acquisitionForm = document.getElementById('acquisitionRequestForm');
-        const titleInput = document.getElementById('title');
-
-        function setTitleError(message) {
-            titleInput.classList.remove('is-valid');
-            titleInput.classList.add('is-invalid');
-            let feedback = document.getElementById('titleFeedback');
-
-            if (!feedback) {
-                feedback = document.createElement('div');
-                feedback.id = 'titleFeedback';
-                feedback.className = 'invalid-feedback d-block';
-                titleInput.insertAdjacentElement('afterend', feedback);
-            }
-
-            feedback.textContent = message;
-        }
-
-        function clearTitleError() {
-            titleInput.classList.remove('is-invalid', 'is-valid');
-            const feedback = document.getElementById('titleFeedback');
-
-            if (feedback) {
-                feedback.textContent = '';
-            }
-        }
-
-        titleInput.addEventListener('input', function () {
-            if (this.value.trim() !== '') {
-                clearTitleError();
-            }
-        });
-
-        acquisitionForm.addEventListener('submit', function (event) {
-            if (titleInput.value.trim() === '') {
-                event.preventDefault();
-                setTitleError('Tên sách không được để trống');
-                titleInput.focus();
-            } else {
-                titleInput.classList.remove('is-invalid');
-                titleInput.classList.add('is-valid');
-            }
-        });
+        const acquisitionForm=document.getElementById('acquisitionRequestForm'),currentYear=new Date().getFullYear();
+        function setFieldError(input,id,message){input.classList.add('is-invalid');document.getElementById(id).textContent=message}function clearFieldError(input,id){input.classList.remove('is-invalid');document.getElementById(id).textContent=''}function hasLetter(value){return /\p{L}/u.test(value)}
+        function validateText(input,id,label,min,max,optional){const value=input.value.trim().replace(/\s+/g,' ');input.value=value;if(optional&&value===''){clearFieldError(input,id);return true}let message='';if(value==='')message=label+' không được để trống.';else if(value.length<min||value.length>max)message=label+' phải có từ '+min+' đến '+max+' ký tự.';else if(!hasLetter(value))message=label+' không được chỉ gồm số hoặc ký tự đặc biệt.';if(message){setFieldError(input,id,message);return false}clearFieldError(input,id);return true}
+        function updateReasonCount(){const reason=document.getElementById('requestReason'),count=document.getElementById('requestReasonCount');count.textContent=reason.value.length+'/1000';count.classList.toggle('is-near-limit',reason.value.length>=900&&reason.value.length<1000);count.classList.toggle('is-limit-reached',reason.value.length>=1000)}
+        ['title','author','publisher','publicationYear','requestReason','referenceUrl'].forEach(function(id){const input=document.getElementById(id);input.addEventListener('input',function(){clearFieldError(input,id+'Feedback');if(id==='requestReason')updateReasonCount()})});
+        acquisitionForm.addEventListener('submit',function(event){let firstInvalid=null;function check(valid,input){if(!valid)firstInvalid=firstInvalid||input}const title=document.getElementById('title'),author=document.getElementById('author'),publisher=document.getElementById('publisher'),year=document.getElementById('publicationYear'),reason=document.getElementById('requestReason'),url=document.getElementById('referenceUrl');check(validateText(title,'titleFeedback','Tên sách',2,255,false),title);check(validateText(author,'authorFeedback','Tên tác giả',2,255,false),author);check(validateText(publisher,'publisherFeedback','Nhà xuất bản',1,255,true),publisher);check(validateText(reason,'requestReasonFeedback','Lý do đề xuất',10,1000,false),reason);if(year.value!==''&&(Number(year.value)<1000||Number(year.value)>currentYear)){setFieldError(year,'publicationYearFeedback','Năm xuất bản phải từ 1000 đến '+currentYear+'.');firstInvalid=firstInvalid||year}if(url.value.trim()!==''){try{const parsed=new URL(url.value.trim());if(!['http:','https:'].includes(parsed.protocol))throw new Error()}catch(e){setFieldError(url,'referenceUrlFeedback','Link tham khảo phải là địa chỉ http:// hoặc https:// hợp lệ.');firstInvalid=firstInvalid||url}}updateReasonCount();if(firstInvalid){event.preventDefault();firstInvalid.focus()}});updateReasonCount();
     </script>
 </div>
-</body>
-</html>
+</body></html>

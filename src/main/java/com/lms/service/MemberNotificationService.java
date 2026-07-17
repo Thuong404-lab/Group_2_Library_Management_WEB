@@ -1,17 +1,24 @@
 package com.lms.service;
 
 import com.lms.dto.response.MemberNotificationResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface MemberNotificationService {
 
-    List<MemberNotificationResponse> getMyNotifications(String username);
+    Page<MemberNotificationResponse> getMyNotifications(String username, Pageable pageable);
+
+    List<MemberNotificationResponse> getAllMyNotifications(String username);
 
     List<MemberNotificationResponse> getLatestNotifications(String username);
 
     long countUnreadNotifications(String username);
 
     void markAllNotificationsAsRead(String username);
+
+    long markNotificationAsRead(String username, Integer notificationId);
 
     // ======= BỔ SUNG PHƯƠNG THỨC GỬI THÔNG BÁO =======
     void sendNotificationToUser(String username, String title, String content);

@@ -58,7 +58,7 @@ public class OverdueViolationQueryService {
                     .map(setting -> new BigDecimal(setting.getSettingValue()))
                     .filter(amount -> amount.signum() >= 0)
                     .orElse(DEFAULT_FINE_PER_DAY);
-        } catch (RuntimeException exception) {
+        } catch (NumberFormatException exception) {
             return DEFAULT_FINE_PER_DAY;
         }
     }

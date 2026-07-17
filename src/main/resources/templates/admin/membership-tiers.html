@@ -3,21 +3,17 @@
     layout:decorate="~{layout/admin_base}">
 <head>
     <title>Quản lý Hạng thành viên</title>
-</head>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/membership-tiers.css}" />
+  </head>
 <body>
     <div layout:fragment="content" th:with="activeMenu='tiers'">
-        
+
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
+           >
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Quản lý hạng thành viên</h2>
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Quản lý hạng thành viên</h2>
                 <div class="text-muted">Thiết lập các mức hạng và quyền lợi của độc giả</div>
-            </div>
-            <div>
-                <button class="btn btn-classic" data-bs-toggle="modal" data-bs-target="#addTierModal">
-                    Thêm hạng mới
-                </button>
             </div>
         </div>
 
@@ -27,7 +23,6 @@
         </div>
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
         </div>
 
         <!-- Table -->
@@ -36,13 +31,13 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 stable-table-layout">
                         <colgroup>
-                            <col style="width: 6%">
-                            <col style="width: 11%">
-                            <col style="width: 15%">
-                            <col style="width: 11%">
-                            <col style="width: 13%">
-                            <col style="width: 32%">
-                            <col style="width: 12%">
+                            <col class="u-width-6-89d41777">
+                            <col class="u-width-11-ed323c3f">
+                            <col class="u-width-15-f7f760e2">
+                            <col class="u-width-11-ed323c3f">
+                            <col class="admin-membership-tiers-col-width-06">
+                            <col class="admin-membership-tiers-col-width-07">
+                            <col class="u-width-12-392c6809">
                         </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
@@ -57,11 +52,11 @@
                         </thead>
                         <tbody>
                             <tr th:each="tier : ${tiers}">
-                                <td class="ps-3 fw-bold" style="color: #8b5a2b;" th:text="${'#' + tier.tierId}"></td>
+                                <td class="ps-3 fw-bold u-color-8b5a2b-93ece783" th:text="${'#' + tier.tierId}"></td>
                                 <td class="fw-bold" th:text="${tier.tierName == 'Regular' ? 'Thường' : (tier.tierName == 'Silver' ? 'Bạc' : (tier.tierName == 'Gold' ? 'Vàng' : (tier.tierName == 'Diamond' ? 'Kim cương' : tier.tierName)))}"></td>
-                                <td th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 0, 'COMMA', 0, 'POINT') + ' VND' : 'Mặc định'}"></td>
-                                <td><span class="badge rounded-pill px-3 py-2 text-white"
-                                    style="background-color: #587442;" th:text="${tier.discountPercent + '%'}"></span></td>
+                                <td th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 0, 'COMMA', 0, 'POINT') + ' VND' : '0 VND'}"></td>
+                                <td><span class="badge rounded-pill px-3 py-2 text-white admin-membership-tiers-span-background-10"
+                                    th:text="${tier.discountPercent + '%'}"></span></td>
                                 <td th:text="${tier.borrowLimit + ' cuốn'}"></td>
                                 <td><span th:text="${tier.benefits}"></span></td>
                                 <td class="text-end pe-3">
@@ -69,33 +64,24 @@
                                             data-bs-toggle="modal" th:data-bs-target="${'#editTierModal' + tier.tierId}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <form th:action="@{/admin/tiers/delete/{id}(id=${tier.tierId})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                onclick="return confirm('Bạn có chắc chắn muốn xóa hạng thành viên này không?');">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
                                 </td>
-                                
+
                                 <!-- Edit Modal cho mỗi dòng -->
                                 <div class="modal fade" th:id="${'editTierModal' + tier.tierId}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content border-0 shadow">
-                                            <div class="modal-header bg-white border-bottom p-4">
-                                                <h5 class="modal-title fw-bold" style="color: #4a3b32; font-family: 'Playfair Display', serif;"><i class="bi bi-pencil-square text-classic me-2"></i>Sửa hạng thành viên</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                                            </div>
+
                                             <form th:action="@{/admin/tiers/save}" method="post">
                                                 <input type="hidden" name="tierId" th:value="${tier.tierId}" />
                                                 <div class="modal-body">
                                                     <div class="mb-3">
                                                         <label class="form-label fw-bold text-muted small">Tên hạng <span class="text-danger">*</span></label>
-                                                        <input type="text" name="tierName" class="form-control" th:value="${tier.tierName}" required>
+                                                        <input type="text" name="tierName" class="form-control" th:value="${tier.tierName}" readonly required>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-6 mb-3">
                                                             <label class="form-label fw-bold text-muted small">Điểm/Chi tiêu (VND)</label>
-                                                            <input type="number" step="0.01" name="condition" class="form-control" th:value="${tier.condition}">
+                                                            <input type="number" step="0.01" min="0" name="condition" class="form-control" th:value="${tier.condition}" required>
                                                         </div>
                                                         <div class="col-6 mb-3">
                                                             <label class="form-label fw-bold text-muted small">Giảm giá (%) <span class="text-danger">*</span></label>
@@ -104,7 +90,7 @@
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-bold text-muted small">Giới hạn mượn (cuốn) <span class="text-danger">*</span></label>
-                                                        <input type="number" name="borrowLimit" class="form-control" th:value="${tier.borrowLimit}" required>
+                                                        <input type="number" name="borrowLimit" class="form-control" min="0" th:value="${tier.borrowLimit}" required>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-bold text-muted small">Quyền lợi bổ sung</label>
@@ -125,48 +111,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Modal -->
-        <div class="modal fade" id="addTierModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header bg-white border-bottom p-4">
-                        <h5 class="modal-title fw-bold" style="color: #4a3b32; font-family: 'Playfair Display', serif;">Thêm hạng mới</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                    </div>
-                    <form th:action="@{/admin/tiers/save}" method="post">
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small">Tên hạng <span class="text-danger">*</span></label>
-                                <input type="text" name="tierName" class="form-control" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label class="form-label fw-bold text-muted small">Điểm/Chi tiêu (VND)</label>
-                                    <input type="number" step="0.01" name="condition" class="form-control" placeholder="0.00">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label class="form-label fw-bold text-muted small">Giảm giá (%) <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" min="0" max="100" name="discountPercent" class="form-control" value="0.00" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small">Giới hạn mượn (cuốn) <span class="text-danger">*</span></label>
-                                <input type="number" name="borrowLimit" class="form-control" value="3" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small">Quyền lợi bổ sung</label>
-                                <textarea name="benefits" class="form-control" rows="3"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-top">
-                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-classic">Thêm hạng</button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>

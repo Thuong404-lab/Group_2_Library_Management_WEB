@@ -1,4 +1,6 @@
 package com.lms.controller.librarian;
+import com.lms.exception.ApplicationException;
+import com.lms.exception.ValidationException;
 
 import com.lms.entity.BorrowDetail;
 import com.lms.service.LoanService;
@@ -69,7 +71,7 @@ public class LoanController {
                                                RedirectAttributes redirectAttributes) {
         try {
             if (barcode == null || barcode.trim().isEmpty()) {
-                throw new IllegalArgumentException("Mã vạch cuốn sách hoàn trả không hợp lệ.");
+                throw new ValidationException("Mã vạch cuốn sách hoàn trả không hợp lệ.");
             }
 
             String staffUsername = (principal != null) ? principal.getName() : "admin";
@@ -87,7 +89,7 @@ public class LoanController {
             loanService.confirmReturnWithDetails(barcode.trim(), actualReturnDateTime, fullConditionLog, staffUsername);
 
             redirectAttributes.addFlashAttribute("successMessage", "Xác nhận nhận sách trả và cập nhật kho thành công!");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Xử lý trả sách thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/loan/returns";
@@ -121,7 +123,7 @@ public class LoanController {
         try {
             loanService.processRenewal(borrowDetailId);
             redirectAttributes.addFlashAttribute("successMessage", "Gia hạn sách thành công!");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Gia hạn thất bại: " + e.getMessage());
         }
         return "redirect:/librarian/loan/borrow-schedule";
@@ -137,7 +139,7 @@ public class LoanController {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             loanService.approveRenewal(borrowDetailId, staffUsername);
             redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu gia hạn!");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi duyệt gia hạn: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";
@@ -153,7 +155,7 @@ public class LoanController {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             loanService.rejectRenewal(borrowDetailId, staffUsername);
             redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu gia hạn!");
-        } catch (Exception e) {
+        } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi từ chối gia hạn: " + e.getMessage());
         }
         return "redirect:/librarian/borrow/create";

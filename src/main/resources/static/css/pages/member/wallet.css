@@ -1,0 +1,87 @@
+/*
+ * Page family: Member wallet and transaction history
+ * Template: templates/member/wallet.html
+ * Route: /member/financial/transactions
+ * Root scope: .wallet-page
+ */
+
+.wallet-page .wallet-overview-row > [class*="col-"] { display: flex; min-width: 0; }
+.wallet-page .balance-card,
+.wallet-page .fine-summary { width: 100%; min-width: 0; min-height: 340px; }
+.wallet-page .balance-card {
+    color: var(--app-color-ink) !important;
+    background: var(--app-color-surface-card) !important;
+    border: 1px solid var(--app-color-hairline) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+}
+.wallet-page .balance-card .card-body { padding: 24px !important; }
+.wallet-page .balance-label { color: var(--app-color-muted); font-size: 12px; font-weight: 600; line-height: 1.4; letter-spacing: 1.5px; text-transform: uppercase; }
+.wallet-page .balance-value { color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 36px; font-weight: 400 !important; line-height: 1.15; letter-spacing: -.02em; }
+.wallet-page .balance-unit { font-family: var(--app-font-ui); font-size: 14px; font-weight: 600; }
+.wallet-page .wallet-balance-info { padding: 16px; color: var(--app-color-body); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.wallet-page .wallet-status-dot { width: 8px; height: 8px; display: inline-block; margin-right: 8px; border-radius: 50%; background: var(--app-color-success-ink); }
+.wallet-page .wallet-balance-note { margin-top: 12px; padding-top: 12px; color: var(--app-color-muted); border-top: 1px solid var(--app-color-hairline-soft); font-size: 13px; }
+.wallet-page .balance-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.wallet-page .balance-actions .btn { width: 100%; min-width: 0; padding-inline: 12px; }
+.wallet-page .btn-wallet-light,
+.wallet-page .btn-wallet-outline { color: var(--app-color-ink); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); }
+.wallet-page .btn-wallet-light:hover,
+.wallet-page .btn-wallet-outline:hover { color: var(--app-color-primary-active); background: var(--app-color-surface-soft); border-color: var(--app-color-primary); }
+
+.wallet-page .classic-card { overflow: visible; background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline) !important; border-radius: 12px !important; box-shadow: none !important; }
+.wallet-page .fine-summary { border-left: 4px solid var(--app-color-danger-ink) !important; }
+.wallet-page .fine-summary.fine-summary-clear { border-left-color: var(--app-color-success-ink) !important; }
+.wallet-page .fine-summary .card-body { min-height: 0; display: flex; flex-direction: column; padding: 24px !important; }
+.wallet-page .fine-summary .section-title { color: var(--app-color-ink) !important; }
+.wallet-page .fine-summary .text-danger { color: var(--app-color-danger-ink) !important; }
+.wallet-page .fine-summary.fine-summary-clear .text-danger { color: var(--app-color-success-ink) !important; }
+.wallet-page .fine-total-amount { font-family: var(--app-font-display); font-size: 20px; font-weight: 500; line-height: 1.3; }
+.wallet-page .fine-list { flex: 1; min-height: 0; max-height: 220px; overflow-y: auto; padding-right: 4px; }
+.wallet-page .fine-item { padding: 16px !important; background: var(--app-color-surface-soft) !important; border: 1px solid var(--app-color-hairline); border-radius: 8px !important; }
+.wallet-page .fine-item .text-danger { color: var(--app-color-danger-ink) !important; }
+.wallet-page .fine-item-title { margin: 0 0 4px; color: var(--app-color-ink); font-family: var(--app-font-ui); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.wallet-page .fine-item-amount-display { margin: 0; font-family: var(--app-font-display); font-size: 20px; font-weight: 500; line-height: 1.3; }
+.wallet-page .btn-pay-fine { color: var(--app-color-canvas); background: var(--app-color-application-primary); border-color: var(--app-color-application-primary); }
+.wallet-page .btn-pay-fine:hover { color: var(--app-color-canvas); background: var(--app-color-application-primary-hover); border-color: var(--app-color-application-primary-hover); }
+.wallet-page .fine-empty-state { height: 100%; min-height: 180px; padding: 24px; display: grid; place-items: center; color: var(--app-color-muted); background: var(--app-color-surface-soft); border: 1px dashed var(--app-color-success-border); border-radius: 8px; text-align: center; }
+.wallet-page .fine-empty-icon { width: 40px; height: 40px; margin: 0 auto 12px; display: grid; place-items: center; color: var(--app-color-success-ink); background: var(--app-color-success-soft); border: 1px solid var(--app-color-success-border); border-radius: 50%; font-size: 18px; }
+.wallet-page .fine-empty-title { color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 20px; font-weight: 500; line-height: 1.3; }
+.wallet-page .fine-empty-note { max-width: 360px; margin: 6px auto 0; color: var(--app-color-muted); font-size: 13px; }
+
+.wallet-page .fine-payment-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr); gap: 24px; align-items: stretch; }
+.wallet-page .fine-payment-ticket,
+.wallet-page .fine-payment-side { min-width: 0; padding: 16px; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.wallet-page .fine-payment-items { max-height: 180px; margin-top: 12px; overflow-y: auto; background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.wallet-page .fine-payment-item { padding: 12px; display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--app-color-hairline-soft); }
+.wallet-page .fine-payment-item:last-child { border-bottom: 0; }
+.wallet-page .fine-payment-label { margin-bottom: 4px; color: var(--app-color-muted); font-size: 12px; font-weight: 600; line-height: 1.4; letter-spacing: .08em; text-transform: uppercase; }
+.wallet-page .fine-payment-account { margin-bottom: 16px; color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.wallet-page .fine-payment-item-title { color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.wallet-page .fine-payment-item-amount { flex-shrink: 0; color: var(--app-color-danger-ink); font-weight: 600; }
+.wallet-page .fine-payment-summary-title { margin: 0 0 16px; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 20px; font-weight: 500; line-height: 1.3; }
+.wallet-page .fine-payment-row { padding: 10px 0; display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--app-color-hairline-soft); }
+.wallet-page .fine-payment-value { max-width: 62%; color: var(--app-color-body-strong); text-align: right; font-weight: 600; }
+.wallet-page .fine-payment-method { padding: 12px 14px; background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.wallet-page .member-wallet-current-balance { padding: 16px; display: flex; align-items: center; justify-content: space-between; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
+.wallet-page .member-wallet-current-balance strong { color: var(--app-color-application-primary); }
+
+.wallet-page .classic-card-header { padding: 20px 24px; background: var(--app-color-surface-soft); border-bottom: 1px solid var(--app-color-hairline) !important; border-radius: 12px 12px 0 0; }
+.wallet-page .transaction-filter { gap: 8px; }
+.wallet-page .transaction-filter .form-select { min-width: 210px; }
+.wallet-page .transaction-code { color: var(--app-color-application-primary) !important; }
+.wallet-page .wallet-transaction-amount { font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 991.98px) {
+    .wallet-page .balance-card,
+    .wallet-page .fine-summary { min-height: 300px; }
+}
+
+@media (max-width: 767.98px) {
+    .wallet-page .balance-actions { grid-template-columns: 1fr; }
+    .wallet-page .fine-payment-layout { grid-template-columns: 1fr; }
+    .wallet-page .classic-card-header > div { align-items: stretch !important; flex-direction: column; }
+    .wallet-page .transaction-filter { width: 100%; align-items: stretch; flex-direction: column; }
+    .wallet-page .transaction-filter .form-select,
+    .wallet-page .transaction-filter .btn { width: 100%; }
+}

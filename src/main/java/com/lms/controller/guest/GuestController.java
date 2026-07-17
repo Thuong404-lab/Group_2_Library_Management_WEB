@@ -1,4 +1,5 @@
 package com.lms.controller.guest;
+import com.lms.exception.ApplicationException;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,12 +46,23 @@ public class GuestController {
 
     // Trang chủ
     @GetMapping("/")
-    public String homePage(Model model, Principal principal) {
+    public String homePage(Model model, org.springframework.security.core.Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (isAdmin) {
+                return "redirect:/admin/dashboard";
+            }
+            boolean isLibrarian = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN"));
+            if (isLibrarian) {
+                return "redirect:/librarian/dashboard";
+            }
+        }
+
         List<Book> books = bookService.getRecentBooks(6);
         List<Book> trendingBooks = bookService.getTrendingBooks(6);
         model.addAttribute("books", books);
         model.addAttribute("trendingBooks", trendingBooks);
-        addFavoriteBookIds(model, principal);
+        addFavoriteBookIds(model, authentication);
         return "index";
     }
 
@@ -112,6 +124,18 @@ public class GuestController {
         model.addAttribute("bookReviews", bookReviews);
         model.addAttribute("reviewCount", bookReviews.size());
         model.addAttribute("averageRating", averageRating);
+        model.addAttribute("reviewBorrowEligible", false);
+        model.addAttribute("reviewAlreadySubmitted", false);
+        if (principal != null) {
+            try {
+                model.addAttribute("reviewBorrowEligible",
+                        memberReviewService.isEligibleToReview(principal.getName(), id));
+                model.addAttribute("reviewAlreadySubmitted",
+                        memberReviewService.hasActiveReview(principal.getName(), id));
+            } catch (ApplicationException ignored) {
+                // Non-member authenticated accounts cannot submit member reviews.
+            }
+        }
         if (!model.containsAttribute("reviewRequest")) {
             MemberReviewSubmitRequest reviewRequest = new MemberReviewSubmitRequest();
             reviewRequest.setBookId(id);
@@ -129,7 +153,7 @@ public class GuestController {
 
         try {
             model.addAttribute("favoriteBookIds", memberFavoriteService.getMyFavoriteBookIds(principal.getName()));
-        } catch (RuntimeException e) {
+        } catch (ApplicationException e) {
             model.addAttribute("favoriteBookIds", Collections.emptySet());
         }
     }

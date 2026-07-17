@@ -2,6 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
+import com.lms.exception.ValidationException;
 import com.lms.entity.MembershipTier;
 import com.lms.enums.ActionType;
 import com.lms.repository.MembershipTierRepository;
@@ -58,17 +59,24 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public Page<SystemLog> getSystemLogs(int page, String action, String keyword) {
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10);
-
-        String trimmedAction = action == null ? "" : action.trim();
         String trimmedKeyword = keyword == null ? "" : keyword.trim();
-        String searchKeyword = (trimmedAction + " " + trimmedKeyword).trim();
+        String section = normalizeLogSection(action);
 
-        Page<SystemLog> logs = !searchKeyword.isEmpty()
-                ? systemLogRepository.searchLogs(searchKeyword, pageRequest)
-                : systemLogRepository.findAllByOrderByCreatedAtDesc(pageRequest);
+        Page<SystemLog> logs = systemLogRepository.searchLogsBySection(
+                section, trimmedKeyword, pageRequest);
 
         logs.forEach(this::populateActorUsername);
         return logs;
+    }
+
+    private String normalizeLogSection(String section) {
+        if ("operations".equalsIgnoreCase(section)) {
+            return "operations";
+        }
+        if ("circulation".equalsIgnoreCase(section)) {
+            return "circulation";
+        }
+        return "auth";
     }
 
     private void populateActorUsername(SystemLog log) {
@@ -197,7 +205,7 @@ public class SystemServiceImpl implements SystemService {
                                         Map<Integer, BigDecimal> tierSpendingConditions) {
         List<MembershipTier> tiers = getMembershipTiers();
         if (tiers.isEmpty()) {
-            throw new IllegalArgumentException("Chưa có hạng thành viên để cấu hình.");
+            throw new ValidationException("Chưa có hạng thành viên để cấu hình.");
         }
 
         for (MembershipTier tier : tiers) {
@@ -229,25 +237,25 @@ public class SystemServiceImpl implements SystemService {
 
     private void validatePositive(Integer value, String message) {
         if (value == null || value <= 0) {
-            throw new IllegalArgumentException(message);
+            throw new ValidationException(message);
         }
     }
 
     private void validateZeroOrPositive(Integer value, String message) {
         if (value == null || value < 0) {
-            throw new IllegalArgumentException(message);
+            throw new ValidationException(message);
         }
     }
 
     private void validatePercentage(Integer value, String message) {
         if (value == null || value < 0 || value > 100) {
-            throw new IllegalArgumentException(message);
+            throw new ValidationException(message);
         }
     }
 
     private void validateZeroOrPositive(BigDecimal value, String message) {
         if (value == null || value.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException(message);
+            throw new ValidationException(message);
         }
     }
 }

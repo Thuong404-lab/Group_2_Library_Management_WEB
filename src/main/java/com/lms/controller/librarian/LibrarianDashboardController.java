@@ -27,7 +27,7 @@ public class LibrarianDashboardController {
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAllAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
+        model.mergeAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
     }
@@ -46,13 +46,16 @@ public class LibrarianDashboardController {
     public String viewLibrarianList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String status,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        LibrarianListViewData data = dashboardService.getLibrarianList(page, keyword);
+        LibrarianListViewData data = dashboardService.getLibrarianList(page, keyword, status);
         model.addAttribute("staffPage", data.staffPage());
         model.addAttribute("accountByUserId", data.accountByUserId());
+        model.addAttribute("librarianSummary", data.summaryCounts());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedStatus", status);
         addCurrentUser(model, userDetails);
         return "librarian/librarian-list";
     }

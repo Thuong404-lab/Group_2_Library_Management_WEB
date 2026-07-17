@@ -1,5 +1,7 @@
 package com.lms.entity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
+
 import java.util.Set;
 @Entity
 @Table(name = "Books")
@@ -23,6 +25,7 @@ public class Book {
 
 
     @ManyToMany
+    @BatchSize(size = 20)
     @JoinTable(
         name = "`BookAuthors`",
         joinColumns = @JoinColumn(name = "book_id"),

@@ -12,7 +12,7 @@ public interface AuthService {
     /**
      * Đăng ký thành viên mới
      */
-    void register(RegisterRequest request) throws Exception;
+    void register(RegisterRequest request);
 
     /**
      * Ghi log khi đăng nhập
@@ -32,15 +32,15 @@ public interface AuthService {
     /**
      * Yêu cầu đặt lại mật khẩu
      */
-    void requestPasswordReset(String email) throws Exception;
+    void requestPasswordReset(String email);
 
     /**
      * Xác thực token đặt lại mật khẩu
      */
-    void validatePasswordResetToken(String token) throws Exception;
+    void validatePasswordResetToken(String token);
 
     /**
      * Đặt lại mật khẩu cho người dùng
      */
-    void resetPassword(String token, String newPassword) throws Exception;
+    void resetPassword(String token, String newPassword);
 }

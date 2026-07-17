@@ -58,8 +58,10 @@
                 <textarea name="response"
                           class="form-control form-control-sm mb-1"
                           rows="2"
-                          placeholder="Nhập phản hồi..."></textarea>
-                        <button type="submit" class="btn btn-sm btn-primary">
+                          th:placeholder="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Chỉnh sửa phản hồi...' : 'Nhập phản hồi...'"
+                          th:text="${review.librarianResponse != null ? review.librarianResponse : ''}"></textarea>
+                        <button type="submit" class="btn btn-sm btn-primary"
+                                th:text="${review.librarianResponse != null && !review.librarianResponse.isBlank()} ? 'Lưu chỉnh sửa' : 'Phản hồi'">
                             Phản hồi
                         </button>
                     </form>
@@ -87,14 +89,14 @@
         <nav th:if="${reviews != null && reviews.totalPages > 1}">
             <ul class="pagination justify-content-center">
                 <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
-                    <a class="page-link"
+                    <a class="page-link page-link-classic"
                        th:href="@{/librarian/interaction/reviews(page=${reviews.number - 1})}">
                         Trước
                     </a>
                 </li>
 
                 <li class="page-item disabled">
-                    <span class="page-link">
+                    <span class="page-link page-link-classic">
                         Trang <span th:text="${reviews.number + 1}">1</span>
                         /
                         <span th:text="${reviews.totalPages}">1</span>
@@ -102,7 +104,7 @@
                 </li>
 
                 <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
-                    <a class="page-link"
+                    <a class="page-link page-link-classic"
                        th:href="@{/librarian/interaction/reviews(page=${reviews.number + 1})}">
                         Sau
                     </a>

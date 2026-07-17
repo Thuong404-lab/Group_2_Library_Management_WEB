@@ -3,35 +3,25 @@
     layout:decorate="~{layout/admin_base}">
 
 <head>
-    <title th:text="${source == 'staff' ? 'Tạo tài khoản thủ thư' : 'Tạo tài khoản thành viên'}">
+    <title th:text="${source == 'staff' ? 'Tạo tài khoản nhân viên' : 'Tạo tài khoản thành viên'}">
         Tạo tài khoản
     </title>
-    <style>
-        .validate-field.is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-            background-image: none !important;
-        }
-
-        .validate-field.is-valid {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
-            background-image: none !important;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/admin/create-account.css}" />
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu=${source == 'staff' ? 'staff' : 'accounts'}">
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom"
-            style="border-color: rgba(139, 90, 43, 0.2) !important;">
+    <div layout:fragment="content" th:with="activeMenu=${source == 'staff' ? 'staff' : 'accounts'}"
+        class="member-management-page">
+        <div
+            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
             <div>
-                <h2 class="fw-bold mb-1" style="color: #4a3b32; font-family: 'Playfair Display', serif;"
+                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336"
                     th:text="${source == 'staff' ? 'Tạo Tài Khoản Thủ Thư' : 'Tạo Tài Khoản Thành Viên'}">
                     Tạo Tài Khoản Mới
                 </h2>
                 <div class="text-muted"
-                    th:text="${source == 'staff' ? 'Thêm một tài khoản thủ thư mới vào hệ thống' : 'Thêm một tài khoản thành viên mới vào hệ thống'}">
+                    th:text="${source == 'staff' ? 'Thêm một tài khoản nhân viên mới vào hệ thống' : 'Thêm một tài khoản thành viên mới vào hệ thống'}">
                     Thêm một tài khoản mới vào hệ thống
                 </div>
             </div>
@@ -46,7 +36,7 @@
             <div class="col-lg-8">
                 <div class="card-classic shadow-sm mb-4">
                     <div class="card-header bg-white border-bottom border-color p-4">
-                        <h5 class="fw-bold mb-0" style="color: #4a3b32; font-family: 'Playfair Display', serif;">
+                        <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                             Thông tin tài khoản
                         </h5>
@@ -63,7 +53,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Họ tên <span
                                             class="text-danger">*</span></label>
-                                    <input class="form-control validate-field" name="fullName" required
+                                    <input class="form-control validate-field" name="fullName" maxlength="50" required
                                         placeholder="Nguyễn Văn A"
                                         th:value="${formValues != null ? formValues['fullName'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
@@ -126,36 +116,17 @@
                                 </div>
                             </div>
 
-                            <h5 class="fw-bold mb-1 mt-3"
-                                style="color: #4a3b32; font-family: 'Playfair Display', serif;">
-                                <i class="bi bi-card-heading me-2 text-classic"></i>
-                                <span
-                                    th:text="${source == 'staff' ? 'Thiết lập Tài khoản Thủ thư' : 'Thiết lập Thẻ Thư viện'}">
-                                    Thiết lập tài khoản
-                                </span>
-                            </h5>
-
                             <div class="row g-4">
                                 <div class="col-md-6" id="tierBox" th:if="${source == 'members'}">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Hạng thành viên <span class="text-danger">*</span>
+                                        Hạng thành viên
                                     </label>
-                                    <select class="form-select form-control validate-field" name="tierId" required
-                                        th:classappend="${fieldErrors != null and fieldErrors['tierId'] != null} ? 'is-invalid'">
-                                        <option value="" disabled
-                                            th:selected="${formValues == null or formValues['tierId'] == null}">
-                                            -- Chọn hạng thành viên --
-                                        </option>
-                                        <option th:each="tier : ${tiers}" th:value="${tier.tierId}"
-                                            th:text="${tier.tierName == 'Regular' ? 'Thường' : (tier.tierName == 'Silver' ? 'Bạc' : (tier.tierName == 'Gold' ? 'Vàng' : (tier.tierName == 'Diamond' ? 'Kim cương' : tier.tierName)))}"
-                                            th:selected="${formValues != null and formValues['tierId'] == tier.tierId}">
-                                            Standard Member
-                                        </option>
-                                    </select>
-                                    <div class="invalid-feedback"
-                                        th:text="${fieldErrors != null ? fieldErrors['tierId'] : ''}">
-                                        Vui lòng chọn hạng thành viên.
+                                    <div class="member-readonly-field" role="textbox" aria-readonly="true">
+                                        Thường
                                     </div>
+                                    <input type="hidden" name="tierId" th:each="tier : ${tiers}"
+                                        th:if="${#strings.equalsIgnoreCase(tier.tierName, 'Regular')}"
+                                        th:value="${tier.tierId}">
                                 </div>
 
                                 <div class="col-md-6" th:if="${source != 'members'}">
@@ -186,34 +157,24 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">
-                                        Trạng thái <span class="text-danger">*</span>
+                                        Trạng thái
                                     </label>
-                                    <select class="form-select form-control validate-field" name="status" required
-                                        th:classappend="${fieldErrors != null and fieldErrors['status'] != null} ? 'is-invalid'">
-                                        <option value="Active"
-                                            th:selected="${formValues == null or #strings.isEmpty(formValues['status']) or formValues['status'] == 'Active'}">
-                                            Hoạt động
-                                        </option>
-                                        <option value="Inactive"
-                                            th:selected="${formValues != null and formValues['status'] == 'Inactive'}">
-                                            Ngừng hoạt động
-                                        </option>
-                                    </select>
-                                    <div class="invalid-feedback"
-                                        th:text="${fieldErrors != null ? fieldErrors['status'] : ''}">
-                                        Vui lòng chọn trạng thái tài khoản.
+                                    <div class="member-readonly-field" role="textbox" aria-readonly="true">
+                                        Hoạt động
                                     </div>
+                                    <input type="hidden" name="status" value="Active">
                                 </div>
 
                             </div>
 
-                            <hr class="my-4" style="border-color: rgba(139, 90, 43, 0.2);">
-                            <div class="d-flex justify-content-end" style="gap: 12px;">
-                                <a class="btn btn-light border shadow-sm" th:if="${modalMode != true}" th:href="${backUrl}">
+                            <hr class="my-4 u-border-color-rgba-139-90-43-0-2-447fe402">
+                            <div class="d-flex justify-content-end u-gap-12px-58cf3fe5">
+                                <a class="btn btn-light border shadow-sm" th:if="${modalMode != true}"
+                                    th:href="${backUrl}">
                                     Hủy bỏ
                                 </a>
-                                <button class="btn btn-light border shadow-sm" th:if="${modalMode == true}" type="button"
-                                    data-bs-dismiss="modal">Hủy bỏ</button>
+                                <button class="btn btn-light border shadow-sm" th:if="${modalMode == true}"
+                                    type="button" data-bs-dismiss="modal">Hủy bỏ</button>
                                 <button class="btn btn-classic px-4" type="submit">
                                     Tạo tài khoản
                                 </button>
@@ -303,6 +264,35 @@
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
                         feedback.textContent = getErrorMessage(field);
+                        return false;
+                    }
+
+                    if (field.name === "fullName" && value.length > 50) {
+                        field.classList.remove("is-valid");
+                        field.classList.add("is-invalid");
+                        feedback.textContent = "Họ tên không được vượt quá 50 ký tự.";
+                        return false;
+                    }
+
+                    if (field.name === "fullName"
+                        && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(value)) {
+                        field.classList.remove("is-valid");
+                        field.classList.add("is-invalid");
+                        feedback.textContent = "Họ tên chỉ được có tối đa 8 từ và mỗi từ không quá 15 ký tự.";
+                        return false;
+                    }
+
+                    if (field.name === "fullName" && /([\p{L}])\1\1/u.test(value)) {
+                        field.classList.remove("is-valid");
+                        field.classList.add("is-invalid");
+                        feedback.textContent = "Họ tên không được có một ký tự lặp lại 3 lần liên tiếp.";
+                        return false;
+                    }
+
+                    if (field.name === "fullName" && /^([\p{L}])\1+$/u.test(value)) {
+                        field.classList.remove("is-valid");
+                        field.classList.add("is-invalid");
+                        feedback.textContent = "Họ tên không được chỉ gồm một ký tự lặp lại.";
                         return false;
                     }
 
