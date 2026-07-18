@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
-<head><title>Payment audit logs</title><link rel="stylesheet" th:href="@{/css/pages/admin/payments.css}"/><script defer th:src="@{/js/auto-filter.js}"></script></head>
+<head><title th:text="#{admin.paymentAudit.title}">Payment Audit Logs</title><link rel="stylesheet" th:href="@{/css/pages/admin/payments.css}"/><script defer th:src="@{/js/auto-filter.js}"></script></head>
 <body><div layout:fragment="content" th:with="activeMenu='payments'" class="admin-payment-page">
     <div class="app-page-header"><div><a th:href="@{/admin/payments}" class="app-back-link"><i class="bi bi-arrow-left"></i> <span th:text="#{admin.payments.heading}">Payments</span></a><h2 class="app-page-title" th:text="#{admin.paymentAudit.title}">Payment Audit Logs</h2></div>
         <div class="app-page-actions"><a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs/export(format='csv',keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">CSV</a><a class="btn btn-classic" th:href="@{/admin/payments/audit-logs/export(format='pdf',keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}">PDF</a></div></div>
@@ -34,7 +34,7 @@
                     </li>
                     <li class="page-item disabled" th:if="${endPage < audits.totalPages - 1}"><span class="page-link">…</span></li>
                     <li class="page-item" th:classappend="${audits.last ? 'disabled' : ''}">
-                        <a class="page-link" aria-label="Trang sau" th:href="@{/admin/payments/audit-logs(page=${audits.number+1},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}"><i class="bi bi-chevron-right"></i></a>
+                        <a class="page-link" th:aria-label="#{common.next}" th:href="@{/admin/payments/audit-logs(page=${audits.number+1},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}"><i class="bi bi-chevron-right"></i></a>
                     </li>
                     <li class="page-item" th:classappend="${audits.last ? 'disabled' : ''}">
                         <a class="page-link" th:href="@{/admin/payments/audit-logs(page=${audits.totalPages-1},keyword=${keyword},eventType=${eventType},fromDate=${fromDate},toDate=${toDate})}" th:text="#{pagination.last}">Last</a>

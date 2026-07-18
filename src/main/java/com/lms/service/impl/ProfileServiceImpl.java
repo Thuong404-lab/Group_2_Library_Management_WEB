@@ -7,12 +7,12 @@ import com.lms.repository.UserRepository;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.service.FileUploadService;
-import com.lms.service.ProfileService;
 import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.lms.service.ProfileService;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,17 +121,16 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private void validateAndSetPhone(User user, String phone) {
-        if (phone != null && !phone.trim().isEmpty()) {
-            if (!phone.matches("^(0|\\+84)\\d{9}$")) {
-                throw new ValidationException(messages.get("backend.profile.phoneFormat"));
-            }
-            if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
-                throw new ConflictException(messages.get("backend.account.phoneUsed"));
-            }
-            user.setPhone(phone);
-        } else if (phone != null) {
-            user.setPhone("");
+        if (phone == null || phone.trim().isEmpty()) {
+            throw new ValidationException(messages.get("validation.phoneRequired"));
         }
+        if (!phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+            throw new ValidationException(messages.get("backend.profile.phoneFormat"));
+        }
+        if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
+            throw new ConflictException(messages.get("backend.account.phoneUsed"));
+        }
+        user.setPhone(phone);
     }
 
     @Override

@@ -99,6 +99,9 @@ public class BorrowController extends LocalizedControllerSupport {
         model.addAttribute("currentMemberName", principal.getName());
         model.addAttribute("selectedBookId", bookId);
 
+        // --- THÊM DÒNG NÀY ĐỂ TRUYỀN DỮ LIỆU SỐ NGÀY MAX XUỐNG GIAO DIỆN ---
+        model.addAttribute("maxBorrowDays", getMaxBorrowDays());
+
         try {
             Book book = bookService.findBookById(bookId);
             if ("Inactive".equalsIgnoreCase(book.getStatus())) {
@@ -123,6 +126,14 @@ public class BorrowController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
         }
+
+        // --- THÊM ĐOẠN VALIDATION CHẶN LỖI NHẬP QUÁ NGÀY Ở ĐÂY ---
+        Integer maxDaysAllowed = getMaxBorrowDays();
+        if (numberOfDays < 1 || numberOfDays > maxDaysAllowed) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBorrowDays", maxDaysAllowed));
+            return "redirect:/member/borrow/create?bookId=" + bookId;
+        }
+
         try {
             borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmitted"));
@@ -255,4 +266,18 @@ public class BorrowController extends LocalizedControllerSupport {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+    private Integer getMaxBorrowDays() {
+        return systemSettingRepository.findAll().stream()
+                .filter(setting -> setting.getSettingKey() != null)
+                .filter(setting -> "Max_Borrow_Days".equalsIgnoreCase(setting.getSettingKey()))
+                .map(setting -> setting.getSettingValue())
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .map(Integer::parseInt)
+                .filter(value -> value > 0)
+                .findFirst()
+                .orElse(14); // Giá trị mặc định nếu database chưa có key này
+    }
+
+
 }

@@ -17,7 +17,6 @@ import com.lms.repository.TransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.annotation.PreDestroy;
@@ -39,8 +38,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class PayOsPaymentService {
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
+    private final LocalizedMessageService messages;
     private static final Logger LOGGER = LoggerFactory.getLogger(PayOsPaymentService.class);
     public static final String TOP_UP = "TOP_UP";
     public static final String FINE = "FINE";
@@ -78,7 +77,8 @@ public class PayOsPaymentService {
                                @Value("${PAYOS_CLIENT_ID:${payos.client-id:}}") String clientId,
                                @Value("${PAYOS_API_KEY:${payos.api-key:}}") String apiKey,
                                @Value("${PAYOS_CHECKSUM_KEY:${payos.checksum-key:}}") String checksumKey,
-                               @Value("${APP_BASE_URL:${app.base-url:http://localhost:8080}}") String baseUrl) {
+                               @Value("${APP_BASE_URL:${app.base-url:http://localhost:8080}}") String baseUrl,
+                               LocalizedMessageService messages) {
         this.paymentRepository = paymentRepository;
         this.fineItemRepository = fineItemRepository;
         this.transactionRepository = transactionRepository;
@@ -90,6 +90,7 @@ public class PayOsPaymentService {
         this.apiKey = apiKey;
         this.checksumKey = checksumKey;
         this.baseUrl = baseUrl.replaceAll("/+$", "");
+        this.messages = messages;
         this.payOS = clientId.isBlank() || apiKey.isBlank() || checksumKey.isBlank()
                 ? null : new PayOS(clientId, apiKey, checksumKey);
     }

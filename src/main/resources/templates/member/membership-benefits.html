@@ -12,22 +12,22 @@
         <div class="col-lg-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-primary text-white py-3 text-center">
-            <h4 class="mb-0 fw-bold" th:text="#{member.benefits.heading}">Your Benefits</h4>
-            <small class="text-white-50" th:text="#{member.benefits.description}">Based on your current membership tier</small>
+                    <h4 class="mb-0 fw-bold" th:text="#{member.benefits.heading}">Your Benefits</h4>
+                    <small class="text-white-50" th:text="#{member.benefits.description}">Based on your current membership tier</small>
                 </div>
                 <div class="card-body p-4" th:if="${tierBenefits != null}">
                     <div class="text-center mb-4">
                         <span class="badge bg-light text-primary border border-primary px-4 py-2 fs-5 text-uppercase fw-bold"
-                      th:text="${tierBenefits.tierName}">Membership Tier</span>
+                              th:text="${tierBenefits.tierName}">Hạng Thẻ</span>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-6 text-center border-end">
-                        <h6 class="text-muted text-uppercase mb-1" th:text="#{member.benefits.maxLimit}">Maximum Limit</h6>
-                        <span class="fs-4 fw-bold text-dark" th:text="#{book.count(${tierBenefits.borrowLimit})}">3 books</span>
+                            <h6 class="text-muted text-uppercase mb-1" th:text="#{member.benefits.maxLimit}">Maximum Limit</h6>
+                            <span class="fs-4 fw-bold text-dark" th:text="#{common.bookCount(${tierBenefits.borrowLimit})}">3 books</span>
                         </div>
                         <div class="col-6 text-center">
-                        <h6 class="text-muted text-uppercase mb-1" th:text="#{member.benefits.discount}">Discount</h6>
+                            <h6 class="text-muted text-uppercase mb-1" th:text="#{member.tier.discount}">Discount</h6>
                             <span class="fs-4 fw-bold text-success" th:text="${tierBenefits.discountPercent} + '%'">0%</span>
                         </div>
                     </div>
@@ -36,16 +36,16 @@
 
                     <h5 class="text-dark mb-3"><i class="bi bi-gift me-2 text-danger"></i><span th:text="#{member.benefits.details}">Benefit Details:</span></h5>
                     <div class="bg-light p-3 rounded text-secondary member-membership-benefits-div-white-space-01" th:text="${tierBenefits.benefits}">
-                        <span th:text="#{member.benefits.notConfigured}">Detailed benefits have not been configured for this tier.</span>
+                        Detailed benefits have not been configured for this tier.
                     </div>
                 </div>
 
                 <div class="card-body text-center py-5" th:if="${tierBenefits == null}">
                     <i class="bi bi-person-exclamation text-muted display-1"></i>
-            <p class="text-secondary mt-3" th:text="#{member.benefits.noData}">No tier benefit configuration was found for your account.</p>
+                    <p class="text-secondary mt-3" th:text="#{member.benefits.noData}">No tier benefit configuration was found for your account.</p>
                 </div>
                 <div class="card-footer bg-white text-center py-3">
-            <a th:href="@{/member/membership/tier}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i><span th:text="#{member.benefits.viewProgress}">View Tier Progress</span></a>
+                    <a th:href="@{/member/membership/tier}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i><span th:text="#{member.benefits.viewProgress}">View Tier Progress</span></a>
                 </div>
             </div>
         </div>

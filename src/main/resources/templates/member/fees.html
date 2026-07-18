@@ -14,7 +14,7 @@
 <div layout:fragment="content" class="container finance-page member-fees-page">
     <div class="finance-header">
         <div>
-            <h2 class="finance-title" th:text="#{member.fees.heading}">Borrowing Fees</h2>
+            <h2 class="finance-title" th:text="#{member.fees.title}">Borrowing Fees</h2>
             <div class="finance-description" th:text="#{member.fees.description}">Fees are deducted from your wallet when a librarian approves the loan.</div>
         </div>
         <div class="fees-wallet-balance">
@@ -34,8 +34,8 @@
                 <span class="fees-count is-pending" th:text="${pendingFees != null ? #lists.size(pendingFees) : 0}">0</span>
             </div>
 
-            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="empty-state">
-                <span th:text="#{member.fees.pendingEmpty}">There are no loans pending approval.</span>
+            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="empty-state" th:text="#{member.fees.pendingEmpty}">
+                There are no loans pending approval.
             </div>
 
             <div class="app-table-wrap" th:if="${pendingFees != null and !#lists.isEmpty(pendingFees)}">
@@ -72,8 +72,8 @@
                 <span class="fees-count is-unpaid" th:text="${payableFees != null ? #lists.size(payableFees) : 0}">0</span>
             </div>
 
-            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="empty-state">
-                <span th:text="#{member.fees.payableEmpty}">There are no borrowing fees to pay.</span>
+            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="empty-state" th:text="#{member.fees.payableEmpty}">
+                There are no borrowing fees to pay.
             </div>
 
             <div class="app-table-wrap" th:if="${payableFees != null and !#lists.isEmpty(payableFees)}">
@@ -103,8 +103,8 @@
                             <form th:if="${fee.payable}" method="post"
                                   th:action="@{/member/financial/fees/pay/{borrowId}(borrowId=${fee.borrowId})}"
                                   class="fees-action-form">
-                                <button type="submit" class="btn app-primary-action">
-                                    <span th:text="#{payment.pay}">Pay</span>
+                                <button type="submit" class="btn app-primary-action" th:text="#{payment.pay}">
+                                    Pay
                                 </button>
                             </form>
                             <form th:if="${fee.payable}" method="post"
@@ -127,8 +127,8 @@
                 <span class="fees-count is-paid" th:text="${paidFees != null ? #lists.size(paidFees) : 0}">0</span>
             </div>
 
-            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="empty-state">
-                <span th:text="#{member.fees.paidEmpty}">No borrowing fees have been paid yet.</span>
+            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="empty-state" th:text="#{member.fees.paidEmpty}">
+                No borrowing fees have been paid yet.
             </div>
 
             <div class="app-table-wrap" th:if="${paidFees != null and !#lists.isEmpty(paidFees)}">

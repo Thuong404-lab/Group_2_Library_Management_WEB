@@ -43,4 +43,10 @@ public class BookItem {
     public void setStatus(String status) { this.status = status; }
     public String getBookCondition() { return bookCondition; }
     public void setBookCondition(String bookCondition) { this.bookCondition = bookCondition; }
+
+    @Column(name = "damage_note", columnDefinition = "NVARCHAR(255)")
+    private String damageNote;
+
+    public String getDamageNote() { return damageNote; }
+    public void setDamageNote(String damageNote) { this.damageNote = damageNote; }
 }

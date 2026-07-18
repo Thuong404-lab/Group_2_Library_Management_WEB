@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head>
+    <title th:text="#{member.cart.checkoutTitle}">Confirm Loan Payment - LMW</title>
+    <style>
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content" class="container mt-5 mb-5 justify-content-center d-flex">
+    <div class="card border-classic shadow-sm p-4 bg-white rounded-3" style="max-width: 650px; width: 100%;">
+        <h4 class="font-playfair fw-bold text-center mb-4" style="color: #4a3b32;"><i class="bi bi-shield-check me-2" style="color: #8b5a2b;"></i><span th:text="#{member.cart.checkoutHeading}">Confirm &amp; Pay</span></h4>
+
+        <!-- Thông báo Alert -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #e6f4ea; color: #137333;" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${successMessage}">Success notification</span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #fce8e6; color: #c5221f;" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${errorMessage}">Error notification</span>
+        </div>
+
+        <div class="alert alert-warning border-0 small mb-4" style="background-color:#fffbeb; color:#b45309;">
+            <i class="bi bi-info-circle-fill me-2"></i><span th:text="#{member.cart.checkoutNotice}">The service fee will be deducted directly from your wallet after you confirm.</span>
+        </div>
+
+        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.summary(${cartItems.size()})}">Selected books (0 books)</h6>
+        <div class="border-classic rounded p-3 bg-light mb-4 text-dark small" style="max-height: 180px; overflow-y: auto;">
+            <div th:each="item : ${cartItems}" class="d-flex justify-content-between py-1 border-bottom border-light">
+                <span class="fw-semibold text-truncate" style="max-width: 450px;" th:text="${item.title}">Book title</span>
+                <span class="text-muted font-monospace" th:text="#{member.cart.physicalBook}">Physical book</span>
+            </div>
+        </div>
+
+        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.cashFlow}">Payment Details</h6>
+        <div class="p-3 bg-classic-soft rounded border-classic small text-dark mb-4" style="background-color: rgba(139, 90, 43, 0.03);">
+            <div class="d-flex justify-content-between mb-2">
+                <span th:text="#{member.cart.borrowingPeriod}">Borrowing period:</span>
+                <span class="fw-bold text-dark" th:text="#{member.cart.days(${numberOfDays})}">14 days</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span th:text="#{member.cart.totalDeduction}">Total wallet deduction:</span>
+                <span class="fw-bold text-danger font-monospace fs-6"><span th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
+            </div>
+            <hr class="my-2" style="border-top:1px dashed rgba(139, 90, 43, 0.2)">
+            <div class="d-flex justify-content-between mb-1 text-muted">
+                <span th:text="#{member.cart.balanceBefore}">Wallet balance (before):</span>
+                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
+            </div>
+            <div class="d-flex justify-content-between text-success fw-bold">
+                <span th:text="#{member.cart.balanceAfter}">Estimated balance (after):</span>
+                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
+            </div>
+        </div>
+
+        <form th:action="@{/member/cart/submit}" method="post">
+            <input type="hidden" name="numberOfDays" th:value="${numberOfDays}">
+            <!-- Lưu danh sách sách được chọn - mỗi id một input riêng -->
+            <th:block th:each="id : ${selectedBookIds}">
+                <input type="hidden" name="selectedBookIds" th:value="${id}">
+            </th:block>
+            <div class="d-flex gap-3">
+                <a href="/member/cart" class="btn btn-light border flex-grow-1 py-2" th:text="#{member.cart.backToEdit}">Back to edit</a>
+                <button type="submit" class="btn text-white flex-grow-1 py-2 fw-bold" style="background-color: #8b5a2b;"><i class="bi bi-wallet2 me-2"></i><span th:text="#{member.cart.checkoutHeading}">Confirm &amp; Pay</span></button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

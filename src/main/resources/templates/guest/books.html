@@ -204,9 +204,10 @@
                                         <a th:href="@{'/books/' + ${book.bookId}}"
                                             class="btn btn-light rounded-pill mb-2 fw-bold w-75"><i
                                                 class="bi bi-eye me-1"></i> <span th:text="#{book.details}">View Details</span></a>
-                                        <button sec:authorize="isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
+                                        <button type="button" sec:authorize="isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
 
-                                            th:onclick="|showToast('#{book.borrow.comingSoon}')|"><i
+                                            th:data-toast-message="#{book.borrow.comingSoon}"
+                                            onclick="showToast(this.dataset.toastMessage)"><i
                                                 class="bi bi-cart-plus me-1"></i> <span th:text="#{book.borrow}">Borrow Book</span></button>
                                         <button sec:authorize="!isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
 

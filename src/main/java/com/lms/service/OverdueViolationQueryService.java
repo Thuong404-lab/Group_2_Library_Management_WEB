@@ -7,7 +7,6 @@ import com.lms.entity.User;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.SystemSettingRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -24,8 +23,8 @@ import java.util.Set;
  */
 @Service
 public class OverdueViolationQueryService {
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
+    private final LocalizedMessageService messages;
     private static final String FINE_PER_DAY_SETTING_KEY = "Fine_Per_Day";
     private static final BigDecimal DEFAULT_FINE_PER_DAY = BigDecimal.valueOf(5000);
     private static final Set<String> OVERDUE_ELIGIBLE_STATUSES =
@@ -34,10 +33,10 @@ public class OverdueViolationQueryService {
     private final BorrowDetailRepository borrowDetailRepository;
     private final SystemSettingRepository systemSettingRepository;
 
-    public OverdueViolationQueryService(BorrowDetailRepository borrowDetailRepository,
-                                        SystemSettingRepository systemSettingRepository) {
+    public OverdueViolationQueryService(BorrowDetailRepository borrowDetailRepository, SystemSettingRepository systemSettingRepository, LocalizedMessageService messages) {
         this.borrowDetailRepository = borrowDetailRepository;
         this.systemSettingRepository = systemSettingRepository;
+        this.messages = messages;
     }
 
     @Transactional(readOnly = true)

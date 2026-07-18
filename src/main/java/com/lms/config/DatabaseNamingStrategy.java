@@ -13,6 +13,9 @@ public class DatabaseNamingStrategy extends CamelCaseToUnderscoresNamingStrategy
     @Override
     public Identifier toPhysicalTableName(Identifier logicalName,
                                           JdbcEnvironment jdbcEnvironment) {
+        System.out.println("[DatabaseNamingStrategy] logicalName: " + logicalName.getText());
+        Identifier physicalName = super.toPhysicalTableName(logicalName, jdbcEnvironment);
+        System.out.println("[DatabaseNamingStrategy] super physicalName: " + physicalName.getText());
         return logicalName;
     }
 }

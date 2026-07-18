@@ -4,7 +4,6 @@ import com.lms.config.CustomUserDetails;
 import com.lms.entity.StaffAccount;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,13 +19,15 @@ import java.util.List;
 @Service
 public class CustomStaffDetailsService implements UserDetailsService {
 
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
+    private final LocalizedMessageService messages;
+
 
     private final StaffAccountRepository staffAccountRepository;
 
-    public CustomStaffDetailsService(StaffAccountRepository staffAccountRepository) {
+    public CustomStaffDetailsService(StaffAccountRepository staffAccountRepository, LocalizedMessageService messages) {
         this.staffAccountRepository = staffAccountRepository;
+        this.messages = messages;
     }
 
     @Override

@@ -93,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(messages.get("validation.email"));
         }
 
-        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)[0-9]{9}$")) {
+        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new AuthException(messages.get("backend.profile.phoneFormat"));
         }
 
@@ -157,12 +157,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logLoginAction(Integer userId, String ipAddress, String userAgent) {
-        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent, messages.get("backend.auth.audit.login"));
+        createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent,
+                messages.get("backend.auth.audit.login"));
     }
 
     @Override
     public void logLogoutAction(Integer userId, String ipAddress, String userAgent) {
-        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent, messages.get("backend.auth.audit.logout"));
+        createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent,
+                messages.get("backend.auth.audit.logout"));
     }
 
     @Override

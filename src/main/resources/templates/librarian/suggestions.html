@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<head>
+    <title>Đề xuất bổ sung sách</title>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/suggestions.css}" />
+  </head>
+<body>
+<div layout:fragment="content" th:with="activeMenu='suggestions'">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
+        <div>
+            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Đề xuất Mua Sách</h2>
+            <div class="text-muted">Xem xét và phê duyệt các đề xuất bổ sung sách từ bạn đọc</div>
+        </div>
+        <div>
+            <button class="btn btn-classic">
+                <i class="bi bi-plus-lg me-1"></i> Tạo đề xuất
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-ffc107-important-437ded87">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Chờ duyệt</div>
+                <h4 class="fw-bold mb-0 u-color-ffc107-b61c34a0" th:text="${pendingCount ?: 0}">0</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Đã duyệt</div>
+                <h4 class="fw-bold mb-0 text-success" th:text="${approvedCount ?: 0}">0</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-dc3545-important-49da6d79">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Từ chối</div>
+                <h4 class="fw-bold mb-0 text-danger" th:text="${rejectedCount ?: 0}">0</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-classic p-3 text-center shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Tổng cộng</div>
+                <h4 class="fw-bold mb-0 text-classic" th:text="${totalCount ?: 0}">0</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Table -->
+    <div class="card-classic shadow-sm">
+        <div class="card-body p-4">
+            <form class="row g-3 mb-4" method="get">
+                <div class="col-md-6">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
+                        <input class="form-control border-start-0 ps-0" type="text" name="keyword" placeholder="Tìm theo tên sách, tác giả hoặc người đề xuất...">
+                        <button class="btn btn-classic" type="submit">Tìm</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="pending">Chờ duyệt</option>
+                        <option value="approved">Đã duyệt</option>
+                        <option value="rejected">Từ chối</option>
+                    </select>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                    <table class="table table-hover align-middle stable-table-layout">
+                        <colgroup>
+                            <col class="u-width-6-89d41777">
+                            <col class="u-width-25-84a0e8c4">
+                            <col class="u-width-20-00e2b68d">
+                            <col class="u-width-25-84a0e8c4">
+                            <col class="u-width-24-3ca932db">
+                        </colgroup>
+                    <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th class="ps-3">STT</th>
+                            <th>Tên sách đề xuất</th>
+                            <th>Tác giả</th>
+                            <th>Người đề xuất</th>
+                            <th>Ngày đề xuất</th>
+                            <th>Lý do</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-3">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="suggestion, iterStat : ${suggestions}" th:if="${suggestions != null}">
+                            <td class="ps-3 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                            <td>
+                                <div class="fw-bold" th:text="${suggestion.bookTitle}">Tên sách</div>
+                                <div class="small text-muted" th:text="${suggestion.isbn}">ISBN</div>
+                            </td>
+                            <td th:text="${suggestion.author}">Tác giả</td>
+                            <td th:text="${suggestion.requesterName}">Bạn đọc</td>
+                            <td th:text="${#temporals.format(suggestion.createdAt, 'dd/MM/yyyy')}">01/01/2026</td>
+                            <td>
+                                <span class="text-truncate d-inline-block librarian-suggestions-span-max-width-13" th:text="${suggestion.reason}">Lý do</span>
+                            </td>
+                            <td>
+                                <span class="status-badge status-pending" th:if="${suggestion.status == 'pending'}">Chờ duyệt</span>
+                                <span class="status-badge status-approved" th:if="${suggestion.status == 'approved'}">Đã duyệt</span>
+                                <span class="status-badge status-rejected" th:if="${suggestion.status == 'rejected'}">Từ chối</span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-sm btn-outline-success me-1"><i class="bi bi-check-lg"></i> Duyệt</button>
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Từ chối</button>
+                            </td>
+                        </tr>
+                        <tr th:if="${suggestions == null || #lists.isEmpty(suggestions)}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-plus-square fs-2 d-block mb-2 opacity-50"></i>
+                                Chưa có đề xuất bổ sung sách nào.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

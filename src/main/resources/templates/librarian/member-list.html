@@ -36,8 +36,7 @@
 
                             <div class="modal-body member-modal-body">
                                 <form method="post" th:action="@{/librarian/members/create}" autocomplete="off"
-                                    id="createMemberForm" novalidate
-                                    th:attr="data-validation-url=@{/librarian/members/create/validate}">
+                                    id="createMemberForm" novalidate>
 
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                         th:value="${_csrf.token}">
@@ -211,10 +210,9 @@
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{account.status.blocked}">Blocked</option>
                             </select>
 
-                            <a class="btn member-search-button text-nowrap" th:href="@{/librarian/members}">
-                                <i class="bi bi-arrow-clockwise"></i>
-                                <span th:text="#{common.clearFilter}">Clear filter</span>
-                            </a>
+                            <button class="btn member-search-button text-nowrap" type="submit">
+                                <span th:text="#{common.search}">Search</span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -665,7 +663,6 @@
                 }
 
                 const fields = form.querySelectorAll(".validate-field");
-                let isSubmitting = false;
 
                 function getFeedback(field) {
                     return field.parentElement.querySelector(".invalid-feedback");
@@ -782,62 +779,17 @@
                     field.addEventListener("change", clearFieldError);
                 });
 
-                form.addEventListener("submit", async function (event) {
-                    event.preventDefault();
-                    if (isSubmitting) return;
-                    isSubmitting = true;
+                form.addEventListener("submit", function (event) {
                     let isFormValid = true;
                     fields.forEach(function (field) {
                         if (!validateField(field)) {
                             isFormValid = false;
                         }
                     });
-                    const submitButton = form.querySelector("button[type='submit']");
-                    submitButton.disabled = true;
-                    try {
-                        const params = new URLSearchParams();
-                        new FormData(form).forEach(function (value, key) {
-                            if (!key.startsWith("_csrf")) params.append(key, value);
-                        });
-                        const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
-                        params.forEach(function (value, key) { validationUrl.searchParams.append(key, value); });
-                        const response = await fetch(validationUrl.toString(), { headers: { "Accept": "application/json" } });
-                        if (!response.ok) throw new Error("Validation request failed");
-                        const serverErrors = await response.json();
-                        const errors = Object.assign({}, serverErrors, Object.fromEntries(
-                            Array.from(fields).filter(function (field) {
-                                return field.classList.contains("is-invalid");
-                            }).map(function (field) {
-                                return [field.name, getFeedback(field).textContent];
-                            })
-                        ));
-                        Object.entries(errors).forEach(function (entry) {
-                            const field = form.elements.namedItem(entry[0]);
-                            if (field == null || !field.classList) return;
-                            field.classList.remove("is-valid");
-                            field.classList.add("is-invalid");
-                            const feedback = getFeedback(field);
-                            if (feedback != null) feedback.textContent = entry[1];
-                        });
-                        if (Object.keys(errors).length === 0 && isFormValid) form.submit();
-                    } catch (error) {
-                        window.alert("Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại.");
-                    } finally {
-                        submitButton.disabled = false;
-                        isSubmitting = false;
+                    if (!isFormValid) {
+                        event.preventDefault();
                     }
                 });
-                const createModal = form.closest(".modal");
-                if (createModal != null) {
-                    createModal.addEventListener("hidden.bs.modal", function () {
-                        form.reset();
-                        fields.forEach(function (field) {
-                            field.classList.remove("is-invalid", "is-valid");
-                            const feedback = getFeedback(field);
-                            if (feedback != null) feedback.textContent = "";
-                        });
-                    });
-                }
             });
         </script>
         <script>
@@ -846,7 +798,6 @@
                     const modal = form.closest(".modal");
                     const submitButton = form.querySelector("button[type='submit']");
                     const globalError = form.querySelector(".member-update-global-error");
-                    let isSubmitting = false;
                     let lastFocusedField = null;
 
                     form.querySelectorAll("input, select, textarea").forEach(function (field) {
@@ -964,8 +915,6 @@
 
                     form.addEventListener("submit", async function (event) {
                         event.preventDefault();
-                        if (isSubmitting) return;
-                        isSubmitting = true;
                         clearErrors();
 
                         const localErrors = validateLocally();
@@ -1006,11 +955,11 @@
                             });
                         } finally {
                             submitButton.disabled = false;
-                            isSubmitting = false;
                         }
                     });
 
                     modal.addEventListener("hidden.bs.modal", function () {
+                        form.reset();
                         clearErrors();
                     });
                 });

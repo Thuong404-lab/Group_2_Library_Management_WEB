@@ -10,7 +10,12 @@
   </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='fines'" class="finance-page fines-page">
+    <div layout:fragment="content" th:with="activeMenu='fines'" class="finance-page fines-page"
+        th:data-fine-member-lower="#{librarian.fines.memberLower}"
+        th:data-fine-book-lower="#{librarian.fines.bookLower}"
+        th:data-overdue-reason-prefix="#{librarian.fines.overdueReasonPrefix}"
+        th:data-overdue-reason-days="#{librarian.fines.overdueReasonDays}"
+        th:data-amount-for-prefix="#{librarian.fines.amountForPrefix}">
         <div class="finance-header">
             <div>
                 <h2 class="finance-title" th:text="#{librarian.fines.heading}">Violation Fine Management</h2>
@@ -136,7 +141,8 @@
                                         </form>
                                         <button type="button" class="btn btn-sm btn-outline-classic btn-select-violation overdue-action-tooltip"
                                             th:data-bs-title="#{librarian.fines.createFine}" data-bs-custom-class="overdue-fine-tooltip"
-                                            data-bs-placement="top" th:aria-label="#{librarian.fines.createFine}" th:attr="data-member-id=${violation.memberId},
+                                            data-bs-placement="top" th:aria-label="#{librarian.fines.createFine}"
+                                            aria-controls="fineForm" th:attr="data-member-id=${violation.memberId},
                                                  data-member-name=${violation.memberName},
                                                  data-book-title=${violation.bookTitle},
                                                  data-overdue-days=${violation.overdueDays},
@@ -157,7 +163,7 @@
             </div>
         </div>
 
-        <div class="card-classic finance-card p-4 mb-4">
+        <div id="createFineSection" class="card-classic finance-card p-4 mb-4">
                 <h5 class="section-title mb-3">
                 <span th:text="#{librarian.fines.createHeading}">Create a New Fine</span>
             </h5>
@@ -270,11 +276,12 @@
                 document.getElementById("overdueViolationEmpty")?.classList.toggle("d-none", visibleCount !== 0);
             });
 
+            const finePageConfig = document.querySelector(".fines-page");
             document.querySelectorAll(".btn-select-violation").forEach(function (button) {
                 button.addEventListener("click", function () {
                     const memberId = button.getAttribute("data-member-id");
-                    const memberName = button.getAttribute("data-member-name") || /*[[#{librarian.fines.memberLower}]]*/ "member";
-                    const bookTitle = button.getAttribute("data-book-title") || /*[[#{librarian.fines.bookLower}]]*/ "book";
+                    const memberName = button.getAttribute("data-member-name") || finePageConfig?.dataset.fineMemberLower || "member";
+                    const bookTitle = button.getAttribute("data-book-title") || finePageConfig?.dataset.fineBookLower || "book";
                     const overdueDays = button.getAttribute("data-overdue-days") || "0";
                     const suggestedFineAmount = button.getAttribute("data-fine-amount") || "";
 
@@ -286,16 +293,22 @@
 
                     const reasonInput = document.getElementById("fineReason");
                     if (reasonInput != null) {
-                        reasonInput.value = /*[[#{librarian.fines.overdueReasonPrefix}]]*/ "Overdue" + " " + overdueDays + " " + /*[[#{librarian.fines.overdueReasonDays}]]*/ "days -" + " " + bookTitle;
+                        const reasonPrefix = finePageConfig?.dataset.overdueReasonPrefix || "Overdue";
+                        const reasonDays = finePageConfig?.dataset.overdueReasonDays || "days -";
+                        reasonInput.value = reasonPrefix + " " + overdueDays + " " + reasonDays + " " + bookTitle;
                         reasonInput.classList.remove("is-invalid");
                         document.getElementById("fineReasonRequired")?.classList.remove("d-block");
                     }
 
                     document.getElementById("fineMemberList")?.classList.remove("is-invalid");
                     document.getElementById("fineMemberRequired")?.classList.remove("d-block");
-                    document.getElementById("fineForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
 
                     if (selectedMember != null) {
+                        const selectedLabel = selectedMember.closest(".fine-member-item")?.dataset.selectedLabel;
+                        const memberSearch = document.getElementById("fineMemberSearch");
+                        if (memberSearch != null && selectedLabel) memberSearch.value = selectedLabel;
+                        document.getElementById("fineMemberList")?.classList.add("d-none");
+
                         const fineAmount = document.getElementById("fineAmount");
                         if (fineAmount != null) {
                             fineAmount.value = suggestedFineAmount;
@@ -304,8 +317,16 @@
                             document.getElementById("fineAmountRequired")?.classList.remove("d-block");
                         }
                         fineAmount?.focus({ preventScroll: true });
-                        fineAmount?.setAttribute("placeholder", /*[[#{librarian.fines.amountForPrefix}]]*/ "Enter a fine amount for" + " " + memberName);
+                        const amountPrefix = finePageConfig?.dataset.amountForPrefix || "Enter a fine amount for";
+                        fineAmount?.setAttribute("placeholder", amountPrefix + " " + memberName);
                     }
+
+                    window.requestAnimationFrame(function () {
+                        document.getElementById("createFineSection")?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                    });
                 });
             });
 
@@ -317,7 +338,7 @@
                             .toLocaleLowerCase("vi")
                             .normalize("NFD")
                             .replace(/[\u0300-\u036f]/g, "")
-                            .replace(/đ/g, "d");
+                            .replace(/[\u0111\u0110]/g, "d");
                     };
                     const keyword = normalizeSearchText(fineMemberSearch.value.trim());
                     const memberList = document.getElementById("fineMemberList");

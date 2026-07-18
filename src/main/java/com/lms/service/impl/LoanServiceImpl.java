@@ -25,6 +25,7 @@ import java.util.Optional;
  */
 @Service
 public class LoanServiceImpl implements LoanService {
+
     @Autowired
     private LocalizedMessageService localizedMessageService = LocalizedMessageService.fallback();
 
@@ -154,8 +155,7 @@ public class LoanServiceImpl implements LoanService {
                         .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.memberPhoneNotFound")));
             }
         } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
-            throw new DataProcessingException(
-                    localizedMessageService.get("backend.loan.duplicateMemberData"), e);
+            throw new DataProcessingException(localizedMessageService.get("backend.loan.duplicateMemberData"), e);
         }
 
         Staff staff = staffAccountRepository.findByUsername(staffUsername)
@@ -172,8 +172,7 @@ public class LoanServiceImpl implements LoanService {
                 item = bookItemRepository.findByBarcode(trimmedBarcode)
                         .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", trimmedBarcode)));
             } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
-                throw new DataProcessingException(
-                        localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
+                throw new DataProcessingException(localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
             }
 
             if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
@@ -279,7 +278,8 @@ public class LoanServiceImpl implements LoanService {
         Member member = detail.getBorrow().getMember();
         if (member != null && member.getMemberId() != null) {
             sendInternalNotification(member, localizedMessageService.get("systemNotification.renewal.success.title"),
-                    localizedMessageService.get("systemNotification.renewal.success.content", detail.getBook().getTitle(), renewDays,
+                    localizedMessageService.get("systemNotification.renewal.success.content",
+                            detail.getBook().getTitle(), renewDays,
                             detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         }
     }
@@ -297,39 +297,155 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String conditionNote, String staffUsername) {
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
         if (activeLoans.isEmpty()) {
             throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
         }
 
-        // Xử lý lượt mượn tìm thấy hợp lệ
         BorrowDetail detail = activeLoans.get(0);
         BookItem item = detail.getBookItem();
 
-        // 1. Cập nhật trạng thái sách vật lý về Available
         if (item != null) {
             item.setStatus(STATUS_AVAILABLE);
+            item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
+            item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
             bookItemRepository.save(item);
         }
 
-        // 2. Lưu thông tin ngày trả, ghi chú tình trạng ngoại quan và cập nhật status
+        String fullConditionNote = bookCondition != null ? bookCondition.trim() : "Tốt";
+        if (damageNote != null && !damageNote.trim().isEmpty()) {
+            fullConditionNote += " - " + damageNote.trim();
+        }
         detail.setReturnDate(returnDate);
-        detail.setConditionNote(conditionNote);
+        detail.setConditionNote(fullConditionNote);
         detail.setStatus(STATUS_RETURNED);
         borrowDetailRepository.save(detail);
 
-        // 3. Kế thừa hàm tính phạt quá hạn có sẵn của nhóm bạn nếu ngày trả thực tế vượt hạn
         if (returnDate.isAfter(detail.getDueDate())) {
             processOverdueFine(detail);
         }
 
-        // 4. Cập nhật trạng thái của phiếu mượn tổng cha (Borrow)
         updateParentBorrowStatus(detail.getBorrow());
-
-        // 5. Gửi thông báo đến độc giả về việc trả sách tại quầy thành công
-        sendInternalNotification(detail.getBorrow().getMember(), localizedMessageService.get("systemNotification.return.desk.title"),
+        sendInternalNotification(detail.getBorrow().getMember(),
+                localizedMessageService.get("systemNotification.return.desk.title"),
                 localizedMessageService.get("systemNotification.return.desk.content", detail.getBook().getTitle()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
+        if (barcodes == null || barcodes.isEmpty()) {
+            return;
+        }
+        for (String barcode : barcodes) {
+            if (barcode != null && !barcode.trim().isEmpty()) {
+                confirmReturnWithDetails(barcode.trim(), returnDate, bookCondition, damageNote, staffUsername);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> searchActiveLoansByQuery(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        String cleanQuery = query.trim();
+
+        List<BorrowDetail> results = new ArrayList<>();
+
+        // 1. Try to search by Email or Phone number of a member
+        Optional<Member> memberOpt = memberRepository.findByUserEmail(cleanQuery);
+        if (!memberOpt.isPresent()) {
+            memberOpt = memberRepository.findByUserPhone(cleanQuery);
+        }
+
+        if (memberOpt.isPresent()) {
+            Member member = memberOpt.get();
+            // Get all current borrow details of this member
+            List<BorrowDetail> allMemberDetails = borrowDetailRepository.findCurrentBorrowsByMemberId(member.getMemberId());
+            for (BorrowDetail d : allMemberDetails) {
+                if (d.getBookItem() != null && ("Borrowed".equalsIgnoreCase(d.getStatus())
+                        || "Overdue".equalsIgnoreCase(d.getStatus())
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus()))) {
+                    results.add(d);
+                }
+            }
+            return results;
+        }
+
+        // 2. Otherwise, treat as Barcode or BorrowId
+        List<Borrow> matchingBorrows = new ArrayList<>();
+
+        // Check if query is borrowId (with or without 'BOR-' prefix)
+        String borrowIdStr = cleanQuery;
+        if (borrowIdStr.toUpperCase().startsWith("BOR-")) {
+            borrowIdStr = borrowIdStr.substring(4);
+        }
+        try {
+            Integer id = Integer.parseInt(borrowIdStr);
+            Optional<Borrow> borrowOpt = borrowRepository.findById(id);
+            borrowOpt.ifPresent(matchingBorrows::add);
+        } catch (NumberFormatException ignored) {}
+
+        // Check if query is barcode
+        List<BorrowDetail> barcodeDetails = borrowDetailRepository.findActiveLoansByBarcode(cleanQuery);
+        for (BorrowDetail bd : barcodeDetails) {
+            if (bd.getBorrow() != null && !matchingBorrows.contains(bd.getBorrow())) {
+                matchingBorrows.add(bd.getBorrow());
+            }
+        }
+
+        // Collect all active details for matching borrows
+        for (Borrow b : matchingBorrows) {
+            List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(b.getBorrowId());
+            for (BorrowDetail d : details) {
+                if (d.getBookItem() != null && ("Borrowed".equalsIgnoreCase(d.getStatus())
+                        || "Overdue".equalsIgnoreCase(d.getStatus())
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus()))) {
+                    if (!results.contains(d)) {
+                        results.add(d);
+                    }
+                }
+            }
+        }
+
+        return results;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmCollection(Integer borrowId) {
+        Borrow borrow = borrowRepository.findById(borrowId)
+                .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.loan.notFoundById", borrowId)));
+
+        if (!"Approved".equalsIgnoreCase(borrow.getStatus())) {
+            throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.notWaitingPickup"));
+        }
+
+        borrow.setStatus(STATUS_ACTIVE);
+        borrow.setBorrowDate(LocalDateTime.now());
+        borrowRepository.save(borrow);
+
+        List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
+        for (BorrowDetail detail : details) {
+            detail.setStatus(STATUS_BORROWED);
+            detail.setDueDate(LocalDateTime.now().plusDays(14));
+            borrowDetailRepository.save(detail);
+
+            if (detail.getBookItem() != null) {
+                BookItem item = detail.getBookItem();
+                item.setStatus(STATUS_BORROWED);
+                bookItemRepository.save(item);
+            }
+        }
+
+        sendInternalNotification(borrow.getMember(),
+                localizedMessageService.get("systemNotification.borrow.pickup.title"),
+                localizedMessageService.get("systemNotification.borrow.collection.content", borrowId,
+                        LocalDateTime.now().plusDays(14)
+                                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
     }
 
     @Override
@@ -366,7 +482,9 @@ public class LoanServiceImpl implements LoanService {
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
                     localizedMessageService.get("systemNotification.renewal.approved.title"),
-                    localizedMessageService.get("systemNotification.renewal.approved.content", detail.getBook().getTitle(), detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    localizedMessageService.get("systemNotification.renewal.approved.content",
+                            detail.getBook().getTitle(),
+                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         }
     }
 
@@ -391,7 +509,9 @@ public class LoanServiceImpl implements LoanService {
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
                     localizedMessageService.get("systemNotification.renewal.rejected.title"),
-                    localizedMessageService.get("systemNotification.renewal.rejected.content", detail.getBook().getTitle(), detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    localizedMessageService.get("systemNotification.renewal.rejected.content",
+                            detail.getBook().getTitle(),
+                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
         }
     }
 
@@ -459,7 +579,8 @@ public class LoanServiceImpl implements LoanService {
                 // Gửi thông báo hệ thống đến độc giả
                 sendInternalNotification(member, localizedMessageService.get("systemNotification.overdueFine.title"),
                         localizedMessageService.get("systemNotification.overdueFine.content",
-                                fineAmount.setScale(0, java.math.RoundingMode.HALF_UP), detail.getBook().getTitle(), overdueDays));
+                                fineAmount.setScale(0, java.math.RoundingMode.HALF_UP),
+                                detail.getBook().getTitle(), overdueDays));
             }
         }
     }
@@ -512,5 +633,74 @@ public class LoanServiceImpl implements LoanService {
         mn.setNotification(saved);
         mn.setIsRead(false);
         memberNotificationRepository.save(mn);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getMemberBorrowDetailsLimit365Days(Integer memberId) {
+        java.time.LocalDateTime limitDate = java.time.LocalDateTime.now().minusDays(365);
+        return borrowDetailRepository.findBorrowHistoryLimit365Days(memberId, limitDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Transaction> getMemberTransactionsLimit365Days(Integer memberId) {
+        java.time.LocalDateTime limitDate = java.time.LocalDateTime.now().minusDays(365);
+        return transactionRepository.findTransactionsByMemberIdLimit365Days(memberId, limitDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getMemberBorrowDetailsByDateRange(Integer memberId, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+        return borrowDetailRepository.findBorrowHistoryByDateRange(memberId, startDate, endDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Transaction> getMemberTransactionsByDateRange(Integer memberId, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+        return transactionRepository.findTransactionsByMemberIdAndDateRange(memberId, startDate, endDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getBorrowSchedule(String borrowDate, String returnDate, String keyword) {
+        List<BorrowDetail> all = borrowDetailRepository.findAll();
+        return all.stream().filter(d -> {
+            boolean match = true;
+            if (keyword != null && !keyword.isEmpty()) {
+                match = (d.getBook() != null && d.getBook().getTitle().toLowerCase().contains(keyword.toLowerCase()))
+                        || (d.getBookItem() != null && d.getBookItem().getBarcode().contains(keyword));
+            }
+            return match;
+        }).toList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmBookReturn(Integer borrowDetailId, String conditionNote) {
+        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+                .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.loan.detailNotFound")));
+
+        BookItem item = detail.getBookItem();
+        if (item == null) {
+            throw new IllegalArgumentException(localizedMessageService.get("backend.loan.physicalCopyMissing"));
+        }
+        String barcode = item.getBarcode();
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new IllegalArgumentException(localizedMessageService.get("backend.loan.physicalBarcodeMissing"));
+        }
+        confirmReturnWithDetails(barcode, LocalDateTime.now(), conditionNote, null, "admin");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId) {
+        return borrowDetailRepository.findByBorrowId(borrowId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Transaction> getTransactionsByBorrowId(Integer borrowId) {
+        return transactionRepository.findByBorrow_BorrowId(borrowId);
     }
 }

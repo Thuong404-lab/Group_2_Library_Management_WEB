@@ -79,20 +79,20 @@
                     <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.details}">Account Details</h5>
                 </div>
                 <div class="card-body-classic">
-                    <form th:action="@{/admin/profile/update}" method="post" enctype="multipart/form-data" class="m-0">
+                    <form th:action="@{/admin/profile/update}" method="post" enctype="multipart/form-data" class="m-0" novalidate>
                         <input type="file" id="avatarUploadAdmin" name="avatarFile" accept="image/*" class="d-none">
                         <div class="row g-3">
                             <div class="col-12 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.fullName}">Full Name</label>
-                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${admin?.fullName}" required>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${admin?.fullName}" th:placeholder="#{admin.profile.fullNamePlaceholder}" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.email}">Email Address</label>
-                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${admin?.email}" required>
+                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${admin?.email}" th:placeholder="#{admin.profile.emailPlaceholder}" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.phone}">Phone Number</label>
-                                <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${admin?.phone}">
+                                <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${admin?.phone}" th:placeholder="#{admin.profile.phonePlaceholder}" required>
                             </div>
 
                             <div class="col-12 mt-3 text-end">
@@ -111,7 +111,7 @@
                         <h5 class="modal-title fw-bold font-playfair mb-0 u-color-4a3b32-1ba01220" th:text="#{member.profile.passwordTitle}">Change Secure Password</h5>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form th:action="@{/admin/profile/change-password}" method="post" class="m-0">
+                    <form th:action="@{/admin/profile/change-password}" method="post" class="m-0" novalidate>
                         <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.currentPassword}">Current Password</label>
