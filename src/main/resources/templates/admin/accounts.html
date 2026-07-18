@@ -234,6 +234,7 @@
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="username"
@@ -252,6 +253,7 @@
                                                                     pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
                                                                     inputmode="numeric"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                 <div class="invalid-feedback" data-error-for="phone"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
@@ -268,6 +270,7 @@
                                                                     data-label="Email"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="email"
@@ -595,6 +598,13 @@
                     button.addEventListener("click", function () {
                         tooltip.hide();
                     });
+                });
+
+                document.querySelectorAll(".member-form-modal").forEach(function (modalEl) {
+                    if (modalEl.getAttribute("data-reopen-edit") === "true") {
+                        const bsModal = new bootstrap.Modal(modalEl);
+                        bsModal.show();
+                    }
                 });
             });
         </script>
