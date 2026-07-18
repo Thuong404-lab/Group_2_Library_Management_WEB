@@ -12,7 +12,6 @@ import com.lms.repository.payos.PayOsBorrowRepository;
 import com.lms.repository.payos.PayOsTransactionRepository;
 import com.lms.repository.payos.PayOsWalletRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -23,8 +22,8 @@ import java.util.List;
 /** Isolated settlement logic owned by the PayOS integration flow. */
 @Service
 public class PayOsSettlementService {
-    @Autowired
-    private LocalizedMessageService localizedMessageService = LocalizedMessageService.fallback();
+
+    private final LocalizedMessageService localizedMessageService;
     private static final String COMPLETED = "Completed";
 
     private final PayOsWalletRepository walletRepository;
@@ -43,7 +42,8 @@ public class PayOsSettlementService {
                                   FinancialService financialService,
                                   NotificationRepository notificationRepository,
                                   MemberNotificationRepository memberNotificationRepository,
-                                  BorrowService borrowService) {
+                                  BorrowService borrowService,
+                                  LocalizedMessageService localizedMessageService) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.borrowRepository = borrowRepository;
@@ -52,6 +52,7 @@ public class PayOsSettlementService {
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.borrowService = borrowService;
+        this.localizedMessageService = localizedMessageService;
     }
 
     @Transactional(rollbackFor = Exception.class)

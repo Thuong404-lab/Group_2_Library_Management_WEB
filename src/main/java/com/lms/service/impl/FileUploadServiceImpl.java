@@ -5,7 +5,6 @@ import com.cloudinary.utils.ObjectUtils;
 import com.lms.exception.FileStorageException;
 import com.lms.service.FileUploadService;
 import com.lms.service.LocalizedMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,13 +14,14 @@ import java.util.Map;
 @Service
 public class FileUploadServiceImpl implements FileUploadService {
 
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
+    private final LocalizedMessageService messages;
 
     private final Cloudinary cloudinary;
 
-    public FileUploadServiceImpl(Cloudinary cloudinary) {
+    public FileUploadServiceImpl(Cloudinary cloudinary, LocalizedMessageService messages) {
         this.cloudinary = cloudinary;
+        this.messages = messages;
     }
 
     @Override

@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.net.URI;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -105,7 +107,8 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
         String normalized = value == null ? "" : value.trim().replaceAll("\\s+", " ");
         if (normalized.isEmpty()) throw new ValidationException(fieldName + " không được để trống.");
         if (normalized.length() < minimum || normalized.length() > maximum) {
-            throw new ValidationException(fieldName + " phải có từ " + minimum + " đến " + maximum + " ký tự.");
+            String maximumLabel = NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi")).format(maximum);
+            throw new ValidationException(fieldName + " phải có từ " + minimum + " đến " + maximumLabel + " ký tự.");
         }
         if (normalized.codePoints().noneMatch(Character::isLetter)) {
             throw new ValidationException(fieldName + " không được chỉ gồm số hoặc ký tự đặc biệt.");
@@ -123,7 +126,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
                 throw new ValidationException("Giao thức URL không hợp lệ.");
             }
         } catch (IllegalArgumentException ex) {
-            throw new ValidationException("Link tham khảo phải là địa chỉ http:// hoặc https:// hợp lệ.");
+            throw new ValidationException("Link tham khảo phải là địa chỉ HTTP hoặc HTTPS hợp lệ.");
         }
     }
 }

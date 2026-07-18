@@ -12,7 +12,6 @@ import com.lms.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,21 +19,19 @@ import java.time.LocalDateTime;
 
 @Service
 public class PayOsPaymentAuditService {
-    @Autowired
-    private LocalizedMessageService messages = LocalizedMessageService.fallback();
+
+    private final LocalizedMessageService messages;
     private final PayOsPaymentAuditLogRepository auditRepository;
     private final PayOsReconciliationIssueRepository issueRepository;
     private final PayOsPaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
-    public PayOsPaymentAuditService(PayOsPaymentAuditLogRepository auditRepository,
-                                    PayOsReconciliationIssueRepository issueRepository,
-                                    PayOsPaymentRepository paymentRepository,
-                                    UserRepository userRepository) {
+    public PayOsPaymentAuditService(PayOsPaymentAuditLogRepository auditRepository, PayOsReconciliationIssueRepository issueRepository, PayOsPaymentRepository paymentRepository, UserRepository userRepository, LocalizedMessageService messages) {
         this.auditRepository = auditRepository;
         this.issueRepository = issueRepository;
         this.paymentRepository = paymentRepository;
         this.userRepository = userRepository;
+        this.messages = messages;
     }
 
     @Transactional

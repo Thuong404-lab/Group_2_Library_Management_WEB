@@ -9,12 +9,15 @@ import com.lms.entity.Notification;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.MemberNotificationRepository;
 import com.lms.repository.NotificationRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,8 +30,14 @@ import static org.mockito.Mockito.when;
 
 class OverdueReminderServiceTest {
 
+    @AfterEach
+    void resetLocale() {
+        LocaleContextHolder.resetLocaleContext();
+    }
+
     @Test
     void sendsUnreadReminderWithoutCreatingAFine() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("vi"));
         BorrowDetailRepository borrowDetailRepository = mock(BorrowDetailRepository.class);
         NotificationRepository notificationRepository = mock(NotificationRepository.class);
         MemberNotificationRepository memberNotificationRepository = mock(MemberNotificationRepository.class);
