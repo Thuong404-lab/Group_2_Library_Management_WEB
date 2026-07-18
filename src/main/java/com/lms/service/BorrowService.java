@@ -18,7 +18,7 @@ public interface BorrowService {
     // Luồng đăng ký mượn trực tuyến (Chờ duyệt)
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, String staffUsername);
-    void rejectPendingRequest(Integer borrowId);
+    void rejectPendingRequest(Integer borrowId, String reason);
 
     void confirmPhysicalPickup(Integer borrowId, String staffUsername);
 
@@ -29,7 +29,7 @@ public interface BorrowService {
     // Luồng ĐẶT TRƯỚC SÁCH - RESERVATION (Mới nâng cấp)
     Reservation memberSubmitReservationRequest(String username, Integer bookId);
     void approveReservationRequest(Integer reservationId, String staffUsername);
-    void rejectReservationRequest(Integer reservationId, String staffUsername);
+    void rejectReservationRequest(Integer reservationId, String staffUsername, String reason);
     void memberCancelReservation(String username, Integer reservationId);
     Reservation getReservationById(Integer reservationId);
 

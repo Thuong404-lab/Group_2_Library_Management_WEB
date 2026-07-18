@@ -490,7 +490,7 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectRenewal(Integer borrowDetailId, String staffUsername) {
+    public void rejectRenewal(Integer borrowDetailId, String staffUsername, String reason) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
 
@@ -507,11 +507,15 @@ public class LoanServiceImpl implements LoanService {
         borrowDetailRepository.save(detail);
 
         if (detail.getBorrow().getMember() != null) {
+            String content = localizedMessageService.get("systemNotification.renewal.rejected.content",
+                    detail.getBook().getTitle(),
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            if (reason != null && !reason.trim().isEmpty()) {
+                content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
+            }
             sendInternalNotification(detail.getBorrow().getMember(),
                     localizedMessageService.get("systemNotification.renewal.rejected.title"),
-                    localizedMessageService.get("systemNotification.renewal.rejected.content",
-                            detail.getBook().getTitle(),
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    content);
         }
     }
 

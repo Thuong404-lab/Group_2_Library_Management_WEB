@@ -341,7 +341,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectPendingRequest(Integer borrowId) {
+    public void rejectPendingRequest(Integer borrowId, String reason) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.requestNotFound")));
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
@@ -365,9 +365,13 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         // Gửi thông báo đến member
+        String content = localizedMessageService.get("systemNotification.borrow.rejected.content", bookNames, borrowId);
+        if (reason != null && !reason.trim().isEmpty()) {
+            content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
+        }
         sendInternalNotification(member,
                 localizedMessageService.get("systemNotification.borrow.rejected.title"),
-                localizedMessageService.get("systemNotification.borrow.rejected.content", bookNames, borrowId));
+                content);
     }
 
     @Override
@@ -619,7 +623,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectReservationRequest(Integer reservationId, String staffUsername) {
+    public void rejectReservationRequest(Integer reservationId, String staffUsername, String reason) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.borrow.reservationNotFound")));
 
@@ -658,11 +662,15 @@ public class BorrowServiceImpl implements BorrowService {
 
         reservation.setStatus("Rejected");
         reservationRepository.save(reservation);
+        String content = localizedMessageService.get("systemNotification.reservation.rejectedWithRefund.content",
+                reservation.getBook().getTitle(), reservationId,
+                isDepositPaid ? localizedMessageService.get("systemNotification.reservation.refundSuffix") : "");
+        if (reason != null && !reason.trim().isEmpty()) {
+            content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
+        }
         sendInternalNotification(reservation.getMember(),
                 localizedMessageService.get("systemNotification.reservation.rejected.title"),
-                localizedMessageService.get("systemNotification.reservation.rejectedWithRefund.content",
-                        reservation.getBook().getTitle(), reservationId,
-                        isDepositPaid ? localizedMessageService.get("systemNotification.reservation.refundSuffix") : ""));
+                content);
     }
 
     @Override

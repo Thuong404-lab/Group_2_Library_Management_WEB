@@ -30,7 +30,7 @@ public interface LoanService {
     // UC-13.4: Gia hạn mượn
     void processRenewal(Integer borrowDetailId) ;
     void approveRenewal(Integer borrowDetailId, String staffUsername);
-    void rejectRenewal(Integer borrowDetailId, String staffUsername);
+    void rejectRenewal(Integer borrowDetailId, String staffUsername, String reason);
     List<BorrowDetail> getAllPendingRenewals();
 
     List<BorrowDetail> getAllBorrowDetails();

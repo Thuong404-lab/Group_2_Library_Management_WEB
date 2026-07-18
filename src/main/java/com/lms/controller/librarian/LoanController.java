@@ -206,10 +206,13 @@ public class LoanController extends LocalizedControllerSupport {
      * Từ chối yêu cầu gia hạn từ độc giả.
      */
     @PostMapping("/renew/reject/{id}")
-    public String rejectRenewal(@PathVariable("id") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String rejectRenewal(@PathVariable("id") Integer borrowDetailId,
+                                @RequestParam("reason") String reason,
+                                Principal principal,
+                                RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            loanService.rejectRenewal(borrowDetailId, staffUsername);
+            loanService.rejectRenewal(borrowDetailId, staffUsername, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.rejectFailed", e));
