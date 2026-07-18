@@ -1,5 +1,6 @@
 package com.lms.controller.member;
 
+import com.lms.controller.LocalizedControllerSupport;
 import com.lms.entity.Book;
 import com.lms.entity.Member;
 import com.lms.repository.MemberRepository;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/member/cart")
-public class CartController {
+public class CartController extends LocalizedControllerSupport {
 
     private final CartService cartService;
     private final BorrowService borrowService;
@@ -37,7 +38,7 @@ public class CartController {
     public String addToCart(@RequestParam("bookId") Integer bookId, HttpSession session,
                             RedirectAttributes redirectAttributes, @RequestHeader(value = "referer", required = false) String referer) {
         cartService.addToCart(session, bookId);
-        redirectAttributes.addFlashAttribute("successMessage", "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
+        redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.added"));
         return (referer != null) ? "redirect:" + referer : "redirect:/books/" + bookId;
     }
 
@@ -52,7 +53,7 @@ public class CartController {
         if (principal == null) return "redirect:/login";
 
         Member member = memberRepository.findByAccountUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Không xác định được danh tính thành viên"));
+                .orElseThrow(() -> new RuntimeException(message("backend.cart.memberNotFound")));
 
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                 .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
@@ -75,7 +76,7 @@ public class CartController {
         if (principal == null) return "redirect:/login";
 
         if (selectedBookIds == null || selectedBookIds.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất một cuốn sách để tiến hành xác nhận thanh toán.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.selectionRequired"));
             return "redirect:/member/cart";
         }
 
@@ -85,7 +86,7 @@ public class CartController {
                 .toList();
 
         if (selectedCartItems.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Giỏ sách của bạn không chứa sách hợp lệ đã chọn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
             return "redirect:/member/cart";
         }
 
@@ -112,7 +113,7 @@ public class CartController {
         if (principal == null) return "redirect:/login";
 
         if (selectedBookIds == null || selectedBookIds.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Quy trình lập phiếu thất bại: Không nhận được danh sách sách đã chọn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.missingSelection"));
             return "redirect:/member/cart";
         }
 
@@ -120,10 +121,10 @@ public class CartController {
             borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
             // Đơn mượn lập thành công -> chỉ xóa những sách đã đăng ký khỏi giỏ hàng
             selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
-            redirectAttributes.addFlashAttribute("successMessage", "Lập phiếu mượn tập trung thành công! Toàn bộ yêu cầu đang chờ thủ thư xét duyệt.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.created"));
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Quy trình lập phiếu thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.cart.creationFailed", e));
             return "redirect:/member/cart";
         }
     }

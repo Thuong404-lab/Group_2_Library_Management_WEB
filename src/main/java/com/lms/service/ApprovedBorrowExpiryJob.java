@@ -30,17 +30,20 @@ public class ApprovedBorrowExpiryJob {
     private final BookItemRepository bookItemRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final LocalizedMessageService messages;
 
     public ApprovedBorrowExpiryJob(BorrowRepository borrowRepository,
                                    BorrowDetailRepository borrowDetailRepository,
                                    BookItemRepository bookItemRepository,
                                    NotificationRepository notificationRepository,
-                                   MemberNotificationRepository memberNotificationRepository) {
+                                   MemberNotificationRepository memberNotificationRepository,
+                                   LocalizedMessageService messages) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookItemRepository = bookItemRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.messages = messages;
     }
 
     /**
@@ -82,8 +85,8 @@ public class ApprovedBorrowExpiryJob {
             // Tạo thông báo gửi đến độc giả chỉ rõ điều khoản vi phạm quy định nhận sách và không hoàn phí
             try {
                 Notification notif = new Notification();
-                notif.setTitle("Vi phạm quy định nhận sách - Hủy phiếu mượn");
-                notif.setContent("Hệ thống tự động hủy phiếu mượn BOR-" + borrow.getBorrowId() + " do bạn vi phạm quy định không nhận sách vật lý trong vòng 48 giờ kể từ khi phiếu được duyệt. Phí mượn sách đã thanh toán sẽ không được hoàn lại.");
+                notif.setTitle(messages.get("systemNotification.borrow.pickupExpired.title"));
+                notif.setContent(messages.get("systemNotification.borrow.pickupExpired.content", borrow.getBorrowId()));
                 notif.setCreatedDate(LocalDateTime.now());
                 notif.setStatus("Active");
                 Notification saved = notificationRepository.save(notif);

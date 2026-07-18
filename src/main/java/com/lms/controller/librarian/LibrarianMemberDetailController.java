@@ -1,5 +1,6 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.entity.Member;
@@ -27,7 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 @RequestMapping("/librarian/members")
-public class LibrarianMemberDetailController {
+public class LibrarianMemberDetailController extends LocalizedControllerSupport {
     private static final int TRANSACTION_PAGE_SIZE = 8;
 
     private final MemberRepository memberRepository;
@@ -55,7 +56,7 @@ public class LibrarianMemberDetailController {
                                    Model model,
                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new com.lms.exception.ForbiddenException("Không tìm thấy thành viên hoặc bạn không có quyền xem thông tin này."));
+                .orElseThrow(() -> new com.lms.exception.ForbiddenException(message("backend.member.notFoundOrForbidden")));
 
         int safePage = Math.max(page, 0);
         String selectedType = type == null ? "" : type.trim();
@@ -87,7 +88,7 @@ public class LibrarianMemberDetailController {
                                            RedirectAttributes redirectAttributes) {
         try {
             financialService.refundReservationDeposit(memberId, reservationId);
-            redirectAttributes.addFlashAttribute("success", "Đã duyệt và hoàn tiền cọc vào ví thành viên.");
+            redirectAttributes.addFlashAttribute("success", message("backend.financial.refundApproved"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }

@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -41,7 +42,11 @@ class AcquisitionWorkflowViewTest {
     @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
     void rendersLibrarianAcquisitionDashboardWithCurrentDatabase() throws Exception {
         mockMvc.perform(get("/librarian/dashboard").param("section", "acquisition"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/librarian/interaction/acquisition-requests"));
+
+        mockMvc.perform(get("/librarian/interaction/acquisition-requests"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("librarian/dashboard"));
+                .andExpect(view().name("librarian/acquisition-request-list"));
     }
 }

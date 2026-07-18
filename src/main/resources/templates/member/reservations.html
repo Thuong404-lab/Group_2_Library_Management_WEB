@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Hoàn tiền cọc - Thư viện LMW</title>
+    <title th:text="#{member.reservations.title}">Deposit Refund - LMW Library</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/member/reservations.css}" />
   </head>
@@ -11,10 +11,10 @@
 <div layout:fragment="content" class="container finance-page reservations-page">
     <div class="finance-header">
         <div>
-            <h2 class="finance-title">Hoàn tiền cọc</h2>
-            <div class="finance-description">Kiểm tra phiếu cọc và gửi yêu cầu hoàn tiền cho thủ thư duyệt.</div>
+            <h2 class="finance-title" th:text="#{member.reservations.heading}">Deposit Refund</h2>
+            <div class="finance-description" th:text="#{member.reservations.description}">Review deposit records and submit refund requests.</div>
         </div>
-        <a th:href="@{/member/financial/transactions}" class="btn app-secondary-action">Quay lại ví</a>
+            <a th:href="@{/member/financial/transactions}" class="btn app-secondary-action" th:text="#{member.reservations.backWallet}">Back to Wallet</a>
     </div>
 
     <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
@@ -22,38 +22,38 @@
 
     <div class="reservation-summary-grid">
         <div class="reservation-summary-card">
-            <div class="reservation-summary-label">Số dư ví</div>
+                    <div class="reservation-summary-label" th:text="#{member.wallet.balance}">Wallet Balance</div>
             <div class="reservation-summary-value">
                 <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                <span class="reservation-summary-unit">VNĐ</span>
+                <span class="reservation-summary-unit" th:text="#{currency.vnd}">VND</span>
             </div>
         </div>
         <div class="reservation-summary-card">
-            <div class="reservation-summary-label">Tiền cọc mỗi lượt đặt trước</div>
+                    <div class="reservation-summary-label" th:text="#{member.reservations.depositPerReservation}">Deposit per Reservation</div>
             <div class="reservation-summary-value">
                 <span th:text="${depositAmount != null ? #numbers.formatDecimal(depositAmount, 0, 'COMMA', 0, 'POINT') : '50,000'}">50,000</span>
-                <span class="reservation-summary-unit">VNĐ</span>
+                <span class="reservation-summary-unit" th:text="#{currency.vnd}">VND</span>
             </div>
         </div>
     </div>
 
     <div class="reservation-note">
         <i class="bi bi-info-circle" aria-hidden="true"></i>
-        <span>Chọn phiếu đã thanh toán cọc và bấm <strong>Yêu cầu hoàn tiền</strong>. Tiền chỉ được cộng lại vào ví sau khi thủ thư duyệt.</span>
+                <span th:utext="#{member.reservations.instructions}">Select a paid deposit and choose <strong>Request Refund</strong>.</span>
     </div>
 
     <section class="finance-card reservation-list">
         <div class="reservation-list-header">
             <div>
-                <h3 class="app-section-title">Phiếu cọc đặt trước</h3>
-                <p>Theo dõi trạng thái thanh toán và hoàn tiền của từng phiếu.</p>
+                    <h3 class="app-section-title" th:text="#{member.reservations.records}">Reservation Deposit Records</h3>
+                    <p th:text="#{member.reservations.recordsDescription}">Track payment and refund status for each reservation.</p>
             </div>
             <span class="reservation-count"
-                  th:text="${reservations != null ? #lists.size(reservations) + ' phiếu' : '0 phiếu'}">0 phiếu</span>
+                      th:text="#{member.reservations.count(${reservations != null ? #lists.size(reservations) : 0})}">0 records</span>
         </div>
 
         <div th:if="${reservations == null or #lists.isEmpty(reservations)}" class="reservation-empty-state">
-            Bạn chưa có phiếu cọc đặt trước nào để yêu cầu hoàn tiền.
+                <span th:text="#{member.reservations.empty}">You have no reservation deposits eligible for a refund.</span>
         </div>
 
         <article th:each="reservation : ${reservations}" class="reservation-row">
@@ -63,24 +63,24 @@
                 </div>
                 <div class="reservation-book-info">
                     <strong class="reservation-book-title"
-                            th:text="${reservation.book != null ? reservation.book.title : 'Sách không rõ'}">
-                        Tên sách
+                                     th:text="${reservation.book != null ? reservation.book.title : #messages.msg('book.unknown')}">
+                                    Book Title
                     </strong>
-                    <span th:text="${reservation.book != null && reservation.book.isbn != null ? 'ISBN: ' + reservation.book.isbn : 'Chưa có ISBN'}">ISBN</span>
-                    <span>Mã phiếu: <strong th:text="|RSV-${reservation.reservationId}|">RSV-1</strong></span>
+                                    <span th:text="${reservation.book != null && reservation.book.isbn != null ? 'ISBN: ' + reservation.book.isbn : #messages.msg('book.isbn.missing')}">ISBN</span>
+                                    <span><span th:text="#{reservation.code}">Reservation Code</span>: <strong th:text="|RSV-${reservation.reservationId}|">RSV-1</strong></span>
                 </div>
             </div>
 
             <div class="reservation-date">
-                <span class="reservation-meta-label">Ngày đặt</span>
+                                <span class="reservation-meta-label" th:text="#{reservation.date}">Reservation Date</span>
                 <strong th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">-</strong>
             </div>
 
             <div class="reservation-state">
-                <span class="reservation-meta-label">Trạng thái</span>
+                                <span class="reservation-meta-label" th:text="#{common.status}">Status</span>
                 <span class="reservation-status"
                       th:classappend="${reservation.status == 'Deposit_Paid' || reservation.status == 'Refunded'} ? ' is-paid' : (${reservation.status == 'Canceled' || reservation.status == 'Cancelled'} ? ' is-cancelled' : ' is-pending')"
-                      th:text="${reservation.status == 'Deposit_Paid' ? 'Đã cọc' : (reservation.status == 'Refund_Pending' ? 'Chờ duyệt hoàn tiền' : (reservation.status == 'Refunded' ? 'Đã hoàn tiền' : reservation.status))}">
+                                      th:text="${reservation.status == 'Deposit_Paid' ? #messages.msg('reservation.status.depositPaidShort') : (reservation.status == 'Refund_Pending' ? #messages.msg('reservation.status.refundPending') : (reservation.status == 'Refunded' ? #messages.msg('reservation.status.refunded') : reservation.status))}">
                     Pending
                 </span>
             </div>
@@ -89,52 +89,52 @@
                     <form method="post" class="app-confirm-form"
                           th:if="${reservation.status != 'Deposit_Paid' && reservation.status != 'Refund_Pending' && reservation.status != 'Refunded' && reservation.status != 'Completed' && reservation.status != 'Canceled' && reservation.status != 'Cancelled'}"
                           th:action="@{/member/financial/deposit/{reservationId}(reservationId=${reservation.reservationId})}"
-                          data-confirm-title="Xác nhận thanh toán tiền cọc"
-                          data-confirm-subject-label="Phiếu đặt trước"
-                          th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : 'Sách không rõ')}"
-                          data-confirm-message="Tiền cọc sẽ được trừ trực tiếp từ ví thành viên sau khi xác nhận."
-                          data-confirm-action="Xác nhận thanh toán">
+                                          th:data-confirm-title="#{reservation.deposit.confirmTitle}"
+                                          th:data-confirm-subject-label="#{reservation.book}"
+                                          th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : #messages.msg('book.unknown'))}"
+                                          th:data-confirm-message="#{reservation.deposit.confirmMessage}"
+                                          th:data-confirm-action="#{payment.confirm}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <button type="submit" class="btn app-primary-action reservation-action">
-                            Thanh toán cọc
+                                        <span th:text="#{reservation.deposit.pay}">Pay Deposit</span>
                         </button>
                     </form>
                     <form method="post" class="app-confirm-form"
                           th:if="${reservation.status == 'Pending' || reservation.status == 'Active'}"
                           th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${reservation.reservationId})}"
-                          data-confirm-title="Xác nhận hủy đặt trước"
-                          data-confirm-subject-label="Phiếu đặt trước"
-                          th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : 'Sách không rõ')}"
-                          data-confirm-message="Yêu cầu đặt trước sẽ được hủy sau khi xác nhận."
-                          data-confirm-action="Xác nhận hủy"
+                                          th:data-confirm-title="#{reservation.cancel.title}"
+                                          th:data-confirm-subject-label="#{reservation.book}"
+                                          th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : #messages.msg('book.unknown'))}"
+                                          th:data-confirm-message="#{reservation.cancel.simpleMessage}"
+                                          th:data-confirm-action="#{reservation.cancel.confirm}"
                           data-confirm-tone="danger">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <button type="submit" class="btn app-secondary-action reservation-action is-danger">
-                            Hủy
+                                        <span th:text="#{common.cancel}">Cancel</span>
                         </button>
                     </form>
                     <form method="post" class="app-confirm-form"
                           th:if="${reservation.status == 'Deposit_Paid'}"
                           th:action="@{/member/financial/deposit/{reservationId}/refund-request(reservationId=${reservation.reservationId})}"
-                          data-confirm-title="Xác nhận yêu cầu hoàn tiền"
-                          data-confirm-subject-label="Phiếu cọc"
-                          th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : 'Sách không rõ')}"
-                          data-confirm-message="Yêu cầu sẽ được chuyển cho thủ thư duyệt. Tiền chỉ được cộng lại vào ví sau khi yêu cầu được chấp thuận."
-                          data-confirm-action="Gửi yêu cầu hoàn tiền">
+                                          th:data-confirm-title="#{reservation.refund.confirmTitle}"
+                                          th:data-confirm-subject-label="#{reservation.refund.depositRecord}"
+                                          th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : #messages.msg('book.unknown'))}"
+                                          th:data-confirm-message="#{reservation.refund.confirmMessage}"
+                                          th:data-confirm-action="#{reservation.refund.request}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <button type="submit" class="btn app-primary-action reservation-action">
-                            Yêu cầu hoàn tiền
+                                        <span th:text="#{reservation.refund.request}">Request Refund</span>
                         </button>
                     </form>
                     <a th:if="${reservation.status == 'Deposit_Paid' || reservation.status == 'Refund_Pending'}"
                        th:href="@{/member/financial/transactions(type='DEPOSIT')}"
                        class="btn app-secondary-action reservation-action">
-                        Xem giao dịch
+                                        <span th:text="#{reservation.viewTransaction}">View Transaction</span>
                     </a>
                     <a th:if="${reservation.status == 'Refunded'}"
                        th:href="@{/member/financial/transactions(type='REFUND')}"
                        class="btn app-secondary-action reservation-action">
-                        Xem giao dịch hoàn tiền
+                                        <span th:text="#{reservation.viewRefundTransaction}">View Refund Transaction</span>
                     </a>
             </div>
         </article>

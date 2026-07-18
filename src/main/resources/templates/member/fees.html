@@ -5,7 +5,7 @@
 <head>
     <!-- UC-8.2 UI maintained by Pham Kien Quoc. -->
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Phí mượn sách</title>
+    <title th:text="#{member.fees.title}">Borrowing Fees</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
     <link rel="stylesheet" th:href="@{/css/pages/member/fees.css}"/>
 </head>
@@ -14,14 +14,14 @@
 <div layout:fragment="content" class="container finance-page member-fees-page">
     <div class="finance-header">
         <div>
-            <h2 class="finance-title">Phí mượn sách</h2>
-            <div class="finance-description">Phí sẽ được trừ từ ví khi thủ thư duyệt phiếu mượn.</div>
+            <h2 class="finance-title" th:text="#{member.fees.title}">Borrowing Fees</h2>
+            <div class="finance-description" th:text="#{member.fees.description}">Fees are deducted from your wallet when a librarian approves the loan.</div>
         </div>
         <div class="fees-wallet-balance">
-            <span>Số dư ví</span>
+            <span th:text="#{member.wallet.balance}">Wallet Balance</span>
             <strong
                   th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
-            <span>VNĐ</span>
+            <span th:text="#{currency.vnd}">VND</span>
         </div>
     </div>
 
@@ -30,23 +30,23 @@
 
     <section class="finance-card fees-section">
         <div class="fees-section-header">
-                <h2>Phiếu đang chờ duyệt</h2>
+                <h2 th:text="#{member.fees.pendingLoans}">Loans Pending Approval</h2>
                 <span class="fees-count is-pending" th:text="${pendingFees != null ? #lists.size(pendingFees) : 0}">0</span>
             </div>
 
-            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="empty-state">
-                Không có phiếu mượn đang chờ duyệt.
+            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="empty-state" th:text="#{member.fees.pendingEmpty}">
+                There are no loans pending approval.
             </div>
 
             <div class="app-table-wrap" th:if="${pendingFees != null and !#lists.isEmpty(pendingFees)}">
                 <table class="app-table">
                     <thead>
                     <tr>
-                        <th>Mã phiếu mượn</th>
-                        <th>Số quyển</th>
-                        <th>Số ngày tính phí</th>
-                        <th>Phí dự kiến</th>
-                        <th>Trạng thái</th>
+                        <th th:text="#{loan.id}">Loan ID</th>
+                        <th th:text="#{member.fees.bookCount}">Books</th>
+                        <th th:text="#{member.fees.chargeableDays}">Chargeable Days</th>
+                        <th th:text="#{member.fees.estimatedFee}">Estimated Fee</th>
+                        <th th:text="#{common.status}">Status</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -55,10 +55,10 @@
                         <td th:text="${fee.quantity}">1</td>
                         <td th:text="${fee.days}">10</td>
                         <td class="fees-amount">
-                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
                         </td>
                         <td>
-                            <span class="status-badge status-pending">Chờ thủ thư duyệt</span>
+                            <span class="status-badge status-pending" th:text="#{member.fees.awaitingLibrarian}">Awaiting Librarian Approval</span>
                         </td>
                     </tr>
                     </tbody>
@@ -68,24 +68,24 @@
 
     <section class="finance-card fees-section">
         <div class="fees-section-header">
-                <h2>Phí cần thanh toán</h2>
+                <h2 th:text="#{member.fees.payable}">Fees to Pay</h2>
                 <span class="fees-count is-unpaid" th:text="${payableFees != null ? #lists.size(payableFees) : 0}">0</span>
             </div>
 
-            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="empty-state">
-                Không có phí mượn cần thanh toán.
+            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="empty-state" th:text="#{member.fees.payableEmpty}">
+                There are no borrowing fees to pay.
             </div>
 
             <div class="app-table-wrap" th:if="${payableFees != null and !#lists.isEmpty(payableFees)}">
                 <table class="app-table">
                     <thead>
                     <tr>
-                        <th>Mã phiếu mượn</th>
-                        <th>Số quyển</th>
-                        <th>Số ngày tính phí</th>
-                        <th>Tổng phí</th>
-                        <th>Trạng thái</th>
-                        <th class="text-end">Thao tác</th>
+                        <th th:text="#{loan.id}">Loan ID</th>
+                        <th th:text="#{member.fees.bookCount}">Books</th>
+                        <th th:text="#{member.fees.chargeableDays}">Chargeable Days</th>
+                        <th th:text="#{member.fees.totalFee}">Total Fee</th>
+                        <th th:text="#{common.status}">Status</th>
+                        <th class="text-end" th:text="#{common.actions}">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -94,17 +94,17 @@
                         <td th:text="${fee.quantity}">1</td>
                         <td th:text="${fee.days}">10</td>
                         <td class="fees-amount">
-                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
                         </td>
                         <td>
-                            <span class="status-badge badge-danger">Chưa thanh toán</span>
+                            <span class="status-badge badge-danger" th:text="#{payment.status.unpaid}">Unpaid</span>
                         </td>
                         <td class="fees-actions">
                             <form th:if="${fee.payable}" method="post"
                                   th:action="@{/member/financial/fees/pay/{borrowId}(borrowId=${fee.borrowId})}"
                                   class="fees-action-form">
-                                <button type="submit" class="btn app-primary-action">
-                                    Thanh toán
+                                <button type="submit" class="btn app-primary-action" th:text="#{payment.pay}">
+                                    Pay
                                 </button>
                             </form>
                             <form th:if="${fee.payable}" method="post"
@@ -123,24 +123,24 @@
 
     <section class="finance-card fees-section">
         <div class="fees-section-header">
-                <h2>Phí đã thanh toán</h2>
+                <h2 th:text="#{member.fees.paid}">Paid Fees</h2>
                 <span class="fees-count is-paid" th:text="${paidFees != null ? #lists.size(paidFees) : 0}">0</span>
             </div>
 
-            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="empty-state">
-                Chưa có phí mượn nào đã thanh toán.
+            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="empty-state" th:text="#{member.fees.paidEmpty}">
+                No borrowing fees have been paid yet.
             </div>
 
             <div class="app-table-wrap" th:if="${paidFees != null and !#lists.isEmpty(paidFees)}">
                 <table class="app-table">
                     <thead>
                     <tr>
-                        <th>Mã phiếu mượn</th>
-                        <th>Mã giao dịch</th>
-                        <th>Số quyển</th>
-                        <th>Tổng phí</th>
-                        <th>Ngày thanh toán</th>
-                        <th>Trạng thái</th>
+                        <th th:text="#{loan.id}">Loan ID</th>
+                        <th th:text="#{transaction.code}">Transaction ID</th>
+                        <th th:text="#{member.fees.bookCount}">Books</th>
+                        <th th:text="#{member.fees.totalFee}">Total Fee</th>
+                        <th th:text="#{payment.date}">Payment Date</th>
+                        <th th:text="#{common.status}">Status</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -149,11 +149,11 @@
                         <td th:text="${fee.transactionId != null ? fee.transactionId : '-'}">10</td>
                         <td th:text="${fee.quantity}">1</td>
                         <td class="fees-amount">
-                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
                         </td>
                         <td th:text="${fee.paymentDate != null ? #temporals.format(fee.paymentDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
                         <td>
-                            <span class="status-badge status-completed">Đã thanh toán</span>
+                            <span class="status-badge status-completed" th:text="#{payment.status.paid}">Paid</span>
                         </td>
                     </tr>
                     </tbody>
