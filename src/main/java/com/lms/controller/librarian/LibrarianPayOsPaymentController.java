@@ -48,6 +48,30 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
         }
     }
 
+    @PostMapping("/fine/{fineId}")
+    public String createFinePayment(@PathVariable Integer fineId,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            PayOsPayment payment = paymentService.createFinePaymentForLibrarian(fineId);
+            return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", readableMessage(exception));
+            return "redirect:/librarian/members/fines";
+        }
+    }
+
+    @PostMapping("/fine/borrow/{borrowId}")
+    public String createBorrowFinePayment(@PathVariable Integer borrowId,
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            PayOsPayment payment = paymentService.createFineBatchPaymentForLibrarian(borrowId);
+            return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", readableMessage(exception));
+            return "redirect:/librarian/members/fines/payment/" + borrowId;
+        }
+    }
+
     @GetMapping("/return")
     public String paymentReturn(@RequestParam(required = false) Long orderCode,
                                 RedirectAttributes redirectAttributes) {
@@ -63,6 +87,7 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
     public String viewPayment(@PathVariable Long orderCode, Model model) {
         PayOsPayment payment = paymentService.refreshForStaff(orderCode);
         model.addAttribute("payment", payment);
+        model.addAttribute("fineItems", paymentService.getFineItems(payment));
         model.addAttribute("paymentExpiresAt", paymentService.getExpiryEpochMillis(payment));
         return "librarian/payos-topup";
     }

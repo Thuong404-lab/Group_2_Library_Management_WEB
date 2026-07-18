@@ -15,6 +15,8 @@ public interface ProfileService {
     // UC-4.2 & UC-16.2: Cập nhật Profile
     void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile);
 
+    void updateProfile(String currentUsername, String newUsername, String fullName, String email, String phone, MultipartFile avatarFile);
+
     // UC-4.3 + UC-16.3: Đổi mật khẩu
     void changePassword(String username, String oldPassword, String newPassword);
 }

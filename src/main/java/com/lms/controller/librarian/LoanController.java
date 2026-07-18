@@ -8,6 +8,7 @@ import com.lms.entity.Member;
 import com.lms.entity.Borrow;
 import com.lms.entity.Transaction;
 import com.lms.service.LoanService;
+import com.lms.service.FinancialService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,12 +20,15 @@ import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/librarian/loan")
 public class LoanController extends LocalizedControllerSupport {
 
     private final LoanService loanService;
+    private final FinancialService financialService;
     private final com.lms.repository.MemberRepository memberRepository;
     private final com.lms.repository.BorrowRepository borrowRepository;
     private final com.lms.repository.BorrowDetailRepository borrowDetailRepository;
@@ -33,6 +37,7 @@ public class LoanController extends LocalizedControllerSupport {
     private final com.lms.repository.MemberAccountRepository memberAccountRepository;
 
     public LoanController(LoanService loanService,
+                          FinancialService financialService,
                           com.lms.repository.MemberRepository memberRepository,
                           com.lms.repository.BorrowRepository borrowRepository,
                           com.lms.repository.BorrowDetailRepository borrowDetailRepository,
@@ -40,6 +45,7 @@ public class LoanController extends LocalizedControllerSupport {
                           com.lms.repository.WalletRepository walletRepository,
                           com.lms.repository.MemberAccountRepository memberAccountRepository) {
         this.loanService = loanService;
+        this.financialService = financialService;
         this.memberRepository = memberRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
@@ -56,6 +62,7 @@ public class LoanController extends LocalizedControllerSupport {
     public String showReturnDesk(Model model) {
         model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
         model.addAttribute("defaultReturnDate", LocalDate.now());
+        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
         return "librarian/return-desk";
     }
 
@@ -73,6 +80,7 @@ public class LoanController extends LocalizedControllerSupport {
         model.addAttribute("searchedQuery", trimmedQuery);
         model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
         model.addAttribute("defaultReturnDate", LocalDate.now());
+        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
 
         if (searchResults.isEmpty()) {
             model.addAttribute("errorMessage", message("backend.return.activeQueryNotFound", trimmedQuery));
@@ -99,6 +107,14 @@ public class LoanController extends LocalizedControllerSupport {
             }
 
             String staffUsername = (principal != null) ? principal.getName() : "admin";
+            Set<Integer> borrowIds = new LinkedHashSet<>();
+            for (String barcode : barcodes) {
+                for (BorrowDetail detail : loanService.findActiveLoansByBarcode(barcode)) {
+                    if (detail.getBorrow() != null && detail.getBorrow().getBorrowId() != null) {
+                        borrowIds.add(detail.getBorrow().getBorrowId());
+                    }
+                }
+            }
 
             // Chuyển LocalDate sang LocalDateTime (giữ nguyên giờ, phút, giây hiện hành của ngày làm việc)
             LocalDateTime actualReturnDateTime = returnDate.atTime(LocalDateTime.now().toLocalTime());
@@ -106,11 +122,34 @@ public class LoanController extends LocalizedControllerSupport {
             // Thực thi nghiệp vụ lõi trong LoanService
             loanService.confirmBatchReturnWithDetails(barcodes, actualReturnDateTime, conditionNote, conditionNoteAdditional, staffUsername);
 
-            redirectAttributes.addFlashAttribute("successMessage", message("backend.return.confirmed"));
+            if (borrowIds.size() == 1) {
+                Integer borrowId = borrowIds.iterator().next();
+                if (!transactionRepository.findPendingFineTransactionsByBorrowId(
+                        borrowId, List.of("FINE", "DAMAGE_FEE")).isEmpty()) {
+                    redirectAttributes.addFlashAttribute("successMessage",
+                            message("backend.return.redirectedToPayment"));
+                    return "redirect:/librarian/members/fines/payment/" + borrowId;
+                }
+            }
+
+            if (requiresDamageCompensation(conditionNote)) {
+                redirectAttributes.addFlashAttribute("successMessage",
+                        message("backend.return.confirmedWithCompensation"));
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.return.confirmed"));
+            }
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.return.failed", e));
         }
         return "redirect:/librarian/loan/returns";
+    }
+
+    private boolean requiresDamageCompensation(String conditionNote) {
+        String normalized = conditionNote == null ? "" : conditionNote.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("hư hỏng nặng")
+                || normalized.contains("mất sách")
+                || normalized.contains("severe damage")
+                || normalized.contains("lost");
     }
 
     /**

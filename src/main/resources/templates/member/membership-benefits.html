@@ -35,8 +35,10 @@
                     <hr>
 
                     <h5 class="text-dark mb-3"><i class="bi bi-gift me-2 text-danger"></i><span th:text="#{member.benefits.details}">Benefit Details:</span></h5>
-                    <div class="bg-light p-3 rounded text-secondary member-membership-benefits-div-white-space-01" th:text="${tierBenefits.benefits}">
-                        Detailed benefits have not been configured for this tier.
+                    <div class="bg-light p-3 rounded text-secondary member-membership-benefits-div-white-space-01">
+                        <p class="mb-1" th:if="${tierBenefits.discountPercent > 0}" th:text="#{public.tiers.benefits.dynamic(${#numbers.formatDecimal(tierBenefits.discountPercent, 0, 'COMMA', 0, 'POINT')}, ${tierBenefits.borrowLimit})}"></p>
+                        <p class="mb-1" th:if="${tierBenefits.discountPercent == 0}" th:text="#{public.tiers.benefits.dynamicNoDiscount(${tierBenefits.borrowLimit})}"></p>
+                        <p class="mb-0 mt-2 text-muted small" th:if="${tierBenefits.benefits != null && !tierBenefits.benefits.trim().isEmpty() && !tierBenefits.benefits.startsWith('Giảm') && !tierBenefits.benefits.startsWith('Mượn') && !tierBenefits.benefits.startsWith('Borrow') && !tierBenefits.benefits.contains('discount')}" th:text="${tierBenefits.benefits}"></p>
                     </div>
                 </div>
 
