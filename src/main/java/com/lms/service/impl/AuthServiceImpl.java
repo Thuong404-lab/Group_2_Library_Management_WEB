@@ -93,16 +93,17 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(messages.get("validation.email"));
         }
 
-        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+        if (request.getPhone() == null
+                || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new AuthException(messages.get("backend.profile.phoneFormat"));
         }
-
 
         if (userRepository.existsByPhone(request.getPhone())) {
             throw new AuthException(messages.get("backend.account.phoneUsed"));
         }
 
-        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent()
+                || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AuthException(messages.get("backend.account.usernameExists"));
         }
 
@@ -159,6 +160,12 @@ public class AuthServiceImpl implements AuthService {
     public void logLoginAction(Integer userId, String ipAddress, String userAgent) {
         createAndSaveLog(userId, ActionType.LOGIN.name(), ipAddress, userAgent,
                 messages.get("backend.auth.audit.login"));
+    }
+
+    @Override
+    public void logGoogleLoginAction(Integer userId, String ipAddress, String userAgent) {
+        createAndSaveLog(userId, ActionType.GOOGLE.name(), ipAddress, userAgent,
+                messages.get("backend.auth.audit.google_login"));
     }
 
     @Override
