@@ -6,6 +6,12 @@
     <title th:text="#{librarian.members.title}">Member List</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
+    <style>
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -65,6 +71,7 @@
                                                 required
                                                 pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                 placeholder="email@example.com" autocomplete="off"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['email'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['email'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
@@ -80,6 +87,7 @@
                                             <input class="form-control validate-field" name="phone" required
                                                 pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
                                                 placeholder="0912345678"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['phone'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
@@ -95,10 +103,11 @@
                                             <input class="form-control validate-field" name="username" required
                                                 pattern="[a-zA-Z0-9_]{3,20}" th:placeholder="#{librarian.members.usernamePlaceholder}"
                                                 autocomplete="new-password"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['username'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
-                                                th:text="${fieldErrors != null ? fieldErrors['username'] : ''}">
+                                                th:text="${fieldErrors != null and fieldErrors['username'] != null ? fieldErrors['username'] : #messages.msg('validation.username')}">
                                                 Username is required.
                                             </div>
                                         </div>
@@ -107,12 +116,23 @@
                                             <label class="form-label fw-bold small text-muted text-uppercase">
                                                 <span th:text="#{reset.newPassword}">Password</span> <span class="required-marker">*</span>
                                             </label>
-                                            <input class="form-control validate-field" name="password" type="password"
-                                                required minlength="6" th:placeholder="#{reset.newPassword.placeholder}"
-                                                autocomplete="new-password"
-                                                th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
+                                            <div class="position-relative">
+                                                <input class="form-control validate-field pe-5 pr-5" name="password" type="password" id="createMemberPassword"
+                                                    required minlength="6" pattern="^[!-~]+$" th:placeholder="#{reset.newPassword.placeholder}"
+                                                    autocomplete="new-password" style="padding-right: 2.5rem !important;"
+                                                    th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'"
+                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
+                                                    oninput="this.value = this.value.replace(/[^ -~]/g, '').replace(/ /g, '');">
+                                                <button type="button" class="btn border-0 bg-transparent position-absolute h-100 px-3 z-3" 
+                                                    style="top: 0; right: 0; display: flex; align-items: center;"
+                                                    onclick="const p = document.getElementById('createMemberPassword'); const i = this.querySelector('i'); if (p.type === 'password') { p.type = 'text'; i.classList.remove('bi-eye-slash'); i.classList.add('bi-eye'); } else { p.type = 'password'; i.classList.remove('bi-eye'); i.classList.add('bi-eye-slash'); }"
+                                                    tabindex="-1" aria-label="Toggle password visibility">
+                                                    <i class="bi bi-eye-slash text-muted"></i>
+                                                </button>
+                                            </div>
                                             <div class="invalid-feedback"
-                                                th:text="${fieldErrors != null ? fieldErrors['password'] : ''}">
+                                                th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'd-block'"
+                                                th:text="${fieldErrors != null and fieldErrors['password'] != null ? fieldErrors['password'] : #messages.msg('validation.passwordMin')}">
                                                 Password is required.
                                             </div>
                                         </div>
@@ -126,6 +146,7 @@
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true">
                                                 <span th:text="#{tier.regular}">Regular</span>
                                             </div>
+                                            <input type="hidden" name="tierId" value="1">
                                         </div>
 
                                         <div class="col-md-6">
@@ -135,6 +156,7 @@
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true">
                                                 <span th:text="#{account.status.active}">Active</span>
                                             </div>
+                                            <input type="hidden" name="status" value="Active">
                                         </div>
                                     </div>
 
@@ -148,7 +170,75 @@
                                             <span th:text="#{librarian.members.createAccount}">Create Account</span>
                                         </button>
                                     </div>
-
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const createForm = document.getElementById('createMemberForm');
+                                            if (createForm) {
+                                                createForm.addEventListener('submit', function(e) {
+                                                    let valid = true;
+                                                    const fields = [
+                                                        {name: 'fullName', msg: 'Họ và tên độc giả không được để trống'},
+                                                        {name: 'phone', msg: 'Số điện thoại liên hệ không được để trống'},
+                                                        {name: 'email', msg: 'Email không được để trống'},
+                                                        {name: 'username', msg: 'Username không được để trống'},
+                                                        {name: 'password', msg: 'Mật khẩu mới không được để trống'}
+                                                    ];
+                                                    fields.forEach(f => {
+                                                        const input = this.elements[f.name];
+                                                        if (input) {
+                                                            let errorMsg = null;
+                                                            if (!input.value.trim()) {
+                                                                errorMsg = f.msg;
+                                                            } else if (f.name === 'password' && input.value.length > 50) {
+                                                                errorMsg = 'Mật khẩu không được vượt quá 50 ký tự';
+                                                            }
+                                                            
+                                                            if (errorMsg) {
+                                                                input.classList.add('is-invalid');
+                                                                let feedback = input.parentElement.classList.contains('position-relative') ? input.parentElement.nextElementSibling : input.nextElementSibling;
+                                                                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                                                    feedback.textContent = errorMsg;
+                                                                    feedback.classList.add('d-block');
+                                                                }
+                                                                valid = false;
+                                                            }
+                                                        }
+                                                    });
+                                                    if (!valid) {
+                                                        e.preventDefault();
+                                                    }
+                                                });
+                                                // Xóa lỗi khi gõ
+                                                createForm.querySelectorAll('input').forEach(inp => {
+                                                    inp.addEventListener('input', function() {
+                                                        this.classList.remove('is-invalid');
+                                                        let feedback = this.parentElement.classList.contains('position-relative') ? this.parentElement.nextElementSibling : this.nextElementSibling;
+                                                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                                            feedback.classList.remove('d-block');
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                            
+                                            // Reset form when modal is closed
+                                            const createModal = document.getElementById('createMemberModal');
+                                            if (createModal) {
+                                                createModal.addEventListener('hidden.bs.modal', function () {
+                                                    if (createForm) {
+                                                        createForm.reset();
+                                                        // Xóa text để tránh dính cache cũ
+                                                        createForm.querySelectorAll('input:not([type="hidden"])').forEach(inp => {
+                                                            inp.value = '';
+                                                            inp.classList.remove('is-invalid');
+                                                        });
+                                                        createForm.querySelectorAll('.invalid-feedback').forEach(f => {
+                                                            f.classList.remove('d-block');
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    </script>
                                 </form>
                             </div>
                         </div>
@@ -354,9 +444,10 @@
                                                                 </label>
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:value="${account.username}" required>
-                                                                <div class="invalid-feedback" data-error-for="username">
-                                                                    Username must contain 3-20 letters, numbers, or underscores.
+                                                                <div class="invalid-feedback" data-error-for="username" th:text="#{validation.username}">
+                                                                    Username must contain 3-20 letters, numbers, underscores, and no spaces.
                                                                 </div>
                                                             </div>
 
@@ -369,6 +460,7 @@
                                                                     th:data-label="#{member.profile.phone}"
                                                                     th:value="${account.user != null ? account.user.phone : ''}"
                                                                     required pattern="^(?!0{10}$)0[0-9]{9}$"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     minlength="10" inputmode="numeric">
                                                                 <div class="invalid-feedback" data-error-for="phone">
                                                                     Phone number must contain exactly 10 digits and start with 0.
@@ -383,6 +475,7 @@
                                                                 <input class="form-control" name="email" type="email"
                                                                     data-label="Email"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:value="${account.user != null ? account.user.email : ''}"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="email">

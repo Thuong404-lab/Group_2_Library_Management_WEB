@@ -120,7 +120,7 @@
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
                                         <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action"
-                                                th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"
+                                                th:disabled="${item.renewCount >= 2 or item.status == 'Overdue' or (isInactiveMember != null and isInactiveMember)}"
                                                 th:title="${item.renewCount >= 2 ? #messages.msg('loan.renew.limitReached') : (item.status == 'Overdue' ? #messages.msg('loan.renew.overdueDisabled') : #messages.msg('loan.renew.sevenDays'))}"
                                                 th:attr="data-form-id='renewForm_' + ${item.id}">
                                             <i class="bi bi-clock-history me-1"></i>
@@ -173,6 +173,7 @@
                                 <!-- Form thực hiện Hủy đặt trước -->
                                 <button th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
                                         type="button" class="btn reservation-cancel-action"
+                                        th:disabled="${isInactiveMember != null and isInactiveMember}"
                                         data-toggle="modal"
                                         th:data-target="${'#cancelReservationModal' + item.id}">
                                                 <span th:text="#{reservation.cancel}">Cancel Reservation</span>

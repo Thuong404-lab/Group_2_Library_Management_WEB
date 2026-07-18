@@ -103,7 +103,7 @@
             <div class="card card-profile-classic" th:if="${#authentication.principal.attributes == null}">
                 <div class="card-body p-4 u-background-color-fdfbf7-71083b05">
                     <h6 class="fw-bold mb-3 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.security}">Account Security</h6>
-                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal" th:text="#{member.profile.changePassword}">Change Password</button>
+                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal" th:disabled="${isInactiveMember}" th:text="#{member.profile.changePassword}">Change Password</button>
                 </div>
             </div>
 
@@ -127,7 +127,7 @@
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.fullName}">Full Name</label>
-                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${member?.fullName}" maxlength="50" required>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${member?.fullName}" maxlength="50" required th:readonly="${isInactiveMember}">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.username}">Username</label>
@@ -135,15 +135,15 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.email}">Email Address</label>
-                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${member?.email}" required>
+                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${member?.email}" required th:readonly="${isInactiveMember}">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.phone}">Phone Number</label>
-                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:value="${member?.phone}" required>
+                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:value="${member?.phone}" required th:readonly="${isInactiveMember}">
                             </div>
 
                             <div class="col-12 mt-3 text-end">
-                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm" th:text="#{member.profile.save}">Save Changes</button>
+                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm" th:disabled="${isInactiveMember}" th:text="#{member.profile.save}">Save Changes</button>
                             </div>
                         </div>
                     </form>

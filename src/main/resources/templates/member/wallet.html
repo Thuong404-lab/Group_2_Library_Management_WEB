@@ -45,7 +45,7 @@
                             </div>
                         </div>
                         <div class="balance-actions">
-                            <button type="button" class="btn app-primary-action"
+                            <button type="button" class="btn app-primary-action" th:disabled="${isInactiveMember}"
                                     data-toggle="modal" data-target="#memberTopUpModal">
                                 <i class="bi bi-plus-circle me-1"></i> <span th:text="#{wallet.topUp}">Top Up</span>
                             </button>
@@ -81,7 +81,7 @@
                                     <span th:text="#{currency.vnd}">VND</span>
                                 </div>
                                 <button th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}"
-                                        type="button" class="btn btn-pay-fine btn-sm px-3 mt-2"
+                                        type="button" class="btn btn-pay-fine btn-sm px-3 mt-2" th:disabled="${isInactiveMember}"
                                         data-toggle="modal" data-target="#finePaymentModal">
                                     <span th:text="#{member.wallet.payAll}">Pay All</span>
                                 </button>
