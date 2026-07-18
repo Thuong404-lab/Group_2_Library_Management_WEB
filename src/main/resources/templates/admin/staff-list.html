@@ -85,7 +85,7 @@
                                 th:aria-label="#{admin.staff.filterType}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStaffType)}" th:text="#{admin.staff.allTypes}">All Types</option>
                                 <option value="Librarian" th:selected="${selectedStaffType == 'Librarian'}" th:text="#{role.librarian}">Librarian</option>
-                                <option value="Admin" th:selected="${selectedStaffType == 'Admin'}">Admin</option>
+                                <option value="Admin" th:selected="${selectedStaffType == 'Admin'}" th:text="#{role.admin}">Admin</option>
                             </select>
                             <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{admin.accounts.filterStatus}">
@@ -103,7 +103,15 @@
                 </div>
 
                 <div class="table-responsive member-table-wrap">
-                    <table class="table table-hover align-middle member-table">
+                    <table class="table table-hover align-middle stable-table-layout member-table">
+                        <colgroup>
+                            <col class="staff-col-index">
+                            <col class="staff-col-username">
+                            <col class="staff-col-user">
+                            <col class="staff-col-role">
+                            <col class="staff-col-status">
+                            <col class="staff-col-actions">
+                        </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
                                 <th class="ps-3" th:text="#{common.number}">No.</th>
@@ -287,7 +295,7 @@
                                                                     <div class="member-readonly-field"
                                                                         th:if="${account.accountId == 1}"
                                                                         role="textbox" aria-readonly="true">
-                                                                        Admin
+                                                                        <span th:text="#{role.admin}">Admin</span>
                                                                     </div>
                                                                     <input type="hidden" name="staffType" value="Admin"
                                                                         th:if="${account.accountId == 1}">
@@ -297,10 +305,12 @@
                                                                         required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
                                                                         <option value="Admin"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Admin' : staff.staffType == 'Admin'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Admin' : staff.staffType == 'Admin'}"
+                                                                            th:text="#{role.admin}">
                                                                             Admin</option>
                                                                         <option value="Librarian"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Librarian' : staff.staffType == 'Librarian'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Librarian' : staff.staffType == 'Librarian'}"
+                                                                            th:text="#{role.librarian}">
                                                                             Librarian</option>
                                                                     </select>
                                                                     <div class="invalid-feedback"
@@ -325,13 +335,16 @@
                                                                         name="status" th:data-label="#{common.status}" required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                         <option value="Active"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}"
+                                                                            th:text="#{account.status.active}">
                                                                             Active</option>
                                                                         <option value="Inactive"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
+                                                                            th:text="#{account.status.inactive}">
                                                                             Inactive</option>
                                                                         <option value="Blocked"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
+                                                                            th:text="#{account.status.blocked}">
                                                                             Blocked</option>
                                                                     </select>
                                                                     <div class="invalid-feedback"
@@ -381,7 +394,7 @@
                                                             <div class="p-3 bg-light rounded border">
                                                                 <div class="row g-3">
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Username:</div>
+                                                                        <div class="small text-muted" th:text="#{member.profile.username}">Username</div>
                                                                         <div class="fw-bold mb-1"
                                                                             th:text="${account.username}">
                                                                             username
@@ -389,7 +402,7 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Account ID:</div>
+                                                                        <div class="small text-muted" th:text="#{common.accountId}">Account ID</div>
                                                                         <div class="fw-bold"
                                                                             th:text="${account.accountId}">
                                                                             id
@@ -405,7 +418,7 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Email:</div>
+                                                                        <div class="small text-muted" th:text="#{common.email}">Email</div>
                                                                         <div>
                                                                             <i
                                                                                 class="bi bi-envelope me-1 text-classic"></i>
