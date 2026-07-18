@@ -266,7 +266,11 @@
                     const checkedCBs = document.querySelectorAll(".book-select-checkbox:checked");
                     if (checkedCBs.length === 0) {
                         e.preventDefault();
-                        alert(selectionRequiredMessage);
+                        if (window.showToast) {
+                            window.showToast(selectionRequiredMessage);
+                        } else {
+                            alert(selectionRequiredMessage);
+                        }
                         return;
                     }
 

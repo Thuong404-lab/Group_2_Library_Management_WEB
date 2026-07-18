@@ -343,12 +343,16 @@
                         .then(data => {
                             if (data && data.success) {
                                 if (window.showToast) {
-                                    window.showToast(data.message || "Đã thêm cuốn sách vào giỏ thành công!");
+                                    window.showToast(data.message || "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
                                 } else {
-                                    alert(data.message || "Đã thêm cuốn sách vào giỏ thành công!");
+                                    alert(data.message || "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
                                 }
                             } else if (data && data.message) {
-                                alert(data.message);
+                                if (window.showToast) {
+                                    window.showToast(data.message);
+                                } else {
+                                    alert(data.message);
+                                }
                             }
                         })
                         .catch(err => {
