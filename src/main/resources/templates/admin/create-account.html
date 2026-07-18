@@ -64,7 +64,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Email <span
+                                    <label class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{common.email}">Email</span> <span
                                             class="text-danger">*</span></label>
                                     <input class="form-control validate-field" name="email" type="email" required
                                         pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
@@ -91,7 +91,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Username <span
+                                    <label class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{member.profile.username}">Username</span> <span
                                             class="text-danger">*</span></label>
                                     <input class="form-control validate-field" name="username" required
                                         pattern="[a-zA-Z0-9_]{3,20}" th:placeholder="#{admin.createAccount.usernamePlaceholder}"
@@ -215,7 +215,7 @@
                         if (field.tagName === "SELECT") {
                             return (/*[[#{admin.createAccount.selectPrefix}]]*/ "Please select") + " " + labels[field.name].toLowerCase() + ".";
                         }
-                        return labels[field.name] + (/*[[#{admin.createAccount.requiredSuffix}]]*/ " is required.");
+                        return labels[field.name] + " " + (/*[[#{admin.createAccount.requiredSuffix}]]*/ "is required.");
                     }
 
                     if (field.name === "phone") {
@@ -340,6 +340,15 @@
                     });
 
                     const submitButton = form.querySelector("button[type='submit']");
+                    if (!isFormValid) {
+                        const firstInvalidField = form.querySelector(".is-invalid");
+                        if (firstInvalidField != null) {
+                            firstInvalidField.focus();
+                        }
+                        isSubmitting = false;
+                        return;
+                    }
+
                     submitButton.disabled = true;
                     try {
                         const params = new URLSearchParams();
@@ -394,7 +403,7 @@
 
                         form.submit();
                     } catch (error) {
-                        window.alert(/*[[#{backend.account.validationUnavailable}]]*/ "Unable to validate the data right now. Please try again.");
+                        console.error("Unable to validate account data.", error);
                     } finally {
                         submitButton.disabled = false;
                         isSubmitting = false;
