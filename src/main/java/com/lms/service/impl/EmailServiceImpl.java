@@ -2,7 +2,6 @@ package com.lms.service.impl;
 
 import com.lms.exception.ExternalServiceException;
 import com.lms.service.EmailService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,7 +16,7 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Autowired
+
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }

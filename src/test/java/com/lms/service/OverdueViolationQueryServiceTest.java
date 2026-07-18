@@ -26,7 +26,11 @@ class OverdueViolationQueryServiceTest {
     void returnsOnlyActiveOverdueLoansAndCalculatesCalendarDays() {
         BorrowDetailRepository repository = mock(BorrowDetailRepository.class);
         SystemSettingRepository settingRepository = mock(SystemSettingRepository.class);
-        OverdueViolationQueryService service = new OverdueViolationQueryService(repository, settingRepository);
+        LocalizedMessageService messages = mock(LocalizedMessageService.class);
+        OverdueViolationQueryService service = new OverdueViolationQueryService(
+                repository,
+                settingRepository,
+                messages);
 
         SystemSetting fineSetting = new SystemSetting();
         fineSetting.setSettingValue("7000");
