@@ -31,8 +31,9 @@
                             th:placeholder="#{admin.logs.searchPlaceholder}"
                             th:value="${keyword}">
                     </div>
+                    <input type="hidden" name="section" th:value="${currentSection}">
                     <div class="system-log-filter-actions">
-                        <button type="submit" name="section" th:value="${currentSection}"
+                        <button type="submit"
                             class="btn btn-classic system-log-search-button"
                             th:title="#{common.search}" th:aria-label="#{common.search}">
                             <i class="bi bi-search" aria-hidden="true"></i>
@@ -43,22 +44,22 @@
                         </a>
                     </div>
                     <nav class="system-log-section-nav" th:aria-label="#{admin.logs.groups}">
-                        <button type="submit" name="section" value="auth"
-                            onclick="this.form.actionType.value=''"
+                        <button type="submit"
+                            onclick="this.form.section.value='auth'; this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'auth'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'auth'} ? 'page'">
                             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i><span th:text="#{admin.logs.auth}">Login / Logout</span>
                         </button>
-                        <button type="submit" name="section" value="operations"
-                            onclick="this.form.actionType.value=''"
+                        <button type="submit"
+                            onclick="this.form.section.value='operations'; this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'operations'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'operations'} ? 'page'">
                             <i class="bi bi-activity" aria-hidden="true"></i><span th:text="#{admin.logs.operations}">Status / CRUD</span>
                         </button>
-                        <button type="submit" name="section" value="circulation"
-                            onclick="this.form.actionType.value=''"
+                        <button type="submit"
+                            onclick="this.form.section.value='circulation'; this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'circulation'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'circulation'} ? 'page'">
@@ -99,25 +100,23 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 stable-table-layout">
                         <colgroup>
-                            <col class="u-width-24-3ca932db">
-                            <col class="admin-system-logs-col-width-04">
-                            <col class="u-width-14-546d6dae">
-                            <col class="u-width-17-9278e232">
-                            <col class="u-width-24-3ca932db">
+                            <col style="width: 20%;">
+                            <col style="width: 20%;">
+                            <col style="width: 15%;">
+                            <col style="width: 45%;">
                         </colgroup>
                         <thead class="admin-system-logs-thead-background-07">
                             <tr>
                                 <th th:text="#{common.time}">Time</th>
                                 <th th:text="#{admin.logs.actor}">Actor</th>
                                 <th th:text="#{admin.logs.action}">Action</th>
-                                <th th:text="#{common.ip}">IP</th>
                                 <th th:text="#{librarian.inventory.bookDescription}">Description</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             <tr th:if="${logs == null or logs.content.isEmpty()}">
-                                <td colspan="5" class="text-center text-muted py-5">
+                                <td colspan="4" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                     <span th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.noAuth') : (currentSection == 'operations' ? #messages.msg('admin.logs.noOperations') : #messages.msg('admin.logs.noCirculation'))}">
                                         No system logs.
@@ -148,12 +147,17 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge rounded-pill px-2 py-1 text-white" th:classappend="${
-                                            log.actionType == 'LOGIN' ? 'bg-success' :
-                                            (log.actionType == 'LOGOUT' or log.actionType == 'DEACTIVATE_ACCOUNT') ? 'bg-danger' :
-                                            #strings.startsWith(log.actionType, 'CREATE') ? 'bg-primary' :
-                                            #strings.startsWith(log.actionType, 'UPDATE') ? 'bg-warning text-dark' :
-                                            'bg-secondary'}"
+                                    <span class="log-action-badge" th:classappend="${
+                                            log.actionType == 'LOGIN' ? 'log-action-success' :
+                                            (log.actionType == 'LOGOUT' or log.actionType == 'DEACTIVATE_ACCOUNT' or log.actionType == 'DELETE_BOOK') ? 'log-action-danger' :
+                                            log.actionType == 'GOOGLE' ? 'log-action-primary' :
+                                            (log.actionType == 'CREATE_ACCOUNT' or log.actionType == 'CREATE_BOOK') ? 'log-action-info' :
+                                            (log.actionType == 'UPDATE_ACCOUNT' or log.actionType == 'UPDATE_BOOK') ? 'log-action-warning' :
+                                            log.actionType == 'UPDATE_SETTINGS' ? 'log-action-purple' :
+                                            log.actionType == 'REQUEST_BORROW' ? 'log-action-indigo' :
+                                            log.actionType == 'REQUEST_RETURN' ? 'log-action-pink' :
+                                            log.actionType == 'RESERVE_BOOK' ? 'log-action-brown' :
+                                            'log-action-secondary'}"
                                         th:text="${log.actionType == 'LOGIN' ? #messages.msg('admin.logs.action.login') :
                                             (log.actionType == 'LOGOUT' ? #messages.msg('admin.logs.action.logout') :
                                             (log.actionType == 'CREATE_BOOK' ? #messages.msg('admin.logs.action.create_book') :
@@ -171,16 +175,16 @@
                                     </span>
                                 </td>
 
-                                <td>
-                                    <span th:text="${log.ipAddress != null ? log.ipAddress : 'N/A'}">
-                                        127.0.0.1
-                                    </span>
-                                </td>
-
                                 <td class="admin-system-logs-td-max-width-08">
-                                    <span th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
-                                        No description
-                                    </span>
+                                    <th:block th:switch="${log.actionType}">
+                                        <span th:case="'LOGIN'" th:text="#{backend.auth.audit.login}"></span>
+                                        <span th:case="'LOGOUT'" th:text="#{backend.auth.audit.logout}"></span>
+                                        <span th:case="'GOOGLE'" th:text="#{backend.auth.audit.google_login}"></span>
+                                        <span th:case="'UPDATE_SETTINGS'" th:text="#{backend.settings.audit.updated}"></span>
+                                        <span th:case="*" th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
+                                            No description
+                                        </span>
+                                    </th:block>
                                 </td>
                             </tr>
                         </tbody>
@@ -196,14 +200,14 @@
                     <ul class="pagination mb-0 app-pagination">
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword})}" th:aria-label="#{common.first}" th:text="#{common.first}">
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword}, actionType=${actionType})}" th:aria-label="#{common.first}" th:text="#{common.first}">
                                 First
                             </a>
                         </li>
 
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number - 1}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number - 1}, keyword=${keyword}, actionType=${actionType})}"
                                 th:aria-label="#{common.previous}">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
@@ -216,7 +220,7 @@
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == logs.number} ? 'active'">
                             <a class="page-link page-link-classic"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=${i}, keyword=${keyword})}" th:text="${i + 1}">
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${i}, keyword=${keyword}, actionType=${actionType})}" th:text="${i + 1}">
                                 1
                             </a>
                         </li>
@@ -227,7 +231,7 @@
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number + 1}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.number + 1}, keyword=${keyword}, actionType=${actionType})}"
                                 th:aria-label="#{common.next}">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
@@ -235,7 +239,7 @@
 
                         <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.totalPages - 1}, keyword=${keyword})}"
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${logs.totalPages - 1}, keyword=${keyword}, actionType=${actionType})}"
                                 th:aria-label="#{common.last}" th:text="#{common.last}">
                                 Last
                             </a>
