@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <title>Chi tiết thành viên</title>
+    <title th:text="#{librarian.memberDetail.title}">Member Details</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-detail.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
@@ -11,23 +11,23 @@
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='members'" class="finance-page member-detail-page">
-        <div th:if="${success != null}" class="alert alert-success" th:text="${success}"></div>
-        <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:if="${success != null}" class="finance-alert finance-alert--success" role="alert" th:text="${success}"></div>
+    <div th:if="${error != null}" class="finance-alert finance-alert--danger" role="alert" th:text="${error}"></div>
 
         <header class="member-detail-header">
             <div>
-                <h1 class="detail-page-title">Chi tiết thành viên</h1>
-                <p class="member-detail-description">Xem hồ sơ, trạng thái tài khoản, số dư ví và lịch sử giao dịch.</p>
+                <h1 class="detail-page-title" th:text="#{librarian.memberDetail.heading}">Member Details</h1>
+                <p class="member-detail-description" th:text="#{librarian.memberDetail.description}">View profile, account status, wallet balance, and transactions.</p>
             </div>
             <a th:href="@{/librarian/members}" class="btn member-detail-back text-nowrap">
-                <i class="bi bi-arrow-left me-1"></i> Trở về
+                <i class="bi bi-arrow-left me-1"></i> <span th:text="#{common.back}">Back</span>
             </a>
         </header>
 
         <div class="member-detail-shell">
             <div class="row g-0">
                 <div class="col-lg-4 reader-column member-profile-panel">
-                    <h5 class="section-title"><i class="bi bi-person-fill"></i>Thông tin độc giả</h5>
+                    <h5 class="section-title"><i class="bi bi-person-fill"></i><span th:text="#{librarian.memberDetail.readerInfo}">Member Information</span></h5>
 
                     <div class="d-flex align-items-center mb-4">
                         <div th:if="${member.user == null or member.user.avatar == null or #strings.isEmpty(member.user.avatar)}"
@@ -35,157 +35,154 @@
                             th:text="${member.user != null and member.user.fullName != null and !#strings.isEmpty(member.user.fullName) ? #strings.toUpperCase(#strings.substring(member.user.fullName, 0, 1)) : 'T'}">
                             T</div>
                         <img th:if="${member.user != null and member.user.avatar != null and !#strings.isEmpty(member.user.avatar)}"
-                            th:src="${member.user.avatar}" alt="Ảnh thành viên"
+                            th:src="${member.user.avatar}" th:alt="#{librarian.memberDetail.avatarAlt}"
                             class="rounded-circle shadow-sm me-3 librarian-member-detail-img-width-height-fit-03">
                         <div>
                             <div class="fw-bold fs-5 detail-page-title"
-                                th:text="${member.user != null ? member.user.fullName : 'Thành viên'}">Họ tên thành viên
+                                th:text="${member.user != null ? member.user.fullName : #messages.msg('common.member')}">Member name
                             </div>
                             <span class="member-status mt-1"
-                                th:text="${member.tier == null ? 'Chưa xếp hạng' : (member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName))))}">
-                                Hạng thành viên
+                                th:text="${member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
+                                Member tier
                             </span>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <small class="detail-label">Mã độc giả</small>
+                        <small class="detail-label" th:text="#{librarian.memberDetail.memberId}">Member ID</small>
                         <div class="detail-value" th:text="${'TV-' + member.memberId}">TV-1</div>
                     </div>
                     <div class="mb-3">
-                        <small class="detail-label">Tên đăng nhập</small>
+                        <small class="detail-label" th:text="#{member.profile.username}">Username</small>
                         <div class="detail-value"
-                            th:text="${memberAccount != null ? memberAccount.username : 'Chưa có'}">username</div>
+                            th:text="${memberAccount != null ? memberAccount.username : #messages.msg('common.none')}">username</div>
                     </div>
                     <div class="mb-3">
-                        <small class="detail-label">Địa chỉ Email</small>
+                        <small class="detail-label" th:text="#{member.profile.email}">Email Address</small>
                         <div class="detail-value text-break"
-                            th:text="${member.user != null ? member.user.email : 'Chưa cập nhật'}">email@domain.com
+                            th:text="${member.user != null ? member.user.email : #messages.msg('common.notUpdated')}">email@domain.com
                         </div>
                     </div>
                     <div class="mb-3">
-                        <small class="detail-label">Số điện thoại</small>
+                        <small class="detail-label" th:text="#{member.profile.phone}">Phone Number</small>
                         <div class="detail-value"
                             th:classappend="${member.user == null or member.user.phone == null or #strings.isEmpty(member.user.phone)} ? ' fst-italic text-muted'"
-                            th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : 'Chưa cập nhật'}">
-                            Chưa cập nhật
+                            th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : #messages.msg('common.notUpdated')}">
+                            Not updated
                         </div>
                     </div>
                 </div>
 
                 <div class="col-lg-8 member-account-panel">
-                    <h5 class="section-title"><i class="bi bi-person-vcard-fill"></i>Thông tin tài khoản và ví</h5>
+                    <h5 class="section-title"><i class="bi bi-person-vcard-fill"></i><span th:text="#{librarian.memberDetail.accountWallet}">Account & Wallet Information</span></h5>
                     <div class="row mb-5 g-4 account-summary">
                         <div class="col-md-6">
-                            <small class="detail-label">Trạng thái tài khoản</small>
+                            <small class="detail-label" th:text="#{librarian.memberDetail.accountStatus}">Account Status</small>
                             <div class="detail-value">
                                 <span class="member-status"
                                     th:classappend="${memberAccount == null or memberAccount.status != 'Active'} ? ' is-inactive'"
-                                    th:text="${memberAccount == null ? 'Chưa có tài khoản' : (memberAccount.status == 'Active' ? 'Đang hoạt động' : (memberAccount.status == 'Blocked' ? 'Bị khóa' : 'Ngừng hoạt động'))}">
-                                    Đang hoạt động
+                                    th:text="${memberAccount == null ? #messages.msg('librarian.memberDetail.noAccount') : (memberAccount.status == 'Active' ? #messages.msg('account.status.active') : (memberAccount.status == 'Blocked' ? #messages.msg('account.status.blocked') : #messages.msg('account.status.inactive')))}">
+                                    Active
                                 </span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <small class="detail-label">Số dư ví hiện tại</small>
+                            <small class="detail-label" th:text="#{member.wallet.currentBalance}">Current Balance</small>
                             <div class="wallet-value">
                                 <span
                                     th:text="${wallet != null and wallet.balance != null ? #numbers.formatDecimal(wallet.balance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                VNĐ
+                                <span th:text="#{currency.vnd}">VND</span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <small class="detail-label">Hạng thành viên</small>
+                            <small class="detail-label" th:text="#{member.profile.tier}">Membership Tier</small>
                             <div class="detail-value"
-                                th:text="${member.tier == null ? 'Chưa xếp hạng' : (member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName))))}">
-                                Thường
+                                th:text="${member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
+                                Regular
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <small class="detail-label">Số giao dịch phù hợp</small>
-                            <div class="detail-value" th:text="${transactionPage.totalElements + ' giao dịch'}">0 giao
-                                dịch</div>
+                            <small class="detail-label" th:text="#{librarian.memberDetail.matchingTransactions}">Matching Transactions</small>
+                            <div class="detail-value" th:text="#{transaction.count(${transactionPage.totalElements})}">0 transactions</div>
                         </div>
                     </div>
 
                     <section class="refund-section" id="refund-requests">
                         <div class="refund-section-heading">
                             <div>
-                                <h5 class="section-title"><i class="bi bi-arrow-counterclockwise"></i>Duyệt hoàn tiền cọc</h5>
-                                <p>Kiểm tra và duyệt yêu cầu hoàn tiền cọc vào ví thành viên.</p>
+                                <h5 class="section-title"><i class="bi bi-arrow-counterclockwise"></i><span th:text="#{librarian.memberDetail.refundHeading}">Approve Deposit Refunds</span></h5>
+                                <p th:text="#{librarian.memberDetail.refundDescription}">Review deposit refund requests.</p>
                             </div>
                             <span class="refund-count"
-                                th:text="${#lists.size(refundableReservations) + ' yêu cầu chờ duyệt'}">0 yêu cầu chờ duyệt</span>
+                                th:text="#{librarian.memberDetail.pendingRefunds(${#lists.size(refundableReservations)})}">0 pending requests</span>
                         </div>
 
                         <div th:if="${#lists.isEmpty(refundableReservations)}" class="refund-empty">
-                            Không có yêu cầu hoàn tiền cọc nào đang chờ duyệt.
+                            <span th:text="#{librarian.memberDetail.noRefunds}">No deposit refund requests are pending.</span>
                         </div>
 
                         <div th:unless="${#lists.isEmpty(refundableReservations)}" class="refund-list">
                             <article class="refund-item" th:each="reservation : ${refundableReservations}">
                                 <div class="refund-main">
-                                    <strong th:text="${reservation.book != null ? reservation.book.title : 'Sách không còn thông tin'}">Tên sách</strong>
+                                    <strong th:text="${reservation.book != null ? reservation.book.title : #messages.msg('book.unknown')}">Book title</strong>
                                     <span>
-                                        Phiếu #<span th:text="${reservation.reservationId}">1</span>
-                                        · Đặt ngày
+                                        <span th:text="#{librarian.memberDetail.reservation}">Reservation</span> #<span th:text="${reservation.reservationId}">1</span>
+                                        · <span th:text="#{librarian.memberDetail.reservedOn}">Reserved on</span>
                                         <span th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd/MM/yyyy HH:mm') : '-'}">-</span>
                                     </span>
                                 </div>
                                 <div class="refund-amount">
-                                    <small>Số tiền hoàn</small>
+                                    <small th:text="#{librarian.memberDetail.refundAmount}">Refund Amount</small>
                                     <strong>
                                         <span th:text="${#numbers.formatDecimal(reservationDepositAmount, 0, 'COMMA', 0, 'POINT')}">50,000</span>
-                                        VNĐ
+                                        <span th:text="#{currency.vnd}">VND</span>
                                     </strong>
                                 </div>
                                 <form method="post" class="app-confirm-form"
                                     th:action="@{/librarian/members/{memberId}/reservations/{reservationId}/refund(memberId=${member.memberId},reservationId=${reservation.reservationId})}"
-                                    data-confirm-title="Xác nhận duyệt hoàn tiền"
-                                    data-confirm-subject-label="Phiếu cọc"
-                                    th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : 'Sách không còn thông tin')}"
-                                    data-confirm-message="Tiền cọc sẽ được cộng vào ví thành viên và giao dịch hoàn tiền được ghi nhận. Thao tác này không thể hoàn tác."
-                                    data-confirm-action="Xác nhận hoàn tiền">
-                                    <button type="submit" class="btn btn-classic refund-button">Duyệt hoàn tiền</button>
+                                    th:data-confirm-title="#{librarian.memberDetail.refundConfirmTitle}"
+                                    th:data-confirm-subject-label="#{librarian.memberDetail.depositRecord}"
+                                    th:data-confirm-subject="${'RSV-' + reservation.reservationId + ' · ' + (reservation.book != null ? reservation.book.title : #messages.msg('book.unknown'))}"
+                                    th:data-confirm-message="#{librarian.memberDetail.refundConfirmMessage}"
+                                    th:data-confirm-action="#{librarian.memberDetail.refundConfirmAction}">
+                                    <button type="submit" class="btn btn-classic refund-button" th:text="#{librarian.memberDetail.approveRefund}">Approve Refund</button>
                                 </form>
                             </article>
                         </div>
                     </section>
 
-                    <h5 class="section-title transaction-title"><i class="bi bi-wallet2"></i>Lịch sử giao dịch</h5>
+                    <h5 class="section-title transaction-title"><i class="bi bi-wallet2"></i><span th:text="#{transaction.history}">Transaction History</span></h5>
 
                     <form method="get" th:action="@{/librarian/members/{memberId}/details(memberId=${member.memberId})}"
                         class="detail-filter d-flex flex-wrap align-items-center gap-2" data-auto-filter-form>
-                        <select name="type" class="form-select" aria-label="Lọc loại giao dịch" data-auto-submit>
-                            <option value="" th:selected="${selectedType == null or selectedType == ''}">Tất cả giao
-                                dịch</option>
-                            <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}">Nạp tiền</option>
-                            <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}">Phí mượn</option>
-                            <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}">Tiền cọc</option>
-                            <option value="FINE" th:selected="${selectedType == 'FINE'}">Phí phạt</option>
-                            <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}">Phí hư hỏng
-                            </option>
-                            <option value="REFUND" th:selected="${selectedType == 'REFUND'}">Hoàn tiền</option>
+                        <select name="type" class="form-select" th:aria-label="#{transaction.filterType}" data-auto-submit>
+                            <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{librarian.memberDetail.allTransactions}">All Transactions</option>
+                            <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
+                            <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}" th:text="#{transaction.type.borrowFee}">Borrowing Fee</option>
+                            <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}" th:text="#{transaction.type.deposit}">Deposit</option>
+                            <option value="FINE" th:selected="${selectedType == 'FINE'}" th:text="#{transaction.type.fine}">Fine</option>
+                            <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage Fee</option>
+                            <option value="REFUND" th:selected="${selectedType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</option>
                         </select>
-                        <button type="submit" class="btn btn-classic px-3">Lọc</button>
+                        <button type="submit" class="btn btn-classic px-3" th:text="#{common.filter}">Filter</button>
                         <a th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId})}"
-                            class="btn btn-outline-secondary px-3">Xóa lọc</a>
+                            class="btn btn-outline-secondary px-3" th:text="#{common.clearFilter}">Clear Filter</a>
                     </form>
 
                     <div class="table-responsive mb-4 member-transaction-table-wrap">
                         <table class="table classic-table mb-0 text-center">
                             <thead>
                                 <tr>
-                                    <th>Mã GD</th>
-                                    <th>Loại giao dịch</th>
-                                    <th>Số tiền</th>
-                                    <th>Thời gian</th>
-                                    <th>Trạng thái</th>
+                                    <th th:text="#{transaction.code}">Transaction ID</th>
+                                    <th th:text="#{transaction.type}">Transaction Type</th>
+                                    <th th:text="#{transaction.amount}">Amount</th>
+                                    <th th:text="#{common.time}">Time</th>
+                                    <th th:text="#{common.status}">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:if="${transactions == null or #lists.isEmpty(transactions)}">
-                                    <td colspan="5" class="py-4 text-muted">Thành viên chưa có giao dịch phù hợp.</td>
+                                    <td colspan="5" class="py-4 text-muted" th:text="#{librarian.memberDetail.noTransactions}">This member has no matching transactions.</td>
                                 </tr>
                                 <tr th:each="transaction : ${transactions}">
                                     <td class="fw-bold font-monospace u-color-8b5a2b-d7f13118"
@@ -193,8 +190,8 @@
                                     <td>
                                         <span class="badge transaction-type"
                                             th:classappend="${transaction.transactionType == 'TOP_UP'} ? ' type-topup' : (${transaction.transactionType == 'BORROW_FEE'} ? ' type-borrow-fee' : (${transaction.transactionType == 'DEPOSIT'} ? ' type-deposit' : (${transaction.transactionType == 'FINE'} ? ' type-fine' : (${transaction.transactionType == 'DAMAGE_FEE'} ? ' type-damage-fee' : (${transaction.transactionType == 'REFUND'} ? ' type-refund' : ' type-default')))))"
-                                            th:text="${transaction.transactionType == 'TOP_UP' ? 'Nạp tiền' : (transaction.transactionType == 'BORROW_FEE' ? 'Phí mượn' : (transaction.transactionType == 'DEPOSIT' ? 'Tiền cọc' : (transaction.transactionType == 'FINE' ? 'Phí phạt' : (transaction.transactionType == 'DAMAGE_FEE' ? 'Phí hư hỏng' : (transaction.transactionType == 'REFUND' ? 'Hoàn tiền' : transaction.transactionType)))))}">
-                                            Loại giao dịch
+                                            th:text="${transaction.transactionType == 'TOP_UP' ? #messages.msg('transaction.type.topUp') : (transaction.transactionType == 'BORROW_FEE' ? #messages.msg('transaction.type.borrowFee') : (transaction.transactionType == 'DEPOSIT' ? #messages.msg('transaction.type.deposit') : (transaction.transactionType == 'FINE' ? #messages.msg('transaction.type.fine') : (transaction.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : (transaction.transactionType == 'REFUND' ? #messages.msg('transaction.type.refund') : transaction.transactionType)))))}">
+                                            Transaction Type
                                         </span>
                                     </td>
                                     <td class="fw-bold"
@@ -204,7 +201,7 @@
                                         </span>
                                         <span
                                             th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                        VNĐ
+                                        <span th:text="#{currency.vnd}">VND</span>
                                     </td>
                                     <td
                                         th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">
@@ -212,8 +209,8 @@
                                     <td>
                                         <span class="status-badge"
                                             th:classappend="${transaction.status == 'Completed' ? 'status-completed' : (transaction.status == 'Failed' ? 'status-rejected' : (transaction.status == 'Canceled' ? 'status-canceled' : 'status-pending'))}"
-                                            th:text="${transaction.status == 'Completed' ? 'Hoàn tất' : (transaction.status == 'Pending' ? 'Chờ xử lý' : (transaction.status == 'Failed' ? 'Thất bại' : (transaction.status == 'Canceled' ? 'Đã hủy' : transaction.status)))}">
-                                            Hoàn tất
+                                            th:text="${transaction.status == 'Completed' ? #messages.msg('transaction.status.completed') : (transaction.status == 'Pending' ? #messages.msg('transaction.status.pending') : (transaction.status == 'Failed' ? #messages.msg('transaction.status.failed') : (transaction.status == 'Canceled' ? #messages.msg('transaction.status.canceled') : transaction.status)))}">
+                                            Completed
                                         </span>
                                     </td>
                                 </tr>
@@ -222,20 +219,19 @@
                     </div>
 
                     <nav th:if="${transactionPage != null and transactionPage.totalPages > 1}"
-                        aria-label="Phân trang giao dịch">
+                        th:aria-label="#{transaction.pagination}">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
                                 <a class="page-link page-link-classic"
-                                    th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage - 1},type=${selectedType})}">Trước</a>
+                                    th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage - 1},type=${selectedType})}" th:text="#{common.previous}">Previous</a>
                             </li>
                             <li class="page-item disabled">
                                 <span class="page-link page-link-classic text-muted"
-                                    th:text="${'Trang ' + (currentPage + 1) + ' / ' + transactionPage.totalPages}">Trang
-                                    1 / 1</span>
+                                    th:text="#{common.pageOf(${currentPage + 1},${transactionPage.totalPages})}">Page 1 / 1</span>
                             </li>
                             <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
                                 <a class="page-link page-link-classic"
-                                    th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage + 1},type=${selectedType})}">Sau</a>
+                                    th:href="@{/librarian/members/{memberId}/details(memberId=${member.memberId},page=${currentPage + 1},type=${selectedType})}" th:text="#{common.next}">Next</a>
                             </li>
                         </ul>
                     </nav>

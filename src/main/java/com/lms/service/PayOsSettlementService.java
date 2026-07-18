@@ -100,7 +100,12 @@ public class PayOsSettlementService {
         fine.setAmount(amount.negate());
         fine.setStatus(COMPLETED);
         fine.setTransactionDate(LocalDateTime.now());
-        return transactionRepository.save(fine);
+        Transaction saved = transactionRepository.save(fine);
+        createNotification(payment.getMember(),
+                localizedMessageService.get("systemNotification.fine.kqpayPaid.title"),
+                localizedMessageService.get("systemNotification.fine.kqpayPaid.content",
+                        formatMoney(amount), fine.getTransactionId()));
+        return saved;
     }
 
     private Transaction settleFineBatch(PayOsPayment payment) {
@@ -137,6 +142,10 @@ public class PayOsSettlementService {
         if (total.compareTo(payment.getAmount()) != 0) {
             throw new ConflictException(localizedMessageService.get("backend.payment.fineTotalMismatch"));
         }
+        createNotification(payment.getMember(),
+                localizedMessageService.get("systemNotification.fine.kqpayPaid.title"),
+                localizedMessageService.get("systemNotification.fine.kqpayBatchPaid.content",
+                        formatMoney(total), items.size()));
         return first;
     }
 

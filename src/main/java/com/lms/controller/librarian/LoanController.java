@@ -1,12 +1,14 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ValidationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
 import com.lms.entity.Borrow;
 import com.lms.entity.Transaction;
 import com.lms.service.LoanService;
+import com.lms.service.FinancialService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,12 +20,15 @@ import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/librarian/loan")
-public class LoanController {
+public class LoanController extends LocalizedControllerSupport {
 
     private final LoanService loanService;
+    private final FinancialService financialService;
     private final com.lms.repository.MemberRepository memberRepository;
     private final com.lms.repository.BorrowRepository borrowRepository;
     private final com.lms.repository.BorrowDetailRepository borrowDetailRepository;
@@ -32,6 +37,7 @@ public class LoanController {
     private final com.lms.repository.MemberAccountRepository memberAccountRepository;
 
     public LoanController(LoanService loanService,
+                          FinancialService financialService,
                           com.lms.repository.MemberRepository memberRepository,
                           com.lms.repository.BorrowRepository borrowRepository,
                           com.lms.repository.BorrowDetailRepository borrowDetailRepository,
@@ -39,6 +45,7 @@ public class LoanController {
                           com.lms.repository.WalletRepository walletRepository,
                           com.lms.repository.MemberAccountRepository memberAccountRepository) {
         this.loanService = loanService;
+        this.financialService = financialService;
         this.memberRepository = memberRepository;
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
@@ -55,6 +62,7 @@ public class LoanController {
     public String showReturnDesk(Model model) {
         model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
         model.addAttribute("defaultReturnDate", LocalDate.now());
+        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
         return "librarian/return-desk";
     }
 
@@ -72,11 +80,12 @@ public class LoanController {
         model.addAttribute("searchedQuery", trimmedQuery);
         model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
         model.addAttribute("defaultReturnDate", LocalDate.now());
+        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
 
         if (searchResults.isEmpty()) {
-            model.addAttribute("errorMessage", "Không tìm thấy cuốn sách nào chưa trả ứng với từ khóa tìm kiếm: " + trimmedQuery);
+            model.addAttribute("errorMessage", message("backend.return.activeQueryNotFound", trimmedQuery));
         } else {
-            model.addAttribute("successMessage", "Tìm thấy thông tin! Vui lòng nhấn nút xử lý để tiếp nhận thẩm định ngoại quan.");
+            model.addAttribute("successMessage", message("backend.return.activeFound"));
         }
         return "librarian/return-desk";
     }
@@ -94,10 +103,18 @@ public class LoanController {
                                                RedirectAttributes redirectAttributes) {
         try {
             if (barcodes == null || barcodes.isEmpty()) {
-                throw new ValidationException("Danh sách mã vạch cuốn sách hoàn trả không hợp lệ.");
+                throw new ValidationException(message("backend.return.invalidBarcodes"));
             }
 
             String staffUsername = (principal != null) ? principal.getName() : "admin";
+            Set<Integer> borrowIds = new LinkedHashSet<>();
+            for (String barcode : barcodes) {
+                for (BorrowDetail detail : loanService.findActiveLoansByBarcode(barcode)) {
+                    if (detail.getBorrow() != null && detail.getBorrow().getBorrowId() != null) {
+                        borrowIds.add(detail.getBorrow().getBorrowId());
+                    }
+                }
+            }
 
             // Chuyển LocalDate sang LocalDateTime (giữ nguyên giờ, phút, giây hiện hành của ngày làm việc)
             LocalDateTime actualReturnDateTime = returnDate.atTime(LocalDateTime.now().toLocalTime());
@@ -105,11 +122,34 @@ public class LoanController {
             // Thực thi nghiệp vụ lõi trong LoanService
             loanService.confirmBatchReturnWithDetails(barcodes, actualReturnDateTime, conditionNote, conditionNoteAdditional, staffUsername);
 
-            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận nhận sách trả và cập nhật kho thành công!");
+            if (borrowIds.size() == 1) {
+                Integer borrowId = borrowIds.iterator().next();
+                if (!transactionRepository.findPendingFineTransactionsByBorrowId(
+                        borrowId, List.of("FINE", "DAMAGE_FEE")).isEmpty()) {
+                    redirectAttributes.addFlashAttribute("successMessage",
+                            message("backend.return.redirectedToPayment"));
+                    return "redirect:/librarian/members/fines/payment/" + borrowId;
+                }
+            }
+
+            if (requiresDamageCompensation(conditionNote)) {
+                redirectAttributes.addFlashAttribute("successMessage",
+                        message("backend.return.confirmedWithCompensation"));
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.return.confirmed"));
+            }
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Xử lý trả sách thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.return.failed", e));
         }
         return "redirect:/librarian/loan/returns";
+    }
+
+    private boolean requiresDamageCompensation(String conditionNote) {
+        String normalized = conditionNote == null ? "" : conditionNote.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("hư hỏng nặng")
+                || normalized.contains("mất sách")
+                || normalized.contains("severe damage")
+                || normalized.contains("lost");
     }
 
     /**
@@ -170,9 +210,9 @@ public class LoanController {
     public String manualRenew(@PathVariable("id") Integer borrowDetailId, RedirectAttributes redirectAttributes) {
         try {
             loanService.processRenewal(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", "Gia hạn sách thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.success"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Gia hạn thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.failed", e));
         }
         return "redirect:/librarian/loan/borrow-schedule";
     }
@@ -186,9 +226,9 @@ public class LoanController {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             loanService.approveRenewal(borrowDetailId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu gia hạn!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.approved"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi duyệt gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.approveFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -202,9 +242,9 @@ public class LoanController {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             loanService.rejectRenewal(borrowDetailId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu gia hạn!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.rejected"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi từ chối gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.rejectFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }

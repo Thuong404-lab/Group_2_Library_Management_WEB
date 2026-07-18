@@ -14,3 +14,6 @@ SET decision_note = N'Chưa có nhà cung cấp phù hợp.'
 WHERE decision_note = N'Chua có nhà cung c?p phù h?p.';
 
 COMMIT TRANSACTION;
+
+
+/* Co loi chu giong tren thi xai */

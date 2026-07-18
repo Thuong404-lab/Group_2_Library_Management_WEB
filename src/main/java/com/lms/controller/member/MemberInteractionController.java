@@ -1,5 +1,6 @@
 package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.repository.BookRepository;
 import com.lms.service.MemberFavoriteService;
@@ -26,7 +27,7 @@ import com.lms.service.MemberBookAcquisitionService;
 
 @Controller
 @RequestMapping("/member/interaction")
-public class MemberInteractionController {
+public class MemberInteractionController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
 
@@ -119,7 +120,7 @@ public class MemberInteractionController {
         try {
             memberReviewService.submitReview(principal.getName(), request);
             flash.addFlashAttribute("success",
-                    "Đã gửi đánh giá thành công.");
+                    message("backend.review.submitted"));
             return "redirect:/member/interaction/reviews";
         } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
@@ -140,7 +141,7 @@ public class MemberInteractionController {
 
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getAllErrors().isEmpty()
-                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    ? message("backend.review.checkContent")
                     : bindingResult.getAllErrors().get(0).getDefaultMessage();
             flash.addFlashAttribute("error", message);
             flash.addFlashAttribute("reviewRequest", request);
@@ -169,7 +170,7 @@ public class MemberInteractionController {
 
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getAllErrors().isEmpty()
-                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    ? message("backend.review.checkContent")
                     : bindingResult.getAllErrors().get(0).getDefaultMessage();
             flash.addFlashAttribute("error", message);
             flash.addFlashAttribute("reviewEditRequest", request);
@@ -180,7 +181,7 @@ public class MemberInteractionController {
 
         try {
             memberReviewService.updateMyReview(principal.getName(), feedbackId, request);
-            flash.addFlashAttribute("success", "Đã cập nhật đánh giá thành công.");
+            flash.addFlashAttribute("success", message("backend.review.updated"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewEditRequest", request);
@@ -197,7 +198,7 @@ public class MemberInteractionController {
                                  RedirectAttributes flash) {
         try {
             memberReviewService.deleteMyReview(principal.getName(), feedbackId);
-            flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
+            flash.addFlashAttribute("success", message("backend.review.deleted"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
@@ -234,7 +235,7 @@ public class MemberInteractionController {
 
         try {
             memberBookAcquisitionService.submitRequest(principal.getName(), request);
-            flash.addFlashAttribute("success", "Đã gửi đề xuất sách thành công.");
+            flash.addFlashAttribute("success", message("backend.acquisition.submitted"));
             return "redirect:/member/interaction/acquisition-requests/new";
 
         } catch (ApplicationException e) {
@@ -266,9 +267,9 @@ public class MemberInteractionController {
         try {
             memberFavoriteService.addToFavorites(principal.getName(), bookId);
             if (isAjax(requestedWith)) {
-                return org.springframework.http.ResponseEntity.ok(favoriteJson(true, "Đã thêm vào danh sách yêu thích!"));
+                return org.springframework.http.ResponseEntity.ok(favoriteJson(true, message("backend.favorite.added")));
             }
-            flash.addFlashAttribute("success", "Đã thêm vào yêu thích!");
+            flash.addFlashAttribute("success", message("backend.favorite.added"));
         } catch (ApplicationException e) {
             if (isAjax(requestedWith)) {
                 return org.springframework.http.ResponseEntity
@@ -292,7 +293,7 @@ public class MemberInteractionController {
 
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);
-            flash.addFlashAttribute("success", "Đã bỏ sách khỏi danh sách yêu thích!");
+            flash.addFlashAttribute("success", message("backend.favorite.removed"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }

@@ -31,7 +31,17 @@ public interface FinancialService {
 
     Page<Transaction> getTransactionHistory(Integer memberId, int page, String type);
 
-    void createFine(Integer memberId, Double amount, String reason);
+    void issueOverdueFine(Integer borrowDetailId);
+
+    void issueDamageCompensation(Integer borrowDetailId);
+
+    BigDecimal getDamageCompensationAmount();
+
+    List<Transaction> getPendingFines();
+
+    void payFineByCash(Integer fineId);
+
+    void payFineByWalletAtDesk(Integer fineId);
 
     Page<Transaction> getAllTransactions(int page, String type);
 

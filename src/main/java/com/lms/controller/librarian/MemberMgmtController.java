@@ -1,5 +1,6 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
@@ -9,6 +10,7 @@ import com.lms.entity.Transaction;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
+import com.lms.service.FineBatchPaymentService;
 import com.lms.dto.response.MemberListViewData;
 import com.lms.service.LibrarianMemberService;
 import com.lms.service.OverdueReminderService;
@@ -42,7 +44,7 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/librarian")
-public class MemberMgmtController {
+public class MemberMgmtController extends LocalizedControllerSupport {
     private static final String TOP_UP_TYPE = "TOP_UP";
     private static final int MEMBER_SEARCH_LIMIT = 5;
 
@@ -52,19 +54,22 @@ public class MemberMgmtController {
     private final MemberRepository memberRepository;
     private final OverdueReminderService overdueReminderService;
     private final OverdueViolationQueryService overdueViolationQueryService;
+    private final FineBatchPaymentService fineBatchPaymentService;
 
     public MemberMgmtController(LibrarianMemberService memberService,
                                 FinancialService financialService,
                                 TransactionRepository transactionRepository,
                                 MemberRepository memberRepository,
                                 OverdueReminderService overdueReminderService,
-                                OverdueViolationQueryService overdueViolationQueryService) {
+                                OverdueViolationQueryService overdueViolationQueryService,
+                                FineBatchPaymentService fineBatchPaymentService) {
         this.memberService = memberService;
         this.financialService = financialService;
         this.transactionRepository = transactionRepository;
         this.memberRepository = memberRepository;
         this.overdueReminderService = overdueReminderService;
         this.overdueViolationQueryService = overdueViolationQueryService;
+        this.fineBatchPaymentService = fineBatchPaymentService;
     }
 
     @GetMapping("/members")
@@ -107,7 +112,7 @@ public class MemberMgmtController {
 
         memberService.createMember(request);
         redirectAttributes.addFlashAttribute(
-                "success", "Tạo tài khoản thành viên thành công.");
+                "success", message("backend.member.created"));
         return "redirect:/librarian/members";
     }
 
@@ -128,7 +133,7 @@ public class MemberMgmtController {
 
         memberService.updateMember(id, request);
         redirectAttributes.addFlashAttribute(
-                "success", "Cập nhật tài khoản thành viên thành công.");
+                "success", message("backend.member.updated"));
         return "redirect:/librarian/members";
     }
 
@@ -149,10 +154,10 @@ public class MemberMgmtController {
             @PathVariable Integer id,
             RedirectAttributes redirectAttributes) {
         if (!memberService.deactivateMember(id)) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
+            redirectAttributes.addFlashAttribute("error", message("backend.account.notFound"));
         } else {
             redirectAttributes.addFlashAttribute(
-                    "success", "Xóa tài khoản thành viên thành công.");
+                    "success", message("backend.member.deleted"));
         }
         return "redirect:/librarian/members";
     }
@@ -166,7 +171,7 @@ public class MemberMgmtController {
             RedirectAttributes redirectAttributes) {
         try {
             memberService.changeMemberStatus(id, status);
-            redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
+            redirectAttributes.addFlashAttribute("success", message("backend.account.statusUpdated"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -176,12 +181,11 @@ public class MemberMgmtController {
     }
 
     @GetMapping("/members/fines")
-    public String manageFines(@RequestParam(required = false, defaultValue = "") String memberKeyword,
-                              Model model,
+    public String manageFines(Model model,
                               @AuthenticationPrincipal CustomUserDetails userDetails) {
         var overdueViolations = overdueViolationQueryService.getActiveOverdueViolations();
-        model.addAttribute("fineMembers", memberRepository.findAll());
         model.addAttribute("overdueViolations", overdueViolations);
+        model.addAttribute("pendingFines", financialService.getPendingFines());
         model.addAttribute("finePerDay", overdueViolationQueryService.getConfiguredFinePerDay());
         model.addAttribute("overdueViolationCount", overdueViolations.size());
         model.addAttribute("overdueMemberCount", overdueViolations.stream()
@@ -192,17 +196,73 @@ public class MemberMgmtController {
         return "librarian/fines";
     }
 
-    @PostMapping("/members/fines/create")
-    public String createFine(
-            @RequestParam Integer memberId,
-            @RequestParam Double amount,
-            @RequestParam String reason,
-            RedirectAttributes redirectAttributes) {
+    @GetMapping("/members/fines/payment/{borrowId}")
+    public String showBorrowFinePayment(@PathVariable Integer borrowId,
+                                        Model model,
+                                        @AuthenticationPrincipal CustomUserDetails userDetails,
+                                        RedirectAttributes redirectAttributes) {
+        List<Transaction> fines = fineBatchPaymentService.getPendingForBorrow(borrowId);
+        if (fines.isEmpty()) {
+            redirectAttributes.addFlashAttribute("success", message("backend.payment.noFinesDue"));
+            return "redirect:/librarian/members/fines";
+        }
+        BigDecimal total = fines.stream()
+                .map(fine -> fine.getAmount().abs())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("borrowId", borrowId);
+        model.addAttribute("fines", fines);
+        model.addAttribute("total", total);
+        model.addAttribute("member", fines.get(0).getWallet().getMember());
+        addCurrentUser(model, userDetails);
+        return "librarian/fine-return-payment";
+    }
+
+    @PostMapping("/members/fines/payment/{borrowId}/cash")
+    public String payBorrowFinesByCash(@PathVariable Integer borrowId,
+                                       RedirectAttributes redirectAttributes) {
         try {
-            financialService.createFine(memberId, amount, reason);
-            redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
-        } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            fineBatchPaymentService.payBorrowFinesByCash(borrowId);
+            redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/librarian/members/fines/payment/" + borrowId;
+        }
+        return "redirect:/librarian/members/fines";
+    }
+
+    @PostMapping("/members/fines/payment/{borrowId}/wallet")
+    public String payBorrowFinesByWallet(@PathVariable Integer borrowId,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            fineBatchPaymentService.payBorrowFinesFromWallet(borrowId);
+            redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/librarian/members/fines/payment/" + borrowId;
+        }
+        return "redirect:/librarian/members/fines";
+    }
+
+    @PostMapping("/members/fines/{fineId}/cash-payment")
+    public String payFineByCash(@PathVariable Integer fineId,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            financialService.payFineByCash(fineId);
+            redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/librarian/members/fines";
+    }
+
+    @PostMapping("/members/fines/{fineId}/wallet-payment")
+    public String payFineByWallet(@PathVariable Integer fineId,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            financialService.payFineByWalletAtDesk(fineId);
+            redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/librarian/members/fines";
     }
@@ -214,7 +274,7 @@ public class MemberMgmtController {
         try {
             overdueReminderService.sendReturnReminder(borrowDetailId);
             redirectAttributes.addFlashAttribute(
-                    "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
+                    "success", message("backend.overdue.reminderSent"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
@@ -264,7 +324,7 @@ public class MemberMgmtController {
             RedirectAttributes redirectAttributes) {
         try {
             financialService.topUpMemberAccount(memberPhone, amount);
-            redirectAttributes.addFlashAttribute("success", "Nạp tiền vào ví thành viên thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
@@ -369,16 +429,16 @@ public class MemberMgmtController {
             data.put("phone", member.getUser().getPhone());
             
             String rawStatus = member.getUser().getStatus().toString();
-            String vnStatus = "Hoạt động";
-            if ("Inactive".equalsIgnoreCase(rawStatus)) vnStatus = "Khóa";
-            else if ("Banned".equalsIgnoreCase(rawStatus)) vnStatus = "Cấm mượn";
-            data.put("status", vnStatus);
+            String localizedStatus = message("status.active");
+            if ("Inactive".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.blocked");
+            else if ("Banned".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.banned");
+            data.put("status", localizedStatus);
             data.put("rawStatus", rawStatus);
             
-            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Tiêu chuẩn";
-            if ("Standard".equalsIgnoreCase(tierName)) tierName = "Hạng Tiêu Chuẩn";
-            else if ("Premium".equalsIgnoreCase(tierName)) tierName = "Hạng Cao Cấp";
-            else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
+            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Standard";
+            if ("Standard".equalsIgnoreCase(tierName)) tierName = message("tier.standard");
+            else if ("Premium".equalsIgnoreCase(tierName)) tierName = message("tier.premium");
+            else if ("VIP".equalsIgnoreCase(tierName)) tierName = message("tier.vip");
             data.put("tier", tierName);
             
         } catch (ApplicationException e) {

@@ -12,16 +12,22 @@ import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class LibrarianInteractionServiceImpl implements LibrarianInteractionService {
 
     private static final String DELETED_BY_MEMBER_STATUS = "DELETED_BY_MEMBER";
+    private static final MessageSource TEST_FALLBACK_MESSAGES = createFallbackMessages();
 
     private final FeedbackRepository feedbackRepository;
     private final MemberRepository memberRepository;
@@ -29,6 +35,9 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     private final MemberNotificationRepository memberNotificationRepository;
     private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
     private final StaffAccountRepository staffAccountRepository;
+
+    @Autowired
+    private MessageSource messageSource;
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
@@ -68,25 +77,25 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Transactional
     public boolean replyReview(Integer feedbackId, LibrarianReviewReplyRequest request) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
+                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
 
         if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
-            throw new ConflictException("Đánh giá này đã được member xoá nên không thể phản hồi.");
+            throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
         }
 
         String normalizedResponse = request.getResponse() == null ? "" : request.getResponse().strip()
                 .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
 
         if (normalizedResponse.isEmpty()) {
-            throw new ValidationException("Nội dung phản hồi không được để trống");
+            throw new ValidationException(msg("backend.librarian.reviewReply.required"));
         }
 
         if (normalizedResponse.length() < 5 || normalizedResponse.length() > 1000) {
-            throw new ValidationException("Nội dung phản hồi phải có từ 5 đến 1000 ký tự.");
+            throw new ValidationException(msg("backend.librarian.reviewReply.range"));
         }
 
         if (normalizedResponse.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException("Nội dung phản hồi không được chỉ gồm số hoặc ký tự đặc biệt.");
+            throw new ValidationException(msg("backend.librarian.reviewReply.letters"));
         }
 
         boolean isEditing = feedback.getLibrarianResponse() != null
@@ -99,8 +108,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
         sendPersonalNotification(
                 feedback.getMember(),
-                "Phản hồi đánh giá",
-                "Thủ thư đã phản hồi đánh giá của bạn cho sách '" + feedback.getBook().getTitle() + "'."
+                msg("notification.reviewReply.title"),
+                msg("notification.reviewReply.content", feedback.getBook().getTitle())
         );
 
         return isEditing;
@@ -110,7 +119,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Transactional
     public void deleteReview(Integer feedbackId) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + feedbackId));
+                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
 
         feedbackRepository.delete(feedback);
     }
@@ -149,11 +158,11 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Transactional
     public void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername) {
         if (request.getRecipientType() == null) {
-            throw new ValidationException("Vui lòng chọn đối tượng nhận thông báo.");
+            throw new ValidationException(msg("backend.librarian.notification.recipientRequired"));
         }
 
         if (request.getNotificationType() == null) {
-            throw new ValidationException("Vui lòng chọn loại thông báo.");
+            throw new ValidationException(msg("backend.librarian.notification.typeRequired"));
         }
 
         String normalizedTitle = request.getTitle() == null ? "" : request.getTitle().trim().replaceAll("\\s+", " ");
@@ -161,29 +170,29 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                 .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
 
         if (normalizedTitle.isEmpty()) {
-            throw new ValidationException("Tiêu đề không được để trống");
+            throw new ValidationException(msg("backend.librarian.notification.titleRequired"));
         }
 
         if (normalizedTitle.length() < 5 || normalizedTitle.length() > 150) {
-            throw new ValidationException("Tiêu đề phải có từ 5 đến 150 ký tự.");
+            throw new ValidationException(msg("backend.librarian.notification.titleRange"));
         }
 
         if (normalizedContent.isEmpty()) {
-            throw new ValidationException("Nội dung không được để trống");
+            throw new ValidationException(msg("backend.librarian.notification.contentRequired"));
         }
 
         if (normalizedContent.length() < 10 || normalizedContent.length() > 2000) {
-            throw new ValidationException("Nội dung phải có từ 10 đến 2000 ký tự.");
+            throw new ValidationException(msg("backend.librarian.notification.contentRange"));
         }
 
         if (normalizedContent.equalsIgnoreCase(normalizedTitle)) {
-            throw new ValidationException("Nội dung không được giống hoàn toàn tiêu đề.");
+            throw new ValidationException(msg("backend.librarian.notification.contentDifferent"));
         }
 
         Staff sender = staffAccountRepository.findByUsername(senderUsername)
                 .map(StaffAccount::getStaff)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy thủ thư gửi thông báo."));
+                        msg("backend.librarian.notification.senderNotFound")));
 
         List<Member> members;
 
@@ -194,18 +203,18 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
             case SELECTED:
                 if (request.getMemberIds() == null || request.getMemberIds().isEmpty()) {
-                    throw new ValidationException("Vui lòng chọn ít nhất một độc giả.");
+                    throw new ValidationException(msg("backend.librarian.notification.memberRequired"));
                 }
 
                 members = memberRepository.findAllById(request.getMemberIds());
 
                 if (members.size() != request.getMemberIds().size()) {
-                    throw new ResourceNotFoundException("Có độc giả không tồn tại.");
+                    throw new ResourceNotFoundException(msg("backend.librarian.notification.memberNotFound"));
                 }
                 break;
 
             default:
-                throw new ValidationException("Loại người nhận không hợp lệ.");
+                throw new ValidationException(msg("backend.librarian.notification.recipientInvalid"));
         }
 
         Notification notification = new Notification();
@@ -253,8 +262,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         bookAcquisitionRequestRepository.save(request);
         sendPersonalNotification(
                 request.getMember(),
-                "Đề xuất sách đã được duyệt",
-                "Đề xuất bổ sung sách '" + request.getTitle() + "' của bạn đã được thư viện chấp nhận."
+                msg("notification.acquisitionApproved.title"),
+                msg("notification.acquisitionApproved.content", request.getTitle())
         );
     }
 
@@ -264,16 +273,16 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         String normalizedReason = reason == null ? "" : reason.strip()
                 .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
         if (normalizedReason.isEmpty()) {
-            throw new ValidationException("Lý do từ chối không được để trống.");
+            throw new ValidationException(msg("librarian.acquisition.validationRequired"));
         }
         if (normalizedReason.length() < 5) {
-            throw new ValidationException("Lý do từ chối phải có ít nhất 5 ký tự.");
+            throw new ValidationException(msg("librarian.acquisition.validationMinimum"));
         }
         if (normalizedReason.length() > 500) {
-            throw new ValidationException("Lý do từ chối không được vượt quá 500 ký tự.");
+            throw new ValidationException(msg("librarian.acquisition.validationMaximum"));
         }
         if (normalizedReason.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException("Lý do từ chối không được chỉ gồm số hoặc ký tự đặc biệt.");
+            throw new ValidationException(msg("librarian.acquisition.validationLetters"));
         }
 
         BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
@@ -283,17 +292,30 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         bookAcquisitionRequestRepository.save(request);
         sendPersonalNotification(
                 request.getMember(),
-                "Đề xuất sách chưa được chấp nhận",
-                "Đề xuất bổ sung sách '" + request.getTitle() + "' của bạn đã bị từ chối. Lý do: " + reason.trim()
+                msg("notification.acquisitionRejected.title"),
+                msg("notification.acquisitionRejected.content", request.getTitle(), normalizedReason)
         );
     }
 
     private BookAcquisitionRequest getPendingAcquisitionRequest(Integer requestId) {
         BookAcquisitionRequest request = bookAcquisitionRequestRepository.findById(requestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề xuất sách."));
+                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.acquisition.notFound")));
         if (request.getStatus() != AcquisitionRequestStatus.PENDING) {
-            throw new ConflictException("Đề xuất này đã được xử lý trước đó.");
+            throw new ConflictException(msg("backend.librarian.acquisition.alreadyProcessed"));
         }
         return request;
+    }
+
+    private String msg(String key, Object... arguments) {
+        MessageSource source = messageSource == null ? TEST_FALLBACK_MESSAGES : messageSource;
+        Locale locale = messageSource == null ? Locale.forLanguageTag("vi") : LocaleContextHolder.getLocale();
+        return source.getMessage(key, arguments, locale);
+    }
+
+    private static MessageSource createFallbackMessages() {
+        ResourceBundleMessageSource source = new ResourceBundleMessageSource();
+        source.setBasename("messages");
+        source.setDefaultEncoding("UTF-8");
+        return source;
     }
 }
