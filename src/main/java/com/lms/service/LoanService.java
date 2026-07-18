@@ -38,12 +38,14 @@ public interface LoanService {
     java.util.List<com.lms.entity.BorrowDetail> findActiveLoansByBarcode(String barcode);
     // Xác nhận trả sách với tình trạng vật lý tách biệt (bookCondition) và ghi chú hư hỏng (damageNote)
     void confirmReturnWithDetails(String barcode, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername);
+    void confirmReturnWithDetails(String barcode, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, java.math.BigDecimal damageFine, String staffUsername);
+    com.lms.entity.Transaction confirmReturnWithDetails(String barcode, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, java.math.BigDecimal damageFine, String paymentMethod, String staffUsername);
 
     // Tìm kiếm các ca mượn đang hoạt động bằng truy vấn đa năng (Barcode, Mã phiếu, SĐT)
     java.util.List<com.lms.entity.BorrowDetail> searchActiveLoansByQuery(String query);
 
     // Xác nhận trả sách hàng loạt với thông tin chi tiết
-    void confirmBatchReturnWithDetails(java.util.List<String> barcodes, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername);
+    com.lms.entity.Transaction confirmBatchReturnWithDetails(java.util.List<String> barcodes, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, java.math.BigDecimal damageFine, String paymentMethod, String staffUsername);
 
     java.util.List<com.lms.entity.BorrowDetail> getTodayReturnedBooks();
     void confirmBookReturn(Integer borrowDetailId, String conditionNote);

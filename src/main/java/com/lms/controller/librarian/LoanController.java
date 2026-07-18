@@ -20,6 +20,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import jakarta.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import com.lms.entity.PayOsPayment;
+import com.lms.service.PayOsPaymentService;
 
 @Controller
 @RequestMapping("/librarian/loan")
@@ -32,6 +35,7 @@ public class LoanController extends LocalizedControllerSupport {
     private final com.lms.repository.TransactionRepository transactionRepository;
     private final com.lms.repository.WalletRepository walletRepository;
     private final com.lms.repository.MemberAccountRepository memberAccountRepository;
+    private final PayOsPaymentService paymentService;
 
     public LoanController(LoanService loanService,
                           com.lms.repository.MemberRepository memberRepository,
@@ -39,7 +43,8 @@ public class LoanController extends LocalizedControllerSupport {
                           com.lms.repository.BorrowDetailRepository borrowDetailRepository,
                           com.lms.repository.TransactionRepository transactionRepository,
                           com.lms.repository.WalletRepository walletRepository,
-                          com.lms.repository.MemberAccountRepository memberAccountRepository) {
+                          com.lms.repository.MemberAccountRepository memberAccountRepository,
+                          PayOsPaymentService paymentService) {
         this.loanService = loanService;
         this.memberRepository = memberRepository;
         this.borrowRepository = borrowRepository;
@@ -47,6 +52,7 @@ public class LoanController extends LocalizedControllerSupport {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
         this.memberAccountRepository = memberAccountRepository;
+        this.paymentService = paymentService;
     }
 
     /**
@@ -65,7 +71,7 @@ public class LoanController extends LocalizedControllerSupport {
 
     /**
      * GET: /librarian/loan/returns/search
-     * Xử lý tìm kiếm lượt mượn hoạt động (Borrowed/Overdue/Return_Pending) của mã Barcode vừa quét.
+     * Xử lý tìm kiếm lượt mượn hoạt động (Borrowed/Overdue/Return_Pending) CHỈ theo mã Barcode vừa quét.
      */
     @GetMapping("/returns/search")
     public String searchActiveReturnLoans(@RequestParam("barcode") String barcode, Model model, HttpServletResponse response) {
@@ -73,7 +79,9 @@ public class LoanController extends LocalizedControllerSupport {
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
         String trimmedQuery = (barcode != null) ? barcode.trim() : "";
-        List<BorrowDetail> searchResults = loanService.searchActiveLoansByQuery(trimmedQuery);
+
+        // CHỈNH SỬA TẠI ĐÂY: Thay thế searchActiveLoansByQuery bằng findActiveLoansByBarcode để chặn tìm kiếm bằng email, sđt, mã đơn mượn
+        List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedQuery);
 
         model.addAttribute("searchResults", searchResults);
         model.addAttribute("searchedBarcode", trimmedQuery);
@@ -90,6 +98,39 @@ public class LoanController extends LocalizedControllerSupport {
     }
 
     /**
+     * GET: /librarian/loan/returns/api/search
+     * API Ajax tìm kiếm lượt mượn hoạt động CHỈ theo mã Barcode.
+     */
+    @GetMapping("/returns/api/search")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> apiSearchActiveReturnLoans(@RequestParam("barcode") String barcode) {
+        String trimmedQuery = (barcode != null) ? barcode.trim() : "";
+        if (trimmedQuery.isEmpty()) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "Barcode cannot be empty"));
+        }
+        List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedQuery);
+        if (searchResults.isEmpty()) {
+            return org.springframework.http.ResponseEntity.status(404).body(java.util.Map.of("message", message("librarian.returnDesk.noActiveLoan")));
+        }
+
+        List<java.util.Map<String, Object>> dto = searchResults.stream().map(detail -> {
+            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("borrowId", detail.getBorrow().getBorrowId());
+            map.put("barcode", detail.getBookItem().getBarcode());
+            map.put("bookTitle", detail.getBook().getTitle());
+            map.put("memberName", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getFullName() : "");
+            map.put("memberEmail", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getEmail() : "");
+            map.put("borrowDate", detail.getBorrow().getBorrowDate() != null ? detail.getBorrow().getBorrowDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
+            map.put("dueDate", detail.getDueDate() != null ? detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
+            map.put("isOverdue", detail.getDueDate() != null && detail.getDueDate().isBefore(java.time.LocalDateTime.now()));
+            map.put("renewCount", detail.getRenewCount());
+            return map;
+        }).toList();
+
+        return org.springframework.http.ResponseEntity.ok(dto);
+    }
+
+    /**
      * POST: /librarian/loan/returns/confirm
      * Tiếp nhận dữ liệu từ Modal gửi lên: cập nhật ngày trả thực tế, tình trạng vật lý, ghi chú, tính phạt quá hạn.
      */
@@ -98,6 +139,8 @@ public class LoanController extends LocalizedControllerSupport {
                                                @RequestParam("returnDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate returnDate,
                                                @RequestParam("conditionNote") String conditionNote,
                                                @RequestParam(value = "conditionNoteAdditional", required = false) String conditionNoteAdditional,
+                                               @RequestParam(value = "damageFine", required = false) BigDecimal damageFine,
+                                               @RequestParam(value = "paymentMethod", required = false, defaultValue = "cash") String paymentMethod,
                                                Principal principal,
                                                RedirectAttributes redirectAttributes) {
         try {
@@ -111,7 +154,14 @@ public class LoanController extends LocalizedControllerSupport {
             LocalDateTime actualReturnDateTime = returnDate.atTime(LocalDateTime.now().toLocalTime());
 
             // Thực thi nghiệp vụ lõi trong LoanService
-            loanService.confirmBatchReturnWithDetails(barcodes, actualReturnDateTime, conditionNote, conditionNoteAdditional, staffUsername);
+            BigDecimal fine = (damageFine != null) ? damageFine : BigDecimal.ZERO;
+            Transaction transaction = loanService.confirmBatchReturnWithDetails(barcodes, actualReturnDateTime, conditionNote, conditionNoteAdditional, fine, paymentMethod, staffUsername);
+
+            if (transaction != null && "bank".equalsIgnoreCase(paymentMethod)) {
+                Member member = transaction.getWallet().getMember();
+                PayOsPayment payment = paymentService.createFinePaymentForLibrarian(member, transaction.getTransactionId());
+                return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
+            }
 
             redirectAttributes.addFlashAttribute("successMessage", message("backend.return.confirmed"));
         } catch (ApplicationException e) {

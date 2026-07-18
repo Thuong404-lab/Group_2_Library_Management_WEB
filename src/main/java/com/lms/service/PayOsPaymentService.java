@@ -142,6 +142,30 @@ public class PayOsPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment createFinePaymentForLibrarian(Member member, Integer fineId) {
+        Transaction fine = transactionRepository.findById(fineId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.fineNotFound")));
+        if (fine.getWallet() == null || fine.getWallet().getMember() == null
+                || !member.getMemberId().equals(fine.getWallet().getMember().getMemberId())) {
+            throw new ForbiddenException(messages.get("backend.payment.fineOwnerMismatch"));
+        }
+        String type = normalize(fine.getTransactionType());
+        if (!FINE.equals(type) && !"DAMAGE_FEE".equals(type)) {
+            throw new ValidationException(messages.get("backend.financial.notFineTransaction"));
+        }
+        if (isCompleted(fine.getStatus())) {
+            throw new ConflictException(messages.get("backend.financial.fineAlreadyPaid"));
+        }
+        PayOsPayment activePayment = findActivePayment(member.getMemberId(), FINE, fineId);
+        if (activePayment != null) {
+            return activePayment;
+        }
+        return createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()),
+                descriptionWithId("LMW NOP PHAT ID", "LMW PHAT ID", fineId),
+                "/librarian/payments/payos/return");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public PayOsPayment createFineBatchPayment(Member member) {
         List<Transaction> fines = transactionRepository.findUnpaidFineTransactions(
                 member.getMemberId(), List.of(FINE, "DAMAGE_FEE"));

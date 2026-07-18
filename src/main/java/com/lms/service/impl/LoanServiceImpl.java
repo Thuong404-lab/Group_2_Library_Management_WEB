@@ -298,6 +298,18 @@ public class LoanServiceImpl implements LoanService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
+        confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, BigDecimal.ZERO, "cash", staffUsername);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String staffUsername) {
+        confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, damageFine, "cash", staffUsername);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Transaction confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
         if (activeLoans.isEmpty()) {
             throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
@@ -326,23 +338,105 @@ public class LoanServiceImpl implements LoanService {
             processOverdueFine(detail);
         }
 
+        Transaction damageFineTx = null;
+        if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0) {
+            damageFineTx = processDamageFine(detail, damageFine, paymentMethod);
+        }
+
         updateParentBorrowStatus(detail.getBorrow());
         sendInternalNotification(detail.getBorrow().getMember(),
                 localizedMessageService.get("systemNotification.return.desk.title"),
                 localizedMessageService.get("systemNotification.return.desk.content", detail.getBook().getTitle()));
+
+        return damageFineTx;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
+    public Transaction confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
         if (barcodes == null || barcodes.isEmpty()) {
-            return;
+            return null;
         }
+        Transaction firstTx = null;
+        boolean isFirst = true;
         for (String barcode : barcodes) {
             if (barcode != null && !barcode.trim().isEmpty()) {
-                confirmReturnWithDetails(barcode.trim(), returnDate, bookCondition, damageNote, staffUsername);
+                BigDecimal fineForThis = isFirst ? damageFine : BigDecimal.ZERO;
+                Transaction tx = confirmReturnWithDetails(barcode.trim(), returnDate, bookCondition, damageNote, fineForThis, paymentMethod, staffUsername);
+                if (isFirst) {
+                    firstTx = tx;
+                }
+                isFirst = false;
             }
         }
+        return firstTx;
+    }
+
+    private Transaction processDamageFine(BorrowDetail detail, BigDecimal damageFine, String paymentMethod) {
+        Member member = detail.getBorrow().getMember();
+        if (member == null) {
+            return null;
+        }
+        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                .orElseGet(() -> {
+                    Wallet newWallet = new Wallet();
+                    newWallet.setMember(member);
+                    newWallet.setBalance(BigDecimal.ZERO);
+                    return walletRepository.save(newWallet);
+                });
+
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setBorrow(detail.getBorrow());
+        transaction.setTransactionType("DAMAGE_FEE");
+        transaction.setTransactionDate(LocalDateTime.now());
+
+        String resolvedMethod = (paymentMethod != null) ? paymentMethod.trim().toLowerCase() : "cash";
+
+        if ("wallet".equals(resolvedMethod)) {
+            // Trừ tiền trực tiếp vào ví
+            wallet.setBalance(wallet.getBalance().subtract(damageFine));
+            walletRepository.save(wallet);
+
+            transaction.setAmount(damageFine.abs().negate());
+            transaction.setStatus("Completed");
+        } else if ("cash".equals(resolvedMethod)) {
+            // Thanh toán tiền mặt tại quầy (không trừ ví, giao dịch hoàn thành ngay)
+            transaction.setAmount(damageFine.abs().negate());
+            transaction.setStatus("Completed");
+        } else {
+            // Thanh toán qua ngân hàng (chờ quét mã QR)
+            transaction.setAmount(damageFine.abs().negate());
+            transaction.setStatus("Pending");
+        }
+
+        Transaction savedTx = transactionRepository.save(transaction);
+
+        // Gửi thông báo hệ thống đến độc giả
+        String formattedMoney = formatMoney(damageFine);
+        if ("wallet".equals(resolvedMethod)) {
+            sendInternalNotification(member,
+                    localizedMessageService.get("systemNotification.damageFine.paidWallet.title"),
+                    localizedMessageService.get("systemNotification.damageFine.paidWallet.content",
+                            formattedMoney, detail.getBook().getTitle()));
+        } else if ("cash".equals(resolvedMethod)) {
+            sendInternalNotification(member,
+                    localizedMessageService.get("systemNotification.damageFine.paidCash.title"),
+                    localizedMessageService.get("systemNotification.damageFine.paidCash.content",
+                            formattedMoney, detail.getBook().getTitle()));
+        } else {
+            sendInternalNotification(member,
+                    localizedMessageService.get("systemNotification.damageFine.created.title"),
+                    localizedMessageService.get("systemNotification.damageFine.created.content",
+                            formattedMoney, detail.getBook().getTitle()));
+        }
+
+        return savedTx;
+    }
+
+    private String formatMoney(BigDecimal amount) {
+        BigDecimal safeAmount = amount == null ? BigDecimal.ZERO : amount;
+        return localizedMessageService.get("currency.vndAmount", String.format("%,.0f", safeAmount));
     }
 
     @Override
