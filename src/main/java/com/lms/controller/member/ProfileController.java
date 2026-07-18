@@ -53,8 +53,10 @@ public class ProfileController extends LocalizedControllerSupport {
         }
 
         String username = principal.getName();
-        User member = profileService.getProfile(username);
-        model.addAttribute("member", member);
+        if (!model.containsAttribute("member")) {
+            User member = profileService.getProfile(username);
+            model.addAttribute("member", member);
+        }
         Member membership = membershipService.getMemberByUsername(username);
         model.addAttribute("membership", membership);
         model.addAttribute("activeBorrowsCount",
@@ -67,6 +69,7 @@ public class ProfileController extends LocalizedControllerSupport {
     public String updateProfile(@RequestParam String fullName,
                                 @RequestParam String email,
                                 @RequestParam String phone,
+                                @RequestParam(required = false) String username,
                                 @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
@@ -74,27 +77,54 @@ public class ProfileController extends LocalizedControllerSupport {
             return "redirect:/login";
         }
 
+        String currentUsername = principal.getName();
+        String newUsername = (username != null && !username.trim().isEmpty()) ? username.trim() : currentUsername;
+
         try {
-            String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            profileService.updateProfile(currentUsername, newUsername, fullName, email, phone, avatarFile);
             
             // Cập nhật lại thông tin trong phiên đăng nhập (Session/SecurityContext) để thanh điều hướng đồng bộ ngay lập tức
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
                 User sessionUser = customUserDetails.getUser();
-                User updatedUser = profileService.getProfile(currentUsername);
+                User updatedUser = profileService.getProfile(newUsername);
                 
                 sessionUser.setFullName(updatedUser.getFullName());
                 sessionUser.setAvatar(updatedUser.getAvatar());
                 sessionUser.setEmail(updatedUser.getEmail());
                 sessionUser.setPhone(updatedUser.getPhone());
+
+                if (!currentUsername.equals(newUsername)) {
+                    CustomUserDetails newCustomUserDetails = new CustomUserDetails(
+                        sessionUser, newUsername, customUserDetails.getPassword(),
+                        customUserDetails.isEnabled() ? "Active" : "Inactive",
+                        customUserDetails.getAccountId(), customUserDetails.getAuthorities(),
+                        customUserDetails.getAttributes()
+                    );
+                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken newAuth =
+                        new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                            newCustomUserDetails, authentication.getCredentials(), authentication.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(newAuth);
+                }
             }
             
             redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
             return "redirect:/member/profile?updated";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+
+            // Preserve user input on error
+            User tempUser = new User();
+            tempUser.setFullName(fullName);
+            tempUser.setEmail(email);
+            tempUser.setPhone(phone);
+            try {
+                tempUser.setAvatar(profileService.getProfile(currentUsername).getAvatar());
+                tempUser.setStatus(profileService.getProfile(currentUsername).getStatus());
+            } catch (Exception ignored) {}
+            redirectAttributes.addFlashAttribute("member", tempUser);
+
             return "redirect:/member/profile";
         }
     }

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.HtmlUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -78,7 +79,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
-        if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
+        String username = request.getUsername() != null ? request.getUsername().trim() : null;
+        String email = request.getEmail() != null ? request.getEmail().trim() : null;
+        String phone = request.getPhone() != null ? request.getPhone().trim() : null;
+        String fullName = request.getFullName() != null ? request.getFullName().trim() : null;
+
+        if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
             throw new AuthException(messages.get("validation.username"));
         }
 
@@ -86,38 +92,42 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(messages.get("validation.passwordMin"));
         }
 
-        validateFullName(request.getFullName());
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new AuthException(messages.get("backend.password.mismatch", "Passwords do not match"));
+        }
 
-        if (request.getEmail() == null
-                || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+        validateFullName(fullName);
+
+        if (email == null
+                || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new AuthException(messages.get("validation.email"));
         }
 
-        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+        if (phone == null || !phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new AuthException(messages.get("backend.profile.phoneFormat"));
         }
 
 
-        if (userRepository.existsByPhone(request.getPhone())) {
+        if (userRepository.existsByPhone(phone)) {
             throw new AuthException(messages.get("backend.account.phoneUsed"));
         }
 
-        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (memberAccountRepository.findByUsername(username).isPresent() || staffAccountRepository.findByUsername(username).isPresent()) {
             throw new AuthException(messages.get("backend.account.usernameExists"));
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(email)) {
             throw new AuthException(messages.get("backend.account.emailUsed"));
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         createCoreAccount(
-                request.getUsername(),
-                request.getFullName().trim(),
+                username,
+                fullName,
                 encodedPassword,
-                request.getEmail(),
-                request.getPhone());
+                email,
+                phone);
     }
 
     private void validateFullName(String fullNameValue) throws AuthException {
@@ -227,10 +237,42 @@ public class AuthServiceImpl implements AuthService {
 
         String resetLink = applicationBaseUrl + "/reset-password?token=" + token;
         String subject = messages.get("backend.auth.resetEmail.subject");
-        String emailContent = messages.get("backend.auth.resetEmail.content", user.getFullName(), resetLink);
+        String emailContent = buildPasswordResetEmail(user.getFullName(), resetLink);
 
-        emailService.sendEmail(user.getEmail(), subject, emailContent);
+        emailService.sendHtmlEmail(user.getEmail(), subject, emailContent);
 
+    }
+
+    private String buildPasswordResetEmail(String fullName, String resetLink) {
+        String safeName = HtmlUtils.htmlEscape(fullName == null || fullName.isBlank()
+                ? messages.get("backend.auth.resetEmail.defaultName") : fullName);
+        String safeResetLink = HtmlUtils.htmlEscape(resetLink);
+        return """
+                <!doctype html>
+                <html><body style="margin:0;padding:0;background:#f5f1eb;font-family:Arial,sans-serif;color:#33271f;">
+                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="background:#f5f1eb;padding:32px 16px;"><tr><td align="center">
+                  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fffdf9;border:1px solid #e4d8ca;border-radius:14px;overflow:hidden;">
+                    <tr><td style="padding:24px 32px;background:#95602b;color:#fff;text-align:center;font-family:Georgia,serif;font-size:24px;font-weight:bold;">%s</td></tr>
+                    <tr><td style="padding:32px;">
+                      <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">%s <strong>%s</strong>,</p>
+                      <p style="margin:0 0 24px;color:#685b51;font-size:15px;line-height:1.7;">%s</p>
+                      <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 24px;"><tr><td style="border-radius:8px;background:#95602b;">
+                        <a href="%s" style="display:inline-block;padding:13px 28px;color:#fff;text-decoration:none;font-size:15px;font-weight:bold;">%s</a>
+                      </td></tr></table>
+                      <div style="padding:14px 16px;background:#faf6f0;border-left:4px solid #c79a69;border-radius:6px;color:#685b51;font-size:13px;line-height:1.6;">%s</div>
+                      <p style="margin:22px 0 0;color:#7a6c61;font-size:13px;line-height:1.6;">%s</p>
+                    </td></tr>
+                    <tr><td style="padding:18px 32px;background:#f2e9df;color:#765b42;text-align:center;font-size:12px;">%s</td></tr>
+                  </table>
+                </td></tr></table></body></html>
+                """.formatted(
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.brand")),
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.greeting")), safeName,
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.instruction")), safeResetLink,
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.button")),
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.expiry")),
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.ignore")),
+                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.signature")));
     }
 
     @Override

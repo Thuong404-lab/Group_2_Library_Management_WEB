@@ -43,7 +43,9 @@ public class AuthController extends LocalizedControllerSupport {
     // UC-2: Register - Hiển thị form đăng ký
     @GetMapping("/register")
     public String showRegisterPage(Model model) {
-        model.addAttribute("registerRequest", new RegisterRequest());
+        if (!model.containsAttribute("registerRequest")) {
+            model.addAttribute("registerRequest", new RegisterRequest());
+        }
         return "register";
     }
 
@@ -57,9 +59,11 @@ public class AuthController extends LocalizedControllerSupport {
             return "redirect:/login";
         } catch (AuthException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+            redirectAttributes.addFlashAttribute("registerRequest", registerRequest);
             return "redirect:/register";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMsg", message("backend.auth.maintenance"));
+            redirectAttributes.addFlashAttribute("registerRequest", registerRequest);
             return "redirect:/register";
         }
     }

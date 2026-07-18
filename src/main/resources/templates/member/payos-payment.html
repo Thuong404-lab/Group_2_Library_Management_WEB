@@ -3,7 +3,7 @@
       layout:decorate="~{layout/base}">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title th:text="#{payos.title}">KQPay Payment</title>
+    <title th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupTitle') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeTitle') : #messages.msg('librarian.payos.fineTitle'))}">KQPay Payment</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
     <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
 </head>
@@ -11,12 +11,12 @@
 <div layout:fragment="content" class="container finance-page">
     <section class="payos-receipt">
         <header class="payos-receipt-header">
-                <h2 th:text="#{payos.heading}">KQPay Payment</h2>
+                <h2 th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHeading') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeHeading') : #messages.msg('librarian.payos.fineHeading'))}">KQPay Payment</h2>
         </header>
 
         <div class="payos-receipt-body">
             <div class="payos-customer-box">
-                <span class="payos-customer-label" th:text="#{member.wallet.paymentAccount}">Payment Account:</span>
+                <span class="payos-customer-label" th:text="#{librarian.payos.memberAccount}">Member Account:</span>
                 <p class="payos-customer-value"
                       th:text="${payment.member.user != null ? payment.member.user.email : #messages.msg('common.member')}">
                     member@example.com
@@ -24,7 +24,8 @@
             </div>
 
             <div class="payos-section-bar">
-                    <h3 class="payos-section-title" th:text="#{payos.paymentInfo}">Payment Information</h3>
+                    <h3 class="payos-section-title"
+                        th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupInfo') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeInfo') : #messages.msg('librarian.payos.fineInfo'))}">Payment Information</h3>
                     <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending" th:text="#{payos.status.pending}">Awaiting Payment</span>
                     <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid" th:text="#{payment.status.paid}">Paid</span>
                 <span th:if="${payment.status != 'PENDING' and payment.status != 'PAID'}"
@@ -37,11 +38,13 @@
             <div class="payos-receipt-grid" th:classappend="${payment.status != 'PENDING'} ? ' no-qr' : ''">
                 <div class="payos-detail-card">
                     <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{payos.type}">Payment Type</span>
+                        <span class="payos-detail-label" th:text="#{common.member}">Member</span>
                         <span class="payos-detail-value"
-                              th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('transaction.type.topUp') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('transaction.type.borrowFee') : (payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.type.fineBatch') : #messages.msg('payos.type.singleFine')))}">
-                            Fine
-                        </span>
+                              th:text="${payment.member.user != null ? payment.member.user.fullName : #messages.msg('common.member')}">Member</span>
+                    </div>
+                    <div class="payos-detail-row">
+                        <span class="payos-detail-label" th:text="#{librarian.payos.memberId}">Member ID</span>
+                        <span class="payos-detail-value" th:text="${'TV-' + payment.member.memberId}">TV-1</span>
                     </div>
                     <div class="payos-detail-row" th:if="${payment.purpose == 'FINE_BATCH'}">
                             <span class="payos-detail-label" th:text="#{payos.itemCount}">Payment Items</span>
@@ -62,15 +65,15 @@
                         <span class="payos-detail-label" th:text="#{payos.createdAt}">Created At</span>
                         <span class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
                     </div>
-                    <div class="payos-fine-breakdown"
+                    <div class="payos-fine-items"
                          th:if="${payment.purpose == 'FINE_BATCH' and fineItems != null and !#lists.isEmpty(fineItems)}">
-                    <div class="payos-fine-breakdown-title" th:text="#{payos.finesInOrder}">Fines in this Order</div>
-                        <div class="payos-detail-row payos-fine-row" th:each="item : ${fineItems}">
-                            <span class="payos-detail-label"
+                    <div class="payos-fine-items-title" th:text="#{payos.finesInOrder}">Fines in this Order</div>
+                        <div class="payos-fine-item" th:each="item : ${fineItems}">
+                            <span
                                       th:text="#{payos.fineNumber(${item.fineTransaction.transactionId})}">Fine #1</span>
-                            <span class="payos-detail-value">
+                            <strong>
                                 <span th:text="${#numbers.formatDecimal(item.amountSnapshot, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                            </span>
+                            </strong>
                         </div>
                     </div>
                     <div class="payos-detail-row">
@@ -103,14 +106,15 @@
                 </div>
             </div>
 
-                <p class="payos-help" th:text="#{payos.help}">The page updates after KQPay confirms the transaction.</p>
+                <p class="payos-help"
+                   th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHelp') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowHelp') : #messages.msg('librarian.payos.fineHelp'))}">The page updates after KQPay confirms the transaction.</p>
 
             <div th:if="${payment.status == 'PAID'}" class="payos-success">
                 <span th:if="${payment.purpose == 'FINE_BATCH'}">
                     <span th:text="#{payos.batchSuccess(${fineItems != null ? #lists.size(fineItems) : 0})}">All fines were paid successfully.</span>
                 </span>
                 <span th:unless="${payment.purpose == 'FINE_BATCH'}">
-                    <span th:text="#{payos.success}">Payment was recorded successfully.</span>
+                    <span th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupSuccess') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowSuccess') : #messages.msg('librarian.payos.fineSuccess'))}">Payment was recorded successfully.</span>
                     <span th:if="${payment.transaction != null}"><span th:text="#{transaction.code}">Transaction ID</span>: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
                 </span>
             </div>

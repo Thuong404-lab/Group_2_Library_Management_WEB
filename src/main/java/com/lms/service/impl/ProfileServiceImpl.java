@@ -68,7 +68,13 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile) {
-        User user = getUserByUsername(username);
+        updateProfile(username, username, fullName, email, phone, avatarFile);
+    }
+
+    @Override
+    @Transactional
+    public void updateProfile(String currentUsername, String newUsername, String fullName, String email, String phone, MultipartFile avatarFile) {
+        User user = getUserByUsername(currentUsername);
 
         String normalizedFullName = validateFullName(fullName);
         user.setFullName(normalizedFullName);
@@ -82,6 +88,33 @@ public class ProfileServiceImpl implements ProfileService {
         }
         
         userRepository.save(user);
+
+        if (newUsername != null && !newUsername.trim().isEmpty() && !newUsername.equals(currentUsername)) {
+            String trimmedNewUsername = newUsername.trim();
+            if (trimmedNewUsername.length() < 3 || trimmedNewUsername.length() > 100) {
+                throw new ValidationException(messages.get("validation.usernameLength"));
+            }
+            if (!trimmedNewUsername.matches("^[a-zA-Z0-9_.]+$")) {
+                throw new ValidationException(messages.get("validation.usernameFormat"));
+            }
+            if (memberAccountRepository.findByUsername(trimmedNewUsername).isPresent() || staffAccountRepository.findByUsername(trimmedNewUsername).isPresent()) {
+                throw new ConflictException(messages.get("backend.account.usernameUsed"));
+            }
+
+            Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(currentUsername);
+            if (memberAccount.isPresent()) {
+                MemberAccount account = memberAccount.get();
+                account.setUsername(trimmedNewUsername);
+                memberAccountRepository.save(account);
+            } else {
+                Optional<StaffAccount> staffAccount = staffAccountRepository.findByUsername(currentUsername);
+                if (staffAccount.isPresent()) {
+                    StaffAccount account = staffAccount.get();
+                    account.setUsername(trimmedNewUsername);
+                    staffAccountRepository.save(account);
+                }
+            }
+        }
     }
 
     private String validateFullName(String fullNameValue) {

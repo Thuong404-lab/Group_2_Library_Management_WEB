@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/pages/register.css}" />
     <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
-      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
-  </head>
+    <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+</head>
 <body>
     <div class="container">
         <div class="d-flex justify-content-end pt-3"><div th:replace="~{fragments/language-switcher :: switcher}"></div></div>
@@ -39,40 +39,49 @@
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control" id="username" th:field="*{username}" th:placeholder="#{register.username}" placeholder="Username" required>
+                                <input type="text" class="form-control" id="username" th:field="*{username}" th:placeholder="#{register.username}" placeholder="Username" minlength="3" maxlength="20" required>
                                 <label for="username" th:text="#{register.username}">Username</label>
                                 <div class="invalid-feedback" th:text="#{register.username.required}">Please enter a username (3-20 characters).</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-floating">
-                                <input type="password" class="form-control" id="password" th:field="*{password}" th:placeholder="#{auth.password}" placeholder="Password" required>
-                                <label for="password" th:text="#{auth.password}">Password</label>
-                                <div class="invalid-feedback" th:text="#{register.password.required}">Please enter a password (at least 6 characters).</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-sm-6">
-                            <div class="form-floating">
-                                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" required>
+                                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" maxlength="100" required>
                                 <label for="email">Email</label>
                                 <div class="invalid-feedback" th:text="#{register.email.required}">Please enter a valid email address.</div>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
                         <div class="col-sm-6">
-                            <div class="form-floating">
-                                <input type="tel" class="form-control" id="phone" th:field="*{phone}" th:placeholder="#{register.phone}" placeholder="Phone number" required>
-                                <label for="phone" th:text="#{register.phone}">Phone number</label>
-                                <div class="invalid-feedback" th:text="#{register.phone.required}">Please enter a valid 10-digit phone number.</div>
+                            <div class="form-floating position-relative">
+                                <input type="password" class="form-control" id="password" th:field="*{password}" th:placeholder="#{auth.password}" placeholder="Password" minlength="6" maxlength="100" required>
+                                <label for="password" th:text="#{auth.password}">Password</label>
+                                <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer toggle-password" data-target="password" style="cursor: pointer; z-index: 10;"></i>
+                                <div class="invalid-feedback" th:text="#{register.password.required}">Please enter a password (at least 6 characters).</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-floating position-relative">
+                                <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" placeholder="Confirm Password" minlength="6" maxlength="100" required>
+                                <label for="confirmPassword">Confirm Password</label>
+                                <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer toggle-password" data-target="confirmPassword" style="cursor: pointer; z-index: 10;"></i>
+                                <div class="invalid-feedback">Passwords must match.</div>
                             </div>
                         </div>
                     </div>
 
-                    <button class="btn btn-classic w-100 py-2 fs-5 mb-3 fw-bold u-font-family-playfair-display-serif-53670465" type="submit" th:text="#{register.submit}">Create Member Account</button>
+                    <div class="form-floating mb-4">
+                        <input type="tel" class="form-control" id="phone" th:field="*{phone}" th:placeholder="#{register.phone}" placeholder="Phone number" minlength="10" maxlength="10" pattern="[0-9]{10}" required>
+                        <label for="phone" th:text="#{register.phone}">Phone number</label>
+                        <div class="invalid-feedback" th:text="#{register.phone.required}">Please enter a valid 10-digit phone number.</div>
+                    </div>
 
-                    <!-- Tạm ẩn phần đăng nhập Google -->
+                    <button id="submitBtn" class="btn btn-classic w-100 py-2 fs-5 mb-3 fw-bold u-font-family-playfair-display-serif-53670465" type="submit">
+                        <span id="submitText" th:text="#{register.submit}">Create Member Account</span>
+                        <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
                 </form>
             </div>
             <div class="card-footer text-center py-3 border-top border-secondary rounded-bottom-4 register-div-background-04">
@@ -87,13 +96,50 @@
     <script>
         (function () {
             'use strict'
+
+            // Password toggle logic
+            const togglePasswords = document.querySelectorAll('.toggle-password');
+            togglePasswords.forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.classList.remove('bi-eye-slash');
+                        this.classList.add('bi-eye');
+                    } else {
+                        input.type = 'password';
+                        this.classList.remove('bi-eye');
+                        this.classList.add('bi-eye-slash');
+                    }
+                });
+            });
+
+            // Form validation and submit button state
             var forms = document.querySelectorAll('.needs-validation')
             Array.prototype.slice.call(forms)
                 .forEach(function (form) {
                     form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
+                        const pass = document.getElementById('password').value;
+                        const confirmPass = document.getElementById('confirmPassword').value;
+                        let isValid = form.checkValidity();
+
+                        if (pass !== confirmPass) {
+                            document.getElementById('confirmPassword').setCustomValidity("Passwords do not match");
+                            isValid = false;
+                        } else {
+                            document.getElementById('confirmPassword').setCustomValidity("");
+                        }
+
+                        if (!isValid) {
                             event.preventDefault()
                             event.stopPropagation()
+                        } else {
+                            // Valid form, disable button
+                            const btn = document.getElementById('submitBtn');
+                            const spinner = document.getElementById('submitSpinner');
+                            btn.disabled = true;
+                            spinner.classList.remove('d-none');
                         }
                         form.classList.add('was-validated')
                     }, false)
