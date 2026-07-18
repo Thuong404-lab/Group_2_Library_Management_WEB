@@ -64,9 +64,12 @@
     margin: 0 0 20px;
 }
 
-.member-summary-chips span {
+.member-summary-chips > span {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 110px;
     min-height: 28px;
     padding: 4px 12px;
     border: 1px solid var(--member-hairline);
@@ -76,6 +79,7 @@
     font-size: 12px;
     font-weight: 500;
     line-height: 1;
+    white-space: nowrap;
 }
 
 .member-summary-chips strong {
@@ -98,6 +102,13 @@
     color: #faf9f5;
     font-size: 14px;
     font-weight: 600;
+}
+
+.member-primary-action {
+    flex: 0 0 110px;
+    width: 110px;
+    padding-inline: 12px;
+    white-space: nowrap;
 }
 
 .member-primary-action:hover,
@@ -152,13 +163,14 @@
 }
 
 .member-search-group .member-filter-select {
-    flex: 0 0 172px;
-    width: 172px;
+    flex: 0 0 180px;
+    width: 180px;
     margin-left: 12px !important;
     border: 1px solid var(--member-hairline) !important;
     border-radius: 8px !important;
     color: var(--member-body);
     font-size: 14px;
+    justify-content: center;
 }
 
 .member-search-group .member-filter-select:focus {
@@ -187,7 +199,8 @@
 .member-search-button {
     height: 42px;
     margin-left: 12px !important;
-    flex: 0 0 auto;
+    flex: 0 0 110px;
+    width: 110px;
 }
 
 .member-back-button {
@@ -573,8 +586,9 @@
     }
 
     .member-search-group .member-filter-select {
-        flex: 1 1 calc(50% - 6px);
-        width: calc(50% - 6px);
+        flex: 1 1 100%;
+        width: 100%;
+        margin-left: 0 !important;
     }
 
     .member-search-group .member-filter-select:first-of-type {
@@ -583,6 +597,7 @@
 
     .member-search-button {
         width: 100%;
+        flex: 1 1 100%;
         margin-left: 0 !important;
     }
 
@@ -702,18 +717,24 @@
 .member-management-page .member-table thead th { padding: 12px 16px; color: var(--app-color-muted); background: var(--app-color-surface-soft); border-bottom: 1px solid var(--app-color-hairline); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .member-management-page .member-table tbody td { padding: 14px 16px; background: var(--app-color-canvas); border-bottom: 1px solid var(--app-color-hairline-soft); vertical-align: middle; }
 .member-management-page .member-table tbody tr:hover td { background: var(--app-color-surface-soft); }
-.member-management-page .member-col-index { width: 7%; }
-.member-management-page .member-col-username { width: 15%; }
-.member-management-page .member-col-user { width: 25%; }
-.member-management-page .member-col-tier { width: 20%; }
-.member-management-page .member-col-status { width: 17%; }
-.member-management-page .member-col-actions { width: 16%; }
+.member-management-page .member-col-index { width: 64px; }
+.member-management-page .member-col-username { width: 16%; }
+.member-management-page .member-col-user { width: 30%; }
+.member-management-page .member-col-tier { width: 18%; }
+.member-management-page .member-col-status { width: 16%; }
+.member-management-page .member-col-actions { width: 14%; }
 .member-management-page .membership-tier-badge,
-.member-management-page .status-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 4px 10px; border: 1px solid transparent; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.member-management-page .status-badge,
+.member-management-page .badge[class*="membership-tier-badge--"] { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; min-height: 28px; padding: 4px 10px; border: 1px solid transparent; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .member-management-page .membership-tier-badge--empty { color: var(--app-color-muted); background: var(--app-color-surface-soft); border-color: var(--app-color-hairline); }
-.member-management-page .status-active { color: var(--app-color-success-ink); background: var(--app-color-success-soft); border-color: var(--app-color-success-border); }
-.member-management-page .status-inactive { color: var(--app-color-warning-ink); background: var(--app-color-warning-soft); border-color: var(--app-color-warning-border); }
-.member-management-page .status-blocked { color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border-color: var(--app-color-danger-border); }
+.member-management-page .membership-tier-badge--regular,
+.member-management-page .membership-tier-badge--default { color: #7c746b !important; background: rgba(148, 139, 128, 0.10) !important; border: 1px solid rgba(148, 139, 128, 0.22) !important; }
+.member-management-page .membership-tier-badge--silver { color: #4b5563 !important; background: rgba(148, 163, 184, 0.22) !important; border: 1px solid rgba(100, 116, 139, 0.46) !important; }
+.member-management-page .membership-tier-badge--gold { color: #9a6700 !important; background: rgba(245, 184, 54, 0.18) !important; border: 1px solid rgba(218, 165, 32, 0.38) !important; }
+.member-management-page .membership-tier-badge--diamond { color: #1d6f9f !important; background: rgba(56, 189, 248, 0.16) !important; border: 1px solid rgba(14, 165, 233, 0.36) !important; }
+.member-management-page .status-active { color: var(--app-color-success-ink) !important; background: var(--app-color-success-soft) !important; border-color: var(--app-color-success-border) !important; }
+.member-management-page .status-inactive { color: var(--app-color-warning-ink) !important; background: var(--app-color-warning-soft) !important; border-color: var(--app-color-warning-border) !important; }
+.member-management-page .status-blocked { color: var(--app-color-danger-ink) !important; background: var(--app-color-danger-soft) !important; border-color: var(--app-color-danger-border) !important; }
 .member-management-page .modal-content { overflow: hidden; color: var(--app-color-body); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline) !important; border-radius: var(--app-radius-lg); box-shadow: var(--app-color-overlay-shadow) !important; }
 .member-management-page .modal-header,
 .member-management-page .modal-footer,
