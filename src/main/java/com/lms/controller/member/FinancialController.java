@@ -13,6 +13,7 @@ import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.Transaction;
+import com.lms.enums.NotificationEventType;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberNotificationRepository;
@@ -22,6 +23,7 @@ import com.lms.repository.PayOsPaymentFineItemRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
+import com.lms.service.LocalizedMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Member financial UC flows maintained by Pham Kien Quoc:
@@ -52,10 +56,7 @@ import java.util.Comparator;
 public class FinancialController extends LocalizedControllerSupport {
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
-    private static final String TOP_UP_NOTIFICATION_KEYWORD_VI = "nạp tiền";
-    private static final String TOP_UP_NOTIFICATION_KEYWORD_EN = "top-up";
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MARK_ALL_READ_LIMIT = 1000;
 
     private final TransactionRepository transactionRepository;
     private final MemberNotificationRepository memberNotificationRepository;
@@ -66,6 +67,7 @@ public class FinancialController extends LocalizedControllerSupport {
     private final FinancialService financialService;
     private final PayOsPaymentRepository payOsPaymentRepository;
     private final PayOsPaymentFineItemRepository payOsPaymentFineItemRepository;
+    private final LocalizedMessageService localizedMessageService;
 
     public FinancialController(TransactionRepository transactionRepository,
                                MemberNotificationRepository memberNotificationRepository,
@@ -75,7 +77,8 @@ public class FinancialController extends LocalizedControllerSupport {
                                BorrowDetailRepository borrowDetailRepository,
                                FinancialService financialService,
                                PayOsPaymentRepository payOsPaymentRepository,
-                               PayOsPaymentFineItemRepository payOsPaymentFineItemRepository) {
+                               PayOsPaymentFineItemRepository payOsPaymentFineItemRepository,
+                               LocalizedMessageService localizedMessageService) {
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
@@ -85,6 +88,7 @@ public class FinancialController extends LocalizedControllerSupport {
         this.financialService = financialService;
         this.payOsPaymentRepository = payOsPaymentRepository;
         this.payOsPaymentFineItemRepository = payOsPaymentFineItemRepository;
+        this.localizedMessageService = localizedMessageService;
     }
 
     @GetMapping("/fines")
@@ -320,14 +324,24 @@ public class FinancialController extends LocalizedControllerSupport {
                                          @RequestParam(defaultValue = "0") int page,
                                          Model model) {
         Member member = getCurrentMember(principal);
-        Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
+        Page<MemberNotification> notificationPage = memberNotificationRepository
+                .findByMember_MemberIdAndNotification_EventTypeOrderByNotification_CreatedDateDesc(
                 member.getMemberId(),
-                TOP_UP_NOTIFICATION_KEYWORD_VI,
-                TOP_UP_NOTIFICATION_KEYWORD_EN,
+                NotificationEventType.TOP_UP_SUCCESS,
                 pageRequest(page, DEFAULT_PAGE_SIZE));
 
         model.addAttribute("notificationPage", notificationPage);
         model.addAttribute("notifications", notificationPage.getContent());
+        Map<Integer, String> localizedTitles = notificationPage.getContent().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getNotification().getNotificationId(),
+                        item -> localizedMessageService.renderNotificationTitle(item.getNotification())));
+        Map<Integer, String> localizedContents = notificationPage.getContent().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getNotification().getNotificationId(),
+                        item -> localizedMessageService.renderNotificationContent(item.getNotification())));
+        model.addAttribute("localizedNotificationTitles", localizedTitles);
+        model.addAttribute("localizedNotificationContents", localizedContents);
         model.addAttribute("currentPage", page);
         return "member/topup-notifications";
     }
@@ -354,19 +368,8 @@ public class FinancialController extends LocalizedControllerSupport {
                                                   Principal principal,
                                                   RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
-        Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
-                member.getMemberId(),
-                TOP_UP_NOTIFICATION_KEYWORD_VI,
-                TOP_UP_NOTIFICATION_KEYWORD_EN,
-                pageRequest(0, MARK_ALL_READ_LIMIT));
-
-        for (MemberNotification memberNotification : notificationPage.getContent()) {
-            if (!Boolean.TRUE.equals(memberNotification.getIsRead())) {
-                memberNotification.setIsRead(true);
-                memberNotification.setReadDate(LocalDateTime.now());
-                memberNotificationRepository.save(memberNotification);
-            }
-        }
+        memberNotificationRepository.markUnreadNotificationsAsReadByEventType(
+                member.getMemberId(), NotificationEventType.TOP_UP_SUCCESS, LocalDateTime.now());
 
         redirectAttributes.addFlashAttribute("success", message("backend.notification.topupAllRead"));
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);

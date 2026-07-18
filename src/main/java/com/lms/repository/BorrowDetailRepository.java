@@ -14,6 +14,9 @@ import java.util.List;
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
     long countByStatusIgnoreCase(String status);
 
+    long countByDueDateGreaterThanEqualAndDueDateLessThan(
+            LocalDateTime startDate, LocalDateTime endDate);
+
     @Query(value = """
             select count(*)
             from dbo.BorrowDetails bd

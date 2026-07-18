@@ -1,6 +1,9 @@
 package com.lms.service;
 
 import com.lms.entity.*;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.DataProcessingException;
 import com.lms.exception.ForbiddenException;
@@ -77,8 +80,10 @@ public class PayOsSettlementService {
 
         Transaction transaction = saveTransaction(wallet, null, "TOP_UP", amount);
         createNotification(member,
-                localizedMessageService.get("systemNotification.kqpay.topup.title"),
-                localizedMessageService.get("systemNotification.topup.success.content", formatMoney(amount), formatMoney(newBalance)));
+                NotificationType.FINANCE, NotificationEventType.TOP_UP_SUCCESS, NotificationSource.SYSTEM,
+                "systemNotification.kqpay.topup.title",
+                "systemNotification.topup.success.content",
+                amount, newBalance);
         return transaction;
     }
 
@@ -193,10 +198,18 @@ public class PayOsSettlementService {
         return walletRepository.save(wallet);
     }
 
-    private void createNotification(Member member, String title, String content) {
+    private void createNotification(Member member,
+                                    NotificationType type,
+                                    NotificationEventType eventType,
+                                    NotificationSource source,
+                                    String titleKey,
+                                    String contentKey,
+                                    Object... arguments) {
         Notification notification = new Notification();
-        notification.setTitle(title);
-        notification.setContent(content);
+        localizedMessageService.prepareNotification(notification, titleKey, contentKey, arguments);
+        notification.setNotificationType(type);
+        notification.setEventType(eventType);
+        notification.setNotificationSource(source);
         notification.setCreatedDate(LocalDateTime.now());
         notification.setStatus("Active");
         notification = notificationRepository.save(notification);
@@ -237,7 +250,4 @@ public class PayOsSettlementService {
         return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
 
-    private String formatMoney(BigDecimal amount) {
-        return localizedMessageService.get("currency.vndAmount", String.format("%,.0f", amount));
-    }
 }

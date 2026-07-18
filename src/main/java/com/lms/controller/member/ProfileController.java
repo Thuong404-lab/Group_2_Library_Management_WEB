@@ -138,6 +138,8 @@ public class ProfileController extends LocalizedControllerSupport {
 
         model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
                 principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
+        model.addAttribute("availableFavoriteBookIds",
+                memberFavoriteService.getAvailableFavoriteBookIds(principal.getName()));
 
         return "member/favorites";
     }

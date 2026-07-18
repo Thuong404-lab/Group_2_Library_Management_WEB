@@ -10,6 +10,9 @@ import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ForbiddenException;
 import com.lms.exception.ResourceNotFoundException;
@@ -214,9 +217,10 @@ public class FinancialServiceImpl implements FinancialService {
 
         createMemberNotification(
                 reservation.getMember(),
-                localizedMessageService.get("systemNotification.deposit.paid.title"),
-                localizedMessageService.get("systemNotification.deposit.paid.content", formatMoney(depositAmount),
-                        reservation.getBook() == null ? "" : reservation.getBook().getTitle()));
+                NotificationType.RESERVATION, NotificationEventType.RESERVATION_DEPOSIT_PAID, NotificationSource.SYSTEM,
+                "systemNotification.deposit.paid.title",
+                "systemNotification.deposit.paid.content",
+                depositAmount, reservation.getBook() == null ? "" : reservation.getBook().getTitle());
     }
 
     @Override
@@ -251,9 +255,14 @@ public class FinancialServiceImpl implements FinancialService {
         Member member = wallet.getMember();
         createMemberNotification(
                 member,
-                localizedMessageService.get("systemNotification.fine.created.title"),
-                localizedMessageService.get("systemNotification.fine.created.content", formatMoney(transaction.getAmount().abs()),
-                        reason == null || reason.isBlank() ? localizedMessageService.get("systemNotification.fine.defaultReason") : reason.trim()));
+                NotificationType.FINANCE, NotificationEventType.FINE_CREATED, NotificationSource.LIBRARIAN,
+                "systemNotification.fine.created.title",
+                reason == null || reason.isBlank()
+                        ? "systemNotification.fine.createdDefault.content"
+                        : "systemNotification.fine.created.content",
+                reason == null || reason.isBlank()
+                        ? new Object[]{transaction.getAmount().abs()}
+                        : new Object[]{transaction.getAmount().abs(), reason.trim()});
     }
 
     @Override
@@ -290,8 +299,10 @@ public class FinancialServiceImpl implements FinancialService {
 
         createMemberNotification(
                 member,
-                localizedMessageService.get("systemNotification.topup.success.title"),
-                localizedMessageService.get("systemNotification.topup.success.content", formatMoney(topUpAmount), formatMoney(newBalance)));
+                NotificationType.FINANCE, NotificationEventType.TOP_UP_SUCCESS, NotificationSource.LIBRARIAN,
+                "systemNotification.topup.success.title",
+                "systemNotification.topup.success.content",
+                topUpAmount, newBalance);
     }
 
     @Override
@@ -360,8 +371,10 @@ public class FinancialServiceImpl implements FinancialService {
 
         createMemberNotification(
                 reservation.getMember(),
-                localizedMessageService.get("systemNotification.deposit.refunded.title"),
-                localizedMessageService.get("systemNotification.deposit.refunded.content", formatMoney(refundAmount), reservationId, formatMoney(newBalance)));
+                NotificationType.RESERVATION, NotificationEventType.RESERVATION_REFUNDED, NotificationSource.LIBRARIAN,
+                "systemNotification.deposit.refunded.title",
+                "systemNotification.deposit.refunded.content",
+                refundAmount, reservationId, newBalance);
     }
 
     @Override
@@ -432,14 +445,22 @@ public class FinancialServiceImpl implements FinancialService {
         return transactionRepository.save(transaction);
     }
 
-    private void createMemberNotification(Member member, String title, String content) {
+    private void createMemberNotification(Member member,
+                                          NotificationType type,
+                                          NotificationEventType eventType,
+                                          NotificationSource source,
+                                          String titleKey,
+                                          String contentKey,
+                                          Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             return;
         }
 
         Notification notification = new Notification();
-        notification.setTitle(title);
-        notification.setContent(content);
+        localizedMessageService.prepareNotification(notification, titleKey, contentKey, arguments);
+        notification.setNotificationType(type);
+        notification.setEventType(eventType);
+        notification.setNotificationSource(source);
         notification.setCreatedDate(LocalDateTime.now());
         notification.setStatus("Active");
         notification = notificationRepository.save(notification);

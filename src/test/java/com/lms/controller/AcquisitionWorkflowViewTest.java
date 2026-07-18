@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @SpringBootTest
@@ -36,6 +37,15 @@ class AcquisitionWorkflowViewTest {
         mockMvc.perform(get("/member/interaction/acquisition-requests/new").with(user(memberUser)))
                 .andExpect(status().isOk())
                 .andExpect(view().name("member/book-acquisition-request"));
+    }
+
+    @Test
+    @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
+    void rendersLibrarianOperationalDashboard() throws Exception {
+        mockMvc.perform(get("/librarian/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("librarian/dashboard"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tasks Awaiting Action")));
     }
 
     @Test

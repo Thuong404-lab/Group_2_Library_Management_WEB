@@ -1,6 +1,9 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
@@ -137,8 +140,10 @@ public class LoanServiceImpl implements LoanService {
         updateParentBorrowStatus(borrow);
 
         // 5. Gửi thông báo đến độc giả
-        sendInternalNotification(borrow.getMember(), localizedMessageService.get("systemNotification.return.approved.title"),
-                localizedMessageService.get("systemNotification.return.approved.content", borrowId));
+        sendInternalNotification(borrow.getMember(),
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.approved.title",
+                "systemNotification.return.approved.content", borrowId);
     }
 
     // UC-13.3: Quầy mượn sách
@@ -277,10 +282,12 @@ public class LoanServiceImpl implements LoanService {
 
         Member member = detail.getBorrow().getMember();
         if (member != null && member.getMemberId() != null) {
-            sendInternalNotification(member, localizedMessageService.get("systemNotification.renewal.success.title"),
-                    localizedMessageService.get("systemNotification.renewal.success.content",
-                            detail.getBook().getTitle(), renewDays,
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+            sendInternalNotification(member,
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.success.title",
+                    "systemNotification.renewal.success.content",
+                    detail.getBook().getTitle(), renewDays,
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -328,8 +335,9 @@ public class LoanServiceImpl implements LoanService {
 
         updateParentBorrowStatus(detail.getBorrow());
         sendInternalNotification(detail.getBorrow().getMember(),
-                localizedMessageService.get("systemNotification.return.desk.title"),
-                localizedMessageService.get("systemNotification.return.desk.content", detail.getBook().getTitle()));
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.desk.title",
+                "systemNotification.return.desk.content", detail.getBook().getTitle());
     }
 
     @Override
@@ -442,10 +450,11 @@ public class LoanServiceImpl implements LoanService {
         }
 
         sendInternalNotification(borrow.getMember(),
-                localizedMessageService.get("systemNotification.borrow.pickup.title"),
-                localizedMessageService.get("systemNotification.borrow.collection.content", borrowId,
-                        LocalDateTime.now().plusDays(14)
-                                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.pickup.title",
+                "systemNotification.borrow.collection.content", borrowId,
+                LocalDateTime.now().plusDays(14)
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @Override
@@ -481,10 +490,11 @@ public class LoanServiceImpl implements LoanService {
 
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
-                    localizedMessageService.get("systemNotification.renewal.approved.title"),
-                    localizedMessageService.get("systemNotification.renewal.approved.content",
-                            detail.getBook().getTitle(),
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.approved.title",
+                    "systemNotification.renewal.approved.content",
+                    detail.getBook().getTitle(),
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -508,10 +518,11 @@ public class LoanServiceImpl implements LoanService {
 
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
-                    localizedMessageService.get("systemNotification.renewal.rejected.title"),
-                    localizedMessageService.get("systemNotification.renewal.rejected.content",
-                            detail.getBook().getTitle(),
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_REJECTED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.rejected.title",
+                    "systemNotification.renewal.rejected.content",
+                    detail.getBook().getTitle(),
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -577,10 +588,12 @@ public class LoanServiceImpl implements LoanService {
                 transactionRepository.save(transaction);
 
                 // Gửi thông báo hệ thống đến độc giả
-                sendInternalNotification(member, localizedMessageService.get("systemNotification.overdueFine.title"),
-                        localizedMessageService.get("systemNotification.overdueFine.content",
-                                fineAmount.setScale(0, java.math.RoundingMode.HALF_UP),
-                                detail.getBook().getTitle(), overdueDays));
+                sendInternalNotification(member,
+                        NotificationType.FINANCE, NotificationEventType.OVERDUE_FINE_CREATED, NotificationSource.SYSTEM,
+                        "systemNotification.overdueFine.title",
+                        "systemNotification.overdueFine.content",
+                        fineAmount.setScale(0, java.math.RoundingMode.HALF_UP),
+                        detail.getBook().getTitle(), overdueDays);
             }
         }
     }
@@ -616,13 +629,21 @@ public class LoanServiceImpl implements LoanService {
     /**
      * Tạo thông báo hệ thống và gửi cho độc giả
      */
-    private void sendInternalNotification(Member member, String title, String content) {
+    private void sendInternalNotification(Member member,
+                                          NotificationType type,
+                                          NotificationEventType eventType,
+                                          NotificationSource source,
+                                          String titleKey,
+                                          String contentKey,
+                                          Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             throw new DataProcessingException(localizedMessageService.get("backend.notification.memberMissing"));
         }
         Notification notif = new Notification();
-        notif.setTitle(title);
-        notif.setContent(content);
+        localizedMessageService.prepareNotification(notif, titleKey, contentKey, arguments);
+        notif.setNotificationType(type);
+        notif.setEventType(eventType);
+        notif.setNotificationSource(source);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus(STATUS_ACTIVE);
         Notification saved = notificationRepository.save(notif);
