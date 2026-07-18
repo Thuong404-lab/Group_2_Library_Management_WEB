@@ -75,7 +75,8 @@ class PayOsPaymentServiceTest {
                 mock(FinancialService.class),
                 mock(PayOsSettlementService.class),
                 mock(PayOsPaymentAuditService.class),
-                "", "", "", "http://localhost:8080");
+                "", "", "", "http://localhost:8080",
+                mock(LocalizedMessageService.class));
     }
 
     private PayOsPayment payment(Long id) {
