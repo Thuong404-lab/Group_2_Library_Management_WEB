@@ -6,6 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.lms.service.BookService;
+import com.lms.repository.BookItemRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MemberReviewService;
@@ -35,17 +36,20 @@ public class GuestController {
     private final MemberFavoriteService memberFavoriteService;
     private final MemberReviewService memberReviewService;
     private final MembershipService membershipService;
+    private final BookItemRepository bookItemRepository;
 
     public GuestController(BookService bookService,
                            GenreRepository genreRepository,
                            MemberFavoriteService memberFavoriteService,
                            MemberReviewService memberReviewService,
-                           MembershipService membershipService) {
+                           MembershipService membershipService,
+                           BookItemRepository bookItemRepository) {
         this.bookService = bookService;
         this.genreRepository = genreRepository;
         this.memberFavoriteService = memberFavoriteService;
         this.memberReviewService = memberReviewService;
         this.membershipService = membershipService;
+        this.bookItemRepository = bookItemRepository;
     }
 
     // Trang chủ
@@ -130,7 +134,9 @@ public class GuestController {
                 .average()
                 .orElse(0);
 
+        long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(id, "Available");
         model.addAttribute("book", book);
+        model.addAttribute("availableCount", availableCount);
         model.addAttribute("bookReviews", bookReviews);
         model.addAttribute("reviewCount", bookReviews.size());
         model.addAttribute("averageRating", averageRating);

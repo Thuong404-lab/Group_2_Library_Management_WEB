@@ -1,78 +1,235 @@
 /* Presentation owner for templates/librarian/return-desk.html */
 
-.classic-card {
-            border: 1px solid rgba(139, 90, 43, 0.18) !important;
-            border-radius: 10px !important;
-            background-color: #ffffff !important;
-            box-shadow: 0 0.125rem 0.25rem rgba(44, 30, 22, 0.075) !important;
-            overflow: hidden;
-        }
-        .classic-card .card-header {
-            background: #ffffff !important;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.18) !important;
-            padding-top: 1.25rem;
-            padding-bottom: 1.25rem;
-        }
-        .card-title-custom {
-            color: #4a3b32;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        .classic-table thead th {
-            background: rgba(139, 90, 43, 0.04) !important;
-            color: #4a3b32 !important;
-            border-bottom: 1px solid rgba(139, 90, 43, 0.15) !important;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.3px;
-        }
-        .classic-table tbody tr {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #dee2e6 !important;
-        }
-        .btn-classic-primary {
-            background: #8b5a2b !important;
-            border: 1px solid #8b5a2b !important;
-            color: #ffffff !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-primary:hover {
-            background: #74481f !important;
-            border-color: #74481f !important;
-            color: #ffffff !important;
-        }
-        .btn-classic-outline {
-            background: transparent !important;
-            border: 1px solid rgba(139, 90, 43, 0.5) !important;
-            color: #8b5a2b !important;
-            font-weight: 500;
-            border-radius: 6px !important;
-            transition: all 0.2s ease;
-        }
-        .btn-classic-outline:hover {
-            background: rgba(139, 90, 43, 0.08) !important;
-            border-color: #8b5a2b !important;
-        }
-        .scan-input {
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            background-color: #ffffff;
-            color: #4a3b32;
-            font-size: 1.05rem;
-            transition: all 0.2s ease;
-        }
-        .scan-input:focus {
-            border-color: #8b5a2b;
-            box-shadow: 0 0 0 0.2rem rgba(139, 90, 43, 0.15);
-            background-color: #fff;
-        }
-        .badge-classic { background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.3); border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; }
-        .result-card { border-left: 4px solid #8b5a2b !important; }
+.borrow-management-page {
+    min-width: 0;
+    color: var(--app-color-body);
+    font-family: var(--app-font-ui);
+}
 
-.librarian-return-desk-button-padding-07 {
-    padding: 0.5rem 1rem;
+.borrow-management-page .borrow-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--app-color-hairline);
+}
+
+.borrow-management-page .borrow-page-title {
+    margin: 0 0 6px;
+    color: var(--app-color-ink);
+    font-family: var(--app-font-display);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.borrow-management-page .borrow-page-description {
+    color: var(--app-color-muted);
+    font-size: 14px;
+}
+
+.borrow-management-page .borrow-card {
+    overflow: hidden;
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    box-shadow: none !important;
+}
+
+.borrow-management-page .borrow-card .card-header {
+    padding: 20px;
+    background: var(--app-color-surface-soft) !important;
+    border-color: var(--app-color-hairline-soft) !important;
+    border-bottom: 1px solid var(--app-color-hairline-soft);
+}
+
+.borrow-management-page .card-title-custom {
+    color: var(--app-color-ink);
+    font-family: var(--app-font-display);
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.borrow-management-page .borrow-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-color-canvas);
+}
+
+.borrow-management-page .borrow-table {
+    width: 100%;
+    margin: 0;
+    color: var(--app-color-body);
+    font-size: 14px;
+    table-layout: fixed !important;
+    font-family: var(--app-font-ui) !important;
+}
+
+.borrow-management-page .borrow-table thead th {
+    padding: 12px 16px;
+    color: var(--app-color-muted) !important;
+    background: var(--app-color-surface-soft) !important;
+    border-bottom: 1px solid var(--app-color-hairline) !important;
+    font-family: var(--app-font-ui) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap;
+}
+
+.borrow-management-page .borrow-table tbody td {
+    padding: 14px 16px;
+    background: var(--app-color-canvas);
+    border-bottom: 1px solid var(--app-color-hairline-soft);
+    vertical-align: middle;
+    font-family: var(--app-font-ui) !important;
+}
+
+.borrow-management-page .borrow-table tbody tr:hover td {
+    background: var(--app-color-surface-soft) !important;
+}
+
+.borrow-management-page .form-control,
+.borrow-management-page .form-select {
+    min-height: 42px;
+    color: var(--app-color-body);
+    background-color: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    font-size: 14px;
+    font-family: var(--app-font-ui);
+}
+
+.borrow-management-page .form-control:focus,
+.borrow-management-page .form-select:focus {
+    border-color: var(--app-color-primary);
+    box-shadow: 0 0 0 3px var(--app-color-focus-coral-ring);
+}
+
+.borrow-management-page .form-label {
+    margin-bottom: 8px;
+    color: var(--app-color-body-strong) !important;
+    font-size: 14px;
+    font-weight: 600 !important;
+    font-family: var(--app-font-ui);
+}
+
+.borrow-management-page .btn-classic-primary {
+    background-color: var(--app-color-application-primary) !important;
+    border-color: var(--app-color-application-primary) !important;
+    color: var(--app-color-on-dark) !important;
+    font-weight: 600;
+    border-radius: var(--app-radius-md) !important;
+    height: 40px;
+    padding: 0 18px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--app-font-ui);
+    transition: background-color 150ms ease, border-color 150ms ease;
+    text-decoration: none;
+}
+
+.borrow-management-page .btn-classic-primary:hover {
+    background-color: var(--app-color-application-primary-hover) !important;
+    border-color: var(--app-color-application-primary-hover) !important;
+    color: var(--app-color-on-dark) !important;
+    box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.22);
+}
+
+.borrow-management-page .btn-classic-primary:disabled {
+    background-color: var(--app-color-surface-soft) !important;
+    border-color: var(--app-color-hairline) !important;
+    color: var(--app-color-muted-soft) !important;
+    box-shadow: none !important;
+}
+
+.borrow-management-page .btn-classic-outline {
+    color: var(--app-color-application-primary) !important;
+    border: 1px solid var(--app-color-hairline) !important;
+    background-color: transparent !important;
+    font-weight: 600;
+    border-radius: var(--app-radius-md) !important;
+    height: 40px;
+    padding: 0 18px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--app-font-ui);
+    transition: background-color 150ms ease, border-color 150ms ease;
+    text-decoration: none;
+}
+
+.borrow-management-page .btn-classic-outline:hover {
+    background-color: var(--app-color-surface-soft) !important;
+    border-color: var(--app-color-hairline) !important;
+}
+
+/* Modal styles synchronized with member-list modal */
+.borrow-management-page .modal-content {
+    overflow: hidden;
+    color: var(--app-color-body);
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline) !important;
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-color-overlay-shadow) !important;
+    white-space: normal;
+    font-family: var(--app-font-ui);
+}
+
+.borrow-management-page .modal-header,
+.borrow-management-page .modal-footer {
+    padding: 20px !important;
+    background: var(--app-color-surface-soft) !important;
+    border-color: var(--app-color-hairline-soft) !important;
+}
+
+.borrow-management-page .modal-body {
+    padding: 24px;
+}
+
+.borrow-management-page .modal-title {
+    color: var(--app-color-ink);
+    font-family: var(--app-font-display);
+    font-size: 20px;
+    font-weight: 500 !important;
+}
+
+.borrow-management-page .modal-footer {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.borrow-management-page .modal-footer > * {
+    margin: 0;
+}
+
+.borrow-management-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.borrow-management-page .status-overdue {
+    color: var(--app-color-danger-ink);
+    background: var(--app-color-danger-soft);
+    border-color: var(--app-color-danger-border);
+}
+
+.borrow-management-page .membership-tier-badge:not(.membership-tier-badge--empty) {
+    color: #faf9f5 !important;
 }

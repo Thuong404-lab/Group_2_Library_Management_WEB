@@ -77,7 +77,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
 
-    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Payment_Pending', 'Borrowed', 'Overdue', 'Return_Pending')")
+    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Payment_Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending')")
     long countActiveBorrowedBooks(@Param("memberId") Integer memberId);
 
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue')")
@@ -88,7 +88,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
 
     // BỔ SUNG & CẬP NHẬT 1: Lấy danh sách sách hiện tại bao gồm cả Pending và Return_Pending (Vấn đề 7)
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
-            "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending') ORDER BY bd.dueDate ASC")
+            "AND bd.status IN ('Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending') ORDER BY bd.dueDate ASC")
     List<BorrowDetail> findCurrentBorrowsByMemberId(@Param("memberId") Integer memberId);
 
     // BỔ SUNG 2: Lấy lịch sử mượn trả trong vòng 1 tháng gần đây (Hiển thị tab Lịch sử)
@@ -136,4 +136,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             @Param("memberId") Integer memberId,
             @Param("startDate") java.time.LocalDateTime startDate,
             @Param("endDate") java.time.LocalDateTime endDate);
+
+    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.book.bookId = :bookId AND bd.status NOT IN ('Returned', 'Canceled', 'Rejected')")
+    long countActiveOrPendingRequestsByMemberAndBook(@Param("memberId") Integer memberId, @Param("bookId") Integer bookId);
 }

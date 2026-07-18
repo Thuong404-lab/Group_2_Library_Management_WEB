@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='borrow-schedule'">
+    <div layout:fragment="content" th:with="activeMenu='borrow-schedule'" class="borrow-management-page">
 
         <div th:if="${successMessage}"
             class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379"
@@ -27,39 +27,33 @@
         </div>
 
         <!-- Page Header -->
-        <div
-            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
+        <header class="borrow-page-header">
             <div>
-                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">Lịch mượn trả chi
-                    tiết</h2>
-                <div class="text-muted">Theo dõi tiến độ lưu hành và nhật ký hoàn trả của từng cuốn sách.</div>
+                <h1 class="borrow-page-title">Lịch mượn trả chi tiết</h1>
+                <p class="borrow-page-description">Theo dõi tiến độ lưu hành và nhật ký hoàn trả của từng cuốn sách.</p>
             </div>
-        </div>
-
-
+        </header>
 
         <!-- Filter Bar -->
-        <div class="classic-card mb-4 p-4">
-            <form class="row g-2 align-items-center" method="get" th:action="@{/librarian/loan/borrow-schedule}">
-                <div class="col-md-9">
-                    <div class="input-group">
-                        <span class="input-group-text classic-addon"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control filter-input addon-right" name="keyword"
-                            th:value="${keyword}"
-                            placeholder="Tìm kiếm theo mã độc giả, tên, email hoặc số điện thoại...">
-                    </div>
-                </div>
-                <div class="col-auto d-flex gap-2">
-                    <button type="submit" class="btn btn-classic-primary px-4">Tìm kiếm</button>
-                    <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-classic-outline px-4 text-decoration-none d-inline-flex align-items-center justify-content-center">Xóa lọc</a>
+        <div class="borrow-card p-4 mb-4">
+            <form class="borrow-search-form" method="get" th:action="@{/librarian/loan/borrow-schedule}">
+                <div class="input-group borrow-search-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="keyword"
+                        th:value="${keyword}"
+                        placeholder="Tìm kiếm theo mã độc giả, tên, email hoặc số điện thoại...">
+                    <button type="submit" class="btn borrow-search-button">Tìm kiếm</button>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="btn borrow-back-button text-decoration-none">Xóa lọc</a>
                 </div>
             </form>
         </div>
 
         <!-- Main Table -->
-        <div class="classic-card">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 classic-table">
+        <div class="borrow-card">
+            <div class="table-responsive borrow-table-wrap">
+                <table class="table table-hover align-middle mb-0 borrow-table">
                     <thead>
                         <tr>
                             <th class="ps-4" style="width: 80px;">STT</th>
@@ -67,43 +61,43 @@
                             <th>Thông tin Độc giả</th>
                             <th>Hạng thành viên</th>
                             <th>Trạng thái tài khoản</th>
-                            <th class="text-center pe-4" style="width: 150px;">Hành động</th>
+                            <th class="text-end pe-4" style="width: 150px;">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="member, iter : ${members}">
-                            <td class="ps-4 text-muted small" th:text="${iter.index + 1}">1</td>
+                            <td class="ps-4 fw-bold" th:text="${iter.index + 1}">1</td>
                             <td>
-                                <span class="font-monospace fw-bold text-classic"
+                                <span class="fw-bold text-classic"
                                     th:text="${'MEM-' + member.memberId}">MEM-1</span>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark fs-6" th:text="${member.user?.fullName}">Nguyễn Văn An</div>
+                                <div class="fw-bold" th:text="${member.user?.fullName}">Nguyễn Văn An</div>
                                 <div class="small text-muted" th:if="${member.user?.email}">
-                                    <i class="bi bi-envelope me-1 text-classic"></i>
+                                    <i class="bi bi-envelope me-1"></i>
                                     <span th:text="${member.user.email}">an@gmail.com</span>
                                 </div>
                                 <div class="small text-muted" th:if="${member.user?.phone}">
-                                    <i class="bi bi-telephone me-1 text-classic"></i>
+                                    <i class="bi bi-telephone me-1"></i>
                                     <span th:text="${member.user.phone}">0912345678</span>
                                 </div>
                             </td>
                             <td>
-                                <span class="badge rounded-pill px-3 py-1 text-white"
+                                <span class="membership-tier-badge"
                                       th:if="${member.tier != null}"
                                       th:text="${member.tier.tierName == 'Regular' ? 'Thường' : (member.tier.tierName == 'Silver' ? 'Bạc' : (member.tier.tierName == 'Gold' ? 'Vàng' : (member.tier.tierName == 'Diamond' ? 'Kim cương' : member.tier.tierName)))}"
-                                      th:style="${member.tier.tierName == 'Regular' ? 'background-color:#6c757d;' : member.tier.tierName == 'Silver' ? 'background-color:#6c8ea4;' : member.tier.tierName == 'Gold' ? 'background-color:#c8942d;' : member.tier.tierName == 'Diamond' ? 'background-color:#6f42c1;' : 'background-color:#8b5a2b;'}">Thường</span>
-                                <span class="badge rounded-pill px-3 py-1 bg-secondary text-white" th:if="${member.tier == null}">Chưa xếp hạng</span>
+                                      th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">Thường</span>
+                                <span class="membership-tier-badge membership-tier-badge--empty" th:if="${member.tier == null}">N/A</span>
                             </td>
                             <td>
                                 <span class="status-badge"
-                                      th:classappend="${member.user?.status?.name() == 'Active'} ? 'status-completed' : 'status-rejected'"
-                                      th:text="${member.user?.status?.name() == 'Active' ? 'Hoạt động' : 'Ngừng hoạt động'}">Hoạt động</span>
+                                      th:classappend="${member.user?.status?.name() == 'Active'} ? 'status-active' : 'status-blocked'"
+                                      th:text="${member.user?.status?.name() == 'Active' ? 'Hoạt động' : 'Bị khóa'}">Hoạt động</span>
                             </td>
-                            <td class="text-center pe-4">
+                            <td class="text-end pe-4">
                                 <a th:href="@{/librarian/borrow/member/{id}(id=${member.memberId})}"
-                                    class="btn btn-classic-outline btn-sm px-3 py-1">
-                                    <i class="bi bi-eye me-1"></i>Chi tiết
+                                    class="borrow-icon-action" title="Xem chi tiết" aria-label="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
                                 </a>
                             </td>
                         </tr>
@@ -117,8 +111,6 @@
                 </table>
             </div>
         </div>
-
-    </div>
 
     </div>
 </body>

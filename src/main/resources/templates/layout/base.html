@@ -57,14 +57,23 @@
       var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
       var notificationMarkAllError = /*[[#{notification.markAll.error}]]*/ "Unable to mark all notifications as read.";
 
+      var toastTimeoutId = null;
       function showToast(message) {
         var toast = document.getElementById("customToast");
+        if (!toast) return;
         document.getElementById("toastMessage").innerText = message;
+        
+        if (toastTimeoutId) {
+          clearTimeout(toastTimeoutId);
+        }
+        
         toast.style.opacity = "1";
         toast.style.transform = "translateY(0)";
-        setTimeout(function () {
+        
+        toastTimeoutId = setTimeout(function () {
           toast.style.opacity = "0";
           toast.style.transform = "translateY(20px)";
+          toastTimeoutId = null;
         }, 3000);
       }
 

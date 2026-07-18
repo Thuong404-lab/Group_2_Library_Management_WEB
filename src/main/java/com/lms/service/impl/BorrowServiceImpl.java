@@ -705,13 +705,28 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<ReservationRequestDTO> getPendingReservationDTOs() {
+        java.util.Map<Integer, String> usernameMap = memberAccountRepository.findAll().stream()
+                .filter(ma -> ma.getMember() != null)
+                .collect(Collectors.toMap(
+                        ma -> ma.getMember().getMemberId(),
+                        ma -> ma.getUsername(),
+                        (ex, rep) -> ex
+                ));
         return getAllPendingReservations().stream()
-                .map(r -> new ReservationRequestDTO(
-                        r.getReservationId(),
-                        r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getFullName() : "N/A",
-                        r.getBook().getTitle(),
-                        r.getReservationDate(),
-                        1))
+                .map(r -> {
+                    String email = r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getEmail() : "";
+                    String phone = r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getPhone() : "";
+                    String username = r.getMember() != null ? usernameMap.getOrDefault(r.getMember().getMemberId(), "") : "";
+                    return new ReservationRequestDTO(
+                            r.getReservationId(),
+                            r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getFullName() : "N/A",
+                            r.getBook().getTitle(),
+                            r.getReservationDate(),
+                            1,
+                            email,
+                            phone,
+                            username);
+                })
                 .toList();
     }
 

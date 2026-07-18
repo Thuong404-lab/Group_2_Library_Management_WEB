@@ -18,6 +18,7 @@ import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping("/librarian/loan")
@@ -52,7 +53,10 @@ public class LoanController {
      * Màn hình mặc định của Bàn Trả Sách - Tự động nạp danh sách sách đã được trả thành công hôm nay.
      */
     @GetMapping("/returns")
-    public String showReturnDesk(Model model) {
+    public String showReturnDesk(Model model, HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
         model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
         model.addAttribute("defaultReturnDate", LocalDate.now());
         return "librarian/return-desk";
@@ -63,7 +67,10 @@ public class LoanController {
      * Xử lý tìm kiếm lượt mượn hoạt động (Borrowed/Overdue/Return_Pending) của mã Barcode vừa quét.
      */
     @GetMapping("/returns/search")
-    public String searchActiveReturnLoans(@RequestParam("barcode") String barcode, Model model) {
+    public String searchActiveReturnLoans(@RequestParam("barcode") String barcode, Model model, HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
         String trimmedQuery = (barcode != null) ? barcode.trim() : "";
         List<BorrowDetail> searchResults = loanService.searchActiveLoansByQuery(trimmedQuery);
 

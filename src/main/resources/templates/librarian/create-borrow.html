@@ -59,6 +59,15 @@
                     </ul>
                 </div>
 
+                <div class="borrow-search-wrapper">
+                    <div class="input-group borrow-search-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="queueSearchInput" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm theo tên, username, email, SĐT..." />
+                    </div>
+                </div>
+
                 <div class="p-0">
                     <div class="tab-content borrow-scrollable-list" id="requestTabsContent">
 
@@ -69,6 +78,10 @@
                                    th:href="@{/librarian/borrow/create(requestId=${req.borrowId})}"
                                    class="list-group-item list-group-item-action borrow-request-item"
                                    th:classappend="${selectedRequest != null && selectedRequest.borrowId == req.borrowId} ? 'borrow-active-request-item' : ''"
+                                   th:data-fullname="${req.member.user.fullName}"
+                                   th:data-email="${req.member.user.email}"
+                                   th:data-phone="${req.member.user.phone}"
+                                   th:data-username="${usernameByMemberId[req.member.memberId]}"
                                   >
                                     <div class="borrow-request-heading">
                                         <h3 class="borrow-request-name" th:text="${req.member.user.fullName}">Tên Thành Viên</h3>
@@ -93,6 +106,10 @@
                                    th:href="@{/librarian/borrow/create(renewId=${ren.borrowDetailId})}"
                                    class="list-group-item list-group-item-action borrow-request-item"
                                    th:classappend="${selectedRenewal != null && selectedRenewal.borrowDetailId == ren.borrowDetailId} ? 'borrow-active-request-item' : ''"
+                                   th:data-fullname="${ren.borrow.member.user.fullName}"
+                                   th:data-email="${ren.borrow.member.user.email}"
+                                   th:data-phone="${ren.borrow.member.user.phone}"
+                                   th:data-username="${usernameByMemberId[ren.borrow.member.memberId]}"
                                   >
                                     <div class="borrow-request-heading">
                                         <h3 class="borrow-request-name" th:text="${ren.borrow.member.user.fullName}">Tên Thành Viên</h3>
@@ -118,6 +135,10 @@
                                    th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
                                    class="list-group-item list-group-item-action borrow-request-item"
                                    th:classappend="${selectedReservation != null && selectedReservation.reservationId == reserve.id} ? 'borrow-active-request-item' : ''"
+                                   th:data-fullname="${reserve.memberName}"
+                                   th:data-email="${reserve.memberEmail}"
+                                   th:data-phone="${reserve.memberPhone}"
+                                   th:data-username="${reserve.memberUsername}"
                                   >
                                     <div class="borrow-request-heading">
                                         <h3 class="borrow-request-name" th:text="${reserve.memberName}">Trần Thị B</h3>
@@ -411,11 +432,26 @@
 
         // --- LOGIC GHI NHỚ TAB ACTIVE BẰNG SESSION STORAGE ---
         document.addEventListener('DOMContentLoaded', function() {
+            // Thay thế URL trong lịch sử để khi back lại sẽ về trang quầy sạch không chứa tham số ID cũ
+            if (window.history.replaceState && (window.location.search.includes('requestId') || window.location.search.includes('renewId') || window.location.search.includes('reservationId'))) {
+                window.history.replaceState(null, "", "/librarian/borrow/create");
+            }
+
             var triggerTabList = [].slice.call(document.querySelectorAll('#requestTabs button'));
             triggerTabList.forEach(function (triggerEl) {
                 triggerEl.addEventListener('click', function (event) {
                     sessionStorage.setItem('activeRequestTab', event.target.id);
                 });
+            });
+
+            // Ngăn chặn tải lại trang từ Cache khi người dùng nhấn nút Back
+            window.addEventListener("pageshow", function (event) {
+                var historyTraversal = event.persisted || 
+                                       (typeof window.performance != "undefined" && 
+                                        window.performance.navigation.type === 2);
+                if (historyTraversal) {
+                    window.location.reload();
+                }
             });
 
             var activeTabId = sessionStorage.getItem('activeRequestTab');
@@ -774,6 +810,44 @@
                     btnConfirmText.classList.add("d-none");
                     btnConfirmSpinner.classList.remove("d-none");
                     btnConfirmLoadingText.classList.remove("d-none");
+                }
+            });
+        }
+
+        // Queue Search Input Logic
+        const queueSearchInput = document.getElementById('queueSearchInput');
+        if (queueSearchInput) {
+            queueSearchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                const items = document.querySelectorAll('.borrow-request-item');
+                
+                items.forEach(function(item) {
+                    const fullName = (item.getAttribute('data-fullname') || '').toLowerCase();
+                    const username = (item.getAttribute('data-username') || '').toLowerCase();
+                    const email = (item.getAttribute('data-email') || '').toLowerCase();
+                    const phone = (item.getAttribute('data-phone') || '').toLowerCase();
+                    
+                    if (fullName.includes(query) || username.includes(query) || email.includes(query) || phone.includes(query)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                updateTabBadges();
+            });
+        }
+
+        function updateTabBadges() {
+            const tabs = ['borrows', 'renewals', 'reservations'];
+            tabs.forEach(tabId => {
+                const tabContent = document.getElementById(tabId);
+                if (tabContent) {
+                    const visibleItems = tabContent.querySelectorAll('.borrow-request-item:not([style*="display: none"])').length;
+                    const badge = document.querySelector(`#${tabId}-tab .borrow-tab-badge`);
+                    if (badge) {
+                        badge.textContent = visibleItems;
+                    }
                 }
             });
         }

@@ -26,6 +26,9 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
 import com.lms.entity.BorrowDetail;
+import com.lms.entity.Reservation;
+import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 public class LibrarianBorrowController {
@@ -97,6 +100,7 @@ public class LibrarianBorrowController {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("activeMenu", "borrow-list");
 
         return "librarian/borrow-list";
     }
@@ -106,7 +110,20 @@ public class LibrarianBorrowController {
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
                                        @RequestParam(value = "renewId", required = false) Integer renewId,
                                        @RequestParam(value = "reservationId", required = false) Integer reservationId,
-                                       Model model) {
+                                       Model model,
+                                       HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+        java.util.Map<Integer, String> usernameByMemberId = memberAccountRepository.findAll().stream()
+                .filter(ma -> ma.getMember() != null)
+                .collect(Collectors.toMap(
+                        ma -> ma.getMember().getMemberId(),
+                        ma -> ma.getUsername(),
+                        (existing, replacement) -> existing
+                ));
+        model.addAttribute("usernameByMemberId", usernameByMemberId);
+
         model.addAttribute("borrowRequest", new BorrowRequest());
         model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
@@ -126,8 +143,10 @@ public class LibrarianBorrowController {
         if (requestId != null) {
             try {
                 Borrow selectedBorrow = borrowService.getBorrowById(requestId);
-                model.addAttribute("selectedRequest", selectedBorrow);
-                model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                if ("Pending".equalsIgnoreCase(selectedBorrow.getStatus())) {
+                    model.addAttribute("selectedRequest", selectedBorrow);
+                    model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", "Không thể lấy thông tin chi tiết: " + e.getMessage());
             }
@@ -135,7 +154,10 @@ public class LibrarianBorrowController {
         
         if (renewId != null) {
             try {
-                model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
+                BorrowDetail selectedRenew = borrowService.getBorrowDetailById(renewId);
+                if ("Renew_Pending".equalsIgnoreCase(selectedRenew.getStatus())) {
+                    model.addAttribute("selectedRenewal", selectedRenew);
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", "Không thể lấy thông tin gia hạn: " + e.getMessage());
             }
@@ -143,12 +165,17 @@ public class LibrarianBorrowController {
 
         if (reservationId != null) {
             try {
-                model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
+                Reservation selectedReservation = borrowService.getReservationById(reservationId);
+                if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
+                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
+                    model.addAttribute("selectedReservation", selectedReservation);
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", "Không thể lấy thông tin đặt trước: " + e.getMessage());
             }
         }
 
+        model.addAttribute("activeMenu", "borrow-desk");
         return "librarian/create-borrow";
     }
 
