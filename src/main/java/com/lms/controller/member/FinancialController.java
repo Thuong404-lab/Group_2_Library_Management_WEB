@@ -2,6 +2,7 @@ package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.UnauthorizedException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.response.BorrowFeeViewData;
 import com.lms.dto.response.MemberTransactionHistoryRow;
@@ -12,6 +13,7 @@ import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.Transaction;
+import com.lms.enums.NotificationEventType;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberNotificationRepository;
@@ -21,6 +23,7 @@ import com.lms.repository.PayOsPaymentFineItemRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
+import com.lms.service.LocalizedMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -41,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Member financial UC flows maintained by Pham Kien Quoc:
@@ -48,13 +53,10 @@ import java.util.Comparator;
  */
 @Controller
 @RequestMapping("/member/financial")
-public class FinancialController {
+public class FinancialController extends LocalizedControllerSupport {
     private static final String FINE_TYPE = "FINE";
     private static final String DAMAGE_FEE_TYPE = "DAMAGE_FEE";
-    private static final String TOP_UP_NOTIFICATION_KEYWORD_VI = "nạp tiền";
-    private static final String TOP_UP_NOTIFICATION_KEYWORD_EN = "top-up";
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MARK_ALL_READ_LIMIT = 1000;
 
     private final TransactionRepository transactionRepository;
     private final MemberNotificationRepository memberNotificationRepository;
@@ -65,6 +67,7 @@ public class FinancialController {
     private final FinancialService financialService;
     private final PayOsPaymentRepository payOsPaymentRepository;
     private final PayOsPaymentFineItemRepository payOsPaymentFineItemRepository;
+    private final LocalizedMessageService localizedMessageService;
 
     public FinancialController(TransactionRepository transactionRepository,
                                MemberNotificationRepository memberNotificationRepository,
@@ -74,7 +77,8 @@ public class FinancialController {
                                BorrowDetailRepository borrowDetailRepository,
                                FinancialService financialService,
                                PayOsPaymentRepository payOsPaymentRepository,
-                               PayOsPaymentFineItemRepository payOsPaymentFineItemRepository) {
+                               PayOsPaymentFineItemRepository payOsPaymentFineItemRepository,
+                               LocalizedMessageService localizedMessageService) {
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
@@ -84,6 +88,7 @@ public class FinancialController {
         this.financialService = financialService;
         this.payOsPaymentRepository = payOsPaymentRepository;
         this.payOsPaymentFineItemRepository = payOsPaymentFineItemRepository;
+        this.localizedMessageService = localizedMessageService;
     }
 
     @GetMapping("/fines")
@@ -99,7 +104,7 @@ public class FinancialController {
 
         try {
             financialService.payOverdueFine(member.getMemberId(), fineId);
-            redirectAttributes.addFlashAttribute("success", "Đã thanh toán phí phạt thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.financial.finePaid"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -132,7 +137,7 @@ public class FinancialController {
 
         try {
             financialService.payBorrowingFee(member.getMemberId(), borrowId);
-            redirectAttributes.addFlashAttribute("message", "Đã thanh toán phí mượn thành công.");
+            redirectAttributes.addFlashAttribute("message", message("backend.financial.borrowFeePaid"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -148,7 +153,7 @@ public class FinancialController {
 
         try {
             financialService.payReservationDeposit(member.getMemberId(), reservationId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã thanh toán tiền cọc đặt trước thành công.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.financial.depositPaid"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -166,7 +171,7 @@ public class FinancialController {
             financialService.requestReservationDepositRefund(member.getMemberId(), reservationId);
             redirectAttributes.addFlashAttribute(
                     "successMessage",
-                    "Đã gửi yêu cầu hoàn tiền. Vui lòng chờ thủ thư duyệt.");
+                    message("backend.financial.refundRequested"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -221,19 +226,19 @@ public class FinancialController {
         return new MemberTransactionHistoryRow(
                 "#TXN-" + transaction.getTransactionId(),
                 transaction.getTransactionDate(),
-                transactionTypeLabel(transaction.getTransactionType()),
+                transactionTypeMessageKey(transaction.getTransactionType()),
                 transaction.getAmount(),
-                completed ? "Hoàn tất" : transaction.getStatus(),
+                transactionStatusMessageKey(transaction.getStatus()),
                 completed);
     }
 
     private MemberTransactionHistoryRow toHistoryRow(PayOsPayment payment) {
         String typeLabel = switch (payment.getPurpose()) {
-            case "TOP_UP" -> "Nạp tiền qua KQPay";
-            case "BORROW_FEE" -> "Thanh toán phí mượn qua KQPay";
-            case "FINE" -> "Thanh toán phí phạt qua KQPay";
-            case "FINE_BATCH" -> "Thanh toán tổng phí phạt qua KQPay";
-            default -> "Thanh toán qua KQPay";
+            case "TOP_UP" -> "transaction.type.kqpayTopUp";
+            case "BORROW_FEE" -> "transaction.type.kqpayBorrowFee";
+            case "FINE" -> "transaction.type.kqpayFine";
+            case "FINE_BATCH" -> "transaction.type.kqpayFineBatch";
+            default -> "transaction.type.kqpay";
         };
         BigDecimal amount = payment.getAmount();
         if (!"TOP_UP".equalsIgnoreCase(payment.getPurpose()) && amount != null) {
@@ -244,22 +249,34 @@ public class FinancialController {
                 payment.getPaidAt() != null ? payment.getPaidAt() : payment.getCreatedAt(),
                 typeLabel,
                 amount,
-                "Hoàn tất",
+                "transaction.status.completed",
                 true);
     }
 
-    private String transactionTypeLabel(String transactionType) {
+    private String transactionTypeMessageKey(String transactionType) {
         if (transactionType == null) {
-            return "Khác";
+            return "transaction.type.other";
         }
         return switch (transactionType.toUpperCase()) {
-            case "TOP_UP" -> "Nạp tiền vào ví";
-            case "BORROW_FEE" -> "Phí mượn sách";
-            case "DEPOSIT" -> "Tiền cọc đặt trước";
-            case "FINE" -> "Phí phạt";
-            case "DAMAGE_FEE" -> "Phí hư hỏng";
-            case "REFUND" -> "Hoàn tiền";
-            default -> transactionType;
+            case "TOP_UP" -> "transaction.type.topUp";
+            case "BORROW_FEE" -> "transaction.type.borrowFee";
+            case "DEPOSIT" -> "transaction.type.deposit";
+            case "FINE" -> "transaction.type.fine";
+            case "DAMAGE_FEE" -> "transaction.type.damageFee";
+            case "REFUND" -> "transaction.type.refund";
+            default -> "transaction.type.other";
+        };
+    }
+
+    private String transactionStatusMessageKey(String status) {
+        if (status == null) {
+            return "transaction.status.pending";
+        }
+        return switch (status.trim().toUpperCase()) {
+            case "COMPLETED", "PAID" -> "transaction.status.completed";
+            case "FAILED" -> "transaction.status.failed";
+            case "CANCELED", "CANCELLED" -> "transaction.status.canceled";
+            default -> "transaction.status.pending";
         };
     }
 
@@ -307,14 +324,24 @@ public class FinancialController {
                                          @RequestParam(defaultValue = "0") int page,
                                          Model model) {
         Member member = getCurrentMember(principal);
-        Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
+        Page<MemberNotification> notificationPage = memberNotificationRepository
+                .findByMember_MemberIdAndNotification_EventTypeOrderByNotification_CreatedDateDesc(
                 member.getMemberId(),
-                TOP_UP_NOTIFICATION_KEYWORD_VI,
-                TOP_UP_NOTIFICATION_KEYWORD_EN,
+                NotificationEventType.TOP_UP_SUCCESS,
                 pageRequest(page, DEFAULT_PAGE_SIZE));
 
         model.addAttribute("notificationPage", notificationPage);
         model.addAttribute("notifications", notificationPage.getContent());
+        Map<Integer, String> localizedTitles = notificationPage.getContent().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getNotification().getNotificationId(),
+                        item -> localizedMessageService.renderNotificationTitle(item.getNotification())));
+        Map<Integer, String> localizedContents = notificationPage.getContent().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getNotification().getNotificationId(),
+                        item -> localizedMessageService.renderNotificationContent(item.getNotification())));
+        model.addAttribute("localizedNotificationTitles", localizedTitles);
+        model.addAttribute("localizedNotificationContents", localizedContents);
         model.addAttribute("currentPage", page);
         return "member/topup-notifications";
     }
@@ -332,7 +359,7 @@ public class FinancialController {
             memberNotificationRepository.save(memberNotification);
         });
 
-        redirectAttributes.addFlashAttribute("success", "Đã đánh dấu thông báo là đã đọc.");
+        redirectAttributes.addFlashAttribute("success", message("backend.notification.markedRead"));
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
     }
 
@@ -341,21 +368,10 @@ public class FinancialController {
                                                   Principal principal,
                                                   RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
-        Page<MemberNotification> notificationPage = memberNotificationRepository.findTopupNotifications(
-                member.getMemberId(),
-                TOP_UP_NOTIFICATION_KEYWORD_VI,
-                TOP_UP_NOTIFICATION_KEYWORD_EN,
-                pageRequest(0, MARK_ALL_READ_LIMIT));
+        memberNotificationRepository.markUnreadNotificationsAsReadByEventType(
+                member.getMemberId(), NotificationEventType.TOP_UP_SUCCESS, LocalDateTime.now());
 
-        for (MemberNotification memberNotification : notificationPage.getContent()) {
-            if (!Boolean.TRUE.equals(memberNotification.getIsRead())) {
-                memberNotification.setIsRead(true);
-                memberNotification.setReadDate(LocalDateTime.now());
-                memberNotificationRepository.save(memberNotification);
-            }
-        }
-
-        redirectAttributes.addFlashAttribute("success", "Đã đánh dấu tất cả thông báo nạp tiền là đã đọc.");
+        redirectAttributes.addFlashAttribute("success", message("backend.notification.topupAllRead"));
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
     }
 
@@ -477,13 +493,13 @@ public class FinancialController {
 
     private Member getCurrentMember(Principal principal) {
         if (principal == null) {
-            throw new UnauthorizedException("Bạn cần đăng nhập để xem thông tin tài chính");
+            throw new UnauthorizedException(message("backend.financial.loginRequired"));
         }
 
         String usernameOrEmail = principal.getName();
         return memberRepository.findByAccountUsername(usernameOrEmail)
                 .or(() -> memberRepository.findByUserEmail(usernameOrEmail))
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin thành viên hiện tại"));
+                .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
     }
 }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 
 <head>
-    <title>Danh Sách Phiếu Mượn Sách</title>
+    <title th:text="#{librarian.borrowList.title}">Loan Records</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
@@ -14,18 +14,18 @@
     <!-- Header đồng bộ -->
     <header class="member-page-header">
         <div>
-            <h1 class="member-page-title">Quản lý Lịch Mượn/Trả</h1>
-            <p class="member-page-description">Quản lý toàn bộ các phiếu mượn sách lưu hành của độc giả và điều phối phân trang hệ thống.</p>
+            <h1 class="member-page-title" th:text="#{librarian.borrowList.heading}">Loan and Return Management</h1>
+            <p class="member-page-description" th:text="#{librarian.borrowList.description}">Manage all member circulation records and system pagination.</p>
         </div>
 
     </header>
 
     <!-- Alerts đồng bộ theo mẫu -->
     <div class="alert alert-danger shadow-sm border-0" th:if="${errorMessage != null}">
-        <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${errorMessage}">Thông báo lỗi</span>
+        <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${errorMessage}">Error notification</span>
     </div>
     <div class="alert alert-success shadow-sm border-0" th:if="${successMessage != null}">
-        <i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}">Thông báo thành công.</span>
+        <i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}">Success notification.</span>
     </div>
 
     <section class="member-data-card">
@@ -43,24 +43,24 @@
                         <!-- Keyword Input -->
                         <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                th:value="${keyword}"
-                               placeholder="Nhập tên độc giả, email, số điện thoại hoặc mã phiếu...">
+                               th:placeholder="#{librarian.borrowList.searchPlaceholder}" placeholder="Enter member name, email, phone number, or loan ID...">
 
                         <!-- Trạng thái phiếu Select -->
                         <select class="form-select member-filter-select" name="status" data-auto-submit
-                                aria-label="Lọc theo trạng thái phiếu">
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="Active" th:selected="${status == 'Active'}">Đang mượn (Active)</option>
-                            <option value="Waiting_Pickup" th:selected="${status == 'Waiting_Pickup'}">Chờ nhận sách vật lý</option>
-                            <option value="Returned" th:selected="${status == 'Returned'}">Đã hoàn thành (Returned)</option>
-                            <option value="Overdue" th:selected="${status == 'Overdue'}">Quá hạn (Overdue)</option>
-                            <option value="Pending" th:selected="${status == 'Pending'}">Chờ duyệt (Pending)</option>
-                            <option value="Rejected" th:selected="${status == 'Rejected'}">Đã từ chối (Rejected)</option>
-                            <option value="Return_Pending" th:selected="${status == 'Return_Pending'}">Độc giả xin trả</option>
+                                th:aria-label="#{librarian.borrowList.filterStatus}">
+                            <option value="" th:text="#{librarian.staff.allStatuses}">All statuses</option>
+                            <option value="Active" th:selected="${status == 'Active'}" th:text="#{librarian.borrowList.status.active}">Borrowing (Active)</option>
+                            <option value="Waiting_Pickup" th:selected="${status == 'Waiting_Pickup'}" th:text="#{librarian.borrowList.status.pickup}">Awaiting physical book pickup</option>
+                            <option value="Returned" th:selected="${status == 'Returned'}" th:text="#{librarian.borrowList.status.returned}">Completed (Returned)</option>
+                            <option value="Overdue" th:selected="${status == 'Overdue'}" th:text="#{librarian.borrowList.status.overdue}">Overdue</option>
+                            <option value="Pending" th:selected="${status == 'Pending'}" th:text="#{librarian.borrowList.status.pending}">Pending approval</option>
+                            <option value="Rejected" th:selected="${status == 'Rejected'}" th:text="#{librarian.borrowList.status.rejected}">Rejected</option>
+                            <option value="Return_Pending" th:selected="${status == 'Return_Pending'}" th:text="#{librarian.borrowList.status.returnPending}">Return requested</option>
                         </select>
 
                         <!-- Nút tìm kiếm chuẩn -->
-                        <button class="btn member-search-button text-nowrap" type="submit">
-                            Tìm kiếm
+                        <button class="btn member-search-button text-nowrap" type="submit" th:text="#{common.search}">
+                            Search
                         </button>
                     </div>
                 </form>
@@ -79,12 +79,12 @@
                     </colgroup>
                     <thead>
                     <tr>
-                        <th class="ps-3">STT</th>
-                        <th>Mã Phiếu</th>
-                        <th>Thông tin Độc giả</th>
-                        <th>Ngày mượn</th>
-                        <th>Trạng thái phiếu</th>
-                        <th class="text-end pe-3">Hành động</th>
+                        <th class="ps-3" th:text="#{common.number}">No.</th>
+                        <th th:text="#{reservation.code}">Reservation Code</th>
+                        <th th:text="#{librarian.borrowDesk.memberInfo}">Member Information</th>
+                        <th th:text="#{loan.borrowDate}">Borrow Date</th>
+                        <th th:text="#{librarian.borrowList.status}">Loan Status</th>
+                        <th class="text-end pe-3" th:text="#{admin.logs.action}">Action</th>
                     </tr>
                     </thead>
 
@@ -114,8 +114,8 @@
                                     <span th:text="${borrow.member.user.phone}">0912345678</span>
                                 </div>
                             </div>
-                            <div th:unless="${borrow.member?.user != null}" class="fst-italic text-muted small">
-                                Chưa cập nhật thông tin
+                            <div th:unless="${borrow.member?.user != null}" class="fst-italic text-muted small" th:text="#{librarian.members.infoNotUpdated}">
+                                Information not updated
                             </div>
                         </td>
 
@@ -130,15 +130,15 @@
                                         borrow.status == 'Overdue' ? 'status-blocked' :
                                         'status-inactive'
                                     }" th:text="${
-                                        borrow.status == 'Active' ? 'Đang mượn' :
-                                        (borrow.status == 'Waiting_Pickup' ? 'Chờ nhận sách' :
-                                        (borrow.status == 'Returned' ? 'Đã hoàn thành' :
-                                        (borrow.status == 'Overdue' ? 'Quá hạn' :
-                                        (borrow.status == 'Pending' ? 'Chờ phê duyệt' :
-                                        (borrow.status == 'Rejected' ? 'Đã từ chối' :
-                                        (borrow.status == 'Return_Pending' ? 'Độc giả xin trả' : borrow.status))))))
+                                        borrow.status == 'Active' ? #messages.msg('loan.status.borrowed') :
+                                        (borrow.status == 'Waiting_Pickup' ? #messages.msg('librarian.borrowList.status.pickup') :
+                                        (borrow.status == 'Returned' ? #messages.msg('librarian.borrowMember.status.completed') :
+                                        (borrow.status == 'Overdue' ? #messages.msg('loan.status.overdue') :
+                                        (borrow.status == 'Pending' ? #messages.msg('librarian.borrowMember.status.pending') :
+                                        (borrow.status == 'Rejected' ? #messages.msg('librarian.borrowMember.status.rejected') :
+                                        (borrow.status == 'Return_Pending' ? #messages.msg('librarian.borrowMember.status.returnPending') : borrow.status))))))
                                     }">
-                                        Đang mượn
+                                        Currently borrowed
                                     </span>
                         </td>
 
@@ -148,11 +148,12 @@
                                 <!-- Form hành động đồng bộ dialog xác nhận qua Modal xóa mẫu hoặc confirm native gọn gàng -->
                                 <form th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}"
                                       method="post" class="d-inline"
-                                      onsubmit="return confirm('Xác nhận độc giả đã nhận sách vật lý? Thời gian mượn sẽ bắt đầu tính từ bây giờ.')">
+                                      th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
+                                      onsubmit="return confirm(this.dataset.confirmMessage)">
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-                                    <button type="submit" class="btn member-modal-primary py-1 px-2 btn-sm account-action-tooltip" data-bs-title="Nhận bản vật lý">
-                                        <i class="bi bi-box-arrow-in-down me-1"></i>Nhận sách
+                                    <button type="submit" class="btn member-modal-primary py-1 px-2 btn-sm account-action-tooltip" th:data-bs-title="#{librarian.borrowList.pickupTitle}">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i><span th:text="#{librarian.borrowList.pickupAction}">Hand Over Books</span>
                                     </button>
                                 </form>
                             </div>
@@ -163,7 +164,7 @@
                     <tr th:if="${#lists.isEmpty(borrows)}">
                         <td colspan="6" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                            Không tìm thấy phiếu mượn sách nào phù hợp với bộ lọc tìm kiếm.
+                            <span th:text="#{librarian.borrowList.empty}">No loan records match the search filters.</span>
                         </td>
                     </tr>
                     </tbody>
@@ -179,7 +180,7 @@
                         <!-- First page -->
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
                             <a class="page-link"
-                               th:href="@{/librarian/borrow/list(page=0, keyword=${keyword}, status=${status})}">Đầu</a>
+                               th:href="@{/librarian/borrow/list(page=0, keyword=${keyword}, status=${status})}" th:text="#{common.first}">First</a>
                         </li>
 
                         <!-- Previous page -->
@@ -217,7 +218,7 @@
                         <!-- Last page -->
                         <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
                             <a class="page-link"
-                               th:href="@{/librarian/borrow/list(page=${totalPages - 1}, keyword=${keyword}, status=${status})}">Cuối</a>
+                               th:href="@{/librarian/borrow/list(page=${totalPages - 1}, keyword=${keyword}, status=${status})}" th:text="#{common.last}">Last</a>
                         </li>
                     </ul>
                 </nav>

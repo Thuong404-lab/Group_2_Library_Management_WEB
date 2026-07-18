@@ -36,4 +36,20 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
             SELECT a.member FROM MemberAccount a WHERE a.username = :username
             """)
     Optional<Member> findByAccountUsername(@Param("username") String username);
+
+    @Query("""
+            SELECT account.member
+            FROM MemberAccount account
+            WHERE LOWER(account.status) = 'active'
+            ORDER BY account.member.memberId
+            """)
+    List<Member> findAllWithActiveAccount();
+
+    @Query("""
+            SELECT account.member
+            FROM MemberAccount account
+            WHERE LOWER(account.status) = 'active'
+              AND account.member.memberId IN :memberIds
+            """)
+    List<Member> findAllWithActiveAccountByMemberIdIn(@Param("memberIds") List<Integer> memberIds);
 }

@@ -2,6 +2,7 @@ package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
+import com.lms.controller.LocalizedControllerSupport;
 import com.lms.dto.request.AdminAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
@@ -24,7 +25,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/accounts")
-public class AccountController {
+public class AccountController extends LocalizedControllerSupport {
 
     private final AccountService accountService;
     private final AuthService authService;
@@ -77,7 +78,7 @@ public class AccountController {
                 fullName, email, phone, username, password, accountType, tierId, status);
         try {
             accountService.createAccount(request);
-            redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
@@ -123,7 +124,7 @@ public class AccountController {
 
         try {
             accountService.updateAccount(request, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.account.updated"));
             return redirectBySource(source);
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("editAccountId", id);
@@ -143,7 +144,7 @@ public class AccountController {
             RedirectAttributes redirectAttributes) {
         try {
             accountService.deleteAccount(id, source, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", "Xóa tài khoản thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.account.deleted"));
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -157,12 +158,11 @@ public class AccountController {
         try {
             String email = accountService.getMemberEmail(id);
             authService.requestPasswordReset(email);
-            redirectAttributes.addFlashAttribute("success",
-                    "Đã gửi liên kết đặt lại mật khẩu đến email " + email + ".");
+            redirectAttributes.addFlashAttribute("success", message("backend.account.resetSent", email));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error",
                     e.getMessage() == null || e.getMessage().isBlank()
-                            ? "Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại."
+                            ? message("backend.account.resetFailed")
                             : e.getMessage());
         }
         return "redirect:/admin/accounts";

@@ -1,6 +1,8 @@
 package com.lms.controller.admin;
+import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
+import com.lms.controller.LocalizedControllerSupport;
 import com.lms.service.FileUploadService;
 import com.lms.service.InventoryService;
 import com.lms.service.LibrarianDashboardService;
@@ -19,7 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /** Admin copy of librarian book and shelf management. */
 @Controller
 @RequestMapping("/admin")
-public class AdminBookController {
+public class AdminBookController extends LocalizedControllerSupport {
 
     private static final String BOOKS_REDIRECT = "redirect:/admin/books";
 
@@ -55,14 +57,15 @@ public class AdminBookController {
             @RequestParam(required = false) String description,
             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(required = false) Integer shelfId,
-            @RequestParam(required = false) String bookCondition,
+            @RequestParam(defaultValue = "Mới") String bookCondition,
             @RequestParam(required = false) String author,
             RedirectAttributes redirectAttributes) {
         try {
             String coverImageUrl = storeCover(coverImage);
-            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId, bookCondition, author);
-            success(redirectAttributes, "Thêm sách mới thành công.");
-        } catch (IllegalArgumentException ex) {
+            inventoryService.addNewBook(title, isbn, genreId, quantity, description, coverImageUrl, shelfId,
+                    bookCondition, author);
+            success(redirectAttributes, message("backend.inventory.bookAdded"));
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -77,9 +80,10 @@ public class AdminBookController {
             @RequestParam(required = false) String author,
             RedirectAttributes redirectAttributes) {
         try {
-            inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId, description, author);
-            success(redirectAttributes, "Cập nhật sách thành công.");
-        } catch (IllegalArgumentException ex) {
+            inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId,
+                    description, author);
+            success(redirectAttributes, message("backend.inventory.bookUpdated"));
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -89,8 +93,8 @@ public class AdminBookController {
     public String deleteBook(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             inventoryService.removeBook(id);
-            success(redirectAttributes, "Xóa sách thành công.");
-        } catch (IllegalArgumentException ex) {
+            success(redirectAttributes, message("backend.inventory.bookDeleted"));
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -103,27 +107,72 @@ public class AdminBookController {
         try {
             if ("genre".equals(type)) {
                 inventoryService.addGenre(categoryId, name);
-                success(redirectAttributes, "Thêm thể loại thành công.");
+                success(redirectAttributes, message("backend.inventory.genreAdded"));
             } else {
                 inventoryService.addCategory(name);
-                success(redirectAttributes, "Thêm danh mục thành công.");
+                success(redirectAttributes, message("backend.inventory.categoryAdded"));
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
+    }
+
+    @PostMapping("/inventory/categories/edit/{id}")
+    public String editCategory(@PathVariable Integer id, @RequestParam String name,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateCategory(id, name);
+            success(redirectAttributes, message("backend.inventory.categoryUpdated"));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
+    @PostMapping("/inventory/categories/delete/{id}")
+    public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteCategory(id);
+            success(redirectAttributes, message("backend.inventory.categoryDeleted"));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
+    @PostMapping("/inventory/genres/edit/{id}")
+    public String editGenre(@PathVariable Integer id, @RequestParam String name,
+            @RequestParam(required = false) Integer categoryId, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateGenre(id, name, categoryId);
+            success(redirectAttributes, message("backend.inventory.genreUpdated"));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
+    }
+
+    @PostMapping("/inventory/genres/delete/{id}")
+    public String deleteGenre(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteGenre(id);
+            success(redirectAttributes, message("backend.inventory.genreDeleted"));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return BOOKS_REDIRECT + "?tab=categories";
     }
 
     @PostMapping("/inventory/audit")
     public String audit(RedirectAttributes redirectAttributes) {
         try {
             var summary = inventoryService.performInventoryAudit();
-            success(redirectAttributes, String.format(
-                    "Kiểm kê hoàn tất: Available=%d, Borrowed=%d, Lost=%d, Damaged=%d, Disposed=%d.",
+            success(redirectAttributes, message("backend.inventory.auditCompleted",
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
                     summary.getOrDefault("Disposed", 0L)));
-        } catch (IllegalArgumentException ex) {
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -134,8 +183,8 @@ public class AdminBookController {
             @RequestParam(required = false) String location, RedirectAttributes redirectAttributes) {
         try {
             storageService.addStorageLocation(shelfName, location);
-            success(redirectAttributes, "Thêm vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException ex) {
+            success(redirectAttributes, message("backend.storage.added"));
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -146,8 +195,8 @@ public class AdminBookController {
             @RequestParam(required = false) String location, RedirectAttributes redirectAttributes) {
         try {
             storageService.updateStorageLocation(id, shelfName, location);
-            success(redirectAttributes, "Cập nhật vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+            success(redirectAttributes, message("backend.storage.updated"));
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;
@@ -157,8 +206,8 @@ public class AdminBookController {
     public String deleteShelf(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             storageService.removeStorageLocation(id);
-            success(redirectAttributes, "Xóa vị trí lưu trữ thành công.");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+            success(redirectAttributes, message("backend.storage.deleted"));
+        } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
         return BOOKS_REDIRECT;

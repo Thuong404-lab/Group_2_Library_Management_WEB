@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
-    <title>Đăng ký phiếu mượn</title>
+    <title th:text="#{member.borrowForm.title}">Create Loan Request</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/borrow-form.css}" />
   </head>
 <body>
 <div layout:fragment="content" class="container py-4 member-borrow-form-div-max-width-01">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-primary text-white py-3">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-medical me-2"></i>Tạo Phiếu Đăng Ký Mượn Sách</h5>
+            <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-medical me-2"></i><span th:text="#{member.borrowForm.heading}">Create a Book Loan Request</span></h5>
         </div>
         <div class="card-body p-4">
             <form th:action="@{/member/borrow/create}" th:object="${borrowRequest}" method="post">
                 <input type="hidden" th:field="*{bookId}" />
 
                 <div class="row mb-3 bg-light p-3 rounded mx-0">
-                    <div class="col-md-3 fw-bold text-muted">Sách đăng ký:</div>
-                    <div class="col-md-9 fw-bold text-dark" th:text="${book.title} + ' - ' + ${book.author}">Tên sách</div>
+                    <div class="col-md-3 fw-bold text-muted" th:text="#{member.borrowForm.selectedBook}">Selected Book:</div>
+                    <div class="col-md-9 fw-bold text-dark" th:text="${book.title} + ' - ' + ${book.author}">Book Title</div>
                 </div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Ngày mượn <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold"><span th:text="#{loan.borrowDate}">Borrow Date</span> <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" th:field="*{borrowDate}" required readonly/>
-                        <small class="text-muted">Mặc định tính từ ngày gửi phiếu đăng ký.</small>
+                        <small class="text-muted" th:text="#{member.borrowForm.borrowDateHint}">Defaults to the request submission date.</small>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Ngày hẹn trả <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold"><span th:text="#{member.borrowForm.dueDate}">Due Date</span> <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" th:field="*{dueDate}" required />
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-semibold">Ghi chú người mượn</label>
-                    <textarea class="form-control" rows="3" th:field="*{note}" placeholder="Nhập lý do hoặc lời nhắn tới Thủ thư..."></textarea>
+                    <label class="form-label fw-semibold" th:text="#{member.borrowForm.note}">Borrower Note</label>
+                    <textarea class="form-control" rows="3" th:field="*{note}" th:placeholder="#{member.borrowForm.notePlaceholder}" placeholder="Enter a reason or message for the librarian..."></textarea>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">
-                    <a th:href="@{/}" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
-                    <button type="submit" class="btn btn-success px-4">Gửi yêu cầu duyệt</button>
+                    <a th:href="@{/}" class="btn btn-outline-secondary px-4" th:text="#{common.cancel}">Cancel</a>
+                    <button type="submit" class="btn btn-success px-4" th:text="#{member.borrowForm.submit}">Submit Request</button>
                 </div>
             </form>
         </div>

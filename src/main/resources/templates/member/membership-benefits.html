@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Quyền Lợi Hạng Thành Viên</title>
+    <title th:text="#{member.benefits.title}">Membership Tier Benefits</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/membership-benefits.css}" />
   </head>
 <body>
@@ -12,8 +12,8 @@
         <div class="col-lg-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-primary text-white py-3 text-center">
-                    <h4 class="mb-0 fw-bold">Đặc Quyền Của Bạn</h4>
-                    <small class="text-white-50">Áp dụng dựa trên cấp bậc tài khoản hiện tại</small>
+                    <h4 class="mb-0 fw-bold" th:text="#{member.benefits.heading}">Your Benefits</h4>
+                    <small class="text-white-50" th:text="#{member.benefits.description}">Based on your current membership tier</small>
                 </div>
                 <div class="card-body p-4" th:if="${tierBenefits != null}">
                     <div class="text-center mb-4">
@@ -23,29 +23,31 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-6 text-center border-end">
-                            <h6 class="text-muted text-uppercase mb-1">Hạn mức tối đa</h6>
-                            <span class="fs-4 fw-bold text-dark" th:text="${tierBenefits.borrowLimit} + ' cuốn'">3 cuốn</span>
+                            <h6 class="text-muted text-uppercase mb-1" th:text="#{member.benefits.maxLimit}">Maximum Limit</h6>
+                            <span class="fs-4 fw-bold text-dark" th:text="#{common.bookCount(${tierBenefits.borrowLimit})}">3 books</span>
                         </div>
                         <div class="col-6 text-center">
-                            <h6 class="text-muted text-uppercase mb-1">Ưu đãi giảm giá</h6>
+                            <h6 class="text-muted text-uppercase mb-1" th:text="#{member.tier.discount}">Discount</h6>
                             <span class="fs-4 fw-bold text-success" th:text="${tierBenefits.discountPercent} + '%'">0%</span>
                         </div>
                     </div>
 
                     <hr>
 
-                    <h5 class="text-dark mb-3"><i class="bi bi-gift me-2 text-danger"></i>Mô Tả Quyền Lợi Chi Tiết:</h5>
-                    <div class="bg-light p-3 rounded text-secondary member-membership-benefits-div-white-space-01" th:text="${tierBenefits.benefits}">
-                        Các điều khoản ưu đãi chi tiết của hạng thẻ này chưa được thủ thư cấu hình văn bản cụ thể.
+                    <h5 class="text-dark mb-3"><i class="bi bi-gift me-2 text-danger"></i><span th:text="#{member.benefits.details}">Benefit Details:</span></h5>
+                    <div class="bg-light p-3 rounded text-secondary member-membership-benefits-div-white-space-01">
+                        <p class="mb-1" th:if="${tierBenefits.discountPercent > 0}" th:text="#{public.tiers.benefits.dynamic(${#numbers.formatDecimal(tierBenefits.discountPercent, 0, 'COMMA', 0, 'POINT')}, ${tierBenefits.borrowLimit})}"></p>
+                        <p class="mb-1" th:if="${tierBenefits.discountPercent == 0}" th:text="#{public.tiers.benefits.dynamicNoDiscount(${tierBenefits.borrowLimit})}"></p>
+                        <p class="mb-0 mt-2 text-muted small" th:if="${tierBenefits.benefits != null && !tierBenefits.benefits.trim().isEmpty() && !tierBenefits.benefits.startsWith('Giảm') && !tierBenefits.benefits.startsWith('Mượn') && !tierBenefits.benefits.startsWith('Borrow') && !tierBenefits.benefits.contains('discount')}" th:text="${tierBenefits.benefits}"></p>
                     </div>
                 </div>
 
                 <div class="card-body text-center py-5" th:if="${tierBenefits == null}">
                     <i class="bi bi-person-exclamation text-muted display-1"></i>
-                    <p class="text-secondary mt-3">Hệ thống chưa tìm thấy dữ liệu cấu hình quyền lợi phân hạng cho tài khoản của bạn.</p>
+                    <p class="text-secondary mt-3" th:text="#{member.benefits.noData}">No tier benefit configuration was found for your account.</p>
                 </div>
                 <div class="card-footer bg-white text-center py-3">
-                    <a th:href="@{/member/membership/tier}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i>Xem lộ trình nâng hạng</a>
+                    <a th:href="@{/member/membership/tier}" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left me-1"></i><span th:text="#{member.benefits.viewProgress}">View Tier Progress</span></a>
                 </div>
             </div>
         </div>

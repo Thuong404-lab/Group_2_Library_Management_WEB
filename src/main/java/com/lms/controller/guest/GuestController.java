@@ -1,5 +1,6 @@
 package com.lms.controller.guest;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +10,8 @@ import com.lms.service.BookService;
 import com.lms.repository.GenreRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MemberReviewService;
+import com.lms.service.MembershipService;
+import com.lms.service.SystemService;
 
 import java.security.Principal;
 import java.util.Collections;
@@ -27,21 +30,27 @@ import org.springframework.data.domain.Page;
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
  */
 @Controller
-public class GuestController {
+public class GuestController extends LocalizedControllerSupport {
 
     private final BookService bookService;
     private final GenreRepository genreRepository;
     private final MemberFavoriteService memberFavoriteService;
     private final MemberReviewService memberReviewService;
+    private final MembershipService membershipService;
+    private final SystemService systemService;
 
     public GuestController(BookService bookService,
                            GenreRepository genreRepository,
                            MemberFavoriteService memberFavoriteService,
-                           MemberReviewService memberReviewService) {
+                           MemberReviewService memberReviewService,
+                           MembershipService membershipService,
+                           SystemService systemService) {
         this.bookService = bookService;
         this.genreRepository = genreRepository;
         this.memberFavoriteService = memberFavoriteService;
         this.memberReviewService = memberReviewService;
+        this.membershipService = membershipService;
+        this.systemService = systemService;
     }
 
     // Trang chủ
@@ -104,8 +113,47 @@ public class GuestController {
 
     // Giới thiệu thư viện
     @GetMapping("/about")
-    public String aboutPage() {
+    public String aboutPage(Model model) {
+        Map<String, String> settings = systemService.getSettingMap();
+
+        // Pass string values or default fallbacks
+        model.addAttribute("maxBorrowDays", settings.getOrDefault("Max_Borrow_Days", "14"));
+        model.addAttribute("maxRenewalDays", settings.getOrDefault("Max_Renewal_Days", "7"));
+        model.addAttribute("damageCompensationThreshold", settings.getOrDefault("Damage_Compensation_Threshold", "50"));
+        model.addAttribute("overdueViolationLockLimit", settings.getOrDefault("Overdue_Violation_Lock_Limit", "3"));
+
+        // Parse numeric currency values
+        try {
+            model.addAttribute("finePerDay", Long.parseLong(settings.getOrDefault("Fine_Per_Day", "5000")));
+        } catch (NumberFormatException e) {
+            model.addAttribute("finePerDay", 5000L);
+        }
+
+        try {
+            model.addAttribute("borrowFeePerBook", Long.parseLong(settings.getOrDefault("Borrow_Fee_Per_Book", "5000")));
+        } catch (NumberFormatException e) {
+            model.addAttribute("borrowFeePerBook", 5000L);
+        }
+
+        try {
+            model.addAttribute("depositAmount", Long.parseLong(settings.getOrDefault("Deposit_Amount", "50000")));
+        } catch (NumberFormatException e) {
+            model.addAttribute("depositAmount", 50000L);
+        }
+
+        try {
+            model.addAttribute("damageCompensationAmount", Long.parseLong(settings.getOrDefault("Damage_Compensation_Amount", "120000")));
+        } catch (NumberFormatException e) {
+            model.addAttribute("damageCompensationAmount", 120000L);
+        }
+
         return "guest/about";
+    }
+
+    @GetMapping("/membership-tiers")
+    public String membershipTiersPage(Model model) {
+        model.addAttribute("tiers", membershipService.getAllTiers());
+        return "guest/membership-tiers";
     }
 
     // UC-3: View Book Detail - Xem chi tiết một quyển sách
@@ -179,7 +227,7 @@ public class GuestController {
                         .map(com.lms.entity.Author::getAuthorName)
                         .collect(Collectors.joining(", "));
             } else {
-                authorNames = "Nhiều tác giả";
+                authorNames = message("book.multipleAuthors");
             }
             map.put("authorName", authorNames);
             map.put("thumbnailUrl", book.getCoverImageUrl() != null && !book.getCoverImageUrl().trim().isEmpty() ? book.getCoverImageUrl() : "https://picsum.photos/seed/" + book.getBookId() + "/600/800");

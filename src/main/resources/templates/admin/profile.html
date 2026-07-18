@@ -79,20 +79,23 @@
                     <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.details}">Account Details</h5>
                 </div>
                 <div class="card-body-classic">
-                    <form th:action="@{/admin/profile/update}" method="post" enctype="multipart/form-data" class="m-0">
+                    <form id="profileForm" th:action="@{/admin/profile/update}" method="post" enctype="multipart/form-data" class="m-0 needs-validation" novalidate>
                         <input type="file" id="avatarUploadAdmin" name="avatarFile" accept="image/*" class="d-none">
                         <div class="row g-3">
-                            <div class="col-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.fullName}">Full Name</label>
-                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${admin?.fullName}" required>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:classappend="${fullNameError} ? 'is-invalid' : ''" th:value="${admin?.fullName}" minlength="2" maxlength="50" required th:data-msg-required="#{validation.fullNameRequired}" th:data-msg-length="#{validation.fullNameMax}">
+                                <div class="invalid-feedback" th:text="${fullNameError != null ? fullNameError : #messages.msg('validation.fullNameRequired')}">Please enter a valid full name.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.email}">Email Address</label>
-                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${admin?.email}" required>
+                                <input type="email" name="email" class="form-control form-control-classic py-2 bg-light text-muted" th:classappend="${emailError} ? 'is-invalid' : ''" th:value="${admin?.email}" required th:data-msg-required="#{validation.emailRequired}" th:data-msg-type="#{validation.email}" readonly>
+                                <div class="invalid-feedback" th:text="${emailError != null ? emailError : #messages.msg('validation.emailRequired')}">Please enter a valid email.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.phone}">Phone Number</label>
-                                <input type="text" name="phone" class="form-control form-control-classic py-2" th:value="${admin?.phone}">
+                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:classappend="${phoneError} ? 'is-invalid' : ''" th:value="${admin?.phone}" pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" required th:data-msg-required="#{validation.phoneRequired}" th:data-msg-pattern="#{backend.profile.phoneFormat}">
+                                <div class="invalid-feedback" th:text="${phoneError != null ? phoneError : #messages.msg('validation.phoneRequired')}">Please enter a valid phone number.</div>
                             </div>
 
                             <div class="col-12 mt-3 text-end">
@@ -111,7 +114,7 @@
                         <h5 class="modal-title fw-bold font-playfair mb-0 u-color-4a3b32-1ba01220" th:text="#{member.profile.passwordTitle}">Change Secure Password</h5>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form th:action="@{/admin/profile/change-password}" method="post" class="m-0">
+                    <form id="changePasswordForm" th:action="@{/admin/profile/change-password}" method="post" class="m-0 needs-validation" novalidate>
                         <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.currentPassword}">Current Password</label>
@@ -119,11 +122,11 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.newPassword}">New Password</label>
-                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" th:placeholder="#{librarian.profile.passwordHint}" required>
+                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" th:placeholder="#{librarian.profile.passwordHint}" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
-                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" th:placeholder="#{reset.confirmPassword.placeholder}" required>
+                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" th:placeholder="#{reset.confirmPassword.placeholder}" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
                             </div>
                         </div>
                         <div class="modal-footer border-0 p-3 u-background-color-fdfbf7-71083b05">
@@ -158,6 +161,56 @@
                     }
                     reader.readAsDataURL(file);
                 }
+            });
+        }
+
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', function(event) {
+                profileForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                if (!profileForm.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    profileForm.querySelectorAll('input').forEach(input => {
+                        const feedback = input.nextElementSibling;
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            if (input.validity.valueMissing && input.dataset.msgRequired) {
+                                feedback.textContent = input.dataset.msgRequired;
+                            } else if (input.validity.patternMismatch && input.dataset.msgPattern) {
+                                feedback.textContent = input.dataset.msgPattern;
+                            } else if (input.validity.typeMismatch && input.dataset.msgType) {
+                                feedback.textContent = input.dataset.msgType;
+                            } else if (input.validity.tooShort || input.validity.tooLong) {
+                                if (input.dataset.msgLength) feedback.textContent = input.dataset.msgLength;
+                            }
+                        }
+                    });
+                }
+                profileForm.classList.add('was-validated');
+            });
+        }
+
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', function(event) {
+                const newPass = document.querySelector('input[name="newPassword"]').value;
+                const confirmPass = document.querySelector('input[name="confirmPassword"]').value;
+                const confirmInput = document.querySelector('input[name="confirmPassword"]');
+                let isValid = changePasswordForm.checkValidity();
+                
+                if (newPass !== confirmPass) {
+                    confirmInput.setCustomValidity("Passwords do not match");
+                    isValid = false;
+                } else {
+                    confirmInput.setCustomValidity("");
+                }
+                
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                changePasswordForm.classList.add('was-validated');
             });
         }
     });

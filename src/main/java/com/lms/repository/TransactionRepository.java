@@ -92,6 +92,31 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("types") List<String> types);
 
     @Query("""
+            select t
+            from Transaction t
+            where upper(t.transactionType) in :types
+              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+            order by t.transactionDate asc, t.transactionId asc
+            """)
+    List<Transaction> findAllPendingFineTransactions(@Param("types") List<String> types);
+
+    @Query("""
+            select t
+            from Transaction t
+            where t.borrow.borrowId = :borrowId
+              and upper(t.transactionType) in :types
+              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+            order by t.transactionDate asc, t.transactionId asc
+            """)
+    List<Transaction> findPendingFineTransactionsByBorrowId(@Param("borrowId") Integer borrowId,
+            @Param("types") List<String> types);
+
+    Optional<Transaction> findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+            Integer borrowId,
+            String transactionType,
+            String status);
+
+    @Query("""
             select case when count(t) > 0 then true else false end
             from Transaction t
             where t.wallet.member.memberId = :memberId
@@ -156,6 +181,3 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }
-
-
-

@@ -1,5 +1,6 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
 import com.lms.service.ProfileService;
@@ -19,7 +20,7 @@ import com.lms.config.CustomUserDetails;
  */
 @Controller
 @RequestMapping("/librarian/profile")
-public class LibrarianProfileController {
+public class LibrarianProfileController extends LocalizedControllerSupport {
 
     private final ProfileService profileService;
 
@@ -31,8 +32,10 @@ public class LibrarianProfileController {
     public String viewProfile(Principal principal, Model model) {
         // Spring Security đã lọc quyền trước đó, ở đây chỉ việc lấy đúng thông tin cá nhân
         String username = principal.getName();
-        User librarian = profileService.getProfile(username);
-        model.addAttribute("librarian", librarian);
+        if (!model.containsAttribute("librarian")) {
+            User librarian = profileService.getProfile(username);
+            model.addAttribute("librarian", librarian);
+        }
         return "librarian/profile";
     }
 
@@ -49,7 +52,8 @@ public class LibrarianProfileController {
 
         try {
             String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -63,9 +67,24 @@ public class LibrarianProfileController {
                 sessionUser.setPhone(updatedUser.getPhone());
             }
 
-            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to update: " + e.getMessage());
+            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
+                String field = ((com.lms.exception.ValidationException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            }
+            User tempUser = new User();
+            tempUser.setFullName(fullName);
+            tempUser.setEmail(email);
+            tempUser.setPhone(phone);
+            try {
+                User current = profileService.getProfile(principal.getName());
+                tempUser.setAvatar(current.getAvatar());
+                tempUser.setStatus(current.getStatus());
+            } catch (Exception ignored) {}
+            redirectAttributes.addFlashAttribute("librarian", tempUser);
         }
         return "redirect:/librarian/profile";
     }
@@ -77,14 +96,14 @@ public class LibrarianProfileController {
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
         if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+            redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
             return "redirect:/librarian/profile";
         }
 
         try {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu thành công!");
+            redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         }

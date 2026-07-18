@@ -22,13 +22,16 @@
                     <div class="col-md-8">
                         <!-- Search Bar in Hero (Shopee Style) -->
                         <div class="position-relative" id="searchContainer">
-                            <form action="/books" method="GET" class="input-group input-group-lg shadow-lg index-form-border-radius-overflow-position-04">
+                            <form id="heroSearchForm" action="/books" method="GET" class="input-group input-group-lg shadow-lg index-form-border-radius-overflow-position-04">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text bg-white border-0 px-4 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
                                 </div>
                                 <input type="text" id="searchInput" name="keyword" class="form-control border-0 py-3 index-input-box-shadow-06" th:placeholder="#{book.search.placeholder}" placeholder="Search by title, author, or ISBN..." autocomplete="off">
                                 <div class="input-group-append">
-                                    <button class="btn btn-warning px-5 font-weight-bold index-button-background-border-color-07" type="submit" th:text="#{book.search.action}">Search</button>
+                                    <button id="heroSearchBtn" class="btn btn-warning px-5 font-weight-bold index-button-background-border-color-07 d-flex justify-content-center align-items-center gap-2" type="submit">
+                                        <span id="heroSearchText" th:text="#{book.search.action}">Search</span>
+                                        <span id="heroSearchSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    </button>
                                 </div>
                             </form>
 
@@ -78,6 +81,23 @@
                                     document.getElementById('searchContainer').style.zIndex = '';
                                 }
 
+                                const heroSearchForm = document.getElementById('heroSearchForm');
+                                const heroSearchBtn = document.getElementById('heroSearchBtn');
+                                const heroSearchSpinner = document.getElementById('heroSearchSpinner');
+
+                                heroSearchForm.addEventListener('submit', function(e) {
+                                    searchInput.value = searchInput.value.trim();
+
+                                    if (searchInput.value === '') {
+                                        e.preventDefault();
+                                        searchInput.focus();
+                                        return;
+                                    }
+
+                                    heroSearchBtn.disabled = true;
+                                    heroSearchSpinner.classList.remove('d-none');
+                                });
+
                                 searchInput.addEventListener('focus', function() {
                                     showDropdown();
                                     if (this.value.trim() === '') {
@@ -123,7 +143,8 @@
                                                     item.className = 'list-group-item list-group-item-action d-flex align-items-center border-0 py-2 px-3 suggestion-item';
                                                     item.style.transition = 'background-color 0.2s';
                                                     item.innerHTML = `
-                                                        <img src="${book.thumbnailUrl}" class="index-img-width-height-fit-12 me-3 rounded shadow-sm" alt="Book cover">
+                                                        <img src="${book.thumbnailUrl}" class="index-img-width-height-fit-12 me-3 rounded shadow-sm" alt="Book cover"
+                                                            onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                                         <div class="flex-grow-1 overflow-hidden">
                                                             <h6 class="mb-1 text-truncate fw-bold index-h6-color-font-size-13">${book.title}</h6>
                                                             <small class="text-muted text-truncate d-block"><i class="bi bi-pen me-1"></i> ${book.authorName}</small>
@@ -160,50 +181,50 @@
             <h3 class="fw-bold mb-4 text-center u-color-4a3b32-font-family-playfair-display-serif-70239336"><i class="bi bi-bookmark-heart text-danger me-2"></i><span th:text="#{home.featuredTopics}">Featured Topics</span></h3>
             <div class="row g-4 justify-content-center text-center">
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="/books?genreId=1" class="text-decoration-none">
-                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15">
+                    <a href="/books?genreId=1" class="text-decoration-none d-block h-100">
+                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15 h-100 d-flex flex-column align-items-center justify-content-center">
                             <i class="bi bi-feather fs-1 mb-2 d-block u-color-8b5a2b-93ece783"></i>
-                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16" th:text="#{home.topic.vietnameseLiterature}">Vietnamese Literature</h6>
+                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16 text-center" th:text="#{home.topic.vietnameseLiterature}">Vietnamese Literature</h6>
                         </div>
                     </a>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="/books?genreId=5" class="text-decoration-none">
-                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15">
+                    <a href="/books?genreId=5" class="text-decoration-none d-block h-100">
+                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15 h-100 d-flex flex-column align-items-center justify-content-center">
                             <i class="bi bi-globe-americas fs-1 mb-2 d-block u-color-8b5a2b-93ece783"></i>
-                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16" th:text="#{home.topic.foreignBooks}">International Books</h6>
+                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16 text-center" th:text="#{home.topic.foreignBooks}">International Books</h6>
                         </div>
                     </a>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="/books?genreId=3" class="text-decoration-none">
-                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15">
+                    <a href="/books?genreId=3" class="text-decoration-none d-block h-100">
+                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15 h-100 d-flex flex-column align-items-center justify-content-center">
                             <i class="bi bi-pc-display-horizontal fs-1 mb-2 d-block u-color-8b5a2b-93ece783"></i>
-                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16" th:text="#{home.topic.technology}">Technology</h6>
+                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16 text-center" th:text="#{home.topic.technology}">Technology</h6>
                         </div>
                     </a>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="/books?genreId=9" class="text-decoration-none">
-                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15">
+                    <a href="/books?genreId=9" class="text-decoration-none d-block h-100">
+                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15 h-100 d-flex flex-column align-items-center justify-content-center">
                             <i class="bi bi-yin-yang fs-1 mb-2 d-block u-color-8b5a2b-93ece783"></i>
-                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16" th:text="#{home.topic.psychology}">Psychology</h6>
+                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16 text-center" th:text="#{home.topic.psychology}">Psychology</h6>
                         </div>
                     </a>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="/books?genreId=7" class="text-decoration-none">
-                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15">
+                    <a href="/books?genreId=7" class="text-decoration-none d-block h-100">
+                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-15 h-100 d-flex flex-column align-items-center justify-content-center">
                             <i class="bi bi-briefcase fs-1 mb-2 d-block u-color-8b5a2b-93ece783"></i>
-                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16" th:text="#{home.topic.business}">Business</h6>
+                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16 text-center" th:text="#{home.topic.business}">Business</h6>
                         </div>
                     </a>
                 </div>
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="/books" class="text-decoration-none">
-                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-17">
+                    <a href="/books" class="text-decoration-none d-block h-100">
+                        <div class="p-3 bg-transparent category-classic-card index-div-border-border-radius-transition-17 h-100 d-flex flex-column align-items-center justify-content-center">
                             <i class="bi bi-collection-play fs-1 mb-2 d-block u-color-8b5a2b-93ece783"></i>
-                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16" th:text="#{home.topic.explore}">Explore</h6>
+                            <h6 class="mb-0 fw-bold index-h6-color-font-family-letter-spacing-16 text-center" th:text="#{home.topic.explore}">Explore</h6>
                         </div>
                     </a>
                 </div>
@@ -225,7 +246,8 @@
                     <a th:href="@{'/books/' + ${book.bookId}}" class="text-decoration-none text-dark">
                         <div class="card h-100 border-0 bg-transparent classic-book-card">
                             <div class="position-relative shadow-sm mb-2 rounded-1 index-div-height-border-left-overflow-20">
-                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="w-100 h-100 u-object-fit-cover-fd3ff4b2" alt="Book cover">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="index-book-cover-backdrop" alt="" aria-hidden="true" onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="index-book-cover-image" th:alt="${#messages.msg('book.coverAlt') + ' ' + book.title}" onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                 <div class="position-absolute top-0 start-0 w-100 h-100 index-div-background-22"></div>
                             </div>
                             <div class="text-center">
@@ -257,9 +279,9 @@
                         <div class="card h-100 border-0 bg-transparent classic-book-card">
                             <div class="position-relative shadow-sm mb-2 rounded-1 index-div-height-border-left-overflow-20">
                                 <!-- Dùng ảnh động theo ID sách -->
-                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="w-100 h-100 u-object-fit-cover-fd3ff4b2" alt="Book cover">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="index-book-cover-backdrop" alt="" aria-hidden="true" onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}" class="index-book-cover-image" th:alt="${#messages.msg('book.coverAlt') + ' ' + book.title}" onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                 <div class="position-absolute top-0 start-0 w-100 h-100 index-div-background-22"></div>
-                                <span class="position-absolute top-0 end-0 m-1 badge badge-danger fw-bold shadow-sm">🔥 HOT</span>
                             </div>
                             <div class="text-center">
               <h6 class="book-title fw-bold text-truncate mb-1 index-h6-color-font-size-13" th:text="${book.title}" th:title="${book.title}">Book Title</h6>

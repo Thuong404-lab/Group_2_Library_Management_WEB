@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
-    <title>Xác nhận phiếu mượn</title>
+    <title th:text="#{librarian.borrowReview.title}">Confirm Loan</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         .card-title-custom {
@@ -29,18 +29,18 @@
                 <div class="card classic-card">
                     <div class="card-header" style="background-color: #fdfbf7; border-bottom: 1px dashed rgba(139, 90, 43, 0.2); padding: 1.5rem;">
                         <h4 class="card-title-custom mb-0 text-center">
-                            <i class="bi bi-receipt me-2" style="color: #8b5a2b;"></i>Phiếu Xác Nhận Mượn Sách
+                            <i class="bi bi-receipt me-2" style="color: #8b5a2b;"></i><span th:text="#{librarian.borrowReview.heading}">Book Loan Confirmation</span>
                         </h4>
                     </div>
                     <div class="card-body p-4 p-md-5">
                         
                         <!-- Thông tin Member -->
                         <div class="mb-4 p-3 rounded" style="background-color: #f8f9fa; border: 1px solid rgba(139, 90, 43, 0.1);">
-                            <h6 class="fw-bold mb-2 text-uppercase small" style="color: #8b5a2b; letter-spacing: 0.5px;">Thông tin người mượn</h6>
+                            <h6 class="fw-bold mb-2 text-uppercase small" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{librarian.borrowReview.borrowerInfo}">Borrower Information</h6>
                             <div class="d-flex align-items-center mb-1">
                                 <i class="bi bi-person-check me-2 fs-5" style="color: #4a3b32;"></i>
                                 <span class="fw-bold fs-5" style="color: #4a3b32;" th:text="${billMember.user.fullName}">Tên</span>
-                                <span class="badge ms-2" style="background-color: #8b5a2b; font-size: 0.75rem;" th:text="${billMember.tier != null ? 'Hạng ' + billMember.tier.tierName : 'Khách thường'}">Hạng VIP</span>
+                                <span class="badge ms-2" style="background-color: #8b5a2b; font-size: 0.75rem;" th:text="${billMember.tier != null ? #messages.msg('librarian.borrowReview.tier', billMember.tier.tierName) : #messages.msg('tier.regular')}">VIP Tier</span>
                             </div>
                             <div class="text-muted small">
                                 <i class="bi bi-telephone me-1"></i> <span th:text="${billMember.user.phone}">SĐT</span> <span class="mx-2">|</span>
@@ -50,15 +50,15 @@
 
                         <!-- Hạn Trả Dự Kiến -->
                         <div class="mb-4 p-3 rounded text-center" style="background-color: #fff9f0; border: 1px dashed rgba(139, 90, 43, 0.3);">
-                            <span class="d-block small text-uppercase fw-bold mb-1" style="color: #8b5a2b;">Hạn trả dự kiến (<span th:text="${billDays}">14</span> ngày)</span>
+                            <span class="d-block small text-uppercase fw-bold mb-1" style="color: #8b5a2b;"><span th:text="#{librarian.borrowReview.expectedDueDate}">Expected Due Date</span> (<span th:text="#{librarian.borrowReview.days(${billDays})}">14 days</span>)</span>
                             <span class="fs-4 fw-bold" style="color: #d32f2f;" id="modalDueDate">--/--/----</span>
                         </div>
 
                         <!-- Danh sách Sách -->
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-end mb-2">
-                                <h6 class="fw-bold text-uppercase small mb-0" style="color: #8b5a2b; letter-spacing: 0.5px;">Chi tiết sách mượn</h6>
-                                <span class="badge" style="background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.2);" th:text="'Tổng: ' + ${billBookItems.size()} + ' cuốn'">Tổng: 0 cuốn</span>
+                                <h6 class="fw-bold text-uppercase small mb-0" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{librarian.borrowReview.bookDetails}">Borrowed Book Details</h6>
+                                <span class="badge" style="background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.2);" th:text="#{librarian.borrowReview.totalBooks(${billBookItems.size()})}">Total: 0 books</span>
                             </div>
                             
                             <ul class="list-group" style="border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 90, 43, 0.15);">
@@ -69,7 +69,7 @@
                                             <i class="bi bi-book text-secondary me-2" style="font-size: 0.9rem;"></i>
                                             <span class="fw-bold text-dark" th:text="${item.book.title}">Tên sách</span>
                                             <div class="text-muted small mt-1">
-                                                <i class="bi bi-upc-scan me-1"></i>Mã vạch: <span th:text="${item.barcode}">BC001</span>
+                                                <i class="bi bi-upc-scan me-1"></i><span th:text="#{book.barcode}">Barcode</span>: <span th:text="${item.barcode}">BC001</span>
                                             </div>
                                         </div>
                                     </div>
@@ -80,26 +80,26 @@
                         <!-- Thanh toán -->
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-end mb-2">
-                                <h6 class="fw-bold text-uppercase small mb-0" style="color: #8b5a2b; letter-spacing: 0.5px;">Thông tin thanh toán</h6>
+                                <h6 class="fw-bold text-uppercase small mb-0" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{librarian.borrowReview.paymentInfo}">Payment Information</h6>
                             </div>
                             <ul class="list-group" style="border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 90, 43, 0.15);">
                                 <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="background-color: #fcfcfc;">
                                     <div>
-                                        <span class="text-muted small">Phí mượn cơ bản:</span><br>
-                                        <small class="text-secondary" th:text="${billBookItems.size()} + ' cuốn × ' + ${billDays} + ' ngày × ' + ${#numbers.formatDecimal(billFeePerBookPerDay, 0, 'COMMA', 0, 'POINT')} + 'đ'"></small>
+                                        <span class="text-muted small" th:text="#{librarian.borrowReview.baseFee}">Base Borrowing Fee:</span><br>
+                                        <small class="text-secondary" th:text="#{librarian.borrowReview.feeFormula(${billBookItems.size()},${billDays},${#numbers.formatDecimal(billFeePerBookPerDay, 0, 'COMMA', 0, 'POINT')})}"></small>
                                     </div>
-                                    <span class="fw-bold text-dark" th:text="${#numbers.formatDecimal(billBaseFee, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span>
+                                    <span class="fw-bold text-dark"><span th:text="${#numbers.formatDecimal(billBaseFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="background-color: #fcfcfc;">
                                     <div>
-                                        <span class="text-muted small">Ưu đãi hạng thành viên:</span><br>
-                                        <small class="text-secondary" th:text="${billMember.tier != null ? 'Hạng ' + billMember.tier.tierName + ' (Giảm ' + #numbers.formatDecimal(billDiscount, 0, 'COMMA', 0, 'POINT') + '%)' : 'Không có (Giảm 0%)'}"></small>
+                                        <span class="text-muted small" th:text="#{librarian.borrowReview.tierDiscount}">Membership Tier Discount:</span><br>
+                                        <small class="text-secondary" th:text="${billMember.tier != null ? #messages.msg('librarian.borrowReview.discountValue', billMember.tier.tierName, #numbers.formatDecimal(billDiscount, 0, 'COMMA', 0, 'POINT')) : #messages.msg('librarian.borrowReview.noDiscount')}"></small>
                                     </div>
-                                    <span class="fw-bold text-success">-<span th:text="${#numbers.formatDecimal(billBaseFee * billDiscount / 100, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ</span>
+                                    <span class="fw-bold text-success">-<span th:text="${#numbers.formatDecimal(billBaseFee * billDiscount / 100, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="background-color: rgba(139, 90, 43, 0.05); border-top: 1px dashed rgba(139, 90, 43, 0.2);">
-                                    <span class="fw-bold" style="color: #8b5a2b;">Tổng thanh toán:</span>
-                                    <span class="fw-bold fs-5" style="color: #d32f2f;" th:text="${#numbers.formatDecimal(billFinalFee, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span>
+                                    <span class="fw-bold" style="color: #8b5a2b;" th:text="#{member.wallet.totalPayment}">Total Payment</span>
+                                    <span class="fw-bold fs-5" style="color: #d32f2f;"><span th:text="${#numbers.formatDecimal(billFinalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
                                 </li>
                             </ul>
                         </div>
@@ -113,24 +113,24 @@
                             
                             <!-- Chọn phương thức thanh toán -->
                             <div class="mb-4">
-                                <h6 class="fw-bold text-uppercase small mb-3" style="color: #8b5a2b; letter-spacing: 0.5px;">Phương thức thanh toán</h6>
+                                <h6 class="fw-bold text-uppercase small mb-3" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{librarian.borrowReview.paymentMethod}">Payment Method</h6>
                                 <div class="d-flex flex-column gap-2">
                                     <div class="form-check p-3 rounded" style="border: 1px solid rgba(139, 90, 43, 0.2); background-color: #fcfcfc;">
                                         <input class="form-check-input ms-1 me-3" type="radio" name="paymentMethod" id="payCash" value="CASH" checked style="cursor: pointer;">
                                         <label class="form-check-label fw-bold" for="payCash" style="color: #4a3b32; cursor: pointer;">
-                                            <i class="bi bi-cash-coin me-2 text-success"></i>Tiền mặt
+                                            <i class="bi bi-cash-coin me-2 text-success"></i><span th:text="#{librarian.borrowReview.cash}">Cash</span>
                                         </label>
                                     </div>
                                     <div class="form-check p-3 rounded" style="border: 1px solid rgba(139, 90, 43, 0.2); background-color: #fcfcfc;">
                                         <input class="form-check-input ms-1 me-3" type="radio" name="paymentMethod" id="payWallet" value="WALLET" style="cursor: pointer;">
                                         <label class="form-check-label fw-bold" for="payWallet" style="color: #4a3b32; cursor: pointer;">
-                                            <i class="bi bi-wallet2 me-2 text-primary"></i>Trừ tiền trong ví
+                                            <i class="bi bi-wallet2 me-2 text-primary"></i><span th:text="#{librarian.borrowReview.wallet}">Deduct from Wallet</span>
                                         </label>
                                     </div>
                                     <div class="form-check p-3 rounded" style="border: 1px solid rgba(139, 90, 43, 0.2); background-color: #fcfcfc;">
                                         <input class="form-check-input ms-1 me-3" type="radio" name="paymentMethod" id="payBank" value="BANK" style="cursor: pointer;">
                                         <label class="form-check-label fw-bold" for="payBank" style="color: #4a3b32; cursor: pointer;">
-                                            <i class="bi bi-bank me-2 text-info"></i>Thanh toán qua ngân hàng
+                                            <i class="bi bi-bank me-2 text-info"></i><span th:text="#{librarian.borrowReview.bank}">Bank Payment</span>
                                         </label>
                                     </div>
                                 </div>
@@ -138,12 +138,12 @@
 
                             <div class="d-flex justify-content-between pt-4 mt-2" style="border-top: 1px dashed rgba(139, 90, 43, 0.2);">
                                 <button type="button" class="btn btn-outline-secondary px-4 py-2" onclick="history.back()">
-                                    <i class="bi bi-arrow-left me-2"></i>Quay lại sửa
+                                    <i class="bi bi-arrow-left me-2"></i><span th:text="#{librarian.borrowReview.backEdit}">Back to Edit</span>
                                 </button>
                                 <button type="submit" class="btn btn-primary px-4 py-2" id="btnConfirmCreate" style="background-color: #8b5a2b; border-color: #8b5a2b;">
-                                    <span id="btnConfirmText"><i class="bi bi-check-circle me-2"></i>Xác nhận tạo phiếu</span>
+                                    <span id="btnConfirmText"><i class="bi bi-check-circle me-2"></i><span th:text="#{librarian.borrowReview.confirm}">Confirm Loan</span></span>
                                     <span id="btnConfirmSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                                    <span id="btnConfirmLoadingText" class="d-none">Đang xử lý...</span>
+                                    <span id="btnConfirmLoadingText" class="d-none" th:text="#{common.processing}">Processing...</span>
                                 </button>
                             </div>
                         </form>
@@ -153,13 +153,13 @@
         </div>
     </div>
 
-    <script>
+    <script th:inline="javascript">
         document.addEventListener("DOMContentLoaded", function() {
             // Script tính ngày hạn trả giống hệt như cũ
             const days = parseInt(document.getElementById('modalHiddenDays').value) || 14;
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + days);
-            document.getElementById('modalDueDate').innerText = dueDate.toLocaleDateString('vi-VN');
+            document.getElementById('modalDueDate').innerText = dueDate.toLocaleDateString(/*[[${#locale.toLanguageTag()}]]*/ 'en');
 
             // Form Submit Loading
             const form = document.getElementById('finalCreateForm');
@@ -173,8 +173,8 @@
                 const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
                 const isBankTransfer = selectedMethod && selectedMethod.value === 'BANK';
                 btnText.innerHTML = isBankTransfer
-                    ? '<i class="bi bi-bank me-2"></i>Tiếp tục thanh toán'
-                    : '<i class="bi bi-check-circle me-2"></i>Xác nhận tạo phiếu';
+                    ? '<i class="bi bi-bank me-2"></i>' + /*[[#{librarian.borrowReview.continuePayment}]]*/ 'Continue to Payment'
+                    : '<i class="bi bi-check-circle me-2"></i>' + /*[[#{librarian.borrowReview.confirm}]]*/ 'Confirm Loan';
             }
 
             paymentMethods.forEach(function(paymentMethod) {

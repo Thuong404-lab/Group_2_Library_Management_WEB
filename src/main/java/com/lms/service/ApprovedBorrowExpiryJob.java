@@ -6,6 +6,9 @@ import com.lms.entity.BorrowDetail;
 import com.lms.entity.Notification;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
@@ -30,17 +33,20 @@ public class ApprovedBorrowExpiryJob {
     private final BookItemRepository bookItemRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final LocalizedMessageService messages;
 
     public ApprovedBorrowExpiryJob(BorrowRepository borrowRepository,
                                    BorrowDetailRepository borrowDetailRepository,
                                    BookItemRepository bookItemRepository,
                                    NotificationRepository notificationRepository,
-                                   MemberNotificationRepository memberNotificationRepository) {
+                                   MemberNotificationRepository memberNotificationRepository,
+                                   LocalizedMessageService messages) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookItemRepository = bookItemRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.messages = messages;
     }
 
     /**
@@ -82,8 +88,14 @@ public class ApprovedBorrowExpiryJob {
             // Tạo thông báo gửi đến độc giả chỉ rõ điều khoản vi phạm quy định nhận sách và không hoàn phí
             try {
                 Notification notif = new Notification();
-                notif.setTitle("Vi phạm quy định nhận sách - Hủy phiếu mượn");
-                notif.setContent("Hệ thống tự động hủy phiếu mượn BOR-" + borrow.getBorrowId() + " do bạn vi phạm quy định không nhận sách vật lý trong vòng 48 giờ kể từ khi phiếu được duyệt. Phí mượn sách đã thanh toán sẽ không được hoàn lại.");
+                messages.prepareNotification(
+                        notif,
+                        "systemNotification.borrow.pickupExpired.title",
+                        "systemNotification.borrow.pickupExpired.content",
+                        borrow.getBorrowId());
+                notif.setNotificationType(NotificationType.LOAN);
+                notif.setEventType(NotificationEventType.LOAN_PICKUP_EXPIRED);
+                notif.setNotificationSource(NotificationSource.SYSTEM);
                 notif.setCreatedDate(LocalDateTime.now());
                 notif.setStatus("Active");
                 Notification saved = notificationRepository.save(notif);

@@ -3,6 +3,7 @@ package com.lms.dto.request;
 public class  RegisterRequest {
     private String username;
     private String password;
+    private String confirmPassword;
     private String fullName;
     private String email;
     private String phone;
@@ -10,9 +11,10 @@ public class  RegisterRequest {
     public RegisterRequest() {
     }
 
-    public RegisterRequest(String username, String password, String fullName, String email, String phone) {
+    public RegisterRequest(String username, String password, String confirmPassword, String fullName, String email, String phone) {
         this.username = username;
         this.password = password;
+        this.confirmPassword = confirmPassword;
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
@@ -32,6 +34,14 @@ public class  RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 
     public String getFullName() {

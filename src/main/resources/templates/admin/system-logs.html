@@ -73,22 +73,22 @@
                         Log List
                     </span>
                 </h5>
-                <select form="systemLogFilterForm" class="form-select system-log-tab-filter" name="actionType" aria-label="Lọc loại nhật ký" onchange="this.form.submit()">
-                    <option value="">Tất cả hoạt động</option>
+                <select form="systemLogFilterForm" class="form-select system-log-tab-filter" name="actionType" th:aria-label="#{admin.logs.filterAction}" onchange="this.form.submit()">
+                    <option value="" th:text="#{admin.logs.allActions}">All activities</option>
                     <th:block th:if="${currentSection == 'auth'}">
-                        <option value="LOGIN" th:selected="${actionType == 'LOGIN'}">Đăng nhập</option>
-                        <option value="LOGOUT" th:selected="${actionType == 'LOGOUT'}">Đăng xuất</option>
-                        <option value="GOOGLE" th:selected="${actionType == 'GOOGLE'}">Đăng nhập Google</option>
+                        <option value="LOGIN" th:selected="${actionType == 'LOGIN'}" th:text="#{admin.logs.action.login}">Login</option>
+                        <option value="LOGOUT" th:selected="${actionType == 'LOGOUT'}" th:text="#{admin.logs.action.logout}">Logout</option>
+                        <option value="GOOGLE" th:selected="${actionType == 'GOOGLE'}" th:text="#{admin.logs.action.google}">Google Login</option>
                     </th:block>
                     <th:block th:if="${currentSection == 'operations'}">
-                        <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}">Tạo tài khoản</option>
-                        <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}">Cập nhật tài khoản</option>
-                        <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}">Cập nhật cài đặt</option>
+                        <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}" th:text="#{admin.logs.action.create_account}">Create Account</option>
+                        <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}" th:text="#{admin.logs.action.update_account}">Update Account</option>
+                        <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}" th:text="#{admin.logs.action.update_settings}">Update Settings</option>
                     </th:block>
                     <th:block th:if="${currentSection == 'circulation'}">
-                        <option value="REQUEST_BORROW" th:selected="${actionType == 'REQUEST_BORROW'}">Yêu cầu mượn</option>
-                        <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}">Yêu cầu trả</option>
-                        <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}">Đặt sách</option>
+                        <option value="REQUEST_BORROW" th:selected="${actionType == 'REQUEST_BORROW'}" th:text="#{admin.logs.action.request_borrow}">Loan Request</option>
+                        <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}" th:text="#{admin.logs.action.request_return}">Return Request</option>
+                        <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}" th:text="#{admin.logs.action.reserve_book}">Reserve Book</option>
                     </th:block>
                 </select>
                 </div>
