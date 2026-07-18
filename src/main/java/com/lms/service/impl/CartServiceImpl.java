@@ -60,4 +60,14 @@ public class CartServiceImpl implements CartService {
     public void clearCart(HttpSession session) {
         session.setAttribute(CART_SESSION_KEY, new ArrayList<Integer>());
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public int getQuantityInCart(HttpSession session, Integer bookId) {
+        List<Integer> cart = (List<Integer>) session.getAttribute(CART_SESSION_KEY);
+        if (cart == null || cart.isEmpty()) {
+            return 0;
+        }
+        return (int) cart.stream().filter(id -> id.equals(bookId)).count();
+    }
 }

@@ -10,7 +10,7 @@
             <p class="app-page-description" th:text="#{admin.payments.description}">Track KQPay transactions, statuses, and reconciliation issues.</p>
         </div>
         <div class="app-page-actions">
-            <a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs}"><i class="bi bi-journal-text me-1"></i> Audit log</a>
+            <a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs}"><i class="bi bi-journal-text me-1"></i> <span th:text="#{admin.payments.auditLog}">Audit Log</span></a>
             <a class="btn btn-outline-classic" th:href="@{/admin/payments/export(format='csv',keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">CSV</a>
             <a class="btn btn-classic" th:href="@{/admin/payments/export(format='pdf',keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}">PDF</a>
         </div>
@@ -64,7 +64,7 @@
                     <td class="fw-semibold" th:text="${p.orderCode}">1</td>
                     <td><div class="fw-semibold" th:text="${p.member.user.fullName}">Name</div><small class="text-muted" th:text="${p.member.user.email}">email</small></td>
                     <td><span class="payment-purpose" th:text="${p.purpose}">TOP_UP</span></td>
-                    <td class="text-end fw-semibold" th:text="${#numbers.formatDecimal(p.amount,0,'COMMA',0,'POINT') + ' ₫'}">0 ₫</td>
+                    <td class="text-end fw-semibold"><span th:text="${#numbers.formatDecimal(p.amount,0,'COMMA',0,'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     <td><span class="payment-status" th:classappend="${p.status == 'PAID' ? ' status-paid' : (p.status == 'PENDING' ? ' status-pending' : ' status-failed')}" th:text="${p.status}">PAID</span></td>
                     <td><span th:text="${#temporals.format(p.createdAt,'dd/MM/yyyy HH:mm')}">-</span></td>
                     <td class="text-end"><a class="btn btn-sm btn-outline-classic" th:href="@{/admin/payments/{code}(code=${p.orderCode})}" th:text="#{common.details}">Details</a></td>
@@ -90,7 +90,7 @@
                     </li>
                     <li class="page-item disabled" th:if="${endPage < payments.totalPages - 1}"><span class="page-link">…</span></li>
                     <li class="page-item" th:classappend="${payments.last ? 'disabled' : ''}">
-                        <a class="page-link" aria-label="Trang sau" th:href="@{/admin/payments(page=${payments.number+1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}"><i class="bi bi-chevron-right"></i></a>
+                        <a class="page-link" th:aria-label="#{common.next}" th:href="@{/admin/payments(page=${payments.number+1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}"><i class="bi bi-chevron-right"></i></a>
                     </li>
                     <li class="page-item" th:classappend="${payments.last ? 'disabled' : ''}">
                         <a class="page-link" th:href="@{/admin/payments(page=${payments.totalPages-1},keyword=${criteria.keyword},status=${criteria.status},purpose=${criteria.purpose},fromDate=${criteria.fromDate},toDate=${criteria.toDate})}" th:text="#{pagination.last}">Last</a>

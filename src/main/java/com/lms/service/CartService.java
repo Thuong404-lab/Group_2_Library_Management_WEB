@@ -10,4 +10,9 @@ public interface CartService {
     List<Book> getCartItems(HttpSession session);
     int getCartCount(HttpSession session);
     void clearCart(HttpSession session);
+
+    /**
+     * Lấy số lượng của một cuốn sách cụ thể hiện đang có trong giỏ hàng (Session)
+     */
+    int getQuantityInCart(HttpSession session, Integer bookId);
 }

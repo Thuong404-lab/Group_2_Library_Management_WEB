@@ -1,7 +1,7 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
-  <title>Thông báo của tôi</title>
+    <title th:text="#{member.notifications.title}">My Notifications</title>
   <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
 </head>
 <body>
@@ -9,16 +9,16 @@
   <div class="member-notifications-container">
     <header class="member-notifications-header">
       <div>
-        <span class="member-notifications-eyebrow">TRUNG TÂM THÔNG BÁO</span>
-        <h1>Thông báo của tôi</h1>
-        <p>Cập nhật mới nhất từ thư viện về hoạt động và tài khoản của bạn.</p>
-        <div class="member-notifications-summary" aria-label="Tổng quan thông báo">
-          <span><strong th:text="${notifications != null ? notifications.size() : 0}">0</strong> thông báo</span>
-          <span><strong th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</strong> từ thủ thư</span>
-          <span><strong th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</strong> từ hệ thống</span>
+                <span class="member-notifications-eyebrow" th:text="#{member.notifications.eyebrow}">NOTIFICATION CENTER</span>
+                <h1 th:text="#{member.notifications.title}">My Notifications</h1>
+                <p th:text="#{member.notifications.description}">Latest library updates about your activity and account.</p>
+                <div class="member-notifications-summary" th:aria-label="#{member.notifications.summary}">
+                    <span th:text="${#messages.msg('member.notifications.count', notifications != null ? notifications.size() : 0)}">0 notifications</span>
+                    <span th:text="${#messages.msg('member.notifications.fromLibrarian', librarianNotifications != null ? librarianNotifications.size() : 0)}">0 from librarians</span>
+                    <span th:text="${#messages.msg('member.notifications.fromSystem', systemNotifications != null ? systemNotifications.size() : 0)}">0 from the system</span>
         </div>
       </div>
-      <a th:href="@{/}" class="member-notifications-back"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Về trang chủ</span></a>
+                <a th:href="@{/}" class="member-notifications-back"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.backHome}">Back to Home</span></a>
     </header>
 
     <div th:if="${success}" class="member-notifications-alert is-success" th:text="${success}"></div>
@@ -27,22 +27,22 @@
     <section class="member-notifications-card" aria-labelledby="notification-list-title">
       <div class="member-notification-toolbar">
         <div class="member-notification-toolbar-copy">
-          <h2 id="notification-list-title">Tất cả thông báo</h2>
-          <p>Duyệt thông báo theo nguồn và loại nội dung.</p>
+                    <h2 id="notification-list-title" th:text="#{member.notifications.all}">All Notifications</h2>
+                    <p th:text="#{member.notifications.browse}">Browse notifications by source and content type.</p>
         </div>
-        <div class="member-notification-source-tabs" role="tablist" aria-label="Nguồn thông báo">
-          <button type="button" id="librarianNotificationsTab" class="is-active" data-notification-source="librarian" role="tab" aria-selected="true" aria-controls="memberNotificationsList"><i class="bi bi-person-badge" aria-hidden="true"></i><span>Thông báo từ thủ thư</span><b th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</b></button>
-          <button type="button" id="systemNotificationsTab" data-notification-source="system" role="tab" aria-selected="false" aria-controls="memberNotificationsList"><i class="bi bi-gear" aria-hidden="true"></i><span>Thông báo từ hệ thống</span><b th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</b></button>
+        <div class="member-notification-source-tabs" role="tablist" th:aria-label="#{member.notifications.sources}">
+                        <button type="button" id="librarianNotificationsTab" class="is-active" data-notification-source="librarian" role="tab" aria-selected="true" aria-controls="memberNotificationsList"><i class="bi bi-person-badge" aria-hidden="true"></i><span th:text="#{member.notifications.librarian}">Librarian Notifications</span><b th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</b></button>
+                        <button type="button" id="systemNotificationsTab" data-notification-source="system" role="tab" aria-selected="false" aria-controls="memberNotificationsList"><i class="bi bi-gear" aria-hidden="true"></i><span th:text="#{member.notifications.system}">System Notifications</span><b th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</b></button>
         </div>
         <label class="member-notification-type-filter" for="notificationTypeFilter">
-          <span>Lọc theo loại</span>
+                            <span th:text="#{member.notifications.filterType}">Filter by Type</span>
           <select id="notificationTypeFilter">
-            <option value="ALL">Tất cả loại thông báo</option>
-            <option value="GENERAL">Thông báo chung</option>
-            <option value="ANNOUNCEMENT">Thông báo quan trọng</option>
-            <option value="MAINTENANCE">Bảo trì hệ thống</option>
-            <option value="EVENT">Sự kiện / chương trình</option>
-            <option value="REMINDER">Nhắc nhở</option>
+                                <option value="ALL" th:text="#{member.notifications.typeAll}">All Notification Types</option>
+                                <option value="GENERAL" th:text="#{notification.type.general}">General Notification</option>
+                                <option value="ANNOUNCEMENT" th:text="#{notification.type.announcement}">Important Announcement</option>
+                                <option value="MAINTENANCE" th:text="#{notification.type.maintenance}">System Maintenance</option>
+                                <option value="EVENT" th:text="#{notification.type.event}">Event / Program</option>
+                                <option value="REMINDER" th:text="#{notification.type.reminder}">Reminder</option>
           </select>
         </label>
       </div>
@@ -57,23 +57,26 @@
           <span class="member-notification-row-icon" aria-hidden="true"><i th:class="${notification.fromLibrarian} ? 'bi bi-person-badge' : 'bi bi-gear'"></i></span>
           <div class="member-notification-row-content">
             <div class="member-notification-row-meta">
-              <span class="member-notification-row-type" th:text="${notification.notificationType.displayName}">Thông báo chung</span>
-              <span class="member-notification-unread-label" th:if="${notification.read == false}"><i aria-hidden="true"></i> Chưa đọc</span>
+              <span class="member-notification-row-type"
+                    th:text="${#messages.msg('notification.type.' + #strings.toLowerCase(notification.notificationType.name()))}">General Notification</span>
+                            <span class="member-notification-unread-label" th:if="${notification.read == false}"><i aria-hidden="true"></i> <span th:text="#{member.notifications.unread}">Unread</span></span>
             </div>
-            <h3 th:text="${notification.title}">Tiêu đề</h3>
-            <p class="member-notification-content" th:text="${notification.content}">Nội dung</p>
-            <button type="button" class="member-notification-content-toggle" hidden aria-expanded="false">Xem thêm</button>
+                            <h3 th:text="${notification.title}">Title</h3>
+                            <p class="member-notification-content" th:text="${notification.content}">Content</p>
+                            <button type="button" class="member-notification-content-toggle" hidden aria-expanded="false" th:text="#{common.showMore}">Show More</button>
           </div>
-          <time class="member-notification-row-time" th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Ngày gửi</time>
+                            <time class="member-notification-row-time" th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Sent date</time>
         </article>
       </div>
-      <div id="notificationFilterEmpty" class="member-notifications-empty member-notifications-empty--compact" hidden><span><i class="bi bi-bell-slash" aria-hidden="true"></i></span><p>Không có thông báo phù hợp với bộ lọc.</p></div>
-      <div class="member-notifications-empty" th:if="${notifications == null || notifications.isEmpty()}"><span><i class="bi bi-bell" aria-hidden="true"></i></span><h2>Chưa có thông báo</h2><p>Các cập nhật mới từ thư viện sẽ xuất hiện tại đây.</p></div>
+                    <div id="notificationFilterEmpty" class="member-notifications-empty member-notifications-empty--compact" hidden><span><i class="bi bi-bell-slash" aria-hidden="true"></i></span><p th:text="#{member.notifications.filterEmpty}">No notifications match the selected filters.</p></div>
+                    <div class="member-notifications-empty" th:if="${notifications == null || notifications.isEmpty()}"><span><i class="bi bi-bell" aria-hidden="true"></i></span><h2 th:text="#{member.notifications.empty}">No Notifications Yet</h2><p th:text="#{member.notifications.emptyDescription}">New library updates will appear here.</p></div>
     </section>
   </div>
 </main>
 <th:block layout:fragment="scripts">
-  <script>
+        <script th:inline="javascript">
+            const showMoreLabel = /*[[#{common.showMore}]]*/ "Show More";
+            const showLessLabel = /*[[#{common.showLess}]]*/ "Show Less";
     document.addEventListener("DOMContentLoaded", function () {
       var source = new URLSearchParams(window.location.search).get("source") || "librarian";
       var typeFilter = document.getElementById("notificationTypeFilter");
@@ -113,7 +116,7 @@
           var content = toggle.previousElementSibling;
           var expanded = content.classList.toggle("is-expanded");
           toggle.setAttribute("aria-expanded", String(expanded));
-          toggle.textContent = expanded ? "Thu gọn" : "Xem thêm";
+                    toggle.textContent = expanded ? showLessLabel : showMoreLabel;
         });
       });
 

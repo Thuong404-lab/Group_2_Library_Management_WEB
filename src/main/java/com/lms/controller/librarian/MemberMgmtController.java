@@ -1,5 +1,6 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
@@ -42,7 +43,7 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/librarian")
-public class MemberMgmtController {
+public class MemberMgmtController extends LocalizedControllerSupport {
     private static final String TOP_UP_TYPE = "TOP_UP";
     private static final int MEMBER_SEARCH_LIMIT = 5;
 
@@ -107,7 +108,7 @@ public class MemberMgmtController {
 
         memberService.createMember(request);
         redirectAttributes.addFlashAttribute(
-                "success", "Tạo tài khoản thành viên thành công.");
+                "success", message("backend.member.created"));
         return "redirect:/librarian/members";
     }
 
@@ -128,7 +129,7 @@ public class MemberMgmtController {
 
         memberService.updateMember(id, request);
         redirectAttributes.addFlashAttribute(
-                "success", "Cập nhật tài khoản thành viên thành công.");
+                "success", message("backend.member.updated"));
         return "redirect:/librarian/members";
     }
 
@@ -149,10 +150,10 @@ public class MemberMgmtController {
             @PathVariable Integer id,
             RedirectAttributes redirectAttributes) {
         if (!memberService.deactivateMember(id)) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy tài khoản.");
+            redirectAttributes.addFlashAttribute("error", message("backend.account.notFound"));
         } else {
             redirectAttributes.addFlashAttribute(
-                    "success", "Xóa tài khoản thành viên thành công.");
+                    "success", message("backend.member.deleted"));
         }
         return "redirect:/librarian/members";
     }
@@ -166,7 +167,7 @@ public class MemberMgmtController {
             RedirectAttributes redirectAttributes) {
         try {
             memberService.changeMemberStatus(id, status);
-            redirectAttributes.addFlashAttribute("success", "Đã cập nhật trạng thái tài khoản.");
+            redirectAttributes.addFlashAttribute("success", message("backend.account.statusUpdated"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -200,7 +201,7 @@ public class MemberMgmtController {
             RedirectAttributes redirectAttributes) {
         try {
             financialService.createFine(memberId, amount, reason);
-            redirectAttributes.addFlashAttribute("success", "Đã tạo khoản phạt cho thành viên.");
+            redirectAttributes.addFlashAttribute("success", message("backend.fine.created"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -214,7 +215,7 @@ public class MemberMgmtController {
         try {
             overdueReminderService.sendReturnReminder(borrowDetailId);
             redirectAttributes.addFlashAttribute(
-                    "success", "Đã gửi thông báo nhắc trả sách cho thành viên.");
+                    "success", message("backend.overdue.reminderSent"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
@@ -264,7 +265,7 @@ public class MemberMgmtController {
             RedirectAttributes redirectAttributes) {
         try {
             financialService.topUpMemberAccount(memberPhone, amount);
-            redirectAttributes.addFlashAttribute("success", "Nạp tiền vào ví thành viên thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("memberPhone", memberPhone);
@@ -369,16 +370,16 @@ public class MemberMgmtController {
             data.put("phone", member.getUser().getPhone());
             
             String rawStatus = member.getUser().getStatus().toString();
-            String vnStatus = "Hoạt động";
-            if ("Inactive".equalsIgnoreCase(rawStatus)) vnStatus = "Khóa";
-            else if ("Banned".equalsIgnoreCase(rawStatus)) vnStatus = "Cấm mượn";
-            data.put("status", vnStatus);
+            String localizedStatus = message("status.active");
+            if ("Inactive".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.blocked");
+            else if ("Banned".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.banned");
+            data.put("status", localizedStatus);
             data.put("rawStatus", rawStatus);
             
-            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Tiêu chuẩn";
-            if ("Standard".equalsIgnoreCase(tierName)) tierName = "Hạng Tiêu Chuẩn";
-            else if ("Premium".equalsIgnoreCase(tierName)) tierName = "Hạng Cao Cấp";
-            else if ("VIP".equalsIgnoreCase(tierName)) tierName = "Hạng VIP";
+            String tierName = member.getTier() != null ? member.getTier().getTierName() : "Standard";
+            if ("Standard".equalsIgnoreCase(tierName)) tierName = message("tier.standard");
+            else if ("Premium".equalsIgnoreCase(tierName)) tierName = message("tier.premium");
+            else if ("VIP".equalsIgnoreCase(tierName)) tierName = message("tier.vip");
             data.put("tier", tierName);
             
         } catch (ApplicationException e) {

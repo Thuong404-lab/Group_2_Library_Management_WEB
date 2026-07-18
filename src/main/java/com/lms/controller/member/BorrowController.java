@@ -1,6 +1,8 @@
 package com.lms.controller.member;
+
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.response.MemberBorrowDTO;
 import com.lms.entity.Book;
@@ -33,7 +35,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/member/borrow")
-public class BorrowController {
+public class BorrowController extends LocalizedControllerSupport {
 
     private final BorrowService borrowService;
     private final BookService bookService;
@@ -109,7 +111,7 @@ public class BorrowController {
         response.setDateHeader("Expires", 0);
 
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn sách trước khi gửi yêu cầu mượn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
         }
 
@@ -161,20 +163,20 @@ public class BorrowController {
         model.addAttribute("currentMemberName", principal.getName());
         model.addAttribute("selectedBookId", bookId);
 
-        // --- THÊM DÒNG NÀY ĐỂ TRUYỀN DỮ LIỆU SỐ NGÀY MAX XUỐNG GIAO DIỆN ---
+        // Truyền dữ liệu số ngày tối đa cho phép xuống giao diện
         model.addAttribute("maxBorrowDays", getMaxBorrowDays());
 
         try {
             Book book = bookService.findBookById(bookId);
             if ("Inactive".equalsIgnoreCase(book.getStatus())) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không có sẵn để mượn!");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.bookUnavailable"));
                 return "redirect:/";
             }
             long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
             model.addAttribute("selectedBook", book);
             model.addAttribute("availableCount", availableCount);
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBook"));
             return "redirect:/";
         }
         return "member/borrow-create";
@@ -189,34 +191,33 @@ public class BorrowController {
                                       RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa chọn sách để gửi yêu cầu mượn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
         }
 
-        // Validate số ngày
+        // 1. Validate số ngày mượn hợp lệ
         Integer maxDaysAllowed = getMaxBorrowDays();
         if (numberOfDays < 1 || numberOfDays > maxDaysAllowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Số ngày mượn không hợp lệ! Bạn chỉ được phép nhập từ 1 đến " + maxDaysAllowed + " ngày.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBorrowDays", maxDaysAllowed));
             return "redirect:/member/borrow/create?bookId=" + bookId;
         }
 
-        // Validate số lượng
+        // 2. Chuẩn hóa số lượng
         if (quantity == null || quantity < 1) quantity = 1;
 
         try {
-            // Validate số lượng bản vật lý còn lại trong kho
+            // 3. Kiểm tra số lượng bản vật lý thực tế trong kho trước khi thực hiện
             long availableStock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
             if (availableStock == 0) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không còn bản vật lý nào trong kho! Không thể tạo phiếu mượn.");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockUnavailable"));
                 return "redirect:/books/" + bookId;
             }
             if (quantity > availableStock) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Số lượng yêu cầu vượt quá số bản còn lại trong kho (còn " + availableStock + " bản).");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockExceeded", availableStock));
                 return "redirect:/member/borrow/create?bookId=" + bookId;
             }
 
-            // Validate số dư ví (tổng phí = quantity × ngày × đơn giá × giảm giá)
+            // 4. Tính toán chi phí mượn sách có áp dụng giảm giá thành viên
             Member member = memberRepository.findByAccountUsername(principal.getName())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
             BigDecimal feePerBookPerDay = BigDecimal.valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
@@ -226,33 +227,46 @@ public class BorrowController {
                     ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
             BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf((long) quantity * numberOfDays));
             BigDecimal finalFee = baseFee.subtract(baseFee.multiply(BigDecimal.valueOf(discount / 100)));
+
             BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                     .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
                     .orElse(BigDecimal.ZERO);
+
+            // 5. Xử lý luồng thanh toán qua Ví thành viên (WALLET)
             if ("WALLET".equalsIgnoreCase(paymentMethod)) {
                 if (walletBalance.compareTo(finalFee) < 0) {
-                    redirectAttributes.addFlashAttribute("errorMessage",
-                            "Số dư ví không đủ để thanh toán phí mượn dự kiến! Vui lòng nạp thêm tiền vào ví.");
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.insufficientWalletBalance"));
                     return "redirect:/member/borrow/create?bookId=" + bookId;
                 }
+
+                // Đủ tiền trong ví -> Thực hiện tạo phiếu mượn & trừ tiền lập tức
+                for (int i = 0; i < quantity; i++) {
+                    borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
+                }
+
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
+                return "redirect:/member/borrow/management?tab=borrowing";
             }
 
-            // Tạo phiếu mượn (1 phiếu cho mỗi bản sách)
-            for (int i = 0; i < quantity; i++) {
-                borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            }
-
+            // 6. Xử lý luồng thanh toán qua Chuyển khoản (BANK - PayOS)
             if ("BANK".equalsIgnoreCase(paymentMethod) && finalFee.compareTo(BigDecimal.ZERO) > 0) {
+                // FIX: Không gọi vòng lặp tạo phiếu mượn trước khi thanh toán.
+                // Luồng tạo phiếu mượn sẽ được thực hiện khi nhận Webhook/Callback giao dịch thành công.
                 com.lms.entity.PayOsPayment payment = payOsPaymentService.createTopUp(member, finalFee);
-                redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng hoàn tất thanh toán ngân hàng để tiếp tục.");
+
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedWithBank"));
                 return "redirect:/member/payments/payos/" + payment.getOrderCode();
             }
 
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Đăng ký thành công " + quantity + " bản! Yêu cầu của bạn đang chờ phê duyệt.");
+            // Trường hợp tổng chi phí bằng 0 (Miễn phí hoàn toàn)
+            for (int i = 0; i < quantity; i++) {
+                borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
+            }
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
             return "redirect:/member/borrow/management?tab=borrowing";
+
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.requestFailed", e));
             return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
         }
     }
@@ -279,12 +293,11 @@ public class BorrowController {
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
             return "member/reserve-confirm";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hiển thị phiếu cọc: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.depositViewFailed", e));
             return "redirect:/member/borrow/management?tab=reserved";
         }
     }
 
-    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
                               Principal principal,
@@ -292,11 +305,9 @@ public class BorrowController {
         if (principal == null) return "redirect:/login";
         try {
             borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute(
-                    "successMessage",
-                    "Đặt trước thành công. Tiền cọc đã được trừ từ ví và ghi nhận trong phiếu đặt.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationSubmitted"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể đặt trước sách: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.reservationFailed", e));
         }
         return "redirect:/member/borrow/management?tab=reserved";
     }
@@ -306,9 +317,9 @@ public class BorrowController {
         if (principal == null) return "redirect:/login";
         try {
             borrowService.memberCancelReservation(principal.getName(), reservationId);
-            redirectAttributes.addFlashAttribute("successMessage", "Hủy yêu cầu đặt giữ chỗ thành công.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationCancelled"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hủy đơn đặt chỗ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.reservationCancelFailed", e));
         }
         return "redirect:/member/borrow/management?tab=reserved";
     }
@@ -318,9 +329,9 @@ public class BorrowController {
         if (principal == null) return "redirect:/login";
         try {
             borrowService.memberSubmitRenewRequest(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu gia hạn tới thủ thư. Vui lòng chờ phê duyệt!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.renewalSubmitted"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gửi yêu cầu gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.renewalSubmitFailed", e));
         }
         return "redirect:/member/borrow/management?tab=borrowing";
     }
@@ -364,7 +375,7 @@ public class BorrowController {
         return memberRepository.findByUserEmail(usernameOrEmail)
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
                 .or(() -> memberRepository.findByAccountUsername(usernameOrEmail))
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên hiện tại."));
+                .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
     }
 
     private BigDecimal getDepositAmount() {
@@ -379,6 +390,7 @@ public class BorrowController {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+
     private Integer getMaxBorrowDays() {
         return systemSettingRepository.findAll().stream()
                 .filter(setting -> setting.getSettingKey() != null)
@@ -389,8 +401,6 @@ public class BorrowController {
                 .map(Integer::parseInt)
                 .filter(value -> value > 0)
                 .findFirst()
-                .orElse(14); // Giá trị mặc định nếu database chưa có key này
+                .orElse(14);
     }
-
-
 }

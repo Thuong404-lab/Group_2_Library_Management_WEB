@@ -1,11 +1,13 @@
 package com.lms.controller.member;
 
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.controller.LocalizedControllerSupport;
 import com.lms.entity.Book;
 import com.lms.entity.Member;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.repository.SystemSettingRepository;
+import com.lms.repository.BookItemRepository;
 import com.lms.service.BorrowService;
 import com.lms.service.CartService;
 import jakarta.servlet.http.HttpSession;
@@ -21,7 +23,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/member/cart")
-public class CartController {
+public class CartController extends LocalizedControllerSupport {
 
     private final CartService cartService;
     private final BorrowService borrowService;
@@ -29,26 +31,55 @@ public class CartController {
     private final WalletRepository walletRepository;
     private final com.lms.service.PayOsPaymentService payOsPaymentService;
     private final SystemSettingRepository systemSettingRepository;
+    private final BookItemRepository bookItemRepository;
 
     public CartController(CartService cartService, BorrowService borrowService,
                           MemberRepository memberRepository, WalletRepository walletRepository,
                           com.lms.service.PayOsPaymentService payOsPaymentService,
-                          SystemSettingRepository systemSettingRepository) {
+                          SystemSettingRepository systemSettingRepository,
+                          BookItemRepository bookItemRepository) {
         this.cartService = cartService;
         this.borrowService = borrowService;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
         this.payOsPaymentService = payOsPaymentService;
         this.systemSettingRepository = systemSettingRepository;
+        this.bookItemRepository = bookItemRepository;
     }
 
     @PostMapping("/add")
     public Object addToCart(@RequestParam("bookId") Integer bookId, HttpSession session,
-                            RedirectAttributes redirectAttributes, 
+                            RedirectAttributes redirectAttributes,
                             @RequestHeader(value = "referer", required = false) String referer,
                             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+
+        // 1. Kiểm tra số lượng bản sao khả dụng thực tế trong kho bằng hàm JpaRepository của bạn
+        long availableStock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+
+        // 2. Lấy số lượng cuốn sách này hiện đã nằm trong giỏ sách Session
+        int currentInCart = cartService.getQuantityInCart(session, bookId);
+
+        // 3. Chặn nếu số lượng thêm vào vượt số lượng khả dụng trong kho
+        if (currentInCart >= availableStock) {
+            String errorMessage = "Không thể thêm sách! Số lượng trong giỏ hiện tại đã đạt giới hạn tối đa có sẵn trong kho (" + availableStock + " cuốn).";
+
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of("success", false, "message", errorMessage));
+            }
+
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            return org.springframework.http.ResponseEntity
+                    .status(org.springframework.http.HttpStatus.SEE_OTHER)
+                    .location(java.net.URI.create(referer != null && !referer.isBlank() ? referer : "/books/" + bookId))
+                    .build();
+        }
+
+        // 4. Đủ điều kiện, thêm vào giỏ hàng
         cartService.addToCart(session, bookId);
-        String successMessage = "Đã thêm cuốn sách vào giỏ sách của bạn thành công!";
+        String successMessage = message("backend.cart.added");
+
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             return org.springframework.http.ResponseEntity.ok(java.util.Map.of("success", true, "message", successMessage));
         }
@@ -71,7 +102,7 @@ public class CartController {
         if (principal == null) return "redirect:/login";
 
         Member member = memberRepository.findByAccountUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Không xác định được danh tính thành viên"));
+                .orElseThrow(() -> new RuntimeException(message("backend.cart.memberNotFound")));
 
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                 .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
@@ -93,7 +124,7 @@ public class CartController {
         model.addAttribute("quantities", quantities);
         model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("discountPercent", discountPercent);
-        // Lấy số ngày mượn tối đa từ system settings
+
         Integer maxBorrowDays = systemSettingRepository.findBySettingKey("MAX_BORROW_DAYS")
                 .map(s -> { try { return Integer.parseInt(s.getSettingValue()); } catch (Exception e) { return 30; } })
                 .orElse(30);
@@ -112,7 +143,7 @@ public class CartController {
         response.setDateHeader("Expires", 0);
 
         if (selectedBookIds == null || selectedBookIds.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất một cuốn sách để tiến hành xác nhận thanh toán.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.selectionRequired"));
             return "redirect:/member/cart";
         }
 
@@ -126,7 +157,7 @@ public class CartController {
         }
 
         if (selectedCartItems.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Giỏ sách của bạn không chứa sách hợp lệ đã chọn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
             return "redirect:/member/cart";
         }
 
@@ -154,7 +185,7 @@ public class CartController {
         if (principal == null) return "redirect:/login";
 
         if (selectedBookIds == null || selectedBookIds.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Quy trình lập phiếu thất bại: Không nhận được danh sách sách đã chọn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.missingSelection"));
             return "redirect:/member/cart";
         }
 
@@ -177,25 +208,31 @@ public class CartController {
 
             if ("WALLET".equalsIgnoreCase(paymentMethod)) {
                 if (walletBalance.compareTo(previewFee) < 0) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Quy trình lập phiếu thất bại: Số dư ví không đủ để thanh toán phí mượn sách.");
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.insufficientWalletBalance"));
                     return "redirect:/member/cart";
                 }
-            }
 
-            borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
-            // Đơn mượn lập thành công -> chỉ xóa những sách đã đăng ký khỏi giỏ hàng
-            selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+                borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
+                selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.created"));
+                return "redirect:/member/borrow/management?tab=borrowing";
+            }
 
             if ("BANK".equalsIgnoreCase(paymentMethod) && previewFee.compareTo(BigDecimal.ZERO) > 0) {
                 com.lms.entity.PayOsPayment payment = payOsPaymentService.createTopUp(member, previewFee);
-                redirectAttributes.addFlashAttribute("successMessage", "Lập phiếu mượn thành công! Vui lòng hoàn tất thanh toán ngân hàng để tiếp tục.");
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.createdWithBank"));
                 return "redirect:/member/payments/payos/" + payment.getOrderCode();
             }
 
-            redirectAttributes.addFlashAttribute("successMessage", "Lập phiếu mượn tập trung thành công! Toàn bộ yêu cầu đang chờ thủ thư xét duyệt.");
+            borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
+            selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.created"));
             return "redirect:/member/borrow/management?tab=borrowing";
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Quy trình lập phiếu thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.cart.creationFailed", e));
             return "redirect:/member/cart";
         }
     }

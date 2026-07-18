@@ -23,13 +23,18 @@ class ApprovedBorrowExpiryJobTest {
         BookItemRepository bookItemRepository = mock(BookItemRepository.class);
         NotificationRepository notificationRepository = mock(NotificationRepository.class);
         MemberNotificationRepository memberNotificationRepository = mock(MemberNotificationRepository.class);
+        LocalizedMessageService messages = mock(LocalizedMessageService.class);
+
+        when(messages.get(anyString())).thenReturn("Vi phạm quy định");
+        when(messages.get(anyString(), any())).thenReturn("BOR-101");
 
         ApprovedBorrowExpiryJob job = new ApprovedBorrowExpiryJob(
                 borrowRepository,
                 borrowDetailRepository,
                 bookItemRepository,
                 notificationRepository,
-                memberNotificationRepository
+                memberNotificationRepository,
+                messages
         );
 
         // Prepare test data
