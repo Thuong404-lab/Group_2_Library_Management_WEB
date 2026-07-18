@@ -120,8 +120,15 @@ public class CartController extends LocalizedControllerSupport {
         double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
                 ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
 
+        java.util.Map<Integer, Long> availableStocks = new java.util.HashMap<>();
+        for (Book book : cartItems) {
+            long stock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(book.getBookId(), "Available");
+            availableStocks.put(book.getBookId(), stock);
+        }
+
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("quantities", quantities);
+        model.addAttribute("availableStocks", availableStocks);
         model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("discountPercent", discountPercent);
 
@@ -208,7 +215,7 @@ public class CartController extends LocalizedControllerSupport {
 
             if ("WALLET".equalsIgnoreCase(paymentMethod)) {
                 if (walletBalance.compareTo(previewFee) < 0) {
-                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.insufficientWalletBalance"));
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.insufficientWalletBalance"));
                     return "redirect:/member/cart";
                 }
 
@@ -221,7 +228,7 @@ public class CartController extends LocalizedControllerSupport {
 
             if ("BANK".equalsIgnoreCase(paymentMethod) && previewFee.compareTo(BigDecimal.ZERO) > 0) {
                 com.lms.entity.PayOsPayment payment = payOsPaymentService.createTopUp(member, previewFee);
-                redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.createdWithBank"));
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedWithBank"));
                 return "redirect:/member/payments/payos/" + payment.getOrderCode();
             }
 

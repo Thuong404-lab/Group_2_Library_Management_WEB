@@ -239,6 +239,9 @@
                             <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.damageFine}">Damage Fine (VND)</label>
                             <input type="number" class="form-control scan-input" name="damageFine" id="damageFineInput" min="0" value="0"
                                    th:placeholder="#{librarian.returnDesk.damageFinePlaceholder}" placeholder="Enter fine amount..."/>
+                            <div id="fineError" class="text-danger small mt-1 font-weight-bold" style="display: none;">
+                                <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{librarian.returnDesk.fineRequired}">Bắt buộc nhập số tiền phạt hợp lệ (lớn hơn 0) khi sách bị hư hỏng.</span>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{payment.method}">Payment Method</label>
@@ -549,19 +552,58 @@
                 });
             }
 
-            th:inline="javascript"
             function toggleFineInput() {
                 if (conditionNoteSelect && fineInputContainer) {
                     const value = conditionNoteSelect.value;
+                    const fineError = document.getElementById('fineError');
                     if (value.includes('Hư hỏng nhẹ') || value.includes('Mất hoặc Hư hỏng nặng')) {
                         fineInputContainer.style.display = 'block';
                     } else {
                         fineInputContainer.style.display = 'none';
                         if (damageFineInput) {
                             damageFineInput.value = '0';
+                            damageFineInput.classList.remove('is-invalid');
+                        }
+                        if (fineError) {
+                            fineError.style.display = 'none';
                         }
                     }
                 }
+            }
+
+            if (confirmReturnModal) {
+                const returnForm = confirmReturnModal.querySelector('form');
+                if (returnForm) {
+                    returnForm.addEventListener('submit', function(e) {
+                        if (conditionNoteSelect && damageFineInput) {
+                            const value = conditionNoteSelect.value;
+                            if (value.includes('Hư hỏng nhẹ') || value.includes('Mất hoặc Hư hỏng nặng')) {
+                                const fineVal = parseFloat(damageFineInput.value) || 0;
+                                if (fineVal <= 0) {
+                                    e.preventDefault();
+                                    const fineError = document.getElementById('fineError');
+                                    if (fineError) {
+                                        fineError.style.display = 'block';
+                                    }
+                                    damageFineInput.classList.add('is-invalid');
+                                    damageFineInput.focus();
+                                    return false;
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (damageFineInput) {
+                damageFineInput.addEventListener('input', function() {
+                    const fineVal = parseFloat(this.value) || 0;
+                    const fineError = document.getElementById('fineError');
+                    if (fineVal > 0) {
+                        this.classList.remove('is-invalid');
+                        if (fineError) fineError.style.display = 'none';
+                    }
+                });
             }
 
             if (conditionNoteSelect) {

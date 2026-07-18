@@ -148,6 +148,12 @@ public class LoanController extends LocalizedControllerSupport {
                 throw new ValidationException(message("backend.return.invalidBarcodes"));
             }
 
+            if (conditionNote != null && (conditionNote.contains("Hư hỏng nhẹ") || conditionNote.contains("Hư hỏng nặng"))) {
+                if (damageFine == null || damageFine.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new ValidationException(message("librarian.returnDesk.fineRequired"));
+                }
+            }
+
             String staffUsername = (principal != null) ? principal.getName() : "admin";
 
             // Chuyển LocalDate sang LocalDateTime (giữ nguyên giờ, phút, giây hiện hành của ngày làm việc)

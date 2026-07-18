@@ -75,6 +75,11 @@ public class BorrowController extends LocalizedControllerSupport {
 
     @GetMapping("/management")
     public String viewBorrowManagement(@RequestParam(value = "tab", defaultValue = "borrowing") String tab,
+                                       @RequestParam(value = "search", required = false) String search,
+                                       @RequestParam(value = "status", required = false) String status,
+                                       @RequestParam(value = "fromDate", required = false) String fromDate,
+                                       @RequestParam(value = "toDate", required = false) String toDate,
+                                       @RequestParam(value = "page", defaultValue = "0") int page,
                                        Principal principal,
                                        Model model) {
         if (principal == null) return "redirect:/login";
@@ -84,17 +89,206 @@ public class BorrowController extends LocalizedControllerSupport {
 
         List<MemberBorrowDTO> currentBorrows = borrowService.getMemberCurrentBorrows(username);
         List<MemberBorrowDTO> reservations = borrowService.getMemberReservations(username);
+        List<MemberBorrowDTO> history = borrowService.getMemberOneMonthHistory(username);
 
         model.addAttribute("borrowingCount", currentBorrows.size());
         model.addAttribute("reservationCount", reservations.size());
 
-        if ("reserved".equalsIgnoreCase(tab)) {
-            model.addAttribute("booksData", reservations);
-        } else if ("history".equalsIgnoreCase(tab)) {
-            model.addAttribute("booksData", borrowService.getMemberOneMonthHistory(username));
-        } else {
-            model.addAttribute("booksData", currentBorrows);
+        java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);
+        java.time.LocalDate maxDate = java.time.LocalDate.now();
+
+        for (MemberBorrowDTO b : currentBorrows) {
+            if (b.getActionDate() != null) {
+                java.time.LocalDate d = b.getActionDate().toLocalDate();
+                if (d.isBefore(minDate)) minDate = d;
+            }
+            if (b.getDueDate() != null) {
+                java.time.LocalDate d = b.getDueDate().toLocalDate();
+                if (d.isAfter(maxDate)) maxDate = d;
+            }
         }
+        for (MemberBorrowDTO r : reservations) {
+            if (r.getActionDate() != null) {
+                java.time.LocalDate d = r.getActionDate().toLocalDate();
+                if (d.isBefore(minDate)) minDate = d;
+            }
+            if (r.getDueDate() != null) {
+                java.time.LocalDate d = r.getDueDate().toLocalDate();
+                if (d.isAfter(maxDate)) maxDate = d;
+            }
+        }
+        for (MemberBorrowDTO h : history) {
+            if (h.getActionDate() != null) {
+                java.time.LocalDate d = h.getActionDate().toLocalDate();
+                if (d.isBefore(minDate)) minDate = d;
+            }
+            if (h.getReturnDate() != null) {
+                java.time.LocalDate d = h.getReturnDate().toLocalDate();
+                if (d.isAfter(maxDate)) maxDate = d;
+            }
+        }
+
+        model.addAttribute("minDate", minDate.toString());
+        model.addAttribute("maxDate", maxDate.toString());
+
+        List<StatusOption> statusOptions = new java.util.ArrayList<>();
+        if ("reserved".equalsIgnoreCase(tab)) {
+            statusOptions.add(new StatusOption("", "common.allStatuses"));
+            statusOptions.add(new StatusOption("Pending", "reservation.status.preparing"));
+            statusOptions.add(new StatusOption("Deposit_Paid", "reservation.status.depositPaid"));
+            statusOptions.add(new StatusOption("Refund_Pending", "reservation.status.refundPending"));
+            statusOptions.add(new StatusOption("Ready", "reservation.status.ready"));
+            statusOptions.add(new StatusOption("Canceled", "reservation.status.canceled"));
+            statusOptions.add(new StatusOption("Completed", "reservation.status.completed"));
+        } else if ("history".equalsIgnoreCase(tab)) {
+            statusOptions.add(new StatusOption("", "common.allStatuses"));
+            statusOptions.add(new StatusOption("Returned", "loan.status.returned"));
+            statusOptions.add(new StatusOption("Lost", "loan.status.lost"));
+            statusOptions.add(new StatusOption("Canceled", "reservation.status.canceled"));
+        } else { // borrowing
+            statusOptions.add(new StatusOption("", "common.allStatuses"));
+            statusOptions.add(new StatusOption("Borrowed", "loan.status.borrowed"));
+            statusOptions.add(new StatusOption("Due_Soon", "loan.status.dueSoon"));
+            statusOptions.add(new StatusOption("Overdue", "loan.status.overdue"));
+            statusOptions.add(new StatusOption("Pending", "loan.status.pendingBorrow"));
+            statusOptions.add(new StatusOption("Waiting_Pickup", "loan.status.waitingPickup"));
+            statusOptions.add(new StatusOption("Return_Pending", "loan.status.pendingReturn"));
+            statusOptions.add(new StatusOption("Renew_Pending", "loan.status.pendingRenewal"));
+        }
+        model.addAttribute("statusOptions", statusOptions);
+
+        List<MemberBorrowDTO> rawList;
+        if ("reserved".equalsIgnoreCase(tab)) {
+            rawList = reservations;
+        } else if ("history".equalsIgnoreCase(tab)) {
+            rawList = history;
+        } else {
+            rawList = currentBorrows;
+        }
+
+        // Parse dates
+        java.time.LocalDate from = null;
+        java.time.LocalDate to = null;
+        try {
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                from = java.time.LocalDate.parse(fromDate.trim());
+                if (from.isBefore(minDate)) {
+                    from = minDate;
+                    fromDate = minDate.toString();
+                }
+                if (from.isAfter(maxDate)) {
+                    from = maxDate;
+                    fromDate = maxDate.toString();
+                }
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                to = java.time.LocalDate.parse(toDate.trim());
+                if (to.isBefore(minDate)) {
+                    to = minDate;
+                    toDate = minDate.toString();
+                }
+                if (to.isAfter(maxDate)) {
+                    to = maxDate;
+                    toDate = maxDate.toString();
+                }
+            }
+        } catch (Exception ignored) {}
+
+        List<MemberBorrowDTO> filteredList = new java.util.ArrayList<>();
+        for (MemberBorrowDTO item : rawList) {
+            boolean matchesSearch = true;
+            if (search != null && !search.trim().isEmpty()) {
+                String title = item.getBookTitle();
+                if (title == null || !title.toLowerCase(java.util.Locale.ROOT).contains(search.trim().toLowerCase(java.util.Locale.ROOT))) {
+                    matchesSearch = false;
+                }
+            }
+
+            boolean matchesStatus = true;
+            if (status != null && !status.trim().isEmpty()) {
+                if ("borrowing".equalsIgnoreCase(tab) || tab == null || tab.isEmpty()) {
+                    if ("Due_Soon".equalsIgnoreCase(status)) {
+                        matchesStatus = "Borrowed".equalsIgnoreCase(item.getStatus()) && item.getDaysLeft() <= 2;
+                    } else if ("Borrowed".equalsIgnoreCase(status)) {
+                        matchesStatus = "Borrowed".equalsIgnoreCase(item.getStatus()) && item.getDaysLeft() > 2;
+                    } else {
+                        matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                    }
+                } else if ("reserved".equalsIgnoreCase(tab)) {
+                    if ("Ready".equalsIgnoreCase(status)) {
+                        matchesStatus = "Ready".equalsIgnoreCase(item.getStatus()) || "Active".equalsIgnoreCase(item.getStatus());
+                    } else {
+                        matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                    }
+                } else {
+                    matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                }
+            }
+
+            boolean matchesDate = true;
+            if (from != null || to != null) {
+                boolean actionMatch = true;
+                boolean returnMatch = true;
+
+                if (item.getActionDate() != null) {
+                    java.time.LocalDate actionDate = item.getActionDate().toLocalDate();
+                    if (from != null && actionDate.isBefore(from)) {
+                        actionMatch = false;
+                    }
+                    if (to != null && actionDate.isAfter(to)) {
+                        actionMatch = false;
+                    }
+                } else {
+                    actionMatch = false;
+                }
+
+                if (item.getReturnDate() != null) {
+                    java.time.LocalDate returnDate = item.getReturnDate().toLocalDate();
+                    if (from != null && returnDate.isBefore(from)) {
+                        returnMatch = false;
+                    }
+                    if (to != null && returnDate.isAfter(to)) {
+                        returnMatch = false;
+                    }
+                } else {
+                    returnMatch = false;
+                }
+
+                if ("history".equalsIgnoreCase(tab)) {
+                    matchesDate = actionMatch || returnMatch;
+                } else {
+                    matchesDate = actionMatch;
+                }
+            }
+
+            if (matchesSearch && matchesStatus && matchesDate) {
+                filteredList.add(item);
+            }
+        }
+
+        int pageSize = 5;
+        int totalItems = filteredList.size();
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+        if (page < 0) page = 0;
+        if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
+
+        List<MemberBorrowDTO> pagedList = new java.util.ArrayList<>();
+        if (totalItems > 0) {
+            int start = page * pageSize;
+            int end = Math.min(start + pageSize, totalItems);
+            pagedList = filteredList.subList(start, end);
+        }
+
+        model.addAttribute("booksData", pagedList);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("search", search);
+        model.addAttribute("status", status);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
 
         return "member/borrow";
     }
@@ -402,5 +596,18 @@ public class BorrowController extends LocalizedControllerSupport {
                 .filter(value -> value > 0)
                 .findFirst()
                 .orElse(14);
+    }
+
+    public static class StatusOption {
+        private final String value;
+        private final String labelKey;
+
+        public StatusOption(String value, String labelKey) {
+            this.value = value;
+            this.labelKey = labelKey;
+        }
+
+        public String getValue() { return value; }
+        public String getLabelKey() { return labelKey; }
     }
 }

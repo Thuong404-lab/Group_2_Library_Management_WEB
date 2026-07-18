@@ -180,12 +180,14 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         return "librarian/create-borrow";
     }
 
-    // CHỨC NĂNG PHÊ DUYỆT ĐƠN MƯỢN ONLINE: Chuyển đổi trạng thái từ Pending -> Active
     @PostMapping("/librarian/borrow/approve/{borrowId}")
-    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                       @RequestParam("barcodes") List<String> barcodes,
+                                       Principal principal,
+                                       RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.approvePendingRequest(borrowId, staffUsername);
+            borrowService.approvePendingRequest(borrowId, barcodes, staffUsername);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.approved"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
@@ -408,9 +410,25 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             if (itemOpt.isPresent()) {
                 com.lms.entity.BookItem item = itemOpt.get();
                 data.put("found", true);
+                data.put("bookId", item.getBook().getBookId());
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
                 String rawStatus = item.getStatus();
+                
+                long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(item.getBook().getBookId(), "Available");
+                data.put("availableCount", availableCount);
+                
+                // Debug logging to console
+                try {
+                    java.util.List<com.lms.entity.BookItem> allItems = bookItemRepository.findByBook_BookId(item.getBook().getBookId());
+                    System.out.println("DEBUG BOOK LOOKUP: Book ID = " + item.getBook().getBookId() + ", Title = " + item.getBook().getTitle() + ", Available Count in DB = " + availableCount);
+                    for (com.lms.entity.BookItem bi : allItems) {
+                        System.out.println("DEBUG BOOK ITEM: Barcode = " + bi.getBarcode() + ", Status = " + bi.getStatus());
+                    }
+                } catch (Exception e) {
+                    System.err.println("DEBUG BOOK LOOKUP ERROR: " + e.getMessage());
+                }
+                
                 String vnStatus = message("book.status.available");
                 if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.borrowed");
                 else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.lost");

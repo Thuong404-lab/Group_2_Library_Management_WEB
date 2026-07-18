@@ -45,14 +45,23 @@
                 <div th:each="book : ${cartItems}" class="cart-item">
                     <div class="d-flex align-items-center gap-3">
                         <div class="form-check d-flex align-items-center">
-                            <input class="form-check-input book-select-checkbox cart-checkbox" type="checkbox" name="selectedBookIds" th:value="${book.bookId}" th:data-qty="${quantities.get(book.bookId)}" checked>
+                            <input class="form-check-input book-select-checkbox cart-checkbox" type="checkbox" name="selectedBookIds" th:value="${book.bookId}" th:data-qty="${quantities.get(book.bookId)}" 
+                                   th:disabled="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" 
+                                   th:checked="${availableStocks.get(book.bookId) >= quantities.get(book.bookId)}">
                         </div>
                         <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/120/160'}" class="img-fluid rounded" style="width: 60px; height: 80px; object-fit: cover;" alt="Book Cover">
                         <div>
                             <h6 class="fw-bold m-0 font-playfair text-dark" th:text="${book.title}">Tên sách</h6>
                             <small class="text-muted d-block my-1"><i class="bi bi-tag-fill me-1"></i><span th:text="${book.genre != null ? book.genre.genreName : #messages.msg('member.cart.defaultGenre')}"></span></small>
-                            <span class="badge bg-success text-white small" style="background-color: #2f855a !important;" th:text="#{member.cart.available}">Có sẵn vật lý</span>
+                            
+                            <!-- Hiển thị badge có sẵn / hết sách -->
+                            <span th:if="${availableStocks.get(book.bookId) >= quantities.get(book.bookId)}" class="badge bg-success text-white small" style="background-color: #2f855a !important;" th:text="#{member.cart.available}">Có sẵn vật lý</span>
+                            <span th:if="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" class="badge bg-danger text-white small" style="background-color: #c5221f !important;" th:text="#{member.cart.outOfStock}">Hết sách vật lý</span>
+                            
                             <span class="badge bg-secondary text-white small ms-1" style="background-color: #8b5a2b !important;" th:text="#{member.cart.qtyPrefix} + ${quantities.get(book.bookId)}">Số lượng: 1</span>
+                            
+                            <!-- Thông báo chữ đỏ khi sách đã hết -->
+                            <div th:if="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" class="text-danger small mt-1 font-weight-bold" th:text="#{member.cart.outOfStockNotice}">Sách này hiện đã hết trong kho do người khác mượn trước!</div>
                         </div>
                     </div>
                     <form th:action="@{/member/cart/remove}" method="post" class="m-0">
@@ -226,7 +235,11 @@
 
             if (selectAll) {
                 selectAll.addEventListener("change", function() {
-                    checkboxes.forEach(cb => cb.checked = this.checked);
+                    checkboxes.forEach(cb => {
+                        if (!cb.disabled) {
+                            cb.checked = this.checked;
+                        }
+                    });
                     calculateRealtimeFee();
                 });
             }
@@ -234,9 +247,9 @@
             checkboxes.forEach(cb => {
                 cb.addEventListener("change", function() {
                     if (selectAll) {
-                        const totalCBs = document.querySelectorAll(".book-select-checkbox").length;
+                        const totalCBs = document.querySelectorAll(".book-select-checkbox:not(:disabled)").length;
                         const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
-                        selectAll.checked = (checkedCount === totalCBs);
+                        selectAll.checked = (checkedCount === totalCBs && totalCBs > 0);
                     }
                     calculateRealtimeFee();
                 });
