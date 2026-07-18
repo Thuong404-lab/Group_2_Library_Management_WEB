@@ -270,7 +270,9 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" onclick="showRejectReasonModal(this)">
+                            <button type="button" class="borrow-danger-button" 
+                                    th:data-book-title="${#strings.listJoin(requestDetails.![book.title], ', ')}"
+                                    onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
                             </button>
                         </form>
@@ -312,7 +314,9 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/loan/renew/reject/{id}(id=${selectedRenewal.borrowDetailId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" onclick="showRejectReasonModal(this)">
+                            <button type="button" class="borrow-danger-button" 
+                                    th:data-book-title="${selectedRenewal.book.title}"
+                                    onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRenewal}">Reject Renewal</span>
                             </button>
                         </form>
@@ -372,7 +376,9 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/reservations/reject/{id}(id=${selectedReservation.reservationId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" onclick="showRejectReasonModal(this)">
+                            <button type="button" class="borrow-danger-button" 
+                                    th:data-book-title="${selectedReservation.book.title}"
+                                    onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
                             </button>
                         </form>
@@ -411,36 +417,31 @@
     </div>
 
     <!-- Reusable reject reason modal -->
-    <div class="modal fade borrow-modal borrow-confirm-modal" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true">
+    <div class="modal fade acquisition-reject-modal" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title text-danger" id="rejectReasonModalLabel">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <span th:text="#{librarian.borrowDesk.rejectTitle}">Reject Request</span>
-                    </h2>
-                    <button type="button" class="app-icon-action" data-bs-dismiss="modal" th:aria-label="#{common.close}">
-                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    <div>
+                        <h2 class="modal-title" id="rejectReasonModalLabel" th:text="#{librarian.borrowDesk.rejectTitle}">Reject Request</h2>
+                        <p id="rejectReasonBookTitle" style="margin: 4px 0 0; color: var(--app-color-muted); font-size: 13px;"></p>
+                    </div>
+                    <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}">
+                        <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
-                <form id="rejectReasonForm" method="post" onsubmit="return validateRejectForm(event)">
+                <form id="rejectReasonForm" method="post" novalidate>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="rejectReasonText" class="form-label fw-bold mb-2 text-dark" th:text="#{librarian.borrowDesk.rejectReasonLabel}">Please enter rejection reason:</label>
-                            <textarea id="rejectReasonText" name="reason" class="form-control" rows="4" required minlength="5" maxlength="500" 
-                                      th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}"
-                                      style="border-radius: 8px; border: 1px solid #ced4da; padding: 10px; width: 100%; font-size: 0.95rem; resize: none;"></textarea>
-                            <div class="d-flex justify-content-between mt-1">
-                                <span id="rejectReasonError" class="text-danger small fw-semibold"></span>
-                                <span id="rejectReasonCount" class="text-muted small">0/500</span>
-                            </div>
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <label for="rejectReasonText" th:text="#{librarian.borrowDesk.rejectReasonLabel}">Rejection Reason</label>
+                        <textarea id="rejectReasonText" name="reason" required minlength="5" maxlength="500" th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}" aria-describedby="rejectReasonCount rejectReasonError"></textarea>
+                        <div class="acquisition-reason-support">
+                            <span id="rejectReasonCount" aria-live="polite">0/500</span>
                         </div>
+                        <div id="rejectReasonError" class="acquisition-field-error" role="alert" aria-live="assertive"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="borrow-secondary-button" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                        <button type="submit" class="borrow-danger-button px-4">
-                            <span th:text="#{librarian.borrowDesk.rejectConfirmAction}">Confirm Rejection</span>
-                        </button>
+                        <button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                        <button type="submit" class="acquisition-modal-reject" th:text="#{librarian.borrowDesk.rejectConfirmAction}">Reject Request</button>
                     </div>
                 </form>
             </div>
@@ -477,44 +478,55 @@
             const modalForm = document.getElementById('rejectReasonForm');
             modalForm.action = rejectFormAction;
             
+            const titleEl = document.getElementById('rejectReasonBookTitle');
+            if (titleEl) {
+                titleEl.textContent = button.dataset.bookTitle || "";
+            }
+            
             // Reset input
             const textarea = document.getElementById('rejectReasonText');
             textarea.value = "";
+            textarea.classList.remove('is-invalid');
             document.getElementById('rejectReasonCount').textContent = "0/500";
             document.getElementById('rejectReasonError').textContent = "";
-            textarea.classList.remove('is-invalid');
             
             bootstrap.Modal.getOrCreateInstance(document.getElementById('rejectReasonModal')).show();
         }
 
-        function validateRejectForm(event) {
-            const textarea = document.getElementById('rejectReasonText');
-            const reason = textarea.value.trim();
-            const errorSpan = document.getElementById('rejectReasonError');
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("rejectReasonForm");
+            const reason = document.getElementById("rejectReasonText");
+            const error = document.getElementById("rejectReasonError");
+            const counter = document.getElementById("rejectReasonCount");
+            if (!form || !reason || !error || !counter) return;
             
-            if (reason.length < 5) {
-                event.preventDefault();
-                const errorMsg = /*[[#{librarian.borrowDesk.validationReasonRequired}]]*/ "Please enter a valid rejection reason (min 5 characters).";
-                errorSpan.textContent = errorMsg;
-                textarea.classList.add('is-invalid');
-                return false;
-            }
-            return true;
-        }
-
-        // Live counter
-        document.addEventListener('DOMContentLoaded', function() {
-            const textarea = document.getElementById('rejectReasonText');
-            if (textarea) {
-                textarea.addEventListener('input', function() {
-                    const length = this.value.length;
-                    document.getElementById('rejectReasonCount').textContent = length + "/500";
-                    if (length >= 5) {
-                        document.getElementById('rejectReasonError').textContent = "";
-                        this.classList.remove('is-invalid');
-                    }
-                });
-            }
+            const messages = {
+                required: /*[[#{librarian.acquisition.validationRequired}]]*/ "A rejection reason is required.",
+                minimum: /*[[#{librarian.acquisition.validationMinimum}]]*/ "The reason must contain at least 5 characters.",
+                maximum: /*[[#{librarian.acquisition.validationMaximum}]]*/ "The reason cannot exceed 500 characters.",
+                letters: /*[[#{librarian.acquisition.validationLetters}]]*/ "The reason must contain letters."
+            };
+            
+            const updateCounter = () => { counter.textContent = reason.value.length + "/500"; };
+            
+            form.addEventListener("submit", function (event) {
+                const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                reason.value = value;
+                updateCounter();
+                const message = value === "" ? messages.required : value.length < 5 ? messages.minimum : value.length > 500 ? messages.maximum : !/\p{L}/u.test(value) ? messages.letters : "";
+                if (message) {
+                    event.preventDefault();
+                    reason.classList.add("is-invalid");
+                    error.textContent = message;
+                    reason.focus();
+                }
+            });
+            
+            reason.addEventListener("input", function () {
+                reason.classList.remove("is-invalid");
+                error.textContent = "";
+                updateCounter();
+            });
         });
 
         // --- LOGIC GHI NHỚ TAB ACTIVE BẰNG SESSION STORAGE ---
