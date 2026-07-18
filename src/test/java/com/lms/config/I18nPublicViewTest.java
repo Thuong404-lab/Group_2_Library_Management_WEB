@@ -41,6 +41,18 @@ class I18nPublicViewTest {
     }
 
     @Test
+    void authenticationPagesResolveAllMessagesInBothLanguages() throws Exception {
+        for (String language : java.util.List.of("en", "vi")) {
+            for (String path : java.util.List.of("/login", "/staff-login", "/register", "/forgot-password")) {
+                mockMvc.perform(get(path).param("lang", language))
+                        .andExpect(status().isOk())
+                        .andExpect(content().string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("??"))));
+            }
+        }
+    }
+
+    @Test
     void catalogPageUsesEnglishByDefault() throws Exception {
         mockMvc.perform(get("/books"))
                 .andExpect(status().isOk())
