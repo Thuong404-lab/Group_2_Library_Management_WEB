@@ -35,8 +35,10 @@ public class AdminProfileController extends LocalizedControllerSupport {
         if (principal == null)
             return "redirect:/login";
         String username = principal.getName();
-        User admin = profileService.getProfile(username);
-        model.addAttribute("admin", admin);
+        if (!model.containsAttribute("admin")) {
+            User admin = profileService.getProfile(username);
+            model.addAttribute("admin", admin);
+        }
         return "admin/profile";
     }
 
@@ -53,7 +55,8 @@ public class AdminProfileController extends LocalizedControllerSupport {
 
         try {
             String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -69,7 +72,22 @@ public class AdminProfileController extends LocalizedControllerSupport {
 
             redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
+                String field = ((com.lms.exception.ValidationException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            }
+            User tempUser = new User();
+            tempUser.setFullName(fullName);
+            tempUser.setEmail(email);
+            tempUser.setPhone(phone);
+            try {
+                User current = profileService.getProfile(principal.getName());
+                tempUser.setAvatar(current.getAvatar());
+                tempUser.setStatus(current.getStatus());
+            } catch (Exception ignored) {}
+            redirectAttributes.addFlashAttribute("admin", tempUser);
         }
         return "redirect:/admin/profile";
     }
