@@ -8,8 +8,12 @@ import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
 import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
+import com.lms.service.LocalizedMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Autowired
     private MessageSource messageSource;
+    @Autowired
+    private LocalizedMessageService localizedMessageService = LocalizedMessageService.fallback();
 
     public LibrarianInteractionServiceImpl(FeedbackRepository feedbackRepository,
                                            MemberRepository memberRepository,
@@ -108,8 +114,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
         sendPersonalNotification(
                 feedback.getMember(),
-                msg("notification.reviewReply.title"),
-                msg("notification.reviewReply.content", feedback.getBook().getTitle())
+                NotificationType.REVIEW, NotificationEventType.REVIEW_REPLIED,
+                "notification.reviewReply.title",
+                "notification.reviewReply.content",
+                feedback.getBook().getTitle()
         );
 
         return isEditing;
@@ -124,10 +132,17 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         feedbackRepository.delete(feedback);
     }
 
-    private void sendPersonalNotification(Member member, String title, String content) {
+    private void sendPersonalNotification(Member member,
+                                          NotificationType type,
+                                          NotificationEventType eventType,
+                                          String titleKey,
+                                          String contentKey,
+                                          Object... arguments) {
         Notification notif = new Notification();
-        notif.setTitle(title);
-        notif.setContent(content);
+        localizedMessageService.prepareNotification(notif, titleKey, contentKey, arguments);
+        notif.setNotificationType(type);
+        notif.setEventType(eventType);
+        notif.setNotificationSource(NotificationSource.LIBRARIAN);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus("Active");
 
@@ -151,7 +166,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Override
     @Transactional(readOnly = true)
     public List<Member> getAllMembers() {
-        return memberRepository.findAll();
+        return memberRepository.findAllWithActiveAccount();
     }
 
     @Override
@@ -163,6 +178,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
         if (request.getNotificationType() == null) {
             throw new ValidationException(msg("backend.librarian.notification.typeRequired"));
+        }
+
+        if (!request.getNotificationType().isManualSelectable()) {
+            throw new ValidationException(msg("backend.librarian.notification.typeInvalidForManual"));
         }
 
         String normalizedTitle = request.getTitle() == null ? "" : request.getTitle().trim().replaceAll("\\s+", " ");
@@ -198,7 +217,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
         switch (request.getRecipientType()) {
             case ALL:
-                members = memberRepository.findAll();
+                members = memberRepository.findAllWithActiveAccount();
                 break;
 
             case SELECTED:
@@ -206,10 +225,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                     throw new ValidationException(msg("backend.librarian.notification.memberRequired"));
                 }
 
-                members = memberRepository.findAllById(request.getMemberIds());
+                members = memberRepository.findAllWithActiveAccountByMemberIdIn(request.getMemberIds());
 
                 if (members.size() != request.getMemberIds().size()) {
-                    throw new ResourceNotFoundException(msg("backend.librarian.notification.memberNotFound"));
+                    throw new ResourceNotFoundException(msg("backend.librarian.notification.memberUnavailable"));
                 }
                 break;
 
@@ -217,10 +236,16 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                 throw new ValidationException(msg("backend.librarian.notification.recipientInvalid"));
         }
 
+        if (members.isEmpty()) {
+            throw new ValidationException(msg("backend.librarian.notification.noActiveMembers"));
+        }
+
         Notification notification = new Notification();
         notification.setTitle(normalizedTitle);
         notification.setContent(normalizedContent);
         notification.setNotificationType(request.getNotificationType());
+        notification.setEventType(NotificationEventType.MANUAL);
+        notification.setNotificationSource(NotificationSource.LIBRARIAN);
         notification.setStaff(sender);
         notification.setStatus("Active");
         notification.setCreatedDate(LocalDateTime.now());
@@ -262,8 +287,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         bookAcquisitionRequestRepository.save(request);
         sendPersonalNotification(
                 request.getMember(),
-                msg("notification.acquisitionApproved.title"),
-                msg("notification.acquisitionApproved.content", request.getTitle())
+                NotificationType.ACQUISITION, NotificationEventType.ACQUISITION_APPROVED,
+                "notification.acquisitionApproved.title",
+                "notification.acquisitionApproved.content",
+                request.getTitle()
         );
     }
 
@@ -292,8 +319,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         bookAcquisitionRequestRepository.save(request);
         sendPersonalNotification(
                 request.getMember(),
-                msg("notification.acquisitionRejected.title"),
-                msg("notification.acquisitionRejected.content", request.getTitle(), normalizedReason)
+                NotificationType.ACQUISITION, NotificationEventType.ACQUISITION_REJECTED,
+                "notification.acquisitionRejected.title",
+                "notification.acquisitionRejected.content",
+                request.getTitle(), normalizedReason
         );
     }
 

@@ -6,6 +6,9 @@ import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ForbiddenException;
 import com.lms.exception.ResourceNotFoundException;
@@ -83,10 +86,12 @@ public class FineBatchPaymentService {
             lockedTransactionRepository.save(fine);
         }
 
-        createNotification(wallet.getMember(),
-                messages.get("systemNotification.fine.walletPaid.title"),
-                messages.get("systemNotification.fine.walletBatchPaid.content",
-                        formatMoney(total), lockedFines.size(), formatMoney(wallet.getBalance())));
+        createNotification(
+                wallet.getMember(),
+                NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.SYSTEM,
+                "systemNotification.fine.walletPaid.title",
+                "systemNotification.fine.walletBatchPaid.content",
+                total, lockedFines.size(), wallet.getBalance());
     }
 
     @Transactional(readOnly = true)
@@ -108,10 +113,12 @@ public class FineBatchPaymentService {
             fine.setTransactionDate(paidAt);
             lockedTransactionRepository.save(fine);
         }
-        createNotification(fines.get(0).getWallet().getMember(),
-                messages.get("systemNotification.fine.cashPaid.title"),
-                messages.get("systemNotification.fine.cashBatchPaid.content",
-                        formatMoney(total), fines.size()));
+        createNotification(
+                fines.get(0).getWallet().getMember(),
+                NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.LIBRARIAN,
+                "systemNotification.fine.cashPaid.title",
+                "systemNotification.fine.cashBatchPaid.content",
+                total, fines.size());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -137,10 +144,12 @@ public class FineBatchPaymentService {
             fine.setTransactionDate(paidAt);
             lockedTransactionRepository.save(fine);
         }
-        createNotification(wallet.getMember(),
-                messages.get("systemNotification.fine.walletPaid.title"),
-                messages.get("systemNotification.fine.walletBatchPaid.content",
-                        formatMoney(total), fines.size(), formatMoney(wallet.getBalance())));
+        createNotification(
+                wallet.getMember(),
+                NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.LIBRARIAN,
+                "systemNotification.fine.walletPaid.title",
+                "systemNotification.fine.walletBatchPaid.content",
+                total, fines.size(), wallet.getBalance());
     }
 
     private List<Transaction> lockBorrowFines(Integer borrowId) {
@@ -168,13 +177,21 @@ public class FineBatchPaymentService {
         return locked;
     }
 
-    private void createNotification(Member member, String title, String content) {
+    private void createNotification(Member member,
+                                    NotificationType type,
+                                    NotificationEventType eventType,
+                                    NotificationSource source,
+                                    String titleKey,
+                                    String contentKey,
+                                    Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             return;
         }
         Notification notification = new Notification();
-        notification.setTitle(title);
-        notification.setContent(content);
+        messages.prepareNotification(notification, titleKey, contentKey, arguments);
+        notification.setNotificationType(type);
+        notification.setEventType(eventType);
+        notification.setNotificationSource(source);
         notification.setCreatedDate(LocalDateTime.now());
         notification.setStatus("Active");
         notification = notificationRepository.save(notification);
@@ -185,10 +202,6 @@ public class FineBatchPaymentService {
         memberNotification.setNotification(notification);
         memberNotification.setIsRead(false);
         memberNotificationRepository.save(memberNotification);
-    }
-
-    private String formatMoney(BigDecimal amount) {
-        return messages.get("currency.vndAmount", String.format("%,.0f", amount));
     }
 
     private void validateFine(Transaction fine, Integer memberId) {

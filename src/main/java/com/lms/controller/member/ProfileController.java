@@ -79,7 +79,7 @@ public class ProfileController extends LocalizedControllerSupport {
 
         String currentUsername = principal.getName();
         String newUsername = currentUsername;
-        
+
         if (username != null) {
             newUsername = username.trim();
             if (newUsername.isEmpty()) {
@@ -94,7 +94,7 @@ public class ProfileController extends LocalizedControllerSupport {
                 return "redirect:/member/profile";
             }
         }
-        
+
         try {
             String currentEmail = profileService.getProfile(currentUsername).getEmail();
             profileService.updateProfile(currentUsername, newUsername, fullName, currentEmail, phone, avatarFile);
@@ -110,7 +110,7 @@ public class ProfileController extends LocalizedControllerSupport {
                 sessionUser.setAvatar(updatedUser.getAvatar());
                 sessionUser.setEmail(updatedUser.getEmail());
                 sessionUser.setPhone(updatedUser.getPhone());
-                
+
                 if (!currentUsername.equals(newUsername)) {
                     CustomUserDetails newCustomUserDetails = new CustomUserDetails(
                         sessionUser, newUsername, customUserDetails.getPassword(),
@@ -118,7 +118,7 @@ public class ProfileController extends LocalizedControllerSupport {
                         customUserDetails.getAccountId(), customUserDetails.getAuthorities(),
                         customUserDetails.getAttributes()
                     );
-                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken newAuth = 
+                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken newAuth =
                         new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                             newCustomUserDetails, authentication.getCredentials(), authentication.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(newAuth);
@@ -138,7 +138,7 @@ public class ProfileController extends LocalizedControllerSupport {
                 redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
             }
             redirectAttributes.addFlashAttribute("failedUsername", newUsername);
-            
+
             // Preserve user input on error
             User tempUser = new User();
             tempUser.setFullName(fullName);
@@ -149,7 +149,7 @@ public class ProfileController extends LocalizedControllerSupport {
                 tempUser.setStatus(profileService.getProfile(currentUsername).getStatus());
             } catch (Exception ignored) {}
             redirectAttributes.addFlashAttribute("member", tempUser);
-            
+
             return "redirect:/member/profile";
         }
     }
@@ -193,6 +193,8 @@ public class ProfileController extends LocalizedControllerSupport {
 
         model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
                 principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
+        model.addAttribute("availableFavoriteBookIds",
+                memberFavoriteService.getAvailableFavoriteBookIds(principal.getName()));
 
         return "member/favorites";
     }

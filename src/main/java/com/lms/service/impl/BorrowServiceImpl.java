@@ -19,6 +19,9 @@ import com.lms.entity.SystemSetting;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
 import com.lms.enums.ActionType;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.enums.UserStatus;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ForbiddenException;
@@ -209,9 +212,10 @@ public class BorrowServiceImpl implements BorrowService {
         
         // Gửi thông báo trực tiếp cho độc giả khi tạo phiếu mượn thành công tại quầy
         sendInternalNotification(member,
-                localizedMessageService.get("systemNotification.borrow.success.title"),
-                localizedMessageService.get("systemNotification.borrow.desk.content", bookNames, borrow.getBorrowId(),
-                        LocalDateTime.now().plusDays(borrowDays).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.success.title",
+                "systemNotification.borrow.desk.content", bookNames, borrow.getBorrowId(),
+                LocalDateTime.now().plusDays(borrowDays).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
         return borrow;
     }
@@ -333,8 +337,9 @@ public class BorrowServiceImpl implements BorrowService {
                         book.getTitle(), borrowDays));
                         
         sendInternalNotification(member,
-                localizedMessageService.get("systemNotification.borrow.requested.title"),
-                localizedMessageService.get("systemNotification.borrow.requested.content", book.getTitle()));
+                NotificationType.LOAN, NotificationEventType.LOAN_REQUESTED, NotificationSource.SYSTEM,
+                "systemNotification.borrow.requested.title",
+                "systemNotification.borrow.requested.content", book.getTitle());
 
         return borrow;
     }
@@ -366,8 +371,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         // Gửi thông báo đến member
         sendInternalNotification(member,
-                localizedMessageService.get("systemNotification.borrow.rejected.title"),
-                localizedMessageService.get("systemNotification.borrow.rejected.content", bookNames, borrowId));
+                NotificationType.LOAN, NotificationEventType.LOAN_REJECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.rejected.title",
+                "systemNotification.borrow.rejected.content", bookNames, borrowId);
     }
 
     @Override
@@ -461,9 +467,10 @@ public class BorrowServiceImpl implements BorrowService {
                 .map(d -> d.getBook().getTitle())
                 .collect(Collectors.joining(", "));
         sendInternalNotification(member,
-                localizedMessageService.get("systemNotification.borrow.approved.title"),
-                localizedMessageService.get("systemNotification.borrow.approvedWithFee.content",
-                        bookNames, String.format("%,.0f", finalFee)));
+                NotificationType.LOAN, NotificationEventType.LOAN_APPROVED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.approved.title",
+                "systemNotification.borrow.approvedWithFee.content",
+                bookNames, finalFee);
     }
 
     @Override
@@ -510,10 +517,11 @@ public class BorrowServiceImpl implements BorrowService {
                 .map(d -> d.getBook().getTitle())
                 .collect(Collectors.joining(", "));
         sendInternalNotification(borrow.getMember(),
-                localizedMessageService.get("systemNotification.borrow.pickup.title"),
-                localizedMessageService.get("systemNotification.borrow.pickup.content", bookNames, borrowDays,
-                        pickupTime.plusDays(borrowDays)
-                                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.pickup.title",
+                "systemNotification.borrow.pickup.content", bookNames, borrowDays,
+                pickupTime.plusDays(borrowDays)
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @Override
@@ -613,8 +621,9 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setStatus("Active");
         reservationRepository.save(reservation);
         sendInternalNotification(reservation.getMember(),
-                localizedMessageService.get("systemNotification.reservation.approved.title"),
-                localizedMessageService.get("systemNotification.reservation.approved.content", reservation.getBook().getTitle()));
+                NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.LIBRARIAN,
+                "systemNotification.reservation.approved.title",
+                "systemNotification.reservation.approved.content", reservation.getBook().getTitle());
     }
 
     @Override
@@ -650,19 +659,22 @@ public class BorrowServiceImpl implements BorrowService {
                 transactionRepository.save(tx);
 
                 sendInternalNotification(member,
-                        localizedMessageService.get("systemNotification.reservation.refund.title"),
-                        localizedMessageService.get("systemNotification.reservation.refund.content",
-                                refundAmount.toPlainString(), reservation.getBook().getTitle()));
+                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_REFUNDED, NotificationSource.LIBRARIAN,
+                        "systemNotification.reservation.refund.title",
+                        "systemNotification.reservation.refund.content",
+                        refundAmount, reservation.getBook().getTitle());
             }
         }
 
         reservation.setStatus("Rejected");
         reservationRepository.save(reservation);
         sendInternalNotification(reservation.getMember(),
-                localizedMessageService.get("systemNotification.reservation.rejected.title"),
-                localizedMessageService.get("systemNotification.reservation.rejectedWithRefund.content",
-                        reservation.getBook().getTitle(), reservationId,
-                        isDepositPaid ? localizedMessageService.get("systemNotification.reservation.refundSuffix") : ""));
+                NotificationType.RESERVATION, NotificationEventType.RESERVATION_REJECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.reservation.rejected.title",
+                isDepositPaid
+                        ? "systemNotification.reservation.rejectedWithDepositRefund.content"
+                        : "systemNotification.reservation.rejectedWithoutDeposit.content",
+                reservation.getBook().getTitle(), reservationId);
     }
 
     @Override
@@ -886,13 +898,21 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElse(null);
     }
 
-    private void sendInternalNotification(Member member, String title, String content) {
+    private void sendInternalNotification(Member member,
+                                          NotificationType type,
+                                          NotificationEventType eventType,
+                                          NotificationSource source,
+                                          String titleKey,
+                                          String contentKey,
+                                          Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             return;
         }
         Notification notif = new Notification();
-        notif.setTitle(title);
-        notif.setContent(content);
+        localizedMessageService.prepareNotification(notif, titleKey, contentKey, arguments);
+        notif.setNotificationType(type);
+        notif.setEventType(eventType);
+        notif.setNotificationSource(source);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus("Active");
         Notification saved = notificationRepository.save(notif);
@@ -917,10 +937,10 @@ public class BorrowServiceImpl implements BorrowService {
                 .max(LocalDateTime::compareTo)
                 .orElse(LocalDateTime.now());
         sendInternalNotification(borrow.getMember(),
-                localizedMessageService.get("systemNotification.borrow.success.title"),
-                localizedMessageService.get("systemNotification.borrow.bankConfirmed.content", bookNames,
-                        borrow.getBorrowId(),
-                        dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.SYSTEM,
+                "systemNotification.borrow.success.title",
+                "systemNotification.borrow.bankConfirmed.content", bookNames,
+                borrow.getBorrowId(), dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     private String getAuthorNames(Book book) {
@@ -1023,8 +1043,9 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         sendInternalNotification(borrow.getMember(),
-                localizedMessageService.get("systemNotification.return.approved.title"),
-                localizedMessageService.get("systemNotification.return.approved.content", borrowId));
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.approved.title",
+                "systemNotification.return.approved.content", borrowId);
     }
 
     @Override

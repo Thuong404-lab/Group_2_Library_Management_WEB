@@ -1,29 +1,37 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
   <body>
-    <div
+    <nav
       th:fragment="switcher"
-      class="btn-group btn-group-sm me-3 mr-3"
+      class="language-switcher me-3 mr-3"
       role="group"
       th:aria-label="#{language.selector.label}"
     >
+      <span class="language-switcher__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="8.5"></circle>
+          <path d="M3.75 12h16.5M12 3.5c2.15 2.3 3.25 5.1 3.25 8.5S14.15 18.2 12 20.5M12 3.5C9.85 5.8 8.75 8.6 8.75 12s1.1 6.2 3.25 8.5"></path>
+        </svg>
+      </span>
       <a
         href="?lang=en"
         data-language="en"
-        class="btn btn-outline-secondary js-language-switch"
+        class="language-switcher__option js-language-switch"
         th:classappend="${#locale.language == 'en'} ? ' active'"
         th:aria-current="${#locale.language == 'en'} ? 'true' : null"
+        th:aria-label="#{language.switch.english}"
         th:title="#{language.switch.english}"
       >EN</a>
       <a
         href="?lang=vi"
         data-language="vi"
-        class="btn btn-outline-secondary js-language-switch"
+        class="language-switcher__option js-language-switch"
         th:classappend="${#locale.language == 'vi'} ? ' active'"
         th:aria-current="${#locale.language == 'vi'} ? 'true' : null"
+        th:aria-label="#{language.switch.vietnamese}"
         th:title="#{language.switch.vietnamese}"
       >VI</a>
-    </div>
+    </nav>
 
     <script th:fragment="script">
       document.querySelectorAll(".js-language-switch").forEach(function (link) {

@@ -115,32 +115,32 @@ public class GuestController extends LocalizedControllerSupport {
     @GetMapping("/about")
     public String aboutPage(Model model) {
         Map<String, String> settings = systemService.getSettingMap();
-        
+
         // Pass string values or default fallbacks
         model.addAttribute("maxBorrowDays", settings.getOrDefault("Max_Borrow_Days", "14"));
         model.addAttribute("maxRenewalDays", settings.getOrDefault("Max_Renewal_Days", "7"));
         model.addAttribute("damageCompensationThreshold", settings.getOrDefault("Damage_Compensation_Threshold", "50"));
         model.addAttribute("overdueViolationLockLimit", settings.getOrDefault("Overdue_Violation_Lock_Limit", "3"));
-        
+
         // Parse numeric currency values
         try {
             model.addAttribute("finePerDay", Long.parseLong(settings.getOrDefault("Fine_Per_Day", "5000")));
         } catch (NumberFormatException e) {
             model.addAttribute("finePerDay", 5000L);
         }
-        
+
         try {
             model.addAttribute("borrowFeePerBook", Long.parseLong(settings.getOrDefault("Borrow_Fee_Per_Book", "5000")));
         } catch (NumberFormatException e) {
             model.addAttribute("borrowFeePerBook", 5000L);
         }
-        
+
         try {
             model.addAttribute("depositAmount", Long.parseLong(settings.getOrDefault("Deposit_Amount", "50000")));
         } catch (NumberFormatException e) {
             model.addAttribute("depositAmount", 50000L);
         }
-        
+
         try {
             model.addAttribute("damageCompensationAmount", Long.parseLong(settings.getOrDefault("Damage_Compensation_Amount", "120000")));
         } catch (NumberFormatException e) {

@@ -9,7 +9,9 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.lms.enums.NotificationEventType;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,8 +19,19 @@ import java.util.List;
 public interface MemberNotificationRepository extends JpaRepository<MemberNotification, MemberNotificationId> {
 
     @EntityGraph(attributePaths = {"notification", "notification.staff"})
-    Page<MemberNotification> findByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId,
-                                                                                       Pageable pageable);
+    @Query("""
+            select mn
+            from MemberNotification mn
+            where mn.member.memberId = :memberId
+              and (:source is null or mn.notification.notificationSource = :source)
+              and (:type is null or mn.notification.notificationType = :type)
+            order by mn.notification.createdDate desc
+            """)
+    Page<MemberNotification> findNotificationPage(
+            @Param("memberId") Integer memberId,
+            @Param("source") com.lms.enums.NotificationSource source,
+            @Param("type") com.lms.enums.NotificationType type,
+            Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
@@ -36,10 +49,12 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
     @EntityGraph(attributePaths = {"notification", "notification.staff"})
     List<MemberNotification> findTop20ByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
 
-    @EntityGraph(attributePaths = {"notification", "notification.staff"})
-    List<MemberNotification> findByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
-
     long countByMember_MemberIdAndIsReadFalse(Integer memberId);
+
+    long countByMember_MemberId(Integer memberId);
+
+    long countByMember_MemberIdAndNotification_NotificationSource(
+            Integer memberId, com.lms.enums.NotificationSource source);
 
     List<MemberNotification> findByMemberMemberIdAndNotificationTitleContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
             Integer memberId,
@@ -49,20 +64,21 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
             Integer memberId,
             String content);
 
+    Page<MemberNotification> findByMember_MemberIdAndNotification_EventTypeOrderByNotification_CreatedDateDesc(
+            Integer memberId,
+            NotificationEventType eventType,
+            Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
-            select mn
-            from MemberNotification mn
+            update MemberNotification mn
+            set mn.isRead = true, mn.readDate = :readDate
             where mn.member.memberId = :memberId
-              and (
-                    lower(mn.notification.title) like lower(concat('%', :keyword, '%'))
-                 or lower(mn.notification.content) like lower(concat('%', :keyword, '%'))
-                 or lower(mn.notification.title) like lower(concat('%', :alternateKeyword, '%'))
-                 or lower(mn.notification.content) like lower(concat('%', :alternateKeyword, '%'))
-              )
-            order by mn.notification.createdDate desc
+              and mn.notification.eventType = :eventType
+              and mn.isRead = false
             """)
-    Page<MemberNotification> findTopupNotifications(@Param("memberId") Integer memberId,
-                                                    @Param("keyword") String keyword,
-                                                    @Param("alternateKeyword") String alternateKeyword,
-                                                    Pageable pageable);
+    int markUnreadNotificationsAsReadByEventType(@Param("memberId") Integer memberId,
+                                                  @Param("eventType") NotificationEventType eventType,
+                                                  @Param("readDate") java.time.LocalDateTime readDate);
 }

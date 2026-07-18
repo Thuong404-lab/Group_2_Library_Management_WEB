@@ -81,8 +81,10 @@ class OverdueReminderServiceTest {
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification savedNotification = notificationCaptor.getValue();
         assertTrue(savedNotification.getContent().contains("Sapiens"));
-        assertTrue(savedNotification.getContent().contains("4 ngày"));
-        assertTrue(savedNotification.getContent().contains("Mã lượt mượn: #11"));
+        assertTrue(savedNotification.getContent().contains("4 days"));
+        assertTrue(savedNotification.getContent().contains("Loan detail ID: #11"));
+        assertTrue("systemNotification.overdue.title".equals(savedNotification.getTitleKey()));
+        assertTrue("systemNotification.overdue.content".equals(savedNotification.getContentKey()));
 
         ArgumentCaptor<MemberNotification> memberNotificationCaptor =
                 ArgumentCaptor.forClass(MemberNotification.class);

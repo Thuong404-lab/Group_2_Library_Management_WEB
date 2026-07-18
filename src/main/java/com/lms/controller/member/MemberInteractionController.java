@@ -24,12 +24,15 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.lms.dto.request.MemberBookAcquisitionRequest;
 import com.lms.service.MemberBookAcquisitionService;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 
 @Controller
 @RequestMapping("/member/interaction")
 public class MemberInteractionController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
+    private static final int NOTIFICATION_PAGE_SIZE = 20;
 
     private final MemberNotificationService memberNotificationService;
     private final MemberReviewService memberReviewService;
@@ -51,26 +54,43 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
     @GetMapping("/notifications")
     public String viewNotifications(Model model,
-                                    Principal principal) {
-        var notifications = memberNotificationService.getAllMyNotifications(principal.getName());
+                                    Principal principal,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "all") String source,
+                                    @RequestParam(defaultValue = "ALL") String type) {
+        NotificationSource sourceFilter = parseNotificationSource(source);
+        NotificationType typeFilter = parseNotificationType(type);
+        var notificationPage = memberNotificationService.getMyNotifications(
+                principal.getName(), sourceFilter, typeFilter,
+                PageRequest.of(Math.max(0, page), NOTIFICATION_PAGE_SIZE));
+        var notifications = notificationPage.getContent();
+        model.addAttribute("notificationPage", notificationPage);
         model.addAttribute("notifications", notifications);
-        model.addAttribute("systemNotifications", notifications.stream()
-                .filter(notification -> !Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
-        model.addAttribute("librarianNotifications", notifications.stream()
-                .filter(notification -> Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
+        model.addAttribute("totalNotificationCount",
+                memberNotificationService.countMyNotifications(principal.getName()));
+        model.addAttribute("systemNotificationCount",
+                memberNotificationService.countMyNotificationsBySource(
+                        principal.getName(), NotificationSource.SYSTEM));
+        model.addAttribute("librarianNotificationCount",
+                memberNotificationService.countMyNotificationsBySource(
+                        principal.getName(), NotificationSource.LIBRARIAN));
+        model.addAttribute("selectedNotificationSource",
+                sourceFilter == null ? "all" : sourceFilter.name().toLowerCase());
+        model.addAttribute("selectedNotificationType",
+                typeFilter == null ? "ALL" : typeFilter.name());
         model.addAttribute("showNotificationBell", false);
 
         return "member/notifications";
     }
 
-    @GetMapping("/notifications/mark-read")
+    @PostMapping("/notifications/mark-read")
     @ResponseBody
     public String markNotificationsAsRead(Principal principal) {
         memberNotificationService.markAllNotificationsAsRead(principal.getName());
         return "OK";
     }
 
-    @GetMapping("/notifications/{notificationId}/mark-read")
+    @PostMapping("/notifications/{notificationId}/mark-read")
     @ResponseBody
     public Map<String, Long> markNotificationAsRead(@PathVariable Integer notificationId,
                                                      Principal principal) {
@@ -247,13 +267,8 @@ public class MemberInteractionController extends LocalizedControllerSupport {
     }
 
     @GetMapping("/favorites")
-    public String viewFavorites(Model model,
-                                Principal principal,
-                                @RequestParam(defaultValue = "0") int page) {
-        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
-                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
-
-        return "member/favorites";
+    public String redirectToCanonicalFavorites() {
+        return "redirect:/member/favorites";
     }
 
     @PostMapping("/favorites/{bookId}/add")
@@ -281,7 +296,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
         return org.springframework.http.ResponseEntity
                 .status(org.springframework.http.HttpStatus.SEE_OTHER)
-                .location(URI.create(referer != null && !referer.isBlank() ? referer : "/books"))
+                .location(URI.create(localRedirectTarget(referer)))
                 .build();
     }
 
@@ -303,6 +318,47 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
     private boolean isAjax(String requestedWith) {
         return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
+    }
+
+    private String localRedirectTarget(String referer) {
+        if (referer == null || referer.isBlank()) {
+            return "/books";
+        }
+        try {
+            URI uri = URI.create(referer);
+            String path = uri.getPath();
+            if (path == null || !path.startsWith("/") || path.startsWith("//")) {
+                return "/books";
+            }
+            StringBuilder target = new StringBuilder(path);
+            if (uri.getQuery() != null) target.append('?').append(uri.getQuery());
+            if (uri.getFragment() != null) target.append('#').append(uri.getFragment());
+            return target.toString();
+        } catch (IllegalArgumentException exception) {
+            return "/books";
+        }
+    }
+
+    private NotificationSource parseNotificationSource(String value) {
+        if (value == null || value.isBlank() || "all".equalsIgnoreCase(value)) {
+            return null;
+        }
+        try {
+            return NotificationSource.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private NotificationType parseNotificationType(String value) {
+        if (value == null || value.isBlank() || "ALL".equalsIgnoreCase(value)) {
+            return null;
+        }
+        try {
+            return NotificationType.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 
     private Map<String, Object> favoriteJson(boolean favorite, String message) {

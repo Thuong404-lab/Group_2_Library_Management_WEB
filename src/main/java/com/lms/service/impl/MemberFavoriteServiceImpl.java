@@ -1,18 +1,17 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
-import com.lms.enums.ActionType;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
-import com.lms.exception.ValidationException;
 import com.lms.repository.*;
-import com.lms.service.AuditLogService;
-import com.lms.service.FinancialService;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,22 +28,16 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     private final MemberAccountRepository memberAccountRepository;
     private final BookRepository bookRepository;
     private final FavoritesRepository favoritesRepository;
-    private final ReservationRepository reservationRepository;
-    private final FinancialService financialService;
-    private final AuditLogService auditLogService;
+    private final BookItemRepository bookItemRepository;
 
     public MemberFavoriteServiceImpl(MemberAccountRepository memberAccountRepository,
                                      BookRepository bookRepository,
                                      FavoritesRepository favoritesRepository,
-                                     ReservationRepository reservationRepository,
-                                     FinancialService financialService,
-                                     AuditLogService auditLogService) {
+                                     BookItemRepository bookItemRepository) {
         this.memberAccountRepository = memberAccountRepository;
         this.bookRepository = bookRepository;
         this.favoritesRepository = favoritesRepository;
-        this.reservationRepository = reservationRepository;
-        this.financialService = financialService;
-        this.auditLogService = auditLogService;
+        this.bookItemRepository = bookItemRepository;
     }
     //lấy ra thông tin cá nhân của một Độc giả (Member) dựa trên tên đăng nhập (username) của người đó.
     private Member getMemberByUsername(String username) {
@@ -75,7 +68,11 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
         favorites.setMember(member);
         favorites.setBook(book);
 
-        favoritesRepository.saveAndFlush(favorites);
+        try {
+            favoritesRepository.saveAndFlush(favorites);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ConflictException(messages.get("backend.favorite.alreadyAdded"));
+        }
     }
 
     @Override
@@ -103,7 +100,11 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     public Page<Favorites> getMyFavorites(String username, Pageable pageable) {
         Member member = getMemberByUsername(username);
 
-        return favoritesRepository.findByMember_MemberId(member.getMemberId(), pageable);
+        Pageable stablePage = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by("book.title").ascending().and(Sort.by("book.bookId").ascending()));
+        return favoritesRepository.findByMember_MemberId(member.getMemberId(), stablePage);
     }
 
     @Override
@@ -116,31 +117,10 @@ public class MemberFavoriteServiceImpl implements MemberFavoriteService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Reservation reserveBook(String username, Integer bookId) {
+    @Transactional(readOnly = true)
+    public Set<Integer> getAvailableFavoriteBookIds(String username) {
         Member member = getMemberByUsername(username);
-
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
-
-        if (reservationRepository.existsActiveReservationForMemberAndBook(
-                member.getMemberId(), book.getBookId(), List.of("PENDING", "DEPOSIT_PAID", "READY"))) {
-            throw new ConflictException(messages.get("backend.favorite.activeReservationExists"));
-        }
-
-        Reservation reservation = new Reservation();
-        reservation.setMember(member);
-        reservation.setBook(book);
-        reservation.setReservationDate(java.time.LocalDateTime.now());
-        reservation.setStatus("Pending");
-
-        reservation = reservationRepository.saveAndFlush(reservation);
-        financialService.payReservationDeposit(member.getMemberId(), reservation.getReservationId());
-        auditLogService.log(
-                ActionType.RESERVE_BOOK,
-                messages.get("backend.borrow.audit.reservationRequested", username, book.getBookId(), book.getTitle()));
-
-        return reservation;
+        return bookItemRepository.findAvailableFavoriteBookIds(member.getMemberId());
     }
 
     // TRIỂN KHAI BỔ SUNG: Trích xuất danh sách sách để hiển thị Đề Cử trên Dashboard

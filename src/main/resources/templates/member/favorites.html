@@ -36,7 +36,7 @@
                         <tr th:each="favorite : ${favorites.content}">
                             <td class="ps-3 py-3">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="@{'https://picsum.photos/seed/' + ${favorite.book.bookId} + '/100/150'}"
+                                    <img th:src="${favorite.book.coverImageUrl != null and !#strings.isEmpty(favorite.book.coverImageUrl) ? favorite.book.coverImageUrl : 'https://picsum.photos/seed/' + favorite.book.bookId + '/100/150'}"
                                          class="favorite-cover shadow-sm"
                                          alt="Book"
                                          >
@@ -69,21 +69,14 @@
 
                             <td>
                                 <span class="badge status-badge"
-                                      th:classappend="${favorite.book.status == 'Active'} ? '' : ' unavailable'"
-                                      th:text="${favorite.book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">
+                                      th:classappend="${availableFavoriteBookIds != null and availableFavoriteBookIds.contains(favorite.book.bookId)} ? '' : ' unavailable'"
+                                      th:text="${availableFavoriteBookIds != null and availableFavoriteBookIds.contains(favorite.book.bookId) ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">
                                     Available
                                 </span>
                             </td>
 
                             <td class="favorite-action-column">
                                 <div class="favorite-actions d-flex flex-column flex-md-row justify-content-md-end">
-                                    <button type="button"
-                                            class="btn btn-sm btn-favorite-classic u-width-110px-d76d1bd5"
-                                            th:data-toast-message="#{book.borrow.comingSoon}"
-                                            onclick="showToast(this.dataset.toastMessage)">
-                                        <span th:text="#{book.borrow}">Borrow</span>
-                                    </button>
-
                                     <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
                                           method="post">
                                         <button type="submit"

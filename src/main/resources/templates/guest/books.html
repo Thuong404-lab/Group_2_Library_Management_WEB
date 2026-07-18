@@ -63,6 +63,31 @@
                                 </div>
                             </div>
 
+                            <!-- Preserve availability filtering while retaining dev's auto-submit controls. -->
+                            <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
+                                <h6 class="fw-bold mb-3 u-color-2c1e16-5ab7ae80" th:text="#{catalog.availability}">Availability</h6>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="status" id="statusAll"
+                                        value="" th:checked="${selectedStatus == null || selectedStatus.isEmpty()}"
+                                        onchange="this.form.submit()">
+                                    <label class="custom-control-label text-muted cursor-pointer fw-bold" for="statusAll"
+                                        th:text="#{common.all}">All</label>
+                                </div>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="status" id="statusAvailable"
+                                        value="Active" th:checked="${selectedStatus == 'Active'}"
+                                        onchange="this.form.submit()">
+                                    <label class="custom-control-label text-muted cursor-pointer" for="statusAvailable"
+                                        th:text="#{book.status.availableWithCopies}">Available (copies in stock)</label>
+                                </div>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="status" id="statusUnavailable"
+                                        value="Inactive" th:checked="${selectedStatus == 'Inactive'}"
+                                        onchange="this.form.submit()">
+                                    <label class="custom-control-label text-muted cursor-pointer" for="statusUnavailable"
+                                        th:text="#{book.status.unavailable}">Unavailable</label>
+                                </div>
+                            </div>
 
                         </div>
                     </form>
@@ -109,11 +134,11 @@
                                     searchDropdown.style.display = 'none';
                                 }
                             });
-                            
+
                             const catalogSearchForm = document.getElementById('catalogSearchForm');
                             const catalogSearchBtn = document.getElementById('catalogSearchBtn');
                             const catalogSearchSpinner = document.getElementById('catalogSearchSpinner');
-                            
+
                             catalogSearchForm.addEventListener('submit', function(e) {
                                 searchInput.value = searchInput.value.trim();
                                 if (searchInput.value === '') {

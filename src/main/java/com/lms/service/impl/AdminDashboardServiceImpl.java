@@ -6,7 +6,9 @@ import com.lms.entity.StaffAccount;
 import com.lms.enums.UserStatus;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
+import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
+import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.StaffRepository;
@@ -33,7 +35,9 @@ import java.util.Map;
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private final BorrowRepository borrowRepository;
+    private final BorrowDetailRepository borrowDetailRepository;
     private final MemberRepository memberRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final BookRepository bookRepository;
     private final BookItemRepository bookItemRepository;
     private final StaffRepository staffRepository;
@@ -43,7 +47,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     public AdminDashboardServiceImpl(
             BorrowRepository borrowRepository,
+            BorrowDetailRepository borrowDetailRepository,
             MemberRepository memberRepository,
+            MemberAccountRepository memberAccountRepository,
             BookRepository bookRepository,
             BookItemRepository bookItemRepository,
             StaffRepository staffRepository,
@@ -51,7 +57,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             SystemLogRepository systemLogRepository,
             TransactionRepository transactionRepository) {
         this.borrowRepository = borrowRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
         this.memberRepository = memberRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.bookRepository = bookRepository;
         this.bookItemRepository = bookItemRepository;
         this.staffRepository = staffRepository;
@@ -63,24 +71,37 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData() {
-        Map<String, Object> data = new HashMap<>();
+        Map<String, Object> data = new LinkedHashMap<>();
+        LocalDate today = LocalDate.now();
+        LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime nextMonthStart = today.plusMonths(1).withDayOfMonth(1).atStartOfDay();
+        LocalDateTime previousMonthStart = today.minusMonths(1).withDayOfMonth(1).atStartOfDay();
+
         data.put("totalBooks", bookRepository.countByStatusIgnoreCase("Active"));
+        data.put("totalBookItems", bookItemRepository.count());
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
+        data.put("activeMembers", memberAccountRepository.countByStatusIgnoreCase("Active"));
         data.put("totalStaff", staffRepository.count());
-        
-        // Calculate Total Revenue (Completed transactions)
-        java.math.BigDecimal totalRevenue = transactionRepository.sumAmountByStatusAndDateRange(
-                "Completed", LocalDateTime.of(2000, 1, 1, 0, 0), LocalDateTime.of(2100, 1, 1, 0, 0));
-        data.put("totalRevenue", totalRevenue != null ? totalRevenue : java.math.BigDecimal.ZERO);
-        
-        // Calculate New Members this month
-        // We can just omit new members if we don't want to modify MemberRepository, but let's use active borrows as a placeholder metric for admin as well
+        data.put("activeStaff", staffRepository.countByUser_Status(UserStatus.Active));
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        
+        data.put("overdueItems", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
+        data.put("attentionItems",
+                bookItemRepository.countByStatusIgnoreCase("Damaged")
+                        + bookItemRepository.countByStatusIgnoreCase("Lost"));
+        data.put("blockedAccounts", memberAccountRepository.countByStatusIgnoreCase("Blocked")
+                + staffAccountRepository.countByStatusIgnoreCase("Blocked"));
+
+        java.math.BigDecimal monthlyRevenue = transactionRepository.sumAmountByStatusAndDateRange(
+                "Completed", monthStart, nextMonthStart);
+        java.math.BigDecimal previousMonthRevenue = transactionRepository.sumAmountByStatusAndDateRange(
+                "Completed", previousMonthStart, monthStart);
+        data.put("monthlyRevenue", defaultAmount(monthlyRevenue));
+        data.put("revenueChangePercent", revenueChangePercent(monthlyRevenue, previousMonthRevenue));
+
         data.put("recentLogs", systemLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 5)).getContent());
         data.put("monthStats", getLastSixMonthStats());
-        data.put("currentDate", LocalDate.now());
+        data.put("currentDate", today);
         return data;
     }
 
@@ -139,6 +160,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private List<Map<String, Object>> getLastSixMonthStats() {
         List<Map<String, Object>> monthStats = new ArrayList<>();
         List<Long> borrowCounts = new ArrayList<>();
+        List<Long> returnCounts = new ArrayList<>();
         YearMonth currentMonth = YearMonth.now();
         long maxCount = 0;
 
@@ -147,8 +169,11 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             LocalDateTime startDate = month.atDay(1).atStartOfDay();
             LocalDateTime endDate = month.plusMonths(1).atDay(1).atStartOfDay();
             long count = borrowRepository.countByBorrowDateGreaterThanEqualAndBorrowDateLessThan(startDate, endDate);
+            long returned = borrowDetailRepository.countOnTimeReturnsByDateRange(startDate, endDate)
+                    + borrowDetailRepository.countLateReturnsByDateRange(startDate, endDate);
             borrowCounts.add(count);
-            maxCount = Math.max(maxCount, count);
+            returnCounts.add(returned);
+            maxCount = Math.max(maxCount, Math.max(count, returned));
         }
 
         for (int i = 0; i < borrowCounts.size(); i++) {
@@ -157,6 +182,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             Map<String, Object> stat = new LinkedHashMap<>();
             stat.put("label", month.format(DateTimeFormatter.ofPattern("MM/yyyy")));
             stat.put("count", count);
+            stat.put("returnCount", returnCounts.get(i));
             stat.put("height", calculateBarHeight(count, maxCount));
             monthStats.add(stat);
         }
@@ -165,5 +191,21 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private int calculateBarHeight(long count, long maxCount) {
         return maxCount == 0 ? 8 : (int) Math.max(8, count * 120 / maxCount);
+    }
+
+    private java.math.BigDecimal defaultAmount(java.math.BigDecimal amount) {
+        return amount == null ? java.math.BigDecimal.ZERO : amount;
+    }
+
+    private long revenueChangePercent(java.math.BigDecimal current, java.math.BigDecimal previous) {
+        java.math.BigDecimal currentAmount = defaultAmount(current);
+        java.math.BigDecimal previousAmount = defaultAmount(previous);
+        if (previousAmount.signum() == 0) {
+            return currentAmount.signum() == 0 ? 0 : 100;
+        }
+        return currentAmount.subtract(previousAmount)
+                .multiply(java.math.BigDecimal.valueOf(100))
+                .divide(previousAmount, 0, java.math.RoundingMode.HALF_UP)
+                .longValue();
     }
 }

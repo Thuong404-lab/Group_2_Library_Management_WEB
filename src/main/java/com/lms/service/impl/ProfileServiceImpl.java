@@ -100,7 +100,7 @@ public class ProfileServiceImpl implements ProfileService {
             if (memberAccountRepository.findByUsername(trimmedNewUsername).isPresent() || staffAccountRepository.findByUsername(trimmedNewUsername).isPresent()) {
                 throw new ConflictException("username", messages.get("backend.account.usernameUsed"));
             }
-            
+
             Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(currentUsername);
             if (memberAccount.isPresent()) {
                 MemberAccount account = memberAccount.get();

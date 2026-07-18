@@ -5,6 +5,9 @@ import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
@@ -59,7 +62,8 @@ public class OverdueReminderService {
         long overdueDays = Math.max(
                 ChronoUnit.DAYS.between(detail.getDueDate().toLocalDate(), LocalDate.now()),
                 1L);
-        String reminderMarker = localizedMessageService.get("systemNotification.overdue.marker", detail.getBorrowDetailId());
+        String reminderMarker = localizedMessageService.getEnglish(
+                "systemNotification.overdue.marker", detail.getBorrowDetailId());
 
         boolean remindedRecently = memberNotificationRepository
                 .findByMemberMemberIdAndNotificationContentContainingIgnoreCaseOrderByNotificationCreatedDateDesc(
@@ -74,14 +78,26 @@ public class OverdueReminderService {
             throw new ConflictException(localizedMessageService.get("backend.overdue.alreadyReminded"));
         }
 
-        String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
-                ? localizedMessageService.get("systemNotification.overdue.unknownBook")
-                : detail.getBook().getTitle();
+        boolean unknownBook = detail.getBook() == null || detail.getBook().getTitle() == null;
 
         Notification notification = new Notification();
-        notification.setTitle(localizedMessageService.get("systemNotification.overdue.title"));
-        notification.setContent(localizedMessageService.get("systemNotification.overdue.content", bookTitle, overdueDays,
-                detail.getDueDate().format(DATE_FORMATTER), reminderMarker));
+        if (unknownBook) {
+            localizedMessageService.prepareNotification(
+                    notification,
+                    "systemNotification.overdue.title",
+                    "systemNotification.overdue.unknownBookContent",
+                    overdueDays, detail.getDueDate().format(DATE_FORMATTER), detail.getBorrowDetailId());
+        } else {
+            localizedMessageService.prepareNotification(
+                    notification,
+                    "systemNotification.overdue.title",
+                    "systemNotification.overdue.content",
+                    detail.getBook().getTitle(), overdueDays,
+                    detail.getDueDate().format(DATE_FORMATTER), detail.getBorrowDetailId());
+        }
+        notification.setNotificationType(NotificationType.REMINDER);
+        notification.setEventType(NotificationEventType.OVERDUE_REMINDER);
+        notification.setNotificationSource(NotificationSource.LIBRARIAN);
         notification.setCreatedDate(LocalDateTime.now());
         notification.setStatus("Active");
         notification = notificationRepository.save(notification);

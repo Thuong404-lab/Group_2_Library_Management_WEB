@@ -13,4 +13,5 @@ public interface StaffAccountRepository extends JpaRepository<StaffAccount, Inte
     Optional<StaffAccount> findByStaff_User_Id(Integer userId);
     boolean existsByUsername(String username);
     boolean existsByUsernameAndIdNot(String username, Integer id);
+    long countByStatusIgnoreCase(String status);
 }
