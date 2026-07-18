@@ -122,24 +122,28 @@
                     <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.details}">Account Details</h5>
                 </div>
                 <div class="card-body-classic">
-                    <form id="profileForm" th:action="@{/member/profile/update}" method="post" enctype="multipart/form-data">
+                    <form id="profileForm" th:action="@{/member/profile/update}" method="post" enctype="multipart/form-data" class="m-0 needs-validation" novalidate>
                         <input type="file" id="avatarUpload" name="avatarFile" accept="image/*" class="d-none">
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.fullName}">Full Name</label>
-                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${member?.fullName}" maxlength="50" required>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:classappend="${fullNameError} ? 'is-invalid' : ''" th:value="${member?.fullName}" minlength="2" maxlength="50" required th:data-msg-required="#{validation.fullNameRequired}" th:data-msg-length="#{validation.fullNameMax}">
+                                <div class="invalid-feedback" th:text="${fullNameError != null ? fullNameError : #messages.msg('validation.fullNameRequired')}">Please enter a valid full name.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.username}">Username</label>
-                                <input type="text" name="username" class="form-control form-control-classic py-2" th:value="${#authentication.name}" th:readonly="${#authentication.principal.attributes != null}" required minlength="3" maxlength="100" pattern="^[a-zA-Z0-9_.]+$" title="Username can only contain letters, numbers, underscores and dots">
+                                <input type="text" name="username" class="form-control form-control-classic py-2" th:classappend="${usernameError} ? 'is-invalid' : ''" th:value="${failedUsername != null ? failedUsername : #authentication.name}" required minlength="3" maxlength="100" pattern="^[a-zA-Z0-9_.]+$" th:data-msg-required="#{validation.usernameRequired}" th:data-msg-pattern="#{validation.usernameFormat}">
+                                <div class="invalid-feedback" th:text="${usernameError != null ? usernameError : #messages.msg('validation.usernameRequired')}">Please enter a valid username.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.email}">Email Address</label>
-                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${member?.email}" required>
+                                <input type="email" name="email" class="form-control form-control-classic py-2 bg-light text-muted" th:classappend="${emailError} ? 'is-invalid' : ''" th:value="${member?.email}" required th:data-msg-required="#{validation.emailRequired}" th:data-msg-type="#{validation.email}" readonly>
+                                <div class="invalid-feedback" th:text="${emailError != null ? emailError : #messages.msg('validation.emailRequired')}">Please enter a valid email.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.phone}">Phone Number</label>
-                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:value="${member?.phone}" required>
+                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:classappend="${phoneError} ? 'is-invalid' : ''" th:value="${member?.phone}" pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" required th:data-msg-required="#{validation.phoneRequired}" th:data-msg-pattern="#{backend.profile.phoneFormat}">
+                                <div class="invalid-feedback" th:text="${phoneError != null ? phoneError : #messages.msg('validation.phoneRequired')}">Please enter a valid phone number.</div>
                             </div>
 
                             <div class="col-12 mt-3 text-end">
@@ -169,11 +173,11 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.newPassword}">New Password</label>
-                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" required>
+                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
-                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" required>
+                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
                             </div>
                         </div>
                         <div class="modal-footer border-0 p-3 u-background-color-fdfbf7-71083b05">
@@ -218,11 +222,33 @@
         // Profile Form Loading State
         const profileForm = document.getElementById('profileForm');
         if (profileForm) {
-            profileForm.addEventListener('submit', function() {
-                const btn = document.getElementById('saveProfileBtn');
-                const spinner = document.getElementById('saveProfileSpinner');
-                btn.disabled = true;
-                spinner.classList.remove('d-none');
+            profileForm.addEventListener('submit', function(event) {
+                profileForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                if (!profileForm.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    profileForm.querySelectorAll('input').forEach(input => {
+                        const feedback = input.nextElementSibling;
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            if (input.validity.valueMissing && input.dataset.msgRequired) {
+                                feedback.textContent = input.dataset.msgRequired;
+                            } else if (input.validity.patternMismatch && input.dataset.msgPattern) {
+                                feedback.textContent = input.dataset.msgPattern;
+                            } else if (input.validity.typeMismatch && input.dataset.msgType) {
+                                feedback.textContent = input.dataset.msgType;
+                            } else if (input.validity.tooShort || input.validity.tooLong) {
+                                if (input.dataset.msgLength) feedback.textContent = input.dataset.msgLength;
+                            }
+                        }
+                    });
+                } else {
+                    const btn = document.getElementById('saveProfileBtn');
+                    const spinner = document.getElementById('saveProfileSpinner');
+                    btn.disabled = true;
+                    spinner.classList.remove('d-none');
+                }
+                profileForm.classList.add('was-validated');
             });
         }
 

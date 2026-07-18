@@ -92,13 +92,13 @@ public class ProfileServiceImpl implements ProfileService {
         if (newUsername != null && !newUsername.trim().isEmpty() && !newUsername.equals(currentUsername)) {
             String trimmedNewUsername = newUsername.trim();
             if (trimmedNewUsername.length() < 3 || trimmedNewUsername.length() > 100) {
-                throw new ValidationException(messages.get("validation.usernameLength"));
+                throw new ValidationException("username", messages.get("validation.usernameLength"));
             }
             if (!trimmedNewUsername.matches("^[a-zA-Z0-9_.]+$")) {
-                throw new ValidationException(messages.get("validation.usernameFormat"));
+                throw new ValidationException("username", messages.get("validation.usernameFormat"));
             }
             if (memberAccountRepository.findByUsername(trimmedNewUsername).isPresent() || staffAccountRepository.findByUsername(trimmedNewUsername).isPresent()) {
-                throw new ConflictException(messages.get("backend.account.usernameUsed"));
+                throw new ConflictException("username", messages.get("backend.account.usernameUsed"));
             }
 
             Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(currentUsername);
@@ -120,48 +120,51 @@ public class ProfileServiceImpl implements ProfileService {
     private String validateFullName(String fullNameValue) {
         String fullName = fullNameValue == null ? "" : fullNameValue.trim();
         if (fullName.isEmpty()) {
-            throw new ValidationException(messages.get("validation.fullNameRequired"));
+            throw new ValidationException("fullName", messages.get("validation.fullNameRequired"));
         }
-        if (fullName.length() > 50) {
-            throw new ValidationException(messages.get("validation.fullNameMax"));
+        if (fullName.length() < 2 || fullName.length() > 50) {
+            throw new ValidationException("fullName", messages.get("validation.fullNameMax"));
         }
         if (!fullName.matches(FULL_NAME_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameLetters"));
+            throw new ValidationException("fullName", messages.get("validation.fullNameLetters"));
         }
         if (!fullName.matches(FULL_NAME_WORD_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameWords"));
+            throw new ValidationException("fullName", messages.get("validation.fullNameWords"));
         }
         if (fullName.matches(FULL_NAME_TRIPLE_REPEAT_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameTriple"));
+            throw new ValidationException("fullName", messages.get("validation.fullNameTriple"));
         }
         if (fullName.matches(FULL_NAME_SINGLE_CHARACTER_REPEAT_PATTERN)) {
-            throw new ValidationException(messages.get("validation.fullNameRepeated"));
+            throw new ValidationException("fullName", messages.get("validation.fullNameRepeated"));
         }
         return fullName;
     }
 
     private void validateAndSetEmail(User user, String email) {
         if (email == null || email.trim().isEmpty()) {
-            throw new ValidationException(messages.get("validation.emailRequired"));
+            throw new ValidationException("email", messages.get("validation.emailRequired"));
+        }
+        if (email.length() > 255) {
+            throw new ValidationException("email", messages.get("validation.emailMax"));
         }
         if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new ValidationException(messages.get("validation.email"));
+            throw new ValidationException("email", messages.get("validation.email"));
         }
         if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
-            throw new ConflictException(messages.get("backend.account.emailUsed"));
+            throw new ConflictException("email", messages.get("backend.account.emailUsed"));
         }
         user.setEmail(email);
     }
 
     private void validateAndSetPhone(User user, String phone) {
         if (phone == null || phone.trim().isEmpty()) {
-            throw new ValidationException(messages.get("validation.phoneRequired"));
+            throw new ValidationException("phone", messages.get("validation.phoneRequired"));
         }
         if (!phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
-            throw new ValidationException(messages.get("backend.profile.phoneFormat"));
+            throw new ValidationException("phone", messages.get("backend.profile.phoneFormat"));
         }
         if (userRepository.existsByPhoneAndIdNot(phone, user.getId())) {
-            throw new ConflictException(messages.get("backend.account.phoneUsed"));
+            throw new ConflictException("phone", messages.get("backend.account.phoneUsed"));
         }
         user.setPhone(phone);
     }
@@ -171,6 +174,12 @@ public class ProfileServiceImpl implements ProfileService {
     public void changePassword(String username, String oldPassword, String newPassword) {
         if (newPassword == null || newPassword.length() < 6) {
             throw new ValidationException(messages.get("validation.passwordMin"));
+        }
+        if (newPassword.length() > 50) {
+            throw new ValidationException(messages.get("validation.passwordMax"));
+        }
+        if (newPassword.contains(" ")) {
+            throw new ValidationException(messages.get("validation.passwordNoSpaces"));
         }
         
         Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);

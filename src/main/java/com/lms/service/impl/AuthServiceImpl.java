@@ -91,6 +91,12 @@ public class AuthServiceImpl implements AuthService {
         if (request.getPassword() == null || request.getPassword().length() < 6) {
             throw new AuthException(messages.get("validation.passwordMin"));
         }
+        if (request.getPassword().length() > 50) {
+            throw new AuthException(messages.get("validation.passwordMax"));
+        }
+        if (request.getPassword().contains(" ")) {
+            throw new AuthException(messages.get("validation.passwordNoSpaces"));
+        }
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new AuthException(messages.get("backend.password.mismatch", "Passwords do not match"));
@@ -99,6 +105,7 @@ public class AuthServiceImpl implements AuthService {
         validateFullName(fullName);
 
         if (email == null
+                || email.length() > 255
                 || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new AuthException(messages.get("validation.email"));
         }
@@ -135,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
         if (fullName.isEmpty()) {
             throw new AuthException(messages.get("validation.fullNameRequired"));
         }
-        if (fullName.length() > 50) {
+        if (fullName.length() < 2 || fullName.length() > 50) {
             throw new AuthException(messages.get("validation.fullNameMax"));
         }
         if (!fullName.matches(FULL_NAME_PATTERN)) {

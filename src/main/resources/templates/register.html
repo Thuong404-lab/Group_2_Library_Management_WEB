@@ -31,7 +31,7 @@
 
                 <form th:action="@{/register}" th:object="${registerRequest}" method="post" class="needs-validation" novalidate>
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}" th:placeholder="#{register.fullName}" placeholder="Full name" maxlength="50" required autofocus>
+                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}" th:placeholder="#{register.fullName}" placeholder="Full name" minlength="2" maxlength="50" required autofocus>
                         <label for="fullName" th:text="#{register.fullName}">Full name</label>
                         <div class="invalid-feedback" th:text="#{register.fullName.required}">Please enter a valid full name.</div>
                     </div>
@@ -39,14 +39,14 @@
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control" id="username" th:field="*{username}" th:placeholder="#{register.username}" placeholder="Username" minlength="3" maxlength="20" required>
+                                <input type="text" class="form-control" id="username" th:field="*{username}" th:placeholder="#{register.username}" placeholder="Username" minlength="3" maxlength="20" pattern="^[a-zA-Z0-9_]{3,20}$" th:title="#{validation.username}" required>
                                 <label for="username" th:text="#{register.username}">Username</label>
                                 <div class="invalid-feedback" th:text="#{register.username.required}">Please enter a username (3-20 characters).</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-floating">
-                                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" maxlength="100" required>
+                                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" maxlength="100" th:title="#{validation.email}" required>
                                 <label for="email">Email</label>
                                 <div class="invalid-feedback" th:text="#{register.email.required}">Please enter a valid email address.</div>
                             </div>
@@ -56,7 +56,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
                             <div class="form-floating position-relative">
-                                <input type="password" class="form-control" id="password" th:field="*{password}" th:placeholder="#{auth.password}" placeholder="Password" minlength="6" maxlength="100" required>
+                                <input type="password" class="form-control" id="password" th:field="*{password}" th:placeholder="#{auth.password}" placeholder="Password" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
                                 <label for="password" th:text="#{auth.password}">Password</label>
                                 <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer toggle-password" data-target="password" style="cursor: pointer; z-index: 10;"></i>
                                 <div class="invalid-feedback" th:text="#{register.password.required}">Please enter a password (at least 6 characters).</div>
@@ -64,7 +64,7 @@
                         </div>
                         <div class="col-sm-6">
                             <div class="form-floating position-relative">
-                                <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" placeholder="Confirm Password" minlength="6" maxlength="100" required>
+                                <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" placeholder="Confirm Password" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
                                 <label for="confirmPassword">Confirm Password</label>
                                 <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer toggle-password" data-target="confirmPassword" style="cursor: pointer; z-index: 10;"></i>
                                 <div class="invalid-feedback">Passwords must match.</div>
@@ -73,7 +73,7 @@
                     </div>
 
                     <div class="form-floating mb-4">
-                        <input type="tel" class="form-control" id="phone" th:field="*{phone}" th:placeholder="#{register.phone}" placeholder="Phone number" minlength="10" maxlength="10" pattern="[0-9]{10}" required>
+                        <input type="tel" class="form-control" id="phone" th:field="*{phone}" th:placeholder="#{register.phone}" placeholder="Phone number" pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" th:title="#{backend.profile.phoneFormat}" required>
                         <label for="phone" th:text="#{register.phone}">Phone number</label>
                         <div class="invalid-feedback" th:text="#{register.phone.required}">Please enter a valid 10-digit phone number.</div>
                     </div>

@@ -78,10 +78,26 @@ public class ProfileController extends LocalizedControllerSupport {
         }
 
         String currentUsername = principal.getName();
-        String newUsername = (username != null && !username.trim().isEmpty()) ? username.trim() : currentUsername;
+        String newUsername = currentUsername;
+
+        if (username != null) {
+            newUsername = username.trim();
+            if (newUsername.isEmpty()) {
+                redirectAttributes.addFlashAttribute("usernameError", message("validation.usernameRequired"));
+                User tempUser = new User();
+                tempUser.setFullName(fullName);
+                tempUser.setEmail(email);
+                tempUser.setPhone(phone);
+                tempUser.setAvatar(profileService.getProfile(currentUsername).getAvatar());
+                redirectAttributes.addFlashAttribute("member", tempUser);
+                redirectAttributes.addFlashAttribute("failedUsername", username);
+                return "redirect:/member/profile";
+            }
+        }
 
         try {
-            profileService.updateProfile(currentUsername, newUsername, fullName, email, phone, avatarFile);
+            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            profileService.updateProfile(currentUsername, newUsername, fullName, currentEmail, phone, avatarFile);
             
             // Cập nhật lại thông tin trong phiên đăng nhập (Session/SecurityContext) để thanh điều hướng đồng bộ ngay lập tức
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -112,7 +128,16 @@ public class ProfileController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
             return "redirect:/member/profile?updated";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
+                String field = ((com.lms.exception.ValidationException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else if (e instanceof com.lms.exception.ConflictException && ((com.lms.exception.ConflictException) e).getField() != null) {
+                String field = ((com.lms.exception.ConflictException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            }
+            redirectAttributes.addFlashAttribute("failedUsername", newUsername);
 
             // Preserve user input on error
             User tempUser = new User();
