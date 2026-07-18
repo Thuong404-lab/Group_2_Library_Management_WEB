@@ -4,6 +4,7 @@ import com.lms.dto.request.PaymentSearchCriteria;
 import com.lms.dto.response.ReportExport;
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
+import com.lms.entity.PayOsPaymentAuditLog;
 import com.lms.entity.User;
 import com.lms.repository.PayOsPaymentAuditLogRepository;
 import com.lms.repository.PayOsPaymentRepository;
@@ -37,12 +38,38 @@ class AdminPaymentServiceTest {
 
         String csv = new String(export.getContent(), java.nio.charset.StandardCharsets.UTF_8);
         assertThat(export.getFileName()).endsWith(".csv");
-        assertThat(csv).contains("Order code", "987654321", "Nguyễn Văn A", "TOP_UP", "PAID");
+        assertThat(csv).contains("Order Code", "987654321", "Nguyễn Văn A", "Wallet Top-up", "Paid");
 
         ReportExport pdf = service.exportPayments(
                 new PaymentSearchCriteria("", "", "", null, null), "pdf");
         assertThat(pdf.getFileName()).endsWith(".pdf");
         assertThat(new String(pdf.getContent(), 0, 4, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+    }
+
+    @Test
+    void exportsLegacyPaymentPaidAuditAsCsvAndPdf() {
+        PayOsPaymentAuditLogRepository auditRepository = mock(PayOsPaymentAuditLogRepository.class);
+        AdminPaymentService service = new AdminPaymentService(mock(PayOsPaymentRepository.class), auditRepository,
+                mock(PayOsReconciliationIssueRepository.class));
+        PayOsPaymentAuditLog audit = new PayOsPaymentAuditLog();
+        audit.setPayment(payment());
+        audit.setEventType("PAYMENT_PAID");
+        audit.setSource("WEBHOOK");
+        audit.setOldStatus("PENDING");
+        audit.setNewStatus("PAID");
+        audit.setSuccessful(true);
+        audit.setCreatedAt(LocalDateTime.now());
+        when(auditRepository.search(anyString(), any(), anyString(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(audit)));
+
+        ReportExport csvExport = service.exportAudits("", "", null, null, "csv");
+        String csv = new String(csvExport.getContent(), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(csv).contains("Payment Completed", "Webhook", "Pending Payment", "Paid");
+
+        ReportExport pdfExport = service.exportAudits("", "", null, null, "pdf");
+        assertThat(pdfExport.getFileName()).endsWith(".pdf");
+        assertThat(new String(pdfExport.getContent(), 0, 4, java.nio.charset.StandardCharsets.US_ASCII))
+                .isEqualTo("%PDF");
     }
 
     private PayOsPayment payment() {

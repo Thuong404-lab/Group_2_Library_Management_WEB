@@ -33,14 +33,18 @@
                     <label class="form-label" th:text="#{common.status}">Status</label>
                     <select class="form-select" name="status" data-auto-submit>
                         <option value="" th:text="#{common.all}">All</option>
-                        <option th:each="item : ${statuses}" th:value="${item}" th:text="${item}" th:selected="${item == criteria.status}"></option>
+                        <option th:each="item : ${statuses}" th:value="${item}"
+                                th:text="${#messages.msg('payment.admin.status.' + #strings.toLowerCase(item))}"
+                                th:selected="${item == criteria.status}"></option>
                     </select>
                 </div>
                 <div class="payment-filter-field">
                     <label class="form-label" th:text="#{admin.payments.purpose}">Purpose</label>
                     <select class="form-select" name="purpose" data-auto-submit>
                         <option value="" th:text="#{common.all}">All</option>
-                        <option th:each="item : ${purposes}" th:value="${item}" th:text="${item}" th:selected="${item == criteria.purpose}"></option>
+                        <option th:each="item : ${purposes}" th:value="${item}"
+                                th:text="${#messages.msg('payment.admin.purpose.' + #strings.toLowerCase(item))}"
+                                th:selected="${item == criteria.purpose}"></option>
                     </select>
                 </div>
                 <div class="payment-filter-field"><label class="form-label" th:text="#{common.fromDate}">From Date</label><input type="date" class="form-control" name="fromDate" th:value="${criteria.fromDate}" data-auto-submit></div>
@@ -63,9 +67,9 @@
                 <tr th:each="p : ${payments.content}">
                     <td class="fw-semibold" th:text="${p.orderCode}">1</td>
                     <td><div class="fw-semibold" th:text="${p.member.user.fullName}">Name</div><small class="text-muted" th:text="${p.member.user.email}">email</small></td>
-                    <td><span class="payment-purpose" th:text="${p.purpose}">TOP_UP</span></td>
+                    <td><span class="payment-purpose" th:text="${#messages.msg('payment.admin.purpose.' + #strings.toLowerCase(p.purpose))}">Wallet Top-up</span></td>
                     <td class="text-end fw-semibold"><span th:text="${#numbers.formatDecimal(p.amount,0,'COMMA',0,'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
-                    <td><span class="payment-status" th:classappend="${p.status == 'PAID' ? ' status-paid' : (p.status == 'PENDING' ? ' status-pending' : ' status-failed')}" th:text="${p.status}">PAID</span></td>
+                    <td><span class="payment-status" th:classappend="${p.status == 'PAID' ? ' status-paid' : (p.status == 'PENDING' ? ' status-pending' : ' status-failed')}" th:text="${#messages.msg('payment.admin.status.' + #strings.toLowerCase(p.status))}">Paid</span></td>
                     <td><span th:text="${#temporals.format(p.createdAt,'dd/MM/yyyy HH:mm')}">-</span></td>
                     <td class="text-end"><a class="btn btn-sm btn-outline-classic" th:href="@{/admin/payments/{code}(code=${p.orderCode})}" th:text="#{common.details}">Details</a></td>
                 </tr>
