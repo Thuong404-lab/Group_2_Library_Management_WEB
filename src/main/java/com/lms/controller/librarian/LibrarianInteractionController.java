@@ -1,4 +1,6 @@
 package com.lms.controller.librarian;
+
+import com.lms.config.CustomUserDetails;
 import com.lms.controller.LocalizedControllerSupport;
 import com.lms.exception.ApplicationException;
 
@@ -6,11 +8,10 @@ import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.enums.NotificationRecipientType;
 import com.lms.enums.NotificationType;
-import com.lms.exception.ResourceNotFoundException;
-import com.lms.exception.ValidationException;
 import com.lms.service.LibrarianInteractionService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,6 +54,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
     public String replyReview(
             @PathVariable("id") Integer feedbackId,
             @ModelAttribute LibrarianReviewReplyRequest request,
+            @RequestParam(defaultValue = "0") int page,
             RedirectAttributes flash) {
 
         String response = request.getResponse() == null ? "" : request.getResponse().strip()
@@ -73,7 +75,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("reviewReplyErrorId", feedbackId);
             flash.addFlashAttribute("reviewReplyErrors", Map.of("response", responseError));
             flash.addFlashAttribute("reviewReplyValues", Map.of("response", response));
-            return "redirect:/librarian/interaction/reviews";
+            return reviewRedirect(page);
         }
 
         request.setResponse(response);
@@ -87,12 +89,13 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
         }
 
-        return "redirect:/librarian/interaction/reviews";
+        return reviewRedirect(page);
     }
 
     @PostMapping("/reviews/{id}/delete")
     public String deleteReview(
             @PathVariable("id") Integer feedbackId,
+            @RequestParam(defaultValue = "0") int page,
             RedirectAttributes flash) {
 
         try {
@@ -102,14 +105,21 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
         }
 
-        return "redirect:/librarian/interaction/reviews";
+        return reviewRedirect(page);
     }
 
     @GetMapping("/notifications/new")
-    public String notificationForm(Model model) {
-        model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+    public String notificationForm(
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (!model.containsAttribute("notificationRequest")) {
+            model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+        }
         model.addAttribute("notificationTypes", NotificationType.values());
         model.addAttribute("members", librarianInteractionService.getAllMembers());
+        if (userDetails != null && userDetails.getUser() != null) {
+            model.addAttribute("currentUser", userDetails.getUser());
+        }
 
         return "librarian/send-notification";
     }
@@ -223,6 +233,10 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
     private String normalizeNotificationContent(String value) {
         return value == null ? "" : value.strip().replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
+    }
+
+    private String reviewRedirect(int page) {
+        return "redirect:/librarian/interaction/reviews?page=" + Math.max(0, page);
     }
 
 }
