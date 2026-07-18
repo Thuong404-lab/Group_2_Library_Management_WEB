@@ -10,6 +10,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -17,7 +19,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,6 +44,38 @@ class AcquisitionWorkflowViewTest {
     }
 
     @Test
+    void rendersStandardizedMemberInteractionPagesWithCurrentDatabase() throws Exception {
+        var accounts = memberAccountRepository.findAll(PageRequest.of(0, 1)).getContent();
+        Assumptions.assumeFalse(accounts.isEmpty(), "Current database has no member account");
+        MemberAccount account = accounts.get(0);
+        var memberUser = memberDetailsService.loadUserByUsername(account.getUsername());
+
+        mockMvc.perform(get("/member/favorites").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/favorites"));
+        mockMvc.perform(get("/member/interaction/reviews").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/reviews"));
+        mockMvc.perform(get("/member/interaction/acquisition-requests/new").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/book-acquisition-request"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-target=\"#acquisitionRequestModal\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"acquisitionRequestModal\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"acquisitionRequestForm\"")));
+        mockMvc.perform(get("/member/interaction/notifications").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/notifications"));
+        mockMvc.perform(get("/member/interaction/notifications")
+                        .param("source", "librarian")
+                        .param("type", "RESERVATION")
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/notifications"))
+                .andExpect(model().attribute("selectedNotificationSource", "librarian"))
+                .andExpect(model().attribute("selectedNotificationType", "RESERVATION"));
+    }
+
+    @Test
     @WithUserDetails(value = "librarian01", userDetailsServiceBeanName = "customStaffDetailsService")
     void rendersLibrarianOperationalDashboard() throws Exception {
         mockMvc.perform(get("/librarian/dashboard"))
@@ -55,8 +91,15 @@ class AcquisitionWorkflowViewTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/librarian/interaction/acquisition-requests"));
 
-        mockMvc.perform(get("/librarian/interaction/acquisition-requests"))
+        var result = mockMvc.perform(get("/librarian/interaction/acquisition-requests"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("librarian/acquisition-request-list"));
+                .andExpect(view().name("librarian/acquisition-request-list"))
+                .andReturn();
+
+        Page<?> requests = (Page<?>) result.getModelAndView().getModel().get("requests");
+        assertThat(requests.getSort().getOrderFor("createdDate").getDirection())
+                .isEqualTo(Sort.Direction.DESC);
+        assertThat(requests.getSort().getOrderFor("requestId").getDirection())
+                .isEqualTo(Sort.Direction.DESC);
     }
 }

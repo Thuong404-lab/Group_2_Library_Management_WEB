@@ -45,12 +45,24 @@
 
     <footer th:replace="~{fragments/footer :: footer}"></footer>
 
-    <!-- Global Toast Notification -->
-    <div
-      id="customToast"
-      class="base-div-position-bottom-right-02"
-    >
-      <span id="toastMessage" th:text="#{common.notification}">Notification</span>
+    <div id="appFeedbackRegion"
+         class="app-feedback-region"
+         aria-live="polite"
+         aria-atomic="true"
+         th:data-success-title="#{feedback.successTitle}"
+         th:data-error-title="#{feedback.errorTitle}"
+         th:data-warning-title="#{feedback.warningTitle}"
+         th:data-info-title="#{feedback.infoTitle}">
+      <div id="customToast" class="app-feedback-toast" role="status" hidden>
+        <span class="app-feedback-toast__icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+        <div class="app-feedback-toast__copy">
+          <strong id="toastTitle" class="app-feedback-toast__title"></strong>
+          <span id="toastMessage" class="app-feedback-toast__message"></span>
+        </div>
+        <button type="button" class="app-feedback-toast__close" th:aria-label="#{common.close}">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
 
     <script th:inline="javascript">
@@ -59,15 +71,67 @@
       var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
       var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
 
+      window.AppFeedback = (function () {
+        var hideTimer = null;
+        var icons = {
+          success: "bi bi-check-lg",
+          error: "bi bi-exclamation-lg",
+          warning: "bi bi-exclamation-triangle",
+          info: "bi bi-info-lg"
+        };
+
+        function refs() {
+          var region = document.getElementById("appFeedbackRegion");
+          var toast = document.getElementById("customToast");
+          if (!region || !toast) return null;
+          return {
+            region: region,
+            toast: toast,
+            title: document.getElementById("toastTitle"),
+            message: document.getElementById("toastMessage"),
+            icon: toast.querySelector(".app-feedback-toast__icon i")
+          };
+        }
+
+        function hide() {
+          var elements = refs();
+          if (!elements || elements.toast.hidden) return;
+          elements.toast.classList.remove("is-visible");
+          window.setTimeout(function () { elements.toast.hidden = true; }, 210);
+        }
+
+        function show(message, tone, options) {
+          var elements = refs();
+          if (!elements || !message) return;
+          var normalizedTone = icons[tone] ? tone : "info";
+          var settings = options || {};
+          window.clearTimeout(hideTimer);
+          elements.toast.className = "app-feedback-toast is-" + normalizedTone;
+          elements.title.textContent = settings.title || elements.region.dataset[normalizedTone + "Title"] || elements.region.dataset.infoTitle;
+          elements.message.textContent = String(message);
+          elements.icon.className = icons[normalizedTone];
+          elements.toast.hidden = false;
+          window.requestAnimationFrame(function () { elements.toast.classList.add("is-visible"); });
+          if (settings.persistent !== true) hideTimer = window.setTimeout(hide, settings.duration || 4000);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+          var closeButton = document.querySelector(".app-feedback-toast__close");
+          if (closeButton) closeButton.addEventListener("click", hide);
+        });
+
+        return {
+          show: show,
+          hide: hide,
+          success: function (message, options) { show(message, "success", options); },
+          error: function (message, options) { show(message, "error", options); },
+          warning: function (message, options) { show(message, "warning", options); },
+          info: function (message, options) { show(message, "info", options); }
+        };
+      })();
+
       function showToast(message) {
-        var toast = document.getElementById("customToast");
-        document.getElementById("toastMessage").innerText = message;
-        toast.style.opacity = "1";
-        toast.style.transform = "translateY(0)";
-        setTimeout(function () {
-          toast.style.opacity = "0";
-          toast.style.transform = "translateY(20px)";
-        }, 3000);
+        window.AppFeedback.success(message);
       }
 
       document.addEventListener("submit", function (event) {
@@ -116,10 +180,10 @@
                 setFavoriteButtonActive(favoriteButton);
               });
 
-            showToast(data.message || favoriteAddSuccess);
+            window.AppFeedback.success(data.message || favoriteAddSuccess);
           })
           .catch(function (error) {
-            showToast(error.message || favoriteAddError);
+            window.AppFeedback.error(error.message || favoriteAddError);
           })
           .finally(function () {
             if (button) {
