@@ -69,7 +69,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isAccountNonLocked() {
-        return "Active".equalsIgnoreCase(status);
+        return !"Blocked".equalsIgnoreCase(status);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isEnabled() {
-        return "Active".equalsIgnoreCase(status);
+        return !"Blocked".equalsIgnoreCase(status);
     }
 
     @Override
