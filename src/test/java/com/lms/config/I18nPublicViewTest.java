@@ -56,7 +56,9 @@ class I18nPublicViewTest {
     void catalogPageUsesEnglishByDefault() throws Exception {
         mockMvc.perform(get("/books"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Apply Filters")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Availability")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Apply Filters"))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Sort by:")));
     }
 
