@@ -42,7 +42,7 @@
                     <div class="mb-4">
                         <label for="username" class="form-label" th:text="#{auth.usernameOrEmail}">Username / Email</label>
                         <input type="text" class="form-control" id="username" name="username"
-                            th:placeholder="#{auth.usernameOrEmail.placeholder}" placeholder="Enter your email or username" required autocomplete="username">
+                            th:placeholder="#{auth.usernameOrEmail.placeholder}" placeholder="Enter your email or username" th:value="${session.SPRING_SECURITY_LAST_USERNAME}" required autocomplete="username">
                         <div class="invalid-feedback" th:text="#{auth.usernameOrEmail.required}">Please enter your username or email.</div>
                     </div>
 
@@ -51,12 +51,18 @@
                             <label for="password" class="form-label mb-0" th:text="#{auth.password}">Password</label>
                             <a th:href="@{/forgot-password}" class="auth-links u-font-size-0-9rem-9be74413" th:text="#{auth.forgotPassword}">Forgot password?</a>
                         </div>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="••••••••"
-                            required autocomplete="current-password">
-                        <div class="invalid-feedback" th:text="#{auth.password.required}">Please enter your password.</div>
+                        <div class="position-relative">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••"
+                                required autocomplete="current-password">
+                            <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer toggle-password" data-target="password" style="cursor: pointer; z-index: 10;"></i>
+                            <div class="invalid-feedback" th:text="#{auth.password.required}">Please enter your password.</div>
+                        </div>
                     </div>
 
-                    <button class="btn btn-primary-custom w-100" type="submit" th:text="#{auth.login}">Log In</button>
+                    <button id="submitBtn" class="btn btn-primary-custom w-100 position-relative d-flex justify-content-center align-items-center gap-2" type="submit">
+                        <span id="submitText" th:text="#{auth.login}">Log In</span>
+                        <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
 
                     <div class="divider" th:text="#{auth.orContinueWith}">or continue with</div>
 
@@ -88,6 +94,25 @@
     <script>
         (function () {
             'use strict'
+
+            // Password toggle logic
+            const togglePasswords = document.querySelectorAll('.toggle-password');
+            togglePasswords.forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.classList.remove('bi-eye-slash');
+                        this.classList.add('bi-eye');
+                    } else {
+                        input.type = 'password';
+                        this.classList.remove('bi-eye');
+                        this.classList.add('bi-eye-slash');
+                    }
+                });
+            });
+
             var forms = document.querySelectorAll('.needs-validation')
             Array.prototype.slice.call(forms)
                 .forEach(function (form) {
@@ -95,6 +120,12 @@
                         if (!form.checkValidity()) {
                             event.preventDefault()
                             event.stopPropagation()
+                        } else {
+                            // Valid form, disable button
+                            const btn = document.getElementById('submitBtn');
+                            const spinner = document.getElementById('submitSpinner');
+                            btn.disabled = true;
+                            spinner.classList.remove('d-none');
                         }
                         form.classList.add('was-validated')
                     }, false)

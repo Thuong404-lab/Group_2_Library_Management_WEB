@@ -41,9 +41,12 @@
                     </div>
                     <div class="fs-5 guest-about-ul-color-font-family-09">
                         <p th:text="#{about.rule.card}">1. Present your student or library card when borrowing books.</p>
-                        <p th:text="#{about.rule.loanPeriod}">2. The maximum loan period is 14 days per book.</p>
-                        <p th:text="#{about.rule.overdue}">3. Overdue books incur a fine of VND 5,000 per day.</p>
-                        <p th:text="#{about.rule.damage}">4. Lost or damaged books require compensation equal to 100% of their value.</p>
+                        <p th:if="${borrowFeePerBook > 0}" th:text="#{about.rule.borrowFee(${#numbers.formatInteger(borrowFeePerBook, 0, 'COMMA')})}">2. The standard borrowing fee is VND 5,000 per book.</p>
+                        <p th:if="${depositAmount > 0}" th:text="#{about.rule.deposit(${#numbers.formatInteger(depositAmount, 0, 'COMMA')})}">3. A reservation deposit of VND 50,000 per book is required.</p>
+                        <p th:text="#{about.rule.loanPeriod(${maxBorrowDays}, ${maxRenewalDays})}">4. The maximum loan period is 14 days, renewable for up to 7 additional days.</p>
+                        <p th:text="#{about.rule.overdue(${#numbers.formatInteger(finePerDay, 0, 'COMMA')})}">5. Overdue books incur a fine of VND 5,000 per day.</p>
+                        <p th:text="#{about.rule.lock(${overdueViolationLockLimit})}">6. Your account will be locked after 3 overdue violations.</p>
+                        <p th:text="#{about.rule.damage(${damageCompensationThreshold}, ${#numbers.formatInteger(damageCompensationAmount, 0, 'COMMA')})}">7. Books lost or damaged beyond 50% require a compensation fee of VND 120,000.</p>
                         <p class="mb-0 fw-bold mt-4 p-3 rounded guest-about-p-background-color-border-left-12">
                             <i class="bi bi-star-fill text-warning me-2"></i><span th:text="#{about.membershipNotice}">Special offer: Upgrade your membership tier to borrow more books!</span>
                         </p>

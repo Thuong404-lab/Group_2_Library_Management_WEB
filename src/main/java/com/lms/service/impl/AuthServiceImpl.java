@@ -78,7 +78,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
-        if (request.getUsername() == null || !request.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
+        String username = request.getUsername() != null ? request.getUsername().trim() : null;
+        String email = request.getEmail() != null ? request.getEmail().trim() : null;
+        String phone = request.getPhone() != null ? request.getPhone().trim() : null;
+        String fullName = request.getFullName() != null ? request.getFullName().trim() : null;
+
+        if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
             throw new AuthException(messages.get("validation.username"));
         }
 
@@ -86,38 +91,42 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(messages.get("validation.passwordMin"));
         }
 
-        validateFullName(request.getFullName());
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new AuthException(messages.get("backend.password.mismatch", "Passwords do not match"));
+        }
 
-        if (request.getEmail() == null
-                || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+        validateFullName(fullName);
+
+        if (email == null
+                || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new AuthException(messages.get("validation.email"));
         }
 
-        if (request.getPhone() == null || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+        if (phone == null || !phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new AuthException(messages.get("backend.profile.phoneFormat"));
         }
 
 
-        if (userRepository.existsByPhone(request.getPhone())) {
+        if (userRepository.existsByPhone(phone)) {
             throw new AuthException(messages.get("backend.account.phoneUsed"));
         }
 
-        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent() || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (memberAccountRepository.findByUsername(username).isPresent() || staffAccountRepository.findByUsername(username).isPresent()) {
             throw new AuthException(messages.get("backend.account.usernameExists"));
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(email)) {
             throw new AuthException(messages.get("backend.account.emailUsed"));
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         createCoreAccount(
-                request.getUsername(),
-                request.getFullName().trim(),
+                username,
+                fullName,
                 encodedPassword,
-                request.getEmail(),
-                request.getPhone());
+                email,
+                phone);
     }
 
     private void validateFullName(String fullNameValue) throws AuthException {
