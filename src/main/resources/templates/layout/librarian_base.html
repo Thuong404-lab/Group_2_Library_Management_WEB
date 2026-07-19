@@ -38,14 +38,17 @@
         </li>
 
         <li class="menu-item">
-            <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'">
+            <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'"
+                aria-expanded="false"
+                aria-controls="borrowMenu">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-journal-bookmark-fill menu-icon"></i>
                     <span class="menu-text" th:text="#{staff.nav.loans}">Loan Management</span>
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
+            <ul class="collapse list-unstyled" id="borrowMenu">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/borrow/list}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''">
                         <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.borrowList}">Borrow List</span>
@@ -93,7 +96,7 @@
             <a href="#bookManagementMenu" data-bs-toggle="collapse"
                 class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                 th:classappend="${activeMenu == 'books'} ? 'active'"
-                th:attr="aria-expanded=${activeMenu == 'books'}"
+                aria-expanded="false"
                 aria-controls="bookManagementMenu">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-book-fill menu-icon"></i>
@@ -101,12 +104,11 @@
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled ps-4" id="bookManagementMenu"
-                th:classappend="${activeMenu == 'books'} ? 'show'">
+            <ul class="collapse list-unstyled ps-4" id="bookManagementMenu">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
                         class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && (param.tab == null || param.tab[0] != 'categories')} ? 'active-submenu' : ''">
+                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab == null} ? 'active-submenu' : ''">
                         <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.heading}">Book Title Management</span>
                     </a>
                 </li>
@@ -138,7 +140,7 @@
             <a href="#userManagementMenu" data-bs-toggle="collapse"
                 class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                 th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
-                th:attr="aria-expanded=${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'}"
+                aria-expanded="false"
                 aria-controls="userManagementMenu">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-people-fill menu-icon"></i>
@@ -146,8 +148,7 @@
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled" id="userManagementMenu"
-                th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'show'">
+            <ul class="collapse list-unstyled" id="userManagementMenu">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/members}"
                         class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -174,7 +175,7 @@
         <li class="menu-item">
             <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'active'"
-               th:attr="aria-expanded=${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'}"
+               aria-expanded="false"
                aria-controls="financeMenu">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-wallet2 menu-icon"></i>
@@ -182,8 +183,7 @@
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled" id="financeMenu"
-                th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'show'">
+            <ul class="collapse list-unstyled" id="financeMenu">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/members/topup}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                        th:classappend="${activeMenu == 'topup'} ? 'active-submenu' : ''"
@@ -270,54 +270,6 @@
         });
     })();
 
-    (function () {
-        var storageKey = 'librarianSidebarExpandedMenus';
-        var persistentMenuIds = ['bookManagementMenu', 'userManagementMenu', 'financeMenu'];
-        var storedMenuIds = [];
-
-        try {
-            storedMenuIds = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
-        } catch (error) {
-            storedMenuIds = [];
-        }
-
-        var expandedMenuIds = new Set(storedMenuIds);
-
-        persistentMenuIds.forEach(function (menuId) {
-            var menu = document.getElementById(menuId);
-            if (!menu) return;
-
-            if (expandedMenuIds.has(menuId)) {
-                menu.classList.add('show');
-                var trigger = document.querySelector('[aria-controls="' + menuId + '"]');
-                if (trigger) trigger.setAttribute('aria-expanded', 'true');
-            }
-
-            if (menu.classList.contains('show')) {
-                expandedMenuIds.add(menuId);
-            }
-
-            menu.addEventListener('shown.bs.collapse', function () {
-                expandedMenuIds.add(menuId);
-                saveExpandedMenus();
-            });
-
-            menu.addEventListener('hidden.bs.collapse', function () {
-                expandedMenuIds.delete(menuId);
-                saveExpandedMenus();
-            });
-        });
-
-        saveExpandedMenus();
-
-        function saveExpandedMenus() {
-            try {
-                sessionStorage.setItem(storageKey, JSON.stringify(Array.from(expandedMenuIds)));
-            } catch (error) {
-                // Keep the sidebar usable when browser storage is unavailable.
-            }
-        }
-    })();
 </script>
     <th:block layout:fragment="scripts"></th:block>
     <script th:src="@{/js/dynamic-presentation.js}"></script>

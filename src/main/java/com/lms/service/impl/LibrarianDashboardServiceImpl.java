@@ -150,6 +150,10 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("shelves", storageService.getAllStorageLocations());
         data.put("shelfPage", storageService.getStorageLocations(
                 PageRequest.of(Math.max(0, shelfPage), DASHBOARD_PAGE_SIZE)));
+        Map<Integer, Long> shelfBookCounts = new HashMap<>();
+        bookItemRepository.countBookItemsByShelf().forEach(row ->
+                shelfBookCounts.put((Integer) row[0], (Long) row[1]));
+        data.put("shelfBookCounts", shelfBookCounts);
         Page<Book> booksPage;
         if (keyword != null && !keyword.trim().isEmpty()) {
             booksPage = bookRepository.searchBooks(keyword.trim(), null, null, PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
