@@ -227,9 +227,17 @@ public class CartController extends LocalizedControllerSupport {
             }
 
             if ("BANK".equalsIgnoreCase(paymentMethod) && previewFee.compareTo(BigDecimal.ZERO) > 0) {
-                com.lms.entity.PayOsPayment payment = payOsPaymentService.createTopUp(member, previewFee);
-                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedWithBank"));
-                return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                com.lms.entity.Borrow pendingBorrow = null;
+                try {
+                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
+                    com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
+                    return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                } catch (Exception paymentError) {
+                    if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {
+                        borrowService.cancelPendingBankBorrow(pendingBorrow.getBorrowId(), "CREATE_FAILED");
+                    }
+                    throw paymentError;
+                }
             }
 
             borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);

@@ -193,6 +193,93 @@
                 </tr>
                 </thead>
                 <tbody>
+                <tr th:each="detail : ${searchResults}">
+                    <td style="width: 60px; text-align: center;">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <input type="checkbox" class="form-check-input select-item" th:value="${detail.bookItem.barcode}" />
+                        </div>
+                    </td>
+                    <td>
+                                <span class="font-monospace fw-bold u-color-8b5a2b-93ece783"
+                                      th:text="${T(com.lms.util.BorrowCodeFormatter).format(detail.borrow.borrowId)}">BOR-1</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d"
+                             th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
+                        <small class="text-muted"
+                               th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
+                    </td>
+                    <td>
+                                <span class="font-monospace text-dark fw-semibold"
+                                      th:text="${detail.bookItem?.barcode}">BC001-001</span>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark" th:text="${detail.book.title}">Book title</div>
+                        <small class="text-muted" th:text="#{librarian.returnDesk.renewals(${detail.renewCount})}">Renewals: 0</small>
+                    </td>
+                    <td>
+                                <span class="fw-semibold text-dark"
+                                      th:text="${detail.borrow.borrowDate != null ? #temporals.format(detail.borrow.borrowDate, 'dd/MM/yyyy') : '-'}">10/07/2026</span>
+                    </td>
+                    <td>
+                                <span class="fw-bold text-dark"
+                                      th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
+                        <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}"
+                              class="status-badge status-overdue ms-1" th:text="#{librarian.fines.overdueReasonPrefix}">Overdue</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button type="button"
+                                class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
+                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
+                                th:data-barcode="${detail.bookItem.barcode}" th:text="#{librarian.returnDesk.receive}">
+                            Receive Returned Book
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${searchResults == null}">
+                    <td colspan="8" class="py-4 text-center text-muted" th:text="#{librarian.returnDesk.searchHint}">
+                        Scan or enter a barcode to find the loan to return.
+                    </td>
+                </tr>
+                <tr th:if="${searchResults != null and #lists.isEmpty(searchResults)}">
+                    <td colspan="8" class="py-4 text-center text-muted" th:text="#{librarian.returnDesk.noActiveLoan}">
+                        No active loan was found for this barcode.
+                    </td>
+                </tr>
+                <tr th:if="${false}">
+                    <td style="width: 60px; text-align: center;">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <input type="checkbox" class="form-check-input" disabled />
+                        </div>
+                    </td>
+                    <td>
+                        <span class="font-monospace fw-bold u-color-8b5a2b-93ece783">BOR-1002</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d">Nguyễn Văn A</div>
+                        <small class="text-muted">nva@gmail.com</small>
+                    </td>
+                    <td>
+                        <span class="font-monospace text-dark fw-semibold">BC001-002</span>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">Nhà Giả Kim (Bản Đặc Biệt)</div>
+                        <small class="text-muted">Gia hạn: 0 lần</small>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark">17/07/2026</span>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark">20/07/2026</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button type="button"
+                                class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
+                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal" th:text="#{librarian.returnDesk.receive}">
+                            Receive Returned Book
+                        </button>
+                    </td>
+                </tr>
                 <!-- Rows dynamically populated by JavaScript -->
                 </tbody>
             </table>
@@ -328,117 +415,89 @@
             const msgNotFoundTemplate = /*[[#{librarian.returnDesk.notFound}]]*/ 'Không tìm thấy lượt mượn đang hoạt động cho mã vạch này: {0}.';
             const labelOverdue = /*[[#{librarian.fines.overdueReasonPrefix}]]*/ 'Quá hạn';
             const labelReceive = /*[[#{librarian.returnDesk.receive}]]*/ 'Nhận trả sách';
+            const labelRecover = /*[[#{librarian.returnDesk.recoverBarcode}]]*/ 'Assign barcode';
+            const recoverPlaceholder = /*[[#{librarian.returnDesk.recoverBarcodePlaceholder}]]*/ 'Scan the physical copy barcode';
 
             const scannedBooks = [];
 
-            // Render function
+            function scannedBookKey(book) {
+                return book.needsBarcode ? `detail-${book.borrowDetailId}` : `barcode-${(book.barcode || '').toLowerCase()}`;
+            }
+
             function renderScannedBooks() {
                 const detailsTableBody = document.querySelector('.borrow-table tbody');
                 const resultsCard = document.getElementById('searchResultsCard');
-
                 if (!detailsTableBody) return;
-
                 detailsTableBody.innerHTML = '';
-
                 if (scannedBooks.length === 0) {
-                    if (resultsCard) resultsCard.classList.add('d-none');
-                    if (selectAllCheckbox) {
-                        selectAllCheckbox.checked = false;
-                        selectAllCheckbox.disabled = true;
-                    }
-                    if (bulkReturnBtn) {
-                        bulkReturnBtn.disabled = true;
-                        bulkReturnBtnLabel.innerHTML = selectedReturnsLabel;
-                    }
+                    resultsCard?.classList.add('d-none');
+                    if (selectAllCheckbox) { selectAllCheckbox.checked = false; selectAllCheckbox.disabled = true; }
+                    if (bulkReturnBtn) { bulkReturnBtn.disabled = true; bulkReturnBtnLabel.innerHTML = selectedReturnsLabel; }
                     return;
                 }
-
-                if (resultsCard) resultsCard.classList.remove('d-none');
-                if (selectAllCheckbox) {
-                    selectAllCheckbox.disabled = false;
-                }
+                resultsCard?.classList.remove('d-none');
+                if (selectAllCheckbox) selectAllCheckbox.disabled = false;
 
                 scannedBooks.forEach(book => {
-                    // Horizontal detail list row
-                    const detailsRow = document.createElement('tr');
-                    detailsRow.id = `details-row-${book.barcode}`;
-
-                    const overdueBadge = book.isOverdue
-                        ? `<span class="status-badge status-overdue ms-1">${labelOverdue}</span>`
-                        : '';
-
-                    detailsRow.innerHTML = `
-                        <td class="text-center" style="width: 60px;">
-                            <div class="d-flex justify-content-center align-items-center">
-                                <input type="checkbox" class="form-check-input select-item" value="${book.barcode}" checked autocomplete="off" />
-                            </div>
-                        </td>
-                        <td class="text-start">
-                            <span class="font-monospace fw-bold text-classic">BOR-${book.borrowId}</span>
-                        </td>
-                        <td class="text-start">
-                            <div class="fw-bold">${book.memberName}</div>
-                            <small class="text-muted">${book.memberEmail}</small>
-                        </td>
-                        <td class="text-start">
-                            <span class="font-monospace text-dark fw-semibold">${book.barcode}</span>
-                        </td>
-                        <td class="text-start text-wrap">
-                            <div class="fw-semibold text-dark">${book.bookTitle}</div>
-                            <small class="text-muted">Gia hạn: ${book.renewCount}</small>
-                        </td>
-                        <td class="text-center">
-                            <span class="fw-semibold text-dark">${book.borrowDate}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="fw-bold text-dark">${book.dueDate}</span>
-                            ${overdueBadge}
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex justify-content-center align-items-center gap-2">
-                                <button type="button" class="btn btn-classic-outline btn-sm px-3" data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
-                                        data-barcode="${book.barcode}">
-                                    ${labelReceive}
-                                </button>
-                                <button type="button" class="btn btn-outline-danger btn-sm px-2 btn-remove-item" data-barcode="${book.barcode}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    `;
-
-                    // Handle individual checkbox selection change
-                    detailsRow.querySelector('.select-item').addEventListener('change', function() {
-                        const currentCheckboxes = document.querySelectorAll('.select-item');
-                        if (selectAllCheckbox) {
-                            selectAllCheckbox.checked = Array.from(currentCheckboxes).every(c => c.checked);
-                        }
+                    const row = document.createElement('tr');
+                    const rowKey = scannedBookKey(book);
+                    row.id = `details-row-${rowKey}`;
+                    const overdueBadge = book.isOverdue ? `<span class="status-badge status-overdue ms-1">${labelOverdue}</span>` : '';
+                    const barcodeCell = book.needsBarcode
+                        ? `<div class="input-group input-group-sm"><input type="text" class="form-control recovery-barcode-input" placeholder="${recoverPlaceholder}" autocomplete="off"><button type="button" class="btn btn-classic-primary recover-barcode-btn">${labelRecover}</button></div>`
+                        : `<span class="font-monospace text-dark fw-semibold">${book.barcode}</span>`;
+                    const actionCell = book.needsBarcode
+                        ? `<span class="text-danger small">${recoverPlaceholder}</span>`
+                        : `<div class="d-flex justify-content-center align-items-center gap-2"><button type="button" class="btn btn-classic-outline btn-sm px-3" data-bs-toggle="modal" data-bs-target="#confirmReturnModal" data-barcode="${book.barcode}">${labelReceive}</button><button type="button" class="btn btn-outline-danger btn-sm px-2 btn-remove-item"><i class="bi bi-trash"></i></button></div>`;
+                    row.innerHTML = `
+                        <td class="text-center" style="width:60px"><input type="checkbox" class="form-check-input select-item" value="${book.barcode || ''}" ${book.needsBarcode ? 'disabled' : 'checked'} autocomplete="off"></td>
+                        <td class="text-start"><span class="font-monospace fw-bold text-classic">BOR-${book.borrowId}</span></td>
+                        <td class="text-start"><div class="fw-bold">${book.memberName}</div><small class="text-muted">${book.memberEmail}</small></td>
+                        <td class="text-start">${barcodeCell}</td>
+                        <td class="text-start text-wrap"><div class="fw-semibold text-dark">${book.bookTitle}</div><small class="text-muted">Gia hạn: ${book.renewCount}</small></td>
+                        <td class="text-center"><span class="fw-semibold text-dark">${book.borrowDate}</span></td>
+                        <td class="text-center"><span class="fw-bold text-dark">${book.dueDate}</span>${overdueBadge}</td>
+                        <td class="text-center">${actionCell}</td>`;
+                    row.querySelector('.select-item')?.addEventListener('change', function() {
+                        const boxes = document.querySelectorAll('.select-item:not(:disabled)');
+                        if (selectAllCheckbox) selectAllCheckbox.checked = Array.from(boxes).every(c => c.checked);
                         toggleBulkButton();
                     });
-
-                    // Handle individual click to remove out of list
-                    detailsRow.querySelector('.btn-remove-item').addEventListener('click', function() {
-                        removeScannedBook(book.barcode);
+                    row.querySelector('.btn-remove-item')?.addEventListener('click', () => removeScannedBook(rowKey));
+                    row.querySelector('.recover-barcode-btn')?.addEventListener('click', () => recoverMissingBarcode(book, row));
+                    row.querySelector('.recovery-barcode-input')?.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') { event.preventDefault(); recoverMissingBarcode(book, row); }
                     });
-
-                    detailsTableBody.appendChild(detailsRow);
+                    detailsTableBody.appendChild(row);
                 });
-
-                const currentCheckboxes = document.querySelectorAll('.select-item');
-                if (selectAllCheckbox) {
-                    selectAllCheckbox.checked = Array.from(currentCheckboxes).every(c => c.checked);
-                }
+                const boxes = document.querySelectorAll('.select-item:not(:disabled)');
+                if (selectAllCheckbox) selectAllCheckbox.checked = boxes.length > 0 && Array.from(boxes).every(c => c.checked);
                 toggleBulkButton();
             }
 
-            function removeScannedBook(barcode) {
-                const index = scannedBooks.findIndex(b => b.barcode.toLowerCase() === barcode.toLowerCase());
-                if (index !== -1) {
-                    scannedBooks.splice(index, 1);
-                    renderScannedBooks();
-                }
+            function removeScannedBook(key) {
+                const index = scannedBooks.findIndex(book => scannedBookKey(book) === key);
+                if (index !== -1) { scannedBooks.splice(index, 1); renderScannedBooks(); }
             }
 
+            function recoverMissingBarcode(book, row) {
+                const input = row.querySelector('.recovery-barcode-input');
+                const button = row.querySelector('.recover-barcode-btn');
+                const barcode = input ? input.value.trim() : '';
+                if (!barcode) { showFeedback(recoverPlaceholder); input?.focus(); return; }
+                button.disabled = true;
+                fetch('/librarian/loan/returns/api/recover-barcode', {
+                    method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({borrowDetailId: book.borrowDetailId, barcode: barcode})
+                }).then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || recoverPlaceholder);
+                    book.barcode = data.barcode;
+                    book.needsBarcode = false;
+                    showFeedback(data.message, true);
+                    renderScannedBooks();
+                }).catch(error => { showFeedback(error.message); button.disabled = false; input?.focus(); });
+            }
             // Input handlers
             const barcodeInput = document.getElementById('barcodeScanInput');
             const addBtn = document.getElementById('addBarcodeBtn');
@@ -454,7 +513,7 @@
                     feedback.textContent = '';
                 }
 
-                if (scannedBooks.some(b => b.barcode.toLowerCase() === barcode.toLowerCase())) {
+                if (scannedBooks.some(b => b.barcode && b.barcode.toLowerCase() === barcode.toLowerCase())) {
                     showFeedback(msgDuplicate);
                     barcodeInput.value = '';
                     barcodeInput.focus();
@@ -474,7 +533,7 @@
                     .then(data => {
                         if (data && data.length > 0) {
                             data.forEach(item => {
-                                if (!scannedBooks.some(b => b.barcode.toLowerCase() === item.barcode.toLowerCase())) {
+                                if (!scannedBooks.some(b => scannedBookKey(b) === scannedBookKey(item))) {
                                     scannedBooks.push(item);
                                 }
                             });
@@ -492,8 +551,10 @@
                     });
             }
 
-            function showFeedback(msg) {
+            function showFeedback(msg, success = false) {
                 if (feedback) {
+                    feedback.classList.toggle('text-success', success);
+                    feedback.classList.toggle('text-danger', !success);
                     feedback.textContent = msg;
                     feedback.style.display = 'block';
                 }

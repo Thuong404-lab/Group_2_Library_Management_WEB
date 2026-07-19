@@ -1,5 +1,7 @@
 package com.lms.service;
 
+import com.lms.util.BorrowCodeFormatter;
+
 import com.lms.entity.BookItem;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
@@ -92,7 +94,7 @@ public class ApprovedBorrowExpiryJob {
                         notif,
                         "systemNotification.borrow.pickupExpired.title",
                         "systemNotification.borrow.pickupExpired.content",
-                        borrow.getBorrowId());
+                        BorrowCodeFormatter.format(borrow.getBorrowId()));
                 notif.setNotificationType(NotificationType.LOAN);
                 notif.setEventType(NotificationEventType.LOAN_PICKUP_EXPIRED);
                 notif.setNotificationSource(NotificationSource.SYSTEM);
