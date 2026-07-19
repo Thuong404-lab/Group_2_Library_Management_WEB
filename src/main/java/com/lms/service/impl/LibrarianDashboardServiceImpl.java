@@ -91,18 +91,24 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData() {
-        return getDashboardData(0, 0, 0);
+        return getDashboardData(0, 0, 0, "");
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData(int reviewPage, int requestPage) {
-        return getDashboardData(0, reviewPage, requestPage);
+        return getDashboardData(0, reviewPage, requestPage, "");
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData(int bookPage, int reviewPage, int requestPage) {
+        return getDashboardData(bookPage, reviewPage, requestPage, "");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int bookPage, int reviewPage, int requestPage, String keyword) {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> data = new LinkedHashMap<>();
 
@@ -135,8 +141,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("requests", interactionService.getBookAcquisitionRequests(
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").descending())));
         data.put("shelves", storageService.getAllStorageLocations());
-        Page<Book> booksPage = bookRepository
-                .findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+        Page<Book> booksPage;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            booksPage = bookRepository.searchBooks(keyword.trim(), null, null, PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+        } else {
+            booksPage = bookRepository.findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+        }
         booksPage.forEach(book -> {
             if (book.getAuthors() != null) {
                 book.getAuthors().size();
@@ -234,6 +244,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     private Map<String, Long> inventoryStatusCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("Total", bookItemRepository.count());
         counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
         counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));

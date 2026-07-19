@@ -18,28 +18,14 @@
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom dashboard-page-header"
-            th:if="${currentSection == 'books'}"
-            th:classappend="${!(currentSection == 'books' && currentSubSection == 'inventory')} ? ' u-border-color-rgba-139-90-43-0-2-important-f8e732ba' : ''"
+            th:if="${currentSection == 'books' && (currentSubSection == '' || currentSubSection == null)}"
            >
             <div>
-                <h2 class="app-page-title"
-                    th:classappend="${!(currentSection == 'books' && currentSubSection == 'inventory')} ? ' fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336' : ''">
-                    <th:block th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">
-                        <span th:if="${param.tab == null || param.tab[0] == 'books'}" th:text="#{librarian.inventory.heading}">Book Inventory</span>
-                        <span th:if="${param.tab != null && param.tab[0] == 'categories'}" th:text="#{librarian.inventory.categoryGenreList}">Categories and Genres</span>
-                        <span th:if="${param.tab != null && param.tab[0] == 'audit'}" th:text="#{librarian.inventory.auditHeading}">Inventory Audit</span>
-                    </th:block>
-                    <span th:if="${currentSection == 'books' && currentSubSection == 'storage'}" th:text="#{librarian.storage.management}">Storage Management</span>
-                    <span th:if="${currentSection == 'books' && (currentSubSection == '' || currentSubSection == null)}" th:text="#{librarian.inventory.booksManagement}">Book Management</span>
+                <h2 class="app-page-title fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                    <span th:text="#{librarian.inventory.booksManagement}">Book Management</span>
                 </h2>
-                <div class="app-page-description" th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">
-                    <span th:if="${param.tab == null || param.tab[0] == 'books'}" th:text="#{librarian.inventory.description}">Add, update, and manage titles and copies.</span>
-                    <span th:if="${param.tab != null && param.tab[0] == 'categories'}" th:text="#{librarian.inventory.categoryDescription}">Organize titles by category and genre.</span>
-                    <span th:if="${param.tab != null && param.tab[0] == 'audit'}" th:text="#{librarian.inventory.auditDescription}">Compare total copies with the number currently borrowed.</span>
-                </div>
-                <div class="text-muted"
-                    th:if="${currentSection == 'books' && currentSubSection == 'storage'}">
-                    <span th:text="#{librarian.storage.description}">Create and manage book storage locations.</span>
+                <div class="text-muted">
+                    <span th:text="#{librarian.inventory.cardDescription}">Add, edit, remove, and manage book copies in inventory.</span>
                 </div>
             </div>
         </div>
@@ -358,20 +344,49 @@
     <!-- Header Section -->             <div id="bookInventoryPanel">
 
                             <div th:if="${param.tab == null || param.tab[0] == 'books'}" id="admin-books-pane">
-                                <div class="card-classic shadow-sm mb-4">
-                                    <div class="card-header bg-white border-bottom p-4 border-color d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="fs-5 fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                                <i class="bi bi-book me-2 text-classic"></i><span th:text="#{librarian.inventory.heading}">Book Inventory</span>
-                                            </h5>
-                                            <div class="text-muted small" th:text="#{librarian.inventory.cardDescription}">Add, edit, remove, and manage book copies in inventory.</div>
-                                        </div>
-                                        <button type="button" class="btn btn-classic btn-sm text-nowrap" data-bs-toggle="modal"
-                                            data-bs-target="#addBookModal">
-                                            <span th:text="#{librarian.inventory.addBook}">Add Book</span>
-                                        </button>
+                                <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
+                                    <div>
+                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.heading}">Book Inventory</span></h1>
+                                        <p class="text-muted mb-0" th:text="#{librarian.inventory.cardDescription}">Add, edit, remove, and manage book copies in inventory.</p>
                                     </div>
+                                    <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal"
+                                        data-bs-target="#addBookModal" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                                        <i class="bi bi-plus-lg" aria-hidden="true"></i> <span th:text="#{librarian.inventory.addBook}">Add Book</span>
+                                    </button>
+                                </header>
+                                <div class="card-classic shadow-sm mb-4 border-0" style="border-radius: 12px; overflow: hidden; background-color: var(--app-color-canvas, #faf9f5);">
                                     <div class="card-body p-0">
+                                        <!-- Summary Chips -->
+                                        <div class="d-flex flex-wrap gap-2 px-4 pt-4 mb-4">
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${totalBookCount ?: 0}">0</span> <span th:text="#{librarian.inventory.totalTitles}">titles</span>
+                                            </span>
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0}">0</span> <span>total copies</span>
+                                            </span>
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0}">0</span> <span>available</span>
+                                            </span>
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${(inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0) - (inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0)}">0</span> <span>unavailable</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Toolbar (Search) -->
+                                        <div class="px-4 pb-4">
+                                            <form class="d-flex gap-3 align-items-center flex-wrap" method="get" th:action="@{/librarian/dashboard}">
+                                                <input type="hidden" name="section" value="books">
+                                                <input type="hidden" name="subsection" value="inventory">
+                                                <div class="input-group" style="flex: 1; min-width: 250px;">
+                                                    <span class="input-group-text bg-white border-end-0">
+                                                        <i class="bi bi-search text-muted"></i>
+                                                    </span>
+                                                    <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}" placeholder="Search book title, author, ISBN..." style="box-shadow: none;">
+                                                </div>
+                                                <button type="submit" class="btn btn-classic px-4" style="font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">Search</button>
+                                            </form>
+                                        </div>
+
                                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0 stable-table-layout">
                                 <colgroup>
@@ -484,25 +499,23 @@
                             </div> <!-- close admin-books-pane -->
 
                             <div th:if="${param.tab != null && param.tab[0] == 'categories'}" id="admin-categories-pane">
-                                <div class="card-classic shadow-sm mb-4">
-                                    <div class="card-header bg-white border-bottom p-4 border-color d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="fs-5 fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                                <i class="bi bi-tags me-2 text-classic"></i><span th:text="#{librarian.inventory.tab.categories}">Categories &amp; Genres</span>
-                                            </h5>
-                                            <div class="text-muted small" th:text="#{librarian.inventory.categoryDescription}">Manage categories and genres for books.</div>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-classic btn-sm text-nowrap" data-bs-toggle="modal"
-                                                data-bs-target="#addCategoryModal">
-                                                <i class="bi bi-plus-lg me-1"></i><span th:text="#{librarian.inventory.addCategory}">Add Category</span>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-classic btn-sm text-nowrap" data-bs-toggle="modal"
-                                                data-bs-target="#addGenreModal">
-                                                <i class="bi bi-plus-lg me-1"></i><span th:text="#{librarian.inventory.addGenre}">Add Genre</span>
-                                            </button>
-                                        </div>
+                                <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
+                                    <div>
+                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.tab.categories}">Categories &amp; Genres</span></h1>
+                                        <p class="text-muted mb-0" th:text="#{librarian.inventory.categoryDescription}">Manage categories and genres for books.</p>
                                     </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal"
+                                            data-bs-target="#addCategoryModal" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                                            <i class="bi bi-plus-lg" aria-hidden="true"></i> <span th:text="#{librarian.inventory.addCategory}">Add Category</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-classic text-nowrap" data-bs-toggle="modal"
+                                            data-bs-target="#addGenreModal" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                                            <i class="bi bi-plus-lg" aria-hidden="true"></i> <span th:text="#{librarian.inventory.addGenre}">Add Genre</span>
+                                        </button>
+                                    </div>
+                                </header>
+                                <div class="card-classic shadow-sm mb-4 border-0" style="border-radius: 12px; overflow: hidden; background-color: var(--app-color-canvas, #faf9f5);">
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
                                     <table class="table table-hover align-middle border mb-0">
@@ -639,13 +652,13 @@
                             </div> <!-- close admin-categories-pane -->
 
                             <div th:if="${param.tab != null && param.tab[0] == 'audit'}" id="admin-audit-pane">
-                                <div class="card-classic shadow-sm mb-4">
-                                    <div class="card-header bg-white border-bottom p-4 border-color">
-                                        <h5 class="fs-5 fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                            <i class="bi bi-card-checklist me-2 text-classic"></i><span th:text="#{librarian.inventory.tab.audit}">Inventory Audit</span>
-                                        </h5>
-                                        <div class="text-muted small" th:text="#{librarian.inventory.auditDescription}">Track book copies and their current borrow status.</div>
+                                <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
+                                    <div>
+                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.tab.audit}">Inventory Audit</span></h1>
+                                        <p class="text-muted mb-0" th:text="#{librarian.inventory.auditDescription}">Track book copies and their current borrow status.</p>
                                     </div>
+                                </header>
+                                <div class="card-classic shadow-sm mb-4 border-0" style="border-radius: 12px; overflow: hidden; background-color: var(--app-color-canvas, #faf9f5);">
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0 stable-table-layout">
@@ -896,7 +909,6 @@
                                     <h5 class="modal-title fw-bold admin-books-h5-color-font-family-31">
                                         <span th:text="#{librarian.inventory.copyList}">Book Copies</span> – <span th:text="${book.title}">Book title</span>
                                     </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body p-4">
                                     <div class="table-responsive">
@@ -1073,13 +1085,16 @@
             </div> <!-- Close inventory panel -->
 
                 <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
-                    <div class="card-classic shadow-sm">
-                        <div class="card-header bg-white border-bottom p-4 border-color">
-                            <h5 class="fs-5 fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                                <i class="bi bi-archive me-2 text-classic"></i><span th:text="#{librarian.storage.management}">Storage Location Management</span>
-                            </h5>
-                            <div class="text-muted small" th:text="#{librarian.storage.description}">Create and manage book storage locations.</div>
+                    <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
+                        <div>
+                            <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.storage.management}">Storage Location Management</span></h1>
+                            <p class="text-muted mb-0" th:text="#{librarian.storage.description}">Create and manage book storage locations.</p>
                         </div>
+                        <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal" data-bs-target="#addStorageModal" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i> <span th:text="#{librarian.storage.addNew}">Add New Location</span>
+                        </button>
+                    </header>
+                    <div class="card-classic shadow-sm mb-4 border-0" style="border-radius: 12px; overflow: hidden; background-color: var(--app-color-canvas, #faf9f5);">
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
@@ -1182,11 +1197,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-footer bg-white border-top p-4 border-color text-end">
-                            <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal" data-bs-target="#addStorageModal">
-                                <span th:text="#{librarian.storage.addNew}">Add New Location</span>
-                            </button>
                         </div>
                     </div>
 

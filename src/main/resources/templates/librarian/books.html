@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
@@ -116,15 +116,37 @@
                         <div class="tab-content">
                             <div class="tab-pane fade show active" id="admin-books-pane" role="tabpanel">
 
-                        <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
-                            <h5 class="fw-bold mb-0 text-classic">
-                                <i class="bi bi-list-ul me-2"></i><span th:text="#{librarian.inventory.titleList}">Book Titles</span>
-                            </h5>
-                            <button type="button" class="btn btn-classic btn-sm text-nowrap" data-bs-toggle="modal"
-                                data-bs-target="#addBookModal">
-                                <span th:text="#{librarian.inventory.addBook}">Add Book</span>
-                            </button>
-                        </div>
+                                        <!-- Summary Chips -->
+                                        <div class="d-flex flex-wrap gap-2 mb-4">
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${totalBookCount ?: 0}">0</span> <span th:text="#{librarian.inventory.totalTitles}">titles</span>
+                                            </span>
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0}">0</span> <span>total copies</span>
+                                            </span>
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0}">0</span> <span>available</span>
+                                            </span>
+                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
+                                                <span th:text="${(inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0) - (inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0)}">0</span> <span>unavailable</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Toolbar (Search & Add Button) -->
+                                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                                            <form class="d-flex gap-3 align-items-center flex-grow-1" method="get" th:action="@{/librarian/books}">
+                                                <div class="input-group" style="max-width: 400px;">
+                                                    <span class="input-group-text bg-white border-end-0">
+                                                        <i class="bi bi-search text-muted"></i>
+                                                    </span>
+                                                    <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}" placeholder="Search book title, author, ISBN..." style="box-shadow: none;">
+                                                </div>
+                                                <button type="submit" class="btn btn-classic px-4" style="font-weight: 600;">Search</button>
+                                            </form>
+                                            <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal" data-bs-target="#addBookModal" style="font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                                <i class="bi bi-plus-lg"></i> <span th:text="#{librarian.inventory.addBook}">Add Book</span>
+                                            </button>
+                                        </div>
 
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0 stable-table-layout">
@@ -626,7 +648,6 @@
                                     <h5 class="modal-title fw-bold admin-books-h5-color-font-family-31">
                                         <span th:text="#{librarian.inventory.copyList}">Book Copies</span> – <span th:text="${book.title}">Book title</span>
                                     </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body p-4">
                                     <div class="table-responsive">
