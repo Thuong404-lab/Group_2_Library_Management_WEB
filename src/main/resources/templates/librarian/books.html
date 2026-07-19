@@ -839,37 +839,45 @@
             </div> <!-- Close inventory panel -->
 
                 <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
-                    <div class="card-classic shadow-sm">
+                    <div class="member-data-card">
                         <div class="card-header bg-white border-bottom p-4 border-color">
                             <h5 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                                 <i class="bi bi-archive me-2 text-classic"></i><span th:text="#{librarian.storage.management}">Bookshelf Management</span>
                             </h5>
                             <div class="text-muted small" th:text="#{librarian.storage.description}">Create and manage book storage locations.</div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
+                        <div class="member-data-card-body">
+                            <div class="table-responsive member-table-wrap">
+                                <table class="table table-hover align-middle stable-table-layout member-table">
+                                    <colgroup>
+                                        <col class="bookshelf-name-column">
+                                        <col class="bookshelf-location-column">
+                                        <col class="bookshelf-total-column">
+                                        <col class="bookshelf-actions-column">
+                                    </colgroup>
                                     <thead class="table-light text-uppercase small text-muted">
                                         <tr>
-                                            <th th:text="#{common.number}">No.</th>
                                             <th th:text="#{librarian.storage.name}">Location Name</th>
                                             <th th:text="#{librarian.storage.location}">Location</th>
-                                            <th th:text="#{common.actions}">Actions</th>
+                                            <th class="text-center" th:text="#{librarian.storage.totalBooks}">Total books</th>
+                                            <th class="text-end" th:text="#{common.actions}">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="shelf, iterStat : ${shelfPage.content}">
-                                            <td class="ps-4 fw-bold" th:text="${shelfPage.number * shelfPage.size + iterStat.index + 1}">1</td>
+                                        <tr th:each="shelf : ${shelfPage.content}">
                                             <td th:text="${shelf.shelfName}">Location name</td>
                                             <td th:text="${shelf.location}">Location</td>
-                                            <td class="table-fixed-action">
-                                                <a th:href="@{/librarian/storage/edit/{id}(id=${shelf.shelfId})}" class="btn btn-sm btn-outline-classic me-1" th:title="#{common.update}">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                            <td class="text-center fw-semibold" th:text="${shelfBookCounts[shelf.shelfId] ?: 0}">0</td>
+                                            <td class="text-end member-actions">
+                                                <button type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                    th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
+                                                    th:title="#{common.update}" th:aria-label="#{common.update}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button type="button" class="member-icon-action member-icon-action-danger"
                                                     data-bs-toggle="modal"
                                                     th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
-                                                    th:title="#{common.delete}">
+                                                    th:title="#{common.delete}" th:aria-label="#{common.delete}">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -883,7 +891,6 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
                         <nav class="member-pagination app-pagination-region" th:if="${shelfPage != null && shelfPage.totalPages > 1}">
                             <ul class="pagination app-pagination">
                                 <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
@@ -903,6 +910,7 @@
                                 </li>
                             </ul>
                         </nav>
+                        </div>
                         <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
                             <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1"
                                 th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">

@@ -22,6 +22,9 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     long countByShelf_ShelfId(Integer shelfId);
 
+    @Query("select item.shelf.shelfId, count(item) from BookItem item where item.shelf is not null group by item.shelf.shelfId")
+    List<Object[]> countBookItemsByShelf();
+
     long countByBook_BookId(Integer bookId);
 
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
