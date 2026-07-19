@@ -9,6 +9,7 @@ import com.lms.repository.WalletRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.service.BorrowService;
+import com.lms.service.BookService;
 import com.lms.service.CartService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,19 +28,21 @@ public class CartController extends LocalizedControllerSupport {
 
     private final CartService cartService;
     private final BorrowService borrowService;
+    private final BookService bookService;
     private final MemberRepository memberRepository;
     private final WalletRepository walletRepository;
     private final com.lms.service.PayOsPaymentService payOsPaymentService;
     private final SystemSettingRepository systemSettingRepository;
     private final BookItemRepository bookItemRepository;
 
-    public CartController(CartService cartService, BorrowService borrowService,
+    public CartController(CartService cartService, BorrowService borrowService, BookService bookService,
                           MemberRepository memberRepository, WalletRepository walletRepository,
                           com.lms.service.PayOsPaymentService payOsPaymentService,
                           SystemSettingRepository systemSettingRepository,
                           BookItemRepository bookItemRepository) {
         this.cartService = cartService;
         this.borrowService = borrowService;
+        this.bookService = bookService;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
         this.payOsPaymentService = payOsPaymentService;
@@ -49,9 +52,26 @@ public class CartController extends LocalizedControllerSupport {
 
     @PostMapping("/add")
     public Object addToCart(@RequestParam("bookId") Integer bookId, HttpSession session,
+                            Principal principal,
                             RedirectAttributes redirectAttributes,
                             @RequestHeader(value = "referer", required = false) String referer,
                             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+
+        if (principal == null) return "redirect:/login";
+
+        Book book;
+        try {
+            book = bookService.findBookById(bookId);
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidBook"));
+            redirectAttributes.addFlashAttribute("error", message("backend.cart.invalidBook"));
+            return "redirect:/books";
+        }
+        if (!"Active".equalsIgnoreCase(book.getStatus())) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.unavailable"));
+            redirectAttributes.addFlashAttribute("error", message("backend.cart.unavailable"));
+            return "redirect:/books/" + bookId;
+        }
 
         // 1. Kiểm tra số lượng bản sao khả dụng thực tế trong kho bằng hàm JpaRepository của bạn
         long availableStock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
@@ -70,6 +90,7 @@ public class CartController extends LocalizedControllerSupport {
             }
 
             redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            redirectAttributes.addFlashAttribute("error", errorMessage);
             return org.springframework.http.ResponseEntity
                     .status(org.springframework.http.HttpStatus.SEE_OTHER)
                     .location(java.net.URI.create(referer != null && !referer.isBlank() ? referer : "/books/" + bookId))
@@ -84,6 +105,7 @@ public class CartController extends LocalizedControllerSupport {
             return org.springframework.http.ResponseEntity.ok(java.util.Map.of("success", true, "message", successMessage));
         }
         redirectAttributes.addFlashAttribute("successMessage", successMessage);
+        redirectAttributes.addFlashAttribute("success", successMessage);
         return org.springframework.http.ResponseEntity
                 .status(org.springframework.http.HttpStatus.SEE_OTHER)
                 .location(java.net.URI.create(referer != null && !referer.isBlank() ? referer : "/books/" + bookId))
@@ -154,21 +176,25 @@ public class CartController extends LocalizedControllerSupport {
             return "redirect:/member/cart";
         }
 
+        List<Integer> requestedBookIds = selectedBookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .toList();
         List<Book> allCartItems = cartService.getCartItems(session);
         List<Book> selectedCartItems = new java.util.ArrayList<>();
-        for (Integer id : selectedBookIds) {
+        for (Integer id : requestedBookIds) {
             allCartItems.stream()
                     .filter(item -> item.getBookId().equals(id))
                     .findFirst()
                     .ifPresent(selectedCartItems::add);
         }
 
-        if (selectedCartItems.isEmpty()) {
+        if (selectedCartItems.isEmpty() || selectedCartItems.size() != requestedBookIds.size()) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
             return "redirect:/member/cart";
         }
 
-        BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), selectedBookIds, numberOfDays);
+        List<Integer> validSelectedBookIds = selectedCartItems.stream().map(Book::getBookId).toList();
+        BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), validSelectedBookIds, numberOfDays);
 
         Member member = memberRepository.findByAccountUsername(principal.getName()).orElseThrow();
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
@@ -176,7 +202,7 @@ public class CartController extends LocalizedControllerSupport {
                 .orElse(BigDecimal.ZERO);
 
         model.addAttribute("cartItems", selectedCartItems);
-        model.addAttribute("selectedBookIds", selectedBookIds);
+        model.addAttribute("selectedBookIds", validSelectedBookIds);
         model.addAttribute("numberOfDays", numberOfDays);
         model.addAttribute("totalFee", previewFee);
         model.addAttribute("walletBalance", walletBalance);

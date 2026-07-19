@@ -1,78 +1,79 @@
-/* Presentation owner for templates/register.html */
+/* Registration additions to the shared authentication contract. */
 
-body {
-            font-family: 'Lora', serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 0;
-            margin: 0;
-            background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1920&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-        body::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(44, 30, 22, 0.7);
-            z-index: 1;
-        }
-        .container {
-            z-index: 2;
-        }
-        .auth-card {
-            border-radius: 12px;
-            border: 2px solid #8b5a2b;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            max-width: 550px;
-            width: 100%;
-            background-color: rgba(253, 251, 247, 0.95);
-            backdrop-filter: blur(10px);
-        }
-        .auth-title {
-            font-family: 'Playfair Display', serif;
-            color: #4a3b32;
-        }
-        .btn-classic {
-            background-color: #8b5a2b;
-            color: #fdfbf7;
-            border: none;
-            transition: all 0.3s ease;
-        }
-        .btn-classic:hover {
-            background-color: #4a3b32;
-            color: #fdfbf7;
-        }
-        .form-floating > label {
-            color: #6c757d;
-        }
-        .form-control:focus {
-            border-color: #8b5a2b;
-            box-shadow: 0 0 0 0.25rem rgba(139, 90, 43, 0.25);
-        }
-        .text-classic {
-            color: #8b5a2b !important;
-            transition: color 0.3s ease;
-        }
-        .text-classic:hover {
-            color: #4a3b32 !important;
-            text-decoration: underline !important;
-        }
-
-.register-i-font-size-color-01 {
-    font-size: 3rem; color: #8b5a2b;
+.register-shell {
+    grid-template-columns: minmax(600px, 1.05fr) minmax(0, 0.95fr);
 }
 
-.register-p-font-style-02 {
-    font-style: italic;
+.register-form-card {
+    width: min(100%, 680px);
 }
 
-.register-div-background-04 {
-    background-color: transparent;
+.register-eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--auth-600);
+    font: 700 0.73rem/1.3 system-ui, sans-serif;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.auth-title {
+    margin: 0 0 8px;
+    color: var(--auth-ink);
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2rem, 4vw, 2.55rem);
+    font-weight: 600;
+    line-height: 1.16;
+}
+
+.register-description {
+    margin: 0 0 28px;
+    color: var(--auth-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.register-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.required-mark {
+    color: #a52f2b;
+}
+
+.auth-page--register .auth-form-panel {
+    padding-block: 32px;
+}
+
+.auth-page--register .auth-toolbar {
+    margin-bottom: 24px;
+}
+
+.auth-page--register .brand-subtitle {
+    margin-bottom: 25px;
+}
+
+.auth-page--register .auth-field {
+    margin-bottom: 18px;
+}
+
+@media (max-width: 1199.98px) {
+    .register-shell {
+        grid-template-columns: minmax(540px, 1fr) minmax(0, 0.72fr);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .register-shell {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .register-field-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
 }

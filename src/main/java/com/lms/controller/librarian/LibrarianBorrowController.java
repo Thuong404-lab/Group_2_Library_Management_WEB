@@ -190,6 +190,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         return "librarian/create-borrow";
     }
 
+    // Approving reserves physical copies; the loan only becomes Active after handover.
     @PostMapping("/librarian/borrow/approve/{borrowId}")
     public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId,
                                        @RequestParam("barcodes") List<String> barcodes,
@@ -202,7 +203,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
         }
-        return "redirect:/librarian/borrow/create";
+        return "redirect:/librarian/borrow/list?status=Waiting_Pickup";
     }
 
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
