@@ -280,7 +280,7 @@
                                     <div class="book-category-actions">
                                         <button type="button" class="btn member-primary-action book-category-action" data-bs-toggle="modal"
                                             data-bs-target="#addCategoryModal" th:text="#{librarian.inventory.addCategory}">Add Category</button>
-                                        <button type="button" class="btn member-back-button book-category-action book-category-action--genre" data-bs-toggle="modal"
+                                        <button type="button" class="btn member-primary-action book-category-action" data-bs-toggle="modal"
                                             data-bs-target="#addGenreModal" th:text="#{librarian.inventory.addGenre}">Add Genre</button>
                                     </div>
                                 </div>
@@ -307,7 +307,9 @@
                                                 <tr th:each="genre : ${genres}"
                                                     th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
                                                     class="collapse" th:classappend="'admin-category-genres-' + ${category.categoryId}">
-                                                    <td class="admin-books-td-padding-left-22" th:text="${genre.genreName}">Genre</td>
+                                                    <td>
+                                                        <span class="genre-name" th:text="${genre.genreName}">Genre</span>
+                                                    </td>
                                                     <td class="text-center">
                                                         <button type="button" class="btn btn-sm btn-outline-secondary me-1"
                                                             data-bs-toggle="modal" th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"><i class="bi bi-pencil-square"></i></button>
@@ -465,7 +467,7 @@
                                     <i class="bi bi-book me-2"></i><span th:text="#{librarian.inventory.addBook}">Add Book</span>
                                 </h5>
                             </div>
-                            <form th:action="@{/librarian/inventory/add}" method="post" enctype="multipart/form-data"
+                            <form class="add-book-form" th:action="@{/librarian/inventory/add}" method="post" enctype="multipart/form-data"
                                 novalidate onsubmit="validateBookForm(event, this)">
                                 <div class="modal-body px-4 pt-4 pb-0">
                                     <div class="row g-3">
@@ -525,9 +527,9 @@
                                             <input type="file" name="coverImage" class="form-control" style="background-color: white; border-radius: 8px;" accept="image/*"
                                                 id="addBookCoverInput" onchange="previewAddBookCover(event)" required>
                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.imageRequired}">Please select an image.</div>
-                                            <div class="mt-2 u-display-none-d0466aa3" id="addBookCoverPreview">
+                                            <div class="mt-2 add-book-cover-preview u-display-none-d0466aa3" id="addBookCoverPreview">
                                                 <img id="addBookCoverImg" src="#" th:alt="#{librarian.inventory.coverPreview}"
-                                                    class="u-max-height-160px-max-width-100-border-radius-8px-border-1px-solid-ddd-ob-646b7764">
+                                                    class="add-book-cover-preview-image">
                                             </div>
                                         </div>
                                         <div class="col-12">
