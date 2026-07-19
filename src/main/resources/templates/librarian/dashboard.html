@@ -314,7 +314,7 @@
                 <div class="col-lg-6">
                     <div class="card-classic h-100 shadow-sm p-4 admin-books-div-transition-border-left-background-09">
                         <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                            <i class="bi bi-bookshelf me-2 text-classic"></i><span th:text="#{librarian.storage.management}">Storage Location Management</span>
+                            <i class="bi bi-bookshelf me-2 text-classic"></i><span th:text="#{librarian.storage.management}">Bookshelf Management</span>
                         </h5>
                         <p class="text-muted mb-3" th:text="#{librarian.storage.description}">Create and manage book storage locations.</p>
                         <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}" class="btn btn-outline-classic btn-sm">
@@ -328,26 +328,12 @@
             <div th:if="${currentSubSection == 'inventory'}">
                 <div>
 
-    <!-- Flash Messages -->
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-
     <!-- Header Section -->             <div id="bookInventoryPanel">
 
                             <div th:if="${param.tab == null || param.tab[0] == 'books'}" id="admin-books-pane">
                                 <header class="member-page-header">
                                     <div>
-                                        <h1 class="member-page-title" th:text="#{librarian.inventory.heading}">Book Inventory</h1>
+                                        <h1 class="member-page-title" th:text="#{librarian.inventory.heading}">Book Title Management</h1>
                                         <p class="member-page-description" th:text="#{librarian.inventory.description}">Add, update, and manage titles and copies in the library inventory.</p>
                                     </div>
                                     <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
@@ -447,18 +433,20 @@
                                                 th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
                                                 th:text="${book.status == 'Disposed' ? #messages.msg('book.status.unavailable') : (book.status == 'Active' ? #messages.msg('book.status.ready') : book.status)}">Active</span>
                                         </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-info me-1"
+                                        <td class="text-end member-actions">
+                                            <button type="button" class="member-icon-action"
                                                 data-bs-toggle="modal" th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
-                                                th:title="#{librarian.inventory.viewCopies}"><i class="bi bi-eye"></i></button>
-                                            <button type="button" class="btn btn-sm btn-outline-classic me-1"
+                                                th:title="#{librarian.inventory.viewCopies}" th:aria-label="#{librarian.inventory.viewCopies}"><i class="bi bi-eye"></i></button>
+                                            <button type="button" class="member-icon-action"
                                                 data-bs-toggle="modal"
-                                                th:data-bs-target="${'#editBookModal' + book.bookId}">
+                                                th:data-bs-target="${'#editBookModal' + book.bookId}"
+                                                th:title="#{common.update}" th:aria-label="#{common.update}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                            <button type="button" class="member-icon-action member-icon-action-danger"
                                                 data-bs-toggle="modal"
-                                                th:data-bs-target="${'#deleteBookModal' + book.bookId}">
+                                                th:data-bs-target="${'#deleteBookModal' + book.bookId}"
+                                                th:title="#{common.delete}" th:aria-label="#{common.delete}">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </td>
@@ -517,7 +505,7 @@
                             <div th:if="${param.tab != null && param.tab[0] == 'categories'}" id="admin-categories-pane">
                                 <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
                                     <div>
-                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.tab.categories}">Categories &amp; Genres</span></h1>
+                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.tab.categories}">Category &amp; Genre Management</span></h1>
                                         <p class="text-muted mb-0" th:text="#{librarian.inventory.categoryDescription}">Manage categories and genres for books.</p>
                                     </div>
                                     <div class="book-category-actions">
@@ -546,11 +534,13 @@
                                                         <span th:text="${category.categoryName}">Category</span>
                                                         <i class="bi bi-chevron-down ms-2 small text-muted"></i>
                                                     </td>
-                                                    <td class="text-center" onclick="event.stopPropagation()">
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                                                            data-bs-toggle="modal" th:data-bs-target="'#adminEditCategoryModal' + ${category.categoryId}"><i class="bi bi-pencil-square"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            data-bs-toggle="modal" th:data-bs-target="'#adminDeleteCategoryModal' + ${category.categoryId}"><i class="bi bi-trash"></i></button>
+                                                    <td class="text-center member-actions" onclick="event.stopPropagation()">
+                                                        <button type="button" class="member-icon-action"
+                                                            data-bs-toggle="modal" th:data-bs-target="'#adminEditCategoryModal' + ${category.categoryId}"
+                                                            th:title="#{common.update}" th:aria-label="#{common.update}"><i class="bi bi-pencil-square"></i></button>
+                                                        <button type="button" class="member-icon-action member-icon-action-danger"
+                                                            data-bs-toggle="modal" th:data-bs-target="'#adminDeleteCategoryModal' + ${category.categoryId}"
+                                                            th:title="#{common.delete}" th:aria-label="#{common.delete}"><i class="bi bi-trash"></i></button>
                                                     </td>
                                                 </tr>
                                                 <tr th:each="genre : ${genres}"
@@ -559,11 +549,13 @@
                                                     <td>
                                                         <span class="genre-name" th:text="${genre.genreName}">Genre</span>
                                                     </td>
-                                                    <td class="text-center">
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                                                            data-bs-toggle="modal" th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"><i class="bi bi-pencil-square"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            data-bs-toggle="modal" th:data-bs-target="'#adminDeleteGenreModal' + ${genre.genreId}"><i class="bi bi-trash"></i></button>
+                                                    <td class="text-center member-actions">
+                                                        <button type="button" class="member-icon-action"
+                                                            data-bs-toggle="modal" th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"
+                                                            th:title="#{common.update}" th:aria-label="#{common.update}"><i class="bi bi-pencil-square"></i></button>
+                                                        <button type="button" class="member-icon-action member-icon-action-danger"
+                                                            data-bs-toggle="modal" th:data-bs-target="'#adminDeleteGenreModal' + ${genre.genreId}"
+                                                            th:title="#{common.delete}" th:aria-label="#{common.delete}"><i class="bi bi-trash"></i></button>
                                                     </td>
                                                 </tr>
                                             </th:block>
@@ -672,7 +664,7 @@
                             <div th:if="${param.tab != null && param.tab[0] == 'audit'}" id="admin-audit-pane">
                                 <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
                                     <div>
-                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.tab.audit}">Inventory Audit</span></h1>
+                                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.inventory.tab.audit}">BookItem Management</span></h1>
                                         <p class="text-muted mb-0" th:text="#{librarian.inventory.auditDescription}">Track book copies and their current borrow status.</p>
                                     </div>
                                 </header>
@@ -1106,7 +1098,7 @@
                 <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
                     <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color" style="gap: 24px;">
                         <div>
-                            <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.storage.management}">Storage Location Management</span></h1>
+                            <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336" style="font-size: 30px; font-weight: 500;"><span th:text="#{librarian.storage.management}">Bookshelf Management</span></h1>
                             <p class="text-muted mb-0" th:text="#{librarian.storage.description}">Create and manage book storage locations.</p>
                         </div>
                         <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal" data-bs-target="#addStorageModal" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
@@ -1126,8 +1118,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="shelf, iterStat : ${shelves}">
-                                            <td class="ps-4 fw-bold" th:text="${iterStat.index + 1}">1</td>
+                                        <tr th:each="shelf, iterStat : ${shelfPage.content}">
+                                            <td class="ps-4 fw-bold" th:text="${shelfPage.number * shelfPage.size + iterStat.index + 1}">1</td>
                                             <td th:text="${shelf.shelfName}">Location name</td>
                                             <td th:text="${shelf.location}">Location</td>
                                             <td class="table-fixed-action">
@@ -1142,7 +1134,7 @@
                                                 </button>
                                             </td>
                                         </tr>
-                                        <tr th:if="${shelves == null || #lists.isEmpty(shelves)}">
+                                        <tr th:if="${shelfPage == null || shelfPage.empty}">
                                             <td colspan="4" class="text-center text-muted py-5">
                                                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                                                 <span th:text="#{librarian.storage.empty}">No storage locations have been created.</span>
@@ -1152,6 +1144,25 @@
                                 </table>
                             </div>
                         </div>
+                        <nav class="member-pagination app-pagination-region" th:if="${shelfPage != null && shelfPage.totalPages > 1}">
+                            <ul class="pagination app-pagination">
+                                <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
+                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=0)}" th:text="#{common.first}">First</a>
+                                </li>
+                                <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
+                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.number - 1})}"><i class="bi bi-chevron-left"></i></a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0, shelfPage.totalPages - 1)}" th:classappend="${i == shelfPage.number ? 'active' : ''}">
+                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${i})}" th:text="${i + 1}">1</a>
+                                </li>
+                                <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}">
+                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.number + 1})}"><i class="bi bi-chevron-right"></i></a>
+                                </li>
+                                <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}">
+                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.totalPages - 1})}" th:text="#{common.last}">Last</a>
+                                </li>
+                            </ul>
+                        </nav>
                         <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
                             <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1"
                                 th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">

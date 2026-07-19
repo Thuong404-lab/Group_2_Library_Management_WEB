@@ -8,6 +8,9 @@ import com.lms.repository.BookItemRepository;
 import com.lms.repository.ShelfRepository;
 import com.lms.service.StorageService;
 import com.lms.service.LocalizedMessageService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +38,22 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public List<Shelf> getAllStorageLocations() {
-        return shelfRepository.findAll(Sort.by(Sort.Direction.ASC, "shelfId"));
+        return shelfRepository.findAll(storageSort());
+    }
+
+    @Override
+    public Page<Shelf> getStorageLocations(Pageable pageable) {
+        return shelfRepository.findAll(PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                storageSort()));
+    }
+
+    private Sort storageSort() {
+        return Sort.by(
+                Sort.Order.asc("location").nullsLast(),
+                Sort.Order.asc("shelfName"),
+                Sort.Order.asc("shelfId"));
     }
 
     @Override
