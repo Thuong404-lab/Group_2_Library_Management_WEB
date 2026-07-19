@@ -8,21 +8,24 @@
   <body>
     <header
       th:fragment="header"
-      class="sticky-top shadow-sm w-100 header-header-z-index-border-bottom-01"
+      class="sticky-top shadow-sm w-100 header-header-z-index-border-bottom-01 public-site-header"
 
     >
-      <nav class="navbar navbar-expand-lg navbar-light bg-classic py-3 px-4">
+      <nav class="navbar navbar-expand-md navbar-light public-site-navbar">
         <button
           class="navbar-toggler border-0 mr-2 d-md-none"
           type="button"
           data-toggle="collapse"
           data-target="#navbarCollapse"
+          aria-controls="navbarCollapse"
+          aria-expanded="false"
+          th:aria-label="#{nav.toggleNavigation}"
         >
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <a
-          class="navbar-brand d-flex align-items-center font-weight-bold u-color-4a3b32-1ba01220"
+          class="navbar-brand d-flex align-items-center font-weight-bold public-site-brand"
           th:href="@{/}"
 
         >
@@ -41,37 +44,38 @@
         </a>
 
         <ul
-          class="navbar-nav mr-auto ml-4 d-none d-md-flex font-weight-bold header-ul-font-size-font-family-05"
+          id="navbarCollapse"
+          class="navbar-nav mr-auto collapse navbar-collapse font-weight-bold header-ul-font-size-font-family-05 public-main-navigation"
 
         >
-          <li class="nav-item mr-3">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/}">
-              <i class="bi bi-house-door mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.home}">Home</span>
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/}">
+              <i class="bi bi-house-door mr-1"></i><span th:text="#{nav.home}">Home</span>
             </a>
           </li>
-          <li class="nav-item mr-3">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/books}">
-              <i class="bi bi-collection mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.explore}">Explore</span>
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/books}">
+              <i class="bi bi-collection mr-1"></i><span th:text="#{nav.explore}">Explore</span>
             </a>
           </li>
-          <li class="nav-item mr-3">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/membership-tiers}">
-              <i class="bi bi-award mr-1 u-color-8b5a2b-93ece783"></i><span
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/membership-tiers}">
+              <i class="bi bi-award mr-1"></i><span
                 th:text="#{nav.membershipTiers}">Explore membership tiers</span>
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/about}">
-              <i class="bi bi-feather mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.about}">About</span>
+            <a class="nav-link" th:href="@{/about}">
+              <i class="bi bi-feather mr-1"></i><span th:text="#{nav.about}">About</span>
             </a>
           </li>
         </ul>
 
-        <div class="ml-auto d-flex align-items-center">
+        <div class="ml-auto d-flex align-items-center public-header-actions">
           <div th:replace="~{fragments/language-switcher :: switcher}"></div>
           <div
             id="notificationDropdown"
-            class="dropdown mr-4"
+            class="dropdown"
             sec:authorize="hasRole('MEMBER')"
             th:if="${showNotificationBell}"
           >
@@ -82,6 +86,7 @@
               role="button"
               data-toggle="dropdown"
               aria-expanded="false"
+              th:aria-label="#{notification.heading}"
               th:data-member-key="${#authentication.name}"
               th:data-latest-notification-id="${latestNotifications != null && !latestNotifications.isEmpty() ? latestNotifications[0].notificationId : 0}"
 
@@ -148,10 +153,10 @@
             </div>
           </div>
 
-          <div sec:authorize="!isAuthenticated()" class="d-flex">
+          <div sec:authorize="!isAuthenticated()" class="d-flex public-auth-actions">
             <a
               th:href="@{/login}"
-              class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold mr-2 header-a-font-family-12"
+              class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold header-a-font-family-12"
 
               th:text="#{nav.login}">Log in</a
             >
@@ -163,10 +168,10 @@
             >
           </div>
 
-          <div sec:authorize="isAuthenticated()">
+          <div sec:authorize="isAuthenticated()" class="public-account-menu">
             <div class="dropdown">
               <a
-                class="d-flex align-items-center text-decoration-none dropdown-toggle u-color-4a3b32-1ba01220"
+                class="d-flex align-items-center text-decoration-none dropdown-toggle member-account-toggle"
                 href="#"
                 role="button"
                 data-toggle="dropdown"
@@ -185,6 +190,7 @@
                   th:if="${#authentication.principal.user?.avatar != null}"
                   th:src="${#authentication.principal.user.avatar}"
                   class="rounded-circle mr-2 shadow-sm border border-white header-img-width-height-fit-14"
+                  th:alt="#{common.profile}"
 
                 >
                 <span
@@ -196,15 +202,15 @@
               </a>
 
               <div
-                class="dropdown-menu dropdown-menu-right shadow border-0 mt-2 p-0 header-div-min-width-border-radius-overflow-15"
+                class="dropdown-menu dropdown-menu-right member-account-dropdown"
 
               >
                 <div
-                  class="px-4 py-3 text-center header-div-background-16"
+                  class="member-account-summary"
 
                 >
                   <div
-                    class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 font-weight-bold text-white border border-white header-div-width-height-background-17"
+                    class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold member-account-avatar"
 
                     th:if="${#authentication.principal.user?.avatar == null}"
                     th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
@@ -214,54 +220,57 @@
                   <img
                     th:if="${#authentication.principal.user?.avatar != null}"
                     th:src="${#authentication.principal.user.avatar}"
-                    class="rounded-circle mx-auto mb-2 shadow-sm border border-2 border-white header-img-width-height-fit-18"
+                    class="rounded-circle member-account-avatar member-account-avatar-image"
+                    th:alt="#{common.profile}"
 
                   >
-                  <h6
-                    class="text-white font-weight-bold mb-1"
-                    th:text="${#authentication.principal.name}"
-                  >
-                    User Name
-                  </h6>
-                  <span
-                    class="badge border border-warning text-warning px-2 py-1 small"
-                    sec:authorize="hasRole('ADMIN')"
-                  >
-                    <i class="bi bi-shield-check mr-1"></i><span th:text="#{role.admin}">Administrator</span>
-                  </span>
-                  <span
-                    class="badge border border-info text-info px-2 py-1 small"
-                    sec:authorize="hasRole('LIBRARIAN')"
-                  >
-                    <i class="bi bi-journal-album mr-1"></i><span th:text="#{role.librarian}">Librarian</span>
-                  </span>
-                  <span
-                    class="badge border border-warning text-warning px-2 py-1 small"
-                    sec:authorize="hasRole('MEMBER')"
-                  >
-                    <i class="bi bi-star-fill mr-1"></i><span th:text="#{role.member}">Member</span>
-                  </span>
+                  <div class="member-account-identity">
+                    <h6
+                      class="member-account-name"
+                      th:text="${#authentication.principal.name}"
+                    >
+                      User Name
+                    </h6>
+                    <span
+                      class="member-account-role"
+                      sec:authorize="hasRole('ADMIN')"
+                    >
+                      <i class="bi bi-shield-check"></i><span th:text="#{role.admin}">Administrator</span>
+                    </span>
+                    <span
+                      class="member-account-role"
+                      sec:authorize="hasRole('LIBRARIAN')"
+                    >
+                      <i class="bi bi-journal-album"></i><span th:text="#{role.librarian}">Librarian</span>
+                    </span>
+                    <span
+                      class="member-account-role"
+                      sec:authorize="hasRole('MEMBER')"
+                    >
+                      <i class="bi bi-star-fill"></i><span th:text="#{role.member}">Member</span>
+                    </span>
+                  </div>
                 </div>
 
-                <div class="px-2 py-2 header-div-background-19">
+                <div class="member-account-links">
                   <a
                     sec:authorize="hasRole('ADMIN')"
-                    class="dropdown-item py-2 rounded font-weight-bold u-color-4a3b32-1ba01220"
+                    class="dropdown-item member-account-item font-weight-bold"
                     th:href="@{/admin/dashboard}"
 
                   >
-                    <i class="bi bi-shield-lock mr-2 u-color-8b5a2b-93ece783"></i
+                    <i class="bi bi-shield-lock member-account-item-icon"></i
                     ><span th:text="#{nav.adminDashboard}">Admin Dashboard</span>
                   </a>
 
                   <a
                     sec:authorize="hasRole('LIBRARIAN')"
-                    class="dropdown-item py-2 rounded font-weight-bold u-color-4a3b32-1ba01220"
+                    class="dropdown-item member-account-item font-weight-bold"
                     th:href="@{/librarian/dashboard}"
 
                   >
                     <i
-                      class="bi bi-journal-album mr-2 u-color-8b5a2b-93ece783"
+                      class="bi bi-journal-album member-account-item-icon"
 
                     ></i
                     ><span th:text="#{nav.librarianDashboard}">Librarian Dashboard</span>
@@ -269,74 +278,76 @@
 
                   <div sec:authorize="hasRole('MEMBER')">
                     <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
+                      class="dropdown-item member-account-item"
                       th:href="@{/member/profile}"
 
                     >
-                      <i class="bi bi-person mr-2 u-color-8b5a2b-93ece783"></i
+                      <i class="bi bi-person member-account-item-icon"></i
                       ><span th:text="#{nav.myAccount}">My account</span>
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
-                      th:href="@{/member/cart}"
-                    >
-                      <i class="bi bi-cart3 mr-2 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.myCart}">My Book Cart</span>
-                    </a>
-                    <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
+                      class="dropdown-item member-account-item"
                       th:href="@{/member/wallet}"
 
                     >
-                      <i class="bi bi-wallet2 mr-2 header-i-color-20"></i
+                      <i class="bi bi-wallet2 member-account-item-icon"></i
                       ><span th:text="#{nav.walletBalance}">Wallet balance</span>
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
+                      class="dropdown-item member-account-item"
+                      th:href="@{/member/cart}"
+
+                    >
+                      <i class="bi bi-bag member-account-item-icon"></i
+                      ><span th:text="#{nav.bookCart}">Book cart</span>
+                    </a>
+                    <a
+                      class="dropdown-item member-account-item"
                       th:href="@{/member/borrow}"
 
                     >
                       <i
-                        class="bi bi-journal-check mr-2 u-color-0d6efd-7fee07de"
+                        class="bi bi-journal-check member-account-item-icon"
 
                       ></i
                       ><span th:text="#{nav.borrowedBooks}">Borrowed books</span>
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
+                      class="dropdown-item member-account-item"
                       th:href="@{/member/favorites}"
 
                     >
-                      <i class="bi bi-heart mr-2 header-i-color-22"></i
+                      <i class="bi bi-heart member-account-item-icon"></i
                       ><span th:text="#{nav.favoriteBooks}">Favorite books</span>
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
+                      class="dropdown-item member-account-item"
                       th:href="@{/member/interaction/reviews}"
 
                     >
-                      <i class="bi bi-star mr-2 u-color-ffc107-b61c34a0"></i><span th:text="#{nav.myReviews}">My reviews</span>
+                      <i class="bi bi-star member-account-item-icon"></i><span th:text="#{nav.myReviews}">My reviews</span>
                     </a>
                     <a
-                      class="dropdown-item py-2 rounded u-color-4a3b32-1ba01220"
+                      class="dropdown-item member-account-item"
                       th:href="@{/member/interaction/acquisition-requests/new}"
 
                     >
-                      <i class="bi bi-journal-plus mr-2 u-color-8b5a2b-93ece783"></i
+                      <i class="bi bi-journal-plus member-account-item-icon"></i
                       ><span th:text="#{nav.acquisitionRequest}">Suggest a book</span>
                     </a>
                   </div>
 
                   <div
-                    class="dropdown-divider header-div-border-color-24"
+                    class="dropdown-divider member-account-divider"
 
                   ></div>
 
                   <form th:action="@{/logout}" method="post" class="m-0">
                     <button
                       type="submit"
-                      class="dropdown-item py-2 rounded font-weight-bold text-danger"
+                      class="dropdown-item member-account-item member-account-logout font-weight-bold"
                     >
-                      <i class="bi bi-box-arrow-right mr-2"></i><span th:text="#{nav.logout}">Log out</span>
+                      <i class="bi bi-box-arrow-right member-account-item-icon"></i><span th:text="#{nav.logout}">Log out</span>
                     </button>
                   </form>
                 </div>

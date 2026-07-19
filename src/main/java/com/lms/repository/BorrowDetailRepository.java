@@ -88,7 +88,8 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
 
-    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.status IN ('Payment_Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending')")
+    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
+            "AND bd.status IN ('Payment_Pending', 'Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending')")
     long countActiveBorrowedBooks(@Param("memberId") Integer memberId);
 
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status IN ('Borrowed', 'Overdue')")
@@ -97,7 +98,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status = 'Returned'")
     List<BorrowDetail> findReturnedBorrowDetailsByUsername(@Param("username") String username);
 
-    // Bá»” SUNG & Cáº¬P NHáº¬T 1: Láº¥y danh sÃ¡ch sÃ¡ch hiá»‡n táº¡i bao gá»“m cáº£ Pending vÃ  Return_Pending (Váº¥n Ä‘á» 7)
+    // Current loan workflow includes requests awaiting approval and approved copies awaiting pickup.
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
             "AND bd.status IN ('Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending') ORDER BY bd.dueDate ASC")
     List<BorrowDetail> findCurrentBorrowsByMemberId(@Param("memberId") Integer memberId);

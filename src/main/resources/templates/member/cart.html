@@ -1,27 +1,28 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<html th:lang="${#locale.language}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
-    <title th:text="#{member.cart.title}">Giỏ sách của tôi - LMW</title>
+    <title th:text="#{member.cart.title}">My Book Cart - LMW</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/cart.css}" />
-    <style>
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        .bg-classic-soft { background-color: rgba(139, 90, 43, 0.04); }
-        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
-    </style>
 </head>
 <body>
-<div layout:fragment="content" class="container mt-4 mb-5">
-    <h3 class="font-playfair fw-bold mb-4" style="color: #4a3b32;"><i class="bi bi-cart3 me-2" style="color: #8b5a2b;"></i><span th:text="#{member.cart.heading}">Giỏ Sách Đăng Ký Mượn</span></h3>
+<div layout:fragment="content" class="container member-cart-page member-palette-page">
+    <header class="member-dashboard-hero member-cart-hero">
+        <div class="member-cart-hero-copy">
+            <span th:text="#{member.cart.eyebrow}">BORROWING PLAN</span>
+            <h1 th:text="#{member.cart.heading}">Borrowing Cart</h1>
+            <p th:text="#{member.cart.description}">Select the books and borrowing period you want to include in your next loan request.</p>
+        </div>
+        <a th:href="@{/books}" class="member-ui-button member-ui-button--inverse member-cart-hero-action">
+            <i class="bi bi-compass" aria-hidden="true"></i>
+            <span th:text="#{member.cart.explore}">Explore the library now</span>
+        </a>
+    </header>
 
-    <!-- Thông báo Alert -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #e6f4ea; color: #137333;" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Success notification</span>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fce8e6; color: #c5221f;" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Error notification</span>
-    </div>
+    <div th:if="${successMessage}" class="app-alert app-alert--success" role="status" th:text="${successMessage}">Success notification</div>
+    <div th:if="${errorMessage}" class="app-alert app-alert--danger" role="alert" th:text="${errorMessage}">Error notification</div>
 
     <div th:if="${cartItems == null || cartItems.isEmpty()}" class="text-center p-5 cart-card shadow-sm">
         <i class="bi bi-basket2 text-muted" style="font-size: 4rem;"></i>
@@ -68,9 +69,27 @@
                         <input type="hidden" name="bookId" th:value="${book.bookId}">
                         <button type="submit" class="btn-remove-cart"><i class="bi bi-trash3 fs-5"></i></button>
                     </form>
-                </div>
+                </article>
             </div>
-        </div>
+        </section>
+
+        <aside class="member-cart-summary member-reference-list">
+            <div class="member-reference-list__header member-cart-summary-header">
+                <h2 th:text="#{member.cart.feeEstimate}">Estimated Fee</h2>
+            </div>
+
+            <form th:action="@{/member/cart/checkout}"
+                  method="get"
+                  id="cartForm"
+                  class="member-reference-list__body member-cart-summary-body">
+                <div class="member-cart-field">
+                    <label for="cartDaysSelect" th:text="#{member.cart.duration}">Select borrowing period</label>
+                    <select name="numberOfDays" id="cartDaysSelect">
+                        <option value="7" th:text="#{member.cart.days(7)}">7 days</option>
+                        <option value="14" selected th:text="#{member.cart.days(14)}">14 days</option>
+                        <option value="30" th:text="#{member.cart.days(30)}">30 days</option>
+                    </select>
+                </div>
 
         <div class="col-lg-4">
             <div class="card border-classic shadow-sm rounded bg-white p-4">
@@ -123,6 +142,11 @@
                             <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="#{member.cart.insufficientBalance}">Insufficient wallet balance!</span>
                         </div>
                     </div>
+                    <div class="member-cart-total">
+                        <span th:text="#{member.cart.estimatedTotal}">Estimated total:</span>
+                        <strong id="jsTotalFee">0 VND</strong>
+                    </div>
+                </div>
 
                     <button type="submit" class="btn btn-classic w-100 py-2.5 fw-bold mt-3" id="checkoutBtn" th:text="#{member.cart.checkout}">Continue to checkout</button>
                 </form>
@@ -140,6 +164,10 @@
             const checkoutBtn = document.getElementById("checkoutBtn");
             const cartForm = document.getElementById("cartForm");
 
+            if (!selectDays || !totalFeeText || !walletAlert || !checkoutBtn || !cartForm) {
+                return;
+            }
+
             const discountPercent = /*[[${discountPercent}]]*/ 0.0;
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
             const baseFeePerDay = 5000;
@@ -151,6 +179,14 @@
 
             const selectAll = document.getElementById("selectAllBooks");
             const checkboxes = document.querySelectorAll(".book-select-checkbox");
+
+            function syncSelectAllCheckbox() {
+                if (!selectAll) return;
+
+                const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
+                selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+                selectAll.indeterminate = false;
+            }
 
             function calculateRealtimeFee() {
                 let totalBooksCount = 0;
@@ -180,7 +216,6 @@
 
                 const rawFee = totalBooksCount * days * baseFeePerDay;
                 const finalFee = rawFee * (1 - (discountPercent / 100));
-
                 totalFeeText.textContent = Math.round(finalFee).toLocaleString(numberLocale) + " " + currencyUnit;
 
                 if (walletBalance < finalFee) {
@@ -301,7 +336,7 @@
                         }
                     });
                 });
-            }
+            });
 
             if (selectDays) {
                 selectDays.addEventListener("change", calculateRealtimeFee);

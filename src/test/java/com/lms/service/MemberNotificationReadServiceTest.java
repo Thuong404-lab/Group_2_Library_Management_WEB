@@ -110,6 +110,21 @@ class MemberNotificationReadServiceTest {
     }
 
     @Test
+    void forwardsCombinedSourceAndTypeFiltersToTheRepository() {
+        var pageable = PageRequest.of(0, 20);
+        when(memberNotificationRepository.findNotificationPage(
+                7, NotificationSource.LIBRARIAN, NotificationType.RESERVATION, pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        var page = service.getMyNotifications(
+                "member7", NotificationSource.LIBRARIAN, NotificationType.RESERVATION, pageable);
+
+        assertThat(page).isEmpty();
+        verify(memberNotificationRepository).findNotificationPage(
+                7, NotificationSource.LIBRARIAN, NotificationType.RESERVATION, pageable);
+    }
+
+    @Test
     void persistsNotificationBeforeLinkingItToTheMember() {
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
             Notification notification = invocation.getArgument(0);

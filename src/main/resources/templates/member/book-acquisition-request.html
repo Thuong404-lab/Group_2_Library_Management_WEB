@@ -2,47 +2,73 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head><title th:text="#{member.acquisition.title}">Book Acquisition Request</title><link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css}" /></head>
 <body>
-<div layout:fragment="content" class="container acquisition-page">
-    <header class="member-page-header">
-        <div><span class="member-page-eyebrow" th:text="#{member.acquisition.eyebrow}">COLLECTION DEVELOPMENT</span><h1 th:text="#{member.acquisition.heading}">Request a Book</h1><p th:text="#{member.acquisition.description}">Suggest a book for the library collection.</p></div>
-        <a th:href="@{/books}" class="member-secondary-action"><i class="bi bi-arrow-left"></i><span th:text="#{member.acquisition.explore}">Explore Books</span></a>
+<div layout:fragment="content" class="container acquisition-page member-palette-page">
+    <header class="member-page-header member-dashboard-hero acquisition-hero">
+        <div class="acquisition-hero-copy"><span class="member-page-eyebrow" th:text="#{member.acquisition.eyebrow}">COLLECTION DEVELOPMENT</span><h1 th:text="#{member.acquisition.heading}">Request a Book</h1><p th:text="#{member.acquisition.description}">Suggest a book for the library collection.</p></div>
+        <button type="button" class="member-secondary-action acquisition-hero-action acquisition-modal-trigger member-ui-button member-ui-button--inverse" data-toggle="modal" data-target="#acquisitionRequestModal"><i class="bi bi-plus-lg" aria-hidden="true"></i><span th:text="#{member.acquisition.submit}">Submit Request</span></button>
     </header>
-    <div th:if="${success}" class="member-alert is-success" th:text="${success}"></div>
-    <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
-    <section class="member-form-card" aria-labelledby="acquisition-form-title">
-        <div class="member-form-heading"><span><i class="bi bi-journal-plus"></i></span><div><h2 id="acquisition-form-title" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2><p th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p></div></div>
-        <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
-            <div class="member-form-grid">
-                <div class="member-form-field"><label for="title"><span th:text="#{book.title}">Book Title</span> <span aria-hidden="true">*</span></label><input type="text" id="title" class="validate-field" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" th:field="*{title}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}"><div id="titleFeedback" class="member-field-error" th:text="${#fields.hasErrors('title') ? #fields.errors('title')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="author"><span th:text="#{book.author}">Author</span> <span aria-hidden="true">*</span></label><input type="text" id="author" th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'" th:field="*{author}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}"><div id="authorFeedback" class="member-field-error" th:text="${#fields.hasErrors('author') ? #fields.errors('author')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="isbn">ISBN</label><input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" th:placeholder="#{member.acquisition.isbnPlaceholder}"><div id="isbnFeedback" class="member-field-error" th:text="${#fields.hasErrors('isbn') ? #fields.errors('isbn')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="publisher" th:text="#{book.publisher}">Publisher</label><input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" th:placeholder="#{member.acquisition.publisherPlaceholder}"><div id="publisherFeedback" class="member-field-error" th:text="${#fields.hasErrors('publisher') ? #fields.errors('publisher')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="publicationYear" th:text="#{book.publicationYear}">Publication Year</label><input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.acquisition.yearPlaceholder}"><div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div></div>
-                <div class="member-form-field member-form-field--full"><label for="requestReason"><span th:text="#{member.acquisition.reason}">Request Reason</span> <span aria-hidden="true">*</span></label><textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" th:placeholder="#{validation.charactersRange(10,1000)}"></textarea><div class="member-field-support"><span id="requestReasonCount" aria-live="polite">0/1000</span></div><div id="requestReasonFeedback" class="member-field-error" th:text="${#fields.hasErrors('requestReason') ? #fields.errors('requestReason')[0] : ''}"></div></div>
-                <div class="member-form-field member-form-field--full"><label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label><input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://..."><div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div></div>
+    <div class="modal fade acquisition-request-modal member-standard-dialog"
+         id="acquisitionRequestModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="acquisitionRequestModalLabel"
+         aria-hidden="true"
+         th:attr="data-reopen=${error != null}">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <span class="member-page-eyebrow" th:text="#{member.acquisition.eyebrow}">COLLECTION DEVELOPMENT</span>
+                        <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
+                    </div>
+                </div>
+                <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
+                    <div class="modal-body">
+                        <div th:if="${error}" class="member-alert acquisition-inline-alert is-error" role="alert" th:text="${error}"></div>
+                        <div class="member-form-grid">
+                            <div class="member-form-field"><label for="title"><span th:text="#{book.title}">Book Title</span> <span aria-hidden="true">*</span></label><input type="text" id="title" class="validate-field" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" th:field="*{title}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}"><div id="titleFeedback" class="member-field-error" th:text="${#fields.hasErrors('title') ? #fields.errors('title')[0] : ''}"></div></div>
+                            <div class="member-form-field"><label for="author"><span th:text="#{book.author}">Author</span> <span aria-hidden="true">*</span></label><input type="text" id="author" th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'" th:field="*{author}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}"><div id="authorFeedback" class="member-field-error" th:text="${#fields.hasErrors('author') ? #fields.errors('author')[0] : ''}"></div></div>
+                            <div class="member-form-field"><label for="isbn">ISBN</label><input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" th:placeholder="#{member.acquisition.isbnPlaceholder}"><div id="isbnFeedback" class="member-field-error" th:text="${#fields.hasErrors('isbn') ? #fields.errors('isbn')[0] : ''}"></div></div>
+                            <div class="member-form-field"><label for="publisher" th:text="#{book.publisher}">Publisher</label><input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" th:placeholder="#{member.acquisition.publisherPlaceholder}"><div id="publisherFeedback" class="member-field-error" th:text="${#fields.hasErrors('publisher') ? #fields.errors('publisher')[0] : ''}"></div></div>
+                            <div class="member-form-field"><label for="publicationYear" th:text="#{book.publicationYear}">Publication Year</label><input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.acquisition.yearPlaceholder}"><div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div></div>
+                            <div class="member-form-field member-form-field--full"><label for="requestReason"><span th:text="#{member.acquisition.reason}">Request Reason</span> <span aria-hidden="true">*</span></label><textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" th:placeholder="#{validation.charactersRange(10,1000)}"></textarea><div class="member-field-support"><div id="requestReasonFeedback" class="member-field-error" th:text="${#fields.hasErrors('requestReason') ? #fields.errors('requestReason')[0] : ''}"></div><span id="requestReasonCount" aria-live="polite">0/1000</span></div></div>
+                            <div class="member-form-field member-form-field--full"><label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label><input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://..."><div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="member-secondary-action acquisition-modal-cancel member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                        <button type="submit" class="member-primary-action member-ui-button member-ui-button--primary" th:text="#{member.acquisition.submit}">Submit Request</button>
+                    </div>
+                </form>
             </div>
-            <div class="member-form-actions"><button type="submit" class="member-primary-action" th:text="#{member.acquisition.submit}">Submit Request</button></div>
-        </form>
-    </section>
-    <section class="member-request-history" aria-labelledby="request-history-title">
-        <div class="member-request-history-heading"><h2 id="request-history-title" th:text="#{member.acquisition.mine}">My Requests</h2><span th:text="#{member.acquisition.count(${myAcquisitionRequests.totalElements})}">0 requests</span></div>
-        <div class="member-request-list" th:if="${myAcquisitionRequests.totalElements > 0}">
-            <article class="member-request-item" th:each="request : ${myAcquisitionRequests.content}">
-                <div><h3 th:text="${request.title}">Book Title</h3><p><span th:text="${request.author}">Author</span><span th:if="${request.publisher != null}" th:text="${' · ' + request.publisher}"></span></p></div>
-                <p class="member-request-isbn" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></p>
-                <div class="member-request-meta"><span class="request-status" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? #messages.msg('request.status.pending') : (request.status.name() == 'APPROVED' ? #messages.msg('request.status.approved') : #messages.msg('request.status.rejected'))}">Pending</span><time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time></div>
+        </div>
+    </div>
+    <section class="member-request-history member-reference-list" aria-labelledby="request-history-title">
+        <div class="member-request-history-heading member-reference-list__header"><h2 id="request-history-title" th:text="#{member.acquisition.mine}">My Requests</h2><span th:text="#{member.acquisition.count(${myAcquisitionRequests.totalElements})}">0 requests</span></div>
+        <div class="member-request-list member-reference-list__body" th:if="${myAcquisitionRequests.totalElements > 0}">
+            <article class="member-request-item member-reference-list__item" th:each="request : ${myAcquisitionRequests.content}">
+                <div class="member-request-copy">
+                    <h3 th:text="${request.title}">Book Title</h3>
+                    <p class="member-request-details">
+                        <span th:text="${request.author}">Author</span>
+                        <span th:if="${request.publisher != null and !#strings.isEmpty(#strings.trim(request.publisher))}" th:text="${' · ' + request.publisher}"></span>
+                        <span class="member-request-isbn" th:if="${request.isbn != null and !#strings.isEmpty(#strings.trim(request.isbn))}" th:text="${' · ISBN: ' + request.isbn}"></span>
+                    </p>
+                </div>
+                <div class="member-request-meta"><span class="request-status member-reference-pill" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? #messages.msg('request.status.pending') : (request.status.name() == 'APPROVED' ? #messages.msg('request.status.approved') : #messages.msg('request.status.rejected'))}">Pending</span><time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time></div>
                 <p class="member-request-decision" th:if="${request.status.name() == 'REJECTED'}"><strong th:text="#{member.acquisition.rejectionReason}">Rejection reason:</strong> <span th:text="${request.decisionNote}"></span></p>
             </article>
         </div>
         <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}" th:text="#{member.acquisition.empty}">You have not submitted any requests.</div>
         <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}" th:aria-label="#{member.acquisition.pagination}">
-            <a th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}"><i class="bi bi-chevron-left"></i></a>
+            <a class="member-page-control" th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
             <span th:text="${(myAcquisitionRequests.number + 1) + ' / ' + myAcquisitionRequests.totalPages}">1 / 1</span>
-            <a th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}"><i class="bi bi-chevron-right"></i></a>
+            <a class="member-page-control" th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
         </nav>
     </section>
     <script th:inline="javascript">
-        const acquisitionForm=document.getElementById('acquisitionRequestForm'),currentYear=new Date().getFullYear();
+        const acquisitionPageSuccess=/*[[${success}]]*/null;
+        const acquisitionForm=document.getElementById('acquisitionRequestForm'),acquisitionModal=document.getElementById('acquisitionRequestModal'),currentYear=new Date().getFullYear();
         const acquisitionI18n={required:/*[[#{validation.fieldRequired}]]*/'{0} is required.',range:/*[[#{validation.fieldRange}]]*/'{0} must contain {1}-{2} characters.',letters:/*[[#{validation.fieldLetters}]]*/'{0} must include letters.',year:/*[[#{validation.yearRange}]]*/'Publication year must be between 1000 and {0}.',url:/*[[#{validation.httpUrl}]]*/'Reference link must be a valid HTTP or HTTPS URL.',title:/*[[#{book.title}]]*/'Book Title',author:/*[[#{book.author}]]*/'Author',publisher:/*[[#{book.publisher}]]*/'Publisher',reason:/*[[#{member.acquisition.reason}]]*/'Request Reason'};
         function setFieldError(input,id,message){input.classList.add('is-invalid');document.getElementById(id).textContent=message}function clearFieldError(input,id){input.classList.remove('is-invalid');document.getElementById(id).textContent=''}function hasLetter(value){return /\p{L}/u.test(value)}
         function formatMessage(template,...values){return values.reduce((text,value,index)=>text.replace('{'+index+'}',value),template)}
@@ -50,6 +76,7 @@
         function updateReasonCount(){const reason=document.getElementById('requestReason'),count=document.getElementById('requestReasonCount');count.textContent=reason.value.length+'/1000';count.classList.toggle('is-near-limit',reason.value.length>=900&&reason.value.length<1000);count.classList.toggle('is-limit-reached',reason.value.length>=1000)}
         ['title','author','publisher','publicationYear','requestReason','referenceUrl'].forEach(function(id){const input=document.getElementById(id);input.addEventListener('input',function(){clearFieldError(input,id+'Feedback');if(id==='requestReason')updateReasonCount()})});
         acquisitionForm.addEventListener('submit',function(event){let firstInvalid=null;function check(valid,input){if(!valid)firstInvalid=firstInvalid||input}const title=document.getElementById('title'),author=document.getElementById('author'),publisher=document.getElementById('publisher'),year=document.getElementById('publicationYear'),reason=document.getElementById('requestReason'),url=document.getElementById('referenceUrl');check(validateText(title,'titleFeedback',acquisitionI18n.title,2,255,false),title);check(validateText(author,'authorFeedback',acquisitionI18n.author,2,255,false),author);check(validateText(publisher,'publisherFeedback',acquisitionI18n.publisher,1,255,true),publisher);check(validateText(reason,'requestReasonFeedback',acquisitionI18n.reason,10,1000,false),reason);if(year.value!==''&&(Number(year.value)<1000||Number(year.value)>currentYear)){setFieldError(year,'publicationYearFeedback',formatMessage(acquisitionI18n.year,currentYear));firstInvalid=firstInvalid||year}if(url.value.trim()!==''){try{const parsed=new URL(url.value.trim());if(!['http:','https:'].includes(parsed.protocol))throw new Error()}catch(e){setFieldError(url,'referenceUrlFeedback',acquisitionI18n.url);firstInvalid=firstInvalid||url}}updateReasonCount();if(firstInvalid){event.preventDefault();firstInvalid.focus()}});updateReasonCount();
+        document.addEventListener('DOMContentLoaded',function(){if(acquisitionPageSuccess)window.AppFeedback.success(acquisitionPageSuccess);if(!acquisitionModal||!window.jQuery)return;const modal=window.jQuery(acquisitionModal),firstInvalid=acquisitionModal.querySelector('.is-invalid');modal.on('shown.bs.modal',function(){(acquisitionModal.querySelector('.is-invalid')||document.getElementById('title')).focus()});if(acquisitionModal.dataset.reopen==='true'||firstInvalid)modal.modal('show')});
     </script>
 </div>
 </body></html>

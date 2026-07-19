@@ -10,11 +10,11 @@
   </head>
 
   <body>
-    <div layout:fragment="content" class="container member-page reviews-page">
+    <div layout:fragment="content" class="container member-page reviews-page member-palette-page">
       <div
-        class="member-page-header"
+        class="member-page-header member-dashboard-hero reviews-hero"
       >
-        <div>
+        <div class="reviews-hero-copy">
           <span class="member-page-eyebrow" th:text="#{member.reviews.eyebrow}">YOUR ACTIVITY</span>
           <h1
             class="member-page-title"
@@ -27,22 +27,9 @@
         </div>
       </div>
 
-      <div
-        class="alert alert-success"
-        th:if="${success}"
-        th:text="${success}"
-      ></div>
-      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
-
-      <div class="review-section-heading">
-        <h2>
-          <i class="bi bi-list-stars me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{member.reviews.submitted}">Submitted Reviews</span>
-        </h2>
-      </div>
-
-      <div class="sent-review-card">
-          <div class="member-table-wrap">
-            <table class="review-table">
+      <div class="sent-review-card member-reference-list">
+          <div class="member-table-wrap member-reference-list__body">
+            <table class="review-table member-reference-table">
               <colgroup>
                 <col class="review-book-column">
                 <col class="review-author-column">
@@ -72,16 +59,16 @@
                     <td class="ps-3 py-3">
                       <div class="d-flex align-items-center">
                         <img
-                          th:src="@{'https://picsum.photos/seed/' + ${review.book.bookId} + '/100/150'}"
+                          th:src="${review.book.coverImageUrl != null and !#strings.isEmpty(review.book.coverImageUrl) ? review.book.coverImageUrl : 'https://picsum.photos/seed/' + review.book.bookId + '/100/150'}"
                           class="review-cover shadow-sm"
-                          alt="Book"
+                          th:alt="${review.book.title}"
                         />
                         <div>
                           <h6 class="mb-2 fw-bold sent-review-title" th:text="${review.book.title}">
                             Book Title
                           </h6>
                           <span
-                            class="badge genre-badge"
+                            class="badge genre-badge member-reference-pill"
                             th:text="${review.book.genre != null ? review.book.genre.genreName : #messages.msg('book.genre.uncategorized')}"
                           >
                             Genre
@@ -111,7 +98,7 @@
                     </td>
 
                     <td class="review-cell-centered">
-                      <span class="review-rating-badge">
+                      <span class="review-rating-badge member-reference-pill">
                         <i class="bi bi-star-fill" aria-hidden="true"></i>
                         <span th:text="#{member.reviews.starsValue(${review.rating})}">5 stars</span>
                       </span>
@@ -121,13 +108,13 @@
                       <div class="review-actions">
                         <a
                           th:href="@{'/books/' + ${review.book.bookId}}"
-                          class="btn btn-sm btn-review-classic"
+                          class="btn btn-sm btn-review-classic member-ui-button member-ui-button--primary"
                         >
                           <span th:text="#{book.details}">View Book</span>
                         </a>
                         <button type="button"
                           th:if="${review.librarianResponse == null || review.librarianResponse.isBlank()}"
-                          class="btn btn-sm btn-review-edit"
+                          class="btn btn-sm btn-review-edit member-ui-button member-ui-button--secondary"
                           data-toggle="modal"
                           data-target="#editReviewModal"
                           th:data-feedback-id="${review.feedbackId}"
@@ -139,7 +126,7 @@
                           <span th:text="#{common.edit}">Edit</span>
                         </button>
                         <button type="button"
-                                class="btn btn-sm btn-outline-danger review-delete-trigger"
+                                class="btn btn-sm btn-outline-danger review-delete-trigger member-ui-button member-ui-button--danger-outline"
                                 data-toggle="modal"
                                 data-target="#deleteReviewModal"
                                 th:data-delete-url="@{'/member/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
@@ -179,39 +166,39 @@
             th:with="startPage=${myReviews.totalPages <= 10 ? 0 : (myReviews.number < 9 ? 0 : (myReviews.number - 8 > myReviews.totalPages - 10 ? myReviews.totalPages - 10 : myReviews.number - 8))}, endPage=${startPage + 9 < myReviews.totalPages ? startPage + 9 : myReviews.totalPages - 1}">
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=0)}"
+                <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=0)}"
                   th:text="#{pagination.first}">First</a>
               </li>
               <li class="page-item" th:classappend="${myReviews.first} ? 'disabled'">
-                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
-                 ><i class="bi bi-chevron-left"></i></a>
+                <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number - 1})}"
+                  th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
               </li>
               <li class="page-item disabled" th:if="${startPage > 0}">
-                <span class="page-link page-link-classic">…</span>
+                <span class="page-link page-link-classic">&hellip;</span>
               </li>
               <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                 th:classappend="${i == myReviews.number ? 'active' : ''}">
-                <a class="page-link page-link-classic" th:href="@{/member/interaction/reviews(page=${i})}"
+                <a class="page-link page-link-classic member-page-control" th:href="@{/member/interaction/reviews(page=${i})}"
                   th:text="${i + 1}">1</a>
               </li>
               <li class="page-item disabled" th:if="${endPage < myReviews.totalPages - 1}">
-                <span class="page-link page-link-classic">…</span>
+                <span class="page-link page-link-classic">&hellip;</span>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
-                 >
-                  <i class="bi bi-chevron-right"></i>
+                <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.number + 1})}"
+                  th:aria-label="#{pagination.next}">
+                  <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </a>
               </li>
               <li class="page-item" th:classappend="${myReviews.last} ? 'disabled'">
-                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
+                <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/interaction/reviews(page=${myReviews.totalPages - 1})}"
                   th:text="#{pagination.last}">Last</a>
               </li>
             </ul>
           </nav>
       </div>
 
-    <div class="modal fade review-edit-modal"
+    <div class="modal fade review-edit-modal member-review-dialog member-standard-dialog"
          id="editReviewModal"
          tabindex="-1"
          th:data-reopen-feedback-id="${editReviewId}"
@@ -226,16 +213,16 @@
               <h2 class="modal-title" id="editReviewModalLabel" th:text="#{member.reviews.editTitle}">Edit Review</h2>
               <p class="review-edit-book-title" id="editReviewBookTitle"></p>
             </div>
-            <button type="button" class="review-modal-close" data-dismiss="modal" th:aria-label="#{common.close}">
-              <i class="bi bi-x-lg" aria-hidden="true"></i>
-            </button>
           </div>
           <form id="editReviewForm" th:action="@{/member/interaction/reviews/0/edit}" method="post" novalidate>
             <div class="modal-body">
               <div class="review-edit-field">
                 <label class="review-edit-label" for="editReviewRating" th:text="#{member.reviews.stars}">Stars</label>
                 <input type="hidden" class="review-edit-rating-value" id="editReviewRating" name="rating">
-                <div class="review-edit-rating-picker" role="radiogroup" th:aria-label="#{member.reviews.selectStars}">
+                <div class="review-edit-rating-picker"
+                     role="radiogroup"
+                     th:aria-label="#{member.reviews.selectStars}"
+                     aria-describedby="editReviewRatingError">
                   <button th:each="ratingValue : ${#numbers.sequence(1, 5)}"
                           type="button"
                           class="review-edit-rating-star"
@@ -246,6 +233,10 @@
                     <i class="bi bi-star-fill"></i>
                   </button>
                 </div>
+                <div class="review-edit-field-error"
+                     id="editReviewRatingError"
+                     role="alert"
+                     aria-live="assertive"></div>
               </div>
               <div class="review-edit-field review-edit-comment-field">
                 <label class="review-edit-label" for="editReviewComment" th:text="#{member.reviews.content}">Review Content</label>
@@ -257,20 +248,25 @@
                           required
                           th:placeholder="#{validation.charactersRange(5,1000)}"
                           aria-describedby="editReviewCommentCount editReviewCommentError"></textarea>
-                <div class="review-edit-comment-support"><span id="editReviewCommentCount" aria-live="polite">0/1000</span></div>
-                <div class="review-edit-field-error" id="editReviewCommentError" role="alert" aria-live="assertive"></div>
+                <div class="review-edit-comment-support">
+                  <span class="review-edit-field-error"
+                        id="editReviewCommentError"
+                        role="alert"
+                        aria-live="assertive"></span>
+                  <span id="editReviewCommentCount" aria-live="polite">0/1000</span>
+                </div>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="review-modal-cancel" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-              <button type="submit" class="review-edit-submit" th:text="#{member.profile.save}">Save Changes</button>
+              <button type="button" class="review-modal-cancel member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+              <button type="submit" class="review-edit-submit member-ui-button member-ui-button--primary" th:text="#{member.profile.save}">Save Changes</button>
             </div>
           </form>
         </div>
       </div>
     </div>
 
-    <div class="modal fade review-delete-modal"
+    <div class="modal fade review-delete-modal member-review-dialog member-review-dialog--danger member-standard-dialog"
          id="deleteReviewModal"
          tabindex="-1"
          aria-labelledby="deleteReviewModalLabel"
@@ -280,12 +276,6 @@
         <div class="modal-content">
           <div class="modal-header">
             <h2 class="modal-title" id="deleteReviewModalLabel" th:text="#{member.reviews.deleteTitle}">Delete Review?</h2>
-            <button type="button"
-                    class="review-modal-close"
-                    data-dismiss="modal"
-                    th:aria-label="#{common.close}">
-              <i class="bi bi-x-lg" aria-hidden="true"></i>
-            </button>
           </div>
           <div class="modal-body">
             <p id="deleteReviewModalDescription">
@@ -293,11 +283,11 @@
             </p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="review-modal-cancel" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+            <button type="button" class="review-modal-cancel member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
             <form id="deleteReviewForm"
                   th:action="@{/member/interaction/reviews/0/delete}"
                   method="post">
-              <button type="submit" class="review-modal-confirm" th:text="#{member.reviews.delete}">Delete Review</button>
+              <button type="submit" class="review-modal-confirm member-ui-button member-ui-button--danger" th:text="#{member.reviews.delete}">Delete Review</button>
             </form>
           </div>
         </div>
@@ -309,12 +299,18 @@
     <div layout:fragment="scripts">
       <script th:inline="javascript">
         (function () {
+          const reviewPageSuccess = /*[[${success}]]*/ null;
+          const reviewPageError = /*[[${error}]]*/ null;
+          if (reviewPageSuccess) window.AppFeedback.success(reviewPageSuccess);
+          if (reviewPageError) window.AppFeedback.error(reviewPageError);
+
           const editForm = document.getElementById("editReviewForm");
           const editBookTitle = document.getElementById("editReviewBookTitle");
 
           if (editForm != null && editBookTitle != null) {
             const picker = editForm.querySelector(".review-edit-rating-picker");
             const input = editForm.querySelector(".review-edit-rating-value");
+            const ratingError = document.getElementById("editReviewRatingError");
             const comment = editForm.querySelector("[name='comment']");
             const commentError = document.getElementById("editReviewCommentError");
             const commentCount = document.getElementById("editReviewCommentCount");
@@ -340,6 +336,9 @@
             function select(value) {
               input.value = String(value);
               paint(value);
+              if (ratingError != null && value >= 1 && value <= 5) {
+                ratingError.textContent = "";
+              }
             }
 
             stars.forEach(function (star) {
@@ -363,6 +362,9 @@
                   if (commentError != null) {
                     commentError.textContent = "";
                   }
+                  if (ratingError != null) {
+                    ratingError.textContent = "";
+                  }
                   updateCommentCount();
                   select(Number(rating != null ? rating : trigger.dataset.reviewRating) || 0);
               }
@@ -371,19 +373,30 @@
                 const normalizedComment = comment.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
                 comment.value = normalizedComment;
                 updateCommentCount();
+                const selectedRating = Number(input.value) || 0;
                 let message = "";
                 if (normalizedComment === "") message = /*[[#{member.reviews.validation.required}]]*/ "Please enter review content.";
                 else if (normalizedComment.length < 5) message = /*[[#{member.reviews.validation.min}]]*/ "Review content must contain at least 5 characters.";
                 else if (normalizedComment.length > 1000) message = /*[[#{member.reviews.validation.max}]]*/ "Review content cannot exceed 1000 characters.";
                 else if (!/\p{L}/u.test(normalizedComment)) message = /*[[#{member.reviews.validation.letters}]]*/ "Review content must include letters.";
-                if (message !== "") {
+                const ratingMessage = selectedRating < 1 || selectedRating > 5
+                  ? /*[[#{validation.review.ratingRequired}]]*/ ""
+                  : "";
+                if (ratingMessage !== "" || message !== "") {
                   event.preventDefault();
                   event.stopPropagation();
-                  comment.classList.add("is-invalid");
+                  if (ratingError != null) {
+                    ratingError.textContent = ratingMessage;
+                  }
+                  comment.classList.toggle("is-invalid", message !== "");
                   if (commentError != null) {
                     commentError.textContent = message;
                   }
-                  comment.focus();
+                  if (ratingMessage !== "") {
+                    stars[0].focus();
+                  } else {
+                    comment.focus();
+                  }
                 }
               });
 
