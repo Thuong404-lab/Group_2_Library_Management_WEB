@@ -107,8 +107,10 @@
                 </div>
 
                 <div class="book-detail-actions d-flex mt-3 flex-wrap" th:aria-label="#{common.actions}">
-                    <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
-                          method="post" class="favorite-form" th:data-book-id="${book.bookId}">
+                    <form th:action="${favoriteBookIds.contains(book.bookId) ? '/member/interaction/favorites/' + book.bookId + '/remove' : '/member/interaction/favorites/' + book.bookId + '/add'}"
+                          method="post" class="favorite-form" th:data-book-id="${book.bookId}"
+                          th:data-add-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
+                          th:data-remove-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/remove'}">
                         <button type="submit"
                                 th:class="${favoriteBookIds.contains(book.bookId) ? 'book-detail-button book-detail-button--secondary js-favorite-button active' : 'book-detail-button book-detail-button--secondary js-favorite-button'}">
                             <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill' : 'bi bi-heart'}" aria-hidden="true"></i>

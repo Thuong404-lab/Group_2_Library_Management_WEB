@@ -636,11 +636,15 @@ public class LoanServiceImpl implements LoanService {
             throw new ConflictException(localizedMessageService.get("backend.loan.maxRenewals", maxRenewals));
         if (detail.getDueDate() == null || !detail.getDueDate().isAfter(LocalDateTime.now()))
             throw new ConflictException(localizedMessageService.get("backend.renewal.overdueApproval"));
-        if (detail.getBook() != null && detail.getBorrow() != null && detail.getBorrow().getMember() != null
-                && reservationRepository.existsActiveReservationByOtherMemberForBook(
-                detail.getBook().getBookId(), detail.getBorrow().getMember().getMemberId(),
-                List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE")))
-            throw new ConflictException(localizedMessageService.get("backend.renewal.reservedByAnotherMemberApproval"));
+        if (detail.getBook() != null && detail.getBorrow() != null && detail.getBorrow().getMember() != null) {
+            Integer bookId = detail.getBook().getBookId();
+            long waitingReservations = reservationRepository.countActiveReservationsByOtherMemberForBook(
+                    bookId, detail.getBorrow().getMember().getMemberId(),
+                    List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE"));
+            long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, STATUS_AVAILABLE);
+            if (waitingReservations > availableCopies)
+                throw new ConflictException(localizedMessageService.get("backend.renewal.reservedByAnotherMemberApproval"));
+        }
         int maxDays = getPositiveIntSetting("Max_Renewal_Days", 7);
         if (hold.getRenewalDays() == null || hold.getRenewalDays() < 1 || hold.getRenewalDays() > maxDays)
             throw new ConflictException(localizedMessageService.get("backend.renewal.invalidDays", maxDays));

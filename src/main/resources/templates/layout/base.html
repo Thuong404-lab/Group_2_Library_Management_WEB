@@ -70,6 +70,7 @@
       var favoriteAddError = /*[[#{favorite.add.error}]]*/ "Unable to add this book to favorites.";
       var favoriteAddSuccess = /*[[#{favorite.add.success}]]*/ "Added to your favorites!";
       var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
+      var favoriteDefaultLabel = /*[[#{guest.bookDetail.favorite}]]*/ "Favorite";
       var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
 
       window.AppFeedback = (function () {
@@ -134,7 +135,11 @@
             ".finance-alert--success",
             ".finance-alert--danger"
           ].join(","))).filter(function (element) {
-            return element.textContent.trim().length > 0;
+            var isHidden = element.hidden
+              || element.classList.contains("d-none")
+              || element.getAttribute("aria-hidden") === "true"
+              || element.closest(".modal,[hidden]") !== null;
+            return !isHidden && element.textContent.trim().length > 0;
           });
 
           if (legacyFeedback.length > 0) {
@@ -193,10 +198,12 @@
               window.location.href = "/login";
               return null;
             }
-            if (!response.ok) {
-              throw new Error(favoriteAddError);
-            }
-            return response.json();
+            return response.json().catch(function () { return {}; }).then(function (data) {
+              if (!response.ok) {
+                throw new Error(data.message || favoriteAddError);
+              }
+              return data;
+            });
           })
           .then(function (data) {
             if (!data) {
@@ -205,13 +212,13 @@
 
             var bookId = form.dataset.bookId;
             document
-              .querySelectorAll(
-                '.favorite-form[data-book-id="' +
-                  bookId +
-                  '"] .js-favorite-button',
-              )
-              .forEach(function (favoriteButton) {
-                setFavoriteButtonActive(favoriteButton);
+              .querySelectorAll('.favorite-form[data-book-id="' + bookId + '"]')
+              .forEach(function (favoriteForm) {
+                favoriteForm.action = data.favorite
+                  ? favoriteForm.dataset.removeUrl
+                  : favoriteForm.dataset.addUrl;
+                var favoriteButton = favoriteForm.querySelector(".js-favorite-button");
+                if (favoriteButton) setFavoriteButtonState(favoriteButton, data.favorite);
               });
 
             window.AppFeedback.success(data.message || favoriteAddSuccess);
@@ -226,7 +233,15 @@
           });
       });
 
-      function setFavoriteButtonActive(button) {
+      function setFavoriteButtonState(button, favorite) {
+        if (!favorite) {
+          button.classList.remove("btn-danger", "active");
+          var emptyIcon = button.querySelector("i");
+          if (emptyIcon) emptyIcon.className = "bi bi-heart";
+          var emptyLabel = button.querySelector("span");
+          if (emptyLabel) emptyLabel.innerText = favoriteDefaultLabel;
+          return;
+        }
         button.classList.remove("btn-outline-danger");
         button.classList.add("btn-danger", "active");
 

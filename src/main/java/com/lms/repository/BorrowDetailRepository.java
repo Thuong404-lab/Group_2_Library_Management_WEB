@@ -150,7 +150,21 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             @Param("startDate") java.time.LocalDateTime startDate,
             @Param("endDate") java.time.LocalDateTime endDate);
 
-    @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId AND bd.book.bookId = :bookId AND bd.status NOT IN ('Returned', 'Canceled', 'Rejected')")
+    @Query("""
+            SELECT COUNT(bd)
+            FROM BorrowDetail bd
+            WHERE bd.borrow.member.memberId = :memberId
+              AND bd.book.bookId = :bookId
+              AND UPPER(TRIM(bd.status)) IN (
+                    'PENDING',
+                    'PAYMENT_PENDING',
+                    'WAITING_PICKUP',
+                    'BORROWED',
+                    'OVERDUE',
+                    'RETURN_PENDING',
+                    'RENEW_PENDING'
+              )
+            """)
     long countActiveOrPendingRequestsByMemberAndBook(@Param("memberId") Integer memberId, @Param("bookId") Integer bookId);
 }
 

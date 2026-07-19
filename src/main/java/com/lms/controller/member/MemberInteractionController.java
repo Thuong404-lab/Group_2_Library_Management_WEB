@@ -301,19 +301,30 @@ public class MemberInteractionController extends LocalizedControllerSupport {
     }
 
     @PostMapping("/favorites/{bookId}/remove")
-    public String removeFromFavorites(
+    public Object removeFromFavorites(
             @PathVariable("bookId") Integer bookId,
             Principal principal,
-            RedirectAttributes flash) {
+            RedirectAttributes flash,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
+            @RequestHeader(value = "Referer", required = false) String referer) {
 
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity.ok(favoriteJson(false, message("backend.favorite.removed")));
+            }
             flash.addFlashAttribute("success", message("backend.favorite.removed"));
         } catch (ApplicationException e) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity.status(e.getStatus())
+                        .body(favoriteJson(false, e.getMessage()));
+            }
             flash.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/member/favorites";
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                .location(URI.create(localRedirectTarget(referer)))
+                .build();
     }
 
     private boolean isAjax(String requestedWith) {
@@ -363,7 +374,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
     private Map<String, Object> favoriteJson(boolean favorite, String message) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("success", favorite);
+        body.put("success", true);
         body.put("favorite", favorite);
         body.put("message", message);
         return body;

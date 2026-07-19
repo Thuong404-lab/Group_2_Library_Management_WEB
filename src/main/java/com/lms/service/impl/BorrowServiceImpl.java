@@ -624,10 +624,28 @@ public class BorrowServiceImpl implements BorrowService {
         int maxRenewals = getPositiveIntSetting("MAX_RENEWALS", 2);
         if (detail.getRenewCount() != null && detail.getRenewCount() >= maxRenewals)
             throw new ConflictException(localizedMessageService.get("backend.loan.maxRenewals", maxRenewals));
-        if (detail.getBook() != null && reservationRepository.existsActiveReservationByOtherMemberForBook(
-                detail.getBook().getBookId(), member.getMemberId(),
-                List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE")))
-            throw new ConflictException(localizedMessageService.get("backend.renewal.reservedByAnotherMember"));
+        int maxRenewalRequests = getPositiveIntSetting("MAX_RENEWAL_REQUESTS_PER_LOAN", 3);
+        long renewalRequestCount = transactionRepository.countByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCase(
+                borrowDetailId, "RENEWAL_FEE");
+        if (renewalRequestCount >= maxRenewalRequests)
+            throw new ConflictException(localizedMessageService.get("backend.renewal.requestLimitReached", maxRenewalRequests));
+        int cooldownHours = getPositiveIntSetting("RENEWAL_REJECTION_COOLDOWN_HOURS", 24);
+        transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDescTransactionIdDesc(
+                        borrowDetailId, "REFUND", "Completed")
+                .map(Transaction::getTransactionDate)
+                .filter(rejectedAt -> rejectedAt.plusHours(cooldownHours).isAfter(LocalDateTime.now()))
+                .ifPresent(rejectedAt -> {
+                    throw new ConflictException(localizedMessageService.get("backend.renewal.rejectionCooldown",
+                            rejectedAt.plusHours(cooldownHours).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+                });
+        if (detail.getBook() != null) {
+            Integer bookId = detail.getBook().getBookId();
+            long waitingReservations = reservationRepository.countActiveReservationsByOtherMemberForBook(
+                    bookId, member.getMemberId(), List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE"));
+            long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            if (waitingReservations > availableCopies)
+                throw new ConflictException(localizedMessageService.get("backend.renewal.reservedByAnotherMember"));
+        }
         if (transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(borrowDetailId, "RENEWAL_FEE", "Pending").isPresent())
             throw new ConflictException(localizedMessageService.get("backend.renewal.alreadyPending"));
 
@@ -1015,6 +1033,25 @@ public class BorrowServiceImpl implements BorrowService {
             dto.setProgressPercentage(Math.min(100, Math.max(0, progress)));
         }
         dto.setRenewCount(detail.getRenewCount() != null ? detail.getRenewCount() : 0);
+        int maxRenewalRequests = getPositiveIntSetting("MAX_RENEWAL_REQUESTS_PER_LOAN", 3);
+        long requestCount = transactionRepository.countByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCase(
+                detail.getBorrowDetailId(), "RENEWAL_FEE");
+        dto.setRenewalRequestCount((int) Math.min(Integer.MAX_VALUE, requestCount));
+        if (requestCount >= maxRenewalRequests) {
+            dto.setRenewalRequestBlocked(true);
+            dto.setRenewalBlockedReason(localizedMessageService.get("backend.renewal.requestLimitReached", maxRenewalRequests));
+        } else {
+            int cooldownHours = getPositiveIntSetting("RENEWAL_REJECTION_COOLDOWN_HOURS", 24);
+            transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDescTransactionIdDesc(
+                            detail.getBorrowDetailId(), "REFUND", "Completed")
+                    .map(Transaction::getTransactionDate)
+                    .filter(rejectedAt -> rejectedAt.plusHours(cooldownHours).isAfter(LocalDateTime.now()))
+                    .ifPresent(rejectedAt -> {
+                        dto.setRenewalRequestBlocked(true);
+                        dto.setRenewalBlockedReason(localizedMessageService.get("backend.renewal.rejectionCooldown",
+                                rejectedAt.plusHours(cooldownHours).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+                    });
+        }
         return dto;
     }
 
