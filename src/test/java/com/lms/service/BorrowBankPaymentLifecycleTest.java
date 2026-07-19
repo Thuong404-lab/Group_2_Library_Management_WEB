@@ -7,6 +7,8 @@ import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
 import com.lms.entity.Notification;
+import com.lms.entity.User;
+import com.lms.enums.UserStatus;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -59,6 +61,9 @@ class BorrowBankPaymentLifecycleTest {
     void bankCheckoutStaysPendingUntilPaymentIsConfirmed() {
         Member member = new Member();
         member.setMemberId(7);
+        User user = new User();
+        user.setStatus(UserStatus.Active);
+        member.setUser(user);
         Book book = new Book();
         book.setTitle("Clean Code");
         BookItem item = new BookItem();
@@ -74,7 +79,7 @@ class BorrowBankPaymentLifecycleTest {
 
         when(memberRepository.findByUserEmail("0900000000")).thenReturn(Optional.empty());
         when(memberRepository.findByUserPhone("0900000000")).thenReturn(Optional.of(member));
-        when(bookItemRepository.findByBarcode("BC-001")).thenReturn(Optional.of(item));
+        when(bookItemRepository.findByBarcodeForUpdate("BC-001")).thenReturn(Optional.of(item));
         when(borrowDetailRepository.countActiveBorrowedBooks(7)).thenReturn(0L);
         when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> {
             Borrow borrow = invocation.getArgument(0);

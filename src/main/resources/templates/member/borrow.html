@@ -11,7 +11,7 @@
 <body>
 <div layout:fragment="content" class="container mt-4 mb-5">
 
-    <!-- Thông báo Alert hệ thống -->
+    <!-- ThÃƒÂ´ng bÃƒÂ¡o Alert hÃ¡Â»â€¡ thÃ¡Â»â€˜ng -->
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
                 <span th:text="${successMessage}">Success notification</span>
@@ -23,13 +23,13 @@
         <button type="button" class="close u-color-c53030-c575d87d" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </div>
 
-    <!-- Tiêu đề trang đầu mục -->
+    <!-- TiÃƒÂªu Ã„â€˜Ã¡Â»Â trang Ã„â€˜Ã¡ÂºÂ§u mÃ¡Â»Â¥c -->
     <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="page-title mb-0"><i class="bi bi-journal-bookmark-fill me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{member.loan.heading}">Loan and Return Management</span></h2>
                 <a th:href="@{/}" class="btn btn-classic-primary"><i class="bi bi-search me-1"></i> <span th:text="#{member.loan.borrowNew}">Borrow a New Book</span></a>
     </div>
 
-    <!-- Thanh Điều Hướng Tabs Điều Kiện -->
+    <!-- Thanh Ã„ÂiÃ¡Â»Âu HÃ†Â°Ã¡Â»â€ºng Tabs Ã„ÂiÃ¡Â»Âu KiÃ¡Â»â€¡n -->
     <ul class="nav nav-pills nav-pills-classic mb-4" id="borrowTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <a th:href="@{/member/borrow/management(tab='borrowing')}"
@@ -115,12 +115,12 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
 
-                    <!-- ================= TAB: ĐANG MƯỢN (ĐÃ NÂNG CẤP CHỨC NĂNG YÊU CẦU TRẢ) ================= -->
+                    <!-- ================= TAB: Ã„ÂANG MÃ†Â¯Ã¡Â»Â¢N (Ã„ÂÃƒÆ’ NÃƒâ€šNG CÃ¡ÂºÂ¤P CHÃ¡Â»Â¨C NÃ„â€šNG YÃƒÅ U CÃ¡ÂºÂ¦U TRÃ¡ÂºÂ¢) ================= -->
                     <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'borrowing' || activeTab == null}">
                         <thead>
                         <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
-                                <th class="border-0" th:text="#{book.id}">Book ID</th>
+                                <th class="border-0" th:text="#{book.barcode}">Barcode</th>
                                 <th class="border-0" th:text="#{loan.borrowDate}">Borrow Date</th>
                                 <th class="border-0" th:text="#{loan.dueDate}">Due Date</th>
                                 <th class="border-0" th:text="#{common.status}">Status</th>
@@ -142,7 +142,11 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10023</td>
+                            <td class="fw-medium" th:classappend="${item.barcodeAssigned or item.status == 'Pending'} ? 'text-muted' : 'text-danger'">
+                                <span th:if="${item.barcodeAssigned}" th:text="${item.bookIdStr}">BC016-092</span>
+                                <span th:if="${!item.barcodeAssigned and item.status == 'Pending'}" th:text="#{member.loan.barcodePending}">Awaiting librarian assignment</span>
+                                <span th:if="${!item.barcodeAssigned and item.status != 'Pending'}" th:text="#{member.loan.barcodeMissing(${item.borrowIdStr})}">Barcode not assigned</span>
+                            </td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">10/11/2026</td>
                             <td>
                                 <strong th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}"
@@ -167,21 +171,24 @@
                                          th:classappend="${item.daysLeft <= 2 || item.status == 'Overdue'} ? 'bg-danger' : 'bg-classic-progress'"
                                          th:aria-valuenow="${item.progressPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
+                                <small th:if="${item.status == 'Borrowed' or item.status == 'Renew_Pending'}" class="text-muted d-block mt-2"
+                                       th:text="#{loan.renew.usageValue(${item.renewCount}, ${maxRenewals})}">Renewals used: 0/2</small>
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
-                                    <!-- Nút trả sách đã bị ẩn theo yêu cầu hệ thống không cần nữa -->
+                                    <!-- NÃƒÂºt trÃ¡ÂºÂ£ sÃƒÂ¡ch Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ Ã¡ÂºÂ©n theo yÃƒÂªu cÃ¡ÂºÂ§u hÃ¡Â»â€¡ thÃ¡Â»â€˜ng khÃƒÂ´ng cÃ¡ÂºÂ§n nÃ¡Â»Â¯a -->
 
-                                    <!-- Hiển thị nhãn khi đang chờ thủ thư xử lý -->
+                                    <!-- HiÃ¡Â»Æ’n thÃ¡Â»â€¹ nhÃƒÂ£n khi Ã„â€˜ang chÃ¡Â»Â thÃ¡Â»Â§ thÃ†Â° xÃ¡Â»Â­ lÃƒÂ½ -->
                                         <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm u-font-size-0-85rem-4908cb0a"><i class="bi bi-hourglass-split me-1"></i><span th:text="#{common.pendingApproval}">Awaiting approval...</span></span>
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <input type="hidden" name="renewalDays" class="renewal-days-value">
                                         <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action"
-                                                th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"
-                                                th:title="${item.renewCount >= 2 ? #messages.msg('loan.renew.limitReached') : (item.status == 'Overdue' ? #messages.msg('loan.renew.overdueDisabled') : #messages.msg('loan.renew.sevenDays'))}"
-                                                th:attr="data-form-id='renewForm_' + ${item.id}">
+                                                th:disabled="${item.renewCount >= maxRenewals or item.status == 'Overdue'}"
+                                                th:title="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitReached', maxRenewals) : (item.status == 'Overdue' ? #messages.msg('loan.renew.overdueDisabled') : #messages.msg('loan.renew.sevenDays', maxRenewalDays))}"
+                                                th:attr="data-form-id='renewForm_' + ${item.id},data-due-date=${item.dueDate != null ? #temporals.format(item.dueDate, 'yyyy-MM-dd') : ''},data-renew-count=${item.renewCount}">
                                             <i class="bi bi-clock-history me-1"></i>
-                                                <span th:text="${item.renewCount >= 2 ? #messages.msg('loan.renew.limitLabel') : #messages.msg('loan.renew')}">Renew</span>
+                                                <span th:text="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitLabel') : #messages.msg('loan.renew')}">Renew</span>
                                         </button>
                                     </form>
                                 </div>
@@ -190,7 +197,7 @@
                         </tbody>
                     </table>
 
-                    <!-- ================= TAB: ĐÃ ĐẶT TRƯỚC (ĐÃ NÂNG CẤP HỦY ĐẶT TRƯỚC) ================= -->
+                    <!-- ================= TAB: Ã„ÂÃƒÆ’ Ã„ÂÃ¡ÂºÂ¶T TRÃ†Â¯Ã¡Â»Å¡C (Ã„ÂÃƒÆ’ NÃƒâ€šNG CÃ¡ÂºÂ¤P HÃ¡Â»Â¦Y Ã„ÂÃ¡ÂºÂ¶T TRÃ†Â¯Ã¡Â»Å¡C) ================= -->
                     <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'reserved'}">
                         <thead>
                         <tr>
@@ -227,7 +234,7 @@
                                     <span th:if="${item.status == 'Completed'}" class="badge badge-classic-status" th:text="#{reservation.status.completed}">Book Collected</span>
                             </td>
                             <td class="text-end pe-4">
-                                <!-- Form thực hiện Hủy đặt trước -->
+                                <!-- Form thÃ¡Â»Â±c hiÃ¡Â»â€¡n HÃ¡Â»Â§y Ã„â€˜Ã¡ÂºÂ·t trÃ†Â°Ã¡Â»â€ºc -->
                                 <button th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
                                         type="button" class="btn reservation-cancel-action"
                                         data-toggle="modal"
@@ -240,12 +247,12 @@
                         </tbody>
                     </table>
 
-                    <!-- ================= TAB: LỊCH SỬ MƯỢN ================= -->
+                    <!-- ================= TAB: LÃ¡Â»Å CH SÃ¡Â»Â¬ MÃ†Â¯Ã¡Â»Â¢N ================= -->
                     <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'history'}">
                         <thead>
                         <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
-                                <th class="border-0" th:text="#{book.id}">Book ID</th>
+                                <th class="border-0" th:text="#{book.barcode}">Barcode</th>
                                 <th class="border-0" th:text="#{loan.borrowDate}">Borrow Date</th>
                                 <th class="border-0" th:text="#{loan.actualReturnDate}">Actual Return Date</th>
                                 <th class="border-0" th:text="#{common.status}">Status</th>
@@ -386,7 +393,7 @@
         </div>
     </th:block>
 
-    <!-- Modal Xác Nhận Gia Hạn (Vanilla JS) -->
+    <!-- Modal XÃƒÂ¡c NhÃ¡ÂºÂ­n Gia HÃ¡ÂºÂ¡n (Vanilla JS) -->
     <div class="modal fade member-borrow-div-background-14" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
@@ -396,7 +403,22 @@
                 <div class="modal-body text-center py-4">
                     <i class="bi bi-clock-history mb-3 member-borrow-i-font-size-color-opacity-19"></i>
                     <p class="mb-1 mt-2 member-borrow-p-color-font-size-font-weight-20" th:text="#{loan.renew.confirmQuestion}">Are you sure you want to renew this book?</p>
-                    <p class="text-muted mb-0 u-font-size-0-95rem-b8088cad" th:text="#{loan.renew.confirmNotice}">The due date will be extended by 7 days.</p>
+                                        <label for="renewalDaysInput" class="form-label mt-3" th:text="#{loan.renew.days}">Renewal days</label>
+                    <input id="renewalDaysInput" type="number" class="form-control mx-auto" style="max-width:180px" min="1" th:max="${maxRenewalDays}" value="1" oninput="updateRenewalPreview()">
+                    <small class="text-muted d-block mt-2" th:text="#{loan.renew.maxDays(${maxRenewalDays})}">Maximum days</small>
+                    <small id="renewalDaysError" class="text-danger d-none" th:text="#{backend.renewal.invalidDays(${maxRenewalDays})}">Invalid renewal days.</small>
+                    <div class="mt-3 text-start border rounded p-3 bg-light">
+                        <div class="d-flex justify-content-between mb-2"><span th:text="#{loan.renew.renewalUsage}">Renewals already used</span><strong><span id="renewalCountPreview">0</span>/<span th:text="${maxRenewals}">2</span></strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span th:text="#{loan.renew.selectedDays}">Selected extension</span><strong><span id="renewalDaysPreview">1</span> <span th:text="#{common.days}">days</span></strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span th:text="#{loan.renew.currentDueDate}">Current due date</span><strong id="renewalCurrentDueDatePreview">--/--/----</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span th:text="#{loan.renew.newDueDate}">New due date</span><strong id="renewalDueDatePreview" class="text-success">--/--/----</strong></div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between mb-2"><span th:text="#{loan.renew.estimatedFee}">Estimated fee</span><strong id="renewalFeePreview" class="text-danger">0 VND</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span th:text="#{loan.renew.availableBalance}">Available balance</span><strong th:text="${#numbers.formatDecimal(walletBalance,0,'COMMA',0,'POINT')} + ' VND'">0 VND</strong></div>
+                        <div class="d-flex justify-content-between"><span th:text="#{loan.renew.balanceAfterHold}">Balance after hold</span><strong id="renewalBalanceAfterPreview">0 VND</strong></div>
+                    </div>
+                    <div class="alert alert-info py-2 mt-3 mb-0 text-start" th:text="#{loan.renew.holdNotice}">The fee is held immediately and refunded if rejected.</div>
+                    <div id="renewalInsufficientBalance" class="alert alert-danger py-2 mt-2 mb-0 d-none text-start" th:text="#{loan.renew.insufficientBalance}">Insufficient balance.</div>
                 </div>
                 <div class="modal-footer member-borrow-div-border-top-justify-gap-22">
                     <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9" onclick="hideRenewModal()" th:text="#{common.cancel}">Cancel</button>
@@ -406,7 +428,7 @@
         </div>
     </div>
 
-    <!-- Modal Xác Nhận Trả Sách (Vanilla JS) -->
+    <!-- Modal XÃƒÂ¡c NhÃ¡ÂºÂ­n TrÃ¡ÂºÂ£ SÃƒÂ¡ch (Vanilla JS) -->
     <div class="modal fade member-borrow-div-background-14" id="returnConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
@@ -430,13 +452,66 @@
         var currentRenewFormId = null;
         var currentReturnFormId = null;
         var processingMessage = /*[[#{common.processing}]]*/ 'Processing...';
+        var renewalFeePerDay = /*[[${renewalFeePerDay}]]*/ 5000;
+        var selectedRenewalDueDate = null;
+        var renewalWalletBalance = /*[[${walletBalance}]]*/ 0;
 
+        function formatRenewalMoney(value) {
+            var locale = document.documentElement.lang === 'en' ? 'en-US' : 'vi-VN';
+            return Math.round(value).toLocaleString(locale) + ' VND';
+        }
+
+        function formatRenewalDate(date) {
+            var locale = document.documentElement.lang === 'en' ? 'en-GB' : 'vi-VN';
+            return new Intl.DateTimeFormat(locale, {
+                day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC'
+            }).format(date);
+        }
+
+        function updateRenewalPreview() {
+            var input = document.getElementById('renewalDaysInput');
+            if (!input) return;
+            var days = Number.parseInt(input.value, 10);
+            var maxDays = Number.parseInt(input.max, 10);
+            var invalidDays = !Number.isInteger(days) || days < 1 || days > maxDays;
+            input.classList.toggle('is-invalid', invalidDays);
+            document.getElementById('renewalDaysError').classList.toggle('d-none', !invalidDays);
+            document.getElementById('renewalDaysPreview').textContent = invalidDays ? '-' : days;
+
+            var currentDateText = '--/--/----';
+            var newDateText = '--/--/----';
+            if (selectedRenewalDueDate) {
+                var currentDueDate = new Date(selectedRenewalDueDate + 'T00:00:00Z');
+                if (!Number.isNaN(currentDueDate.getTime())) {
+                    currentDateText = formatRenewalDate(currentDueDate);
+                    if (!invalidDays) {
+                        var newDueDate = new Date(currentDueDate.getTime());
+                        newDueDate.setUTCDate(newDueDate.getUTCDate() + days);
+                        newDateText = formatRenewalDate(newDueDate);
+                    }
+                }
+            }
+            document.getElementById('renewalCurrentDueDatePreview').textContent = currentDateText;
+            document.getElementById('renewalDueDatePreview').textContent = newDateText;
+
+            var fee = invalidDays ? 0 : days * Number(renewalFeePerDay || 0);
+            var balanceAfterHold = Number(renewalWalletBalance || 0) - fee;
+            document.getElementById('renewalFeePreview').textContent = formatRenewalMoney(fee);
+            var balanceAfterElement = document.getElementById('renewalBalanceAfterPreview');
+            balanceAfterElement.textContent = formatRenewalMoney(balanceAfterHold);
+            balanceAfterElement.classList.toggle('text-danger', balanceAfterHold < 0);
+            document.getElementById('renewalInsufficientBalance').classList.toggle('d-none', balanceAfterHold >= 0);
+            document.getElementById('confirmRenewBtn').disabled = invalidDays || balanceAfterHold < 0 || !selectedRenewalDueDate;
+        }
         document.addEventListener('click', function(e) {
-            // Xử lý nút Gia hạn
+            // XÃ¡Â»Â­ lÃƒÂ½ nÃƒÂºt Gia hÃ¡ÂºÂ¡n
             var renewBtn = e.target.closest('.btn-renew-action');
             if (renewBtn && !renewBtn.disabled) {
                 e.preventDefault();
                 currentRenewFormId = renewBtn.getAttribute('data-form-id');
+                selectedRenewalDueDate = renewBtn.getAttribute('data-due-date') || null;
+                document.getElementById('renewalCountPreview').textContent = renewBtn.getAttribute('data-renew-count') || '0';
+                updateRenewalPreview();
                 var modal = document.getElementById('renewConfirmModal');
                 if (modal) {
                     modal.style.display = 'block';
@@ -445,7 +520,7 @@
                 return;
             }
 
-            // Xử lý nút Trả sách
+            // XÃ¡Â»Â­ lÃƒÂ½ nÃƒÂºt TrÃ¡ÂºÂ£ sÃƒÂ¡ch
             var returnBtn = e.target.closest('.btn-return-action');
             if (returnBtn && !returnBtn.disabled) {
                 e.preventDefault();
@@ -458,7 +533,7 @@
                 return;
             }
 
-            // Xử lý nút đóng Modal Gia hạn
+            // XÃ¡Â»Â­ lÃƒÂ½ nÃƒÂºt Ã„â€˜ÃƒÂ³ng Modal Gia hÃ¡ÂºÂ¡n
             if (e.target.closest('#renewConfirmModal .close') || e.target.closest('#renewConfirmModal .btn-light')) {
                 var modal = document.getElementById('renewConfirmModal');
                 modal.classList.remove('show');
@@ -466,7 +541,7 @@
                 currentRenewFormId = null;
             }
 
-            // Xử lý nút đóng Modal Trả sách
+            // XÃ¡Â»Â­ lÃƒÂ½ nÃƒÂºt Ã„â€˜ÃƒÂ³ng Modal TrÃ¡ÂºÂ£ sÃƒÂ¡ch
             if (e.target.closest('#returnConfirmModal .close') || e.target.closest('#returnConfirmModal .btn-light')) {
                 var modal = document.getElementById('returnConfirmModal');
                 modal.classList.remove('show');
@@ -474,18 +549,27 @@
                 currentReturnFormId = null;
             }
 
-            // Xử lý nút Đồng ý Gia hạn
+            // XÃ¡Â»Â­ lÃƒÂ½ nÃƒÂºt Ã„ÂÃ¡Â»â€œng ÃƒÂ½ Gia hÃ¡ÂºÂ¡n
             if (e.target.closest('#confirmRenewBtn')) {
                 if (currentRenewFormId) {
                     var btn = e.target.closest('#confirmRenewBtn');
                     btn.disabled = true;
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + processingMessage;
                     var form = document.getElementById(currentRenewFormId);
+                    var daysInput = document.getElementById('renewalDaysInput');
+                    if (!daysInput || !daysInput.checkValidity()) {
+                        if (daysInput) daysInput.classList.add('is-invalid');
+                        document.getElementById('renewalDaysError').classList.remove('d-none');
+                        btn.disabled = false;
+                        btn.textContent = /*[[#{loan.renew.confirm}]]*/ 'Confirm Renewal';
+                        return;
+                    }
+                    form.querySelector('.renewal-days-value').value = daysInput.value;
                     if (form) form.submit();
                 }
             }
 
-            // Xử lý nút Đồng ý Trả sách
+            // XÃ¡Â»Â­ lÃƒÂ½ nÃƒÂºt Ã„ÂÃ¡Â»â€œng ÃƒÂ½ TrÃ¡ÂºÂ£ sÃƒÂ¡ch
             if (e.target.closest('#confirmReturnBtn')) {
                 if (currentReturnFormId) {
                     var btn = e.target.closest('#confirmReturnBtn');
@@ -514,6 +598,8 @@
                 updateFilterBtn(); // initial run
             }
         });
+
+
     </script>
 </div>
 </body>

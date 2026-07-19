@@ -88,7 +88,7 @@ public class LoanController extends LocalizedControllerSupport {
         String trimmedQuery = (barcode != null) ? barcode.trim() : "";
 
         // CHỈNH SỬA TẠI ĐÂY: Thay thế searchActiveLoansByQuery bằng findActiveLoansByBarcode để chặn tìm kiếm bằng email, sđt, mã đơn mượn
-        List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedQuery);
+        List<BorrowDetail> searchResults = loanService.searchActiveLoansByQuery(trimmedQuery);
 
         model.addAttribute("searchResults", searchResults);
         model.addAttribute("searchedBarcode", trimmedQuery);
@@ -116,7 +116,7 @@ public class LoanController extends LocalizedControllerSupport {
         if (trimmedQuery.isEmpty()) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "Barcode cannot be empty"));
         }
-        List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedQuery);
+        List<BorrowDetail> searchResults = loanService.searchActiveLoansByQuery(trimmedQuery);
         if (searchResults.isEmpty()) {
             return org.springframework.http.ResponseEntity.status(404).body(java.util.Map.of("message", message("librarian.returnDesk.noActiveLoan")));
         }
@@ -124,7 +124,9 @@ public class LoanController extends LocalizedControllerSupport {
         List<java.util.Map<String, Object>> dto = searchResults.stream().map(detail -> {
             java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
             map.put("borrowId", detail.getBorrow().getBorrowId());
-            map.put("barcode", detail.getBookItem().getBarcode());
+            map.put("borrowDetailId", detail.getBorrowDetailId());
+            map.put("needsBarcode", detail.getBookItem() == null || detail.getBookItem().getBarcode() == null || detail.getBookItem().getBarcode().isBlank());
+            map.put("barcode", detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "");
             map.put("bookTitle", detail.getBook().getTitle());
             map.put("memberName", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getFullName() : "");
             map.put("memberEmail", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getEmail() : "");
@@ -138,6 +140,22 @@ public class LoanController extends LocalizedControllerSupport {
         return org.springframework.http.ResponseEntity.ok(dto);
     }
 
+
+    @PostMapping("/returns/api/recover-barcode")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> recoverMissingBarcode(
+            @RequestParam("borrowDetailId") Integer borrowDetailId,
+            @RequestParam("barcode") String barcode) {
+        try {
+            BorrowDetail recovered = loanService.recoverMissingBookItem(borrowDetailId, barcode);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
+                    "message", message("librarian.returnDesk.recoverySuccess", recovered.getBookItem().getBarcode()),
+                    "barcode", recovered.getBookItem().getBarcode()));
+        } catch (ApplicationException exception) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", exception.getMessage()));
+        }
+    }
     /**
      * POST: /librarian/loan/returns/confirm
      * Tiếp nhận dữ liệu từ Modal gửi lên: cập nhật ngày trả thực tế, tình trạng vật lý, ghi chú, tính phạt quá hạn.
