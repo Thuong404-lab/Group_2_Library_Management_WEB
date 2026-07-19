@@ -2,25 +2,31 @@
 <html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}" th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}" th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}" th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title layout:title-pattern="$CONTENT_TITLE - Librarian">Librarian Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE" th:text="#{layout.librarian.title}">Librarian</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
     <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/layouts/librarian-base.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}" />
     <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
     <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
-      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+    <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+    <th:block layout:fragment="styles"></th:block>
   </head>
-<body>
+<body class="app-shell app-shell--staff staff-shell staff-shell--librarian">
 
 <!-- Sidebar -->
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar staff-sidebar" id="sidebar" th:aria-label="#{staff.sidebar.navigation}">
     <div class="sidebar-header">
         <a th:href="@{/librarian/dashboard}" class="sidebar-brand">
-            <i class="bi bi-book-half u-color-dcb38a-c310609e"></i>
-            <span class="menu-text">LMW Librarian</span>
+            <i class="bi bi-book-half"></i>
+            <span class="menu-text" th:text="#{staff.brand.librarian}">LMW Librarian</span>
         </a>
     </div>
     <ul class="sidebar-menu">
@@ -39,7 +45,7 @@
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled ps-4" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
+            <ul class="collapse list-unstyled" id="borrowMenu" th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'show'">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''">
                         <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.loanSchedule}">Loan Schedule</span>
@@ -97,7 +103,7 @@
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled ps-4" id="userManagementMenu"
+            <ul class="collapse list-unstyled" id="userManagementMenu"
                 th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'show'">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/members}"
@@ -132,7 +138,7 @@
                 </div>
                 <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
-            <ul class="collapse list-unstyled ps-4" id="financeMenu"
+            <ul class="collapse list-unstyled" id="financeMenu"
                 th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'show'">
                 <li class="menu-item my-1">
                     <a th:href="@{/librarian/members/topup}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -169,24 +175,29 @@
 <!-- Main Wrapper -->
 <div class="main-wrapper">
     <!-- Topbar -->
-    <header class="topbar">
+    <header class="topbar staff-topbar">
         <div>
-            <button class="toggle-btn" id="sidebarToggle">
-                <i class="bi bi-list"></i>
+            <button class="toggle-btn" id="sidebarToggle" type="button"
+                    aria-controls="sidebar" aria-expanded="true"
+                    th:aria-label="#{staff.sidebar.toggle}">
+                <i class="bi bi-list" aria-hidden="true"></i>
             </button>
         </div>
 
         <div class="topbar-right">
             <div th:replace="~{fragments/language-switcher :: switcher}"></div>
-            <div class="dropdown">
-                <div class="user-dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="dropdown staff-user-dropdown">
+                <button type="button" class="user-dropdown-toggle staff-user-dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false"
+                        th:aria-label="#{staff.user.menu}">
                     <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad">
                         <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
-                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
+                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}"
+                             th:alt="#{common.profile}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
                     </div>
-                    <span sec:authorize="isAuthenticated()" sec:authentication="name">Librarian</span>
-                    <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8"></i>
-                </div>
+                    <span class="staff-user-name" sec:authorize="isAuthenticated()" sec:authentication="name">Librarian</span>
+                    <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8" aria-hidden="true"></i>
+                </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 librarian-base-ul-border-10">
                     <li><a class="dropdown-item py-2" th:href="@{/librarian/profile}"><i class="bi bi-person-circle me-2 text-classic"></i><span th:text="#{common.profile}">Profile</span></a></li>
                     <li><hr class="dropdown-divider"></li>
@@ -197,7 +208,7 @@
     </header>
 
     <!-- Dynamic Content Area -->
-    <div class="content-area">
+    <div class="content-area staff-content-area">
         <div layout:fragment="content"></div>
     </div>
 </div>
@@ -206,10 +217,16 @@
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script th:replace="~{fragments/language-switcher :: script}"></script>
 <script>
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.body.classList.toggle('sidebar-collapsed');
-    });
+    (function () {
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        if (!sidebarToggle) return;
+        sidebarToggle.addEventListener('click', function () {
+            var collapsed = document.body.classList.toggle('sidebar-collapsed');
+            sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+        });
+    })();
 </script>
+    <th:block layout:fragment="scripts"></th:block>
     <script th:src="@{/js/dynamic-presentation.js}"></script>
     <script th:src="@{/js/confirmation-dialog.js}"></script>
 </body>

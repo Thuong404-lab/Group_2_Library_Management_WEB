@@ -392,7 +392,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         Member member = borrow.getMember();
 
-        // ── 1. Gán BookItem và đặt trạng thái Borrowed ──────────────────────
+        // Reserve physical copies until the member arrives for pickup.
         for (BorrowDetail detail : details) {
             BookItem item = detail.getBookItem();
             if (item == null) {
@@ -789,9 +789,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId) {
-        return borrowDetailRepository.findAll().stream()
-                .filter(d -> d.getBorrow() != null && d.getBorrow().getBorrowId().equals(borrowId))
-                .toList();
+        return borrowDetailRepository.findByBorrowId(borrowId);
     }
 
     @Override

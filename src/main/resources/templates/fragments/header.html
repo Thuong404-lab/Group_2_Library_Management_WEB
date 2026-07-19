@@ -8,21 +8,24 @@
   <body>
     <header
       th:fragment="header"
-      class="sticky-top shadow-sm w-100 header-header-z-index-border-bottom-01"
+      class="sticky-top shadow-sm w-100 header-header-z-index-border-bottom-01 public-site-header"
 
     >
-      <nav class="navbar navbar-expand-lg navbar-light bg-classic py-3 px-4">
+      <nav class="navbar navbar-expand-md navbar-light public-site-navbar">
         <button
           class="navbar-toggler border-0 mr-2 d-md-none"
           type="button"
           data-toggle="collapse"
           data-target="#navbarCollapse"
+          aria-controls="navbarCollapse"
+          aria-expanded="false"
+          th:aria-label="#{nav.toggleNavigation}"
         >
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <a
-          class="navbar-brand d-flex align-items-center font-weight-bold u-color-4a3b32-1ba01220"
+          class="navbar-brand d-flex align-items-center font-weight-bold public-site-brand"
           th:href="@{/}"
 
         >
@@ -41,37 +44,38 @@
         </a>
 
         <ul
-          class="navbar-nav mr-auto ml-4 d-none d-md-flex font-weight-bold header-ul-font-size-font-family-05"
+          id="navbarCollapse"
+          class="navbar-nav mr-auto collapse navbar-collapse font-weight-bold header-ul-font-size-font-family-05 public-main-navigation"
 
         >
-          <li class="nav-item mr-3">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/}">
-              <i class="bi bi-house-door mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.home}">Home</span>
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/}">
+              <i class="bi bi-house-door mr-1"></i><span th:text="#{nav.home}">Home</span>
             </a>
           </li>
-          <li class="nav-item mr-3">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/books}">
-              <i class="bi bi-collection mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.explore}">Explore</span>
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/books}">
+              <i class="bi bi-collection mr-1"></i><span th:text="#{nav.explore}">Explore</span>
             </a>
           </li>
-          <li class="nav-item mr-3">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/membership-tiers}">
-              <i class="bi bi-award mr-1 u-color-8b5a2b-93ece783"></i><span
+          <li class="nav-item">
+            <a class="nav-link" th:href="@{/membership-tiers}">
+              <i class="bi bi-award mr-1"></i><span
                 th:text="#{nav.membershipTiers}">Explore membership tiers</span>
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link u-color-4a3b32-1ba01220" th:href="@{/about}">
-              <i class="bi bi-feather mr-1 u-color-8b5a2b-93ece783"></i><span th:text="#{nav.about}">About</span>
+            <a class="nav-link" th:href="@{/about}">
+              <i class="bi bi-feather mr-1"></i><span th:text="#{nav.about}">About</span>
             </a>
           </li>
         </ul>
 
-        <div class="ml-auto d-flex align-items-center">
+        <div class="ml-auto d-flex align-items-center public-header-actions">
           <div th:replace="~{fragments/language-switcher :: switcher}"></div>
           <div
             id="notificationDropdown"
-            class="dropdown mr-4"
+            class="dropdown"
             sec:authorize="hasRole('MEMBER')"
             th:if="${showNotificationBell}"
           >
@@ -82,6 +86,7 @@
               role="button"
               data-toggle="dropdown"
               aria-expanded="false"
+              th:aria-label="#{notification.heading}"
               th:data-member-key="${#authentication.name}"
               th:data-latest-notification-id="${latestNotifications != null && !latestNotifications.isEmpty() ? latestNotifications[0].notificationId : 0}"
 
@@ -148,10 +153,10 @@
             </div>
           </div>
 
-          <div sec:authorize="!isAuthenticated()" class="d-flex">
+          <div sec:authorize="!isAuthenticated()" class="d-flex public-auth-actions">
             <a
               th:href="@{/login}"
-              class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold mr-2 header-a-font-family-12"
+              class="btn btn-outline-classic btn-sm rounded-pill px-4 font-weight-bold header-a-font-family-12"
 
               th:text="#{nav.login}">Log in</a
             >
@@ -163,10 +168,10 @@
             >
           </div>
 
-          <div sec:authorize="isAuthenticated()">
+          <div sec:authorize="isAuthenticated()" class="public-account-menu">
             <div class="dropdown">
               <a
-                class="d-flex align-items-center text-decoration-none dropdown-toggle u-color-4a3b32-1ba01220"
+                class="d-flex align-items-center text-decoration-none dropdown-toggle"
                 href="#"
                 role="button"
                 data-toggle="dropdown"
@@ -185,6 +190,7 @@
                   th:if="${#authentication.principal.user?.avatar != null}"
                   th:src="${#authentication.principal.user.avatar}"
                   class="rounded-circle mr-2 shadow-sm border border-white header-img-width-height-fit-14"
+                  th:alt="#{common.profile}"
 
                 >
                 <span
@@ -215,6 +221,7 @@
                     th:if="${#authentication.principal.user?.avatar != null}"
                     th:src="${#authentication.principal.user.avatar}"
                     class="rounded-circle mx-auto mb-2 shadow-sm border border-2 border-white header-img-width-height-fit-18"
+                    th:alt="#{common.profile}"
 
                   >
                   <h6

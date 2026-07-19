@@ -1,6 +1,7 @@
 package com.lms.controller;
 
 import com.lms.entity.MemberAccount;
+import com.lms.repository.BookRepository;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.service.impl.CustomMemberDetailsService;
 import org.junit.jupiter.api.Assumptions;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AcquisitionWorkflowViewTest {
 
     @Autowired MockMvc mockMvc;
+    @Autowired BookRepository bookRepository;
     @Autowired MemberAccountRepository memberAccountRepository;
     @Autowired CustomMemberDetailsService memberDetailsService;
 
@@ -73,6 +75,49 @@ class AcquisitionWorkflowViewTest {
                 .andExpect(view().name("member/notifications"))
                 .andExpect(model().attribute("selectedNotificationSource", "librarian"))
                 .andExpect(model().attribute("selectedNotificationType", "RESERVATION"));
+        mockMvc.perform(get("/member/borrow/management")
+                        .param("tab", "borrowing")
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/borrow"))
+                .andExpect(model().attribute("activeTab", "borrowing"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-loan-hero")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"renewConfirmModal\"")));
+        mockMvc.perform(get("/member/borrow/management")
+                        .param("tab", "reserved")
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/borrow"))
+                .andExpect(model().attribute("activeTab", "reserved"));
+        mockMvc.perform(get("/member/borrow/management")
+                        .param("tab", "history")
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/borrow"))
+                .andExpect(model().attribute("activeTab", "history"));
+        var availableBook = bookRepository.findAll().stream()
+                .filter(book -> !"Inactive".equalsIgnoreCase(book.getStatus()))
+                .findFirst();
+        Assumptions.assumeTrue(availableBook.isPresent(), "Current database has no active book");
+        mockMvc.perform(get("/member/borrow/create")
+                        .param("bookId", String.valueOf(availableBook.get().getBookId()))
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/borrow-create"))
+                .andExpect(model().attributeExists("selectedBook", "selectedBookId", "maxBorrowDays"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-borrow-create-hero")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("action=\"/member/borrow/request/submit\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"numberOfDays\"")));
+        mockMvc.perform(get("/member/membership/tier").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/membership-tier"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("??"))));
+        mockMvc.perform(get("/member/membership/benefits").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/membership-benefits"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("??"))));
     }
 
     @Test

@@ -219,7 +219,10 @@
               <div class="review-edit-field">
                 <label class="review-edit-label" for="editReviewRating" th:text="#{member.reviews.stars}">Stars</label>
                 <input type="hidden" class="review-edit-rating-value" id="editReviewRating" name="rating">
-                <div class="review-edit-rating-picker" role="radiogroup" th:aria-label="#{member.reviews.selectStars}">
+                <div class="review-edit-rating-picker"
+                     role="radiogroup"
+                     th:aria-label="#{member.reviews.selectStars}"
+                     aria-describedby="editReviewRatingError">
                   <button th:each="ratingValue : ${#numbers.sequence(1, 5)}"
                           type="button"
                           class="review-edit-rating-star"
@@ -230,6 +233,10 @@
                     <i class="bi bi-star-fill"></i>
                   </button>
                 </div>
+                <div class="review-edit-field-error"
+                     id="editReviewRatingError"
+                     role="alert"
+                     aria-live="assertive"></div>
               </div>
               <div class="review-edit-field review-edit-comment-field">
                 <label class="review-edit-label" for="editReviewComment" th:text="#{member.reviews.content}">Review Content</label>
@@ -241,8 +248,13 @@
                           required
                           th:placeholder="#{validation.charactersRange(5,1000)}"
                           aria-describedby="editReviewCommentCount editReviewCommentError"></textarea>
-                <div class="review-edit-comment-support"><span id="editReviewCommentCount" aria-live="polite">0/1000</span></div>
-                <div class="review-edit-field-error" id="editReviewCommentError" role="alert" aria-live="assertive"></div>
+                <div class="review-edit-comment-support">
+                  <span class="review-edit-field-error"
+                        id="editReviewCommentError"
+                        role="alert"
+                        aria-live="assertive"></span>
+                  <span id="editReviewCommentCount" aria-live="polite">0/1000</span>
+                </div>
               </div>
             </div>
             <div class="modal-footer">
@@ -298,6 +310,7 @@
           if (editForm != null && editBookTitle != null) {
             const picker = editForm.querySelector(".review-edit-rating-picker");
             const input = editForm.querySelector(".review-edit-rating-value");
+            const ratingError = document.getElementById("editReviewRatingError");
             const comment = editForm.querySelector("[name='comment']");
             const commentError = document.getElementById("editReviewCommentError");
             const commentCount = document.getElementById("editReviewCommentCount");
@@ -323,6 +336,9 @@
             function select(value) {
               input.value = String(value);
               paint(value);
+              if (ratingError != null && value >= 1 && value <= 5) {
+                ratingError.textContent = "";
+              }
             }
 
             stars.forEach(function (star) {
@@ -346,6 +362,9 @@
                   if (commentError != null) {
                     commentError.textContent = "";
                   }
+                  if (ratingError != null) {
+                    ratingError.textContent = "";
+                  }
                   updateCommentCount();
                   select(Number(rating != null ? rating : trigger.dataset.reviewRating) || 0);
               }
@@ -354,19 +373,30 @@
                 const normalizedComment = comment.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
                 comment.value = normalizedComment;
                 updateCommentCount();
+                const selectedRating = Number(input.value) || 0;
                 let message = "";
                 if (normalizedComment === "") message = /*[[#{member.reviews.validation.required}]]*/ "Please enter review content.";
                 else if (normalizedComment.length < 5) message = /*[[#{member.reviews.validation.min}]]*/ "Review content must contain at least 5 characters.";
                 else if (normalizedComment.length > 1000) message = /*[[#{member.reviews.validation.max}]]*/ "Review content cannot exceed 1000 characters.";
                 else if (!/\p{L}/u.test(normalizedComment)) message = /*[[#{member.reviews.validation.letters}]]*/ "Review content must include letters.";
-                if (message !== "") {
+                const ratingMessage = selectedRating < 1 || selectedRating > 5
+                  ? /*[[#{validation.review.ratingRequired}]]*/ ""
+                  : "";
+                if (ratingMessage !== "" || message !== "") {
                   event.preventDefault();
                   event.stopPropagation();
-                  comment.classList.add("is-invalid");
+                  if (ratingError != null) {
+                    ratingError.textContent = ratingMessage;
+                  }
+                  comment.classList.toggle("is-invalid", message !== "");
                   if (commentError != null) {
                     commentError.textContent = message;
                   }
-                  comment.focus();
+                  if (ratingMessage !== "") {
+                    stars[0].focus();
+                  } else {
+                    comment.focus();
+                  }
                 }
               });
 

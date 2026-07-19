@@ -42,11 +42,60 @@ body {
     background-color: #fdfbf7; min-height: 100vh;
 }
 
+/* Shared public/member application shell. */
+.app-shell--public {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    background: var(--member-color-canvas, #faf9f5);
+}
+
+.app-shell--public .app-public-main {
+    flex: 1 0 auto;
+    min-width: 0;
+    min-height: 0;
+    background: var(--member-color-canvas, #faf9f5);
+}
+
+.app-shell--public a,
+.app-shell--public button,
+.app-shell--public input,
+.app-shell--public select,
+.app-shell--public textarea {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-classic,
+.btn-outline-classic {
+    min-height: 40px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+        box-shadow .18s ease, transform .12s ease;
+}
+
+.btn-classic:hover,
+.btn-outline-classic:hover {
+    transform: translateY(-1px);
+}
+
+.btn-classic:active,
+.btn-outline-classic:active {
+    transform: translateY(1px);
+}
+
+.btn-classic:focus-visible,
+.btn-outline-classic:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--member-focus-ring, rgba(139, 90, 43, .22));
+}
+
 .base-div-position-bottom-right-02 {
     position: fixed; bottom: 20px; right: 20px; background-color: #8b5a2b; color: white; padding: 12px 24px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 9999; opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(20px); pointer-events: none;
 }
 
 /* Canonical toast feedback for the existing public/member layout. */
+.app-shell--public :is(.alert-success,.alert-danger,.app-alert--success,.app-alert--danger,.finance-alert--success,.finance-alert--danger){display:none}
 .app-feedback-region{position:fixed;top:92px;right:24px;z-index:1090;width:min(390px,calc(100vw - 32px));pointer-events:none}.app-feedback-toast{--feedback-accent:var(--member-color-primary,#8b5a2b);--feedback-icon-bg:var(--member-color-surface-card,#efe9de);display:grid;grid-template-columns:42px minmax(0,1fr) 34px;align-items:start;gap:12px;padding:14px;border:1px solid var(--member-color-hairline,#e6dfd8);border-left:4px solid var(--feedback-accent);border-radius:12px;background:var(--member-color-canvas,#faf9f5);color:var(--member-color-body,#3d3d3a);box-shadow:var(--member-overlay-shadow,0 18px 48px rgba(20,20,19,.18));opacity:0;transform:translateY(-12px);transition:opacity .2s ease,transform .2s ease;pointer-events:auto}.app-feedback-toast[hidden]{display:none}.app-feedback-toast.is-visible{opacity:1;transform:translateY(0)}.app-feedback-toast.is-success{--feedback-accent:var(--member-color-success-ink,#2f6f3e);--feedback-icon-bg:var(--member-color-success-soft,#e7f4ea)}.app-feedback-toast.is-error{--feedback-accent:var(--member-color-danger-ink,#923b36);--feedback-icon-bg:var(--member-color-danger-soft,#f8e5e2)}.app-feedback-toast.is-warning{--feedback-accent:#9a6d17;--feedback-icon-bg:#f7f0dc}.app-feedback-toast.is-info{--feedback-accent:#486f96;--feedback-icon-bg:#eaf0f7}.app-feedback-toast__icon{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:var(--feedback-icon-bg);color:var(--feedback-accent);font-size:18px}.app-feedback-toast__copy{min-width:0;padding-top:1px}.app-feedback-toast__title{display:block;color:var(--member-color-ink,#141413);font:600 15px/1.35 var(--member-font-ui,Georgia,serif)}.app-feedback-toast__message{display:block;margin-top:3px;color:var(--member-color-muted,#6c6a64);font:400 13px/1.5 var(--member-font-ui,Georgia,serif);overflow-wrap:anywhere}.app-feedback-toast__close{display:grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--member-color-muted,#6c6a64);cursor:pointer}.app-feedback-toast__close:hover{background:var(--member-color-surface-soft,#f5f0e8);color:var(--member-color-ink,#141413)}.app-feedback-toast__close:focus-visible{outline:0;box-shadow:0 0 0 3px var(--member-focus-ring,rgba(139,90,43,.22))}
 @media(max-width:767.98px){.app-feedback-region{top:76px;right:16px;left:16px;width:auto}}
 @media(prefers-reduced-motion:reduce){.app-feedback-toast{transition:none}}

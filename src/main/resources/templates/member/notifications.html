@@ -75,7 +75,9 @@
                             <p class="member-notification-content" th:text="${notification.content}">Content</p>
                             <button type="button" class="member-notification-content-toggle member-text-action" hidden aria-expanded="false" th:text="#{common.showMore}">Show More</button>
           </div>
-                            <time class="member-notification-row-time" th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Sent date</time>
+                            <time class="member-notification-row-time"
+                                  th:datetime="${notification.sentDate}"
+                                  th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : #messages.msg('common.unknownDate')}">Sent date</time>
         </article>
       </div>
                     <div id="notificationFilterEmpty" class="member-notifications-empty member-notifications-empty--compact" th:if="${(notifications == null || notifications.isEmpty()) && (selectedNotificationSource != 'all' || selectedNotificationType != 'ALL')}">
@@ -117,6 +119,8 @@
             const showLessLabel = /*[[#{common.showLess}]]*/ "Show Less";
             const pageNotificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
             const pageNotificationMarkAllError = /*[[#{notification.markAll.error}]]*/ "Unable to mark all notifications as read.";
+            const pageNotificationMarkedRead = /*[[#{backend.notification.markedRead}]]*/ "";
+            const pageNotificationMarkedAllRead = /*[[#{backend.notification.markedAllRead}]]*/ "";
             const notificationPageSuccess = /*[[${success}]]*/ null;
             const notificationPageError = /*[[${error}]]*/ null;
             if (notificationPageSuccess) window.AppFeedback.success(notificationPageSuccess);
@@ -166,7 +170,7 @@
       tabs.forEach(function (tab) {
         tab.addEventListener("click", function () {
           var nextSource = tab.dataset.notificationSource;
-          navigateToFilter(nextSource, nextSource === "all" ? "ALL" : typeFilter.value);
+          navigateToFilter(nextSource, "ALL");
         });
       });
       typeFilter.addEventListener("change", function () {
@@ -206,6 +210,7 @@
             markRowRead(button.closest(".member-notification-row"));
             var markAllButton = document.getElementById("pageMarkAllNotificationsRead");
             if (markAllButton) markAllButton.disabled = Number(data.unreadCount) <= 0;
+            window.AppFeedback.success(pageNotificationMarkedRead);
           }).catch(function () {
             button.disabled = false;
             window.AppFeedback.error(pageNotificationUpdateError);
@@ -221,6 +226,7 @@
         }).then(function (response) {
           if (!response.ok) throw new Error(pageNotificationMarkAllError);
           rows.forEach(markRowRead);
+          window.AppFeedback.success(pageNotificationMarkedAllRead);
         }).catch(function () {
           markAllButton.disabled = false;
           window.AppFeedback.error(pageNotificationMarkAllError);

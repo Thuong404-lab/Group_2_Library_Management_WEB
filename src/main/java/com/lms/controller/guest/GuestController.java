@@ -67,8 +67,8 @@ public class GuestController extends LocalizedControllerSupport {
             }
         }
 
-        List<Book> books = bookService.getRecentBooks(6);
-        List<Book> trendingBooks = bookService.getTrendingBooks(6);
+        List<Book> books = bookService.getRecentBooks(7);
+        List<Book> trendingBooks = bookService.getTrendingBooks(7);
         model.addAttribute("books", books);
         model.addAttribute("trendingBooks", trendingBooks);
         addFavoriteBookIds(model, authentication);

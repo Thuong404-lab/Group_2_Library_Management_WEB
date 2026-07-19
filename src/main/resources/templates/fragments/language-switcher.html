@@ -3,7 +3,7 @@
   <body>
     <nav
       th:fragment="switcher"
-      class="language-switcher me-3 mr-3"
+      class="language-switcher"
       role="group"
       th:aria-label="#{language.selector.label}"
     >
@@ -35,6 +35,8 @@
 
     <script th:fragment="script">
       document.querySelectorAll(".js-language-switch").forEach(function (link) {
+        if (link.dataset.languageSwitchBound === "true") return;
+        link.dataset.languageSwitchBound = "true";
         link.addEventListener("click", function (event) {
           event.preventDefault();
           var url = new URL(window.location.href);

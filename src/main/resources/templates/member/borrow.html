@@ -4,33 +4,27 @@
 
 <head>
     <title th:text="#{member.loan.title}">Loans and Returns</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/member/borrow.css}" />
   </head>
 
 <body>
-<div layout:fragment="content" class="container mt-4 mb-5">
+<div layout:fragment="content" class="container member-loan-page member-palette-page">
 
-    <!-- Thông báo Alert hệ thống -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-                <span th:text="${successMessage}">Success notification</span>
-        <button type="button" class="close u-color-2f855a-3ab9db54" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                <span th:text="${errorMessage}">Error notification</span>
-        <button type="button" class="close u-color-c53030-c575d87d" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-    </div>
-
-    <!-- Tiêu đề trang đầu mục -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="page-title mb-0"><i class="bi bi-journal-bookmark-fill me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{member.loan.heading}">Loan and Return Management</span></h2>
-                <a th:href="@{/}" class="btn btn-classic-primary"><i class="bi bi-search me-1"></i> <span th:text="#{member.loan.borrowNew}">Borrow a New Book</span></a>
-    </div>
+    <header class="member-dashboard-hero member-loan-hero">
+        <div class="member-loan-hero-copy">
+            <span th:text="#{member.loan.eyebrow}">YOUR LIBRARY ACTIVITY</span>
+            <h1 th:text="#{member.loan.heading}">Loan and Return Management</h1>
+            <p th:text="#{member.loan.description}">Track current loans, reservations, renewals, and borrowing history.</p>
+        </div>
+        <a th:href="@{/books}" class="member-ui-button member-ui-button--inverse member-loan-hero-action">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span th:text="#{member.loan.borrowNew}">Borrow a New Book</span>
+        </a>
+    </header>
 
     <!-- Thanh Điều Hướng Tabs Điều Kiện -->
-    <ul class="nav nav-pills nav-pills-classic mb-4" id="borrowTabs" role="tablist">
+    <section class="member-loan-panel member-reference-list" th:aria-label="#{member.loan.heading}">
+    <ul class="nav nav-pills nav-pills-classic member-loan-tabs member-reference-list__header" id="borrowTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <a th:href="@{/member/borrow/management(tab='borrowing')}"
                th:classappend="${activeTab == 'borrowing' || activeTab == null} ? 'active' : ''"
@@ -54,13 +48,13 @@
         </li>
     </ul>
 
-    <div class="tab-content" id="borrowTabsContent">
+    <div class="tab-content member-reference-list__body" id="borrowTabsContent">
         <div class="card card-classic shadow-sm">
             <div class="card-body p-0">
                 <div class="table-responsive">
 
                     <!-- ================= TAB: ĐANG MƯỢN (ĐÃ NÂNG CẤP CHỨC NĂNG YÊU CẦU TRẢ) ================= -->
-                    <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'borrowing' || activeTab == null}">
+                    <table class="table align-middle mb-0 table-classic member-loan-table member-reference-table" th:if="${activeTab == 'borrowing' || activeTab == null}">
                         <thead>
                         <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
@@ -72,14 +66,14 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:if="${#lists.isEmpty(booksData)}">
+                        <tr th:if="${#lists.isEmpty(booksData)}" class="member-loan-empty-row">
                                 <td colspan="6" class="text-center py-4 text-muted fst-italic" th:text="#{member.loan.empty}">You are not currently borrowing any books.</td>
                         </tr>
-                        <tr th:each="item : ${booksData}">
+                        <tr th:each="item : ${booksData}" class="member-loan-row member-reference-list__item">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="#{book.cover}">
                                     <div>
                                         <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Book Title</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Author</small>
@@ -94,16 +88,17 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <span th:if="${item.daysLeft <= 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-warn" th:text="#{loan.status.dueSoon}">Due Soon</span>
-                                    <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-success" th:text="#{loan.status.borrowed}">Borrowing</span>
-                                    <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger" th:text="#{loan.status.overdue}">Overdue</span>
-                                    <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn" th:text="#{loan.status.pendingBorrow}">Pending Loan Approval</span>
-                                    <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-08" th:text="#{loan.status.pendingReturn}">Pending Return Approval</span>
-                                    <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-09" th:text="#{loan.status.pendingRenewal}">Pending Renewal Approval</span>
+                                    <span th:if="${item.daysLeft <= 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-warn member-reference-pill" th:text="#{loan.status.dueSoon}">Due Soon</span>
+                                    <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-success member-reference-pill" th:text="#{loan.status.borrowed}">Borrowing</span>
+                                    <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger member-reference-pill" th:text="#{loan.status.overdue}">Overdue</span>
+                                    <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn member-reference-pill" th:text="#{loan.status.pendingBorrow}">Pending Loan Approval</span>
+                                    <span th:if="${item.status == 'Waiting_Pickup'}" class="badge badge-classic-status badge-classic-success member-reference-pill" th:text="#{loan.status.waitingPickup}">Approved - Awaiting Pickup</span>
+                                    <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-08 member-reference-pill" th:text="#{loan.status.pendingReturn}">Pending Return Approval</span>
+                                    <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-09 member-reference-pill" th:text="#{loan.status.pendingRenewal}">Pending Renewal Approval</span>
 
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="|(${#messages.msg('loan.daysLeft', item.daysLeft)})|"></small>
                                 </div>
-                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending'}"
+                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending' and item.status != 'Waiting_Pickup'}"
                                              th:title="${#messages.msg('loan.progress', item.progressPercentage)}" data-bs-toggle="tooltip">
                                     <div class="progress-bar" role="progressbar"
                                          th:data-presentation-width="${item.progressPercentage}"
@@ -119,7 +114,7 @@
                                         <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm u-font-size-0-85rem-4908cb0a"><i class="bi bi-hourglass-split me-1"></i><span th:text="#{common.pendingApproval}">Awaiting approval...</span></span>
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
-                                        <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action"
+                                        <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action member-ui-button member-ui-button--secondary member-ui-button--compact"
                                                 th:disabled="${item.renewCount >= 2 or item.status == 'Overdue'}"
                                                 th:title="${item.renewCount >= 2 ? #messages.msg('loan.renew.limitReached') : (item.status == 'Overdue' ? #messages.msg('loan.renew.overdueDisabled') : #messages.msg('loan.renew.sevenDays'))}"
                                                 th:attr="data-form-id='renewForm_' + ${item.id}">
@@ -134,7 +129,7 @@
                     </table>
 
                     <!-- ================= TAB: ĐÃ ĐẶT TRƯỚC (ĐÃ NÂNG CẤP HỦY ĐẶT TRƯỚC) ================= -->
-                    <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'reserved'}">
+                    <table class="table align-middle mb-0 table-classic member-loan-table member-reference-table" th:if="${activeTab == 'reserved'}">
                         <thead>
                         <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
@@ -145,14 +140,14 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:if="${#lists.isEmpty(booksData)}">
+                        <tr th:if="${#lists.isEmpty(booksData)}" class="member-loan-empty-row">
                                 <td colspan="5" class="text-center py-4 text-muted fst-italic" th:text="#{reservation.empty}">There are no active reservations.</td>
                         </tr>
-                        <tr th:each="item : ${booksData}">
+                        <tr th:each="item : ${booksData}" class="member-loan-row member-reference-list__item">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="#{book.cover}">
                                     <div>
                                         <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Book Title</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Author</small>
@@ -162,17 +157,17 @@
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">18/11/2026</td>
                             <td><strong class="text-dark" th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">21/11/2026</strong></td>
                             <td>
-                                    <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn" th:text="#{reservation.status.preparing}">Preparing</span>
-                                    <span th:if="${item.status == 'Deposit_Paid'}" class="badge badge-classic-status badge-classic-warn" th:text="#{reservation.status.depositPaid}">Deposit Paid - Pending Approval</span>
-                                    <span th:if="${item.status == 'Refund_Pending'}" class="badge badge-classic-status badge-classic-warn" th:text="#{reservation.status.refundPending}">Pending Refund Approval</span>
-                                    <span th:if="${item.status == 'Active' || item.status == 'Ready'}" class="badge badge-classic-status badge-classic-success"><i class="bi bi-bell me-1"></i><span th:text="#{reservation.status.ready}">Approved (Ready for Pickup)</span></span>
-                                    <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status badge-classic-danger" th:text="#{reservation.status.canceled}">Canceled</span>
-                                    <span th:if="${item.status == 'Completed'}" class="badge badge-classic-status" th:text="#{reservation.status.completed}">Book Collected</span>
+                                    <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn member-reference-pill" th:text="#{reservation.status.preparing}">Preparing</span>
+                                    <span th:if="${item.status == 'Deposit_Paid'}" class="badge badge-classic-status badge-classic-warn member-reference-pill" th:text="#{reservation.status.depositPaid}">Deposit Paid - Pending Approval</span>
+                                    <span th:if="${item.status == 'Refund_Pending'}" class="badge badge-classic-status badge-classic-warn member-reference-pill" th:text="#{reservation.status.refundPending}">Pending Refund Approval</span>
+                                    <span th:if="${item.status == 'Active' || item.status == 'Ready'}" class="badge badge-classic-status badge-classic-success member-reference-pill"><i class="bi bi-bell"></i><span th:text="#{reservation.status.ready}">Approved (Ready for Pickup)</span></span>
+                                    <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status badge-classic-danger member-reference-pill" th:text="#{reservation.status.canceled}">Canceled</span>
+                                    <span th:if="${item.status == 'Completed'}" class="badge badge-classic-status member-reference-pill" th:text="#{reservation.status.completed}">Book Collected</span>
                             </td>
                             <td class="text-end pe-4">
                                 <!-- Form thực hiện Hủy đặt trước -->
                                 <button th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
-                                        type="button" class="btn reservation-cancel-action"
+                                        type="button" class="btn reservation-cancel-action member-ui-button member-ui-button--danger-outline member-ui-button--compact"
                                         data-toggle="modal"
                                         th:data-target="${'#cancelReservationModal' + item.id}">
                                                 <span th:text="#{reservation.cancel}">Cancel Reservation</span>
@@ -184,7 +179,7 @@
                     </table>
 
                     <!-- ================= TAB: LỊCH SỬ MƯỢN ================= -->
-                    <table class="table table-hover align-middle mb-0 table-classic" th:if="${activeTab == 'history'}">
+                    <table class="table align-middle mb-0 table-classic member-loan-table member-reference-table" th:if="${activeTab == 'history'}">
                         <thead>
                         <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
@@ -196,14 +191,14 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:if="${#lists.isEmpty(booksData)}">
+                        <tr th:if="${#lists.isEmpty(booksData)}" class="member-loan-empty-row">
                                 <td colspan="6" class="text-center py-4 text-muted fst-italic" th:text="#{member.loan.historyEmpty}">No loan history was found within the last month.</td>
                         </tr>
-                        <tr th:each="item : ${booksData}">
+                        <tr th:each="item : ${booksData}" class="member-loan-row member-reference-list__item">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" alt="Book">
+                                         class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="#{book.cover}">
                                     <div>
                                         <h6 class="mb-0 fw-bold font-playfair u-color-2c1e16-5ab7ae80" th:text="${item.bookTitle}">Book Title</h6>
                                         <small class="text-muted" th:text="${item.authorName}">Author</small>
@@ -214,12 +209,12 @@
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">01/10/2026</td>
                             <td class="text-muted" th:text="${item.returnDate != null ? #temporals.format(item.returnDate, 'dd/MM/yyyy') : '-'}">10/10/2026</td>
                             <td>
-                                    <span th:if="${item.status == 'Returned'}" class="badge badge-classic-status" th:text="#{loan.status.returned}">Returned</span>
-                                    <span th:if="${item.status == 'Lost'}" class="badge badge-classic-status badge-classic-danger"><i class="bi bi-exclamation-octagon me-1"></i><span th:text="#{loan.status.lost}">Lost</span></span>
-                                    <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status member-borrow-span-background-12" th:text="#{reservation.status.canceled}">Canceled</span>
+                                    <span th:if="${item.status == 'Returned'}" class="badge badge-classic-status member-reference-pill" th:text="#{loan.status.returned}">Returned</span>
+                                    <span th:if="${item.status == 'Lost'}" class="badge badge-classic-status badge-classic-danger member-reference-pill"><i class="bi bi-exclamation-octagon"></i><span th:text="#{loan.status.lost}">Lost</span></span>
+                                    <span th:if="${item.status == 'Canceled'}" class="badge badge-classic-status member-borrow-span-background-12 member-reference-pill" th:text="#{reservation.status.canceled}">Canceled</span>
                             </td>
                             <td class="text-end pe-4">
-                                    <a th:href="@{/}" class="btn btn-classic-outline member-borrow-a-padding-font-size-13"><i class="bi bi-arrow-repeat me-1"></i><span th:text="#{loan.borrowAgain}">Borrow Again</span></a>
+                                    <a th:href="@{/books}" class="btn btn-classic-outline member-borrow-a-padding-font-size-13 member-ui-button member-ui-button--secondary member-ui-button--compact"><i class="bi bi-arrow-repeat"></i><span th:text="#{loan.borrowAgain}">Borrow Again</span></a>
                             </td>
                         </tr>
                         </tbody>
@@ -229,10 +224,11 @@
             </div>
         </div>
     </div>
+    </section>
     <th:block th:if="${activeTab == 'reserved'}">
         <div th:each="item : ${booksData}"
              th:if="${item.status == 'Pending' || item.status == 'Deposit_Paid' || item.status == 'Active' || item.status == 'Ready'}"
-             class="modal fade cancel-reservation-modal"
+             class="modal fade cancel-reservation-modal member-standard-dialog"
              th:id="${'cancelReservationModal' + item.id}"
              tabindex="-1"
              role="dialog"
@@ -270,18 +266,18 @@
                     </div>
 
                     <div class="modal-footer">
-                    <button type="button" class="btn cancel-reservation-secondary" data-dismiss="modal" th:text="#{common.back}">Back</button>
+                    <button type="button" class="btn cancel-reservation-secondary member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.back}">Back</button>
                         <form th:if="${item.status == 'Pending'}"
                               th:action="@{/member/borrow/cancel-reservation/{reservationId}(reservationId=${item.id})}"
                               method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn cancel-reservation-confirm" th:text="#{reservation.cancel.confirm}">Confirm Cancellation</button>
+                        <button type="submit" class="btn cancel-reservation-confirm member-ui-button member-ui-button--danger" th:text="#{reservation.cancel.confirm}">Confirm Cancellation</button>
                         </form>
                         <form th:unless="${item.status == 'Pending'}"
                               th:action="@{/member/financial/deposit/{reservationId}/refund-request(reservationId=${item.id})}"
                               method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn cancel-reservation-confirm" th:text="#{reservation.refund.request}">Submit Refund Request</button>
+                        <button type="submit" class="btn cancel-reservation-confirm member-ui-button member-ui-button--danger" th:text="#{reservation.refund.request}">Submit Refund Request</button>
                         </form>
                     </div>
                 </div>
@@ -290,7 +286,7 @@
     </th:block>
 
     <!-- Modal Xác Nhận Gia Hạn (Vanilla JS) -->
-    <div class="modal fade member-borrow-div-background-14" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade member-borrow-div-background-14 member-standard-dialog" id="renewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
                 <div class="modal-header member-borrow-div-background-border-bottom-border-radius-16">
@@ -302,15 +298,15 @@
                     <p class="text-muted mb-0 u-font-size-0-95rem-b8088cad" th:text="#{loan.renew.confirmNotice}">The due date will be extended by 7 days.</p>
                 </div>
                 <div class="modal-footer member-borrow-div-border-top-justify-gap-22">
-                    <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9" onclick="hideRenewModal()" th:text="#{common.cancel}">Cancel</button>
-                    <button type="button" class="btn btn-classic-primary px-4" id="confirmRenewBtn" th:text="#{loan.renew.confirm}">Confirm Renewal</button>
+                    <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9 member-ui-button member-ui-button--secondary" th:text="#{common.cancel}">Cancel</button>
+                    <button type="button" class="btn btn-classic-primary px-4 member-ui-button member-ui-button--primary" id="confirmRenewBtn" th:text="#{loan.renew.confirm}">Confirm Renewal</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Xác Nhận Trả Sách (Vanilla JS) -->
-    <div class="modal fade member-borrow-div-background-14" id="returnConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade member-borrow-div-background-14 member-standard-dialog" id="returnConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content member-borrow-div-border-border-radius-box-shadow-15">
                 <div class="modal-header member-borrow-div-background-border-bottom-border-radius-16">
@@ -322,8 +318,8 @@
                     <p class="text-muted mb-0 u-font-size-0-95rem-b8088cad" th:text="#{loan.return.confirmNotice}">The request will be sent to a librarian for confirmation.</p>
                 </div>
                 <div class="modal-footer member-borrow-div-border-top-justify-gap-22">
-                    <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9" onclick="hideReturnModal()" th:text="#{common.cancel}">Cancel</button>
-                    <button type="button" class="btn btn-warning px-4" id="confirmReturnBtn" th:text="#{loan.return.confirm}">Confirm Return</button>
+                    <button type="button" class="btn btn-light px-4 u-border-radius-6px-font-weight-500-69eab2b9 member-ui-button member-ui-button--secondary" th:text="#{common.cancel}">Cancel</button>
+                    <button type="button" class="btn btn-warning px-4 member-ui-button member-ui-button--primary" id="confirmReturnBtn" th:text="#{loan.return.confirm}">Confirm Return</button>
                 </div>
             </div>
         </div>
@@ -333,6 +329,17 @@
         var currentRenewFormId = null;
         var currentReturnFormId = null;
         var processingMessage = /*[[#{common.processing}]]*/ 'Processing...';
+        var borrowPageSuccess = /*[[${successMessage}]]*/ null;
+        var borrowPageError = /*[[${errorMessage}]]*/ null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (borrowPageSuccess && window.AppFeedback) {
+                window.AppFeedback.success(borrowPageSuccess);
+            }
+            if (borrowPageError && window.AppFeedback) {
+                window.AppFeedback.error(borrowPageError);
+            }
+        });
 
         document.addEventListener('click', function(e) {
             // Xử lý nút Gia hạn

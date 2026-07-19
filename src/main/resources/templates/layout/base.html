@@ -15,7 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
-    <title>Library Management System</title>
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE" th:text="#{app.name}">Library Management System</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}" />
     <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}" />
@@ -29,17 +29,18 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
       rel="stylesheet"
     />
-      <link rel="stylesheet" th:href="@{/css/layouts/base.css}" />
-      <link rel="stylesheet" th:href="@{/css/components/footer.css}" />
-      <link rel="stylesheet" th:href="@{/css/components/header.css}" />
-      <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
-      <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
-      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+    <link rel="stylesheet" th:href="@{/css/layouts/base.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/footer.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
+    <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+    <th:block layout:fragment="styles"></th:block>
   </head>
-  <body class="bg-classic">
+  <body class="bg-classic app-shell app-shell--public">
     <header th:replace="~{fragments/header :: header}"></header>
 
-    <main class="base-main-background-min-height-01">
+    <main class="base-main-background-min-height-01 app-public-main">
       <div layout:fragment="content"></div>
     </main>
 
@@ -118,6 +119,39 @@
         document.addEventListener("DOMContentLoaded", function () {
           var closeButton = document.querySelector(".app-feedback-toast__close");
           if (closeButton) closeButton.addEventListener("click", hide);
+
+          /*
+           * Backward-compatible adapter for member/guest pages that still render
+           * action feedback as an in-page Bootstrap/app/finance alert. Keeping
+           * this in the shared layout gives every action the canonical toast
+           * without changing controller flash attributes or form workflows.
+           */
+          var legacyFeedback = Array.from(document.querySelectorAll([
+            ".alert-success",
+            ".alert-danger",
+            ".app-alert--success",
+            ".app-alert--danger",
+            ".finance-alert--success",
+            ".finance-alert--danger"
+          ].join(","))).filter(function (element) {
+            return element.textContent.trim().length > 0;
+          });
+
+          if (legacyFeedback.length > 0) {
+            var selected = legacyFeedback.find(function (element) {
+              return element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger");
+            }) || legacyFeedback[0];
+            var tone = selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")
+              ? "error"
+              : "success";
+            var message = selected.textContent.trim();
+
+            legacyFeedback.forEach(function (element) {
+              element.hidden = true;
+              element.setAttribute("aria-hidden", "true");
+            });
+            show(message, tone);
+          }
         });
 
         return {
