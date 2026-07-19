@@ -209,10 +209,11 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
     @PostMapping("/librarian/borrow/reject/{borrowId}")
     public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                      @RequestParam("reasonCode") String reasonCode,
                                       @RequestParam("reason") String reason,
                                       RedirectAttributes redirectAttributes) {
         try {
-            borrowService.rejectPendingRequest(borrowId, reason);
+            borrowService.rejectPendingRequest(borrowId, reasonCode, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
@@ -237,12 +238,13 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
     @PostMapping("/librarian/reservations/reject/{id}")
     public String rejectReservationRequest(@PathVariable("id") Integer id,
-                                           @RequestParam("reason") String reason,
+                                           @RequestParam("reasonCode") String reasonCode,
+                                      @RequestParam("reason") String reason,
                                            Principal principal,
                                            RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.rejectReservationRequest(id, staffUsername, reason);
+            borrowService.rejectReservationRequest(id, staffUsername, reasonCode, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.reservation.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));

@@ -46,20 +46,26 @@
                     </div>
                     <ul class="borrow-pill-tabs" id="requestTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="borrows-tab" data-bs-toggle="tab" data-bs-target="#borrows" type="button" role="tab" aria-controls="borrows" aria-selected="true">
+                            <button class="nav-link" id="borrows-tab" data-bs-toggle="tab" data-bs-target="#borrows" type="button" role="tab" aria-controls="borrows"
+                                    th:classappend="${selectedRenewal == null and selectedReservation == null} ? 'active' : ''"
+                                    th:attr="aria-selected=${selectedRenewal == null and selectedReservation == null}">
                                 <i class="bi bi-cloud-arrow-up"></i> <span th:text="#{librarian.borrowDesk.loanRequests}">Loan Requests</span>
                                 <span class="borrow-tab-badge" th:text="${#lists.size(pendingRequests)}">0</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="renewals-tab" data-bs-toggle="tab" data-bs-target="#renewals" type="button" role="tab" aria-controls="renewals" aria-selected="false">
+                            <button class="nav-link" id="renewals-tab" data-bs-toggle="tab" data-bs-target="#renewals" type="button" role="tab" aria-controls="renewals"
+                                    th:classappend="${selectedRenewal != null} ? 'active' : ''"
+                                    th:attr="aria-selected=${selectedRenewal != null}">
                                 <i class="bi bi-arrow-repeat"></i> <span th:text="#{librarian.borrowDesk.renewals}">Renewals</span>
                                 <span class="borrow-tab-badge" th:text="${#lists.size(pendingRenewals)}">0</span>
                             </button>
                         </li>
 
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations" type="button" role="tab" aria-controls="reservations" aria-selected="false">
+                            <button class="nav-link" id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations" type="button" role="tab" aria-controls="reservations"
+                                    th:classappend="${selectedReservation != null} ? 'active' : ''"
+                                    th:attr="aria-selected=${selectedReservation != null}">
                                 <i class="bi bi-bookmark-star"></i> <span th:text="#{librarian.borrowDesk.reservations}">Reservations</span>
                                 <span class="borrow-tab-badge" th:text="${#lists.size(activeReservations)}">0</span>
                             </button>
@@ -80,7 +86,8 @@
                     <div class="tab-content borrow-scrollable-list" id="requestTabsContent">
 
                         <!-- TAB: ĐƠN MƯỢN ONLINE -->
-                        <div class="tab-pane fade show active" id="borrows" role="tabpanel" aria-labelledby="borrows-tab">
+                        <div class="tab-pane fade" id="borrows" role="tabpanel" aria-labelledby="borrows-tab"
+                             th:classappend="${selectedRenewal == null and selectedReservation == null} ? 'show active' : ''">
                             <div class="list-group list-group-flush">
                                 <a th:each="req : ${pendingRequests}"
                                    th:href="@{/librarian/borrow/create(requestId=${req.borrowId})}"
@@ -108,7 +115,8 @@
                         </div>
 
                         <!-- TAB: YÊU CẦU GIA HẠN -->
-                        <div class="tab-pane fade" id="renewals" role="tabpanel" aria-labelledby="renewals-tab">
+                        <div class="tab-pane fade" id="renewals" role="tabpanel" aria-labelledby="renewals-tab"
+                             th:classappend="${selectedRenewal != null} ? 'show active' : ''">
                             <div class="list-group list-group-flush">
                                 <a th:each="ren : ${pendingRenewals}"
                                    th:href="@{/librarian/borrow/create(renewId=${ren.borrowDetailId})}"
@@ -137,7 +145,8 @@
 
 
                         <!-- TAB: HÀNG ĐỢI ĐẶT TRƯỚC -->
-                        <div class="tab-pane fade" id="reservations" role="tabpanel" aria-labelledby="reservations-tab">
+                        <div class="tab-pane fade" id="reservations" role="tabpanel" aria-labelledby="reservations-tab"
+                             th:classappend="${selectedReservation != null} ? 'show active' : ''">
                             <div class="list-group list-group-flush">
                                 <a th:each="reserve : ${activeReservations}"
                                    th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
@@ -310,6 +319,7 @@
                         <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form">
                             <button type="button" class="borrow-danger-button" 
                                     th:data-book-title="${#strings.listJoin(requestDetails.![book.title], ', ')}"
+                                    data-reject-flow="BORROW"
                                     onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
                             </button>
@@ -361,15 +371,15 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/loan/renew/reject/{id}(id=${selectedRenewal.borrowDetailId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" 
-                                    th:data-book-title="${selectedRenewal.book.title}"
-                                    onclick="showRejectReasonModal(this)">
+                            <button type="button" class="borrow-danger-button"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#rejectReasonModal">
                                 <span th:text="#{librarian.borrowDesk.rejectRenewal}">Reject Renewal</span>
                             </button>
                         </form>
 
                         <form th:action="@{/librarian/loan/renew/approve/{id}(id=${selectedRenewal.borrowDetailId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="app-form-primary" th:data-confirm-message="#{librarian.borrowDesk.approveRenewalConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
+                            <button type="submit" class="app-form-primary">
                                 <span th:text="#{librarian.borrowDesk.approveRenewal}">Approve Renewal</span>
                             </button>
                         </form>
@@ -425,6 +435,7 @@
                         <form th:action="@{/librarian/reservations/reject/{id}(id=${selectedReservation.reservationId})}" method="post" class="borrow-action-form">
                             <button type="button" class="borrow-danger-button" 
                                     th:data-book-title="${selectedReservation.book.title}"
+                                    data-reject-flow="RESERVATION"
                                     onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
                             </button>
@@ -470,17 +481,30 @@
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title" id="rejectReasonModalLabel" th:text="#{librarian.borrowDesk.rejectTitle}">Reject Request</h2>
-                        <p id="rejectReasonBookTitle" style="margin: 4px 0 0; color: var(--app-color-muted); font-size: 13px;"></p>
+                        <p id="rejectReasonBookTitle" style="margin: 4px 0 0; color: var(--app-color-muted); font-size: 13px;" th:text="${selectedRenewal != null ? selectedRenewal.book.title : (selectedRequest != null ? #strings.listJoin(requestDetails.![book.title], ', ') : (selectedReservation != null ? selectedReservation.book.title : ''))}"></p>
                     </div>
                     <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
-                <form id="rejectReasonForm" method="post" novalidate>
+                <form id="rejectReasonForm" method="post" novalidate
+                      th:action="${selectedRenewal != null ? '/librarian/loan/renew/reject/' + selectedRenewal.borrowDetailId : (selectedRequest != null ? '/librarian/borrow/reject/' + selectedRequest.borrowId : (selectedReservation != null ? '/librarian/reservations/reject/' + selectedReservation.reservationId : '#'))}">
                     <div class="modal-body">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <label for="rejectReasonText" th:text="#{librarian.borrowDesk.rejectReasonLabel}">Rejection Reason</label>
-                        <textarea id="rejectReasonText" name="reason" required minlength="5" maxlength="500" th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}" aria-describedby="rejectReasonCount rejectReasonError"></textarea>
+                        <label for="rejectReasonCode" th:text="#{rejection.type}">Reason type</label>
+                        <select id="rejectReasonCode" name="reasonCode" required class="form-select mb-3">
+                                                        <option value="" th:text="#{rejection.select}">Select a reason</option>
+                            <th:block th:if="${selectedRenewal != null}">
+                                <option value="RESERVED_BY_OTHER" th:text="#{rejection.renewal.reserved}">Reserved by another member</option>
+                                <option value="OVERDUE" th:text="#{rejection.renewal.overdue}">Book is overdue</option>
+                                <option value="RENEWAL_LIMIT_REACHED" th:text="#{rejection.renewal.limit}">Renewal limit reached</option>
+                                <option value="ACCOUNT_RESTRICTED" th:text="#{rejection.accountRestricted}">Account restricted</option>
+                                <option value="BOOK_RECALL" th:text="#{rejection.renewal.recall}">Book recall</option>
+                                <option value="OTHER" th:text="#{rejection.other}">Other</option>
+                            </th:block>
+                        </select>
+                        <label for="rejectReasonText" th:text="#{rejection.detail}">Details sent to member</label>
+                        <textarea id="rejectReasonText" name="reason" maxlength="500" th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}" aria-describedby="rejectReasonCount rejectReasonError"></textarea>
                         <div class="acquisition-reason-support">
                             <span id="rejectReasonCount" aria-live="polite">0/500</span>
                         </div>
@@ -532,6 +556,37 @@
             
             // Reset input
             const textarea = document.getElementById('rejectReasonText');
+            const reasonSelect = document.getElementById('rejectReasonCode');
+            const reasonOptions = {
+                BORROW: [
+                    ["NO_COPY", /*[[#{rejection.borrow.noCopy}]]*/ "No available copy"],
+                    ["LIMIT_EXCEEDED", /*[[#{rejection.borrow.limit}]]*/ "Loan limit exceeded"],
+                    ["ACCOUNT_RESTRICTED", /*[[#{rejection.accountRestricted}]]*/ "Account restricted"],
+                    ["OUTSTANDING_OBLIGATION", /*[[#{rejection.borrow.obligation}]]*/ "Outstanding obligation"],
+                    ["INVALID_INFORMATION", /*[[#{rejection.borrow.invalidInfo}]]*/ "Invalid information"],
+                    ["OTHER", /*[[#{rejection.other}]]*/ "Other"]
+                ],
+                RENEWAL: [
+                    ["RESERVED_BY_OTHER", /*[[#{rejection.renewal.reserved}]]*/ "Reserved by another member"],
+                    ["OVERDUE", /*[[#{rejection.renewal.overdue}]]*/ "Book is overdue"],
+                    ["RENEWAL_LIMIT_REACHED", /*[[#{rejection.renewal.limit}]]*/ "Renewal limit reached"],
+                    ["ACCOUNT_RESTRICTED", /*[[#{rejection.accountRestricted}]]*/ "Account restricted"],
+                    ["BOOK_RECALL", /*[[#{rejection.renewal.recall}]]*/ "Book recall"],
+                    ["OTHER", /*[[#{rejection.other}]]*/ "Other"]
+                ],
+                RESERVATION: [
+                    ["COPY_AVAILABLE", /*[[#{rejection.reservation.available}]]*/ "A copy is available"],
+                    ["UNFULFILLABLE", /*[[#{rejection.reservation.unfulfillable}]]*/ "Request cannot be fulfilled"],
+                    ["DUPLICATE_REQUEST", /*[[#{rejection.reservation.duplicate}]]*/ "Duplicate request"],
+                    ["ACCOUNT_RESTRICTED", /*[[#{rejection.accountRestricted}]]*/ "Account restricted"],
+                    ["INVALID_DEPOSIT", /*[[#{rejection.reservation.deposit}]]*/ "Invalid deposit"],
+                    ["OTHER", /*[[#{rejection.other}]]*/ "Other"]
+                ]
+            };
+            reasonSelect.innerHTML = '<option value="">' + /*[[#{rejection.select}]]*/ 'Select a reason' + '</option>';
+            (reasonOptions[button.dataset.rejectFlow] || []).forEach(function(option) {
+                reasonSelect.add(new Option(option[1], option[0]));
+            });
             textarea.value = "";
             textarea.classList.remove('is-invalid');
             document.getElementById('rejectReasonCount').textContent = "0/500";
@@ -543,6 +598,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("rejectReasonForm");
             const reason = document.getElementById("rejectReasonText");
+            const reasonCode = document.getElementById("rejectReasonCode");
             const error = document.getElementById("rejectReasonError");
             const counter = document.getElementById("rejectReasonCount");
             if (!form || !reason || !error || !counter) return;
@@ -560,7 +616,8 @@
                 const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
                 reason.value = value;
                 updateCounter();
-                const message = value === "" ? messages.required : value.length < 5 ? messages.minimum : value.length > 500 ? messages.maximum : !/\p{L}/u.test(value) ? messages.letters : "";
+                const detailRequired = reasonCode.value === "OTHER";
+                const message = !reasonCode.value ? /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type." : detailRequired && value === "" ? messages.required : value !== "" && value.length < 5 ? messages.minimum : value.length > 500 ? messages.maximum : value !== "" && !/\p{L}/u.test(value) ? messages.letters : "";
                 if (message) {
                     event.preventDefault();
                     reason.classList.add("is-invalid");
@@ -584,9 +641,31 @@
             }
 
             var triggerTabList = [].slice.call(document.querySelectorAll('#requestTabs button'));
+
+            function showRequestTab(triggerEl) {
+                if (!triggerEl) return;
+
+                triggerTabList.forEach(function (tabButton) {
+                    var selected = tabButton === triggerEl;
+                    tabButton.classList.toggle('active', selected);
+                    tabButton.setAttribute('aria-selected', String(selected));
+                    tabButton.setAttribute('tabindex', selected ? '0' : '-1');
+
+                    var targetSelector = tabButton.getAttribute('data-bs-target');
+                    var targetPane = targetSelector ? document.querySelector(targetSelector) : null;
+                    if (targetPane) {
+                        targetPane.classList.toggle('active', selected);
+                        targetPane.classList.toggle('show', selected);
+                    }
+                });
+
+                sessionStorage.setItem('activeRequestTab', triggerEl.id);
+            }
+
             triggerTabList.forEach(function (triggerEl) {
-                triggerEl.addEventListener('click', function (event) {
-                    sessionStorage.setItem('activeRequestTab', event.target.id);
+                triggerEl.addEventListener('click', function () {
+                    // Use the registered button, not event.target (which may be its icon or label).
+                    showRequestTab(triggerEl);
                 });
             });
 
@@ -600,11 +679,10 @@
                 }
             });
 
-            var activeTabId = sessionStorage.getItem('activeRequestTab');
-            if (activeTabId) {
-                var activeTab = new bootstrap.Tab(document.getElementById(activeTabId));
-                activeTab.show();
-            }
+            var serverSelectedTabId = /*[[${selectedRenewal != null ? 'renewals-tab' : (selectedReservation != null ? 'reservations-tab' : (selectedRequest != null ? 'borrows-tab' : null))}]]*/ null;
+            var activeTabId = serverSelectedTabId || sessionStorage.getItem('activeRequestTab');
+            var activeTabTrigger = activeTabId ? document.getElementById(activeTabId) : null;
+            showRequestTab(activeTabTrigger || document.getElementById('borrows-tab'));
 
         });
     </script>

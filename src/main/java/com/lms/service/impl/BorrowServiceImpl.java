@@ -380,7 +380,8 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectPendingRequest(Integer borrowId, String reason) {
+    public void rejectPendingRequest(Integer borrowId, String reasonCode, String reason) {
+        var rejection = com.lms.util.RejectionReasonValidator.validate("BORROW", reasonCode, reason);
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.requestNotFound")));
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
@@ -391,6 +392,8 @@ public class BorrowServiceImpl implements BorrowService {
 
         // Cáº­p nháº­t tráº¡ng thÃ¡i Borrow thÃ nh Rejected
         borrow.setStatus("Rejected");
+        borrow.setRejectionCode(rejection.code());
+        borrow.setRejectionReason(rejection.detail());
         borrowRepository.save(borrow);
 
         // Cáº­p nháº­t tráº¡ng thÃ¡i Táº¤T Cáº¢ BorrowDetail liÃªn quan thÃ nh Rejected
@@ -409,10 +412,18 @@ public class BorrowServiceImpl implements BorrowService {
             content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
         }
 
-        sendInternalNotification(member,
-                NotificationType.LOAN, NotificationEventType.LOAN_REJECTED, NotificationSource.LIBRARIAN,
-                "systemNotification.borrow.rejected.title",
-                "systemNotification.borrow.rejected.content", bookNames, BorrowCodeFormatter.format(borrowId));
+        Object translatedReason = localizedMessageService.messageArgument("rejection.code." + rejection.code());
+        if (rejection.detail() == null) {
+            sendInternalNotification(member,
+                    NotificationType.LOAN, NotificationEventType.LOAN_REJECTED, NotificationSource.LIBRARIAN,
+                    "systemNotification.borrow.rejected.title", "systemNotification.borrow.rejected.contentWithoutDetail",
+                    bookNames, BorrowCodeFormatter.format(borrowId), translatedReason);
+        } else {
+            sendInternalNotification(member,
+                    NotificationType.LOAN, NotificationEventType.LOAN_REJECTED, NotificationSource.LIBRARIAN,
+                    "systemNotification.borrow.rejected.title", "systemNotification.borrow.rejected.contentWithReason",
+                    bookNames, BorrowCodeFormatter.format(borrowId), translatedReason, rejection.detail());
+        }
     }
 
     @Override
@@ -751,7 +762,8 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectReservationRequest(Integer reservationId, String staffUsername, String reason) {
+    public void rejectReservationRequest(Integer reservationId, String staffUsername, String reasonCode, String reason) {
+        var rejection = com.lms.util.RejectionReasonValidator.validate("RESERVATION", reasonCode, reason);
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.borrow.reservationNotFound")));
 
@@ -790,6 +802,8 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         reservation.setStatus(isDepositPaid ? "Refunded" : "Rejected");
+        reservation.setRejectionCode(rejection.code());
+        reservation.setRejectionReason(rejection.detail());
         reservationRepository.save(reservation);
         String content = localizedMessageService.get("systemNotification.reservation.rejectedWithRefund.content",
                 reservation.getBook().getTitle(), reservationId,
@@ -797,13 +811,20 @@ public class BorrowServiceImpl implements BorrowService {
         if (reason != null && !reason.trim().isEmpty()) {
             content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
         }
-        sendInternalNotification(reservation.getMember(),
-                NotificationType.RESERVATION, NotificationEventType.RESERVATION_REJECTED, NotificationSource.LIBRARIAN,
-                "systemNotification.reservation.rejected.title",
-                isDepositPaid
-                        ? "systemNotification.reservation.rejectedWithDepositRefund.content"
-                        : "systemNotification.reservation.rejectedWithoutDeposit.content",
-                reservation.getBook().getTitle(), reservationId);
+        Object translatedReason = localizedMessageService.messageArgument("rejection.code." + rejection.code());
+        boolean hasDetail = rejection.detail() != null;
+        String rejectionContentKey = isDepositPaid
+                ? (hasDetail ? "systemNotification.reservation.rejectedWithDepositRefund.contentWithReason" : "systemNotification.reservation.rejectedWithDepositRefund.contentWithoutDetail")
+                : (hasDetail ? "systemNotification.reservation.rejectedWithoutDeposit.contentWithReason" : "systemNotification.reservation.rejectedWithoutDeposit.contentWithoutDetail");
+        if (hasDetail) {
+            sendInternalNotification(reservation.getMember(), NotificationType.RESERVATION, NotificationEventType.RESERVATION_REJECTED,
+                    NotificationSource.LIBRARIAN, "systemNotification.reservation.rejected.title", rejectionContentKey,
+                    reservation.getBook().getTitle(), reservationId, translatedReason, rejection.detail());
+        } else {
+            sendInternalNotification(reservation.getMember(), NotificationType.RESERVATION, NotificationEventType.RESERVATION_REJECTED,
+                    NotificationSource.LIBRARIAN, "systemNotification.reservation.rejected.title", rejectionContentKey,
+                    reservation.getBook().getTitle(), reservationId, translatedReason);
+        }
     }
 
     @Override
