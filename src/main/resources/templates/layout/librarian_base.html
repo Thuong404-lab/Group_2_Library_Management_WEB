@@ -84,10 +84,48 @@
         </li>
 
         <li class="menu-item">
-            <a th:href="@{/librarian/dashboard(section='books')}" class="menu-link" th:classappend="${activeMenu == 'books'} ? 'active'">
-                <i class="bi bi-book-fill menu-icon"></i>
-                <span class="menu-text" th:text="#{staff.nav.books}">Book Management</span>
+            <a href="#bookManagementMenu" data-bs-toggle="collapse"
+                class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                th:classappend="${activeMenu == 'books'} ? 'active'"
+                th:attr="aria-expanded=${activeMenu == 'books'}"
+                aria-controls="bookManagementMenu">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-book-fill menu-icon"></i>
+                    <span class="menu-text" th:text="#{staff.nav.books}">Book Management</span>
+                </div>
+                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
             </a>
+            <ul class="collapse list-unstyled ps-4" id="bookManagementMenu"
+                th:classappend="${activeMenu == 'books'} ? 'show'">
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && (param.tab == null || param.tab[0] != 'categories')} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.heading}">Book Inventory</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='categories')}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'categories'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.tab.categories}">Categories & Genres</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit')}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'audit'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.tab.audit}">Inventory Audit</span>
+                    </a>
+                </li>
+                <li class="menu-item my-1">
+                    <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
+                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                        th:classappend="${param.subsection != null && param.subsection[0] == 'storage'} ? 'active-submenu' : ''">
+                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.storage.management}">Storage Management</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="menu-item">
