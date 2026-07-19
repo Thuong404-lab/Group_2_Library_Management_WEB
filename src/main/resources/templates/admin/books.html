@@ -81,8 +81,23 @@
 
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
             <div class="card-classic shadow-sm mb-4" th:if="${currentSubSection == 'inventory'}">
-                <div class="card-body p-4">
-                    <div id="bookInventoryPanel">
+                <div class="container-fluid py-4">
+
+    <!-- Flash Messages -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <!-- Header Section -->             <div id="bookInventoryPanel">
                         <div class="nav d-flex flex-wrap mb-4 u-gap-12px-58cf3fe5" id="adminInventoryTabs" role="tablist">
                             <button type="button" class="nav-link btn btn-classic btn-sm active text-white"
                                 id="admin-books-tab" data-bs-toggle="tab" data-bs-target="#admin-books-pane">
@@ -279,7 +294,7 @@
                                                     <div class="modal-body px-4 pt-4 pb-0">
                                                         <div class="mb-3">
                                                             <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.categoryName}">Category Name</span> <span class="text-danger">*</span></label>
-                                                            <input type="text" class="form-control" style="background-color: white; border-radius: 8px;" name="name" th:value="${category.categoryName}" required oninput="validateCategoryGenreName(this)">
+                                                            <input type="text" class="form-control" style="background-color: white; border-radius: 8px;" name="name" th:value="${category.categoryName}" required maxlength="20" oninput="validateCategoryGenreName(this)">
                                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.name}">Names may contain letters and spaces only.</div>
                                                         </div>
                                                     </div>
@@ -322,14 +337,15 @@
                                                     <div class="modal-body px-4 pt-4 pb-0">
                                                         <div class="mb-3">
                                                             <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.parentCategory}">Category</span> <span class="text-danger">*</span></label>
-                                                            <select class="form-select form-control" style="background-color: white; border-radius: 8px;" name="categoryId" required>
+                                                            <select class="form-select form-control" style="background-color: white; border-radius: 8px;" name="categoryId" required onchange="validateCategoryGenreSelect(this)">
                                                                 <option th:each="option : ${categories}" th:value="${option.categoryId}" th:text="${option.categoryName}"
                                                                     th:selected="${genre.category != null and genre.category.categoryId == option.categoryId}"></option>
                                                             </select>
+                                                            <div class="invalid-feedback" th:text="#{backend.inventory.categoryRequired}">Please select a category.</div>
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.genreName}">Genre Name</span> <span class="text-danger">*</span></label>
-                                                            <input type="text" class="form-control" style="background-color: white; border-radius: 8px;" name="name" th:value="${genre.genreName}" required oninput="validateCategoryGenreName(this)">
+                                                            <input type="text" class="form-control" style="background-color: white; border-radius: 8px;" name="name" th:value="${genre.genreName}" required maxlength="20" oninput="validateCategoryGenreName(this)">
                                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.name}">Names may contain letters and spaces only.</div>
                                                         </div>
                                                     </div>
@@ -429,8 +445,9 @@
                                             <label class="form-label fw-bold small"><span th:text="#{book.genre}">Genre</span> <span class="text-danger">*</span></label>
                                             <select name="genreId" class="form-select form-control" style="background-color: white; border-radius: 8px;" required>
                                                 <option value="" disabled selected th:text="#{librarian.inventory.selectGenre}">Select Genre</option>
-                                                <option th:each="genre : ${genres}" th:value="${genre.genreId}"
-                                                    th:text="${genre.genreName}">Genre</option>
+                                                <optgroup th:each="cat : ${categories}" th:label="${cat.categoryName}">
+                                                    <option th:each="genre : ${genres}" th:if="${genre.category != null and genre.category.categoryId == cat.categoryId}" th:value="${genre.genreId}" th:text="${genre.genreName}">Genre</option>
+                                                </optgroup>
                                             </select>
                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.genreRequired}">Please select a genre.</div>
                                         </div>
@@ -502,7 +519,7 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.categoryName}">Category Name</span> <span class="text-danger">*</span></label>
                                         <input type="text" name="name" class="form-control" style="background-color: white; border-radius: 8px;"
-                                            th:placeholder="#{librarian.inventory.categoryPlaceholder}" required
+                                            th:placeholder="#{librarian.inventory.categoryPlaceholder}" required maxlength="20"
                                             oninput="validateCategoryGenreName(this)">
                                         <div class="invalid-feedback" th:text="#{librarian.inventory.validation.name}">Names may contain letters and spaces only.</div>
                                     </div>
@@ -528,17 +545,18 @@
                                     <input type="hidden" name="type" value="genre" />
                                     <div class="mb-3">
                                         <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.parentCategory}">Category</span> <span class="text-danger">*</span></label>
-                                        <select name="categoryId" class="form-select form-control" style="background-color: white; border-radius: 8px;" required>
+                                        <select name="categoryId" class="form-select form-control" style="background-color: white; border-radius: 8px;" required onchange="validateCategoryGenreSelect(this)">
                                             <option value="" disabled selected th:text="#{librarian.inventory.selectCategory}">Select Category</option>
                                             <option th:each="category : ${categories}"
                                                 th:value="${category.categoryId}"
                                                 th:text="${category.categoryName}">Category</option>
                                         </select>
+                                        <div class="invalid-feedback" th:text="#{backend.inventory.categoryRequired}">Please select a category.</div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.genreName}">Genre Name</span> <span class="text-danger">*</span></label>
                                         <input type="text" name="name" class="form-control" style="background-color: white; border-radius: 8px;"
-                                            th:placeholder="#{librarian.inventory.genrePlaceholder}" required
+                                            th:placeholder="#{librarian.inventory.genrePlaceholder}" required maxlength="20"
                                             oninput="validateCategoryGenreName(this)">
                                         <div class="invalid-feedback" th:text="#{librarian.inventory.validation.name}">Names may contain letters and spaces only.</div>
                                     </div>
@@ -672,9 +690,11 @@
                                                 <label class="form-label" th:text="#{book.genre}">Genre</label>
                                                 <select name="genreId" class="form-select" required>
                                                     <option value="" disabled th:text="#{librarian.inventory.selectGenre}">Select Genre</option>
-                                                    <option th:each="genre : ${genres}" th:value="${genre.genreId}"
-                                                        th:selected="${book.genre != null && genre.genreId == book.genre.genreId}"
-                                                        th:text="${genre.genreName}">Genre</option>
+                                                    <optgroup th:each="cat : ${categories}" th:label="${cat.categoryName}">
+                                                        <option th:each="genre : ${genres}" th:if="${genre.category != null and genre.category.categoryId == cat.categoryId}" th:value="${genre.genreId}"
+                                                            th:selected="${book.genre != null && genre.genreId == book.genre.genreId}"
+                                                            th:text="${genre.genreName}">Genre</option>
+                                                    </optgroup>
                                                 </select>
                                             </div>
                                             <div class="col-md-6">
@@ -936,6 +956,9 @@
             invalidIsbn: /*[[#{librarian.inventory.validation.isbn}]]*/ 'ISBN may contain digits only (0-9).',
             isbnRequired: /*[[#{librarian.inventory.validation.isbnRequired}]]*/ 'Please enter ISBN.',
             invalidName: /*[[#{librarian.inventory.validation.name}]]*/ 'Names may contain letters and spaces only.',
+            categoryNameRequired: /*[[#{backend.inventory.categoryNameRequired}]]*/ 'Category name is required.',
+            genreNameRequired: /*[[#{backend.inventory.genreNameRequired}]]*/ 'Genre name is required.',
+            categoryRequired: /*[[#{backend.inventory.categoryRequired}]]*/ 'Please select a category.',
             invalidQuantity: /*[[#{librarian.inventory.validation.quantity}]]*/ 'Quantity must be between 1 and 999.',
             quantityRequired: /*[[#{librarian.inventory.validation.quantityRequired}]]*/ 'Please enter quantity.',
             titleRequired: /*[[#{librarian.inventory.validation.titleRequired}]]*/ 'Please enter book title.',
@@ -1018,9 +1041,30 @@
             setFieldValidity(input, valid, adminBookMessages.invalidQuantity);
             return valid;
         }
+        function getFormType(form) {
+            const typeInput = form.querySelector("input[name='type']");
+            if (typeInput) return typeInput.value;
+            const action = form.getAttribute('action') || '';
+            if (action.includes('/genres/')) return 'genre';
+            if (action.includes('/categories/')) return 'category';
+            return 'category';
+        }
+
         function validateCategoryGenreName(input) {
+            const form = input.closest('form');
+            const type = form ? getFormType(form) : 'category';
+            if (!input.value.trim()) {
+                setFieldValidity(input, false, type === 'category' ? adminBookMessages.categoryNameRequired : adminBookMessages.genreNameRequired);
+                return false;
+            }
             const valid = /^[\p{L}\s]*$/u.test(input.value);
             setFieldValidity(input, valid, adminBookMessages.invalidName);
+            return valid;
+        }
+
+        function validateCategoryGenreSelect(select) {
+            const valid = !!select.value;
+            setFieldValidity(select, valid, adminBookMessages.categoryRequired);
             return valid;
         }
         function validateBookForm(event, form) {
@@ -1053,8 +1097,26 @@
             }
         }
         function validateCategoryGenreForm(event, form) {
+            let isValid = true;
+            if (!form.checkValidity()) {
+                isValid = false;
+            }
+            form.classList.add('was-validated');
+
+            const categorySelect = form.querySelector("select[name='categoryId']");
+            if (categorySelect && !validateCategoryGenreSelect(categorySelect)) {
+                isValid = false;
+            }
+
             const input = form.querySelector("input[name='name']");
-            if (input && !validateCategoryGenreName(input)) event.preventDefault();
+            if (input && !validateCategoryGenreName(input)) {
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
         }
         function setFieldValidity(input, valid, message) {
             if (valid) {

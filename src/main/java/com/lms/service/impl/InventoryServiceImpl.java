@@ -124,6 +124,15 @@ public class InventoryServiceImpl implements InventoryService {
         if (isbn == null || isbn.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.isbnRequired"));
         }
+        if (authorName == null || authorName.trim().isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.authorRequired"));
+        }
+        if (shelfId == null) {
+            throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
+        }
+        if (coverImageUrl == null || coverImageUrl.trim().isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.imageRequired"));
+        }
         Genre genre = genreRepository.findById(genreId)
                 .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.validGenreRequired")));
 
@@ -155,7 +164,8 @@ public class InventoryServiceImpl implements InventoryService {
 
         book = bookRepository.save(book);
 
-        Shelf shelf = shelfId != null ? shelfRepository.findById(shelfId).orElse(null) : null;
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
 
         int copies = quantity != null && quantity > 0 ? quantity : 1;
 
@@ -180,6 +190,12 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status,
             String coverImageUrl, Integer shelfId, String description, String authorName) {
+        if (authorName == null || authorName.trim().isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.authorRequired"));
+        }
+        if (shelfId == null) {
+            throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
+        }
         Book book = findBookById(bookId);
         if (title != null && !title.trim().isEmpty()) {
             book.setTitle(title.trim());
@@ -219,13 +235,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         bookRepository.save(book);
 
-        if (shelfId != null) {
-            Shelf shelf = shelfRepository.findById(shelfId).orElse(null);
-            List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
-            for (BookItem item : items) {
-                item.setShelf(shelf);
-                bookItemRepository.save(item);
-            }
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
+        List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
+        for (BookItem item : items) {
+            item.setShelf(shelf);
+            bookItemRepository.save(item);
         }
     }
 
@@ -265,6 +280,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (name == null || name.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.categoryNameRequired"));
         }
+        if (name.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
+        }
         Category category = new Category();
         category.setCategoryName(name.trim());
         categoryRepository.save(category);
@@ -277,6 +295,9 @@ public class InventoryServiceImpl implements InventoryService {
         }
         if (name == null || name.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.genreNameRequired"));
+        }
+        if (name.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
         }
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.categoryNotFound")));
@@ -292,6 +313,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (newName == null || newName.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.categoryNameRequired"));
         }
+        if (newName.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
+        }
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.categoryNotFound")));
         category.setCategoryName(newName.trim());
@@ -302,6 +326,9 @@ public class InventoryServiceImpl implements InventoryService {
     public void updateGenre(Integer genreId, String newName, Integer newCategoryId) {
         if (newName == null || newName.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.genreNameRequired"));
+        }
+        if (newName.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
         }
         Genre genre = genreRepository.findById(genreId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.genreNotFound")));
