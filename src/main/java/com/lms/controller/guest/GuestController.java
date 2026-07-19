@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.lms.service.BookService;
+import com.lms.repository.BookItemRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MemberReviewService;
@@ -37,6 +38,7 @@ public class GuestController extends LocalizedControllerSupport {
     private final MemberFavoriteService memberFavoriteService;
     private final MemberReviewService memberReviewService;
     private final MembershipService membershipService;
+    private final BookItemRepository bookItemRepository;
     private final SystemService systemService;
 
     public GuestController(BookService bookService,
@@ -44,12 +46,14 @@ public class GuestController extends LocalizedControllerSupport {
                            MemberFavoriteService memberFavoriteService,
                            MemberReviewService memberReviewService,
                            MembershipService membershipService,
+                           BookItemRepository bookItemRepository,
                            SystemService systemService) {
         this.bookService = bookService;
         this.genreRepository = genreRepository;
         this.memberFavoriteService = memberFavoriteService;
         this.memberReviewService = memberReviewService;
         this.membershipService = membershipService;
+        this.bookItemRepository = bookItemRepository;
         this.systemService = systemService;
     }
 
@@ -168,7 +172,9 @@ public class GuestController extends LocalizedControllerSupport {
                 .average()
                 .orElse(0);
 
+        long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(id, "Available");
         model.addAttribute("book", book);
+        model.addAttribute("availableCount", availableCount);
         model.addAttribute("bookReviews", bookReviews);
         model.addAttribute("reviewCount", bookReviews.size());
         model.addAttribute("averageRating", averageRating);

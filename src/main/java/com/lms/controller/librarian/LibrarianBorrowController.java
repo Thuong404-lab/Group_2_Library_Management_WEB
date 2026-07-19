@@ -27,6 +27,9 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
 import com.lms.entity.BorrowDetail;
+import com.lms.entity.Reservation;
+import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 public class LibrarianBorrowController extends LocalizedControllerSupport {
@@ -98,6 +101,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("activeMenu", "borrow-list");
 
         return "librarian/borrow-list";
     }
@@ -107,7 +111,20 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
                                        @RequestParam(value = "renewId", required = false) Integer renewId,
                                        @RequestParam(value = "reservationId", required = false) Integer reservationId,
-                                       Model model) {
+                                       Model model,
+                                       HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+        java.util.Map<Integer, String> usernameByMemberId = memberAccountRepository.findAll().stream()
+                .filter(ma -> ma.getMember() != null)
+                .collect(Collectors.toMap(
+                        ma -> ma.getMember().getMemberId(),
+                        ma -> ma.getUsername(),
+                        (existing, replacement) -> existing
+                ));
+        model.addAttribute("usernameByMemberId", usernameByMemberId);
+
         model.addAttribute("borrowRequest", new BorrowRequest());
         model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
@@ -127,8 +144,10 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         if (requestId != null) {
             try {
                 Borrow selectedBorrow = borrowService.getBorrowById(requestId);
-                model.addAttribute("selectedRequest", selectedBorrow);
-                model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                if ("Pending".equalsIgnoreCase(selectedBorrow.getStatus())) {
+                    model.addAttribute("selectedRequest", selectedBorrow);
+                    model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
             }
@@ -136,7 +155,10 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         
         if (renewId != null) {
             try {
-                model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
+                BorrowDetail selectedRenew = borrowService.getBorrowDetailById(renewId);
+                if ("Renew_Pending".equalsIgnoreCase(selectedRenew.getStatus())) {
+                    model.addAttribute("selectedRenewal", selectedRenew);
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.renewalDetailsFailed", e));
             }
@@ -144,21 +166,28 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
         if (reservationId != null) {
             try {
-                model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
+                Reservation selectedReservation = borrowService.getReservationById(reservationId);
+                if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
+                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
+                    model.addAttribute("selectedReservation", selectedReservation);
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.reservationDetailsFailed", e));
             }
         }
 
+        model.addAttribute("activeMenu", "borrow-desk");
         return "librarian/create-borrow";
     }
 
-    // CHỨC NĂNG PHÊ DUYỆT ĐƠN MƯỢN ONLINE: Chuyển đổi trạng thái từ Pending -> Active
     @PostMapping("/librarian/borrow/approve/{borrowId}")
-    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                       @RequestParam("barcodes") List<String> barcodes,
+                                       Principal principal,
+                                       RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.approvePendingRequest(borrowId, staffUsername);
+            borrowService.approvePendingRequest(borrowId, barcodes, staffUsername);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.approved"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
@@ -168,9 +197,11 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
     @PostMapping("/librarian/borrow/reject/{borrowId}")
-    public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
+    public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                      @RequestParam("reason") String reason,
+                                      RedirectAttributes redirectAttributes) {
         try {
-            borrowService.rejectPendingRequest(borrowId);
+            borrowService.rejectPendingRequest(borrowId, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
@@ -194,10 +225,13 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
     // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
     @PostMapping("/librarian/reservations/reject/{id}")
-    public String rejectReservationRequest(@PathVariable("id") Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String rejectReservationRequest(@PathVariable("id") Integer id,
+                                           @RequestParam("reason") String reason,
+                                           Principal principal,
+                                           RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.rejectReservationRequest(id, staffUsername);
+            borrowService.rejectReservationRequest(id, staffUsername, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.reservation.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
@@ -376,9 +410,25 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             if (itemOpt.isPresent()) {
                 com.lms.entity.BookItem item = itemOpt.get();
                 data.put("found", true);
+                data.put("bookId", item.getBook().getBookId());
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
                 String rawStatus = item.getStatus();
+                
+                long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(item.getBook().getBookId(), "Available");
+                data.put("availableCount", availableCount);
+                
+                // Debug logging to console
+                try {
+                    java.util.List<com.lms.entity.BookItem> allItems = bookItemRepository.findByBook_BookId(item.getBook().getBookId());
+                    System.out.println("DEBUG BOOK LOOKUP: Book ID = " + item.getBook().getBookId() + ", Title = " + item.getBook().getTitle() + ", Available Count in DB = " + availableCount);
+                    for (com.lms.entity.BookItem bi : allItems) {
+                        System.out.println("DEBUG BOOK ITEM: Barcode = " + bi.getBarcode() + ", Status = " + bi.getStatus());
+                    }
+                } catch (Exception e) {
+                    System.err.println("DEBUG BOOK LOOKUP ERROR: " + e.getMessage());
+                }
+                
                 String vnStatus = message("book.status.available");
                 if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.borrowed");
                 else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.lost");
