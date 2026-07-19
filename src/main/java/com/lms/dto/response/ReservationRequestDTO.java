@@ -8,6 +8,11 @@ public class ReservationRequestDTO {
     private String bookTitle;
     private LocalDateTime bookingDate;
     private Integer queuePosition;
+    
+    // New fields for search
+    private String memberEmail;
+    private String memberPhone;
+    private String memberUsername;
 
     public ReservationRequestDTO() {}
 
@@ -17,6 +22,18 @@ public class ReservationRequestDTO {
         this.bookTitle = bookTitle;
         this.bookingDate = bookingDate;
         this.queuePosition = queuePosition;
+    }
+
+    public ReservationRequestDTO(Integer id, String memberName, String bookTitle, LocalDateTime bookingDate, Integer queuePosition,
+                                 String memberEmail, String memberPhone, String memberUsername) {
+        this.id = id;
+        this.memberName = memberName;
+        this.bookTitle = bookTitle;
+        this.bookingDate = bookingDate;
+        this.queuePosition = queuePosition;
+        this.memberEmail = memberEmail;
+        this.memberPhone = memberPhone;
+        this.memberUsername = memberUsername;
     }
 
     // Getters and Setters
@@ -30,4 +47,11 @@ public class ReservationRequestDTO {
     public void setBookingDate(LocalDateTime bookingDate) { this.bookingDate = bookingDate; }
     public Integer getQueuePosition() { return queuePosition; }
     public void setQueuePosition(Integer queuePosition) { this.queuePosition = queuePosition; }
+
+    public String getMemberEmail() { return memberEmail; }
+    public void setMemberEmail(String memberEmail) { this.memberEmail = memberEmail; }
+    public String getMemberPhone() { return memberPhone; }
+    public void setMemberPhone(String memberPhone) { this.memberPhone = memberPhone; }
+    public String getMemberUsername() { return memberUsername; }
+    public void setMemberUsername(String memberUsername) { this.memberUsername = memberUsername; }
 }

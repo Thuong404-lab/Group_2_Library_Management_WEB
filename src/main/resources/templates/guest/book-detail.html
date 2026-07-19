@@ -97,6 +97,20 @@
                 <hr class="guest-book-detail-hr-border-color-09">
 
                 <!-- Action Buttons -->
+                <!-- Số lượng bản vật lý khả dụng -->
+                <div class="mb-3">
+                    <span th:if="${availableCount > 0}"
+                          class="badge me-2"
+                          style="background-color: rgba(34,197,94,0.1); color: #15803d; border: 1px solid rgba(34,197,94,0.3); font-size: 0.8rem; padding: 6px 12px;">
+                        <i class="bi bi-box-seam me-1"></i>Còn <strong th:text="${availableCount}">0</strong> bản vật lý khả dụng
+                    </span>
+                    <span th:if="${availableCount == 0}"
+                          class="badge"
+                          style="background-color: rgba(239,68,68,0.1); color: #b91c1c; border: 1px solid rgba(239,68,68,0.3); font-size: 0.8rem; padding: 6px 12px;">
+                        <i class="bi bi-x-circle me-1"></i>Tạm thời hết bản vật lý trong kho
+                    </span>
+                </div>
+
                 <div class="d-flex mt-3 flex-wrap">
                     <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
                           method="post"
@@ -109,7 +123,21 @@
                         </button>
                     </form>
 
-                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
+                    <form th:action="@{/member/cart/add}" method="post" class="flex-grow-1 mr-2 mb-2 cart-add-form">
+                        <input type="hidden" name="bookId" th:value="${book.bookId}" />
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2"
+                                th:disabled="${book.status != 'Active' or availableCount == 0}"
+                                th:title="${availableCount == 0 ? 'Sách đã hết bản trong kho' : ''}">
+                            <i class="bi bi-cart-plus me-1"></i> <span th:text="#{guest.bookDetail.addToCart}">Thêm vào giỏ sách</span>
+                        </button>
+                    </form>
+
+                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2 app-confirm-form"
+                          data-confirm-title="Xác nhận đặt trước sách"
+                          data-confirm-subject-label="Sách đặt trước"
+                          th:data-confirm-subject="${book.title}"
+                          data-confirm-message="Hệ thống sẽ tiến hành trừ tạm thời tiền đặt cọc (50.000 VNĐ) từ ví thành viên của bạn để giữ chỗ. Bạn có đồng ý tiếp tục?"
+                          data-confirm-action="Xác nhận &amp; Trừ tiền">
                         <button type="submit" class="btn btn-outline-classic w-100 py-2">
                             <i class="bi bi-bookmark me-1"></i> <span th:text="#{guest.bookDetail.reserve}">Reserve</span>
                         </button>
@@ -117,7 +145,9 @@
 
                     <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active'}" th:title="${book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : ''}">
+                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold"
+                                th:disabled="${book.status != 'Active' or availableCount == 0}"
+                                th:title="${availableCount == 0 ? 'Sách đã hết bản trong kho' : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
                             <i class="bi bi-book me-1"></i> <span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
                         </button>
                     </form>
@@ -286,6 +316,55 @@
 
     <div layout:fragment="scripts">
         <script th:inline="javascript">
+            // Independent AJAX Cart handler to ensure it runs even if reviews are not rendered
+            (function() {
+                const cartAddForms = document.querySelectorAll(".cart-add-form");
+                cartAddForms.forEach(form => {
+                    form.addEventListener("submit", function(e) {
+                        e.preventDefault();
+                        const btn = form.querySelector("button[type='submit']");
+                        if (btn) btn.disabled = true;
+
+                        const formData = new FormData(form);
+                        fetch(form.action, {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            }
+                        })
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                window.location.href = "/login";
+                                return null;
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data && data.success) {
+                                if (window.showToast) {
+                                    window.showToast(data.message || "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
+                                } else {
+                                    alert(data.message || "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
+                                }
+                            } else if (data && data.message) {
+                                if (window.showToast) {
+                                    window.showToast(data.message);
+                                } else {
+                                    alert(data.message);
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        })
+                        .finally(() => {
+                            if (btn) btn.disabled = false;
+                        });
+                    });
+                });
+            })();
+
             (function() {
                 const reviewI18n = {
                     ratingRequired: /*[[#{guest.bookDetail.validation.ratingRequired}]]*/ "Select a star rating.",
