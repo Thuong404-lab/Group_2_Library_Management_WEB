@@ -1,72 +1,183 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
-    <title>Xác nhận thanh toán phiếu mượn - LMW</title>
+    <title th:text="#{member.cart.checkoutTitle}">Xác nhận thanh toán phiếu mượn - LMW</title>
+    <link rel="stylesheet" th:href="@{/css/pages/member/cart.css}" />
     <style>
         .font-playfair { font-family: 'Playfair Display', serif; }
         .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
+        .payment-option-card {
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .payment-option-card:hover {
+            background-color: rgba(139, 90, 43, 0.02);
+        }
+        .payment-option-card.active {
+            border-color: #8b5a2b !important;
+            background-color: rgba(139, 90, 43, 0.05) !important;
+        }
     </style>
 </head>
 <body>
-<div layout:fragment="content" class="container mt-5 mb-5 justify-content-center d-flex">
-    <div class="card border-classic shadow-sm p-4 bg-white rounded-3" style="max-width: 650px; width: 100%;">
-        <h4 class="font-playfair fw-bold text-center mb-4" style="color: #4a3b32;"><i class="bi bi-shield-check me-2" style="color: #8b5a2b;"></i>Xác Nhận & Thanh Toán</h4>
+<div layout:fragment="content" class="container member-cart-page member-cart-checkout-page member-checkout-layout member-palette-page mt-5 mb-5 justify-content-center d-flex">
+    <div class="card member-reference-list member-checkout-summary border-classic shadow-sm p-4 bg-white rounded-3" style="max-width: 650px; width: 100%;">
+        <h4 class="font-playfair fw-bold text-center mb-4" style="color: #4a3b32;"><i class="bi bi-shield-check me-2" style="color: #8b5a2b;"></i><span th:text="#{member.cart.checkoutHeading}">Xác Nhận &amp; Thanh Toán</span></h4>
 
         <!-- Thông báo Alert -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #e6f4ea; color: #137333;" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>
-            <span th:text="${successMessage}">Thông báo thành công</span>
+            <span th:text="${successMessage}">Success notification</span>
         </div>
         <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #fce8e6; color: #c5221f;" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${errorMessage}">Thông báo lỗi</span>
+            <span th:text="${errorMessage}">Error notification</span>
         </div>
 
         <div class="alert alert-warning border-0 small mb-4" style="background-color:#fffbeb; color:#b45309;">
-            <i class="bi bi-info-circle-fill me-2"></i>Hệ thống sẽ tiến hành trừ phí dịch vụ trực tiếp vào ví điện tử của bạn ngay sau khi ấn nút xác nhận.
+            <i class="bi bi-info-circle-fill me-2"></i><span th:text="#{member.cart.checkoutNotice}">The service fee will be deducted directly from your wallet after you confirm.</span>
         </div>
 
-        <h6 class="fw-bold small text-muted text-uppercase mb-2">Tóm tắt danh sách đăng ký (<span th:text="${cartItems.size()}">0</span> cuốn)</h6>
+        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.summary(${cartItems.size()})}">Selected books (0 books)</h6>
         <div class="border-classic rounded p-3 bg-light mb-4 text-dark small" style="max-height: 180px; overflow-y: auto;">
             <div th:each="item : ${cartItems}" class="d-flex justify-content-between py-1 border-bottom border-light">
-                <span class="fw-semibold text-truncate" style="max-width: 450px;" th:text="${item.title}">Tên cuốn sách</span>
-                <span class="text-muted font-monospace">Sách vật lý</span>
+                <span class="fw-semibold text-truncate" style="max-width: 450px;" th:text="${item.title}">Book title</span>
+                <span class="text-muted font-monospace" th:text="#{member.cart.physicalBook}">Physical book</span>
             </div>
         </div>
 
-        <h6 class="fw-bold small text-muted text-uppercase mb-2">Chi tiết giao dịch dòng tiền</h6>
+        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.cashFlow}">Chi tiết giao dịch dòng tiền</h6>
         <div class="p-3 bg-classic-soft rounded border-classic small text-dark mb-4" style="background-color: rgba(139, 90, 43, 0.03);">
             <div class="d-flex justify-content-between mb-2">
-                <span>Thời hạn thuê mượn:</span>
-                <span class="fw-bold text-dark" th:text="${numberOfDays} + ' Ngày'">14 Ngày</span>
+                <span th:text="#{member.cart.borrowingPeriod}">Borrowing period:</span>
+                <span class="fw-bold text-dark" th:text="#{member.cart.days(${numberOfDays})}">14 days</span>
             </div>
             <div class="d-flex justify-content-between mb-2">
-                <span>Tổng chi phí khấu trừ ví:</span>
-                <span class="fw-bold text-danger font-monospace fs-6" th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                <span th:text="#{member.cart.totalDeduction}">Total wallet deduction:</span>
+                <span class="fw-bold text-danger font-monospace fs-6"><span th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
             </div>
             <hr class="my-2" style="border-top:1px dashed rgba(139, 90, 43, 0.2)">
             <div class="d-flex justify-content-between mb-1 text-muted">
-                <span>Số dư tài khoản ví (Trước):</span>
-                <span class="font-monospace" th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                <span th:text="#{member.cart.balanceBefore}">Wallet balance (before):</span>
+                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
             </div>
             <div class="d-flex justify-content-between text-success fw-bold">
-                <span>Số dư ước tính (Sau):</span>
-                <span class="font-monospace" th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                <span th:text="#{member.cart.balanceAfter}">Estimated balance (after):</span>
+                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
             </div>
         </div>
 
-        <form th:action="@{/member/cart/submit}" method="post">
+        <form th:action="@{/member/cart/submit}" method="post" id="cartSubmitForm">
             <input type="hidden" name="numberOfDays" th:value="${numberOfDays}">
-            <!-- Lưu danh sách sách được chọn - mỗi id một input riêng -->
+
             <th:block th:each="id : ${selectedBookIds}">
                 <input type="hidden" name="selectedBookIds" th:value="${id}">
             </th:block>
+
+            <!-- PHƯƠNG THỨC THANH TOÁN -->
+            <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.borrowCreate.paymentMethod}">Phương thức thanh toán</h6>
+            <div class="d-flex flex-column gap-2 mb-4">
+                <div class="payment-option-card form-check p-3 rounded active" onclick="document.getElementById('payWallet').click();">
+                    <input class="form-check-input ms-1 me-3 cart-checkbox" type="radio" name="paymentMethod" id="payWallet" value="WALLET" checked>
+                    <label class="form-check-label fw-bold mb-0" for="payWallet" style="color: #4a3b32; cursor: pointer; user-select: none;">
+                        <i class="bi bi-wallet2 me-2 text-primary"></i><span th:text="#{member.borrowCreate.payWallet}">Trừ tiền trong ví</span>
+                    </label>
+                </div>
+                <div class="payment-option-card form-check p-3 rounded" onclick="document.getElementById('payBank').click();">
+                    <input class="form-check-input ms-1 me-3 cart-checkbox" type="radio" name="paymentMethod" id="payBank" value="BANK">
+                    <label class="form-check-label fw-bold mb-0" for="payBank" style="color: #4a3b32; cursor: pointer; user-select: none;">
+                        <i class="bi bi-bank me-2 text-info"></i><span th:text="#{member.borrowCreate.payBank}">Thanh toán qua ngân hàng</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Cảnh báo số dư ví không đủ -->
+            <div id="walletWarningCheckout" class="alert alert-danger border-0 small mb-3 d-none">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="#{member.cart.checkout.walletWarning}">Số dư ví không đủ để thanh toán! Vui lòng nạp thêm tiền hoặc chọn Thanh toán qua ngân hàng.</span>
+            </div>
+
             <div class="d-flex gap-3">
-                <a href="/member/cart" class="btn btn-light border flex-grow-1 py-2">Quay lại chỉnh sửa</a>
-                <button type="submit" class="btn text-white flex-grow-1 py-2 fw-bold" style="background-color: #8b5a2b;"><i class="bi bi-wallet2 me-2"></i>Xác Nhận & Thanh Toán</button>
+                <a href="/member/cart" class="btn btn-outline-classic member-ui-button member-ui-button--secondary flex-grow-1 py-2" th:text="#{member.cart.backToEdit}">Quay lại chỉnh sửa</a>
+                <button type="submit" id="checkoutSubmitBtn" class="btn btn-classic member-ui-button member-ui-button--primary flex-grow-1 py-2 fw-bold">
+                    <i class="bi bi-wallet2 me-2" id="submitBtnIcon"></i><span id="submitBtnLabel" th:text="#{member.cart.checkoutHeading}">Xác Nhận &amp; Thanh Toán</span>
+                </button>
             </div>
         </form>
     </div>
+</div>
+
+<div layout:fragment="scripts">
+    <script th:inline="javascript">
+        if (window.history.replaceState) {
+            window.history.replaceState(null, "", "/member/cart");
+        }
+
+        window.addEventListener("pageshow", function (event) {
+            var historyTraversal = event.persisted ||
+                (typeof window.performance != "undefined" &&
+                    window.performance.navigation.type === 2);
+            if (historyTraversal) {
+                window.location.reload();
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const walletBalance = /*[[${walletBalance}]]*/ 0;
+            const totalFee = /*[[${totalFee}]]*/ 0;
+            const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+            const walletWarning = document.getElementById("walletWarningCheckout");
+            const submitBtn = document.getElementById("checkoutSubmitBtn");
+            const submitBtnIcon = document.getElementById("submitBtnIcon");
+            const submitBtnLabel = document.getElementById("submitBtnLabel");
+
+            // Đọc cấu hình chuỗi ngôn ngữ an toàn từ Thymeleaf Messages
+            const textContinueBank = /*[[#{member.cart.checkout.continueBank}]]*/ "Tiếp tục thanh toán";
+            const textConfirmWallet = /*[[#{member.cart.checkout.confirmWallet}]]*/ "Xác nhận & Thanh toán";
+
+            function updateCheckoutUI() {
+                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                const isBank = selectedMethod && selectedMethod.value === 'BANK';
+
+                // Cập nhật class active cho viền thẻ bao ngoài trực quan hơn
+                paymentMethods.forEach(method => {
+                    const card = method.closest('.payment-option-card');
+                    if (card) {
+                        if (method.checked) {
+                            card.classList.add('active');
+                        } else {
+                            card.classList.remove('active');
+                        }
+                    }
+                });
+
+                if (isBank) {
+                    if (walletWarning) walletWarning.classList.add("d-none");
+                    if (submitBtn) submitBtn.disabled = false;
+                    if (submitBtnIcon) submitBtnIcon.className = "bi bi-bank me-2";
+                    if (submitBtnLabel) submitBtnLabel.textContent = textContinueBank;
+                } else {
+                    if (walletBalance < totalFee) {
+                        if (walletWarning) walletWarning.classList.remove("d-none");
+                        if (submitBtn) submitBtn.disabled = true;
+                    } else {
+                        if (walletWarning) walletWarning.classList.add("d-none");
+                        if (submitBtn) submitBtn.disabled = false;
+                    }
+                    if (submitBtnIcon) submitBtnIcon.className = "bi bi-wallet2 me-2";
+                    if (submitBtnLabel) submitBtnLabel.textContent = textConfirmWallet;
+                }
+            }
+
+            paymentMethods.forEach(function(method) {
+                method.addEventListener("change", updateCheckoutUI);
+            });
+
+            // Chạy kiểm tra ban đầu khi vừa tải trang
+            updateCheckoutUI();
+        });
+    </script>
 </div>
 </body>
 </html>

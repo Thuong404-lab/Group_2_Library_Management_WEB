@@ -1,5 +1,7 @@
 package com.lms.entity;
 import jakarta.persistence.*;
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "`BookItems`")
 public class BookItem {
@@ -18,6 +20,9 @@ public class BookItem {
     
     @Column(columnDefinition = "NVARCHAR(50)")
     private String bookCondition = "Mới";
+
+    @Column(name = "added_date", nullable = false, updatable = false)
+    private LocalDate addedDate = LocalDate.now();
 
     public BookItem() {
     }
@@ -43,6 +48,14 @@ public class BookItem {
     public void setStatus(String status) { this.status = status; }
     public String getBookCondition() { return bookCondition; }
     public void setBookCondition(String bookCondition) { this.bookCondition = bookCondition; }
+    public LocalDate getAddedDate() { return addedDate; }
+
+    @PrePersist
+    private void assignAddedDate() {
+        if (addedDate == null) {
+            addedDate = LocalDate.now();
+        }
+    }
 
     @Column(name = "damage_note", columnDefinition = "NVARCHAR(255)")
     private String damageNote;

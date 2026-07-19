@@ -9,6 +9,7 @@ public class MemberBorrowDTO {
     private String bookImage;
     private String bookIdStr;
     private String borrowIdStr;
+    private boolean barcodeAssigned;
     private LocalDateTime actionDate;
     private LocalDateTime dueDate;
     private LocalDateTime returnDate; // Dành cho tab Lịch sử
@@ -16,6 +17,9 @@ public class MemberBorrowDTO {
     private long daysLeft;
     private int progressPercentage;   // Dành cho thanh tiến trình ở Tab Đang mượn
     private int renewCount;
+    private int renewalRequestCount;
+    private boolean renewalRequestBlocked;
+    private String renewalBlockedReason;
 
     public MemberBorrowDTO() {}
 
@@ -43,6 +47,14 @@ public class MemberBorrowDTO {
     public void setProgressPercentage(int progressPercentage) { this.progressPercentage = progressPercentage; }
     public int getRenewCount() { return renewCount; }
     public void setRenewCount(int renewCount) { this.renewCount = renewCount; }
+    public int getRenewalRequestCount() { return renewalRequestCount; }
+    public void setRenewalRequestCount(int renewalRequestCount) { this.renewalRequestCount = renewalRequestCount; }
+    public boolean isRenewalRequestBlocked() { return renewalRequestBlocked; }
+    public void setRenewalRequestBlocked(boolean renewalRequestBlocked) { this.renewalRequestBlocked = renewalRequestBlocked; }
+    public String getRenewalBlockedReason() { return renewalBlockedReason; }
+    public void setRenewalBlockedReason(String renewalBlockedReason) { this.renewalBlockedReason = renewalBlockedReason; }
     public String getBorrowIdStr() { return borrowIdStr; }
     public void setBorrowIdStr(String borrowIdStr) { this.borrowIdStr = borrowIdStr; }
+    public boolean isBarcodeAssigned() { return barcodeAssigned; }
+    public void setBarcodeAssigned(boolean barcodeAssigned) { this.barcodeAssigned = barcodeAssigned; }
 }

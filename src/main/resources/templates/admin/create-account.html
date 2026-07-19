@@ -81,7 +81,7 @@
                                         <span th:text="#{member.profile.phone}">Phone Number</span> <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="phone" required
-                                        pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
+                                        pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
                                         placeholder="0912345678"
                                         th:value="${formValues != null ? formValues['phone'] : ''}"
                                         th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
@@ -108,7 +108,7 @@
                                         <span th:text="#{auth.password}">Password</span> <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control validate-field" name="password" type="password" required
-                                        minlength="6" th:placeholder="#{admin.createAccount.passwordPlaceholder}" autocomplete="new-password"
+                                        minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" th:placeholder="#{admin.createAccount.passwordPlaceholder}" autocomplete="new-password"
                                         th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                     <div class="invalid-feedback"
                                         th:text="${fieldErrors != null ? fieldErrors['password'] : ''}">
@@ -394,7 +394,7 @@
 
                         form.submit();
                     } catch (error) {
-                        window.alert("Không thể kiểm tra dữ liệu lúc này. Vui lòng thử lại.");
+                        window.alert(/*[[#{backend.account.validationUnavailable}]]*/ "Unable to validate the data right now. Please try again.");
                     } finally {
                         submitButton.disabled = false;
                         isSubmitting = false;

@@ -11,20 +11,23 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.BookAcquisitionRequestRepository;
 import com.lms.service.MemberBookAcquisitionService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.net.URI;
-import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 @Service
 public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionService {
+
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final MemberAccountRepository memberAccountRepository;
     private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
@@ -38,35 +41,35 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
     @Override
     @Transactional
     public void submitRequest(String username, MemberBookAcquisitionRequest request) {
-        String title = normalizeRequired(request.getTitle(), "Tên sách", 2, 255);
-        String author = normalizeRequired(request.getAuthor(), "Tên tác giả", 2, 255);
-        String reason = normalizeRequired(request.getRequestReason(), "Lý do đề xuất", 10, 1000);
+        String title = normalizeRequired(request.getTitle(), messages.get("book.title"), 2, 255);
+        String author = normalizeRequired(request.getAuthor(), messages.get("book.author"), 2, 255);
+        String reason = normalizeRequired(request.getRequestReason(), messages.get("member.acquisition.reason"), 10, 1000);
         String publisher = normalizeOptional(request.getPublisher());
         String referenceUrl = normalizeOptional(request.getReferenceUrl());
         if (publisher != null && publisher.length() > 255) {
-            throw new ValidationException("Nhà xuất bản không được vượt quá 255 ký tự.");
+            throw new ValidationException(messages.get("backend.acquisition.publisherMaximum"));
         }
         if (publisher != null && publisher.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException("Nhà xuất bản không được chỉ gồm số hoặc ký tự đặc biệt.");
+            throw new ValidationException(messages.get("backend.acquisition.publisherLetters"));
         }
         validateReferenceUrl(referenceUrl);
 
         MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username)));
 
         Member member = account.getMember();
         if (member == null) {
-            throw new ResourceNotFoundException("Không tìm thấy độc giả với tài khoản: " + username);
+            throw new ResourceNotFoundException(messages.get("backend.review.memberAccountNotFound", username));
         }
 
         if (bookAcquisitionRequestRepository.existsByMember_MemberIdAndTitleIgnoreCaseAndStatusIn(
                 member.getMemberId(), title,
                 List.of(AcquisitionRequestStatus.PENDING, AcquisitionRequestStatus.APPROVED))) {
-            throw new ConflictException("Bạn đã đề xuất sách này rồi.");
+            throw new ConflictException(messages.get("backend.acquisition.duplicate"));
         }
 
         if (request.getPublicationYear() != null && request.getPublicationYear() > Year.now().getValue()) {
-            throw new ValidationException("Năm xuất bản không được lớn hơn năm hiện tại.");
+            throw new ValidationException(messages.get("backend.acquisition.futureYear"));
         }
 
         BookAcquisitionRequest acquisitionRequest = new BookAcquisitionRequest();
@@ -91,7 +94,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
     public Page<BookAcquisitionRequest> getMyRequests(String username, Pageable pageable) {
         Member member = memberAccountRepository.findByUsername(username)
                 .map(MemberAccount::getMember)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy member."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.member.currentNotFound")));
         return bookAcquisitionRequestRepository.findByMember_MemberIdOrderByCreatedDateDesc(
                 member.getMemberId(), pageable);
     }
@@ -105,28 +108,27 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
 
     private String normalizeRequired(String value, String fieldName, int minimum, int maximum) {
         String normalized = value == null ? "" : value.trim().replaceAll("\\s+", " ");
-        if (normalized.isEmpty()) throw new ValidationException(fieldName + " không được để trống.");
+        if (normalized.isEmpty()) throw new ValidationException(messages.get("validation.fieldRequired", fieldName));
         if (normalized.length() < minimum || normalized.length() > maximum) {
-            String maximumLabel = NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi")).format(maximum);
-            throw new ValidationException(fieldName + " phải có từ " + minimum + " đến " + maximumLabel + " ký tự.");
+            throw new ValidationException(messages.get("validation.fieldRange", fieldName, minimum, maximum));
         }
         if (normalized.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException(fieldName + " không được chỉ gồm số hoặc ký tự đặc biệt.");
+            throw new ValidationException(messages.get("validation.fieldLetters", fieldName));
         }
         return normalized;
     }
 
     private void validateReferenceUrl(String referenceUrl) {
         if (referenceUrl == null) return;
-        if (referenceUrl.length() > 500) throw new ValidationException("Link tham khảo không được vượt quá 500 ký tự.");
+        if (referenceUrl.length() > 500) throw new ValidationException(messages.get("backend.acquisition.referenceMaximum"));
         try {
             URI uri = URI.create(referenceUrl);
             if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
                     || uri.getHost() == null || uri.getHost().isBlank()) {
-                throw new ValidationException("Giao thức URL không hợp lệ.");
+                throw new ValidationException(messages.get("validation.httpUrl"));
             }
         } catch (IllegalArgumentException ex) {
-            throw new ValidationException("Link tham khảo phải là địa chỉ HTTP hoặc HTTPS hợp lệ.");
+            throw new ValidationException(messages.get("validation.httpUrl"));
         }
     }
 }

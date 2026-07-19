@@ -10,7 +10,6 @@
 .fines-page .overdue-count-value { font-family: var(--app-font-display); font-size: 28px; font-weight: 500; line-height: 1.15; }
 .fines-page .overdue-days-badge { min-height: 24px; min-width: 86px; padding: 5px 11px; display: inline-flex; align-items: center; justify-content: center; color: var(--app-color-danger-ink); background: var(--app-color-danger-soft); border: 1px solid var(--app-color-danger-border); border-radius: 9999px; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; }
 .fines-page .overdue-member-name { color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
-.fines-page .fine-history-note-title { margin: 0 0 6px; color: var(--app-color-ink); font-family: var(--app-font-ui); font-size: 15px; font-weight: 600; line-height: 1.4; }
 .fines-page .overdue-actions { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .fines-page .overdue-actions form { margin: 0; }
 .fines-page .overdue-actions .btn { width: 36px; height: 36px; min-height: 36px; flex: 0 0 36px; padding: 0; color: var(--app-color-ink); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 9999px; }
@@ -19,37 +18,151 @@
 .fines-page .btn-remind-overdue { color: var(--app-color-warning-ink); }
 .fines-page .overdue-reminder-tooltip .tooltip-inner,
 .fines-page .overdue-fine-tooltip .tooltip-inner { color: var(--app-color-canvas); background: var(--app-color-ink); border-radius: 6px; font-size: 12px; font-weight: 500; }
-.fines-page .member-picker { max-height: 260px; overflow-y: auto; background: var(--app-color-surface-soft); border: 1px solid var(--app-color-hairline); border-radius: 8px; }
-.fines-page .fine-member-search-hint,
-.fines-page .fine-member-selection-hint { color: var(--app-color-muted); font-size: 13px; line-height: 1.4; }
-.fines-page .fine-member-search-hint { margin-bottom: 6px; }
-.fines-page .fine-member-selection-hint { margin-bottom: 12px; }
-.fines-page .fine-member-item {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 1fr);
-    align-items: start;
-    gap: 10px;
-    margin: 0 !important;
-    padding: 10px 12px;
-}
-.fines-page .fine-member-item + .fine-member-item { margin-top: 2px !important; }
-.fines-page .fine-member-item .form-check-input { position: static; float: none; margin: 3px 0 0 !important; }
-.fines-page .fine-member-info { display: block; min-width: 0; }
-.fines-page .fine-member-name { display: block; color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.35; }
-.fines-page .fine-member-contact { display: block; margin-top: 3px; color: var(--app-color-muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
-.fines-page .fine-member-empty {
+.fines-page .pending-fines-header {
     display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+.fines-page .pending-fines-count {
+    min-width: 40px;
+    height: 32px;
+    padding: 0 12px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    min-height: 112px;
-    padding: 20px;
-    color: var(--app-color-muted);
-    text-align: center;
+    color: var(--app-color-warning-ink);
+    background: var(--app-color-warning-soft);
+    border: 1px solid var(--app-color-warning-border);
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
 }
-.fines-page .fine-member-empty i { color: var(--app-color-primary); }
-.fines-page .fine-entry-field { margin-top: 24px; }
+.fines-page .pending-fines-table th,
+.fines-page .pending-fines-table td { padding: 14px 16px; }
+.fines-page .pending-fine-code,
+.fines-page .pending-fine-member { color: var(--app-color-ink); font-weight: 600; }
+.fines-page .fine-type-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 5px 11px;
+    color: var(--app-color-warning-ink);
+    background: var(--app-color-warning-soft);
+    border: 1px solid var(--app-color-warning-border);
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+.fines-page .fine-type-badge.is-damage {
+    color: var(--app-color-danger-ink);
+    background: var(--app-color-danger-soft);
+    border-color: var(--app-color-danger-border);
+}
+.fines-page .pending-fine-action { width: 148px; text-align: center; }
+.fines-page .pending-fine-action form { margin: 0; }
+.fines-page .pending-fine-action .btn { min-width: 112px; min-height: 40px; }
+.fines-page .fine-desk-payment-modal {
+    overflow: hidden;
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 12px;
+}
+.fines-page .fine-desk-payment-modal .modal-header,
+.fines-page .fine-desk-payment-modal .modal-body,
+.fines-page .fine-desk-payment-modal .modal-footer { padding: 20px 24px; }
+.fines-page .fine-desk-payment-modal .modal-header {
+    border-bottom: 1px solid var(--app-color-hairline);
+}
+.fines-page .fine-desk-payment-modal .modal-title {
+    color: var(--app-color-ink);
+    font-family: var(--app-font-display);
+    font-size: 22px;
+    font-weight: 500;
+}
+.fines-page .fine-desk-payment-modal .modal-subtitle {
+    margin: 4px 0 0;
+    color: var(--app-color-muted);
+    font-size: 13px;
+}
+.fines-page .fine-payment-receipt-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, .9fr);
+    gap: 24px;
+}
+.fines-page .fine-payment-receipt-details,
+.fines-page .fine-payment-methods { min-width: 0; }
+.fines-page .fine-payment-receipt-details h6,
+.fines-page .fine-payment-methods legend {
+    margin: 0 0 12px;
+    color: var(--app-color-ink);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    font-weight: 600;
+}
+.fines-page .fine-payment-data-list {
+    margin: 0;
+    border-top: 1px solid var(--app-color-hairline);
+}
+.fines-page .fine-payment-data-list > div {
+    display: grid;
+    grid-template-columns: minmax(120px, .8fr) minmax(0, 1.2fr);
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--app-color-hairline);
+}
+.fines-page .fine-payment-data-list dt {
+    color: var(--app-color-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+.fines-page .fine-payment-data-list dd {
+    margin: 0;
+    color: var(--app-color-ink);
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.fines-page .fine-payment-methods {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.fines-page .fine-payment-method-option {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    background: var(--app-color-canvas);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 8px;
+    cursor: pointer;
+}
+.fines-page .fine-payment-method-option:has(input:checked) {
+    background: var(--app-color-surface-soft);
+    border-color: var(--app-color-primary);
+}
+.fines-page .fine-payment-method-option input { margin: 3px 0 0; }
+.fines-page .fine-payment-method-option strong,
+.fines-page .fine-payment-method-option small { display: block; }
+.fines-page .fine-payment-method-option strong { color: var(--app-color-ink); font-size: 14px; }
+.fines-page .fine-payment-method-option small { margin-top: 3px; color: var(--app-color-muted); font-size: 12px; line-height: 1.4; }
+.fines-page .fine-desk-payment-modal .modal-footer {
+    gap: 8px;
+    border-top: 1px solid var(--app-color-hairline);
+}
 @media (max-width: 767.98px) {
     .fines-page .overdue-count-group { width: 100%; }
     .fines-page .overdue-count { flex: 1; min-width: 0; }
+    .fines-page .pending-fines-header { align-items: center; gap: 16px; }
+    .fines-page .fine-payment-receipt-grid { grid-template-columns: 1fr; }
+    .fines-page .fine-desk-payment-modal .modal-header,
+    .fines-page .fine-desk-payment-modal .modal-body,
+    .fines-page .fine-desk-payment-modal .modal-footer { padding: 16px; }
+    .fines-page .fine-desk-payment-modal .modal-footer .btn { flex: 1; }
 }

@@ -1,5 +1,6 @@
 package com.lms.controller.auth;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.request.ForgotPasswordRequest;
 import com.lms.dto.request.RegisterRequest;
@@ -19,7 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
  */
 @Controller
-public class AuthController {
+public class AuthController extends LocalizedControllerSupport {
 
     private final AuthService authService;
 
@@ -42,7 +43,9 @@ public class AuthController {
     // UC-2: Register - Hiển thị form đăng ký
     @GetMapping("/register")
     public String showRegisterPage(Model model) {
-        model.addAttribute("registerRequest", new RegisterRequest());
+        if (!model.containsAttribute("registerRequest")) {
+            model.addAttribute("registerRequest", new RegisterRequest());
+        }
         return "register";
     }
 
@@ -52,13 +55,15 @@ public class AuthController {
             RedirectAttributes redirectAttributes) {
         try {
             authService.register(registerRequest);
-            redirectAttributes.addFlashAttribute("successMsg", "Đăng ký thành công! Vui lòng đăng nhập.");
+            redirectAttributes.addFlashAttribute("successMsg", message("backend.auth.registered"));
             return "redirect:/login";
         } catch (AuthException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+            redirectAttributes.addFlashAttribute("registerRequest", registerRequest);
             return "redirect:/register";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Hệ thống đang bảo trì, vui lòng thử lại sau!");
+            redirectAttributes.addFlashAttribute("errorMsg", message("backend.auth.maintenance"));
+            redirectAttributes.addFlashAttribute("registerRequest", registerRequest);
             return "redirect:/register";
         }
     }
@@ -83,7 +88,7 @@ public class AuthController {
         try {
             authService.requestPasswordReset(forgotPasswordRequest.getEmail());
             redirectAttributes.addFlashAttribute("successMsg",
-                    "Liên kết đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn. Vui lòng kiểm tra hộp thư để tiếp tục.");
+                    message("backend.auth.resetLinkSent"));
             return "redirect:/forgot-password";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
@@ -106,7 +111,7 @@ public class AuthController {
 
             token = (String) session.getAttribute("passwordResetToken");
             if (token == null || token.isBlank()) {
-                redirectAttributes.addFlashAttribute("errorMsg", "Token đặt lại mật khẩu không hợp lệ.");
+                redirectAttributes.addFlashAttribute("errorMsg", message("backend.auth.resetTokenInvalid"));
                 return "redirect:/login";
             }
 
@@ -138,7 +143,7 @@ public class AuthController {
             result.rejectValue(
                     "confirmPassword",
                     "password.mismatch",
-                    "Mật khẩu mới và xác nhận mật khẩu không khớp.");
+                    message("backend.password.mismatch"));
             return "reset-password";
         }
 
@@ -146,7 +151,7 @@ public class AuthController {
             authService.resetPassword(resetPasswordRequest.getToken(), resetPasswordRequest.getNewPassword());
             session.removeAttribute("passwordResetToken");
             redirectAttributes.addFlashAttribute("successMsg",
-                    "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập.");
+                    message("backend.auth.passwordReset"));
             return "redirect:/login";
         } catch (ApplicationException e) {
             session.removeAttribute("passwordResetToken");

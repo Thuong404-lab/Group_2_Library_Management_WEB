@@ -7,6 +7,8 @@ import com.lms.repository.BookRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.service.BookService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,8 @@ import java.util.List;
  */
 @Service
 public class BookServiceImpl implements BookService {
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
@@ -109,6 +113,6 @@ public class BookServiceImpl implements BookService {
     @Override
     public Book findBookById(Integer id) {
         return bookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", id)));
     }
 }

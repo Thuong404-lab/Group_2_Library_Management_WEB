@@ -12,6 +12,8 @@ import com.lms.repository.SystemLogRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.service.SystemService;
 import com.lms.service.AuditLogService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -29,6 +31,9 @@ import java.util.Map;
  */
 @Service
 public class SystemServiceImpl implements SystemService {
+
+    @Autowired
+    private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final SystemSettingRepository systemSettingRepository;
     private final SystemLogRepository systemLogRepository;
@@ -135,6 +140,8 @@ public class SystemServiceImpl implements SystemService {
     @Transactional
     public void updateBorrowingPolicies(Integer maxBorrowDays,
                                         Integer maxRenewalDays,
+                                        Integer maxRenewalRequests,
+                                        Integer renewalRejectionCooldownHours,
                                         Map<Integer, Integer> tierBorrowLimits,
                                         Map<Integer, BigDecimal> tierSpendingConditions,
                                         BigDecimal borrowFeePerBook,
@@ -145,78 +152,88 @@ public class SystemServiceImpl implements SystemService {
                                         Integer bookDisposalConditionThreshold,
                                         BigDecimal depositAmount) {
 
-        validatePositive(maxBorrowDays, "Số ngày mượn tối đa phải lớn hơn 0.");
-        validatePositive(maxRenewalDays, "Số ngày gia hạn tối đa phải lớn hơn 0.");
+        validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
+        validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
+        validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
+        validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateAndUpdateTiers(tierBorrowLimits, tierSpendingConditions);
-        validateZeroOrPositive(borrowFeePerBook, "Phí mượn sách không được âm.");
-        validateZeroOrPositive(finePerDay, "Phí phạt quá hạn không được âm.");
-        validateZeroOrPositive(damageCompensationAmount, "Phí bồi thường không được âm.");
-        validatePercentage(damageCompensationThreshold, "Ngưỡng hư hỏng phải nằm trong khoảng 0-100%.");
-        validateZeroOrPositive(overdueViolationLockLimit, "Số lần quá hạn trước khi khóa không được âm.");
-        validatePercentage(bookDisposalConditionThreshold, "Ngưỡng thanh lý sách phải nằm trong khoảng 0-100%.");
-        validateZeroOrPositive(depositAmount, "Tiền cọc không được âm.");
+        validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
+        validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
+        validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
+        validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
+        validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
+        validatePercentage(bookDisposalConditionThreshold, messages.get("backend.settings.disposalThresholdRange"));
+        validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
         saveOrUpdateSetting("Max_Borrow_Days",
                 String.valueOf(maxBorrowDays),
-                "Số ngày mượn sách tối đa tiêu chuẩn");
+                messages.get("backend.settings.description.maxBorrowDays"));
 
         saveOrUpdateSetting("Max_Renewal_Days",
                 String.valueOf(maxRenewalDays),
-                "Số ngày gia hạn tối đa");
+                messages.get("backend.settings.description.maxRenewalDays"));
+
+        saveOrUpdateSetting("MAX_RENEWAL_REQUESTS_PER_LOAN",
+                String.valueOf(maxRenewalRequests),
+                messages.get("backend.settings.description.maxRenewalRequests"));
+
+        saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
+                String.valueOf(renewalRejectionCooldownHours),
+                messages.get("backend.settings.description.renewalCooldown"));
 
         saveOrUpdateSetting("Max_Books_Per_Member",
                 String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
-                "Giới hạn mượn lớn nhất trong các hạng thành viên");
+                messages.get("backend.settings.description.maxBooks"));
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
-                "Phí mượn tiêu chuẩn cho mỗi quyển sách mỗi ngày");
+                messages.get("backend.settings.description.borrowFee"));
 
         saveOrUpdateSetting("Fine_Per_Day",
                 finePerDay.toPlainString(),
-                "Phí phạt trễ hạn tính theo ngày cho mỗi cuốn sách");
+                messages.get("backend.settings.description.finePerDay"));
 
         saveOrUpdateSetting("Damage_Compensation_Amount",
                 damageCompensationAmount.toPlainString(),
-                "Phí bồi thường khi sách hư hỏng nặng");
+                messages.get("backend.settings.description.compensation"));
 
         saveOrUpdateSetting("Damage_Compensation_Threshold",
                 String.valueOf(damageCompensationThreshold),
-                "Ngưỡng phần trăm hư hỏng để tính phí bồi thường");
+                messages.get("backend.settings.description.damageThreshold"));
 
         saveOrUpdateSetting("Overdue_Violation_Lock_Limit",
                 String.valueOf(overdueViolationLockLimit),
-                "Số lần quá hạn tối đa trước khi khóa tài khoản thành viên");
+                messages.get("backend.settings.description.overdueLockLimit"));
 
         saveOrUpdateSetting("Book_Disposal_Condition_Threshold",
                 String.valueOf(bookDisposalConditionThreshold),
-                "Ngưỡng tình trạng sách cho phép thanh lý");
+                messages.get("backend.settings.description.disposalThreshold"));
 
         saveOrUpdateSetting("Deposit_Amount",
                 depositAmount.toPlainString(),
-                "Tiền cọc đặt trước một quyển sách");
+                messages.get("backend.settings.description.deposit"));
 
         auditLogService.log(
                 ActionType.UPDATE_SETTINGS,
-                "Cập nhật chính sách mượn/trả, phí phạt và cấu hình hạng thành viên.");
+                messages.get("backend.settings.audit.updated"));
     }
 
     private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits,
                                         Map<Integer, BigDecimal> tierSpendingConditions) {
         List<MembershipTier> tiers = getMembershipTiers();
         if (tiers.isEmpty()) {
-            throw new ValidationException("Chưa có hạng thành viên để cấu hình.");
+            throw new ValidationException(messages.get("backend.settings.noTiers"));
         }
 
         for (MembershipTier tier : tiers) {
             Integer borrowLimit = tierBorrowLimits == null ? null : tierBorrowLimits.get(tier.getTierId());
             validatePositive(borrowLimit,
-                    "Số sách tối đa của hạng " + tier.getTierName() + " phải lớn hơn 0.");
+                    messages.get("backend.settings.tierBorrowLimitPositive", tier.getTierName()));
             BigDecimal spendingCondition = tierSpendingConditions == null
                     ? null
                     : tierSpendingConditions.get(tier.getTierId());
             validateZeroOrPositive(spendingCondition,
-                    "Mức chi tiêu của hạng " + tier.getTierName() + " không được âm.");
+                    messages.get("backend.settings.tierSpendingNonNegative", tier.getTierName()));
             tier.setBorrowLimit(borrowLimit);
             tier.setCondition(spendingCondition);
         }

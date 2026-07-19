@@ -1,5 +1,6 @@
 package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
@@ -18,7 +19,7 @@ import java.util.List;
  */
 @Controller
 @RequestMapping("/member/membership")
-public class MembershipController {
+public class MembershipController extends LocalizedControllerSupport {
 
     private final MembershipService membershipService;
 
@@ -42,7 +43,7 @@ public class MembershipController {
                 model.addAttribute("tierBenefits", null);
             }
         } catch (ApplicationException e) {
-            model.addAttribute("errorMessage", "Không thể tải quyền lợi thành viên: " + e.getMessage());
+            model.addAttribute("errorMessage", messageWithDetail("backend.membership.benefitsLoadFailed", e));
         }
 
         // Hướng tới view đồng bộ chung
@@ -92,7 +93,7 @@ public class MembershipController {
             model.addAttribute("allTiers", allTiers);
 
         } catch (ApplicationException e) {
-            model.addAttribute("errorMessage", "Không thể tải thông tin hạng thành viên: " + e.getMessage());
+            model.addAttribute("errorMessage", messageWithDetail("backend.membership.tierLoadFailed", e));
         }
 
         return "member/membership-tier";

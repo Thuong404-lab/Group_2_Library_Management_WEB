@@ -7,6 +7,10 @@ import com.lms.entity.Shelf;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.ShelfRepository;
 import com.lms.service.StorageService;
+import com.lms.service.LocalizedMessageService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,15 +27,33 @@ import java.util.Optional;
 public class StorageServiceImpl implements StorageService {
     private final ShelfRepository shelfRepository;
     private final BookItemRepository bookItemRepository;
+    private final LocalizedMessageService messages;
 
-    public StorageServiceImpl(ShelfRepository shelfRepository, BookItemRepository bookItemRepository) {
+    public StorageServiceImpl(ShelfRepository shelfRepository, BookItemRepository bookItemRepository,
+            LocalizedMessageService messages) {
         this.shelfRepository = shelfRepository;
         this.bookItemRepository = bookItemRepository;
+        this.messages = messages;
     }
 
     @Override
     public List<Shelf> getAllStorageLocations() {
-        return shelfRepository.findAll(Sort.by(Sort.Direction.ASC, "shelfId"));
+        return shelfRepository.findAll(storageSort());
+    }
+
+    @Override
+    public Page<Shelf> getStorageLocations(Pageable pageable) {
+        return shelfRepository.findAll(PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                storageSort()));
+    }
+
+    private Sort storageSort() {
+        return Sort.by(
+                Sort.Order.asc("location").nullsLast(),
+                Sort.Order.asc("shelfName"),
+                Sort.Order.asc("shelfId"));
     }
 
     @Override
@@ -42,11 +64,11 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void addStorageLocation(String shelfName, String location) {
         if (shelfName == null || shelfName.trim().isEmpty()) {
-            throw new ValidationException("Tên vị trí không được để trống.");
+            throw new ValidationException(messages.get("backend.storage.nameRequired"));
         }
         String normalizedShelfName = shelfName.trim();
         if (shelfRepository.existsByShelfNameIgnoreCase(normalizedShelfName)) {
-            throw new ConflictException("Tên vị trí đã tồn tại.");
+            throw new ConflictException(messages.get("backend.storage.nameExists"));
         }
         Shelf shelf = new Shelf();
         shelf.setShelfName(normalizedShelfName);
@@ -57,17 +79,17 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void updateStorageLocation(Integer shelfId, String shelfName, String location) {
         if (shelfId == null) {
-            throw new ValidationException("Id vị trí không hợp lệ.");
+            throw new ValidationException(messages.get("backend.storage.invalidId"));
         }
         if (shelfName == null || shelfName.trim().isEmpty()) {
-            throw new ValidationException("Tên vị trí không được để trống.");
+            throw new ValidationException(messages.get("backend.storage.nameRequired"));
         }
         Shelf shelf = shelfRepository.findById(shelfId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vị trí lưu trữ."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.storage.notFound")));
         String normalizedShelfName = shelfName.trim();
         if (!shelf.getShelfName().equalsIgnoreCase(normalizedShelfName)
                 && shelfRepository.existsByShelfNameIgnoreCase(normalizedShelfName)) {
-            throw new ConflictException("Tên vị trí đã tồn tại.");
+            throw new ConflictException(messages.get("backend.storage.nameExists"));
         }
         shelf.setShelfName(normalizedShelfName);
         shelf.setLocation(location == null ? null : location.trim());
@@ -77,10 +99,10 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void removeStorageLocation(Integer shelfId) {
         if (!shelfRepository.existsById(shelfId)) {
-            throw new ResourceNotFoundException("Vị trí lưu trữ không tồn tại.");
+            throw new ResourceNotFoundException(messages.get("backend.storage.notFound"));
         }
         if (bookItemRepository.countByShelf_ShelfId(shelfId) > 0) {
-            throw new ConflictException("Không thể xóa vị trí đang chứa sách.");
+            throw new ConflictException(messages.get("backend.storage.deleteContainsBooks"));
         }
         shelfRepository.deleteById(shelfId);
     }

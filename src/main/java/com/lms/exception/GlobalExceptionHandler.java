@@ -166,6 +166,14 @@ public class GlobalExceptionHandler {
     }
 
     private Object render(HttpStatus status, String title, String message, HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (uri != null && (status == HttpStatus.NOT_FOUND || status == HttpStatus.BAD_REQUEST)) {
+            if (uri.startsWith("/books/") || uri.startsWith("/member/")) {
+                status = HttpStatus.FORBIDDEN;
+                title = message("error.forbidden.title");
+                message = message("error.forbidden.message");
+            }
+        }
         if (expectsJson(request)) {
             return ResponseEntity.status(status).body(new ApiErrorResponse(
                     Instant.now(), status.value(), title, message, request.getRequestURI()));

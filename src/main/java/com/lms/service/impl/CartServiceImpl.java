@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,32 +22,36 @@ public class CartServiceImpl implements CartService {
     }
 
     @SuppressWarnings("unchecked")
-    private Set<Integer> getOrCreateCart(HttpSession session) {
-        Set<Integer> cart = (Set<Integer>) session.getAttribute(CART_SESSION_KEY);
-        if (cart == null) {
-            cart = new HashSet<>();
-            session.setAttribute(CART_SESSION_KEY, cart);
-        }
+    private List<Integer> getOrCreateCart(HttpSession session) {
+        Object storedCart = session.getAttribute(CART_SESSION_KEY);
+        List<Integer> cart = storedCart instanceof List<?>
+                ? (List<Integer>) storedCart
+                : storedCart instanceof Set<?>
+                    ? new ArrayList<>((Set<Integer>) storedCart)
+                    : new ArrayList<>();
+        session.setAttribute(CART_SESSION_KEY, cart);
         return cart;
     }
 
     @Override
-    public void addToCart(HttpSession session, Integer bookId) {
-        Set<Integer> cart = getOrCreateCart(session);
+    public boolean addToCart(HttpSession session, Integer bookId) {
+        List<Integer> cart = getOrCreateCart(session);
         cart.add(bookId);
+        return true;
     }
 
     @Override
     public void removeFromCart(HttpSession session, Integer bookId) {
-        Set<Integer> cart = getOrCreateCart(session);
-        cart.remove(bookId);
+        List<Integer> cart = getOrCreateCart(session);
+        cart.removeIf(id -> id.equals(bookId));
     }
 
     @Override
     public List<Book> getCartItems(HttpSession session) {
-        Set<Integer> cart = getOrCreateCart(session);
+        List<Integer> cart = getOrCreateCart(session);
         if (cart.isEmpty()) return new ArrayList<>();
-        return bookRepository.findAllById(cart);
+        Set<Integer> uniqueIds = new LinkedHashSet<>(cart);
+        return bookRepository.findAllById(uniqueIds);
     }
 
     @Override
@@ -57,6 +61,21 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void clearCart(HttpSession session) {
-        session.setAttribute(CART_SESSION_KEY, new HashSet<Integer>());
+        session.setAttribute(CART_SESSION_KEY, new ArrayList<Integer>());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public int getQuantityInCart(HttpSession session, Integer bookId) {
+        List<Integer> cart = (List<Integer>) session.getAttribute(CART_SESSION_KEY);
+        if (cart == null || cart.isEmpty()) {
+            return 0;
+        }
+        return (int) cart.stream().filter(id -> id.equals(bookId)).count();
+    }
+
+    @Override
+    public boolean isInCart(HttpSession session, Integer bookId) {
+        return bookId != null && getOrCreateCart(session).contains(bookId);
     }
 }

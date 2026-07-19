@@ -1,5 +1,6 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.request.BorrowRequest;
 import com.lms.entity.Borrow;
@@ -12,6 +13,7 @@ import com.lms.entity.SystemSetting;
 import com.lms.service.PayOsPaymentService;
 import com.lms.service.FinancialService;
 import com.lms.entity.PayOsPayment;
+import com.lms.util.BorrowCodeFormatter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.springframework.data.domain.Page;
@@ -24,11 +26,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import com.lms.entity.BorrowDetail;
+import com.lms.entity.Reservation;
+import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
-public class LibrarianBorrowController {
+public class LibrarianBorrowController extends LocalizedControllerSupport {
 
     private final BorrowService borrowService;
     private final BorrowRepository borrowRepository;
@@ -97,6 +104,7 @@ public class LibrarianBorrowController {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("activeMenu", "borrow-list");
 
         return "librarian/borrow-list";
     }
@@ -106,7 +114,20 @@ public class LibrarianBorrowController {
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
                                        @RequestParam(value = "renewId", required = false) Integer renewId,
                                        @RequestParam(value = "reservationId", required = false) Integer reservationId,
-                                       Model model) {
+                                       Model model,
+                                       HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+        java.util.Map<Integer, String> usernameByMemberId = memberAccountRepository.findAll().stream()
+                .filter(ma -> ma.getMember() != null)
+                .collect(Collectors.toMap(
+                        ma -> ma.getMember().getMemberId(),
+                        ma -> ma.getUsername(),
+                        (existing, replacement) -> existing
+                ));
+        model.addAttribute("usernameByMemberId", usernameByMemberId);
+
         model.addAttribute("borrowRequest", new BorrowRequest());
         model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
@@ -126,53 +147,75 @@ public class LibrarianBorrowController {
         if (requestId != null) {
             try {
                 Borrow selectedBorrow = borrowService.getBorrowById(requestId);
-                model.addAttribute("selectedRequest", selectedBorrow);
-                model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                if ("Pending".equalsIgnoreCase(selectedBorrow.getStatus())) {
+                    model.addAttribute("selectedRequest", selectedBorrow);
+                    model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                }
             } catch (ApplicationException e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin chi tiết: " + e.getMessage());
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
             }
         }
         
         if (renewId != null) {
             try {
-                model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
+                BorrowDetail selectedRenew = borrowService.getBorrowDetailById(renewId);
+                if ("Renew_Pending".equalsIgnoreCase(selectedRenew.getStatus())) {
+                    model.addAttribute("selectedRenewal", selectedRenew);                    transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                                    renewId, "RENEWAL_FEE", "Pending")
+                            .ifPresent(hold -> {
+                                int requestedDays = hold.getRenewalDays() == null ? 0 : hold.getRenewalDays();
+                                model.addAttribute("selectedRenewalDays", requestedDays);
+                                model.addAttribute("selectedRenewalFee", hold.getAmount() == null ? BigDecimal.ZERO : hold.getAmount().abs());
+                                model.addAttribute("selectedRenewalNewDueDate", selectedRenew.getDueDate().plusDays(requestedDays));
+                            });
+                }
             } catch (ApplicationException e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin gia hạn: " + e.getMessage());
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.renewalDetailsFailed", e));
             }
         }
 
         if (reservationId != null) {
             try {
-                model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
+                Reservation selectedReservation = borrowService.getReservationById(reservationId);
+                if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
+                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
+                    model.addAttribute("selectedReservation", selectedReservation);
+                }
             } catch (ApplicationException e) {
-                model.addAttribute("errorMessage", "Không thể lấy thông tin đặt trước: " + e.getMessage());
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.reservationDetailsFailed", e));
             }
         }
 
+        model.addAttribute("activeMenu", "borrow-desk");
         return "librarian/create-borrow";
     }
 
-    // CHỨC NĂNG PHÊ DUYỆT ĐƠN MƯỢN ONLINE: Chuyển đổi trạng thái từ Pending -> Active
+    // Approving reserves physical copies; the loan only becomes Active after handover.
     @PostMapping("/librarian/borrow/approve/{borrowId}")
-    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                       @RequestParam("barcodes") List<String> barcodes,
+                                       Principal principal,
+                                       RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.approvePendingRequest(borrowId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã phê duyệt và cấp sách vật lý thành công!");
+            borrowService.approvePendingRequest(borrowId, barcodes, staffUsername);
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.approved"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Phê duyệt thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
         }
-        return "redirect:/librarian/borrow/create";
+        return "redirect:/librarian/borrow/list?status=Waiting_Pickup";
     }
 
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
     @PostMapping("/librarian/borrow/reject/{borrowId}")
-    public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
+    public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                      @RequestParam("reason") String reason,
+                                      RedirectAttributes redirectAttributes) {
         try {
-            borrowService.rejectPendingRequest(borrowId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối cấp sách cho yêu cầu trực tuyến này.");
+            borrowService.rejectPendingRequest(borrowId, reason);
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.rejected"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -183,9 +226,9 @@ public class LibrarianBorrowController {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             borrowService.confirmPhysicalPickup(borrowId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận nhận sách vật lý! Phiếu mượn đang hoạt động và bắt đầu tính thời gian.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.pickupConfirmed"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.failed", e));
         }
         return "redirect:/librarian/borrow/list";
     }
@@ -193,13 +236,16 @@ public class LibrarianBorrowController {
 
     // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
     @PostMapping("/librarian/reservations/reject/{id}")
-    public String rejectReservationRequest(@PathVariable("id") Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String rejectReservationRequest(@PathVariable("id") Integer id,
+                                           @RequestParam("reason") String reason,
+                                           Principal principal,
+                                           RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.rejectReservationRequest(id, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối đơn đặt trước thành công.");
+            borrowService.rejectReservationRequest(id, staffUsername, reason);
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.reservation.rejected"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Từ chối thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -207,57 +253,89 @@ public class LibrarianBorrowController {
 
 
     // Xem trước thông tin phiếu mượn (Review Bill)
+    @GetMapping("/librarian/borrow/review")
+    public String redirectReviewWithoutPreviewData() {
+        return "redirect:/librarian/borrow/create";
+    }
+
     @PostMapping("/librarian/borrow/review")
     public String reviewCreateBorrow(@RequestParam("memberIdentifier") String memberIdentifier,
                                      @RequestParam(value = "numberOfDays", required = false) Integer numberOfDays,
                                      @RequestParam("rawBarcodes") String rawBarcodes,
+                                     @RequestParam(value = "paymentMethod", required = false, defaultValue = "CASH") String paymentMethod,
                                      Model model,
                                      RedirectAttributes redirectAttributes) {
-        if (numberOfDays == null || numberOfDays <= 0) {
-            numberOfDays = 14; // Giá trị mặc định nếu người dùng nhập rỗng
+        int maxBorrowDays = borrowService.getMaxBorrowDays();
+        if (numberOfDays == null || numberOfDays < 1 || numberOfDays > maxBorrowDays) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidDays", maxBorrowDays));
+            return "redirect:/librarian/borrow/create";
         }
         try {
+            if (memberIdentifier == null || memberIdentifier.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.memberIdentifierRequired"));
+                return "redirect:/librarian/borrow/create";
+            }
             // 1. Tìm thành viên
             java.util.Optional<com.lms.entity.Member> optMember = memberRepository.findByUserEmail(memberIdentifier.trim());
             if (optMember.isEmpty()) {
                 optMember = memberRepository.findByUserPhone(memberIdentifier.trim());
             }
             if (optMember.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy thành viên với SĐT/Email này!");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.member.notFoundByIdentifier"));
                 return "redirect:/librarian/borrow/create";
             }
             com.lms.entity.Member member = optMember.get();
-            if (member.getUser().getStatus() != com.lms.enums.UserStatus.Active) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản thành viên này đang bị khóa hoặc không hoạt động!");
+            if (member.getUser() == null || member.getUser().getStatus() != com.lms.enums.UserStatus.Active) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.member.inactive"));
+                return "redirect:/librarian/borrow/create";
+            }
+            List<String> eligibilityReasons = getBorrowIneligibilityReasons(member);
+            if (!eligibilityReasons.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", eligibilityReasons.get(0));
                 return "redirect:/librarian/borrow/create";
             }
 
             // 2. Kiểm tra mã vạch
             if (rawBarcodes == null || rawBarcodes.trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng nhập ít nhất một mã vạch!");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.required"));
                 return "redirect:/librarian/borrow/create";
             }
-            java.util.List<String> barcodeList = java.util.Arrays.asList(rawBarcodes.split("\\s*,\\s*"));
+            Set<String> barcodeSet = new LinkedHashSet<>();
+            for (String rawBarcode : rawBarcodes.split("\\s*,\\s*")) {
+                String barcode = rawBarcode.trim();
+                if (barcode.isEmpty()) continue;
+                if (!barcodeSet.add(barcode)) {
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.duplicate", barcode));
+                    return "redirect:/librarian/borrow/create";
+                }
+            }
             java.util.List<com.lms.entity.BookItem> validItems = new java.util.ArrayList<>();
             
-            for (String barcode : barcodeList) {
-                barcode = barcode.trim();
-                if (barcode.isEmpty()) continue;
+            for (String barcode : barcodeSet) {
                 java.util.Optional<com.lms.entity.BookItem> optItem = bookItemRepository.findByBarcode(barcode);
                 if (optItem.isEmpty()) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy sách có mã vạch: " + barcode);
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.notFound", barcode));
                     return "redirect:/librarian/borrow/create";
                 }
                 com.lms.entity.BookItem item = optItem.get();
                 if (!"Available".equalsIgnoreCase(item.getStatus())) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Sách có mã vạch " + barcode + " hiện không sẵn sàng (Trạng thái: " + item.getStatus() + ")");
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.book.unavailable", barcode, item.getStatus()));
                     return "redirect:/librarian/borrow/create";
                 }
                 validItems.add(item);
             }
             
             if (validItems.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Không có mã vạch hợp lệ nào được nhập!");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.noneValid"));
+                return "redirect:/librarian/borrow/create";
+            }
+
+            long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
+            int configuredLimit = getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10);
+            int maxLimit = member.getTier() != null && member.getTier().getBorrowLimit() != null
+                    ? member.getTier().getBorrowLimit() : configuredLimit;
+            if (currentBorrowCount + validItems.size() > Math.max(1, maxLimit)) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.tierLimitExceeded"));
                 return "redirect:/librarian/borrow/create";
             }
 
@@ -289,6 +367,7 @@ public class LibrarianBorrowController {
             model.addAttribute("billDays", days);
             model.addAttribute("billRawBarcodes", rawBarcodes);
             model.addAttribute("billMemberIdentifier", memberIdentifier);
+            model.addAttribute("billPaymentMethod", paymentMethod);
             model.addAttribute("billFeePerBookPerDay", baseFee);
             model.addAttribute("billBaseFee", totalBaseFee);
             model.addAttribute("billDiscount", discount);
@@ -297,7 +376,7 @@ public class LibrarianBorrowController {
             return "librarian/review-borrow";
             
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi kiểm tra thông tin: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.validation.failed", e));
             return "redirect:/librarian/borrow/create";
         }
     }
@@ -324,7 +403,7 @@ public class LibrarianBorrowController {
                 }
                 borrowService.activatePendingBankBorrow(borrow.getBorrowId());
             }
-            redirectAttributes.addFlashAttribute("successMessage", "Tạo phiếu mượn trực tiếp tại quầy thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.createdAtDeskWithCode", BorrowCodeFormatter.format(borrow.getBorrowId())));
         } catch (ApplicationException e) {
             if (borrow != null && "BANK".equalsIgnoreCase(request.getPaymentMethod())) {
                 try {
@@ -333,7 +412,10 @@ public class LibrarianBorrowController {
                     // Preserve the original payment error shown to the librarian.
                 }
             }
-            redirectAttributes.addFlashAttribute("errorMessage", "Thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.failed", e));
+            redirectAttributes.addFlashAttribute("billMemberIdentifier", request.getMemberIdentifier());
+            redirectAttributes.addFlashAttribute("billDays", request.getNumberOfDays());
+            redirectAttributes.addFlashAttribute("billRawBarcodes", rawBarcodes);
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -348,9 +430,9 @@ public class LibrarianBorrowController {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             borrowService.approveReservationRequest(reservationId, staffUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt đơn đặt trước sách thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.reservation.approved"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Duyệt thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -375,19 +457,35 @@ public class LibrarianBorrowController {
             if (itemOpt.isPresent()) {
                 com.lms.entity.BookItem item = itemOpt.get();
                 data.put("found", true);
+                data.put("bookId", item.getBook().getBookId());
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
                 String rawStatus = item.getStatus();
-                String vnStatus = "Có sẵn";
-                if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = "Đang mượn";
-                else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = "Bị mất";
-                else if ("Maintenance".equalsIgnoreCase(rawStatus)) vnStatus = "Bảo trì";
+                
+                long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(item.getBook().getBookId(), "Available");
+                data.put("availableCount", availableCount);
+                
+                // Debug logging to console
+                try {
+                    java.util.List<com.lms.entity.BookItem> allItems = bookItemRepository.findByBook_BookId(item.getBook().getBookId());
+                    System.out.println("DEBUG BOOK LOOKUP: Book ID = " + item.getBook().getBookId() + ", Title = " + item.getBook().getTitle() + ", Available Count in DB = " + availableCount);
+                    for (com.lms.entity.BookItem bi : allItems) {
+                        System.out.println("DEBUG BOOK ITEM: Barcode = " + bi.getBarcode() + ", Status = " + bi.getStatus());
+                    }
+                } catch (Exception e) {
+                    System.err.println("DEBUG BOOK LOOKUP ERROR: " + e.getMessage());
+                }
+                
+                String vnStatus = message("book.status.available");
+                if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.borrowed");
+                else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.lost");
+                else if ("Maintenance".equalsIgnoreCase(rawStatus)) vnStatus = message("backend.book.status.maintenance");
                 
                 data.put("status", vnStatus);
                 data.put("rawStatus", rawStatus);
             } else {
                 data.put("found", false);
-                data.put("error", "Không tồn tại");
+                data.put("error", message("backend.common.notFound"));
             }
             results.add(data);
         }
@@ -415,13 +513,17 @@ public class LibrarianBorrowController {
             response.put("email", member.getUser().getEmail());
             response.put("phone", member.getUser().getPhone());
             response.put("status", member.getUser().getStatus().name());
+            List<String> eligibilityReasons = getBorrowIneligibilityReasons(member);
+            boolean eligible = member.getUser().getStatus() == com.lms.enums.UserStatus.Active && eligibilityReasons.isEmpty();
+            response.put("eligible", eligible);
+            response.put("reasons", eligibilityReasons);
             
-            int maxBorrowLimit = 0;
+            int maxBorrowLimit = getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10);
             if (member.getTier() != null) {
                 response.put("memberLevel", member.getTier().getTierName());
-                maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit() : 0;
+                maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit() : maxBorrowLimit;
             } else {
-                response.put("memberLevel", "Mặc định");
+                response.put("memberLevel", message("backend.member.defaultTier"));
             }
             response.put("maxBorrowLimit", maxBorrowLimit);
             
@@ -434,13 +536,38 @@ public class LibrarianBorrowController {
         return response;
     }
 
+    private List<String> getBorrowIneligibilityReasons(com.lms.entity.Member member) {
+        List<String> reasons = new java.util.ArrayList<>();
+        if (borrowDetailRepository.countByBorrow_Member_MemberIdAndStatusIgnoreCase(member.getMemberId(), "Overdue") > 0) {
+            reasons.add(message("backend.borrow.blockedByOverdue"));
+        }
+        if (!transactionRepository.findUnpaidFineTransactions(member.getMemberId(), List.of("FINE", "DAMAGE_FEE")).isEmpty()) {
+            reasons.add(message("backend.borrow.blockedByUnpaidFine"));
+        }
+        return reasons;
+    }
+
+    private int getPositiveSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .filter(value -> value > 0)
+                    .orElse(defaultValue);
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
+    }
+
     @GetMapping("/librarian/borrow/member/{memberId}")
     public String viewMemberBorrowHistory(@PathVariable Integer memberId,
                                           @RequestParam(value = "startDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate startDate,
                                           @RequestParam(value = "endDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate endDate,
                                           Model model) {
         com.lms.entity.Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new com.lms.exception.ForbiddenException("Không tìm thấy thành viên hoặc bạn không có quyền xem thông tin này."));
+                .orElseThrow(() -> new com.lms.exception.ForbiddenException(message("backend.member.notFoundOrForbidden")));
 
         // Determine user account creation date
         java.time.LocalDateTime minBorrow = borrowRepository.findMinBorrowDateByMemberId(memberId);
@@ -522,7 +649,7 @@ public class LibrarianBorrowController {
         com.lms.entity.Wallet wallet = walletRepository.findByMemberMemberId(memberId).orElse(null);
 
         model.addAttribute("member", member);
-        model.addAttribute("accountUsername", account != null ? account.getUsername() : "Chưa có");
+        model.addAttribute("accountUsername", account != null ? account.getUsername() : message("librarian.memberDetail.noAccount"));
         model.addAttribute("accountStatus", account != null ? account.getStatus() : "Inactive");
         model.addAttribute("walletBalance", wallet != null && wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO);
 

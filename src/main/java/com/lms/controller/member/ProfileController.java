@@ -1,5 +1,6 @@
 package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
 import com.lms.entity.Member;
@@ -24,7 +25,7 @@ import com.lms.config.CustomUserDetails;
  */
 @Controller
 @RequestMapping("/member")
-public class ProfileController {
+public class ProfileController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
 
@@ -52,8 +53,10 @@ public class ProfileController {
         }
 
         String username = principal.getName();
-        User member = profileService.getProfile(username);
-        model.addAttribute("member", member);
+        if (!model.containsAttribute("member")) {
+            User member = profileService.getProfile(username);
+            model.addAttribute("member", member);
+        }
         Member membership = membershipService.getMemberByUsername(username);
         model.addAttribute("membership", membership);
         model.addAttribute("activeBorrowsCount",
@@ -66,6 +69,7 @@ public class ProfileController {
     public String updateProfile(@RequestParam String fullName,
                                 @RequestParam String email,
                                 @RequestParam String phone,
+                                @RequestParam(required = false) String username,
                                 @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
@@ -73,27 +77,79 @@ public class ProfileController {
             return "redirect:/login";
         }
 
+        String currentUsername = principal.getName();
+        String newUsername = currentUsername;
+
+        if (username != null) {
+            newUsername = username.trim();
+            if (newUsername.isEmpty()) {
+                redirectAttributes.addFlashAttribute("usernameError", message("validation.usernameRequired"));
+                User tempUser = new User();
+                tempUser.setFullName(fullName);
+                tempUser.setEmail(email);
+                tempUser.setPhone(phone);
+                tempUser.setAvatar(profileService.getProfile(currentUsername).getAvatar());
+                redirectAttributes.addFlashAttribute("member", tempUser);
+                redirectAttributes.addFlashAttribute("failedUsername", username);
+                return "redirect:/member/profile";
+            }
+        }
+
         try {
-            String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            profileService.updateProfile(currentUsername, newUsername, fullName, currentEmail, phone, avatarFile);
             
             // Cập nhật lại thông tin trong phiên đăng nhập (Session/SecurityContext) để thanh điều hướng đồng bộ ngay lập tức
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
                 User sessionUser = customUserDetails.getUser();
-                User updatedUser = profileService.getProfile(currentUsername);
+                User updatedUser = profileService.getProfile(newUsername);
                 
                 sessionUser.setFullName(updatedUser.getFullName());
                 sessionUser.setAvatar(updatedUser.getAvatar());
                 sessionUser.setEmail(updatedUser.getEmail());
                 sessionUser.setPhone(updatedUser.getPhone());
+
+                if (!currentUsername.equals(newUsername)) {
+                    CustomUserDetails newCustomUserDetails = new CustomUserDetails(
+                        sessionUser, newUsername, customUserDetails.getPassword(),
+                        customUserDetails.isEnabled() ? "Active" : "Inactive",
+                        customUserDetails.getAccountId(), customUserDetails.getAuthorities(),
+                        customUserDetails.getAttributes()
+                    );
+                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken newAuth =
+                        new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                            newCustomUserDetails, authentication.getCredentials(), authentication.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(newAuth);
+                }
             }
             
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
             return "redirect:/member/profile?updated";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
+            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
+                String field = ((com.lms.exception.ValidationException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else if (e instanceof com.lms.exception.ConflictException && ((com.lms.exception.ConflictException) e).getField() != null) {
+                String field = ((com.lms.exception.ConflictException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            }
+            redirectAttributes.addFlashAttribute("failedUsername", newUsername);
+
+            // Preserve user input on error
+            User tempUser = new User();
+            tempUser.setFullName(fullName);
+            tempUser.setEmail(email);
+            tempUser.setPhone(phone);
+            try {
+                tempUser.setAvatar(profileService.getProfile(currentUsername).getAvatar());
+                tempUser.setStatus(profileService.getProfile(currentUsername).getStatus());
+            } catch (Exception ignored) {}
+            redirectAttributes.addFlashAttribute("member", tempUser);
+
             return "redirect:/member/profile";
         }
     }
@@ -111,14 +167,14 @@ public class ProfileController {
 
         // Kiểm tra khớp mật khẩu gõ lại ngay tại Controller trước khi gọi xuống Service
         if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+            redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
             return "redirect:/member/profile";
         }
 
         try {
             String username = principal.getName();
             profileService.changePassword(username, oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", "Thay đổi mật khẩu hệ thống thành công!");
+            redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
             return "redirect:/member/profile?passwordChanged";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
@@ -137,6 +193,8 @@ public class ProfileController {
 
         model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
                 principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
+        model.addAttribute("availableFavoriteBookIds",
+                memberFavoriteService.getAvailableFavoriteBookIds(principal.getName()));
 
         return "member/favorites";
     }

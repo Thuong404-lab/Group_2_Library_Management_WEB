@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title>Lịch sử mượn sách</title>
+    <title th:text="#{member.borrowHistory.title}">Loan History</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/borrow-history.css}" />
   </head>
 <body>
@@ -12,13 +12,15 @@
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom member-borrow-history-div-border-color-01">
         <div>
             <h2 class="font-weight-bold mb-1 u-font-family-playfair-display-serif-color-4a3b32-fbccaa2c">
-                <i class="bi bi-journal-check me-2 u-color-8b5a2b-d7f13118"></i>Lịch sử Mượn Sách
+                <i class="bi bi-journal-check me-2 u-color-8b5a2b-d7f13118"></i><span th:text="#{member.borrowHistory.heading}">Loan History</span>
             </h2>
-            <div class="text-muted">Tất cả biên bản và tiến trình mượn - trả của bạn</div>
+            <div class="text-muted" th:text="#{member.borrowHistory.description}">All your loan and return records</div>
         </div>
         <div>
             <span class="badge rounded-pill px-3 py-2 member-borrow-history-span-background-border-04">
-                Tổng cộng: <strong th:text="${totalBorrows != null ? totalBorrows : #lists.size(historyList)}">0</strong> lần mượn
+                <span th:text="#{member.borrowHistory.total}">Total:</span>
+                <strong th:text="${totalBorrows != null ? totalBorrows : #lists.size(historyList)}">0</strong>
+                <span th:text="#{member.borrowHistory.times}">loans</span>
             </span>
         </div>
     </div>
@@ -27,27 +29,27 @@
     <ul class="nav nav-pills nav-pills-classic mb-4 member-borrow-history-ul-border-bottom-05">
         <li class="nav-item">
             <a class="nav-link" th:classappend="${activeTab == 'all' || activeTab == null} ? 'active' : ''"
-               th:href="@{/member/borrow/history(tab='all')}">Tất cả</a>
+               th:href="@{/member/borrow/history(tab='all')}" th:text="#{common.all}">All</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" th:classappend="${activeTab == 'borrowing'} ? 'active' : ''"
-               th:href="@{/member/borrow/history(tab='borrowing')}">Đang mượn</a>
+               th:href="@{/member/borrow/history(tab='borrowing')}" th:text="#{loan.status.borrowed}">Borrowing</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" th:classappend="${activeTab == 'returned'} ? 'active' : ''"
-               th:href="@{/member/borrow/history(tab='returned')}">Đã trả</a>
+               th:href="@{/member/borrow/history(tab='returned')}" th:text="#{loan.status.returned}">Returned</a>
         </li>
         <li class="nav-item">
             <a class="nav-link text-danger" th:classappend="${activeTab == 'overdue'} ? 'active' : ''"
-               th:href="@{/member/borrow/history(tab='overdue')}">Quá hạn</a>
+               th:href="@{/member/borrow/history(tab='overdue')}" th:text="#{loan.status.overdue}">Overdue</a>
         </li>
     </ul>
 
     <!-- Trường hợp danh sách rỗng -->
     <div th:if="${#lists.isEmpty(historyList)}" class="text-center py-5 bg-white rounded shadow-sm">
         <i class="bi bi-inbox text-muted u-font-size-3rem-ea01e09b"></i>
-        <p class="text-muted fst-italic mt-2">Không tìm thấy bản ghi lịch sử mượn sách nào trong danh mục này.</p>
-        <a th:href="@{/}" class="btn text-white mt-2 u-background-color-8b5a2b-9102f523"><i class="bi bi-search me-1"></i> Khám phá mượn sách ngay</a>
+        <p class="text-muted fst-italic mt-2" th:text="#{member.borrowHistory.empty}">No loan history was found in this category.</p>
+        <a th:href="@{/}" class="btn text-white mt-2 u-background-color-8b5a2b-9102f523"><i class="bi bi-search me-1"></i> <span th:text="#{member.borrowHistory.explore}">Explore Books</span></a>
     </div>
 
     <!-- VÒNG LẶP DUYỆT DANH SÁCH LỊCH SỬ ĐỘNG -->
@@ -60,29 +62,29 @@
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                             class="rounded me-3 border member-borrow-history-img-width-height-fit-08" alt="Book Cover">
+                             class="rounded me-3 border member-borrow-history-img-width-height-fit-08" th:alt="#{book.cover}">
                         <div>
-                            <div class="font-weight-bold member-borrow-history-div-color-font-size-font-family-09" th:text="${item.bookTitle}">Tên sách mượn</div>
-                            <div class="text-muted small" th:text="${item.authorName}">Tác giả</div>
-                            <div class="text-muted small mt-1">Mã phiếu: <strong th:text="${item.borrowCode != null ? item.borrowCode : 'BOR-' + item.id}">BOR-2026-0042</strong></div>
+                            <div class="font-weight-bold member-borrow-history-div-color-font-size-font-family-09" th:text="${item.bookTitle}">Borrowed book title</div>
+                            <div class="text-muted small" th:text="${item.authorName}">Author</div>
+                            <div class="text-muted small mt-1"><span th:text="#{member.borrowHistory.loanCode}">Loan code:</span> <strong th:text="${item.borrowIdStr}">BOR-42</strong></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Cột 2: Dữ liệu mốc thời gian -->
                 <div class="col-md-3 text-md-center mt-2 mt-md-0">
-                    <div class="small text-muted">Ngày mượn</div>
+                    <div class="small text-muted" th:text="#{loan.borrowDate}">Borrow Date</div>
                     <div class="font-weight-bold text-dark" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">15/06/2026</div>
 
                     <!-- Hiển thị Hạn trả nếu chưa trả sách thành công -->
                     <div th:if="${item.status == 'Borrowed' || item.status == 'Overdue' || item.status == 'Return_Pending'}">
-                        <div class="small text-muted mt-2">Hạn trả</div>
+                        <div class="small text-muted mt-2" th:text="#{loan.dueDate}">Due Date</div>
                         <div class="font-weight-bold text-danger" th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">15/07/2026</div>
                     </div>
 
                     <!-- Hiển thị Ngày trả thực tế nếu sách đã được hoàn kho -->
                     <div th:if="${item.status == 'Returned'}">
-                        <div class="small text-muted mt-2">Ngày trả thực tế</div>
+                        <div class="small text-muted mt-2" th:text="#{loan.actualReturnDate}">Actual Return Date</div>
                         <div class="font-weight-bold text-success" th:text="${#temporals.format(item.returnDate, 'dd/MM/yyyy')}">05/07/2026</div>
                     </div>
                 </div>
@@ -93,16 +95,16 @@
                     <!-- Nhóm Badge Trạng thái -->
                     <div>
                         <span th:if="${item.status == 'Borrowed'}" class="badge px-3 py-2 status-badge-borrowing member-borrow-history-span-font-size-border-radius-10">
-                            <i class="bi bi-arrow-left-right me-1"></i>Đang mượn
+                            <i class="bi bi-arrow-left-right me-1"></i><span th:text="#{loan.status.borrowed}">Borrowing</span>
                         </span>
                         <span th:if="${item.status == 'Overdue'}" class="badge px-3 py-2 status-badge-overdue member-borrow-history-span-font-size-border-radius-10">
-                            <i class="bi bi-exclamation-triangle me-1"></i>Quá hạn
+                            <i class="bi bi-exclamation-triangle me-1"></i><span th:text="#{loan.status.overdue}">Overdue</span>
                         </span>
                         <span th:if="${item.status == 'Returned'}" class="badge px-3 py-2 status-badge-returned member-borrow-history-span-font-size-border-radius-10">
-                            <i class="bi bi-check-circle me-1"></i>Đã trả xong
+                            <i class="bi bi-check-circle me-1"></i><span th:text="#{loan.status.returned}">Returned</span>
                         </span>
                         <span th:if="${item.status == 'Return_Pending'}" class="badge px-3 py-2 status-badge-pending member-borrow-history-span-font-size-border-radius-10">
-                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt trả
+                            <i class="bi bi-hourglass-split me-1"></i><span th:text="#{loan.status.pendingReturn}">Pending Return Approval</span>
                         </span>
                     </div>
 
@@ -110,26 +112,26 @@
                     <div class="mt-3">
                         <!-- Quá hạn: Hiển thị số tiền phạt tích lũy -->
                         <div th:if="${item.status == 'Overdue' && item.fineAmount > 0}" class="small text-danger font-weight-bold">
-                            <i class="bi bi-cash-coin me-1"></i>Phí phạt: <span th:text="${#numbers.formatDecimal(item.fineAmount, 0, 'POINT', 0, 'POINT')} + 'đ'">0đ</span>
+                            <i class="bi bi-cash-coin me-1"></i><span th:text="#{member.borrowHistory.fine}">Fine:</span> <span th:text="${#numbers.formatDecimal(item.fineAmount, 0, 'POINT', 0, 'POINT')} + ' VND'">0 VND</span>
                         </div>
 
                         <!-- Đang mượn: Cho phép bấm gửi yêu cầu trả nhanh hoặc gia hạn -->
                         <div th:if="${item.status == 'Borrowed'}" class="d-flex justify-content-md-end gap-1">
                             <form th:action="@{/borrow/return/{detailId}(detailId=${item.id})}" method="post">
-                                <button type="submit" class="btn btn-sm btn-outline-primary u-font-size-0-75rem-8b511f07"><i class="bi bi-arrow-return-left"></i> Trả sách</button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary u-font-size-0-75rem-8b511f07"><i class="bi bi-arrow-return-left"></i> <span th:text="#{loan.return.confirm}">Return Book</span></button>
                             </form>
                         </div>
 
                         <!-- Đã trả: Đã đánh giá nhận xét -->
                         <div th:if="${item.status == 'Returned' && item.isReviewed}">
                             <span class="text-warning small"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></span>
-                            <span class="text-muted small d-block u-font-size-0-75rem-8b511f07">Đã gửi đánh giá</span>
+                            <span class="text-muted small d-block u-font-size-0-75rem-8b511f07" th:text="#{member.borrowHistory.reviewed}">Review Submitted</span>
                         </div>
 
                         <!-- Đã trả: Chưa đánh giá nhận xét -> Hiện nút viết bài -->
                         <div th:if="${item.status == 'Returned' && !item.isReviewed}">
                             <a th:href="@{/books/{id}(id=${item.bookId})}" class="btn btn-sm btn-outline-warning member-borrow-history-a-font-size-border-radius-12">
-                                <i class="bi bi-star me-1"></i>Viết đánh giá
+                                <i class="bi bi-star me-1"></i><span th:text="#{member.borrowHistory.writeReview}">Write a Review</span>
                             </a>
                         </div>
                     </div>

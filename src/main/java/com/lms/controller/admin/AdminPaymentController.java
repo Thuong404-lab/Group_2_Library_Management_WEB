@@ -1,5 +1,6 @@
 package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.request.PaymentSearchCriteria;
 import com.lms.dto.response.ReportExport;
@@ -23,7 +24,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/payments")
-public class AdminPaymentController {
+public class AdminPaymentController extends LocalizedControllerSupport {
     private final AdminPaymentService adminPaymentService;
     private final PayOsPaymentService paymentService;
     private final PayOsPaymentAuditService auditService;
@@ -82,12 +83,12 @@ public class AdminPaymentController {
     public String reconcile(@PathVariable Long orderCode, RedirectAttributes redirectAttributes) {
         PayOsPayment payment = adminPaymentService.getPayment(orderCode);
         auditService.record(payment, "RECONCILIATION_REQUESTED", "ADMIN", payment.getStatus(), payment.getStatus(), true,
-                "Quản trị viên yêu cầu đối soát thủ công.");
+                message("backend.payment.audit.manualReconciliation"));
         try {
             PayOsPayment refreshed = paymentService.reconcileForStaff(orderCode);
             auditService.resolveReconciliationIssue(orderCode, "ADMIN");
             redirectAttributes.addFlashAttribute("successMessage",
-                    "Đối soát hoàn tất. Trạng thái hiện tại: " + refreshed.getStatus());
+                    message("backend.payment.reconciled", refreshed.getStatus()));
         } catch (ApplicationException exception) {
             auditService.recordReconciliationFailure(orderCode, exception.getMessage(), "ADMIN");
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());

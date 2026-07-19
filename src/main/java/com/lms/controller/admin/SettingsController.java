@@ -1,5 +1,6 @@
 package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 import com.lms.exception.ValidationException;
 
 import com.lms.service.SystemService;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/settings")
-public class SettingsController {
+public class SettingsController extends LocalizedControllerSupport {
 
     private final SystemService systemService;
 
@@ -39,6 +40,8 @@ public class SettingsController {
     @PostMapping("/policies")
     public String updateBorrowingPolicies(@RequestParam Integer maxBorrowDays,
             @RequestParam Integer maxRenewalDays,
+            @RequestParam Integer maxRenewalRequests,
+            @RequestParam Integer renewalRejectionCooldownHours,
             @RequestParam(required = false) List<Integer> tierIds,
             @RequestParam(required = false) List<Integer> tierBorrowLimits,
             @RequestParam(required = false) List<BigDecimal> tierSpendingConditions,
@@ -55,7 +58,7 @@ public class SettingsController {
                     || tierIds.isEmpty()
                     || tierIds.size() != tierBorrowLimits.size()
                     || tierIds.size() != tierSpendingConditions.size()) {
-                throw new ValidationException("Dữ liệu cấu hình hạng thành viên không hợp lệ.");
+                throw new ValidationException(message("backend.settings.invalidTierData"));
             }
 
             Map<Integer, Integer> borrowLimitsByTier = new LinkedHashMap<>();
@@ -68,6 +71,8 @@ public class SettingsController {
             systemService.updateBorrowingPolicies(
                     maxBorrowDays,
                     maxRenewalDays,
+                    maxRenewalRequests,
+                    renewalRejectionCooldownHours,
                     borrowLimitsByTier,
                     spendingConditionsByTier,
                     borrowFeePerBook,
@@ -78,7 +83,7 @@ public class SettingsController {
                     bookDisposalConditionThreshold,
                     depositAmount);
 
-            redirectAttributes.addFlashAttribute("success", "Cập nhật cấu hình thành công.");
+            redirectAttributes.addFlashAttribute("success", message("backend.settings.updated"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }

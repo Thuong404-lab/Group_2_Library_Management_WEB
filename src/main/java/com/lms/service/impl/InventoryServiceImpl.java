@@ -16,6 +16,7 @@ import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.repository.ShelfRepository;
 import com.lms.service.InventoryService;
+import com.lms.service.LocalizedMessageService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -44,19 +45,22 @@ public class InventoryServiceImpl implements InventoryService {
     private final BookItemRepository bookItemRepository;
     private final ShelfRepository shelfRepository;
     private final AuthorRepository authorRepository;
+    private final LocalizedMessageService messages;
 
     public InventoryServiceImpl(BookRepository bookRepository,
             CategoryRepository categoryRepository,
             GenreRepository genreRepository,
             BookItemRepository bookItemRepository,
             ShelfRepository shelfRepository,
-            AuthorRepository authorRepository) {
+            AuthorRepository authorRepository,
+            LocalizedMessageService messages) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.bookItemRepository = bookItemRepository;
         this.shelfRepository = shelfRepository;
         this.authorRepository = authorRepository;
+        this.messages = messages;
     }
 
     @Override
@@ -108,20 +112,29 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public Book findBookById(Integer bookId) {
         return bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + bookId));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
     }
 
     @Override
     public void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description,
             String coverImageUrl, Integer shelfId, String bookCondition, String authorName) {
         if (title == null || title.trim().isEmpty()) {
-            throw new ValidationException("Tên sách không được để trống.");
+            throw new ValidationException(messages.get("backend.inventory.titleRequired"));
         }
         if (isbn == null || isbn.trim().isEmpty()) {
-            throw new ValidationException("ISBN không được để trống.");
+            throw new ValidationException(messages.get("backend.inventory.isbnRequired"));
+        }
+        if (authorName == null || authorName.trim().isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.authorRequired"));
+        }
+        if (shelfId == null) {
+            throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
+        }
+        if (coverImageUrl == null || coverImageUrl.trim().isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.imageRequired"));
         }
         Genre genre = genreRepository.findById(genreId)
-                .orElseThrow(() -> new ValidationException("Chọn thể loại hợp lệ."));
+                .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.validGenreRequired")));
 
         Book book = new Book();
         book.setTitle(title.trim());
@@ -151,7 +164,8 @@ public class InventoryServiceImpl implements InventoryService {
 
         book = bookRepository.save(book);
 
-        Shelf shelf = shelfId != null ? shelfRepository.findById(shelfId).orElse(null) : null;
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
 
         int copies = quantity != null && quantity > 0 ? quantity : 1;
 
@@ -176,6 +190,12 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status,
             String coverImageUrl, Integer shelfId, String description, String authorName) {
+        if (authorName == null || authorName.trim().isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.authorRequired"));
+        }
+        if (shelfId == null) {
+            throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
+        }
         Book book = findBookById(bookId);
         if (title != null && !title.trim().isEmpty()) {
             book.setTitle(title.trim());
@@ -185,7 +205,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
         if (genreId != null) {
             Genre genre = genreRepository.findById(genreId)
-                    .orElseThrow(() -> new ValidationException("Chọn thể loại hợp lệ."));
+                    .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.validGenreRequired")));
             book.setGenre(genre);
         }
         if (status != null && !status.trim().isEmpty()) {
@@ -215,20 +235,19 @@ public class InventoryServiceImpl implements InventoryService {
 
         bookRepository.save(book);
 
-        if (shelfId != null) {
-            Shelf shelf = shelfRepository.findById(shelfId).orElse(null);
-            List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
-            for (BookItem item : items) {
-                item.setShelf(shelf);
-                bookItemRepository.save(item);
-            }
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
+        List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
+        for (BookItem item : items) {
+            item.setShelf(shelf);
+            bookItemRepository.save(item);
         }
     }
 
     @Override
     public void updateBookStatus(Integer bookId, String status) {
         if (status == null || status.trim().isEmpty()) {
-            throw new ValidationException("Chọn trạng thái sách.");
+            throw new ValidationException(messages.get("backend.inventory.statusRequired"));
         }
         Book book = findBookById(bookId);
         book.setStatus(status.trim());
@@ -242,7 +261,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<BookItem> items = bookItemRepository.findByBook_BookId(bookId);
         for (BookItem item : items) {
             if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
-                throw new ConflictException("Không thể xóa sách vì có bản sách đang được mượn.");
+                throw new ConflictException(messages.get("backend.inventory.deleteBorrowedConflict"));
             }
         }
         try {
@@ -252,14 +271,17 @@ public class InventoryServiceImpl implements InventoryService {
             bookRepository.delete(book);
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException(
-                    "Không thể xóa sách này vì sách đã từng có lịch sử giao dịch (mượn/trả) trong hệ thống.", ex);
+                    messages.get("backend.inventory.deleteHistoryConflict"), ex);
         }
     }
 
     @Override
     public void addCategory(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new ValidationException("Tên danh mục không được để trống.");
+            throw new ValidationException(messages.get("backend.inventory.categoryNameRequired"));
+        }
+        if (name.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
         }
         Category category = new Category();
         category.setCategoryName(name.trim());
@@ -269,13 +291,16 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void addGenre(Integer categoryId, String name) {
         if (categoryId == null) {
-            throw new ValidationException("Vui lòng chọn danh mục.");
+            throw new ValidationException(messages.get("backend.inventory.categoryRequired"));
         }
         if (name == null || name.trim().isEmpty()) {
-            throw new ValidationException("Tên thể loại không được để trống.");
+            throw new ValidationException(messages.get("backend.inventory.genreNameRequired"));
+        }
+        if (name.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
         }
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.categoryNotFound")));
 
         Genre genre = new Genre();
         genre.setCategory(category);
@@ -286,10 +311,13 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void updateCategory(Integer categoryId, String newName) {
         if (newName == null || newName.trim().isEmpty()) {
-            throw new ValidationException("Tên danh mục không được để trống.");
+            throw new ValidationException(messages.get("backend.inventory.categoryNameRequired"));
+        }
+        if (newName.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
         }
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.categoryNotFound")));
         category.setCategoryName(newName.trim());
         categoryRepository.save(category);
     }
@@ -297,14 +325,17 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void updateGenre(Integer genreId, String newName, Integer newCategoryId) {
         if (newName == null || newName.trim().isEmpty()) {
-            throw new ValidationException("Tên thể loại không được để trống.");
+            throw new ValidationException(messages.get("backend.inventory.genreNameRequired"));
+        }
+        if (newName.trim().length() > 20) {
+            throw new ValidationException(messages.get("backend.inventory.validation.maxLength20"));
         }
         Genre genre = genreRepository.findById(genreId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thể loại."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.genreNotFound")));
 
         if (newCategoryId != null) {
             Category category = categoryRepository.findById(newCategoryId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại."));
+                    .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.categoryNotFound")));
             genre.setCategory(category);
         }
 
@@ -315,10 +346,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void deleteGenre(Integer genreId) {
         Genre genre = genreRepository.findById(genreId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thể loại."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.genreNotFound")));
 
         if (bookRepository.existsByGenre_GenreId(genreId)) {
-            throw new ConflictException("Không thể xóa thể loại vì đang có sách thuộc thể loại này.");
+            throw new ConflictException(messages.get("backend.inventory.deleteGenreConflict"));
         }
 
         genreRepository.delete(genre);
@@ -327,10 +358,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void deleteCategory(Integer categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục."));
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.categoryNotFound")));
         
         if (genreRepository.existsByCategory_CategoryId(categoryId)) {
-            throw new ConflictException("Không thể xóa danh mục vì đang có thể loại thuộc danh mục này.");
+            throw new ConflictException(messages.get("backend.inventory.deleteCategoryConflict"));
         }
         categoryRepository.delete(category);
     }

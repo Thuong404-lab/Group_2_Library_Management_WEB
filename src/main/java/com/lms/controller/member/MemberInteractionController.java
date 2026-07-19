@@ -1,5 +1,6 @@
 package com.lms.controller.member;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.repository.BookRepository;
 import com.lms.service.MemberFavoriteService;
@@ -23,12 +24,15 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.lms.dto.request.MemberBookAcquisitionRequest;
 import com.lms.service.MemberBookAcquisitionService;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 
 @Controller
 @RequestMapping("/member/interaction")
-public class MemberInteractionController {
+public class MemberInteractionController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
+    private static final int NOTIFICATION_PAGE_SIZE = 20;
 
     private final MemberNotificationService memberNotificationService;
     private final MemberReviewService memberReviewService;
@@ -50,26 +54,43 @@ public class MemberInteractionController {
 
     @GetMapping("/notifications")
     public String viewNotifications(Model model,
-                                    Principal principal) {
-        var notifications = memberNotificationService.getAllMyNotifications(principal.getName());
+                                    Principal principal,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "all") String source,
+                                    @RequestParam(defaultValue = "ALL") String type) {
+        NotificationSource sourceFilter = parseNotificationSource(source);
+        NotificationType typeFilter = parseNotificationType(type);
+        var notificationPage = memberNotificationService.getMyNotifications(
+                principal.getName(), sourceFilter, typeFilter,
+                PageRequest.of(Math.max(0, page), NOTIFICATION_PAGE_SIZE));
+        var notifications = notificationPage.getContent();
+        model.addAttribute("notificationPage", notificationPage);
         model.addAttribute("notifications", notifications);
-        model.addAttribute("systemNotifications", notifications.stream()
-                .filter(notification -> !Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
-        model.addAttribute("librarianNotifications", notifications.stream()
-                .filter(notification -> Boolean.TRUE.equals(notification.getFromLibrarian())).toList());
+        model.addAttribute("totalNotificationCount",
+                memberNotificationService.countMyNotifications(principal.getName()));
+        model.addAttribute("systemNotificationCount",
+                memberNotificationService.countMyNotificationsBySource(
+                        principal.getName(), NotificationSource.SYSTEM));
+        model.addAttribute("librarianNotificationCount",
+                memberNotificationService.countMyNotificationsBySource(
+                        principal.getName(), NotificationSource.LIBRARIAN));
+        model.addAttribute("selectedNotificationSource",
+                sourceFilter == null ? "all" : sourceFilter.name().toLowerCase());
+        model.addAttribute("selectedNotificationType",
+                typeFilter == null ? "ALL" : typeFilter.name());
         model.addAttribute("showNotificationBell", false);
 
         return "member/notifications";
     }
 
-    @GetMapping("/notifications/mark-read")
+    @PostMapping("/notifications/mark-read")
     @ResponseBody
     public String markNotificationsAsRead(Principal principal) {
         memberNotificationService.markAllNotificationsAsRead(principal.getName());
         return "OK";
     }
 
-    @GetMapping("/notifications/{notificationId}/mark-read")
+    @PostMapping("/notifications/{notificationId}/mark-read")
     @ResponseBody
     public Map<String, Long> markNotificationAsRead(@PathVariable Integer notificationId,
                                                      Principal principal) {
@@ -119,7 +140,7 @@ public class MemberInteractionController {
         try {
             memberReviewService.submitReview(principal.getName(), request);
             flash.addFlashAttribute("success",
-                    "Đã gửi đánh giá thành công.");
+                    message("backend.review.submitted"));
             return "redirect:/member/interaction/reviews";
         } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
@@ -140,7 +161,7 @@ public class MemberInteractionController {
 
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getAllErrors().isEmpty()
-                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    ? message("backend.review.checkContent")
                     : bindingResult.getAllErrors().get(0).getDefaultMessage();
             flash.addFlashAttribute("error", message);
             flash.addFlashAttribute("reviewRequest", request);
@@ -149,7 +170,7 @@ public class MemberInteractionController {
 
         try {
             memberReviewService.submitReview(principal.getName(), request);
-            flash.addFlashAttribute("reviewSubmittedSuccess", true);
+            flash.addFlashAttribute("success", message("backend.review.submitted"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewRequest", request);
@@ -169,7 +190,7 @@ public class MemberInteractionController {
 
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getAllErrors().isEmpty()
-                    ? "Vui lòng kiểm tra lại nội dung đánh giá."
+                    ? message("backend.review.checkContent")
                     : bindingResult.getAllErrors().get(0).getDefaultMessage();
             flash.addFlashAttribute("error", message);
             flash.addFlashAttribute("reviewEditRequest", request);
@@ -180,7 +201,7 @@ public class MemberInteractionController {
 
         try {
             memberReviewService.updateMyReview(principal.getName(), feedbackId, request);
-            flash.addFlashAttribute("success", "Đã cập nhật đánh giá thành công.");
+            flash.addFlashAttribute("success", message("backend.review.updated"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewEditRequest", request);
@@ -197,7 +218,7 @@ public class MemberInteractionController {
                                  RedirectAttributes flash) {
         try {
             memberReviewService.deleteMyReview(principal.getName(), feedbackId);
-            flash.addFlashAttribute("success", "Đã xoá đánh giá thành công.");
+            flash.addFlashAttribute("success", message("backend.review.deleted"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
@@ -234,7 +255,7 @@ public class MemberInteractionController {
 
         try {
             memberBookAcquisitionService.submitRequest(principal.getName(), request);
-            flash.addFlashAttribute("success", "Đã gửi đề xuất sách thành công.");
+            flash.addFlashAttribute("success", message("backend.acquisition.submitted"));
             return "redirect:/member/interaction/acquisition-requests/new";
 
         } catch (ApplicationException e) {
@@ -246,13 +267,8 @@ public class MemberInteractionController {
     }
 
     @GetMapping("/favorites")
-    public String viewFavorites(Model model,
-                                Principal principal,
-                                @RequestParam(defaultValue = "0") int page) {
-        model.addAttribute("favorites", memberFavoriteService.getMyFavorites(
-                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
-
-        return "member/favorites";
+    public String redirectToCanonicalFavorites() {
+        return "redirect:/member/favorites";
     }
 
     @PostMapping("/favorites/{bookId}/add")
@@ -266,9 +282,9 @@ public class MemberInteractionController {
         try {
             memberFavoriteService.addToFavorites(principal.getName(), bookId);
             if (isAjax(requestedWith)) {
-                return org.springframework.http.ResponseEntity.ok(favoriteJson(true, "Đã thêm vào danh sách yêu thích!"));
+                return org.springframework.http.ResponseEntity.ok(favoriteJson(true, message("backend.favorite.added")));
             }
-            flash.addFlashAttribute("success", "Đã thêm vào yêu thích!");
+            flash.addFlashAttribute("success", message("backend.favorite.added"));
         } catch (ApplicationException e) {
             if (isAjax(requestedWith)) {
                 return org.springframework.http.ResponseEntity
@@ -280,33 +296,85 @@ public class MemberInteractionController {
 
         return org.springframework.http.ResponseEntity
                 .status(org.springframework.http.HttpStatus.SEE_OTHER)
-                .location(URI.create(referer != null && !referer.isBlank() ? referer : "/books"))
+                .location(URI.create(localRedirectTarget(referer)))
                 .build();
     }
 
     @PostMapping("/favorites/{bookId}/remove")
-    public String removeFromFavorites(
+    public Object removeFromFavorites(
             @PathVariable("bookId") Integer bookId,
             Principal principal,
-            RedirectAttributes flash) {
+            RedirectAttributes flash,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
+            @RequestHeader(value = "Referer", required = false) String referer) {
 
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);
-            flash.addFlashAttribute("success", "Đã bỏ sách khỏi danh sách yêu thích!");
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity.ok(favoriteJson(false, message("backend.favorite.removed")));
+            }
+            flash.addFlashAttribute("success", message("backend.favorite.removed"));
         } catch (ApplicationException e) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity.status(e.getStatus())
+                        .body(favoriteJson(false, e.getMessage()));
+            }
             flash.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/member/favorites";
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                .location(URI.create(localRedirectTarget(referer)))
+                .build();
     }
 
     private boolean isAjax(String requestedWith) {
         return "XMLHttpRequest".equalsIgnoreCase(requestedWith);
     }
 
+    private String localRedirectTarget(String referer) {
+        if (referer == null || referer.isBlank()) {
+            return "/books";
+        }
+        try {
+            URI uri = URI.create(referer);
+            String path = uri.getPath();
+            if (path == null || !path.startsWith("/") || path.startsWith("//")) {
+                return "/books";
+            }
+            StringBuilder target = new StringBuilder(path);
+            if (uri.getQuery() != null) target.append('?').append(uri.getQuery());
+            if (uri.getFragment() != null) target.append('#').append(uri.getFragment());
+            return target.toString();
+        } catch (IllegalArgumentException exception) {
+            return "/books";
+        }
+    }
+
+    private NotificationSource parseNotificationSource(String value) {
+        if (value == null || value.isBlank() || "all".equalsIgnoreCase(value)) {
+            return null;
+        }
+        try {
+            return NotificationSource.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private NotificationType parseNotificationType(String value) {
+        if (value == null || value.isBlank() || "ALL".equalsIgnoreCase(value)) {
+            return null;
+        }
+        try {
+            return NotificationType.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
     private Map<String, Object> favoriteJson(boolean favorite, String message) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("success", favorite);
+        body.put("success", true);
         body.put("favorite", favorite);
         body.put("message", message);
         return body;

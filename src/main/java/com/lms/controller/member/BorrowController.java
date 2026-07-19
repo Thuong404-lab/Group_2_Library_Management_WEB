@@ -1,14 +1,20 @@
 package com.lms.controller.member;
+
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.response.MemberBorrowDTO;
 import com.lms.entity.Book;
+import com.lms.entity.Borrow;
 import com.lms.entity.Member;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.WalletRepository;
+import com.lms.repository.BorrowDetailRepository;
+import com.lms.repository.BookItemRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import com.lms.service.BookService;
 import com.lms.service.BorrowService;
 import com.lms.service.LoanService;
@@ -20,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.lms.service.PayOsPaymentService;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -28,7 +35,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/member/borrow")
-public class BorrowController {
+public class BorrowController extends LocalizedControllerSupport {
 
     private final BorrowService borrowService;
     private final BookService bookService;
@@ -38,6 +45,9 @@ public class BorrowController {
     private final ReservationRepository reservationRepository;
     private final WalletRepository walletRepository;
     private final SystemSettingRepository systemSettingRepository;
+    private final BorrowDetailRepository borrowDetailRepository;
+    private final PayOsPaymentService payOsPaymentService;
+    private final BookItemRepository bookItemRepository;
 
     public BorrowController(BorrowService borrowService,
                             MemberFavoriteService memberFavoriteService,
@@ -46,7 +56,10 @@ public class BorrowController {
                             MemberRepository memberRepository,
                             ReservationRepository reservationRepository,
                             WalletRepository walletRepository,
-                            SystemSettingRepository systemSettingRepository) {
+                            SystemSettingRepository systemSettingRepository,
+                            BorrowDetailRepository borrowDetailRepository,
+                            PayOsPaymentService payOsPaymentService,
+                            BookItemRepository bookItemRepository) {
         this.borrowService = borrowService;
         this.bookService = bookService;
         this.loanService = loanService;
@@ -55,10 +68,18 @@ public class BorrowController {
         this.reservationRepository = reservationRepository;
         this.walletRepository = walletRepository;
         this.systemSettingRepository = systemSettingRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
+        this.payOsPaymentService = payOsPaymentService;
+        this.bookItemRepository = bookItemRepository;
     }
 
     @GetMapping("/management")
     public String viewBorrowManagement(@RequestParam(value = "tab", defaultValue = "borrowing") String tab,
+                                       @RequestParam(value = "search", required = false) String search,
+                                       @RequestParam(value = "status", required = false) String status,
+                                       @RequestParam(value = "fromDate", required = false) String fromDate,
+                                       @RequestParam(value = "toDate", required = false) String toDate,
+                                       @RequestParam(value = "page", defaultValue = "0") int page,
                                        Principal principal,
                                        Model model) {
         if (principal == null) return "redirect:/login";
@@ -68,17 +89,214 @@ public class BorrowController {
 
         List<MemberBorrowDTO> currentBorrows = borrowService.getMemberCurrentBorrows(username);
         List<MemberBorrowDTO> reservations = borrowService.getMemberReservations(username);
+        List<MemberBorrowDTO> history = borrowService.getMemberOneMonthHistory(username);
 
         model.addAttribute("borrowingCount", currentBorrows.size());
         model.addAttribute("reservationCount", reservations.size());
+        Member member = getCurrentMember(principal);
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance()).orElse(BigDecimal.ZERO);
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("maxRenewalDays", getPositiveIntSetting("Max_Renewal_Days", 7));
+        model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
+        model.addAttribute("maxRenewalRequests", getPositiveIntSetting("MAX_RENEWAL_REQUESTS_PER_LOAN", 3));
+        model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
 
-        if ("reserved".equalsIgnoreCase(tab)) {
-            model.addAttribute("booksData", reservations);
-        } else if ("history".equalsIgnoreCase(tab)) {
-            model.addAttribute("booksData", borrowService.getMemberOneMonthHistory(username));
-        } else {
-            model.addAttribute("booksData", currentBorrows);
+        java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);
+        java.time.LocalDate maxDate = java.time.LocalDate.now();
+
+        for (MemberBorrowDTO b : currentBorrows) {
+            if (b.getActionDate() != null) {
+                java.time.LocalDate d = b.getActionDate().toLocalDate();
+                if (d.isBefore(minDate)) minDate = d;
+            }
+            if (b.getDueDate() != null) {
+                java.time.LocalDate d = b.getDueDate().toLocalDate();
+                if (d.isAfter(maxDate)) maxDate = d;
+            }
         }
+        for (MemberBorrowDTO r : reservations) {
+            if (r.getActionDate() != null) {
+                java.time.LocalDate d = r.getActionDate().toLocalDate();
+                if (d.isBefore(minDate)) minDate = d;
+            }
+            if (r.getDueDate() != null) {
+                java.time.LocalDate d = r.getDueDate().toLocalDate();
+                if (d.isAfter(maxDate)) maxDate = d;
+            }
+        }
+        for (MemberBorrowDTO h : history) {
+            if (h.getActionDate() != null) {
+                java.time.LocalDate d = h.getActionDate().toLocalDate();
+                if (d.isBefore(minDate)) minDate = d;
+            }
+            if (h.getReturnDate() != null) {
+                java.time.LocalDate d = h.getReturnDate().toLocalDate();
+                if (d.isAfter(maxDate)) maxDate = d;
+            }
+        }
+
+        model.addAttribute("minDate", minDate.toString());
+        model.addAttribute("maxDate", maxDate.toString());
+
+        List<StatusOption> statusOptions = new java.util.ArrayList<>();
+        if ("reserved".equalsIgnoreCase(tab)) {
+            statusOptions.add(new StatusOption("", "common.allStatuses"));
+            statusOptions.add(new StatusOption("Pending", "reservation.status.preparing"));
+            statusOptions.add(new StatusOption("Deposit_Paid", "reservation.status.depositPaid"));
+            statusOptions.add(new StatusOption("Refund_Pending", "reservation.status.refundPending"));
+            statusOptions.add(new StatusOption("Ready", "reservation.status.ready"));
+            statusOptions.add(new StatusOption("Canceled", "reservation.status.canceled"));
+            statusOptions.add(new StatusOption("Completed", "reservation.status.completed"));
+        } else if ("history".equalsIgnoreCase(tab)) {
+            statusOptions.add(new StatusOption("", "common.allStatuses"));
+            statusOptions.add(new StatusOption("Returned", "loan.status.returned"));
+            statusOptions.add(new StatusOption("Lost", "loan.status.lost"));
+            statusOptions.add(new StatusOption("Canceled", "reservation.status.canceled"));
+        } else { // borrowing
+            statusOptions.add(new StatusOption("", "common.allStatuses"));
+            statusOptions.add(new StatusOption("Borrowed", "loan.status.borrowed"));
+            statusOptions.add(new StatusOption("Due_Soon", "loan.status.dueSoon"));
+            statusOptions.add(new StatusOption("Overdue", "loan.status.overdue"));
+            statusOptions.add(new StatusOption("Pending", "loan.status.pendingBorrow"));
+            statusOptions.add(new StatusOption("Waiting_Pickup", "loan.status.waitingPickup"));
+            statusOptions.add(new StatusOption("Return_Pending", "loan.status.pendingReturn"));
+            statusOptions.add(new StatusOption("Renew_Pending", "loan.status.pendingRenewal"));
+        }
+        model.addAttribute("statusOptions", statusOptions);
+
+        List<MemberBorrowDTO> rawList;
+        if ("reserved".equalsIgnoreCase(tab)) {
+            rawList = reservations;
+        } else if ("history".equalsIgnoreCase(tab)) {
+            rawList = history;
+        } else {
+            rawList = currentBorrows;
+        }
+
+        // Parse dates
+        java.time.LocalDate from = null;
+        java.time.LocalDate to = null;
+        try {
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                from = java.time.LocalDate.parse(fromDate.trim());
+                if (from.isBefore(minDate)) {
+                    from = minDate;
+                    fromDate = minDate.toString();
+                }
+                if (from.isAfter(maxDate)) {
+                    from = maxDate;
+                    fromDate = maxDate.toString();
+                }
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                to = java.time.LocalDate.parse(toDate.trim());
+                if (to.isBefore(minDate)) {
+                    to = minDate;
+                    toDate = minDate.toString();
+                }
+                if (to.isAfter(maxDate)) {
+                    to = maxDate;
+                    toDate = maxDate.toString();
+                }
+            }
+        } catch (Exception ignored) {}
+
+        List<MemberBorrowDTO> filteredList = new java.util.ArrayList<>();
+        for (MemberBorrowDTO item : rawList) {
+            boolean matchesSearch = true;
+            if (search != null && !search.trim().isEmpty()) {
+                String title = item.getBookTitle();
+                if (title == null || !title.toLowerCase(java.util.Locale.ROOT).contains(search.trim().toLowerCase(java.util.Locale.ROOT))) {
+                    matchesSearch = false;
+                }
+            }
+
+            boolean matchesStatus = true;
+            if (status != null && !status.trim().isEmpty()) {
+                if ("borrowing".equalsIgnoreCase(tab) || tab == null || tab.isEmpty()) {
+                    if ("Due_Soon".equalsIgnoreCase(status)) {
+                        matchesStatus = "Borrowed".equalsIgnoreCase(item.getStatus()) && item.getDaysLeft() <= 2;
+                    } else if ("Borrowed".equalsIgnoreCase(status)) {
+                        matchesStatus = "Borrowed".equalsIgnoreCase(item.getStatus()) && item.getDaysLeft() > 2;
+                    } else {
+                        matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                    }
+                } else if ("reserved".equalsIgnoreCase(tab)) {
+                    if ("Ready".equalsIgnoreCase(status)) {
+                        matchesStatus = "Ready".equalsIgnoreCase(item.getStatus()) || "Active".equalsIgnoreCase(item.getStatus());
+                    } else {
+                        matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                    }
+                } else {
+                    matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                }
+            }
+
+            boolean matchesDate = true;
+            if (from != null || to != null) {
+                boolean actionMatch = true;
+                boolean returnMatch = true;
+
+                if (item.getActionDate() != null) {
+                    java.time.LocalDate actionDate = item.getActionDate().toLocalDate();
+                    if (from != null && actionDate.isBefore(from)) {
+                        actionMatch = false;
+                    }
+                    if (to != null && actionDate.isAfter(to)) {
+                        actionMatch = false;
+                    }
+                } else {
+                    actionMatch = false;
+                }
+
+                if (item.getReturnDate() != null) {
+                    java.time.LocalDate returnDate = item.getReturnDate().toLocalDate();
+                    if (from != null && returnDate.isBefore(from)) {
+                        returnMatch = false;
+                    }
+                    if (to != null && returnDate.isAfter(to)) {
+                        returnMatch = false;
+                    }
+                } else {
+                    returnMatch = false;
+                }
+
+                if ("history".equalsIgnoreCase(tab)) {
+                    matchesDate = actionMatch || returnMatch;
+                } else {
+                    matchesDate = actionMatch;
+                }
+            }
+
+            if (matchesSearch && matchesStatus && matchesDate) {
+                filteredList.add(item);
+            }
+        }
+
+        int pageSize = 5;
+        int totalItems = filteredList.size();
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+        if (page < 0) page = 0;
+        if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
+
+        List<MemberBorrowDTO> pagedList = new java.util.ArrayList<>();
+        if (totalItems > 0) {
+            int start = page * pageSize;
+            int end = Math.min(start + pageSize, totalItems);
+            pagedList = filteredList.subList(start, end);
+        }
+
+        model.addAttribute("booksData", pagedList);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("search", search);
+        model.addAttribute("status", status);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
 
         return "member/borrow";
     }
@@ -87,29 +305,80 @@ public class BorrowController {
     public String showCreateRequestForm(@RequestParam(value = "bookId", required = false) Integer bookId,
                                         Model model,
                                         Principal principal,
-                                        RedirectAttributes redirectAttributes) {
+                                        RedirectAttributes redirectAttributes,
+                                        HttpServletResponse response) {
         if (principal == null) return "redirect:/login";
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
 
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn sách trước khi gửi yêu cầu mượn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
         }
+
+        Member member = null;
+        try {
+            member = memberRepository.findByAccountUsername(principal.getName())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
+            long activeOrPendingCount = borrowDetailRepository.countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
+            if (activeOrPendingCount > 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Yêu cầu bị từ chối: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
+                return "redirect:/member/borrow/management?tab=borrowing";
+            }
+            // Kiểm tra số lượng bản vật lý khả dụng trong kho
+            long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            if (availableCount == 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không còn bản vật lý nào trong kho!");
+                return "redirect:/books/" + bookId;
+            }
+        } catch (ResourceNotFoundException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/";
+        } catch (Exception e) {
+            // ignore
+        }
+
+        if (member == null) {
+            return "redirect:/login";
+        }
+
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
+                .orElse(BigDecimal.ZERO);
+        double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
+                .map(s -> {
+                    try {
+                        return Integer.parseInt(s.getSettingValue());
+                    } catch (Exception e) {
+                        return 5000;
+                    }
+                }).orElse(5000));
+
+        model.addAttribute("member", member);
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("discountPercent", discountPercent);
+        model.addAttribute("feePerBookPerDay", feePerBookPerDay);
 
         model.addAttribute("currentMemberName", principal.getName());
         model.addAttribute("selectedBookId", bookId);
 
-        // --- THÊM DÒNG NÀY ĐỂ TRUYỀN DỮ LIỆU SỐ NGÀY MAX XUỐNG GIAO DIỆN ---
+        // Truyền dữ liệu số ngày tối đa cho phép xuống giao diện
         model.addAttribute("maxBorrowDays", getMaxBorrowDays());
 
         try {
             Book book = bookService.findBookById(bookId);
             if ("Inactive".equalsIgnoreCase(book.getStatus())) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không có sẵn để mượn!");
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.bookUnavailable"));
                 return "redirect:/";
             }
+            long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
             model.addAttribute("selectedBook", book);
+            model.addAttribute("availableCount", availableCount);
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Sách không hợp lệ. Vui lòng thử lại.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBook"));
             return "redirect:/";
         }
         return "member/borrow-create";
@@ -118,27 +387,94 @@ public class BorrowController {
     @PostMapping("/request/submit")
     public String submitBorrowRequest(@RequestParam(value = "bookId", required = false) Integer bookId,
                                       @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
+                                      @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
+                                      @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
                                       Principal principal,
                                       RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         if (bookId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa chọn sách để gửi yêu cầu mượn.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
         }
 
-        // --- THÊM ĐOẠN VALIDATION CHẶN LỖI NHẬP QUÁ NGÀY Ở ĐÂY ---
+        // 1. Validate số ngày mượn hợp lệ
         Integer maxDaysAllowed = getMaxBorrowDays();
         if (numberOfDays < 1 || numberOfDays > maxDaysAllowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Số ngày mượn không hợp lệ! Bạn chỉ được phép nhập từ 1 đến " + maxDaysAllowed + " ngày.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBorrowDays", maxDaysAllowed));
             return "redirect:/member/borrow/create?bookId=" + bookId;
         }
 
+        // 2. Chuẩn hóa số lượng
+        if (quantity == null || quantity < 1) quantity = 1;
+
         try {
-            borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Yêu cầu của bạn đang chờ phê duyệt.");
+            // 3. Kiểm tra số lượng bản vật lý thực tế trong kho trước khi thực hiện
+            long availableStock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            if (availableStock == 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockUnavailable"));
+                return "redirect:/books/" + bookId;
+            }
+            if (quantity > availableStock) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockExceeded", availableStock));
+                return "redirect:/member/borrow/create?bookId=" + bookId;
+            }
+
+            // 4. Tính toán chi phí mượn sách có áp dụng giảm giá thành viên
+            Member member = memberRepository.findByAccountUsername(principal.getName())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
+            BigDecimal feePerBookPerDay = BigDecimal.valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
+                    .map(s -> { try { return Integer.parseInt(s.getSettingValue()); } catch (Exception e) { return 5000; } })
+                    .orElse(5000));
+            double discount = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                    ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+            BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf((long) quantity * numberOfDays));
+            BigDecimal finalFee = baseFee.subtract(baseFee.multiply(BigDecimal.valueOf(discount / 100)));
+
+            BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                    .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
+                    .orElse(BigDecimal.ZERO);
+
+            // 5. Xử lý luồng thanh toán qua Ví thành viên (WALLET)
+            if ("WALLET".equalsIgnoreCase(paymentMethod)) {
+                if (walletBalance.compareTo(finalFee) < 0) {
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.insufficientWalletBalance"));
+                    return "redirect:/member/borrow/create?bookId=" + bookId;
+                }
+
+                // Đủ tiền trong ví -> Thực hiện tạo phiếu mượn & trừ tiền lập tức
+                for (int i = 0; i < quantity; i++) {
+                    borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
+                }
+
+                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
+                return "redirect:/member/borrow/management?tab=borrowing";
+            }
+
+            // 6. Xử lý luồng thanh toán qua Chuyển khoản (BANK - PayOS)
+            if ("BANK".equalsIgnoreCase(paymentMethod) && finalFee.compareTo(BigDecimal.ZERO) > 0) {
+                java.util.List<Integer> requestedBookIds = java.util.Collections.nCopies(quantity, bookId);
+                com.lms.entity.Borrow pendingBorrow = null;
+                try {
+                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), requestedBookIds, numberOfDays);
+                    com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
+                    return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                } catch (Exception paymentError) {
+                    if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {
+                        borrowService.cancelPendingBankBorrow(pendingBorrow.getBorrowId(), "CREATE_FAILED");
+                    }
+                    throw paymentError;
+                }
+            }
+
+            // Zero-fee loans can be submitted immediately without opening a payment link.
+            for (int i = 0; i < quantity; i++) {
+                borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
+            }
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
             return "redirect:/member/borrow/management?tab=borrowing";
-        } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể tạo yêu cầu mượn: " + e.getMessage());
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.requestFailed", e));
             return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
         }
     }
@@ -165,7 +501,7 @@ public class BorrowController {
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
             return "member/reserve-confirm";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hiển thị phiếu cọc: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.depositViewFailed", e));
             return "redirect:/member/borrow/management?tab=reserved";
         }
     }
@@ -178,11 +514,9 @@ public class BorrowController {
         if (principal == null) return "redirect:/login";
         try {
             borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
-            redirectAttributes.addFlashAttribute(
-                    "successMessage",
-                    "Đặt trước thành công. Tiền cọc đã được trừ từ ví và ghi nhận trong phiếu đặt.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationSubmitted"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể đặt trước sách: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.reservationFailed", e));
         }
         return "redirect:/member/borrow/management?tab=reserved";
     }
@@ -192,21 +526,23 @@ public class BorrowController {
         if (principal == null) return "redirect:/login";
         try {
             borrowService.memberCancelReservation(principal.getName(), reservationId);
-            redirectAttributes.addFlashAttribute("successMessage", "Hủy yêu cầu đặt giữ chỗ thành công.");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationCancelled"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể hủy đơn đặt chỗ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.reservationCancelFailed", e));
         }
         return "redirect:/member/borrow/management?tab=reserved";
     }
 
     @PostMapping("/renew/{borrowDetailId}")
-    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId,
+                            @RequestParam("renewalDays") Integer renewalDays,
+                            Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            borrowService.memberSubmitRenewRequest(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu gia hạn tới thủ thư. Vui lòng chờ phê duyệt!");
+            borrowService.memberSubmitRenewRequest(principal.getName(), borrowDetailId, renewalDays);
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.renewalSubmitted"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gửi yêu cầu gia hạn: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.renewalSubmitFailed", e));
         }
         return "redirect:/member/borrow/management?tab=borrowing";
     }
@@ -250,7 +586,7 @@ public class BorrowController {
         return memberRepository.findByUserEmail(usernameOrEmail)
                 .or(() -> memberRepository.findByUserPhone(usernameOrEmail))
                 .or(() -> memberRepository.findByAccountUsername(usernameOrEmail))
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên hiện tại."));
+                .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
     }
 
     private BigDecimal getDepositAmount() {
@@ -265,6 +601,14 @@ public class BorrowController {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+    private int getPositiveIntSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key).map(setting -> setting.getSettingValue())
+                    .filter(v -> v != null && !v.isBlank()).map(String::trim).map(Integer::parseInt)
+                    .filter(v -> v > 0).orElse(defaultValue);
+        } catch (NumberFormatException ignored) { return defaultValue; }
+    }
+
     private Integer getMaxBorrowDays() {
         return systemSettingRepository.findAll().stream()
                 .filter(setting -> setting.getSettingKey() != null)
@@ -278,5 +622,16 @@ public class BorrowController {
                 .orElse(14); // Giá trị mặc định nếu database chưa có key này
     }
 
+    public static class StatusOption {
+        private final String value;
+        private final String labelKey;
 
+        public StatusOption(String value, String labelKey) {
+            this.value = value;
+            this.labelKey = labelKey;
+        }
+
+        public String getValue() { return value; }
+        public String getLabelKey() { return labelKey; }
+    }
 }

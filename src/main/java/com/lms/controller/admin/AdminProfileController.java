@@ -1,5 +1,6 @@
 package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
+import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
 import com.lms.service.ProfileService;
@@ -21,7 +22,7 @@ import com.lms.config.CustomUserDetails;
  */
 @Controller
 @RequestMapping("/admin/profile")
-public class AdminProfileController {
+public class AdminProfileController extends LocalizedControllerSupport {
 
     private final ProfileService profileService;
 
@@ -34,8 +35,10 @@ public class AdminProfileController {
         if (principal == null)
             return "redirect:/login";
         String username = principal.getName();
-        User admin = profileService.getProfile(username);
-        model.addAttribute("admin", admin);
+        if (!model.containsAttribute("admin")) {
+            User admin = profileService.getProfile(username);
+            model.addAttribute("admin", admin);
+        }
         return "admin/profile";
     }
 
@@ -52,7 +55,8 @@ public class AdminProfileController {
 
         try {
             String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -66,9 +70,24 @@ public class AdminProfileController {
                 sessionUser.setPhone(updatedUser.getPhone());
             }
 
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Cập nhật thất bại: " + e.getMessage());
+            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
+                String field = ((com.lms.exception.ValidationException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            }
+            User tempUser = new User();
+            tempUser.setFullName(fullName);
+            tempUser.setEmail(email);
+            tempUser.setPhone(phone);
+            try {
+                User current = profileService.getProfile(principal.getName());
+                tempUser.setAvatar(current.getAvatar());
+                tempUser.setStatus(current.getStatus());
+            } catch (Exception ignored) {}
+            redirectAttributes.addFlashAttribute("admin", tempUser);
         }
         return "redirect:/admin/profile";
     }
@@ -82,12 +101,12 @@ public class AdminProfileController {
         if (principal == null)
             return "redirect:/login";
         if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("passwordError", "Mật khẩu mới và xác nhận không khớp!");
+            redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
             return "redirect:/admin/profile";
         }
         try {
             profileService.changePassword(principal.getName(), oldPassword, newPassword);
-            redirectAttributes.addFlashAttribute("passwordSuccess", "Đổi mật khẩu thành công!");
+            redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         }
