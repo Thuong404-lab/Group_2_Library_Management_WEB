@@ -5,24 +5,24 @@
 
 <head>
     <title th:text="#{home.title}">Book Catalog</title>
-    <!-- Include Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/index.css}" />
-  </head>
+</head>
 
 <body>
-    <div layout:fragment="content" class="container-fluid p-0">
+    <div layout:fragment="content" class="container-fluid p-0 guest-home-page">
         <!-- HERO SECTION -->
-        <div class="position-relative index-div-background-padding-01">
-            <div class="container text-center text-white position-relative index-div-z-index-02">
+        <section class="position-relative index-div-background-padding-01 guest-home-hero">
+            <div class="container text-center text-white position-relative guest-home-hero__content">
+                <span class="guest-page-eyebrow" th:text="#{home.hero.eyebrow}">Library discovery</span>
                 <h1 class="display-4 fw-bold mb-3 u-font-family-playfair-display-serif-53670465" th:text="#{home.hero.title}">Welcome to LMW Library</h1>
-                <p class="lead mb-5 opacity-75" th:text="#{home.hero.description}">Explore more than 10,000 books, research materials, and literary classics.</p>
+                <p class="lead mb-4 opacity-75" th:text="#{home.hero.description}">Explore more than 10,000 books, research materials, and literary classics.</p>
 
                 <div class="row justify-content-center">
                     <div class="col-md-8">
                         <!-- Search Bar in Hero (Shopee Style) -->
                         <div class="position-relative" id="searchContainer">
-                            <form id="heroSearchForm" action="/books" method="GET" class="input-group input-group-lg shadow-lg index-form-border-radius-overflow-position-04">
+                            <form id="heroSearchForm" th:action="@{/books}" method="get" class="input-group input-group-lg shadow-lg index-form-border-radius-overflow-position-04" role="search">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text bg-white border-0 px-4 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
                                 </div>
@@ -50,8 +50,6 @@
                                 </div>
                             </div>
 
-                            <!-- Backdrop for when search is active -->
-                            <div id="searchBackdrop" class="index-div-display-position-top-11"></div>
                         </div>
 
                         <!-- JavaScript for Live Search -->
@@ -66,19 +64,21 @@
                                 const suggestionList = document.getElementById('suggestionList');
                                 const searchBackdrop = document.getElementById('searchBackdrop');
                                 const viewAllResults = document.getElementById('viewAllResults');
+                                const homeHero = document.querySelector('.guest-home-hero');
                                 let timeoutId;
 
                                 function showDropdown() {
-                                    searchDropdown.style.display = 'block';
-                                    searchBackdrop.style.display = 'block';
-                                    // Bring search form to front
-                                    document.getElementById('searchContainer').style.zIndex = '1050';
+                                    searchDropdown.classList.add('is-open');
+                                    searchBackdrop.classList.add('is-open');
+                                    document.getElementById('searchContainer').classList.add('is-search-active');
+                                    homeHero.classList.add('is-search-active');
                                 }
 
                                 function hideDropdown() {
-                                    searchDropdown.style.display = 'none';
-                                    searchBackdrop.style.display = 'none';
-                                    document.getElementById('searchContainer').style.zIndex = '';
+                                    searchDropdown.classList.remove('is-open');
+                                    searchBackdrop.classList.remove('is-open');
+                                    document.getElementById('searchContainer').classList.remove('is-search-active');
+                                    homeHero.classList.remove('is-search-active');
                                 }
 
                                 const heroSearchForm = document.getElementById('heroSearchForm');
@@ -101,21 +101,28 @@
                                 searchInput.addEventListener('focus', function() {
                                     showDropdown();
                                     if (this.value.trim() === '') {
-                                        liveSearchSuggestions.style.display = 'none';
+                                        liveSearchSuggestions.classList.remove('is-open');
                                     }
                                 });
 
                                 searchBackdrop.addEventListener('click', hideDropdown);
 
+                                document.addEventListener('keydown', function(event) {
+                                    if (event.key === 'Escape' && searchDropdown.classList.contains('is-open')) {
+                                        hideDropdown();
+                                        searchInput.focus();
+                                    }
+                                });
+
                                 searchInput.addEventListener('input', function() {
                                     const keyword = this.value.trim();
 
                                     if (keyword === '') {
-                                        liveSearchSuggestions.style.display = 'none';
+                                        liveSearchSuggestions.classList.remove('is-open');
                                         return;
                                     }
 
-                                    liveSearchSuggestions.style.display = 'block';
+                                    liveSearchSuggestions.classList.add('is-open');
 
                                     // Update view all link
                                     viewAllResults.href = '/books?keyword=' + encodeURIComponent(keyword);
@@ -141,7 +148,6 @@
                                                     const item = document.createElement('a');
                                                     item.href = '/books/' + book.bookId;
                                                     item.className = 'list-group-item list-group-item-action d-flex align-items-center border-0 py-2 px-3 suggestion-item';
-                                                    item.style.transition = 'background-color 0.2s';
                                                     item.innerHTML = `
                                                         <img src="${book.thumbnailUrl}" class="index-img-width-height-fit-12 me-3 rounded shadow-sm" alt="Book cover"
                                                             onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
@@ -150,9 +156,6 @@
                                                             <small class="text-muted text-truncate d-block"><i class="bi bi-pen me-1"></i> ${book.authorName}</small>
                                                         </div>
                                                     `;
-                                                    // Add hover effect via JS since inline hover is hard
-                                                    item.addEventListener('mouseenter', function() { this.style.backgroundColor = '#f8f9fa'; });
-                                                    item.addEventListener('mouseleave', function() { this.style.backgroundColor = 'transparent'; });
                                                     suggestionList.appendChild(item);
                                                 });
                                             })
@@ -172,13 +175,19 @@
                     <a th:href="@{/register}" class="btn btn-warning rounded-pill px-4 font-weight-bold index-button-background-border-color-07" th:text="#{register.action}">Register now</a>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="container py-5">
+        <!-- Page-level backdrop: only the active search container is rendered above it. -->
+        <div id="searchBackdrop" class="index-div-display-position-top-11"></div>
+
+        <div class="container py-5 guest-home-content">
 
         <!-- FEATURED CATEGORIES (CLASSIC UI) -->
-        <div class="mb-5 pb-3">
-            <h3 class="fw-bold mb-4 text-center u-color-4a3b32-font-family-playfair-display-serif-70239336"><i class="bi bi-bookmark-heart text-danger me-2"></i><span th:text="#{home.featuredTopics}">Featured Topics</span></h3>
+        <section class="mb-5 pb-3 guest-home-section">
+            <div class="guest-section-heading guest-section-heading--center">
+                <span class="guest-page-eyebrow" th:text="#{home.featuredTopics.eyebrow}">Browse by interest</span>
+                <h2><i class="bi bi-bookmark-heart" aria-hidden="true"></i><span th:text="#{home.featuredTopics}">Featured Topics</span></h2>
+            </div>
             <div class="row g-4 justify-content-center text-center">
                 <div class="col-6 col-md-4 col-lg-2">
                     <a href="/books?genreId=1" class="text-decoration-none d-block h-100">
@@ -229,15 +238,16 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- RECENT BOOKS HORIZONTAL SLIDER (CLASSIC UI) -->
-        <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-dark pb-2">
+        <section class="mb-5 guest-home-section">
+            <div class="d-flex justify-content-between align-items-end mb-4 guest-section-heading guest-section-heading--row">
                 <div>
-                    <h3 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336"><i class="bi bi-stars text-warning me-2"></i><span th:text="#{home.newBooks}">Recently Added Books</span></h3>
+                    <span class="guest-page-eyebrow" th:text="#{home.newBooks.eyebrow}">Fresh arrivals</span>
+                    <h2><i class="bi bi-stars" aria-hidden="true"></i><span th:text="#{home.newBooks}">Recently Added Books</span></h2>
                 </div>
-                <a href="/books?sort=newest" class="btn btn-outline-dark btn-sm rounded-0 border-2 fw-bold u-font-family-playfair-display-serif-53670465"><span th:text="#{common.viewAll}">View all</span> <i class="bi bi-arrow-right"></i></a>
+                <a th:href="@{/books(sort='newest')}" class="guest-outline-action"><span th:text="#{common.viewAll}">View all</span> <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
             </div>
 
             <!-- Horizontal Scrollable Container (Slider 1) -->
@@ -261,13 +271,14 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- HOT TRENDING BOOKS HORIZONTAL SLIDER -->
-        <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-dark pb-2">
+        <section class="mb-5 guest-home-section">
+            <div class="d-flex justify-content-between align-items-end mb-4 guest-section-heading guest-section-heading--row">
                 <div>
-                    <h3 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336"><i class="bi bi-fire text-danger mr-2"></i><span th:text="#{home.trendingBooks}">Trending / Most Read</span></h3>
+                    <span class="guest-page-eyebrow" th:text="#{home.trendingBooks.eyebrow}">Reader favorites</span>
+                    <h2><i class="bi bi-fire" aria-hidden="true"></i><span th:text="#{home.trendingBooks}">Trending / Most Read</span></h2>
                 </div>
                 <!-- Button removed as per user request -->
             </div>
@@ -294,12 +305,12 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Modals removed as per user request to navigate to detail page instead -->
         </div>
 
-        <div class="alert alert-info" th:if="${books == null or books.isEmpty()}">
+        <div class="alert alert-info guest-empty-alert" th:if="${books == null or books.isEmpty()}">
             <span th:text="#{book.empty}">There are no books in the system yet.</span>
         </div>
     </div>

@@ -1,74 +1,87 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{member.tier.title}">Membership Tier Progress</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/membership-tier.css}" />
-  </head>
+</head>
 <body>
-<div layout:fragment="content" class="container py-4">
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body p-4 text-center bg-light rounded">
-            <h4 class="text-muted mb-1" th:text="#{member.tier.current}">Current Membership Tier</h4>
-            <h1 class="display-4 text-primary fw-bold" th:text="${member.tier != null ? member.tier.tierName : #messages.msg('tier.standard')}">Standard</h1>
+<main layout:fragment="content" class="member-tier-page member-palette-page">
+    <div class="container member-tier-container">
+        <header class="member-tier-hero member-dashboard-hero">
+            <div class="member-tier-hero-copy">
+                <span th:text="#{member.tier.eyebrow}">MEMBERSHIP JOURNEY</span>
+                <h1 th:text="#{member.tier.title}">Membership Tier Progress</h1>
+                <p th:text="#{member.tier.description}">Track your current benefits and progress toward the next tier.</p>
+            </div>
+            <a th:href="@{/member/membership/benefits}" class="member-ui-button member-ui-button--inverse">
+                <i class="bi bi-gift" aria-hidden="true"></i><span th:text="#{member.tier.viewBenefits}">View benefits</span>
+            </a>
+        </header>
 
-            <div class="mt-3">
-                <p class="text-secondary mb-2">
-                    <span th:text="#{member.tier.totalSpent}">Total accumulated spending:</span> <strong class="text-dark" th:text="#{currency.vndAmount(${#numbers.formatDecimal(currentSpent, 1, 'DEFAULT', 0, 'DEFAULT')})}">150,000 VND</strong>
+        <div class="member-tier-alert member-tier-alert--error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+        <section class="member-tier-current member-reference-list" th:if="${member != null}">
+            <div class="member-tier-current-copy">
+                <span th:text="#{member.tier.current}">Current Membership Tier</span>
+                <h2 th:text="${member.tier != null ? member.tier.tierName : #messages.msg('tier.standard')}">Standard</h2>
+                <p><span th:text="#{member.tier.totalSpent}">Total accumulated spending:</span>
+                    <strong th:text="#{currency.vndAmount(${#numbers.formatDecimal(currentSpent != null ? currentSpent : 0, 1, 'DEFAULT', 0, 'DEFAULT')})}">0 VND</strong>
                 </p>
             </div>
 
-            <div class="mt-4 mx-auto member-membership-tier-div-max-width-01" th:if="${nextTier != null}">
-                <div class="d-flex justify-content-between mb-1 small text-muted">
+            <div class="member-tier-progress" th:if="${nextTier != null && nextTier.condition != null && nextTier.condition > 0}">
+                <div class="member-tier-progress-heading">
                     <span th:text="#{member.tier.currentLevel}">Current level</span>
                     <span><span th:text="#{member.tier.next}">Next tier:</span> <strong th:text="${nextTier.tierName}">VIP</strong></span>
                 </div>
-                <div class="progress mb-3 member-membership-tier-div-height-02">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                         role="progressbar"
-                         th:data-presentation-width="${currentSpent / nextTier.condition * 100}"></div>
+                <div class="member-tier-progress-track" role="progressbar" th:aria-label="#{member.tier.progressLabel}"
+                     aria-valuemin="0" aria-valuemax="100" th:aria-valuenow="${currentSpent / nextTier.condition * 100}">
+                    <div class="member-tier-progress-bar" th:data-presentation-width="${currentSpent / nextTier.condition * 100}"></div>
                 </div>
-                <div class="alert alert-info border-0 shadow-sm" role="alert">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    <span th:text="#{member.tier.spendMorePrefix}">Spend another</span> <strong th:text="#{currency.vndAmount(${#numbers.formatDecimal(amountNeeded, 1, 'DEFAULT', 0, 'DEFAULT')})}">50,000 VND</strong> <span th:text="#{member.tier.unlockPrefix}">to unlock tier</span> <span th:text="${nextTier.tierName}">VIP</span>!
-                </div>
+                <p class="member-tier-next-message">
+                    <i class="bi bi-arrow-up-circle" aria-hidden="true"></i>
+                    <span th:text="#{member.tier.spendMorePrefix}">Spend another</span>
+                    <strong th:text="#{currency.vndAmount(${#numbers.formatDecimal(amountNeeded != null ? amountNeeded : 0, 1, 'DEFAULT', 0, 'DEFAULT')})}">0 VND</strong>
+                    <span th:text="#{member.tier.unlockPrefix}">to unlock tier</span>
+                    <strong th:text="${nextTier.tierName}">VIP</strong>
+                </p>
             </div>
 
-            <div class="mt-4" th:if="${nextTier == null}">
-                <span class="badge bg-gold p-2 text-warning border border-warning fs-6"><i class="bi bi-trophy-fill me-1"></i><span th:text="#{member.tier.highest}">Congratulations! You reached the highest membership tier.</span></span>
+            <div class="member-tier-highest" th:if="${nextTier == null}">
+                <i class="bi bi-trophy-fill" aria-hidden="true"></i>
+                <span th:text="#{member.tier.highest}">Congratulations! You reached the highest membership tier.</span>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-layers me-2 text-primary"></i><span th:text="#{member.tier.system}">Membership Tier System</span></h5>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th th:text="#{member.tier.name}">Tier Name</th>
-                    <th th:text="#{member.tier.borrowLimit}">Borrowing Limit</th>
-                    <th th:text="#{member.tier.discount}">Discount</th>
-                    <th th:text="#{member.tier.requirement}">Required Spending</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="tier : ${allTiers}" th:classappend="${member.tier != null && member.tier.tierId == tier.tierId} ? 'table-primary fw-bold' : ''">
-                    <td>
-                        <span th:text="${tier.tierName}">Tier Name</span>
-                        <span th:if="${member.tier != null && member.tier.tierId == tier.tierId}" class="badge bg-primary ms-2 small" th:text="#{member.tier.yours}">Yours</span>
-                    </td>
-                    <td th:text="#{member.tier.booksAtOnce(${tier.borrowLimit})}">3 books at once</td>
-                    <td th:text="#{member.tier.borrowFeeDiscount(${tier.discountPercent})}">0% off borrowing fees</td>
-                    <td th:text="#{currency.vndAmount(${#numbers.formatDecimal(tier.condition, 1, 'DEFAULT', 0, 'DEFAULT')})}">0 VND</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+        <section class="member-tier-system member-reference-list" th:if="${allTiers != null}">
+            <div class="member-tier-system-heading member-reference-list__header">
+                <span th:text="#{public.tiers.eyebrow}">Benefits made for you</span>
+                <h2 th:text="#{member.tier.system}">Membership Tier System</h2>
+            </div>
+            <div class="member-tier-table-wrap member-reference-list__body">
+                <table class="member-tier-table member-reference-table">
+                    <thead><tr>
+                        <th th:text="#{member.tier.name}">Tier Name</th>
+                        <th th:text="#{member.tier.borrowLimit}">Borrowing Limit</th>
+                        <th th:text="#{member.tier.discount}">Discount</th>
+                        <th th:text="#{member.tier.requirement}">Required Spending</th>
+                    </tr></thead>
+                    <tbody>
+                    <tr class="member-reference-list__item" th:each="tier : ${allTiers}"
+                        th:classappend="${member != null && member.tier != null && member.tier.tierId == tier.tierId} ? ' is-current' : ''">
+                        <td><strong th:text="${tier.tierName}">Tier Name</strong>
+                            <span th:if="${member != null && member.tier != null && member.tier.tierId == tier.tierId}"
+                                  class="member-reference-pill" th:text="#{member.tier.yours}">Yours</span></td>
+                        <td th:text="#{member.tier.booksAtOnce(${tier.borrowLimit})}">3 books at once</td>
+                        <td th:text="#{member.tier.borrowFeeDiscount(${tier.discountPercent})}">0% off borrowing fees</td>
+                        <td th:text="#{currency.vndAmount(${#numbers.formatDecimal(tier.condition, 1, 'DEFAULT', 0, 'DEFAULT')})}">0 VND</td>
+                    </tr>
+                    <tr th:if="${allTiers.isEmpty()}"><td colspan="4" class="member-tier-empty" th:text="#{public.tiers.emptyDescription}">Membership tier information is being updated.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
-</div>
+</main>
 </body>
 </html>

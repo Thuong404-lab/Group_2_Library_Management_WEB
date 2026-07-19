@@ -1,68 +1,63 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout/base}">
-
 <head>
     <title th:text="#{guest.bookDetail.pageTitle(${book.title})}">Book Details</title>
     <link rel="stylesheet" th:href="@{/css/pages/guest/book-detail.css}" />
-  </head>
-
+</head>
 <body>
-    <div layout:fragment="content" class="container mt-4 mb-5">
-
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4 pt-3">
-            <ol class="breadcrumb bg-transparent p-0 mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none u-color-8b5a2b-93ece783"><i
-                            class="bi bi-house-door"></i> <span th:text="#{nav.home}">Home</span></a></li>
-                <li class="breadcrumb-item"><a href="/books" class="text-decoration-none u-color-8b5a2b-93ece783" th:text="#{nav.explore}">Explore Books</a></li>
-                <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page" th:text="${book.title}">Book title</li>
-            </ol>
+<main layout:fragment="content" class="guest-book-detail-page member-palette-page">
+    <div class="container guest-book-detail-container">
+        <nav class="book-detail-breadcrumb" th:aria-label="#{guest.bookDetail.breadcrumb}">
+            <a th:href="@{/}"><i class="bi bi-house-door" aria-hidden="true"></i><span th:text="#{nav.home}">Home</span></a>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            <a th:href="@{/books}" th:text="#{nav.explore}">Explore Books</a>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            <span th:text="${book.title}">Book title</span>
         </nav>
 
-
-        <!-- Book Info -->
-        <div class="row mt-3 bg-white p-4 rounded shadow-sm">
-            <!-- Book Cover -->
-            <div class="col-md-4 text-center mb-4 mb-md-0">
+        <section class="book-detail-hero member-reference-list">
+            <div class="book-detail-cover-panel">
                 <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
-                     class="img-fluid rounded shadow guest-book-detail-img-max-height-fit-03" th:alt="${book.title}"
+                     class="book-detail-cover" th:alt="${book.title}"
                      onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
-                <div class="mt-3">
-
-                    <span th:class="${book.status == 'Active' ? 'badge bg-success px-3 py-2 fs-6 text-white' : 'badge bg-danger px-3 py-2 fs-6 text-white'}"
-                          th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
-                </div>
+                <span class="book-detail-status member-reference-pill"
+                      th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
+                      th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
             </div>
 
-            <!-- Book Details -->
-            <div class="col-md-8">
-                <div class="badge mb-2 guest-book-detail-div-background-04" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</div>
-                <h2 class="fw-bold mb-1 guest-book-detail-h2-font-family-05" th:text="${book.title}">Book title</h2>
-                <p class="text-muted fs-5 mb-3">
-                    <span th:if="${book.authors != null && !book.authors.isEmpty()}"
-                          th:each="author, iterStat : ${book.authors}">
+            <div class="book-detail-main">
+                <span class="book-detail-eyebrow" th:text="#{guest.bookDetail.eyebrow}">BOOK DETAILS</span>
+                <span class="book-detail-genre member-reference-pill"
+                      th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</span>
+                <h1 th:text="${book.title}">Book title</h1>
+                <p class="book-detail-authors">
+                    <span th:if="${book.authors != null && !book.authors.isEmpty()}" th:each="author, iterStat : ${book.authors}">
                         <span th:text="${author.authorName}"></span><span th:if="${!iterStat.last}">, </span>
                     </span>
                     <span th:if="${book.authors == null || book.authors.isEmpty()}" th:text="#{book.unknownAuthor}">Unknown author</span>
                 </p>
 
-                <!-- Stats -->
-                <div class="d-flex gap-4 mb-4">
-                    <div class="text-center">
-                        <div class="fw-bold fs-4 u-color-ffc107-2cee102e"
-                             th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' ★' : #messages.msg('common.none')}">None</div>
-                        <div class="small text-muted" th:text="#{guest.bookDetail.averageRating}">Average Rating</div>
+                <dl class="book-detail-facts">
+                    <div>
+                        <dt th:text="#{guest.bookDetail.averageRating}">Average Rating</dt>
+                        <dd><i class="bi bi-star-fill" aria-hidden="true"></i><span th:text="${reviewCount > 0 ? #numbers.formatDecimal(averageRating, 1, 1) + ' / 5' : #messages.msg('common.none')}">None</span></dd>
                     </div>
-                    <div class="text-center">
-                        <div class="fw-bold fs-4 u-color-8b5a2b-d7f13118">320</div>
-                        <div class="small text-muted" th:text="#{guest.bookDetail.pages}">Pages</div>
+                    <div>
+                        <dt th:text="#{guest.bookDetail.reviewTotal}">Reader reviews</dt>
+                        <dd th:text="${reviewCount}">0</dd>
                     </div>
-                    <div class="text-center">
-                        <div class="fw-bold fs-4 guest-book-detail-div-color-08">42</div>
-                        <div class="small text-muted" th:text="#{guest.bookDetail.borrowCount}">Loans</div>
+                    <div>
+                        <dt>ISBN</dt>
+                        <dd th:text="${book.isbn != null ? book.isbn : #messages.msg('common.none')}">ISBN</dd>
                     </div>
+                </dl>
+
+                <div class="book-detail-description">
+                    <h2 th:text="#{guest.bookDetail.description}">Book Description</h2>
+                    <p th:text="${book.description != null && !book.description.trim().isEmpty() ? book.description : #messages.msg('guest.bookDetail.descriptionPending')}">Book description...</p>
                 </div>
 
                 <div class="row mb-4">
@@ -111,376 +106,226 @@
                     </span>
                 </div>
 
-                <div class="d-flex mt-3 flex-wrap">
+                <div class="book-detail-actions d-flex mt-3 flex-wrap" th:aria-label="#{common.actions}">
                     <form th:action="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
-                          method="post"
-                          class="flex-grow-1 favorite-form mr-2 mb-2"
-                          th:data-book-id="${book.bookId}">
+                          method="post" class="favorite-form" th:data-book-id="${book.bookId}">
                         <button type="submit"
-                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
-                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
+                                th:class="${favoriteBookIds.contains(book.bookId) ? 'book-detail-button book-detail-button--secondary js-favorite-button active' : 'book-detail-button book-detail-button--secondary js-favorite-button'}">
+                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill' : 'bi bi-heart'}" aria-hidden="true"></i>
                             <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
                         </button>
                     </form>
-
-                    <form th:action="@{/member/cart/add}" method="post" class="flex-grow-1 mr-2 mb-2 cart-add-form">
+                    <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"
+                          th:action="@{/member/cart/add}" method="post">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-outline-classic w-100 py-2"
+                        <button type="submit" class="book-detail-button book-detail-button--secondary"
                                 th:disabled="${book.status != 'Active' or availableCount == 0}"
-                                th:title="${availableCount == 0 ? 'Sách đã hết bản trong kho' : ''}">
-                            <i class="bi bi-cart-plus me-1"></i> <span th:text="#{guest.bookDetail.addToCart}">Thêm vào giỏ sách</span>
+                                th:title="${availableCount == 0 ? #messages.msg('guest.bookDetail.unavailableHint') : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
+                            <i class="bi bi-bag-plus" aria-hidden="true"></i><span th:text="#{guest.bookDetail.addToCart}">Add to Cart</span>
                         </button>
                     </form>
-
-                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2 app-confirm-form"
+                    <a sec:authorize="hasRole('MEMBER')" th:if="${bookInCart}"
+                       th:href="@{/member/cart}"
+                       class="book-detail-button book-detail-button--secondary active">
+                        <i class="bi bi-bag-check" aria-hidden="true"></i><span th:text="#{guest.bookDetail.viewCart}">View Cart</span>
+                    </a>
+                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
+                          class="app-confirm-form"
                           data-confirm-title="Xác nhận đặt trước sách"
                           data-confirm-subject-label="Sách đặt trước"
                           th:data-confirm-subject="${book.title}"
-                          data-confirm-message="Hệ thống sẽ tiến hành trừ tạm thời tiền đặt cọc (50.000 VNĐ) từ ví thành viên của bạn để giữ chỗ. Bạn có đồng ý tiếp tục?"
+                          data-confirm-message="Hệ thống sẽ tạm giữ tiền đặt cọc từ ví thành viên để giữ chỗ. Bạn có đồng ý tiếp tục?"
                           data-confirm-action="Xác nhận &amp; Trừ tiền">
-                        <button type="submit" class="btn btn-outline-classic w-100 py-2">
-                            <i class="bi bi-bookmark me-1"></i> <span th:text="#{guest.bookDetail.reserve}">Reserve</span>
+                        <button type="submit" class="book-detail-button book-detail-button--secondary">
+                            <i class="bi bi-bookmark" aria-hidden="true"></i><span th:text="#{guest.bookDetail.reserve}">Reserve</span>
                         </button>
                     </form>
-
-                    <form th:action="@{/member/borrow/create}" method="get" class="flex-grow-1 mb-2">
+                    <form th:action="@{/member/borrow/create}" method="get">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold"
+                        <button type="submit" class="book-detail-button book-detail-button--primary"
                                 th:disabled="${book.status != 'Active' or availableCount == 0}"
-                                th:title="${availableCount == 0 ? 'Sách đã hết bản trong kho' : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
-                            <i class="bi bi-book me-1"></i> <span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
+                                th:title="${availableCount == 0 ? #messages.msg('guest.bookDetail.unavailableHint') : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
+                            <i class="bi bi-book" aria-hidden="true"></i><span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
                         </button>
                     </form>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- ====================== REVIEWS SECTION ====================== -->
-        <div class="mt-5">
-            <h4 class="fw-bold mb-4 u-font-family-playfair-display-serif-color-4a3b32-fbccaa2c">
-                <i class="bi bi-chat-square-quote-fill me-2 u-color-8b5a2b-d7f13118"></i>
-                <span th:text="#{guest.bookDetail.readerReviews}">Reader Reviews</span>
-                <span class="badge bg-secondary ms-2 fs-6" th:text="${reviewCount}">0</span>
-            </h4>
+        <section class="book-review-section" th:aria-labelledby="book-review-heading">
+            <div class="book-review-section-heading">
+                <div>
+                    <span th:text="#{guest.bookDetail.reviewEyebrow}">READER COMMUNITY</span>
+                    <h2 id="book-review-heading" th:text="#{guest.bookDetail.readerReviews}">Reader Reviews</h2>
+                </div>
+                <span class="book-review-count member-reference-pill" th:text="#{guest.bookDetail.reviewCount(${reviewCount})}">0 reviews</span>
+            </div>
 
-            <!-- Form viết review cho member -->
-            <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
-            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
-
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')"
+            <div class="write-review-box member-reference-list__item" sec:authorize="hasRole('MEMBER')"
                  th:if="${reviewBorrowEligible and !reviewAlreadySubmitted}">
-                <h5 class="fw-bold mb-4 u-color-4a3b32-8f35ff96">
-                    <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span>
-                </h5>
+                <h3><i class="bi bi-pencil-square" aria-hidden="true"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span></h3>
                 <form id="bookDetailReviewForm"
                       th:action="@{'/member/interaction/books/' + ${book.bookId} + '/reviews'}"
-                      th:object="${reviewRequest}"
-                      method="post"
-                      novalidate>
+                      th:object="${reviewRequest}" method="post" novalidate>
                     <input type="hidden" th:field="*{bookId}" th:value="${book.bookId}">
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" th:text="#{guest.bookDetail.stars}">Stars</label>
+                    <div class="book-review-field">
+                        <label th:text="#{guest.bookDetail.stars}">Stars</label>
                         <input type="hidden" th:field="*{rating}" id="ratingValue">
-                        <div class="d-flex align-items-center flex-wrap gap-2">
-                            <div class="rating-picker"
-                                 id="memberRatingPicker"
-                                 role="radiogroup"
-                                 th:aria-label="#{guest.bookDetail.selectStars}">
-                                <button type="button" class="rating-star" data-value="1" role="radio" th:aria-label="#{guest.bookDetail.starCount(1)}" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="2" role="radio" th:aria-label="#{guest.bookDetail.starCount(2)}" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="3" role="radio" th:aria-label="#{guest.bookDetail.starCount(3)}" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="4" role="radio" th:aria-label="#{guest.bookDetail.starCount(4)}" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                                <button type="button" class="rating-star" data-value="5" role="radio" th:aria-label="#{guest.bookDetail.starCount(5)}" aria-checked="false">
-                                    <i class="bi bi-star-fill"></i>
-                                </button>
-                            </div>
+                        <div class="rating-picker" id="memberRatingPicker" role="radiogroup" th:aria-label="#{guest.bookDetail.selectStars}">
+                            <button type="button" class="rating-star" data-value="1" role="radio" th:aria-label="#{guest.bookDetail.starCount(1)}" aria-checked="false"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="2" role="radio" th:aria-label="#{guest.bookDetail.starCount(2)}" aria-checked="false"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="3" role="radio" th:aria-label="#{guest.bookDetail.starCount(3)}" aria-checked="false"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="4" role="radio" th:aria-label="#{guest.bookDetail.starCount(4)}" aria-checked="false"><i class="bi bi-star-fill"></i></button>
+                            <button type="button" class="rating-star" data-value="5" role="radio" th:aria-label="#{guest.bookDetail.starCount(5)}" aria-checked="false"><i class="bi bi-star-fill"></i></button>
                         </div>
-                        <div id="ratingFeedback" class="invalid-feedback d-block"></div>
+                        <div id="ratingFeedback" class="book-review-field-error" role="alert"></div>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold" th:text="#{guest.bookDetail.comment}">Comment</label>
-                        <textarea class="form-control"
-                                  id="bookDetailReviewComment"
-                                  rows="5"
-                                  th:field="*{comment}"
-                                  required minlength="5"
-                                  maxlength="1000"
+                    <div class="book-review-field">
+                        <label for="bookDetailReviewComment" th:text="#{guest.bookDetail.comment}">Comment</label>
+                        <textarea id="bookDetailReviewComment" rows="5" th:field="*{comment}" required minlength="5" maxlength="1000"
                                   th:placeholder="#{guest.bookDetail.commentPlaceholder}"
-                                  aria-describedby="bookDetailReviewCommentCount bookDetailReviewCommentError"></textarea>
-                        <div class="book-review-comment-support"><span id="bookDetailReviewCommentCount" aria-live="polite">0/1000</span></div>
-                        <div id="bookDetailReviewCommentError" class="book-review-field-error" role="alert" aria-live="assertive"
-                             th:text="${#fields.hasErrors('comment') ? #fields.errors('comment')[0] : ''}"></div>
+                                  aria-describedby="bookDetailReviewCommentError bookDetailReviewCommentCount"></textarea>
+                        <div class="book-review-comment-support">
+                            <div id="bookDetailReviewCommentError" class="book-review-field-error" role="alert" aria-live="assertive"
+                                 th:text="${#fields.hasErrors('comment') ? #fields.errors('comment')[0] : ''}"></div>
+                            <span id="bookDetailReviewCommentCount" aria-live="polite">0/1000</span>
+                        </div>
                     </div>
-
-                    <button type="submit" class="btn text-white px-4 u-background-8b5a2b-9b8da1d0">
-                        <span th:text="#{guest.bookDetail.submitReview}">Submit Review</span>
-                    </button>
+                    <button type="submit" class="book-detail-button book-detail-button--primary" th:text="#{guest.bookDetail.submitReview}">Submit Review</button>
                 </form>
             </div>
 
-            <div class="review-eligibility-notice" sec:authorize="hasRole('MEMBER')"
-                 th:if="${reviewSubmittedSuccess == true}">
-                <div>
-                    <h5 th:text="#{guest.bookDetail.reviewSuccess}">Review submitted successfully.</h5>
-                    <a th:href="@{/member/interaction/reviews}" class="review-eligibility-link" th:text="#{guest.bookDetail.myReviews}">View My Reviews</a>
-                </div>
-            </div>
-
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="!hasRole('MEMBER')">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="write-review-box member-reference-list__item" sec:authorize="!hasRole('MEMBER')">
+                <div class="book-review-login">
                     <div>
-                        <h5 class="fw-bold mb-1 u-color-4a3b32-8f35ff96" th:text="#{guest.bookDetail.writeReview}">Write Your Review</h5>
-                        <div class="text-muted" th:text="#{guest.bookDetail.loginToReview}">Log in with a member account to submit a review.</div>
+                        <h3 th:text="#{guest.bookDetail.writeReview}">Write Your Review</h3>
+                        <p th:text="#{guest.bookDetail.loginToReview}">Log in with a member account to submit a review.</p>
                     </div>
-                    <a th:href="@{/login}" class="btn text-white px-4 guest-book-detail-a-background-13" th:text="#{nav.login}">Log in</a>
+                    <a th:href="@{/login}" class="book-detail-button book-detail-button--primary" th:text="#{nav.login}">Log in</a>
                 </div>
             </div>
 
-            <div th:if="${bookReviews == null || bookReviews.isEmpty()}"
-                 class="bg-white rounded shadow-sm p-4 text-center text-muted">
-                <span th:text="#{guest.bookDetail.noReviews}">There are no reviews for this book yet.</span>
+            <div class="book-review-empty member-reference-list__item" th:if="${bookReviews == null || bookReviews.isEmpty()}">
+                <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                <p th:text="#{guest.bookDetail.noReviews}">There are no reviews for this book yet.</p>
             </div>
 
-            <!-- Danh sách reviews từ DB -->
-            <!-- Review 1 -->
-            <div th:each="review : ${bookReviews}" class="bg-white rounded shadow-sm p-4 mb-3 review-card">
-                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-14"
-
-                             th:text="${review.member != null && review.member.user != null && !#strings.isEmpty(review.member.user.fullName) ? #strings.substring(review.member.user.fullName, 0, 1) : '?'}">N</div>
-                        <div>
-                            <div class="fw-bold" th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : #messages.msg('guest.bookDetail.reader')}">Reader</div>
-                            <div class="small text-muted" th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : #messages.msg('common.unknownDate')}">Unknown date</div>
+            <div class="book-review-list" th:if="${bookReviews != null && !bookReviews.isEmpty()}">
+                <article th:each="review : ${bookReviews}" class="book-review-card member-reference-list__item">
+                    <div class="book-review-card-heading">
+                        <div class="book-review-reader">
+                            <span class="book-review-avatar"
+                                  th:text="${review.member != null && review.member.user != null && !#strings.isEmpty(review.member.user.fullName) ? #strings.substring(review.member.user.fullName, 0, 1) : '?'}">R</span>
+                            <span>
+                                <strong th:text="${review.member != null && review.member.user != null ? review.member.user.fullName : #messages.msg('guest.bookDetail.reader')}">Reader</strong>
+                                <small th:text="${review.createdDate != null ? #temporals.format(review.createdDate, 'dd/MM/yyyy') : #messages.msg('common.unknownDate')}">Unknown date</small>
+                            </span>
                         </div>
+                        <span class="book-review-rating"><i class="bi bi-star-fill" aria-hidden="true"></i><b th:text="${review.rating + '/5'}">5/5</b></span>
                     </div>
-                    <div class="text-warning fs-5">
-                        <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
-                        <span class="text-muted small ms-1" th:text="${review.rating + '/5'}">5/5</span>
-                    </div>
-                </div>
-                <p class="mb-0 text-muted lh-lg" th:text="${review.comment}">
-                    A thoughtful and useful book with practical lessons for everyday life.
-                </p>
+                    <p th:text="${review.comment}">Review content</p>
+                </article>
             </div>
-
-            <!-- Review 2 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card" th:remove="all">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-15"
-                            >T</div>
-                        <div>
-                            <div class="fw-bold">Sample Reader</div>
-                            <div class="small text-muted">20/05/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★<span class="guest-book-detail-span-color-16">★</span> <span class="text-muted small ms-1">4/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    The book is easy to read and includes many practical examples.
-                </p>
-            </div>
-
-            <!-- Review 3 -->
-            <div class="bg-white rounded shadow-sm p-4 mb-3 review-card" th:remove="all">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white guest-book-detail-div-width-height-background-17"
-                            >L</div>
-                        <div>
-                            <div class="fw-bold">Sample Reader</div>
-                            <div class="small text-muted">02/04/2026</div>
-                        </div>
-                    </div>
-                    <div class="text-warning fs-5">★★★★★ <span class="text-muted small ms-1">5/5</span></div>
-                </div>
-                <p class="mb-0 text-muted lh-lg">
-                    A classic with straightforward, practical ideas.
-                </p>
-            </div>
-        </div>
-        <!-- ====================== END REVIEWS ====================== -->
-
+        </section>
     </div>
+</main>
 
-    <div layout:fragment="scripts">
-        <script th:inline="javascript">
-            // Independent AJAX Cart handler to ensure it runs even if reviews are not rendered
-            (function() {
-                const cartAddForms = document.querySelectorAll(".cart-add-form");
-                cartAddForms.forEach(form => {
-                    form.addEventListener("submit", function(e) {
-                        e.preventDefault();
-                        const btn = form.querySelector("button[type='submit']");
-                        if (btn) btn.disabled = true;
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        const bookDetailPageSuccess = /*[[${success}]]*/ null;
+        const bookDetailPageError = /*[[${error}]]*/ null;
+        if (bookDetailPageError) window.AppFeedback.error(bookDetailPageError);
+        else if (bookDetailPageSuccess) window.AppFeedback.success(bookDetailPageSuccess);
 
-                        const formData = new FormData(form);
-                        fetch(form.action, {
-                            method: "POST",
-                            body: formData,
-                            headers: {
-                                "X-Requested-With": "XMLHttpRequest"
-                            }
-                        })
-                        .then(response => {
-                            if (response.status === 401 || response.status === 403) {
-                                window.location.href = "/login";
-                                return null;
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data && data.success) {
-                                if (window.showToast) {
-                                    window.showToast(data.message || "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
-                                } else {
-                                    alert(data.message || "Đã thêm cuốn sách vào giỏ sách của bạn thành công!");
-                                }
-                            } else if (data && data.message) {
-                                if (window.showToast) {
-                                    window.showToast(data.message);
-                                } else {
-                                    alert(data.message);
-                                }
-                            }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                        })
-                        .finally(() => {
-                            if (btn) btn.disabled = false;
-                        });
-                    });
+        (function () {
+            const reviewI18n = {
+                ratingRequired: /*[[#{guest.bookDetail.validation.ratingRequired}]]*/ "Select a star rating.",
+                commentRequired: /*[[#{guest.bookDetail.validation.commentRequired}]]*/ "Enter your review.",
+                commentMin: /*[[#{guest.bookDetail.validation.commentMin}]]*/ "The review must contain at least 5 characters.",
+                commentMax: /*[[#{guest.bookDetail.validation.commentMax}]]*/ "The review cannot exceed 1000 characters.",
+                commentLetters: /*[[#{guest.bookDetail.validation.commentLetters}]]*/ "The review cannot contain only numbers or special characters."
+            };
+            const reviewForm = document.getElementById("bookDetailReviewForm");
+            const ratingPicker = document.getElementById("memberRatingPicker");
+            const ratingStars = Array.from(document.querySelectorAll("#memberRatingPicker .rating-star"));
+            const ratingInput = document.getElementById("ratingValue");
+            const ratingFeedback = document.getElementById("ratingFeedback");
+            const comment = document.getElementById("bookDetailReviewComment");
+            const commentError = document.getElementById("bookDetailReviewCommentError");
+            const commentCount = document.getElementById("bookDetailReviewCommentCount");
+
+            if (reviewForm == null || ratingPicker == null || ratingInput == null) return;
+
+            function updateRatingStars(value) {
+                ratingStars.forEach(function (star) {
+                    const starValue = Number(star.dataset.value);
+                    star.classList.toggle("active", starValue <= value);
+                    star.setAttribute("aria-checked", String(starValue === value));
                 });
-            })();
+            }
+            function setRatingError(message) {
+                ratingPicker.classList.add("is-invalid");
+                if (ratingFeedback) ratingFeedback.textContent = message;
+            }
+            function clearRatingError() {
+                ratingPicker.classList.remove("is-invalid");
+                if (ratingFeedback) ratingFeedback.textContent = "";
+            }
+            function setRating(value) {
+                ratingInput.value = value || "";
+                updateRatingStars(value);
+                clearRatingError();
+            }
+            function updateCommentCount() {
+                if (!comment || !commentCount) return;
+                commentCount.textContent = comment.value.length + "/1000";
+                commentCount.classList.toggle("is-near-limit", comment.value.length >= 900 && comment.value.length < 1000);
+                commentCount.classList.toggle("is-limit-reached", comment.value.length >= 1000);
+            }
+            function setCommentError(message) {
+                if (comment) comment.classList.add("is-invalid");
+                if (commentError) commentError.textContent = message;
+            }
 
-            (function() {
-                const reviewI18n = {
-                    ratingRequired: /*[[#{guest.bookDetail.validation.ratingRequired}]]*/ "Select a star rating.",
-                    commentRequired: /*[[#{guest.bookDetail.validation.commentRequired}]]*/ "Enter your review.",
-                    commentMin: /*[[#{guest.bookDetail.validation.commentMin}]]*/ "The review must contain at least 5 characters.",
-                    commentMax: /*[[#{guest.bookDetail.validation.commentMax}]]*/ "The review cannot exceed 1000 characters.",
-                    commentLetters: /*[[#{guest.bookDetail.validation.commentLetters}]]*/ "The review cannot contain only numbers or special characters."
-                };
-                const reviewForm = document.getElementById("bookDetailReviewForm");
-                const ratingPicker = document.getElementById("memberRatingPicker");
-                const ratingStars = Array.from(
-                    document.querySelectorAll("#memberRatingPicker .rating-star")
-                );
-                const ratingInput = document.getElementById("ratingValue");
-                const comment = document.getElementById("bookDetailReviewComment");
-                const commentError = document.getElementById("bookDetailReviewCommentError");
-                const commentCount = document.getElementById("bookDetailReviewCommentCount");
-
-                if (reviewForm == null || ratingPicker == null || ratingInput == null) {
-                    return;
+            ratingStars.forEach(function (star) {
+                star.addEventListener("click", function () { setRating(Number(this.dataset.value)); });
+                star.addEventListener("mouseenter", function () { updateRatingStars(Number(this.dataset.value)); });
+            });
+            ratingPicker.addEventListener("mouseleave", function () { updateRatingStars(Number(ratingInput.value) || 0); });
+            reviewForm.addEventListener("submit", function (event) {
+                let invalid = false;
+                if (ratingInput.value.trim() === "") {
+                    setRatingError(reviewI18n.ratingRequired);
+                    invalid = true;
                 }
-
-                function updateRatingStars(value) {
-                    ratingStars.forEach((star) => {
-                        const starValue = Number(star.dataset.value);
-                        const isActive = starValue <= value;
-                        star.classList.toggle("active", isActive);
-                        star.setAttribute("aria-checked", String(starValue === value));
-                    });
-                }
-
-                function setRatingError(message) {
-                    ratingPicker.classList.add("is-invalid");
-                    const feedback = document.getElementById("ratingFeedback");
-
-                    if (feedback != null) {
-                        feedback.textContent = message;
-                    }
-                }
-
-                function clearRatingError() {
-                    ratingPicker.classList.remove("is-invalid");
-                    const feedback = document.getElementById("ratingFeedback");
-
-                    if (feedback != null) {
-                        feedback.textContent = "";
-                    }
-                }
-
-                function setRating(value) {
-                    ratingInput.value = value || "";
-                    updateRatingStars(value);
-                    clearRatingError();
-                }
-
-                function updateCommentCount() {
-                    if (comment == null || commentCount == null) return;
-                    commentCount.textContent = comment.value.length + "/1000";
-                    commentCount.classList.toggle("is-near-limit", comment.value.length >= 900 && comment.value.length < 1000);
-                    commentCount.classList.toggle("is-limit-reached", comment.value.length >= 1000);
-                }
-
-                function setCommentError(message) {
-                    if (comment != null) comment.classList.add("is-invalid");
-                    if (commentError != null) commentError.textContent = message;
-                }
-
-                ratingStars.forEach((star) => {
-                    star.addEventListener("click", function() {
-                        setRating(Number(this.dataset.value));
-                    });
-
-                    star.addEventListener("mouseenter", function() {
-                        updateRatingStars(Number(this.dataset.value));
-                    });
-                });
-
-                ratingPicker.addEventListener("mouseleave", function() {
-                    updateRatingStars(Number(ratingInput.value) || 0);
-                });
-
-                reviewForm.addEventListener("submit", function(event) {
-                    if (ratingInput.value.trim() === "") {
-                        setRatingError(reviewI18n.ratingRequired);
-                        event.preventDefault();
-                        event.stopPropagation();
-                        return;
-                    }
-
-                    const normalizedComment = comment == null ? "" : comment.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
-                    if (comment != null) comment.value = normalizedComment;
-                    updateCommentCount();
-                    let commentMessage = "";
-                    if (normalizedComment === "") commentMessage = reviewI18n.commentRequired;
-                    else if (normalizedComment.length < 5) commentMessage = reviewI18n.commentMin;
-                    else if (normalizedComment.length > 1000) commentMessage = reviewI18n.commentMax;
-                    else if (!/\p{L}/u.test(normalizedComment)) commentMessage = reviewI18n.commentLetters;
-                    if (commentMessage !== "") {
-                        setCommentError(commentMessage);
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                });
-
-                if (comment != null) {
-                    comment.addEventListener("input", function() {
-                        this.classList.remove("is-invalid");
-                        if (commentError != null) commentError.textContent = "";
-                        updateCommentCount();
-                    });
-                }
-
+                const normalizedComment = comment == null ? "" : comment.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                if (comment) comment.value = normalizedComment;
                 updateCommentCount();
-                setRating(Number(ratingInput.value) || 0);
-            })();
-        </script>
-    </div>
+                let message = "";
+                if (normalizedComment === "") message = reviewI18n.commentRequired;
+                else if (normalizedComment.length < 5) message = reviewI18n.commentMin;
+                else if (normalizedComment.length > 1000) message = reviewI18n.commentMax;
+                else if (!/\p{L}/u.test(normalizedComment)) message = reviewI18n.commentLetters;
+                if (message !== "") {
+                    setCommentError(message);
+                    invalid = true;
+                }
+                if (invalid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            });
+            if (comment) {
+                comment.addEventListener("input", function () {
+                    this.classList.remove("is-invalid");
+                    if (commentError) commentError.textContent = "";
+                    updateCommentCount();
+                });
+            }
+            updateCommentCount();
+            setRating(Number(ratingInput.value) || 0);
+        })();
+    </script>
+</th:block>
 </body>
 </html>

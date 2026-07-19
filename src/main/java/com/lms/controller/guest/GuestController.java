@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.lms.service.BookService;
 import com.lms.repository.BookItemRepository;
+import com.lms.service.CartService;
 import com.lms.repository.GenreRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MemberReviewService;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
+import jakarta.servlet.http.HttpSession;
 /**
  * GuestController - Trang công khai cho Khách (Guest)
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
@@ -34,6 +36,7 @@ import org.springframework.data.domain.Page;
 public class GuestController extends LocalizedControllerSupport {
 
     private final BookService bookService;
+    private final CartService cartService;
     private final GenreRepository genreRepository;
     private final MemberFavoriteService memberFavoriteService;
     private final MemberReviewService memberReviewService;
@@ -42,6 +45,7 @@ public class GuestController extends LocalizedControllerSupport {
     private final SystemService systemService;
 
     public GuestController(BookService bookService,
+                           CartService cartService,
                            GenreRepository genreRepository,
                            MemberFavoriteService memberFavoriteService,
                            MemberReviewService memberReviewService,
@@ -49,6 +53,7 @@ public class GuestController extends LocalizedControllerSupport {
                            BookItemRepository bookItemRepository,
                            SystemService systemService) {
         this.bookService = bookService;
+        this.cartService = cartService;
         this.genreRepository = genreRepository;
         this.memberFavoriteService = memberFavoriteService;
         this.memberReviewService = memberReviewService;
@@ -71,8 +76,8 @@ public class GuestController extends LocalizedControllerSupport {
             }
         }
 
-        List<Book> books = bookService.getRecentBooks(6);
-        List<Book> trendingBooks = bookService.getTrendingBooks(6);
+        List<Book> books = bookService.getRecentBooks(7);
+        List<Book> trendingBooks = bookService.getTrendingBooks(7);
         model.addAttribute("books", books);
         model.addAttribute("trendingBooks", trendingBooks);
         addFavoriteBookIds(model, authentication);
@@ -162,7 +167,7 @@ public class GuestController extends LocalizedControllerSupport {
 
     // UC-3: View Book Detail - Xem chi tiết một quyển sách
     @GetMapping("/books/{id}")
-    public String viewBookDetail(@PathVariable Integer id, Model model, Principal principal) {
+    public String viewBookDetail(@PathVariable Integer id, Model model, Principal principal, HttpSession session) {
         Book book = bookService.findBookById(id);
         List<Feedback> bookReviews = memberReviewService.getApprovedReviewsByBookId(id);
         double averageRating = bookReviews.stream()
@@ -178,6 +183,7 @@ public class GuestController extends LocalizedControllerSupport {
         model.addAttribute("bookReviews", bookReviews);
         model.addAttribute("reviewCount", bookReviews.size());
         model.addAttribute("averageRating", averageRating);
+        model.addAttribute("bookInCart", principal != null && cartService.isInCart(session, id));
         model.addAttribute("reviewBorrowEligible", false);
         model.addAttribute("reviewAlreadySubmitted", false);
         if (principal != null) {

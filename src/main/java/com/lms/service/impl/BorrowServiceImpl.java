@@ -916,9 +916,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<BorrowDetail> getBorrowDetailsByBorrowId(Integer borrowId) {
-        return borrowDetailRepository.findAll().stream()
-                .filter(d -> d.getBorrow() != null && d.getBorrow().getBorrowId().equals(borrowId))
-                .toList();
+        return borrowDetailRepository.findByBorrowId(borrowId);
     }
 
     @Override
@@ -1191,17 +1189,23 @@ public class BorrowServiceImpl implements BorrowService {
     public java.math.BigDecimal calculateBorrowFeePreview(String username, List<Integer> bookIds, Integer numberOfDays) {
         if (bookIds == null || bookIds.isEmpty()) return java.math.BigDecimal.ZERO;
 
+        List<Integer> normalizedBookIds = bookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalizedBookIds.isEmpty()) return java.math.BigDecimal.ZERO;
+
         Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.member.currentNotFound")));
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
-        java.math.BigDecimal feePerBookPerDay = java.math.BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000));
+        java.math.BigDecimal feePerBookPerDay = java.math.BigDecimal.valueOf(getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000));
         double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
                 ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
         java.math.BigDecimal discountFactor = java.math.BigDecimal.valueOf(1.0 - (discountPercent / 100.0));
 
         return feePerBookPerDay
-                .multiply(java.math.BigDecimal.valueOf(bookIds.size()))
+                .multiply(java.math.BigDecimal.valueOf(normalizedBookIds.size()))
                 .multiply(java.math.BigDecimal.valueOf(borrowDays))
                 .multiply(discountFactor);
     }
@@ -1213,12 +1217,20 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
         }
 
+        List<Integer> normalizedBookIds = bookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalizedBookIds.isEmpty()) {
+            throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
+        }
+
         Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.member.currentNotFound")));
 
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
-        if (currentBorrowed + bookIds.size() > maxLimit) {
+        if (currentBorrowed + normalizedBookIds.size() > maxLimit) {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.tierLimitExceeded"));
         }
 
@@ -1231,10 +1243,14 @@ public class BorrowServiceImpl implements BorrowService {
         borrow = borrowRepository.save(borrow);
 
         List<String> titles = new ArrayList<>();
-        for (Integer bookId : bookIds) {
+        for (Integer bookId : normalizedBookIds) {
             Book book = bookRepository.findById(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
-                            localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
+                             localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
+
+            if ("Inactive".equalsIgnoreCase(book.getStatus())) {
+                throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.bookUnavailable"));
+            }
 
             List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
             boolean hasAvailableItem = items.stream()
@@ -1256,7 +1272,7 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         auditLogService.log(com.lms.enums.ActionType.REQUEST_BORROW,
-                localizedMessageService.get("backend.borrow.audit.multiRequested", username, bookIds.size(),
+                localizedMessageService.get("backend.borrow.audit.multiRequested", username, normalizedBookIds.size(),
                         String.join(", ", titles), borrowDays));
 
         return borrow;
