@@ -181,6 +181,7 @@ public class SystemServiceImpl implements SystemService {
                 String.valueOf(renewalRejectionCooldownHours),
                 messages.get("backend.settings.description.renewalCooldown"));
 
+
         saveOrUpdateSetting("Max_Books_Per_Member",
                 String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
                 messages.get("backend.settings.description.maxBooks"));
