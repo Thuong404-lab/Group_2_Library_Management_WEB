@@ -19,6 +19,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
             Integer borrowDetailId, String transactionType, String status);
 
+    long countByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCase(Integer borrowDetailId, String transactionType);
+
+    Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDescTransactionIdDesc(
+            Integer borrowDetailId, String transactionType, String status);
+
     @Query("select coalesce(sum(t.amount), 0) " +
             "from Transaction t " +
             "where lower(t.status) = lower(:status) " +

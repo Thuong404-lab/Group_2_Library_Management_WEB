@@ -167,6 +167,8 @@
                                 </div>
                                 <small th:if="${item.status == 'Borrowed' or item.status == 'Renew_Pending'}" class="text-muted d-block mt-2"
                                        th:text="#{loan.renew.usageValue(${item.renewCount}, ${maxRenewals})}">Renewals used: 0/2</small>
+                                <small th:if="${item.status == 'Borrowed' or item.status == 'Renew_Pending'}" class="text-muted d-block"
+                                       th:text="#{loan.renew.requestUsage(${item.renewalRequestCount}, ${maxRenewalRequests})}">Requests sent: 0/3</small>
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
@@ -178,11 +180,11 @@
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
                                         <input type="hidden" name="renewalDays" class="renewal-days-value">
                                         <button type="button" class="btn btn-sm btn-classic-outline btn-renew-action"
-                                                th:disabled="${item.renewCount >= maxRenewals or item.status == 'Overdue'}"
-                                                th:title="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitReached', maxRenewals) : (item.status == 'Overdue' ? #messages.msg('loan.renew.overdueDisabled') : #messages.msg('loan.renew.sevenDays', maxRenewalDays))}"
+                                                th:disabled="${item.renewCount >= maxRenewals or item.status == 'Overdue' or item.renewalRequestBlocked}"
+                                                th:title="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitReached', maxRenewals) : (item.status == 'Overdue' ? #messages.msg('loan.renew.overdueDisabled') : (item.renewalRequestBlocked ? item.renewalBlockedReason : #messages.msg('loan.renew.sevenDays', maxRenewalDays)))}"
                                                 th:attr="data-form-id='renewForm_' + ${item.id},data-due-date=${item.dueDate != null ? #temporals.format(item.dueDate, 'yyyy-MM-dd') : ''},data-renew-count=${item.renewCount}">
                                             <i class="bi bi-clock-history me-1"></i>
-                                                <span th:text="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitLabel') : #messages.msg('loan.renew')}">Renew</span>
+                                                <span th:text="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitLabel') : (item.renewalRequestBlocked ? #messages.msg('loan.renew.requestBlockedLabel') : #messages.msg('loan.renew'))}">Renew</span>
                                         </button>
                                     </form>
                                 </div>

@@ -29,6 +29,8 @@ public interface SystemService {
 
     void updateBorrowingPolicies(Integer maxBorrowDays,
                                  Integer maxRenewalDays,
+                                 Integer maxRenewalRequests,
+                                 Integer renewalRejectionCooldownHours,
                                  Map<Integer, Integer> tierBorrowLimits,
                                  Map<Integer, BigDecimal> tierSpendingConditions,
                                  BigDecimal borrowFeePerBook,
