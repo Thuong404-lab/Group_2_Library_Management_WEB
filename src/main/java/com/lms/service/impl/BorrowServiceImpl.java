@@ -737,9 +737,8 @@ public class BorrowServiceImpl implements BorrowService {
     public void approveReservationRequest(Integer reservationId, String staffUsername) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.borrow.reservationNotFound")));
-        if (!"Pending".equalsIgnoreCase(reservation.getStatus())
-                && !"Deposit_Paid".equalsIgnoreCase(reservation.getStatus())) {
-            throw new ConflictException(localizedMessageService.get("backend.borrow.reservationAlreadyProcessed"));
+        if (!"Deposit_Paid".equalsIgnoreCase(reservation.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.reservationDepositRequired"));
         }
 
         reservation.setStatus("Active");
@@ -790,7 +789,7 @@ public class BorrowServiceImpl implements BorrowService {
             }
         }
 
-        reservation.setStatus("Rejected");
+        reservation.setStatus(isDepositPaid ? "Refunded" : "Rejected");
         reservationRepository.save(reservation);
         String content = localizedMessageService.get("systemNotification.reservation.rejectedWithRefund.content",
                 reservation.getBook().getTitle(), reservationId,
@@ -1051,6 +1050,20 @@ public class BorrowServiceImpl implements BorrowService {
                         dto.setRenewalBlockedReason(localizedMessageService.get("backend.renewal.rejectionCooldown",
                                 rejectedAt.plusHours(cooldownHours).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
                     });
+        }
+        if (!dto.isRenewalRequestBlocked()
+                && detail.getBook() != null
+                && detail.getBorrow() != null
+                && detail.getBorrow().getMember() != null) {
+            Integer bookId = detail.getBook().getBookId();
+            Integer memberId = detail.getBorrow().getMember().getMemberId();
+            long waitingReservations = reservationRepository.countActiveReservationsByOtherMemberForBook(
+                    bookId, memberId, List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE"));
+            long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            if (waitingReservations > availableCopies) {
+                dto.setRenewalRequestBlocked(true);
+                dto.setRenewalBlockedReason(localizedMessageService.get("backend.renewal.reservedByAnotherMember"));
+            }
         }
         return dto;
     }
