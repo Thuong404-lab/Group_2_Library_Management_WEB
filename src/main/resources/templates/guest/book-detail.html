@@ -69,6 +69,20 @@
                             <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
                         </button>
                     </form>
+                    <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"
+                          th:action="@{/member/cart/add}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.bookId}" />
+                        <button type="submit" class="book-detail-button book-detail-button--secondary"
+                                th:disabled="${book.status != 'Active'}"
+                                th:title="${book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : ''}">
+                            <i class="bi bi-bag-plus" aria-hidden="true"></i><span th:text="#{guest.bookDetail.addToCart}">Add to Cart</span>
+                        </button>
+                    </form>
+                    <a sec:authorize="hasRole('MEMBER')" th:if="${bookInCart}"
+                       th:href="@{/member/cart}"
+                       class="book-detail-button book-detail-button--secondary active">
+                        <i class="bi bi-bag-check" aria-hidden="true"></i><span th:text="#{guest.bookDetail.viewCart}">View Cart</span>
+                    </a>
                     <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post">
                         <button type="submit" class="book-detail-button book-detail-button--secondary">
                             <i class="bi bi-bookmark" aria-hidden="true"></i><span th:text="#{guest.bookDetail.reserve}">Reserve</span>

@@ -14,14 +14,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpSession;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -95,10 +99,86 @@ class AcquisitionWorkflowViewTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("member/borrow"))
                 .andExpect(model().attribute("activeTab", "history"));
+        mockMvc.perform(get("/member/cart").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/cart"))
+                .andExpect(model().attributeExists("cartItems", "walletBalance", "discountPercent"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-cart-hero")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-account-dropdown")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/member/cart\"")));
+        mockMvc.perform(get("/member/borrow/reservations").with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/reservations"))
+                .andExpect(model().attributeExists("reservations", "walletBalance", "depositAmount"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-reservations-hero")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("reservation-list")));
         var availableBook = bookRepository.findAll().stream()
-                .filter(book -> !"Inactive".equalsIgnoreCase(book.getStatus()))
+                .filter(book -> "Active".equalsIgnoreCase(book.getStatus()))
                 .findFirst();
         Assumptions.assumeTrue(availableBook.isPresent(), "Current database has no active book");
+        Integer availableBookId = availableBook.get().getBookId();
+        MockHttpSession cartSession = new MockHttpSession();
+        mockMvc.perform(get("/books/{id}", availableBookId)
+                        .session(cartSession)
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("guest/book-detail"))
+                .andExpect(model().attribute("bookInCart", false))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("action=\"/member/cart/add\"")));
+        mockMvc.perform(post("/member/cart/add")
+                        .param("bookId", String.valueOf(availableBookId))
+                        .session(cartSession)
+                        .with(user(memberUser))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/books/" + availableBookId))
+                .andExpect(flash().attributeExists("success"));
+        mockMvc.perform(get("/books/{id}", availableBookId)
+                        .session(cartSession)
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("bookInCart", true))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/member/cart\"")));
+        mockMvc.perform(get("/member/cart")
+                        .session(cartSession)
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(availableBook.get().getTitle())));
+        mockMvc.perform(post("/member/cart/add")
+                        .param("bookId", String.valueOf(availableBookId))
+                        .session(cartSession)
+                        .with(user(memberUser))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/books/" + availableBookId))
+                .andExpect(flash().attributeExists("success"));
+        mockMvc.perform(get("/member/cart/checkout")
+                        .param("selectedBookIds", String.valueOf(availableBookId))
+                        .param("numberOfDays", "14")
+                        .session(cartSession)
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/cart-checkout"))
+                .andExpect(model().attribute("selectedBookIds", java.util.List.of(availableBookId)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-checkout-layout")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("action=\"/member/cart/submit\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"numberOfDays\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"selectedBookIds\"")));
+        mockMvc.perform(get("/member/cart/checkout")
+                        .param("selectedBookIds", String.valueOf(Integer.MAX_VALUE))
+                        .session(cartSession)
+                        .with(user(memberUser)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/member/cart"))
+                .andExpect(flash().attributeExists("errorMessage"));
+        mockMvc.perform(get("/member/cart")
+                        .sessionAttr("BOOK_CART", java.util.Set.of(availableBook.get().getBookId()))
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/cart"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"cartForm\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("action=\"/member/cart/remove\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"selectedBookIds\"")));
         mockMvc.perform(get("/member/borrow/create")
                         .param("bookId", String.valueOf(availableBook.get().getBookId()))
                         .with(user(memberUser)))

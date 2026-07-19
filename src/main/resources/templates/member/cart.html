@@ -1,116 +1,130 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<html th:lang="${#locale.language}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{member.cart.title}">My Book Cart - LMW</title>
-    <style>
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        .bg-classic-soft { background-color: rgba(139, 90, 43, 0.04); }
-        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/pages/member/cart.css}" />
 </head>
 <body>
-<div layout:fragment="content" class="container mt-4 mb-5">
-    <h3 class="font-playfair fw-bold mb-4" style="color: #4a3b32;"><i class="bi bi-cart3 me-2" style="color: #8b5a2b;"></i><span th:text="#{member.cart.heading}">Borrowing Cart</span></h3>
+<div layout:fragment="content" class="container member-cart-page member-palette-page">
+    <header class="member-dashboard-hero member-cart-hero">
+        <div class="member-cart-hero-copy">
+            <span th:text="#{member.cart.eyebrow}">BORROWING PLAN</span>
+            <h1 th:text="#{member.cart.heading}">Borrowing Cart</h1>
+            <p th:text="#{member.cart.description}">Select the books and borrowing period you want to include in your next loan request.</p>
+        </div>
+        <a th:href="@{/books}" class="member-ui-button member-ui-button--inverse member-cart-hero-action">
+            <i class="bi bi-compass" aria-hidden="true"></i>
+            <span th:text="#{member.cart.explore}">Explore the library now</span>
+        </a>
+    </header>
 
-    <!-- Thông báo Alert -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #e6f4ea; color: #137333;" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Success notification</span>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" style="background-color: #fce8e6; color: #c5221f;" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Error notification</span>
-    </div>
+    <div th:if="${successMessage}" class="app-alert app-alert--success" role="status" th:text="${successMessage}">Success notification</div>
+    <div th:if="${errorMessage}" class="app-alert app-alert--danger" role="alert" th:text="${errorMessage}">Error notification</div>
 
-    <div th:if="${cartItems == null || cartItems.isEmpty()}" class="text-center p-5 bg-white border-classic rounded shadow-sm">
-        <i class="bi bi-basket2 text-muted" style="font-size: 4rem;"></i>
-        <p class="text-muted mt-3 fs-5" th:text="#{member.cart.empty}">Your book cart is currently empty.</p>
-        <a href="/books" class="btn text-white mt-2" style="background-color: #8b5a2b;" th:text="#{member.cart.explore}">Explore the library now</a>
-    </div>
+    <section th:if="${cartItems == null || cartItems.isEmpty()}"
+             class="member-cart-empty member-reference-list"
+             th:aria-label="#{member.cart.heading}">
+        <div class="member-reference-list__body member-cart-empty-body">
+            <i class="bi bi-basket2" aria-hidden="true"></i>
+            <p th:text="#{member.cart.empty}">Your book cart is currently empty.</p>
+            <a th:href="@{/books}" class="member-ui-button member-ui-button--primary" th:text="#{member.cart.explore}">Explore the library now</a>
+        </div>
+    </section>
 
-    <div th:if="${cartItems != null && !cartItems.isEmpty()}" class="row">
-        <div class="col-lg-8 mb-4">
-            <div class="card border-0 shadow-sm rounded bg-white p-3">
-                <!-- Chọn tất cả -->
-                <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-light">
-                    <div class="form-check">
-                        <input class="form-check-input border-classic" type="checkbox" id="selectAllBooks" checked style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
-                        <label class="form-check-label small fw-bold text-muted text-uppercase ms-2 mb-0" for="selectAllBooks" style="cursor: pointer; user-select: none;" th:text="#{member.cart.selectAll}">
-                            Select all books in the cart
-                        </label>
+    <div th:if="${cartItems != null && !cartItems.isEmpty()}" class="member-cart-layout">
+        <section class="member-cart-items member-reference-list" th:aria-label="#{member.cart.selectAll}">
+            <div class="member-reference-list__header member-cart-list-header">
+                <label class="member-cart-check-control" for="selectAllBooks">
+                    <input type="checkbox" id="selectAllBooks" checked>
+                    <span th:text="#{member.cart.selectAll}">Select all books in the cart</span>
+                </label>
+                <span class="member-reference-pill">
+                    <strong id="jsHeaderCount" th:text="${cartItems.size()}">0</strong>
+                    <span th:text="#{member.cart.items}">books</span>
+                </span>
+            </div>
+
+            <div class="member-reference-list__body member-cart-list-body">
+                <article th:each="book : ${cartItems}" class="member-cart-item member-reference-list__item">
+                    <label class="member-cart-item-check">
+                        <input class="book-select-checkbox" type="checkbox" name="selectedBookIds" th:value="${book.bookId}" checked>
+                        <span class="sr-only" th:text="#{member.cart.selectBook(${book.title})}">Select book</span>
+                    </label>
+                    <img class="member-cart-cover"
+                         th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/120/160'}"
+                         th:alt="${book.title}">
+                    <div class="member-cart-book-copy">
+                        <h2 th:text="${book.title}">Book title</h2>
+                        <span class="member-cart-genre" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('member.cart.defaultGenre')}">Genre</span>
+                        <span class="member-reference-pill member-cart-availability" th:text="#{member.cart.available}">Physical copy available</span>
                     </div>
-                </div>
-
-                <!-- Từng cuốn sách -->
-                <div th:each="book : ${cartItems}" class="d-flex align-items-center justify-content-between p-3 mb-3 border-classic rounded">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="form-check">
-                            <input class="form-check-input book-select-checkbox border-classic" type="checkbox" name="selectedBookIds" th:value="${book.bookId}" checked style="width: 1.15rem; height: 1.15rem; cursor: pointer;">
-                        </div>
-                        <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/120/160'}"
-                             style="width: 70px; height: 95px; object-fit: cover;" class="rounded shadow-sm" alt="Cover">
-                        <div>
-                            <h6 class="fw-bold m-0 font-playfair text-dark" th:text="${book.title}">Book title</h6>
-                            <small class="text-muted d-block my-1"><i class="bi bi-tag-fill me-1"></i><span th:text="${book.genre != null ? book.genre.genreName : #messages.msg('member.cart.defaultGenre')}"></span></small>
-                            <span class="badge bg-success text-white small" th:text="#{member.cart.available}">Physical copy available</span>
-                        </div>
-                    </div>
-                    <form th:action="@{/member/cart/remove}" method="post" class="m-0">
+                    <form th:action="@{/member/cart/remove}" method="post" class="member-cart-remove-form">
                         <input type="hidden" name="bookId" th:value="${book.bookId}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash3 fs-5"></i></button>
+                        <button type="submit"
+                                class="member-cart-remove member-ui-button member-ui-button--danger-outline member-ui-button--compact"
+                                th:aria-label="#{member.cart.remove(${book.title})}">
+                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                        </button>
                     </form>
+                </article>
+            </div>
+        </section>
+
+        <aside class="member-cart-summary member-reference-list">
+            <div class="member-reference-list__header member-cart-summary-header">
+                <h2 th:text="#{member.cart.feeEstimate}">Estimated Fee</h2>
+            </div>
+
+            <form th:action="@{/member/cart/checkout}"
+                  method="get"
+                  id="cartForm"
+                  class="member-reference-list__body member-cart-summary-body">
+                <div class="member-cart-field">
+                    <label for="cartDaysSelect" th:text="#{member.cart.duration}">Select borrowing period</label>
+                    <select name="numberOfDays" id="cartDaysSelect">
+                        <option value="7" th:text="#{member.cart.days(7)}">7 days</option>
+                        <option value="14" selected th:text="#{member.cart.days(14)}">14 days</option>
+                        <option value="30" th:text="#{member.cart.days(30)}">30 days</option>
+                    </select>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-lg-4">
-            <div class="card border-classic shadow-sm rounded bg-white p-4">
-                <h5 class="fw-bold font-playfair mb-3 pb-2 border-bottom text-dark" th:text="#{member.cart.feeEstimate}">Estimated Fee</h5>
-
-                <form th:action="@{/member/cart/checkout}" method="get" id="cartForm">
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase" th:text="#{member.cart.duration}">Select borrowing period</label>
-                        <select class="form-select border-classic" name="numberOfDays" id="cartDaysSelect">
-                            <option value="7" th:text="#{member.cart.days(7)}">7 days</option>
-                            <option value="14" selected th:text="#{member.cart.days(14)}">14 days</option>
-                            <option value="30" th:text="#{member.cart.days(30)}">30 days</option>
-                        </select>
+                <div class="member-cart-fee-breakdown">
+                    <div>
+                        <span th:text="#{member.cart.bookCount}">Number of titles:</span>
+                        <strong id="jsCount" th:text="${cartItems.size()}">0</strong>
                     </div>
-
-                    <div class="bg-classic-soft p-3 rounded mb-4 text-dark small">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span th:text="#{member.cart.bookCount}">Number of titles:</span>
-                            <span class="fw-bold" id="jsCount" th:text="${cartItems.size()}">0</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span th:text="#{member.cart.baseRate}">Base daily rate:</span>
-                            <span th:text="#{member.cart.baseRateValue}">5,000 VND / day</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span th:text="#{member.cart.tierDiscount}">Membership discount:</span>
-                            <span class="text-success fw-bold" th:text="'-' + ${discountPercent} + '%'">-0%</span>
-                        </div>
-                        <hr class="my-2 border-classic">
-                        <div class="d-flex justify-content-between align-items-center mt-2 text-dark">
-                            <span class="fw-bold" th:text="#{member.cart.estimatedTotal}">Estimated total:</span>
-                            <h5 class="fw-bold text-danger m-0 font-playfair" id="jsTotalFee">0 VND</h5>
-                        </div>
+                    <div>
+                        <span th:text="#{member.cart.baseRate}">Base daily rate:</span>
+                        <strong th:text="#{member.cart.baseRateValue}">5,000 VND / day</strong>
                     </div>
-
-                    <div class="mb-4 p-3 rounded border-classic bg-light">
-                        <div class="d-flex justify-content-between small text-dark mb-1">
-                            <span th:text="#{member.cart.currentBalance}">Current wallet balance:</span>
-                            <span class="fw-bold font-monospace"><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-                        </div>
-                        <div id="walletAlert" class="text-danger small fw-bold mt-1 d-none">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="#{member.cart.insufficientBalance}">Insufficient wallet balance!</span>
-                        </div>
+                    <div>
+                        <span th:text="#{member.cart.tierDiscount}">Membership discount:</span>
+                        <strong class="member-cart-discount" th:text="'-' + ${discountPercent} + '%'">-0%</strong>
                     </div>
+                    <div class="member-cart-total">
+                        <span th:text="#{member.cart.estimatedTotal}">Estimated total:</span>
+                        <strong id="jsTotalFee">0 VND</strong>
+                    </div>
+                </div>
 
-                    <button type="submit" class="btn text-white w-100 py-2.5 fw-bold" style="background-color: #8b5a2b;" id="checkoutBtn" th:text="#{member.cart.checkout}">Continue to checkout</button>
-                </form>
-            </div>
-        </div>
+                <div class="member-cart-wallet">
+                    <span th:text="#{member.cart.currentBalance}">Current wallet balance:</span>
+                    <strong><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+                    <div id="walletAlert" class="member-cart-wallet-error d-none">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                        <span th:text="#{member.cart.insufficientBalance}">Insufficient wallet balance!</span>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="member-ui-button member-ui-button--primary member-cart-checkout"
+                        id="checkoutBtn"
+                        th:text="#{member.cart.checkout}">Continue to checkout</button>
+            </form>
+        </aside>
     </div>
 </div>
 
@@ -123,6 +137,10 @@
             const checkoutBtn = document.getElementById("checkoutBtn");
             const cartForm = document.getElementById("cartForm");
 
+            if (!selectDays || !totalFeeText || !walletAlert || !checkoutBtn || !cartForm) {
+                return;
+            }
+
             const discountPercent = /*[[${discountPercent}]]*/ 0.0;
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
             const baseFeePerDay = 5000;
@@ -133,12 +151,20 @@
             const selectAll = document.getElementById("selectAllBooks");
             const checkboxes = document.querySelectorAll(".book-select-checkbox");
 
+            function syncSelectAllCheckbox() {
+                if (!selectAll) return;
+
+                const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
+                selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+                selectAll.indeterminate = false;
+            }
+
             function calculateRealtimeFee() {
                 const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
-
-                // Cập nhật số hiển thị
                 const jsCount = document.getElementById("jsCount");
+                const jsHeaderCount = document.getElementById("jsHeaderCount");
                 if (jsCount) jsCount.textContent = checkedCount;
+                if (jsHeaderCount) jsHeaderCount.textContent = checkedCount;
 
                 if (checkedCount === 0) {
                     totalFeeText.textContent = "0 " + currencyUnit;
@@ -147,10 +173,9 @@
                     return;
                 }
 
-                const days = parseInt(selectDays.value);
+                const days = parseInt(selectDays.value, 10);
                 const rawFee = checkedCount * days * baseFeePerDay;
                 const finalFee = rawFee * (1 - (discountPercent / 100));
-
                 totalFeeText.textContent = Math.round(finalFee).toLocaleString(numberLocale) + " " + currencyUnit;
 
                 if (walletBalance < finalFee) {
@@ -162,56 +187,41 @@
                 }
             }
 
-            // Xử lý nút chọn tất cả
             if (selectAll) {
                 selectAll.addEventListener("change", function() {
+                    this.indeterminate = false;
                     checkboxes.forEach(cb => cb.checked = this.checked);
                     calculateRealtimeFee();
                 });
             }
 
-            // Xử lý từng checkbox
             checkboxes.forEach(cb => {
                 cb.addEventListener("change", function() {
-                    if (selectAll) {
-                        const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
-                        selectAll.checked = (checkedCount === checkboxes.length);
-                    }
+                    syncSelectAllCheckbox();
                     calculateRealtimeFee();
                 });
             });
 
-            // Khi submit form checkout, thêm tham số các sách được tích chọn làm hidden inputs
-            if (cartForm) {
-                cartForm.addEventListener("submit", function(e) {
-                    // Xóa các input cũ
-                    const oldInputs = cartForm.querySelectorAll("input[name='selectedBookIds']");
-                    oldInputs.forEach(input => input.remove());
+            cartForm.addEventListener("submit", function(e) {
+                cartForm.querySelectorAll("input[name='selectedBookIds']").forEach(input => input.remove());
+                const checkedCBs = document.querySelectorAll(".book-select-checkbox:checked");
+                if (checkedCBs.length === 0) {
+                    e.preventDefault();
+                    window.AppFeedback.warning(selectionRequiredMessage);
+                    return;
+                }
 
-                    // Lấy tất cả các checkbox đang được check
-                    const checkedCBs = document.querySelectorAll(".book-select-checkbox:checked");
-                    if (checkedCBs.length === 0) {
-                        e.preventDefault();
-                        window.AppFeedback.warning(selectionRequiredMessage);
-                        return;
-                    }
-
-                    // Append các hidden inputs
-                    checkedCBs.forEach(cb => {
-                        const hiddenInput = document.createElement("input");
-                        hiddenInput.type = "hidden";
-                        hiddenInput.name = "selectedBookIds";
-                        hiddenInput.value = cb.value;
-                        cartForm.appendChild(hiddenInput);
-                    });
+                checkedCBs.forEach(cb => {
+                    const hiddenInput = document.createElement("input");
+                    hiddenInput.type = "hidden";
+                    hiddenInput.name = "selectedBookIds";
+                    hiddenInput.value = cb.value;
+                    cartForm.appendChild(hiddenInput);
                 });
-            }
+            });
 
-            if (selectDays) {
-                selectDays.addEventListener("change", calculateRealtimeFee);
-            }
-
-            // Tính toán lần đầu
+            selectDays.addEventListener("change", calculateRealtimeFee);
+            syncSelectAllCheckbox();
             calculateRealtimeFee();
         });
     </script>

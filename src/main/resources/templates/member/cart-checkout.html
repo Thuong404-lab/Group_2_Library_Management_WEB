@@ -1,71 +1,95 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<html th:lang="${#locale.language}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{member.cart.checkoutTitle}">Confirm Loan Payment - LMW</title>
-    <style>
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/pages/member/cart.css}" />
 </head>
 <body>
-<div layout:fragment="content" class="container mt-5 mb-5 justify-content-center d-flex">
-    <div class="card border-classic shadow-sm p-4 bg-white rounded-3" style="max-width: 650px; width: 100%;">
-        <h4 class="font-playfair fw-bold text-center mb-4" style="color: #4a3b32;"><i class="bi bi-shield-check me-2" style="color: #8b5a2b;"></i><span th:text="#{member.cart.checkoutHeading}">Confirm &amp; Pay</span></h4>
-
-        <!-- Thông báo Alert -->
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #e6f4ea; color: #137333;" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <span th:text="${successMessage}">Success notification</span>
+<div layout:fragment="content" class="container member-cart-page member-cart-checkout-page member-palette-page">
+    <header class="member-dashboard-hero member-cart-hero member-checkout-hero">
+        <div class="member-cart-hero-copy">
+            <span th:text="#{member.cart.checkoutEyebrow}">FINAL REVIEW</span>
+            <h1 th:text="#{member.cart.checkoutHeading}">Confirm &amp; Pay</h1>
+            <p th:text="#{member.cart.checkoutDescription}">Review the selected books, borrowing period, and wallet deduction before submitting your request.</p>
         </div>
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #fce8e6; color: #c5221f;" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${errorMessage}">Error notification</span>
-        </div>
+        <a th:href="@{/member/cart}" class="member-ui-button member-ui-button--inverse member-cart-hero-action">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            <span th:text="#{member.cart.backToEdit}">Back to edit</span>
+        </a>
+    </header>
 
-        <div class="alert alert-warning border-0 small mb-4" style="background-color:#fffbeb; color:#b45309;">
-            <i class="bi bi-info-circle-fill me-2"></i><span th:text="#{member.cart.checkoutNotice}">The service fee will be deducted directly from your wallet after you confirm.</span>
-        </div>
+    <div th:if="${successMessage}" class="app-alert app-alert--success" role="status" th:text="${successMessage}">Success notification</div>
+    <div th:if="${errorMessage}" class="app-alert app-alert--danger" role="alert" th:text="${errorMessage}">Error notification</div>
 
-        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.summary(${cartItems.size()})}">Selected books (0 books)</h6>
-        <div class="border-classic rounded p-3 bg-light mb-4 text-dark small" style="max-height: 180px; overflow-y: auto;">
-            <div th:each="item : ${cartItems}" class="d-flex justify-content-between py-1 border-bottom border-light">
-                <span class="fw-semibold text-truncate" style="max-width: 450px;" th:text="${item.title}">Book title</span>
-                <span class="text-muted font-monospace" th:text="#{member.cart.physicalBook}">Physical book</span>
+    <div class="member-checkout-layout">
+        <section class="member-reference-list member-checkout-books" th:aria-label="#{member.cart.summary(${cartItems.size()})}">
+            <div class="member-reference-list__header member-checkout-section-header">
+                <h2 th:text="#{member.cart.summary(${cartItems.size()})}">Selected books (0 books)</h2>
+                <span class="member-reference-pill">
+                    <strong th:text="${cartItems.size()}">0</strong>
+                    <span th:text="#{member.cart.items}">books</span>
+                </span>
             </div>
-        </div>
 
-        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.cashFlow}">Payment Details</h6>
-        <div class="p-3 bg-classic-soft rounded border-classic small text-dark mb-4" style="background-color: rgba(139, 90, 43, 0.03);">
-            <div class="d-flex justify-content-between mb-2">
-                <span th:text="#{member.cart.borrowingPeriod}">Borrowing period:</span>
-                <span class="fw-bold text-dark" th:text="#{member.cart.days(${numberOfDays})}">14 days</span>
+            <div class="member-reference-list__body member-checkout-book-list">
+                <article th:each="item : ${cartItems}" class="member-reference-list__item member-checkout-book">
+                    <img class="member-checkout-book-cover"
+                         th:src="${item.coverImageUrl != null and !#strings.isEmpty(item.coverImageUrl) ? item.coverImageUrl : 'https://picsum.photos/seed/' + item.bookId + '/120/160'}"
+                         th:alt="${item.title}">
+                    <div class="member-checkout-book-copy">
+                        <h3 th:text="${item.title}">Book title</h3>
+                        <span th:text="${item.genre != null ? item.genre.genreName : #messages.msg('member.cart.defaultGenre')}">Genre</span>
+                    </div>
+                    <span class="member-reference-pill member-checkout-book-type" th:text="#{member.cart.physicalBook}">Physical book</span>
+                </article>
             </div>
-            <div class="d-flex justify-content-between mb-2">
-                <span th:text="#{member.cart.totalDeduction}">Total wallet deduction:</span>
-                <span class="fw-bold text-danger font-monospace fs-6"><span th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-            </div>
-            <hr class="my-2" style="border-top:1px dashed rgba(139, 90, 43, 0.2)">
-            <div class="d-flex justify-content-between mb-1 text-muted">
-                <span th:text="#{member.cart.balanceBefore}">Wallet balance (before):</span>
-                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-            </div>
-            <div class="d-flex justify-content-between text-success fw-bold">
-                <span th:text="#{member.cart.balanceAfter}">Estimated balance (after):</span>
-                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-            </div>
-        </div>
+        </section>
 
-        <form th:action="@{/member/cart/submit}" method="post">
-            <input type="hidden" name="numberOfDays" th:value="${numberOfDays}">
-            <!-- Lưu danh sách sách được chọn - mỗi id một input riêng -->
-            <th:block th:each="id : ${selectedBookIds}">
-                <input type="hidden" name="selectedBookIds" th:value="${id}">
-            </th:block>
-            <div class="d-flex gap-3">
-                <a href="/member/cart" class="btn btn-light border flex-grow-1 py-2" th:text="#{member.cart.backToEdit}">Back to edit</a>
-                <button type="submit" class="btn text-white flex-grow-1 py-2 fw-bold" style="background-color: #8b5a2b;"><i class="bi bi-wallet2 me-2"></i><span th:text="#{member.cart.checkoutHeading}">Confirm &amp; Pay</span></button>
+        <aside class="member-reference-list member-checkout-summary" th:aria-label="#{member.cart.cashFlow}">
+            <div class="member-reference-list__header member-checkout-section-header">
+                <h2 th:text="#{member.cart.cashFlow}">Payment Details</h2>
             </div>
-        </form>
+
+            <div class="member-reference-list__body member-checkout-summary-body">
+                <div class="member-checkout-notice" role="note">
+                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                    <p th:text="#{member.cart.checkoutNotice}">The service fee will be deducted directly from your wallet after you confirm.</p>
+                </div>
+
+                <dl class="member-checkout-payment-details">
+                    <div>
+                        <dt th:text="#{member.cart.borrowingPeriod}">Borrowing period:</dt>
+                        <dd th:text="#{member.cart.days(${numberOfDays})}">14 days</dd>
+                    </div>
+                    <div class="member-checkout-payment-total">
+                        <dt th:text="#{member.cart.totalDeduction}">Total wallet deduction:</dt>
+                        <dd><span th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd>
+                    </div>
+                    <div>
+                        <dt th:text="#{member.cart.balanceBefore}">Wallet balance (before):</dt>
+                        <dd><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd>
+                    </div>
+                    <div class="member-checkout-balance-after" th:classappend="${afterBalance.signum() < 0} ? ' is-negative'">
+                        <dt th:text="#{member.cart.balanceAfter}">Estimated balance (after):</dt>
+                        <dd><span th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd>
+                    </div>
+                </dl>
+
+                <form th:action="@{/member/cart/submit}" method="post" class="member-checkout-form">
+                    <input type="hidden" name="numberOfDays" th:value="${numberOfDays}">
+                    <th:block th:each="id : ${selectedBookIds}">
+                        <input type="hidden" name="selectedBookIds" th:value="${id}">
+                    </th:block>
+                    <button type="submit" class="member-ui-button member-ui-button--primary member-checkout-submit">
+                        <i class="bi bi-wallet2" aria-hidden="true"></i>
+                        <span th:text="#{member.cart.confirmPayment}">Confirm &amp; Pay</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
     </div>
 </div>
 </body>

@@ -7,8 +7,10 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -23,18 +25,18 @@ public class CartServiceImpl implements CartService {
 
     @SuppressWarnings("unchecked")
     private Set<Integer> getOrCreateCart(HttpSession session) {
-        Set<Integer> cart = (Set<Integer>) session.getAttribute(CART_SESSION_KEY);
-        if (cart == null) {
-            cart = new HashSet<>();
-            session.setAttribute(CART_SESSION_KEY, cart);
-        }
+        Object storedCart = session.getAttribute(CART_SESSION_KEY);
+        Set<Integer> cart = storedCart instanceof Set<?>
+                ? new LinkedHashSet<>((Set<Integer>) storedCart)
+                : new LinkedHashSet<>();
+        session.setAttribute(CART_SESSION_KEY, cart);
         return cart;
     }
 
     @Override
-    public void addToCart(HttpSession session, Integer bookId) {
+    public boolean addToCart(HttpSession session, Integer bookId) {
         Set<Integer> cart = getOrCreateCart(session);
-        cart.add(bookId);
+        return cart.add(bookId);
     }
 
     @Override
@@ -47,7 +49,10 @@ public class CartServiceImpl implements CartService {
     public List<Book> getCartItems(HttpSession session) {
         Set<Integer> cart = getOrCreateCart(session);
         if (cart.isEmpty()) return new ArrayList<>();
-        return bookRepository.findAllById(cart);
+        Map<Integer, Book> booksById = new LinkedHashMap<>();
+        bookRepository.findAllById(cart).forEach(book -> booksById.put(book.getBookId(), book));
+        cart.removeIf(bookId -> !booksById.containsKey(bookId));
+        return cart.stream().map(booksById::get).toList();
     }
 
     @Override
@@ -56,7 +61,12 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    public boolean isInCart(HttpSession session, Integer bookId) {
+        return bookId != null && getOrCreateCart(session).contains(bookId);
+    }
+
+    @Override
     public void clearCart(HttpSession session) {
-        session.setAttribute(CART_SESSION_KEY, new HashSet<Integer>());
+        session.setAttribute(CART_SESSION_KEY, new LinkedHashSet<Integer>());
     }
 }

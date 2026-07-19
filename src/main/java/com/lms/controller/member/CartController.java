@@ -6,6 +6,7 @@ import com.lms.entity.Member;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.BorrowService;
+import com.lms.service.BookService;
 import com.lms.service.CartService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -23,23 +24,41 @@ public class CartController extends LocalizedControllerSupport {
 
     private final CartService cartService;
     private final BorrowService borrowService;
+    private final BookService bookService;
     private final MemberRepository memberRepository;
     private final WalletRepository walletRepository;
 
-    public CartController(CartService cartService, BorrowService borrowService,
+    public CartController(CartService cartService, BorrowService borrowService, BookService bookService,
                           MemberRepository memberRepository, WalletRepository walletRepository) {
         this.cartService = cartService;
         this.borrowService = borrowService;
+        this.bookService = bookService;
         this.memberRepository = memberRepository;
         this.walletRepository = walletRepository;
     }
 
     @PostMapping("/add")
     public String addToCart(@RequestParam("bookId") Integer bookId, HttpSession session,
-                            RedirectAttributes redirectAttributes, @RequestHeader(value = "referer", required = false) String referer) {
-        cartService.addToCart(session, bookId);
-        redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.added"));
-        return (referer != null) ? "redirect:" + referer : "redirect:/books/" + bookId;
+                            Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+
+        Book book;
+        try {
+            book = bookService.findBookById(bookId);
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("error", message("backend.cart.invalidBook"));
+            return "redirect:/books";
+        }
+
+        if (!"Active".equalsIgnoreCase(book.getStatus())) {
+            redirectAttributes.addFlashAttribute("error", message("backend.cart.unavailable"));
+            return "redirect:/books/" + bookId;
+        }
+
+        boolean added = cartService.addToCart(session, bookId);
+        redirectAttributes.addFlashAttribute("success",
+                message(added ? "backend.cart.added" : "backend.cart.alreadyAdded"));
+        return "redirect:/books/" + bookId;
     }
 
     @PostMapping("/remove")
@@ -80,17 +99,24 @@ public class CartController extends LocalizedControllerSupport {
             return "redirect:/member/cart";
         }
 
-        List<Book> allCartItems = cartService.getCartItems(session);
-        List<Book> selectedCartItems = allCartItems.stream()
-                .filter(item -> selectedBookIds.contains(item.getBookId()))
+        List<Integer> normalizedBookIds = selectedBookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        java.util.Map<Integer, Book> cartItemsById = cartService.getCartItems(session).stream()
+                .collect(java.util.stream.Collectors.toMap(Book::getBookId, item -> item));
+        List<Book> selectedCartItems = normalizedBookIds.stream()
+                .map(cartItemsById::get)
+                .filter(java.util.Objects::nonNull)
                 .toList();
 
-        if (selectedCartItems.isEmpty()) {
+        if (selectedCartItems.isEmpty() || selectedCartItems.size() != normalizedBookIds.size()) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
             return "redirect:/member/cart";
         }
 
-        BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), selectedBookIds, numberOfDays);
+        List<Integer> validSelectedBookIds = selectedCartItems.stream().map(Book::getBookId).toList();
+        BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), validSelectedBookIds, numberOfDays);
 
         Member member = memberRepository.findByAccountUsername(principal.getName()).orElseThrow();
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
@@ -98,7 +124,7 @@ public class CartController extends LocalizedControllerSupport {
                 .orElse(BigDecimal.ZERO);
 
         model.addAttribute("cartItems", selectedCartItems);
-        model.addAttribute("selectedBookIds", selectedBookIds);
+        model.addAttribute("selectedBookIds", validSelectedBookIds);
         model.addAttribute("numberOfDays", numberOfDays);
         model.addAttribute("totalFee", previewFee);
         model.addAttribute("walletBalance", walletBalance);
@@ -118,9 +144,21 @@ public class CartController extends LocalizedControllerSupport {
         }
 
         try {
-            borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
+            List<Integer> normalizedBookIds = selectedBookIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .toList();
+            java.util.Set<Integer> cartBookIds = cartService.getCartItems(session).stream()
+                    .map(Book::getBookId)
+                    .collect(java.util.stream.Collectors.toSet());
+            if (normalizedBookIds.isEmpty() || !cartBookIds.containsAll(normalizedBookIds)) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
+                return "redirect:/member/cart";
+            }
+
+            borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), normalizedBookIds, numberOfDays);
             // Đơn mượn lập thành công -> chỉ xóa những sách đã đăng ký khỏi giỏ hàng
-            selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+            normalizedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
             redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.created"));
             return "redirect:/member/borrow/management?tab=borrowing";
         } catch (Exception e) {
