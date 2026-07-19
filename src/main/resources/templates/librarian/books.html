@@ -5,18 +5,23 @@
 <head>
     <title th:text="#{librarian.inventory.booksManagement}">Book Management</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/books.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
   </head>
 <body>
 <div layout:fragment="content"
-     th:with="activeMenu='dashboard', currentSection='books', currentSubSection=${param.subsection != null ? param.subsection[0] : 'inventory'}">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
-        >
+     th:with="activeMenu='dashboard', currentSection='books', currentSubSection=${param.subsection != null ? param.subsection[0] : 'inventory'}"
+     class="member-management-page book-inventory-page">
+    <header class="member-page-header">
         <div>
-            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336"
-                th:text="#{librarian.inventory.heading}">Book Inventory</h2>
-            <div class="text-muted" th:text="#{librarian.inventory.description}">Add, update, and manage titles and copies in the library inventory.</div>
+            <h1 class="member-page-title" th:text="#{librarian.inventory.heading}">Book Inventory</h1>
+            <p class="member-page-description" th:text="#{librarian.inventory.description}">Add, update, and manage titles and copies in the library inventory.</p>
         </div>
-    </div>
+        <button type="button" class="btn member-primary-action" data-bs-toggle="modal" data-bs-target="#addBookModal"
+                th:if="${currentSubSection == 'inventory'}">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            <span th:text="#{librarian.inventory.addBook}">Add Book</span>
+        </button>
+    </header>
 
         <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
 
@@ -80,8 +85,8 @@
             </div>
 
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
-            <div class="card-classic shadow-sm mb-4" th:if="${currentSubSection == 'inventory'}">
-                <div class="container-fluid py-4">
+            <div class="member-data-card" th:if="${currentSubSection == 'inventory'}">
+                <div class="member-data-card-body">
 
     <!-- Flash Messages -->
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
@@ -117,39 +122,44 @@
                             <div class="tab-pane fade show active" id="admin-books-pane" role="tabpanel">
 
                                         <!-- Summary Chips -->
-                                        <div class="d-flex flex-wrap gap-2 mb-4">
-                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
-                                                <span th:text="${totalBookCount ?: 0}">0</span> <span th:text="#{librarian.inventory.totalTitles}">titles</span>
+                                        <div class="member-summary-chips" th:aria-label="#{librarian.inventory.summary}">
+                                            <span>
+                                                <strong th:text="${totalBookCount ?: 0}">0</strong> <span th:text="#{librarian.inventory.totalTitles}">Total Titles</span>
                                             </span>
-                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
-                                                <span th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0}">0</span> <span>total copies</span>
+                                            <span>
+                                                <strong th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0}">0</strong> <span th:text="#{librarian.inventory.totalCopies}">Total Copies</span>
                                             </span>
-                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
-                                                <span th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0}">0</span> <span>available</span>
+                                            <span>
+                                                <strong th:text="${inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0}">0</strong> <span th:text="#{book.status.available}">Available</span>
                                             </span>
-                                            <span style="background: #f5f0e8; color: #141413; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid #e6dfd8; display: inline-flex; align-items: center; gap: 6px;">
-                                                <span th:text="${(inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0) - (inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0)}">0</span> <span>unavailable</span>
+                                            <span>
+                                                <strong th:text="${(inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0) - (inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0)}">0</strong> <span th:text="#{book.status.unavailable}">Unavailable</span>
                                             </span>
                                         </div>
                                         
                                         <!-- Toolbar (Search & Add Button) -->
-                                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                                            <form class="d-flex gap-3 align-items-center flex-grow-1" method="get" th:action="@{/librarian/books}">
-                                                <div class="input-group" style="max-width: 400px;">
-                                                    <span class="input-group-text bg-white border-end-0">
-                                                        <i class="bi bi-search text-muted"></i>
-                                                    </span>
-                                                    <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}" placeholder="Search book title, author, ISBN..." style="box-shadow: none;">
+                                        <div class="member-toolbar">
+                                            <form class="member-search-form" method="get" th:action="@{/librarian/books}">
+                                                <div class="input-group member-search-group">
+                                                    <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                                    <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}"
+                                                           th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                                    <select class="form-select member-filter-select" id="bookAvailabilityFilter" name="availability"
+                                                            th:aria-label="#{librarian.inventory.filterAvailability}">
+                                                        <option value="" th:selected="${param.availability == null || #strings.isEmpty(param.availability[0])}"
+                                                                th:text="#{librarian.inventory.allAvailability}">All availability</option>
+                                                        <option value="Available" th:selected="${param.availability != null && param.availability[0] == 'Available'}"
+                                                                th:text="#{book.status.available}">Available</option>
+                                                        <option value="Unavailable" th:selected="${param.availability != null && param.availability[0] == 'Unavailable'}"
+                                                                th:text="#{book.status.unavailable}">Unavailable</option>
+                                                    </select>
+                                                    <button type="submit" class="btn member-search-button text-nowrap" th:text="#{common.search}">Search</button>
                                                 </div>
-                                                <button type="submit" class="btn btn-classic px-4" style="font-weight: 600;">Search</button>
                                             </form>
-                                            <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal" data-bs-target="#addBookModal" style="font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-                                                <i class="bi bi-plus-lg"></i> <span th:text="#{librarian.inventory.addBook}">Add Book</span>
-                                            </button>
                                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0 stable-table-layout">
+                        <div class="table-responsive member-table-wrap">
+                            <table class="table table-hover align-middle stable-table-layout member-table">
                                 <colgroup>
                                     <col class="u-width-5-dccc3412">
                                     <col class="u-width-7-2d9383cf">
@@ -171,7 +181,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="book, iterStat : ${books.content}">
+                                    <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
+                                        th:data-book-availability="${book.status == 'Disposed' ? 'Unavailable' : 'Available'}">
                                         <td class="ps-3 fw-bold"
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
@@ -220,38 +231,44 @@
                                             <span th:text="#{librarian.inventory.empty}">No books in inventory.</span>
                                         </td>
                                     </tr>
+                                    <tr id="bookFilterEmptyState" hidden>
+                                        <td colspan="7" class="text-center text-muted py-5">
+                                            <i class="bi bi-funnel fs-2 d-block mb-2" aria-hidden="true"></i>
+                                            <span th:text="#{librarian.inventory.emptyFiltered}">No books match this availability filter.</span>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Pagination -->
-                        <nav class="mt-4" th:if="${books != null && books.totalPages > 1}"
+                        <nav class="member-pagination app-pagination-region" th:if="${books != null && books.totalPages > 1}"
                             th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
-                            <ul class="pagination justify-content-center mb-0">
+                            <ul class="pagination app-pagination">
                                 <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
-                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=0)}" th:text="#{common.first}">First</a>
+                                    <a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}" th:text="#{common.first}">First</a>
                                 </li>
                                 <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number - 1})}"><i
+                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
                                             class="bi bi-chevron-left"></i></a>
                                 </li>
                                 <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link page-link-classic">…</span></li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                     th:classappend="${i == books.number ? 'active' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${i})}"
+                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                         th:text="${i + 1}">1</a>
                                 </li>
                                 <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}"><span class="page-link page-link-classic">…</span></li>
                                 <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number + 1})}"><i
+                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
                                             class="bi bi-chevron-right"></i></a>
                                 </li>
                                 <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.totalPages - 1})}" th:text="#{common.last}">Last</a>
+                                        th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}" th:text="#{common.last}">Last</a>
                                 </li>
                             </ul>
                         </nav>
@@ -260,10 +277,10 @@
                             <div class="tab-pane fade" id="admin-categories-pane" role="tabpanel">
                                 <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
                                     <h5 class="fw-bold mb-0 text-classic"><i class="bi bi-list-ul me-2"></i><span th:text="#{librarian.inventory.categoryGenreList}">Categories and Genres</span></h5>
-                                    <div class="d-flex u-gap-12px-58cf3fe5">
-                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                    <div class="book-category-actions">
+                                        <button type="button" class="btn member-primary-action book-category-action" data-bs-toggle="modal"
                                             data-bs-target="#addCategoryModal" th:text="#{librarian.inventory.addCategory}">Add Category</button>
-                                        <button type="button" class="btn btn-classic btn-sm" data-bs-toggle="modal"
+                                        <button type="button" class="btn member-back-button book-category-action book-category-action--genre" data-bs-toggle="modal"
                                             data-bs-target="#addGenreModal" th:text="#{librarian.inventory.addGenre}">Add Genre</button>
                                     </div>
                                 </div>
@@ -454,7 +471,8 @@
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small"><span th:text="#{book.title}">Book Title</span> <span class="text-danger">*</span></label>
-                                            <input type="text" name="title" class="form-control" style="background-color: white; border-radius: 8px;" placeholder="Nhập tên sách" required oninput="validateTextLength(this, 50)">
+                                            <input type="text" name="title" class="form-control" style="background-color: white; border-radius: 8px;"
+                                                   th:placeholder="#{librarian.inventory.titlePlaceholder}" required oninput="validateTextLength(this, 50)">
                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.titleRequired}">Please enter book title.</div>
                                         </div>
                                         <div class="col-md-6">
@@ -1149,6 +1167,31 @@
             const feedback = input.parentElement.querySelector('.invalid-feedback');
             if (feedback && !valid) feedback.textContent = message;
         }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const availabilityFilter = document.getElementById('bookAvailabilityFilter');
+            const bookRows = Array.from(document.querySelectorAll('#admin-books-pane .book-data-row'));
+            const filteredEmptyState = document.getElementById('bookFilterEmptyState');
+
+            if (!availabilityFilter || !filteredEmptyState) return;
+
+            const applyAvailabilityFilter = function () {
+                const selectedAvailability = availabilityFilter.value;
+                let visibleRows = 0;
+
+                bookRows.forEach(function (row) {
+                    const matches = !selectedAvailability || row.dataset.bookAvailability === selectedAvailability;
+                    row.hidden = !matches;
+                    if (matches) visibleRows += 1;
+                });
+
+                filteredEmptyState.hidden = bookRows.length === 0 || visibleRows > 0;
+            };
+
+            availabilityFilter.addEventListener('change', applyAvailabilityFilter);
+            applyAvailabilityFilter();
+        });
     </script>
 </div>
 </body>
