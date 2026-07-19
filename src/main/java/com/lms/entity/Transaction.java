@@ -17,6 +17,13 @@ public class Transaction {
     @JoinColumn(name = "borrow_id")
     private Borrow borrow;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "borrow_detail_id")
+    private BorrowDetail borrowDetail;
+
+    @Column(name = "renewal_days")
+    private Integer renewalDays;
+
     @Column(nullable = false, length = 50)
     private String transactionType;
 
@@ -47,6 +54,10 @@ public class Transaction {
     public void setWallet(Wallet wallet) { this.wallet = wallet; }
     public Borrow getBorrow() { return borrow; }
     public void setBorrow(Borrow borrow) { this.borrow = borrow; }
+    public BorrowDetail getBorrowDetail() { return borrowDetail; }
+    public void setBorrowDetail(BorrowDetail borrowDetail) { this.borrowDetail = borrowDetail; }
+    public Integer getRenewalDays() { return renewalDays; }
+    public void setRenewalDays(Integer renewalDays) { this.renewalDays = renewalDays; }
     public String getTransactionType() { return transactionType; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
     public BigDecimal getAmount() { return amount; }
@@ -56,3 +67,4 @@ public class Transaction {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 }
+

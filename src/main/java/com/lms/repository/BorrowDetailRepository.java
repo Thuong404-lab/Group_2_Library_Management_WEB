@@ -4,15 +4,23 @@ import com.lms.entity.BorrowDetail;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select bd from BorrowDetail bd where bd.borrowDetailId = :id")
+    Optional<BorrowDetail> findByIdForUpdate(@Param("id") Integer id);
     long countByStatusIgnoreCase(String status);
+
+    long countByBorrow_Member_MemberIdAndStatusIgnoreCase(Integer memberId, String status);
 
     long countByDueDateGreaterThanEqualAndDueDateLessThan(
             LocalDateTime startDate, LocalDateTime endDate);
@@ -89,12 +97,12 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd JOIN MemberAccount ma ON bd.borrow.member = ma.member WHERE ma.username = :username AND bd.status = 'Returned'")
     List<BorrowDetail> findReturnedBorrowDetailsByUsername(@Param("username") String username);
 
-    // BỔ SUNG & CẬP NHẬT 1: Lấy danh sách sách hiện tại bao gồm cả Pending và Return_Pending (Vấn đề 7)
+    // Bá»” SUNG & Cáº¬P NHáº¬T 1: Láº¥y danh sÃ¡ch sÃ¡ch hiá»‡n táº¡i bao gá»“m cáº£ Pending vÃ  Return_Pending (Váº¥n Ä‘á» 7)
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
             "AND bd.status IN ('Pending', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending') ORDER BY bd.dueDate ASC")
     List<BorrowDetail> findCurrentBorrowsByMemberId(@Param("memberId") Integer memberId);
 
-    // BỔ SUNG 2: Lấy lịch sử mượn trả trong vòng 1 tháng gần đây (Hiển thị tab Lịch sử)
+    // Bá»” SUNG 2: Láº¥y lá»‹ch sá»­ mÆ°á»£n tráº£ trong vÃ²ng 1 thÃ¡ng gáº§n Ä‘Ã¢y (Hiá»ƒn thá»‹ tab Lá»‹ch sá»­)
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
             "AND bd.borrow.borrowDate >= :oneMonthAgo ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findBorrowHistoryInOneMonth(@Param("memberId") Integer memberId, @Param("oneMonthAgo") LocalDateTime oneMonthAgo);
@@ -104,7 +112,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending')")
     List<BorrowDetail> findActiveLoansByBarcode(@Param("barcode") String barcode);
 
-    // THÊM QUERY 2: Lấy danh sách sách đã được trả thành công trong ngày hôm nay
+    // THÃŠM QUERY 2: Láº¥y danh sÃ¡ch sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c tráº£ thÃ nh cÃ´ng trong ngÃ y hÃ´m nay
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.status = 'Returned' " +
             "AND bd.returnDate >= :startOfDay AND bd.returnDate <= :endOfDay ORDER BY bd.returnDate DESC")
     List<BorrowDetail> findReturnedBooksToday(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
@@ -140,3 +148,4 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             @Param("startDate") java.time.LocalDateTime startDate,
             @Param("endDate") java.time.LocalDateTime endDate);
 }
+

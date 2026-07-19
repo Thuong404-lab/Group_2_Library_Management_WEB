@@ -72,6 +72,14 @@ public class BorrowController extends LocalizedControllerSupport {
 
         model.addAttribute("borrowingCount", currentBorrows.size());
         model.addAttribute("reservationCount", reservations.size());
+        Member member = getCurrentMember(principal);
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance()).orElse(BigDecimal.ZERO);
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("maxRenewalDays", getPositiveIntSetting("Max_Renewal_Days", 7));
+        model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
+        model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
+        model.addAttribute("memberDiscountPercent", member.getTier() != null && member.getTier().getDiscountPercent() != null ? member.getTier().getDiscountPercent() : BigDecimal.ZERO);
 
         if ("reserved".equalsIgnoreCase(tab)) {
             model.addAttribute("booksData", reservations);
@@ -99,7 +107,7 @@ public class BorrowController extends LocalizedControllerSupport {
         model.addAttribute("currentMemberName", principal.getName());
         model.addAttribute("selectedBookId", bookId);
 
-        // --- THÊM DÒNG NÀY ĐỂ TRUYỀN DỮ LIỆU SỐ NGÀY MAX XUỐNG GIAO DIỆN ---
+        // --- THÃŠM DÃ’NG NÃ€Y Äá»‚ TRUYá»€N Dá»® LIá»†U Sá» NGÃ€Y MAX XUá»NG GIAO DIá»†N ---
         model.addAttribute("maxBorrowDays", getMaxBorrowDays());
 
         try {
@@ -127,7 +135,7 @@ public class BorrowController extends LocalizedControllerSupport {
             return "redirect:/";
         }
 
-        // --- THÊM ĐOẠN VALIDATION CHẶN LỖI NHẬP QUÁ NGÀY Ở ĐÂY ---
+        // --- THÃŠM ÄOáº N VALIDATION CHáº¶N Lá»–I NHáº¬P QUÃ NGÃ€Y á»ž ÄÃ‚Y ---
         Integer maxDaysAllowed = getMaxBorrowDays();
         if (numberOfDays < 1 || numberOfDays > maxDaysAllowed) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBorrowDays", maxDaysAllowed));
@@ -171,7 +179,7 @@ public class BorrowController extends LocalizedControllerSupport {
         }
     }
 
-    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt trước và lưu vết hệ thống
+    // FIX CHÃNH Táº I ÄÃ‚Y: Äá»“ng bá»™ gá»i chÃ­nh xÃ¡c qua borrowService Ä‘á»ƒ táº¡o báº£n ghi Ä‘áº·t trÆ°á»›c vÃ  lÆ°u váº¿t há»‡ thá»‘ng
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
                               Principal principal,
@@ -201,10 +209,12 @@ public class BorrowController extends LocalizedControllerSupport {
     }
 
     @PostMapping("/renew/{borrowDetailId}")
-    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId,
+                            @RequestParam("renewalDays") Integer renewalDays,
+                            Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            borrowService.memberSubmitRenewRequest(borrowDetailId);
+            borrowService.memberSubmitRenewRequest(principal.getName(), borrowDetailId, renewalDays);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.renewalSubmitted"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.renewalSubmitFailed", e));
@@ -266,6 +276,14 @@ public class BorrowController extends LocalizedControllerSupport {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+    private int getPositiveIntSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key).map(setting -> setting.getSettingValue())
+                    .filter(v -> v != null && !v.isBlank()).map(String::trim).map(Integer::parseInt)
+                    .filter(v -> v > 0).orElse(defaultValue);
+        } catch (NumberFormatException ignored) { return defaultValue; }
+    }
+
     private Integer getMaxBorrowDays() {
         return systemSettingRepository.findAll().stream()
                 .filter(setting -> setting.getSettingKey() != null)
@@ -276,8 +294,10 @@ public class BorrowController extends LocalizedControllerSupport {
                 .map(Integer::parseInt)
                 .filter(value -> value > 0)
                 .findFirst()
-                .orElse(14); // Giá trị mặc định nếu database chưa có key này
+                .orElse(14); // GiÃ¡ trá»‹ máº·c Ä‘á»‹nh náº¿u database chÆ°a cÃ³ key nÃ y
     }
 
 
 }
+
+

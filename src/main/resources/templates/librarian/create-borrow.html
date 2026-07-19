@@ -152,11 +152,12 @@
 
 
 
-                    <form th:action="@{/librarian/borrow/review}" method="post" class="row g-3 borrow-create-form" id="offlineBorrowForm">
+                    <form th:action="@{/librarian/borrow/review}" method="post" class="row g-3 borrow-create-form" id="offlineBorrowForm" novalidate>
                         <div class="col-md-7">
                             <label for="inlineMemberId" class="form-label borrow-form-label"><span th:text="#{librarian.borrowDesk.memberIdentifier}">Email or Phone Number</span> <span class="borrow-required" aria-hidden="true">*</span></label>
                             <input type="text" id="inlineMemberId" name="memberIdentifier" class="form-control" th:placeholder="#{librarian.borrowDesk.memberPlaceholder}" required th:value="${billMemberIdentifier != null ? billMemberIdentifier : ''}" autocomplete="off" />
                             <div id="memberInfoBox" class="borrow-member-info borrow-is-hidden" role="status"></div>
+                            <div id="memberErrorBox" class="borrow-validation-message borrow-is-hidden" role="alert"></div>
                         </div>
                         <div class="col-md-5">
                             <label for="inlineDays" class="form-label borrow-form-label">
@@ -165,12 +166,13 @@
                             </label>
                             <input type="number" id="inlineDays" name="numberOfDays" class="form-control" th:value="${billDays != null ? billDays : maxBorrowDays}" min="1" th:max="${maxBorrowDays}" required />
                             <div id="dueDateBox" class="borrow-due-date" aria-live="polite"></div>
+                            <div id="daysErrorBox" class="borrow-validation-message borrow-is-hidden" role="alert"></div>
                         </div>
                         <div class="col-12">
                             <label for="scannerInput" class="form-label borrow-form-label"><span th:text="#{librarian.borrowDesk.scanBarcode}">Scan Book Barcode</span> <span class="borrow-required" aria-hidden="true">*</span></label>
                             <div class="input-group borrow-scanner-group">
                                 <span class="input-group-text"><i class="bi bi-upc-scan" aria-hidden="true"></i></span>
-                                <input type="text" id="scannerInput" class="form-control" th:placeholder="#{librarian.borrowDesk.scanPlaceholder}" autocomplete="off" />
+                                <input type="text" id="scannerInput" class="form-control" aria-describedby="scanErrorBox scannedBookSummary" th:placeholder="#{librarian.borrowDesk.scanPlaceholder}" autocomplete="off" />
                                 <button class="borrow-secondary-button" type="button" id="btnAddBarcode" th:text="#{common.add}">Add</button>
                             </div>
                             <input type="hidden" id="inlineBarcodes" name="rawBarcodes" required th:value="${billRawBarcodes != null ? billRawBarcodes : ''}" />
@@ -193,10 +195,11 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <div class="borrow-scan-summary"><span id="scannedBookSummary" aria-live="polite"></span><button type="button" id="btnClearBarcodes" class="borrow-link-button borrow-is-hidden"></button></div>
                             <div id="scanErrorBox" class="borrow-validation-message borrow-is-hidden" role="alert"></div>
                         </div>
                         <div class="col-12 borrow-preview-actions">
-                            <button type="submit" class="app-form-primary borrow-preview-button" id="btnPreviewBill">
+                            <button type="submit" class="app-form-primary borrow-preview-button" id="btnPreviewBill" disabled>
                                 <i class="bi bi-file-text" aria-hidden="true"></i><span th:text="#{librarian.borrowDesk.preview}">Preview Loan</span>
                             </button>
                         </div>
@@ -485,6 +488,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         const memberInput = document.getElementById("inlineMemberId");
         const memberInfoBox = document.getElementById("memberInfoBox");
+        const memberErrorBox = document.getElementById("memberErrorBox");
         const scannerInput = document.getElementById("scannerInput");
         const hiddenBarcodes = document.getElementById("inlineBarcodes");
         const scannedBooksTable = document.getElementById("scannedBooksTable");
@@ -493,6 +497,11 @@
         const offlineBorrowForm = document.getElementById("offlineBorrowForm");
         const daysInput = document.getElementById("inlineDays");
         const dueDateBox = document.getElementById("dueDateBox");
+        const daysErrorBox = document.getElementById("daysErrorBox");
+        const previewButton = document.getElementById("btnPreviewBill");
+        const addBarcodeButton = document.getElementById("btnAddBarcode");
+        const clearBarcodesButton = document.getElementById("btnClearBarcodes");
+        const scannedBookSummary = document.getElementById("scannedBookSummary");
         const borrowDeskI18n = {
             expectedDueDate: /*[[#{borrow.expectedDueDate}]]*/ 'Expected due date',
             active: /*[[#{status.active}]]*/ 'Active',
@@ -510,18 +519,50 @@
             coverAlt: /*[[#{book.coverAlt}]]*/ 'Book cover',
             removeBook: /*[[#{librarian.borrowDesk.removeBook}]]*/ 'Remove book from loan',
             scanRequired: /*[[#{librarian.borrowDesk.scanRequired}]]*/ 'Scan at least one book barcode.',
-            validMemberRequired: /*[[#{librarian.borrowDesk.validMemberRequired}]]*/ 'Verify a valid member before previewing the loan.'
+            validMemberRequired: /*[[#{librarian.borrowDesk.validMemberRequired}]]*/ 'Verify a valid member before previewing the loan.',
+            inactiveMember: /*[[#{backend.member.inactive}]]*/ 'This member is inactive.',
+            pendingBarcode: /*[[#{librarian.borrowDesk.pendingBarcode}]]*/ 'Add or clear the barcode currently entered.',
+            checking: /*[[#{common.processing}]]*/ 'Checking...',
+            scannedCount: /*[[#{librarian.borrowDesk.scannedCount}]]*/ 'Scanned: {0} / {1}',
+            clearAll: /*[[#{librarian.borrowDesk.clearAll}]]*/ 'Clear all',
+            invalidDays: /*[[#{backend.borrow.invalidDays(${maxBorrowDays})}]]*/ 'The loan period must be between 1 and 14 days.',
+            remainingCapacity: /*[[#{librarian.borrowDesk.remainingCapacity}]]*/ 'Remaining capacity: {0}'
         };
         
         let scannedBarcodes = [];
         let maxLimit = 0;
         let currentBorrowed = 0;
         let memberFound = false;
+        let lookupSequence = 0;
+
+        function refreshFormState() {
+            const daysValid = daysInput && daysInput.value !== "" && daysInput.checkValidity();
+            if (previewButton) previewButton.disabled = !(memberFound && scannedBarcodes.length > 0 && daysValid);
+            if (scannedBookSummary) {
+                const remaining = Math.max(0, maxLimit - currentBorrowed - scannedBarcodes.length);
+                scannedBookSummary.textContent = borrowDeskI18n.scannedCount.replace("{0}", scannedBarcodes.length).replace("{1}", maxLimit) + " · " + borrowDeskI18n.remainingCapacity.replace("{0}", remaining);
+            }
+            if (clearBarcodesButton) {
+                clearBarcodesButton.textContent = borrowDeskI18n.clearAll;
+                clearBarcodesButton.classList.toggle("borrow-is-hidden", scannedBarcodes.length === 0);
+            }
+        }
+
+        function validateDays() {
+            if (!daysInput || !daysErrorBox) return false;
+            const valid = daysInput.value !== "" && daysInput.checkValidity();
+            daysInput.classList.toggle("is-invalid", !valid);
+            daysInput.setAttribute("aria-invalid", String(!valid));
+            daysInput.setAttribute("aria-describedby", "daysErrorBox dueDateBox");
+            daysErrorBox.textContent = valid ? "" : borrowDeskI18n.invalidDays;
+            daysErrorBox.classList.toggle("borrow-is-hidden", valid);
+            return valid;
+        }
 
         function updateDueDate() {
             if(daysInput && dueDateBox) {
                 const days = parseInt(daysInput.value) || 0;
-                if(days > 0) {
+                if(validateDays()) {
                     const today = new Date();
                     today.setDate(today.getDate() + days);
                     const dd = String(today.getDate()).padStart(2, '0');
@@ -535,13 +576,13 @@
         }
 
         if(daysInput) {
-            daysInput.addEventListener("input", updateDueDate);
+            daysInput.addEventListener("input", function() { updateDueDate(); refreshFormState(); });
             updateDueDate(); // Gọi luôn lúc đầu để hiện ngày
         }
         if (hiddenBarcodes && hiddenBarcodes.value) {
             const initialBarcodes = hiddenBarcodes.value.split(',').map(b => b.trim()).filter(b => b);
             if (initialBarcodes.length > 0) {
-                fetch(`/librarian/api/book-lookup?barcodes=${initialBarcodes.join(',')}`)
+                fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(initialBarcodes.join(','))}`)
                     .then(r => r.json())
                     .then(data => {
                         data.forEach(book => {
@@ -563,6 +604,8 @@
                 clearTimeout(debounceTimer);
                 memberInfoBox.classList.add("borrow-is-hidden");
                 memberFound = false;
+                lookupSequence++;
+                refreshFormState();
                 debounceTimer = setTimeout(() => {
                     const val = this.value.trim();
                     if (val.length >= 3) {
@@ -573,31 +616,75 @@
         }
         
         function lookupMember(val) {
-            fetch(`/librarian/api/member-lookup?identifier=${val}`)
-                .then(r => r.json())
+            const requestId = ++lookupSequence;
+            memberFound = false;
+            refreshFormState();
+            memberInfoBox.innerHTML = `<span class="borrow-semantic-text--muted">${borrowDeskI18n.checking}</span>`;
+            memberInfoBox.classList.remove("borrow-is-hidden");
+            fetch(`/librarian/api/member-lookup?identifier=${encodeURIComponent(val)}`)
+                .then(r => {
+                    if (!r.ok) throw new Error("lookup failed");
+                    return r.json();
+                })
                 .then(data => {
+                    if (requestId !== lookupSequence) return;
                     if (data.found) {
-                        memberFound = true;
                         maxLimit = data.maxBorrowLimit;
                         currentBorrowed = data.currentBorrowCount;
-                        let statusHtml = data.status === 'Active' ? `<span class="borrow-semantic-text--success">${borrowDeskI18n.active}</span>` : `<span class="borrow-semantic-text--danger">${borrowDeskI18n.blocked}</span>`;
+                        const accountActive = data.status === 'Active';
+                        memberFound = data.eligible === undefined ? accountActive : data.eligible === true;
+                        const statusHtml = accountActive
+                            ? `<span class="borrow-semantic-text--success">${borrowDeskI18n.active}</span>`
+                            : `<span class="borrow-semantic-text--danger">${borrowDeskI18n.blocked}</span>`;
                         memberInfoBox.innerHTML = `
-                            <strong>${data.fullName}</strong> (${data.memberLevel})<br/>
+                            <strong>${escapeHtml(data.fullName)}</strong> (${escapeHtml(data.memberLevel)})<br/>
                             ${borrowDeskI18n.status}: ${statusHtml}<br/>
                             ${borrowDeskI18n.currentlyBorrowed}: <strong>${currentBorrowed} / ${maxLimit}</strong> ${borrowDeskI18n.booksUnit}
+                            ${memberFound ? '' : `<br/><span class="borrow-semantic-text--danger">${(data.reasons || []).map(escapeHtml).join('<br/>') || (accountActive ? borrowDeskI18n.validMemberRequired : borrowDeskI18n.inactiveMember)}</span>`}
                         `;
-                        memberInfoBox.classList.remove("borrow-is-hidden");
                     } else {
+                        maxLimit = 0;
+                        currentBorrowed = 0;
                         memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>${borrowDeskI18n.memberNotFound}</span>`;
-                        memberInfoBox.classList.remove("borrow-is-hidden");
                     }
+                    const reasons = data.found ? (data.reasons || []) : [borrowDeskI18n.memberNotFound];
+                    memberErrorBox.textContent = memberFound ? "" : reasons.join(" ");
+                    memberErrorBox.classList.toggle("borrow-is-hidden", memberFound);
+                    refreshFormState();
+                })
+                .catch(() => {
+                    if (requestId !== lookupSequence) return;
+                    memberFound = false;
+                    memberErrorBox.textContent = borrowDeskI18n.lookupFailed;
+                    memberErrorBox.classList.remove("borrow-is-hidden");
+                    memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger">${borrowDeskI18n.lookupFailed}</span>`;
+                    refreshFormState();
                 });
         }
 
+        function escapeHtml(value) {
+            const node = document.createElement('span');
+            node.textContent = value == null ? '' : String(value);
+            return node.innerHTML;
+        }
         const btnAddBarcode = document.getElementById("btnAddBarcode");
+        const addBarcodeDefaultLabel = btnAddBarcode ? btnAddBarcode.textContent : "";
+        let barcodeLookupPending = false;
+
+        function setBarcodeLookupPending(pending) {
+            barcodeLookupPending = pending;
+            if (btnAddBarcode) {
+                btnAddBarcode.disabled = pending;
+                btnAddBarcode.innerHTML = pending
+                    ? '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + borrowDeskI18n.checking
+                    : addBarcodeDefaultLabel;
+            }
+            if (scannerInput) scannerInput.disabled = pending;
+        }
 
         if(scannerInput) {
             function processBarcode() {
+                if (barcodeLookupPending) return;
                 scanErrorBox.classList.add("borrow-is-hidden");
                 const barcode = scannerInput.value.trim();
                 if (!barcode) return;
@@ -619,7 +706,7 @@
                     return;
                 }
 
-                fetch(`/librarian/api/book-lookup?barcodes=${barcode}`)
+                fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(barcode)}`)
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.length > 0) {
@@ -636,8 +723,12 @@
                             }
                         }
                     })
-                    .catch(err => {
+                    .catch(() => {
                         showError(borrowDeskI18n.lookupFailed);
+                    })
+                    .finally(() => {
+                        setBarcodeLookupPending(false);
+                        scannerInput.focus();
                     });
             }
 
@@ -724,6 +815,8 @@
 
                 tr.append(barcodeCell, bookCell, actionCell);
                 tbody.appendChild(tr);
+                refreshFormState();
+                scannerInput.focus();
             }
         }
 
@@ -735,10 +828,31 @@
                 scannedBooksTable.classList.add("borrow-is-hidden");
             }
             scanErrorBox.classList.add("borrow-is-hidden");
+            refreshFormState();
+            scannerInput.focus();
         };
 
         function updateHiddenInput() {
             hiddenBarcodes.value = scannedBarcodes.join(",");
+        }
+
+        if (clearBarcodesButton) {
+            clearBarcodesButton.addEventListener("click", function() {
+                scannedBarcodes = [];
+                tbody.replaceChildren();
+                scannedBooksTable.classList.add("borrow-is-hidden");
+                updateHiddenInput();
+                scanErrorBox.classList.add("borrow-is-hidden");
+                refreshFormState();
+                scannerInput.focus();
+            });
+        }
+
+        refreshFormState();
+        if (memberInput && !memberInput.value.trim()) {
+            memberInput.focus();
+        } else if (scannerInput) {
+            scannerInput.focus();
         }
 
         function showError(msg) {
@@ -749,21 +863,26 @@
         if(offlineBorrowForm) {
             offlineBorrowForm.addEventListener("submit", function(e) {
                 const pendingInput = scannerInput ? scannerInput.value.trim() : "";
-                if (pendingInput !== "") {
-                    if (!scannedBarcodes.includes(pendingInput)) {
-                        scannedBarcodes.push(pendingInput);
-                        updateHiddenInput();
-                    }
-                    scannerInput.value = "";
+                if (!validateDays()) {
+                    e.preventDefault();
+                    daysInput.focus();
+                    return;
                 }
-                
+                if (pendingInput !== "") {
+                    e.preventDefault();
+                    showError(borrowDeskI18n.pendingBarcode);
+                    scannerInput.focus();
+                    return;
+                }
+
                 if (scannedBarcodes.length === 0) {
                     e.preventDefault();
                     showError(borrowDeskI18n.scanRequired);
                 } else if (!memberFound) {
                     e.preventDefault();
-                    scanErrorBox.textContent = borrowDeskI18n.validMemberRequired;
-                    scanErrorBox.classList.remove("borrow-is-hidden");
+                    memberErrorBox.textContent = borrowDeskI18n.validMemberRequired;
+                    memberErrorBox.classList.remove("borrow-is-hidden");
+                    memberInput.focus();
                 }
             });
         }
