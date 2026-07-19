@@ -400,7 +400,8 @@
         }
 
         #settingsMenu .menu-link,
-        #adminUserManagementMenu .menu-link {
+        #adminUserManagementMenu .menu-link,
+        #adminBookManagementMenu .menu-link {
             min-height: auto;
             padding-top: 10px;
             padding-bottom: 10px;
@@ -411,20 +412,59 @@
         }
 
         #settingsMenu .menu-link.active-submenu,
-        #adminUserManagementMenu .menu-link.active-submenu {
+        #adminUserManagementMenu .menu-link.active-submenu,
+        #adminBookManagementMenu .menu-link.active-submenu {
             color: #ffffff;
             background: rgba(255, 255, 255, 0.08);
         }
 
         body.sidebar-collapsed #settingsMenu .menu-link,
-        body.sidebar-collapsed #adminUserManagementMenu .menu-link {
+        body.sidebar-collapsed #adminUserManagementMenu .menu-link,
+        body.sidebar-collapsed #adminBookManagementMenu .menu-link {
             padding-left: 20px;
             justify-content: center;
         }
         
         body.sidebar-collapsed #settingsMenu .menu-link .menu-text,
-        body.sidebar-collapsed #adminUserManagementMenu .menu-link .menu-text {
+        body.sidebar-collapsed #adminUserManagementMenu .menu-link .menu-text,
+        body.sidebar-collapsed #adminBookManagementMenu .menu-link .menu-text {
             display: none;
+        }
+
+        /* Keep every Admin sidebar row on the same grid. */
+        .staff-shell--admin .sidebar-menu > .menu-item > .menu-link {
+            width: 100%;
+            min-height: 50px;
+            box-sizing: border-box;
+        }
+
+        .staff-shell--admin .sidebar-menu > .menu-item > .menu-link > .d-flex {
+            flex: 1 1 auto;
+            gap: 11px;
+        }
+
+        .staff-shell--admin .sidebar-menu > .menu-item > .menu-link:focus {
+            outline: 0;
+            box-shadow: none;
+        }
+
+        .staff-shell--admin .sidebar-menu > .menu-item > .menu-link:focus-visible {
+            box-shadow: inset 0 0 0 2px rgba(245, 178, 127, 0.72);
+        }
+
+        .staff-shell--admin #adminBookManagementMenu {
+            padding: 4px 0 6px 12px;
+        }
+
+        .staff-shell--admin #adminBookManagementMenu .menu-item {
+            margin: 0 0 3px;
+        }
+
+        .staff-shell--admin #adminBookManagementMenu .menu-link {
+            min-height: 42px;
+            padding: 9px 12px 9px 43px;
+            border-radius: 9px;
+            line-height: 1.35;
         }
         /* Shared pagination: keep page numbers and navigation controls aligned. */
         .pagination {
@@ -457,4 +497,456 @@
 
 .admin-base-ul-border-right-left-08 {
     border: 1px solid var(--border-color) !important; right: 0; left: auto; top: 100%;
+}
+
+/* ===========================================================================
+   Canonical Admin UI — derived from the public index visual language
+   ========================================================================== */
+.staff-shell--admin {
+    --admin-ink: #2e1a08;
+    --admin-body: #513215;
+    --admin-muted: #78685d;
+    --admin-line: #eadfd5;
+    --admin-line-soft: #f2e8e0;
+    --admin-paper: #ffffff;
+    --admin-paper-soft: #fffaf7;
+    --admin-accent-soft: #fceee7;
+    --admin-primary: #8b5a2b;
+    --admin-primary-hover: #724922;
+    --admin-primary-active: #513215;
+    --admin-focus: rgba(166, 108, 53, 0.24);
+    --admin-shadow: 0 8px 24px rgba(68, 48, 35, 0.055);
+    --admin-shadow-hover: 0 12px 28px rgba(68, 48, 35, 0.085);
+    --admin-radius: 16px;
+    background: var(--admin-paper);
+    color: var(--admin-body);
+    font-family: var(--app-font-ui);
+}
+
+.staff-shell--admin .main-wrapper,
+.staff-shell--admin .content-area {
+    min-width: 0;
+    background: var(--admin-paper);
+}
+
+.staff-shell--admin .content-area {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+    padding: 32px clamp(20px, 3vw, 40px) 48px;
+}
+
+.staff-shell--admin h1,
+.staff-shell--admin h2,
+.staff-shell--admin h3,
+.staff-shell--admin h4,
+.staff-shell--admin h5,
+.staff-shell--admin h6 {
+    color: var(--admin-ink);
+    font-family: var(--app-font-display);
+}
+
+/* Shell */
+.staff-shell--admin .topbar {
+    height: 68px;
+    padding-inline: clamp(20px, 3vw, 40px);
+    border-color: var(--admin-line);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 18px rgba(81, 50, 21, 0.05);
+    backdrop-filter: blur(12px);
+}
+
+.staff-shell--admin .toggle-btn {
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 10px;
+    color: var(--admin-primary);
+}
+
+.staff-shell--admin .toggle-btn:hover {
+    background: var(--admin-accent-soft);
+}
+
+.staff-shell--admin .toggle-btn:focus-visible,
+.staff-shell--admin .user-dropdown-toggle:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--admin-focus);
+}
+
+.staff-shell--admin .sidebar {
+    background: linear-gradient(180deg, #513215 0%, #2e1a08 100%);
+    box-shadow: 8px 0 28px rgba(46, 26, 8, 0.12);
+}
+
+.staff-shell--admin .sidebar-header {
+    height: 68px;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.staff-shell--admin .sidebar-menu {
+    padding: 18px 12px 28px;
+}
+
+.staff-shell--admin .sidebar-menu > .menu-item {
+    margin-bottom: 5px;
+}
+
+.staff-shell--admin .sidebar-menu > .menu-item > .menu-link {
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-left: 1px solid transparent;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.82);
+    font-family: var(--app-font-ui);
+    font-size: 0.9rem;
+}
+
+.staff-shell--admin .sidebar-menu > .menu-item > .menu-link:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+}
+
+.staff-shell--admin .sidebar-menu > .menu-item > .menu-link.active {
+    border-color: rgba(245, 178, 127, 0.34);
+    background: var(--admin-primary);
+    color: #ffffff;
+    box-shadow: 0 7px 18px rgba(27, 14, 3, 0.2);
+}
+
+.staff-shell--admin :is(#adminUserManagementMenu, #adminBookManagementMenu, #settingsMenu) {
+    padding: 5px 0 6px 12px;
+}
+
+.staff-shell--admin :is(#adminUserManagementMenu, #adminBookManagementMenu, #settingsMenu) .menu-link {
+    min-height: 40px;
+    margin-bottom: 3px;
+    padding: 8px 12px 8px 42px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: var(--app-font-ui);
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+.staff-shell--admin :is(#adminUserManagementMenu, #adminBookManagementMenu, #settingsMenu) .menu-link:hover,
+.staff-shell--admin :is(#adminUserManagementMenu, #adminBookManagementMenu, #settingsMenu) .menu-link.active-submenu {
+    border-color: rgba(245, 178, 127, 0.18);
+    background: rgba(249, 215, 195, 0.12);
+    color: #ffffff;
+}
+
+/* Page headings: supports both current components and legacy Bootstrap markup. */
+.staff-shell--admin :is(.app-page-header, .member-page-header, .admin-report-header, .settings-header) {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 0 28px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid var(--admin-line);
+    background: transparent;
+}
+
+.staff-shell--admin .content-area > div:not(.admin-dashboard-page) > .d-flex:first-child.border-bottom,
+.staff-shell--admin .content-area > main:not(.admin-dashboard-page) > .d-flex:first-child.border-bottom {
+    align-items: flex-end !important;
+    gap: 24px;
+    margin-bottom: 28px !important;
+    padding-bottom: 18px !important;
+    border-color: var(--admin-line) !important;
+}
+
+.staff-shell--admin :is(.admin-report-eyebrow, .admin-dashboard-eyebrow, .app-page-eyebrow, .member-page-eyebrow) {
+    display: block;
+    margin: 0 0 7px;
+    color: #a66c35;
+    font: 700 0.72rem/1.3 var(--app-font-ui);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.staff-shell--admin :is(.app-page-title, .member-page-title, .admin-report-title, .settings-title, .page-title),
+.staff-shell--admin .content-area > div:not(.admin-dashboard-page) > .d-flex:first-child h2 {
+    margin: 0 0 6px;
+    color: var(--admin-ink);
+    font: 600 clamp(1.75rem, 2.4vw, 2.25rem)/1.15 var(--app-font-display);
+    letter-spacing: -0.02em;
+}
+
+.staff-shell--admin :is(.app-page-description, .member-page-description, .admin-report-description, .settings-description) {
+    max-width: 760px;
+    margin: 0;
+    color: var(--admin-muted);
+    font: 400 0.95rem/1.6 var(--app-font-ui);
+}
+
+/* Cards and section surfaces */
+.staff-shell--admin :is(.card, .card-classic, .app-card, .member-data-card, .settings-card):not(.modal-content) {
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius);
+    background: var(--admin-paper);
+    box-shadow: var(--admin-shadow);
+}
+
+.staff-shell--admin :is(.card, .card-classic, .app-card, .member-data-card):not(.modal-content) {
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.staff-shell--admin :is(.card, .card-classic, .app-card, .member-data-card):not(.modal-content):hover {
+    border-color: rgba(139, 90, 43, 0.32);
+    box-shadow: var(--admin-shadow-hover);
+}
+
+.staff-shell--admin :is(.card-header, .app-card-header, .member-data-card-header) {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius) var(--admin-radius) 0 0;
+    background: var(--admin-paper-soft);
+}
+
+.staff-shell--admin :is(.app-card-body, .member-data-card-body) {
+    padding: 22px;
+}
+
+/* Forms */
+.staff-shell--admin :is(.form-control, .form-select, .input-group-text),
+.staff-shell--admin .admin-report-field :is(input, select) {
+    min-height: 42px;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background-color: var(--admin-paper);
+    color: var(--admin-body);
+    font-family: var(--app-font-ui);
+}
+
+.staff-shell--admin :is(.form-control, .form-select):hover,
+.staff-shell--admin .admin-report-field :is(input, select):hover {
+    border-color: rgba(139, 90, 43, 0.42);
+}
+
+.staff-shell--admin :is(.form-control, .form-select):focus,
+.staff-shell--admin .admin-report-field :is(input, select):focus {
+    border-color: #a66c35;
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--admin-focus);
+}
+
+.staff-shell--admin .form-label,
+.staff-shell--admin label {
+    color: var(--admin-body);
+    font-family: var(--app-font-ui);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+/* Unified actions */
+.staff-shell--admin :is(.btn, .member-primary-action, .member-secondary-action, .admin-report-action, .app-primary-action, .app-secondary-action) {
+    min-height: 40px;
+    border-radius: 10px;
+    font-family: var(--app-font-ui);
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.staff-shell--admin :is(.btn-primary, .btn-classic, .member-primary-action, .admin-report-action-primary, .app-primary-action) {
+    border-color: var(--admin-primary);
+    background: var(--admin-primary);
+    color: #ffffff;
+}
+
+.staff-shell--admin :is(.btn-primary, .btn-classic, .member-primary-action, .admin-report-action-primary, .app-primary-action):hover {
+    transform: translateY(-1px);
+    border-color: var(--admin-primary-hover);
+    background: var(--admin-primary-hover);
+    color: #ffffff;
+}
+
+.staff-shell--admin :is(.btn-primary, .btn-classic, .member-primary-action, .admin-report-action-primary, .app-primary-action):active {
+    transform: translateY(1px);
+    border-color: var(--admin-primary-active);
+    background: var(--admin-primary-active);
+}
+
+.staff-shell--admin :is(.btn-outline-primary, .btn-outline-classic, .member-secondary-action, .admin-report-action-secondary, .app-secondary-action) {
+    border-color: rgba(139, 90, 43, 0.38);
+    background: var(--admin-paper);
+    color: var(--admin-primary-hover);
+}
+
+.staff-shell--admin :is(.btn-outline-primary, .btn-outline-classic, .member-secondary-action, .admin-report-action-secondary, .app-secondary-action):hover {
+    transform: translateY(-1px);
+    border-color: var(--admin-primary);
+    background: var(--admin-accent-soft);
+    color: var(--admin-primary-active);
+}
+
+.staff-shell--admin :is(.btn, .member-primary-action, .admin-report-action):focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--admin-focus);
+}
+
+.staff-shell--admin :is(.btn, .member-primary-action, .admin-report-action):disabled,
+.staff-shell--admin :is(.btn, .member-primary-action, .admin-report-action).disabled {
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* Tables */
+.staff-shell--admin :is(.table-responsive, .app-table-wrap, .member-table-wrap) {
+    overflow: auto;
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius);
+    background: var(--admin-paper);
+}
+
+.staff-shell--admin :is(.table, .app-table, .member-table) {
+    width: 100%;
+    margin-bottom: 0;
+    color: var(--admin-body);
+    font-family: var(--app-font-ui);
+    vertical-align: middle;
+}
+
+.staff-shell--admin :is(.table, .app-table, .member-table) > thead > tr > th {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--admin-line);
+    background: var(--admin-paper-soft);
+    color: var(--admin-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.staff-shell--admin :is(.table, .app-table, .member-table) > tbody > tr > td {
+    padding: 15px 16px;
+    border-color: var(--admin-line-soft);
+    background: var(--admin-paper);
+}
+
+.staff-shell--admin .table-hover > tbody > tr:hover > *,
+.staff-shell--admin .app-table > tbody > tr:hover > * {
+    background: var(--admin-paper-soft);
+    color: inherit;
+}
+
+/* Badges, feedback and pagination */
+.staff-shell--admin :is(.badge, .status-badge, .payment-status, .audit-result, .app-pill) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 5px 11px;
+    border: 1px solid rgba(195, 128, 64, 0.42);
+    border-radius: 999px;
+    font-family: var(--app-font-ui);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.staff-shell--admin :is(.alert, .app-alert) {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    box-shadow: none;
+    font-family: var(--app-font-ui);
+}
+
+.staff-shell--admin .pagination {
+    justify-content: center;
+    gap: 8px;
+    margin: 22px 0 0;
+}
+
+.staff-shell--admin .pagination .page-link {
+    min-width: 40px;
+    height: 40px;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background: var(--admin-paper);
+    color: var(--admin-primary-hover);
+}
+
+.staff-shell--admin .pagination .page-link:hover {
+    border-color: var(--admin-primary);
+    background: var(--admin-accent-soft);
+}
+
+.staff-shell--admin .pagination .page-item.active .page-link {
+    border-color: var(--admin-primary);
+    background: var(--admin-primary);
+    color: #ffffff;
+}
+
+/* Modal contract */
+.staff-shell--admin .modal-content {
+    overflow: hidden;
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius);
+    background: var(--admin-paper);
+    box-shadow: 0 18px 48px rgba(20, 20, 19, 0.18);
+}
+
+.staff-shell--admin .modal-header,
+.staff-shell--admin .modal-footer {
+    padding: 18px 22px;
+    border-color: var(--admin-line);
+    background: var(--admin-paper-soft);
+}
+
+.staff-shell--admin .modal-body {
+    padding: 22px;
+    background: var(--admin-paper);
+}
+
+.staff-shell--admin .modal-title {
+    color: var(--admin-ink);
+    font: 600 1.25rem/1.3 var(--app-font-display);
+}
+
+@media (max-width: 767.98px) {
+    .staff-shell--admin .content-area {
+        padding: 22px 16px 36px;
+    }
+
+    .staff-shell--admin :is(.app-page-header, .member-page-header, .admin-report-header, .settings-header),
+    .staff-shell--admin .content-area > div:not(.admin-dashboard-page) > .d-flex:first-child.border-bottom {
+        align-items: stretch !important;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .staff-shell--admin :is(.app-page-actions, .member-page-actions, .admin-report-actions) {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .staff-shell--admin :is(.app-page-actions, .member-page-actions, .admin-report-actions) > *,
+    .staff-shell--admin .member-page-header > .btn {
+        width: 100%;
+    }
+
+    .staff-shell--admin .staff-user-name {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-shell--admin *,
+    .staff-shell--admin *::before,
+    .staff-shell--admin *::after {
+        scroll-behavior: auto;
+        transition-duration: 0.01ms;
+    }
 }
