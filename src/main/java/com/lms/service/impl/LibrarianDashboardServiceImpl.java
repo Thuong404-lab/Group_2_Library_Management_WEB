@@ -109,6 +109,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData(int bookPage, int reviewPage, int requestPage, String keyword) {
+        return getDashboardData(bookPage, 0, reviewPage, requestPage, keyword);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage, String keyword) {
         LocalDateTime now = LocalDateTime.now();
         Map<String, Object> data = new LinkedHashMap<>();
 
@@ -142,6 +148,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
         data.put("shelves", storageService.getAllStorageLocations());
+        data.put("shelfPage", storageService.getStorageLocations(
+                PageRequest.of(Math.max(0, shelfPage), DASHBOARD_PAGE_SIZE)));
         Page<Book> booksPage;
         if (keyword != null && !keyword.trim().isEmpty()) {
             booksPage = bookRepository.searchBooks(keyword.trim(), null, null, PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
