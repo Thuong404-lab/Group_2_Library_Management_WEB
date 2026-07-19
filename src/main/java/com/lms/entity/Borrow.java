@@ -15,6 +15,10 @@ public class Borrow {
     private LocalDateTime borrowDate;
     @Column(length = 50)
     private String status = "Active";
+    @Column(name = "rejection_code", length = 50)
+    private String rejectionCode;
+    @Column(name = "rejection_reason", length = 500, columnDefinition = "nvarchar(500)")
+    private String rejectionReason;
 
     public Borrow() {
     }
@@ -37,4 +41,8 @@ public class Borrow {
     public void setBorrowDate(LocalDateTime borrowDate) { this.borrowDate = borrowDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getRejectionCode() { return rejectionCode; }
+    public void setRejectionCode(String rejectionCode) { this.rejectionCode = rejectionCode; }
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 }

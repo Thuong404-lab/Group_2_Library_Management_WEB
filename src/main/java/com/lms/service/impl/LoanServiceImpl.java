@@ -663,7 +663,8 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectRenewal(Integer borrowDetailId, String staffUsername, String reason) {
+    public void rejectRenewal(Integer borrowDetailId, String staffUsername, String reasonCode, String reason) {
+        var rejection = com.lms.util.RejectionReasonValidator.validate("RENEWAL", reasonCode, reason);
         BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus()))
@@ -684,6 +685,8 @@ public class LoanServiceImpl implements LoanService {
         refundTransaction.setTransactionDate(LocalDateTime.now());
         refundTransaction.setStatus("Completed");
         detail.setStatus(detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now()) ? STATUS_OVERDUE : STATUS_BORROWED);
+        detail.setRejectionCode(rejection.code());
+        detail.setRejectionReason(rejection.detail());
         walletRepository.save(wallet);
         transactionRepository.save(hold);
         transactionRepository.save(refundTransaction);
@@ -691,12 +694,24 @@ public class LoanServiceImpl implements LoanService {
 
         if (detail.getBorrow().getMember() != null) {
             boolean autoExpired = "SYSTEM".equalsIgnoreCase(staffUsername);
-            sendInternalNotification(detail.getBorrow().getMember(),
-                    NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
-                    autoExpired ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
-                    autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
-                    autoExpired ? "systemNotification.renewal.expired.content" : "systemNotification.renewal.refunded.content",
-                    detail.getBook().getTitle(), refund, wallet.getBalance());
+            boolean hasDetail = rejection.detail() != null;
+            String contentKey = autoExpired
+                    ? (hasDetail ? "systemNotification.renewal.expired.contentWithReason" : "systemNotification.renewal.expired.contentWithoutDetail")
+                    : (hasDetail ? "systemNotification.renewal.refunded.contentWithReason" : "systemNotification.renewal.refunded.contentWithoutDetail");
+            Object translatedReason = localizedMessageService.messageArgument("rejection.code." + rejection.code());
+            if (hasDetail) {
+                sendInternalNotification(detail.getBorrow().getMember(),
+                        NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
+                        autoExpired ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
+                        autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
+                        contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason, rejection.detail());
+            } else {
+                sendInternalNotification(detail.getBorrow().getMember(),
+                        NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
+                        autoExpired ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
+                        autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
+                        contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason);
+            }
         }
     }
 

@@ -209,9 +209,7 @@ public class FinancialServiceImpl implements FinancialService {
         if ("DEPOSIT_PAID".equals(reservationStatus) || "PAID".equals(reservationStatus)) {
             throw new ConflictException(localizedMessageService.get("backend.financial.depositAlreadyPaid"));
         }
-        if ("COMPLETED".equals(reservationStatus) || "CANCELED".equals(reservationStatus)
-                || "CANCELLED".equals(reservationStatus) || "REFUNDED".equals(reservationStatus)
-                || "REFUND_PENDING".equals(reservationStatus)) {
+        if (!"PENDING".equals(reservationStatus)) {
             throw new ConflictException(localizedMessageService.get("backend.financial.depositNotPayable"));
         }
 

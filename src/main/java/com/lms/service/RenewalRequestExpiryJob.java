@@ -27,7 +27,7 @@ public class RenewalRequestExpiryJob {
         for (BorrowDetail detail : borrowDetailRepository
                 .findByStatusIgnoreCaseAndDueDateLessThanEqual("Renew_Pending", LocalDateTime.now())) {
             try {
-                loanService.rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "AUTO_EXPIRED");
+                loanService.rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "OTHER", "Renewal request expired before approval.");
             } catch (RuntimeException exception) {
                 log.warn("Could not expire renewal request {}: {}", detail.getBorrowDetailId(), exception.getMessage());
             }
