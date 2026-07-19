@@ -24,6 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminBookController extends LocalizedControllerSupport {
 
     private static final String BOOKS_REDIRECT = "redirect:/admin/books";
+    private static final String CATEGORIES_REDIRECT = BOOKS_REDIRECT + "?subsection=inventory&tab=categories";
+    private static final String AUDIT_REDIRECT = BOOKS_REDIRECT + "?subsection=inventory&tab=audit";
+    private static final String STORAGE_REDIRECT = BOOKS_REDIRECT + "?subsection=storage";
 
     private final LibrarianDashboardService dashboardService;
     private final InventoryService inventoryService;
@@ -115,7 +118,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/categories/edit/{id}")
@@ -127,7 +130,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/categories/delete/{id}")
@@ -138,7 +141,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/genres/edit/{id}")
@@ -150,7 +153,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/genres/delete/{id}")
@@ -161,7 +164,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/audit")
@@ -175,7 +178,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return AUDIT_REDIRECT;
     }
 
     @PostMapping("/storage/add")
@@ -187,7 +190,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return STORAGE_REDIRECT;
     }
 
     @PostMapping("/storage/update/{id}")
@@ -199,7 +202,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return STORAGE_REDIRECT;
     }
 
     @PostMapping("/storage/delete/{id}")
@@ -210,7 +213,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return STORAGE_REDIRECT;
     }
 
     private String storeCover(MultipartFile coverImage) {
