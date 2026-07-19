@@ -46,6 +46,8 @@ public class LoanServiceImpl implements LoanService {
     private final MemberRepository memberRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final BookItemRepository bookItemRepository;
+    private final BookRepository bookRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final ReservationRepository reservationRepository;
@@ -60,6 +62,8 @@ public class LoanServiceImpl implements LoanService {
                            MemberRepository memberRepository,
                            StaffAccountRepository staffAccountRepository,
                            BookItemRepository bookItemRepository,
+                           BookRepository bookRepository,
+                           MemberAccountRepository memberAccountRepository,
                            WalletRepository walletRepository,
                            TransactionRepository transactionRepository,
                            ReservationRepository reservationRepository,
@@ -72,6 +76,8 @@ public class LoanServiceImpl implements LoanService {
         this.memberRepository = memberRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.bookItemRepository = bookItemRepository;
+        this.bookRepository = bookRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.reservationRepository = reservationRepository;
@@ -98,9 +104,14 @@ public class LoanServiceImpl implements LoanService {
 
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
-                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus()) || "Return_Pending".equalsIgnoreCase(d.getStatus())))
+                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus()) || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.activeHistoryNotFound")));
+
+        if ("Renew_Pending".equalsIgnoreCase(activeDetail.getStatus())) {
+            rejectRenewal(activeDetail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
+        }
 
         // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½
         item.setStatus(STATUS_AVAILABLE);
@@ -333,6 +344,9 @@ public class LoanServiceImpl implements LoanService {
         }
 
         BorrowDetail detail = activeLoans.get(0);
+        if ("Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+            rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
+        }
         BookItem item = detail.getBookItem();
         boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
@@ -624,30 +638,42 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, noRollbackFor = ConflictException.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
         BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus()))
             throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
         Transaction hold = findPendingRenewalHold(borrowDetailId);
-        int maxRenewals = getPositiveIntSetting("MAX_RENEWALS", 2);
-        if (detail.getRenewCount() != null && detail.getRenewCount() >= maxRenewals)
-            throw new ConflictException(localizedMessageService.get("backend.loan.maxRenewals", maxRenewals));
-        if (detail.getDueDate() == null || !detail.getDueDate().isAfter(LocalDateTime.now()))
-            throw new ConflictException(localizedMessageService.get("backend.renewal.overdueApproval"));
+        // Renewal limits were validated when the immutable wallet hold was created.
+        // Pending requests keep that policy snapshot even if an administrator changes settings later.
+        if (detail.getDueDate() == null || !detail.getDueDate().isAfter(LocalDateTime.now())) {
+            rejectRenewal(borrowDetailId, "SYSTEM", "APPROVAL_EXPIRED", null);
+            throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedExpired"));
+        }
+        MemberAccount account = memberAccountRepository.findByMemberMemberId(detail.getBorrow().getMember().getMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.account.memberNotFound")));
+        if (!"Active".equalsIgnoreCase(account.getStatus())) {
+            rejectRenewal(borrowDetailId, "SYSTEM", "ACCOUNT_RESTRICTED", null);
+            throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedAccountInactive"));
+        }
         if (detail.getBook() != null && detail.getBorrow() != null && detail.getBorrow().getMember() != null) {
             Integer bookId = detail.getBook().getBookId();
+            bookRepository.findByIdForUpdate(bookId)
+                    .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.book.notFound")));
             long waitingReservations = reservationRepository.countActiveReservationsByOtherMemberForBook(
                     bookId, detail.getBorrow().getMember().getMemberId(),
                     List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE"));
             long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, STATUS_AVAILABLE);
-            if (waitingReservations > availableCopies)
-                throw new ConflictException(localizedMessageService.get("backend.renewal.reservedByAnotherMemberApproval"));
+            if (waitingReservations > availableCopies) {
+                rejectRenewal(borrowDetailId, "SYSTEM", "RESERVED_BY_OTHER", null);
+                throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedReserved"));
+            }
         }
-        int maxDays = getPositiveIntSetting("Max_Renewal_Days", 7);
-        if (hold.getRenewalDays() == null || hold.getRenewalDays() < 1 || hold.getRenewalDays() > maxDays)
-            throw new ConflictException(localizedMessageService.get("backend.renewal.invalidDays", maxDays));
+        if (hold.getRenewalDays() == null || hold.getRenewalDays() < 1) {
+            rejectRenewal(borrowDetailId, "SYSTEM", "OTHER", "Invalid stored renewal request.");
+            throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedInvalidSnapshot"));
+        }
 
         detail.setDueDate(detail.getDueDate().plusDays(hold.getRenewalDays()));
         detail.setRenewCount((detail.getRenewCount() == null ? 0 : detail.getRenewCount()) + 1);
@@ -693,7 +719,8 @@ public class LoanServiceImpl implements LoanService {
         borrowDetailRepository.save(detail);
 
         if (detail.getBorrow().getMember() != null) {
-            boolean autoExpired = "SYSTEM".equalsIgnoreCase(staffUsername);
+            boolean systemDecision = "SYSTEM".equalsIgnoreCase(staffUsername);
+            boolean autoExpired = "APPROVAL_EXPIRED".equalsIgnoreCase(rejection.code());
             boolean hasDetail = rejection.detail() != null;
             String contentKey = autoExpired
                     ? (hasDetail ? "systemNotification.renewal.expired.contentWithReason" : "systemNotification.renewal.expired.contentWithoutDetail")
@@ -702,13 +729,13 @@ public class LoanServiceImpl implements LoanService {
             if (hasDetail) {
                 sendInternalNotification(detail.getBorrow().getMember(),
                         NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
-                        autoExpired ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
+                        systemDecision ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
                         autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
                         contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason, rejection.detail());
             } else {
                 sendInternalNotification(detail.getBorrow().getMember(),
                         NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
-                        autoExpired ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
+                        systemDecision ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
                         autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
                         contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason);
             }
