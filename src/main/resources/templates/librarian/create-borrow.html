@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/create-borrow.css}" />
-  </head>
+    <style>
+        .app-form-primary:disabled {
+            opacity: 0.6 !important;
+            background-color: var(--app-color-muted) !important;
+            border-color: var(--app-color-muted) !important;
+            cursor: not-allowed !important;
+        }
+    </style>
+</head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='borrow-manage'">
 <div class="canonical-management-page librarian-create-borrow-page">
@@ -59,6 +67,15 @@
                     </ul>
                 </div>
 
+                <div class="borrow-search-wrapper">
+                    <div class="input-group borrow-search-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="queueSearchInput" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm theo tên, username, email, SĐT..." />
+                    </div>
+                </div>
+
                 <div class="p-0">
                     <div class="tab-content borrow-scrollable-list" id="requestTabsContent">
 
@@ -69,6 +86,10 @@
                                    th:href="@{/librarian/borrow/create(requestId=${req.borrowId})}"
                                    class="list-group-item list-group-item-action borrow-request-item"
                                    th:classappend="${selectedRequest != null && selectedRequest.borrowId == req.borrowId} ? 'borrow-active-request-item' : ''"
+                                   th:data-fullname="${req.member.user.fullName}"
+                                   th:data-email="${req.member.user.email}"
+                                   th:data-phone="${req.member.user.phone}"
+                                   th:data-username="${usernameByMemberId[req.member.memberId]}"
                                   >
                                     <div class="borrow-request-heading">
                                         <h3 class="borrow-request-name" th:text="${req.member.user.fullName}">Member Name</h3>
@@ -93,6 +114,10 @@
                                    th:href="@{/librarian/borrow/create(renewId=${ren.borrowDetailId})}"
                                    class="list-group-item list-group-item-action borrow-request-item"
                                    th:classappend="${selectedRenewal != null && selectedRenewal.borrowDetailId == ren.borrowDetailId} ? 'borrow-active-request-item' : ''"
+                                   th:data-fullname="${ren.borrow.member.user.fullName}"
+                                   th:data-email="${ren.borrow.member.user.email}"
+                                   th:data-phone="${ren.borrow.member.user.phone}"
+                                   th:data-username="${usernameByMemberId[ren.borrow.member.memberId]}"
                                   >
                                     <div class="borrow-request-heading">
                                         <h3 class="borrow-request-name" th:text="${ren.borrow.member.user.fullName}">Member Name</h3>
@@ -118,6 +143,10 @@
                                    th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
                                    class="list-group-item list-group-item-action borrow-request-item"
                                    th:classappend="${selectedReservation != null && selectedReservation.reservationId == reserve.id} ? 'borrow-active-request-item' : ''"
+                                   th:data-fullname="${reserve.memberName}"
+                                   th:data-email="${reserve.memberEmail}"
+                                   th:data-phone="${reserve.memberPhone}"
+                                   th:data-username="${reserve.memberUsername}"
                                   >
                                     <div class="borrow-request-heading">
                                         <h3 class="borrow-request-name" th:text="${reserve.memberName}">Member Name</h3>
@@ -230,21 +259,48 @@
                         </div>
                     </div>
 
+                    <!-- Thanh quét mã vạch cho đơn hàng đợi trực tuyến (online request) -->
+                    <h3 class="borrow-subsection-title mt-4"><i class="bi bi-qr-code-scan me-2 text-classic"></i><span th:text="#{librarian.returnDesk.scanLabel}">Quét mã vạch sách</span></h3>
+                    <form id="onlineRequestScannerForm" onsubmit="event.preventDefault();">
+                        <div class="mb-4 p-3 rounded" style="background-color: #fff9f0; border: 1px dashed rgba(139, 90, 43, 0.3);">
+                            <label for="requestScannerInput" class="form-label borrow-form-label small fw-bold text-uppercase mb-2" style="color: #8b5a2b; letter-spacing: 0.5px;">
+                                <span th:text="#{librarian.borrowDesk.scanBarcode}">Scan Book Barcode</span> <span class="borrow-required" aria-hidden="true">*</span>
+                            </label>
+                            <div class="input-group borrow-scanner-group">
+                                <span class="input-group-text"><i class="bi bi-upc-scan" aria-hidden="true"></i></span>
+                                <input type="text" id="requestScannerInput" class="form-control" th:placeholder="#{librarian.borrowDesk.scanPlaceholder}" autocomplete="off" />
+                                <button class="borrow-secondary-button" type="submit" id="btnRequestAddBarcode" th:text="#{common.add}">Add</button>
+                            </div>
+                            <div id="requestScanErrorBox" class="borrow-validation-message text-danger small mt-2 fw-bold d-none" role="alert"></div>
+                        </div>
+                    </form>
+
                     <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.requestedBooks}">Requested Books</h3>
-                    <div class="app-table-wrap borrow-detail-table-wrap">
-                        <table class="app-table borrow-detail-table">
+                    <div class="app-table-wrap borrow-detail-table-wrap mb-4">
+                        <table class="app-table borrow-detail-table" id="requestBooksTable">
                             <thead>
                             <tr>
                                 <th th:text="#{book.title}">Book Title</th>
-                                <th th:text="#{book.isbn}">ISBN</th>
-                                <th th:text="#{borrow.expectedDueDate}">Expected Due Date</th>
+                                <th th:text="#{book.barcode}">Barcode</th>
+                                <th th:text="#{common.status}">Status</th>
+                                <th class="text-center" th:text="#{common.actions}">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
-                            <tr th:each="detail : ${requestDetails}">
-                                <td class="borrow-table-primary" th:text="${detail.book.title}">Book title</td>
-                                <td class="borrow-table-secondary" th:text="${detail.book.isbn}">ISBN-12345</td>
-                                <td th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">14/07/2026</td>
+                            <tr th:each="detail : ${requestDetails}" class="request-book-row" th:data-book-id="${detail.book.bookId}" th:data-title="${detail.book.title}">
+                                <td class="borrow-table-primary">
+                                    <div class="fw-bold text-dark" th:text="${detail.book.title}">Book title</div>
+                                    <small class="text-muted" th:text="${detail.book.isbn}">ISBN-12345</small>
+                                </td>
+                                <td class="request-barcode-cell font-monospace text-muted fst-italic">
+                                    Chưa quét mã vạch
+                                </td>
+                                <td class="request-status-cell">
+                                    <span class="status-badge status-pending" th:text="#{status.pendingApproval}">Chờ quét</span>
+                                </td>
+                                <td class="request-action-cell text-center">
+                                    —
+                                </td>
                             </tr>
                             </tbody>
                         </table>
@@ -252,13 +308,16 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/borrow/reject/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" th:data-confirm-message="#{librarian.borrowDesk.rejectLoanConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
+                            <button type="button" class="borrow-danger-button" 
+                                    th:data-book-title="${#strings.listJoin(requestDetails.![book.title], ', ')}"
+                                    onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
                             </button>
                         </form>
 
-                        <form th:action="@{/librarian/borrow/approve/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="app-form-primary" th:data-confirm-message="#{librarian.borrowDesk.approveLoanConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
+                        <form th:action="@{/librarian/borrow/approve/{id}(id=${selectedRequest.borrowId})}" method="post" class="borrow-action-form" id="approveRequestForm">
+                            <div id="hiddenRequestBarcodesContainer"></div>
+                            <button type="submit" class="app-form-primary" id="btnApproveRequest" disabled>
                                 <span th:text="#{librarian.borrowDesk.approveLoan}">Approve Loan</span>
                             </button>
                         </form>
@@ -294,7 +353,9 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/loan/renew/reject/{id}(id=${selectedRenewal.borrowDetailId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" th:data-confirm-message="#{librarian.borrowDesk.rejectRenewalConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
+                            <button type="button" class="borrow-danger-button" 
+                                    th:data-book-title="${selectedRenewal.book.title}"
+                                    onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRenewal}">Reject Renewal</span>
                             </button>
                         </form>
@@ -354,7 +415,9 @@
 
                     <div class="borrow-decision-actions">
                         <form th:action="@{/librarian/reservations/reject/{id}(id=${selectedReservation.reservationId})}" method="post" class="borrow-action-form">
-                            <button type="button" class="borrow-danger-button" th:data-confirm-message="#{librarian.borrowDesk.rejectReservationConfirm}" onclick="showConfirmModal(this.dataset.confirmMessage, this)">
+                            <button type="button" class="borrow-danger-button" 
+                                    th:data-book-title="${selectedReservation.book.title}"
+                                    onclick="showRejectReasonModal(this)">
                                 <span th:text="#{librarian.borrowDesk.rejectRequest}">Reject Request</span>
                             </button>
                         </form>
@@ -392,6 +455,38 @@
         </div>
     </div>
 
+    <!-- Reusable reject reason modal -->
+    <div class="modal fade acquisition-reject-modal" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title" id="rejectReasonModalLabel" th:text="#{librarian.borrowDesk.rejectTitle}">Reject Request</h2>
+                        <p id="rejectReasonBookTitle" style="margin: 4px 0 0; color: var(--app-color-muted); font-size: 13px;"></p>
+                    </div>
+                    <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <form id="rejectReasonForm" method="post" novalidate>
+                    <div class="modal-body">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <label for="rejectReasonText" th:text="#{librarian.borrowDesk.rejectReasonLabel}">Rejection Reason</label>
+                        <textarea id="rejectReasonText" name="reason" required minlength="5" maxlength="500" th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}" aria-describedby="rejectReasonCount rejectReasonError"></textarea>
+                        <div class="acquisition-reason-support">
+                            <span id="rejectReasonCount" aria-live="polite">0/500</span>
+                        </div>
+                        <div id="rejectReasonError" class="acquisition-field-error" role="alert" aria-live="assertive"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                        <button type="submit" class="acquisition-modal-reject" th:text="#{librarian.borrowDesk.rejectConfirmAction}">Reject Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script th:inline="javascript">
 
         var confirmTargetForm = null;
@@ -412,13 +507,89 @@
             form.requestSubmit();
         }
 
+        var rejectFormAction = "";
+
+        function showRejectReasonModal(button) {
+            const parentForm = button.closest('form');
+            if (!parentForm) return;
+            
+            rejectFormAction = parentForm.action;
+            const modalForm = document.getElementById('rejectReasonForm');
+            modalForm.action = rejectFormAction;
+            
+            const titleEl = document.getElementById('rejectReasonBookTitle');
+            if (titleEl) {
+                titleEl.textContent = button.dataset.bookTitle || "";
+            }
+            
+            // Reset input
+            const textarea = document.getElementById('rejectReasonText');
+            textarea.value = "";
+            textarea.classList.remove('is-invalid');
+            document.getElementById('rejectReasonCount').textContent = "0/500";
+            document.getElementById('rejectReasonError').textContent = "";
+            
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('rejectReasonModal')).show();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("rejectReasonForm");
+            const reason = document.getElementById("rejectReasonText");
+            const error = document.getElementById("rejectReasonError");
+            const counter = document.getElementById("rejectReasonCount");
+            if (!form || !reason || !error || !counter) return;
+            
+            const messages = {
+                required: /*[[#{librarian.acquisition.validationRequired}]]*/ "A rejection reason is required.",
+                minimum: /*[[#{librarian.acquisition.validationMinimum}]]*/ "The reason must contain at least 5 characters.",
+                maximum: /*[[#{librarian.acquisition.validationMaximum}]]*/ "The reason cannot exceed 500 characters.",
+                letters: /*[[#{librarian.acquisition.validationLetters}]]*/ "The reason must contain letters."
+            };
+            
+            const updateCounter = () => { counter.textContent = reason.value.length + "/500"; };
+            
+            form.addEventListener("submit", function (event) {
+                const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                reason.value = value;
+                updateCounter();
+                const message = value === "" ? messages.required : value.length < 5 ? messages.minimum : value.length > 500 ? messages.maximum : !/\p{L}/u.test(value) ? messages.letters : "";
+                if (message) {
+                    event.preventDefault();
+                    reason.classList.add("is-invalid");
+                    error.textContent = message;
+                    reason.focus();
+                }
+            });
+            
+            reason.addEventListener("input", function () {
+                reason.classList.remove("is-invalid");
+                error.textContent = "";
+                updateCounter();
+            });
+        });
+
         // --- LOGIC GHI NHỚ TAB ACTIVE BẰNG SESSION STORAGE ---
         document.addEventListener('DOMContentLoaded', function() {
+            // Thay thế URL trong lịch sử để khi back lại sẽ về trang quầy sạch không chứa tham số ID cũ
+            if (window.history.replaceState && (window.location.search.includes('requestId') || window.location.search.includes('renewId') || window.location.search.includes('reservationId'))) {
+                window.history.replaceState(null, "", "/librarian/borrow/create");
+            }
+
             var triggerTabList = [].slice.call(document.querySelectorAll('#requestTabs button'));
             triggerTabList.forEach(function (triggerEl) {
                 triggerEl.addEventListener('click', function (event) {
                     sessionStorage.setItem('activeRequestTab', event.target.id);
                 });
+            });
+
+            // Ngăn chặn tải lại trang từ Cache khi người dùng nhấn nút Back
+            window.addEventListener("pageshow", function (event) {
+                var historyTraversal = event.persisted || 
+                                       (typeof window.performance != "undefined" && 
+                                        window.performance.navigation.type === 2);
+                if (historyTraversal) {
+                    window.location.reload();
+                }
             });
 
             var activeTabId = sessionStorage.getItem('activeRequestTab');
@@ -492,7 +663,7 @@
         const scannerInput = document.getElementById("scannerInput");
         const hiddenBarcodes = document.getElementById("inlineBarcodes");
         const scannedBooksTable = document.getElementById("scannedBooksTable");
-        const tbody = scannedBooksTable.querySelector("tbody");
+        const tbody = scannedBooksTable ? scannedBooksTable.querySelector("tbody") : null;
         const scanErrorBox = document.getElementById("scanErrorBox");
         const offlineBorrowForm = document.getElementById("offlineBorrowForm");
         const daysInput = document.getElementById("inlineDays");
@@ -773,7 +944,7 @@
                 scannedBarcodes.push(barcode);
                 updateHiddenInput();
                 
-                scannedBooksTable.classList.remove("borrow-is-hidden");
+                if (scannedBooksTable) scannedBooksTable.classList.remove("borrow-is-hidden");
                 const tr = document.createElement("tr");
 
                 const barcodeCell = document.createElement("td");
@@ -814,7 +985,7 @@
                 actionCell.appendChild(actionGroup);
 
                 tr.append(barcodeCell, bookCell, actionCell);
-                tbody.appendChild(tr);
+                if (tbody) tbody.appendChild(tr);
                 refreshFormState();
                 scannerInput.focus();
             }
@@ -825,15 +996,17 @@
             updateHiddenInput();
             btn.closest("tr").remove();
             if (scannedBarcodes.length === 0) {
-                scannedBooksTable.classList.add("borrow-is-hidden");
+                if (scannedBooksTable) scannedBooksTable.classList.add("borrow-is-hidden");
             }
-            scanErrorBox.classList.add("borrow-is-hidden");
+            if (scanErrorBox) scanErrorBox.classList.add("borrow-is-hidden");
             refreshFormState();
             scannerInput.focus();
         };
 
         function updateHiddenInput() {
-            hiddenBarcodes.value = scannedBarcodes.join(",");
+            if (hiddenBarcodes) {
+                hiddenBarcodes.value = scannedBarcodes.join(",");
+            }
         }
 
         if (clearBarcodesButton) {
@@ -856,8 +1029,10 @@
         }
 
         function showError(msg) {
-            scanErrorBox.textContent = msg;
-            scanErrorBox.classList.remove("borrow-is-hidden");
+            if (scanErrorBox) {
+                scanErrorBox.textContent = msg;
+                scanErrorBox.classList.remove("borrow-is-hidden");
+            }
         }
 
         if(offlineBorrowForm) {
@@ -912,6 +1087,216 @@
                     btnConfirmText.classList.add("d-none");
                     btnConfirmSpinner.classList.remove("d-none");
                     btnConfirmLoadingText.classList.remove("d-none");
+                }
+            });
+        }
+
+        // ==========================================
+        // QUÉT MÃ VẠCH CHO ĐƠN MƯỢN ONLINE (PENDING REQUESTS)
+        // ==========================================
+        const requestScannerInput = document.getElementById("requestScannerInput");
+        const btnRequestAddBarcode = document.getElementById("btnRequestAddBarcode");
+        const requestScanErrorBox = document.getElementById("requestScanErrorBox");
+        const approveRequestForm = document.getElementById("approveRequestForm");
+        const btnApproveRequest = document.getElementById("btnApproveRequest");
+        const hiddenRequestBarcodesContainer = document.getElementById("hiddenRequestBarcodesContainer");
+
+        function showRequestScanError(msg) {
+            if (!requestScanErrorBox) return;
+            if (msg) {
+                requestScanErrorBox.textContent = msg;
+                requestScanErrorBox.classList.remove("d-none");
+            } else {
+                requestScanErrorBox.textContent = "";
+                requestScanErrorBox.classList.add("d-none");
+            }
+        }
+
+        function updateApproveRequestButton() {
+            if (!btnApproveRequest) return;
+            const rows = document.querySelectorAll(".request-book-row");
+            let allScanned = true;
+            
+            if (hiddenRequestBarcodesContainer) {
+                hiddenRequestBarcodesContainer.innerHTML = "";
+            }
+
+            rows.forEach(row => {
+                const barcode = row.getAttribute("data-scanned-barcode");
+                if (!barcode) {
+                    allScanned = false;
+                } else {
+                    if (hiddenRequestBarcodesContainer) {
+                        const hiddenInput = document.createElement("input");
+                        hiddenInput.type = "hidden";
+                        hiddenInput.name = "barcodes";
+                        hiddenInput.value = barcode;
+                        hiddenRequestBarcodesContainer.appendChild(hiddenInput);
+                    }
+                }
+            });
+
+            btnApproveRequest.disabled = !allScanned;
+        }
+
+        window.removeRequestBarcode = function(buttonElement) {
+            const row = buttonElement.closest(".request-book-row");
+            if (row) {
+                row.removeAttribute("data-scanned-barcode");
+                
+                const barcodeCell = row.querySelector(".request-barcode-cell");
+                const statusCell = row.querySelector(".request-status-cell");
+                const actionCell = row.querySelector(".request-action-cell");
+
+                if (barcodeCell) {
+                    barcodeCell.textContent = "Chưa quét mã vạch";
+                    barcodeCell.classList.add("text-muted", "fst-italic");
+                }
+                if (statusCell) {
+                    statusCell.innerHTML = '<span class="status-badge status-pending">Chờ quét</span>';
+                }
+                if (actionCell) {
+                    actionCell.innerHTML = "—";
+                }
+            }
+
+            showRequestScanError("");
+            updateApproveRequestButton();
+        };
+
+        function processRequestBarcode() {
+            if (!requestScannerInput) return;
+            const barcode = requestScannerInput.value.trim();
+            requestScannerInput.value = "";
+            if (barcode === "") return;
+
+            showRequestScanError("");
+
+            // Check if this barcode is already scanned in any of the rows
+            let isAlreadyScanned = false;
+            document.querySelectorAll(".request-book-row").forEach(row => {
+                if (row.getAttribute("data-scanned-barcode") === barcode) {
+                    isAlreadyScanned = true;
+                }
+            });
+
+            if (isAlreadyScanned) {
+                showRequestScanError("Mã vạch này đã được quét trong đơn này rồi.");
+                return;
+            }
+
+            // Lookup the book by barcode
+            fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(barcode)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const bookInfo = data[0];
+                        if (!bookInfo.found) {
+                            showRequestScanError(`Không tìm thấy thông tin cho mã vạch: ${barcode}`);
+                            return;
+                        }
+
+                        if (bookInfo.rawStatus !== "Available") {
+                            showRequestScanError(`Bản sách ${barcode} không khả dụng (Trạng thái hiện tại: ${bookInfo.status})`);
+                            return;
+                        }
+
+                        const scannedBookId = bookInfo.bookId;
+                        const reqCount = document.querySelectorAll(`.request-book-row[data-book-id="${scannedBookId}"]`).length || 1;
+
+                        if (bookInfo.availableCount !== undefined && (bookInfo.availableCount < reqCount)) {
+                            showRequestScanError(`Sách '${bookInfo.title}' chỉ còn ${bookInfo.availableCount} cuốn khả dụng trong kho, không đủ để duyệt yêu cầu mượn ${reqCount} cuốn.`);
+                            return;
+                        }
+
+                        // Find the first row for this bookId that doesn't have a scanned barcode
+                        const rows = document.querySelectorAll(`.request-book-row[data-book-id="${scannedBookId}"]`);
+                        let foundRow = null;
+                        for (let row of rows) {
+                            if (!row.getAttribute("data-scanned-barcode")) {
+                                foundRow = row;
+                                break;
+                            }
+                        }
+
+                        if (!foundRow) {
+                            showRequestScanError(`Sách '${bookInfo.title}' không nằm trong yêu cầu hoặc đã đủ số lượng quét.`);
+                            return;
+                        }
+
+                        // Assign barcode to this row
+                        foundRow.setAttribute("data-scanned-barcode", barcode);
+
+                        // Update the row UI
+                        const barcodeCell = foundRow.querySelector(".request-barcode-cell");
+                        const statusCell = foundRow.querySelector(".request-status-cell");
+                        const actionCell = foundRow.querySelector(".request-action-cell");
+
+                        if (barcodeCell) {
+                            barcodeCell.textContent = barcode;
+                            barcodeCell.classList.remove("text-muted", "fst-italic");
+                        }
+                        if (statusCell) {
+                            statusCell.innerHTML = '<span class="status-badge status-active">Khả dụng</span>';
+                        }
+                        if (actionCell) {
+                            actionCell.innerHTML = `<button type="button" class="btn btn-sm btn-link text-danger p-0 fw-bold" onclick="removeRequestBarcode(this)"><i class="bi bi-trash"></i></button>`;
+                        }
+
+                        showRequestScanError("");
+                        updateApproveRequestButton();
+                    } else {
+                        showRequestScanError(`Không tìm thấy thông tin cho mã vạch: ${barcode}`);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showRequestScanError("Lỗi kết nối khi tra cứu thông tin sách.");
+                });
+        }
+
+        const onlineRequestScannerForm = document.getElementById("onlineRequestScannerForm");
+        if (onlineRequestScannerForm) {
+            onlineRequestScannerForm.addEventListener("submit", function(e) {
+                e.preventDefault();
+                processRequestBarcode();
+            });
+        }
+
+        // Queue Search Input Logic
+        const queueSearchInput = document.getElementById('queueSearchInput');
+        if (queueSearchInput) {
+            queueSearchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                const items = document.querySelectorAll('.borrow-request-item');
+                
+                items.forEach(function(item) {
+                    const fullName = (item.getAttribute('data-fullname') || '').toLowerCase();
+                    const username = (item.getAttribute('data-username') || '').toLowerCase();
+                    const email = (item.getAttribute('data-email') || '').toLowerCase();
+                    const phone = (item.getAttribute('data-phone') || '').toLowerCase();
+                    
+                    if (fullName.includes(query) || username.includes(query) || email.includes(query) || phone.includes(query)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                updateTabBadges();
+            });
+        }
+
+        function updateTabBadges() {
+            const tabs = ['borrows', 'renewals', 'reservations'];
+            tabs.forEach(tabId => {
+                const tabContent = document.getElementById(tabId);
+                if (tabContent) {
+                    const visibleItems = tabContent.querySelectorAll('.borrow-request-item:not([style*="display: none"])').length;
+                    const badge = document.querySelector(`#${tabId}-tab .borrow-tab-badge`);
+                    if (badge) {
+                        badge.textContent = visibleItems;
+                    }
                 }
             });
         }

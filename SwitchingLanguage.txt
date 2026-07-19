@@ -1,0 +1,282 @@
+Bạn đang làm việc trong repository Library Management System dùng Spring Boot, Thymeleaf và MessageSource.
+
+Thông tin tích hợp:
+- Nhánh hiện tại của tôi chứa chức năng tôi đang làm dở và phải được giữ nguyên: <NHÁNH_HIỆN_TẠI>
+- Nhánh hoặc commit chứa chức năng song ngữ Anh–Việt cần tích hợp: <NHÁNH_SONG_NGỮ>
+- Không được push lên remote nếu tôi chưa yêu cầu.
+
+MỤC TIÊU
+
+Hãy merge chức năng song ngữ từ <NHÁNH_SONG_NGỮ> vào nhánh hiện tại, đồng thời giữ nguyên toàn bộ chức năng tôi đang làm dở.
+
+Kết quả cuối cùng phải có cả:
+1. Chức năng của tôi.
+2. Chức năng song ngữ Anh–Việt.
+3. Không mất code của bất kỳ bên nào.
+4. Không làm thay đổi endpoint, form action, API, database mapping hoặc nghiệp vụ ngoài phạm vi cần thiết.
+5. Những giao diện và backend mới của tôi cũng phải được bổ sung song ngữ đầy đủ.
+
+QUY TẮC AN TOÀN BẮT BUỘC
+
+- Trước tiên đọc toàn bộ AGENTS.md hoặc hướng dẫn repository nếu có.
+- Kiểm tra:
+  - git status
+  - nhánh hiện tại
+  - file modified, staged và untracked
+  - git log của hai nhánh
+  - git diff giữa nhánh hiện tại và nhánh song ngữ
+- Không được sử dụng:
+  - git reset --hard
+  - git clean -fd
+  - git checkout -- .
+  - git restore . hoặc lệnh tương đương làm mất thay đổi
+  - tự động chọn toàn bộ “ours” hoặc toàn bộ “theirs”
+- Nếu working tree đang có code chưa commit:
+  - Phải tạo một bản lưu có thể phục hồi bằng WIP commit trên nhánh backup hoặc `git stash push -u`.
+  - Ghi lại chính xác tên backup branch hoặc stash.
+  - Không được xóa stash/backup cho đến khi merge và compile thành công.
+- Tạo backup branch từ trạng thái hiện tại trước khi merge, ví dụ:
+  `backup/<ten-nhanh>-before-i18n-merge`
+- Nếu không xác định chắc chắn nhánh/commit song ngữ nào cần merge, hãy dừng và hỏi tôi, không được đoán.
+- Không push, force-push hoặc sửa lịch sử remote.
+
+CÁCH MERGE
+
+1. Đọc và hiểu thay đổi của cả hai nhánh trước khi giải quyết conflict.
+2. Thực hiện merge theo hướng có thể review, ưu tiên `git merge --no-commit`.
+3. Với từng conflict:
+   - Đọc base, ours và theirs.
+   - Kết hợp theo ý nghĩa nghiệp vụ.
+   - Không chỉ xóa marker conflict rồi chọn đại một bên.
+4. Sau mỗi file được xử lý, kiểm tra lại:
+   - import
+   - constructor injection
+   - annotation
+   - endpoint
+   - form action
+   - tên model attribute
+   - tên request parameter
+   - JavaScript selector
+   - ID HTML
+   - DTO và repository method signature
+5. Tìm và loại bỏ toàn bộ marker:
+   - `<<<<<<<`
+   - `=======`
+   - `>>>>>>>`
+
+CÁCH ĐỌC KIẾN TRÚC SONG NGỮ ĐÃ CÓ
+
+Trước khi chỉnh code của tôi, phải đọc kỹ các file sau:
+
+- `src/main/java/com/lms/config/WebMvcConfig.java`
+- `src/main/resources/application.properties`
+- `src/main/resources/messages.properties`
+- `src/main/resources/messages_vi.properties`
+- `src/main/java/com/lms/service/LocalizedMessageService.java`
+- `src/main/java/com/lms/controller/LocalizedControllerSupport.java`
+- `src/main/java/com/lms/exception/GlobalExceptionHandler.java`
+- `src/main/java/com/lms/enums/NotificationType.java`
+- Các layout:
+  - `templates/layout/base.html`
+  - `templates/layout/admin_base.html`
+  - `templates/layout/librarian_base.html`
+- Một số template đã làm chuẩn để lấy cách triển khai:
+  - `templates/member/book-acquisition-request.html`
+  - `templates/librarian/acquisition-request-list.html`
+  - `templates/librarian/reviews-response.html`
+  - `templates/admin/books.html`
+
+Phải hiểu các nguyên tắc sau:
+
+- English là ngôn ngữ mặc định.
+- Chuyển ngôn ngữ bằng `?lang=en` hoặc `?lang=vi`.
+- Locale được lưu trong cookie `LMS_LOCALE`.
+- `messages.properties` là English.
+- `messages_vi.properties` là Vietnamese.
+- Hai bundle phải có cùng danh sách key.
+- Không được tự động dịch dữ liệu nghiệp vụ đã lưu trong database.
+- Tên sách, tác giả, đánh giá, nội dung người dùng nhập và nội dung đã lưu trong DB phải giữ nguyên.
+- Chỉ dịch nhãn giao diện, validation, lỗi, trạng thái hiển thị, popup và thông báo hệ thống được tạo bởi code.
+
+QUY TẮC GIẢI QUYẾT CONFLICT I18N
+
+1. Conflict trong `messages.properties` và `messages_vi.properties`
+
+- Phải giữ hợp nhất tất cả key của cả hai bên.
+- Không xóa key đang được template/backend sử dụng.
+- Mỗi key English phải có key tương ứng trong file Vietnamese.
+- Không tạo key trùng.
+- Không đổi ý nghĩa key cũ nếu đang được nhiều nơi sử dụng.
+- Key mới nên đặt theo module, ví dụ:
+  - `member.featureName.*`
+  - `librarian.featureName.*`
+  - `admin.featureName.*`
+  - `backend.featureName.*`
+  - `validation.featureName.*`
+  - `notification.featureName.*`
+
+2. Conflict trong template Thymeleaf
+
+Phải giữ nguyên:
+
+- `th:action`
+- `th:href`
+- `th:object`
+- `th:field`
+- `th:value`
+- `name`
+- `id`
+- `data-*`
+- Bootstrap modal target
+- JavaScript selector
+- điều kiện `th:if`, `th:unless`
+- vòng lặp `th:each`
+
+Các chuỗi giao diện viết cứng phải chuyển sang message key:
+
+- Nội dung:
+  `<span th:text="#{feature.key}">English fallback</span>`
+
+- Placeholder:
+  `th:placeholder="#{feature.placeholder}"`
+
+- Title:
+  `th:title="#{feature.title}"`
+
+- Aria label:
+  `th:aria-label="#{feature.ariaLabel}"`
+
+- Message có tham số:
+  `th:text="#{feature.key(${value})}"`
+
+Fallback HTML nên dùng English vì English là mặc định.
+
+Không được dịch giá trị gửi về backend nếu đó là giá trị nghiệp vụ. Ví dụ:
+
+```html
+<option value="Mới"
+        th:text="#{librarian.inventory.condition.new}">
+    New
+</option>
+value="Mới" được giữ nguyên nếu backend/database đang dùng giá trị đó; chỉ phần hiển thị được dịch.
+Conflict trong JavaScript
+Không viết cứng thông báo English hoặc Vietnamese trong JavaScript.
+Với script inline của Thymeleaf, dùng:
+const featureI18n = {
+    required: /*[[#{validation.required}]]*/ "This field is required.",
+    confirm: /*[[#{common.confirmQuestion}]]*/ "Are you sure?"
+};
+Hoặc truyền thông báo qua data-*:
+<button th:data-confirm-message="#{feature.confirmMessage}">
+Sau đó JavaScript đọc element.dataset.confirmMessage.
+Áp dụng cả cho:
+popup
+confirm
+alert
+lỗi form
+character counter message
+empty state
+loading message
+thông báo AJAX
+lỗi API hiển thị trên trang
+Conflict trong ControllerNếu controller kế thừa LocalizedControllerSupport, dùng:
+message("backend.some.key", arguments...)
+Flash message không được viết cứng:
+
+redirectAttributes.addFlashAttribute(
+    "success",
+    message("backend.feature.success")
+);
+Giữ nguyên route, HTTP method, request parameter và redirect URL của cả hai chức năng.
+Nếu hai bên thêm dependency vào constructor, phải hợp nhất tất cả dependency, không bỏ dependency của bên nào.
+Conflict trong Service
+Dùng LocalizedMessageService:
+messages.get("backend.feature.error", argument);
+Không viết:
+throw new ValidationException("Thông báo viết cứng");
+hoặc:
+throw new ValidationException("Hardcoded error");
+Audit log, email và system notification do code tạo cũng phải lấy từ message bundle.
+Thông báo được tạo theo locale đang sử dụng tại thời điểm tạo.
+Sau khi lưu vào database, nội dung đó không tự đổi ngôn ngữ khi người dùng chuyển locale.
+Bean Validation DTO
+Dùng message key:
+@NotBlank(message = "{validation.feature.required}")
+@Size(min = 5, max = 100, message = "{validation.feature.size}")
+Phải thêm key tương ứng vào cả hai bundle.
+Trạng thái và enumGiữ nguyên giá trị enum/status dùng cho nghiệp vụ.
+Chỉ dịch phần hiển thị.
+Không đổi Pending, Completed, Borrowed, Mới, Tốt... nếu repository hoặc database đang phụ thuộc vào chúng.
+Khi hiển thị phải map sang message key.
+
+ExceptionKhông đưa tiêu đề lỗi viết cứng vào exception.
+Dùng các key error.*.
+GlobalExceptionHandler phải trả thông báo theo locale cho cả:HTML error page
+JSON/API response
+
+
+System Notification
+Khi chức năng mới tạo thông báo:
+Title và content phải có key English/Vietnamese.
+Loại thông báo phải dùng NotificationType.
+Không dịch lại thông báo do người dùng tự nhập.
+Không thay đổi nội dung thông báo cũ đã lưu trong database.
+CÁC CONFLICT ĐẶC BIỆT CẦN CHÚ Ý
+MemberNotificationRepository đã hỗ trợ tìm thông báo nạp tiền bằng cả từ khóa Vietnamese “nạp tiền” và English “top-up”. Không được làm mất tham số hoặc điều kiện này.
+Chữ ký PayOsQrImageRenderer.render(...) đã nhận thông báo lỗi localized. Nếu nhánh của tôi sửa KQPay, phải giữ cả logic KQPay và tham số i18n.
+ReportServiceImpl dịch tên loại giao dịch bằng message key.
+Các exception subclass sử dụng key error.*.
+BookAcquisitionRequest có xử lý tương thích dữ liệu cũ bị lỗi Unicode.
+File migration:
+database/migrations/2026-07-17-fix-acquisition-decision-note-unicode.sql
+chỉ sửa dữ liệu cũ bị lỗi font, không được xóa nếu database của nhóm còn dữ liệu lỗi.
+CODE CŨ ĐÃ BỊ XÓA
+Nhánh song ngữ đã xóa một số template prototype không có controller sử dụng.
+Nếu xảy ra conflict kiểu “modify/delete”:
+Không được tự động chọn delete.
+Kiểm tra xem chức năng của tôi có controller hoặc route mới sử dụng template đó không.
+Nếu chức năng của tôi đang sử dụng template:Giữ lại template.
+Giữ toàn bộ chức năng của tôi.
+Chuyển template đó sang i18n đầy đủ.
+
+Nếu không có controller, route, fragment hoặc test nào sử dụng thì mới giữ quyết định xóa.
+Nếu còn nghi ngờ phải báo tôi trước khi xóa.
+YÊU CẦU CHO CODE MỚI CỦA TÔI
+Sau khi merge, rà soát toàn bộ file tôi mới thêm hoặc sửa:
+Template mới phải có đầy đủ English/Vietnamese.
+Controller/service mới không được trả message viết cứng.
+DTO validation mới phải dùng message key.
+Popup và JavaScript mới phải nhận message từ Thymeleaf/message bundle.
+Email, notification và audit log mới phải có hai bản dịch.
+Trạng thái nghiệp vụ phải giữ nguyên giá trị lưu DB nhưng dịch phần hiển thị.
+Bổ sung đồng thời key vào hai file messages.
+Từ thời điểm này, mỗi khi bạn sửa hoặc xây dựng chức năng mới trong repository này, tự động coi i18n English–Vietnamese là một phần bắt buộc của Definition of Done, không chờ tôi nhắc lại.
+KIỂM TRA SAU MERGE
+Tối thiểu phải chạy:
+git diff --check
+Tìm conflict marker trong toàn repository.
+mvnw.cmd -DskipTests compile trên Windows hoặc ./mvnw -DskipTests compile trên Linux/macOS.
+Kiểm tra hai bundle:số key bằng nhau
+không có key trùng
+không thiếu key ở một ngôn ngữ
+
+Quét template đang có route sử dụng để tìm chuỗi Vietnamese/English viết cứng.
+Quét controller/service/DTO để tìm exception, flash message và validation viết cứng.
+Kiểm tra các template bị xóa có thực sự không còn controller/route sử dụng.
+Chỉ chạy test liên quan trực tiếp đến các file conflict; full test để sau nếu tôi chưa yêu cầu.
+Nếu compile lỗi:
+Phải tìm nguyên nhân và sửa.
+Không được bỏ dependency, method hoặc chức năng chỉ để compile.
+Không được comment code chức năng để né lỗi.
+BÁO CÁO CUỐI
+Sau khi hoàn tất, hãy báo rõ:
+Backup branch/stash đã tạo.
+Những file có conflict.
+Cách đã kết hợp code của hai bên ở từng conflict quan trọng.
+Chức năng của tôi được giữ ở đâu.
+Phần i18n đã được bổ sung vào chức năng của tôi.
+Template/code cũ nào được giữ hoặc xóa và lý do.
+Kết quả compile.
+Kết quả kiểm tra key EN–VI.
+Test nào đã chạy.
+Điểm nào còn cần kiểm tra thủ công.

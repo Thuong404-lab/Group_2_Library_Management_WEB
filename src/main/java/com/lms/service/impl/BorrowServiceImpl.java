@@ -167,8 +167,9 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         int borrowDays = normalizeBorrowDays(request.getNumberOfDays());
-        
-        // TÃ­nh toÃ¡n sá»‘ tiá»n
+
+        // Tính toán số tiền
+
         double feePerBookPerDay = 5000.0;
         SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
         if (feeSetting != null) {
@@ -226,8 +227,8 @@ public class BorrowServiceImpl implements BorrowService {
             item.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Borrowed");
             bookItemRepository.save(item);
         }
-        
-        // Táº¡o danh sÃ¡ch tÃªn sÃ¡ch
+
+        // Tạo danh sách tên sách
         String bookNames = bookItemsToBorrow.stream()
                 .map(item -> item.getBook().getTitle())
                 .collect(java.util.stream.Collectors.joining(", "));
@@ -235,8 +236,8 @@ public class BorrowServiceImpl implements BorrowService {
         if (awaitingBankPayment) {
             return borrow;
         }
-        
-        // Gá»­i thÃ´ng bÃ¡o trá»±c tiáº¿p cho Ä‘á»™c giáº£ khi táº¡o phiáº¿u mÆ°á»£n thÃ nh cÃ´ng táº¡i quáº§y
+
+        // Gửi thông báo trực tiếp cho độc giả khi tạo phiếu mượn thành công tại quầy
         sendInternalNotification(member,
                 NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.LIBRARIAN,
                 "systemNotification.borrow.success.title",
@@ -361,7 +362,7 @@ public class BorrowServiceImpl implements BorrowService {
                 ActionType.REQUEST_BORROW,
                 localizedMessageService.get("backend.borrow.audit.requested", username, book.getBookId(),
                         book.getTitle(), borrowDays));
-                        
+
         sendInternalNotification(member,
                 NotificationType.LOAN, NotificationEventType.LOAN_REQUESTED, NotificationSource.SYSTEM,
                 "systemNotification.borrow.requested.title",
@@ -372,7 +373,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectPendingRequest(Integer borrowId) {
+    public void rejectPendingRequest(Integer borrowId, String reason) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.requestNotFound")));
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
@@ -395,7 +396,12 @@ public class BorrowServiceImpl implements BorrowService {
             borrowDetailRepository.save(detail);
         }
 
-        // Gá»­i thÃ´ng bÃ¡o Ä‘áº¿n member
+        // Gửi thông báo đến member
+        String content = localizedMessageService.get("systemNotification.borrow.rejected.content", bookNames, borrowId);
+        if (reason != null && !reason.trim().isEmpty()) {
+            content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
+        }
+
         sendInternalNotification(member,
                 NotificationType.LOAN, NotificationEventType.LOAN_REJECTED, NotificationSource.LIBRARIAN,
                 "systemNotification.borrow.rejected.title",
@@ -404,7 +410,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approvePendingRequest(Integer borrowId, String staffUsername) {
+    public void approvePendingRequest(Integer borrowId, List<String> barcodes, String staffUsername) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.requestNotFound")));
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
@@ -416,22 +422,55 @@ public class BorrowServiceImpl implements BorrowService {
             throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
         }
 
+        if (barcodes == null || barcodes.size() != details.size()) {
+            throw new ValidationException("Số lượng mã vạch sách cung cấp không khớp với số lượng sách trong yêu cầu mượn.");
+        }
+
         Member member = borrow.getMember();
 
-        // â”€â”€ 1. GÃ¡n BookItem vÃ  Ä‘áº·t tráº¡ng thÃ¡i Borrowed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        for (BorrowDetail detail : details) {
-            BookItem item = detail.getBookItem();
-            if (item == null) {
-                item = bookItemRepository
-                        .findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(
-                                detail.getBook().getBookId(), "Available")
-                        .orElseThrow(() -> new ConflictException(
-                                localizedMessageService.get("backend.borrow.noAvailableCopy", detail.getBook().getTitle())));
-                detail.setBookItem(item);
-            } else if (!"Available".equalsIgnoreCase(item.getStatus())) {
-                throw new ConflictException(
-                        localizedMessageService.get("backend.borrow.copyUnavailable", item.getBarcode()));
+        // Đếm số lượng yêu cầu cho mỗi bookId trong đơn hiện tại
+        java.util.Map<Integer, Long> requestCounts = details.stream()
+                .collect(java.util.stream.Collectors.groupingBy(d -> d.getBook().getBookId(), java.util.stream.Collectors.counting()));
+
+        // ── 1. Giai đoạn 1: Xác thực mã vạch và trạng thái ban đầu của toàn bộ bản sách ──
+        java.util.List<BookItem> matchedItems = new java.util.ArrayList<>();
+        for (int i = 0; i < details.size(); i++) {
+            BorrowDetail detail = details.get(i);
+            String barcode = barcodes.get(i).trim();
+
+            BookItem item = bookItemRepository.findByBarcode(barcode)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mã vạch sách: " + barcode));
+
+            // Đảm bảo sách này khớp với sách được yêu cầu trong phiếu mượn
+            if (!item.getBook().getBookId().equals(detail.getBook().getBookId())) {
+                throw new ConflictException("Mã vạch " + barcode + " thuộc cuốn '" + item.getBook().getTitle() + "', không khớp với sách yêu cầu '" + detail.getBook().getTitle() + "'.");
+
             }
+
+            if (!"Available".equalsIgnoreCase(item.getStatus())) {
+                throw new ConflictException("Bản sách " + barcode + " không khả dụng (Trạng thái hiện tại: " + item.getStatus() + ").");
+            }
+            matchedItems.add(item);
+        }
+
+        // Kiểm tra số lượng tồn kho khả dụng cho mỗi đầu sách trong đơn yêu cầu
+        for (java.util.Map.Entry<Integer, Long> entry : requestCounts.entrySet()) {
+            Integer bookId = entry.getKey();
+            Long reqCount = entry.getValue();
+            long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            if (availableCount < reqCount) {
+                Book tempBook = bookRepository.findById(bookId).orElse(null);
+                String title = tempBook != null ? tempBook.getTitle() : "Sách";
+                throw new ConflictException("Sách '" + title + "' chỉ còn " + availableCount + " cuốn khả dụng trong kho, không đủ để duyệt đơn yêu cầu mượn " + reqCount + " cuốn.");
+            }
+        }
+
+        // ── 2. Giai đoạn 2: Cập nhật trạng thái vào Database (sau khi tất cả kiểm tra đều thành công) ──
+        for (int i = 0; i < details.size(); i++) {
+            BorrowDetail detail = details.get(i);
+            BookItem item = matchedItems.get(i);
+
+            detail.setBookItem(item);
             item.setStatus("Waiting_Pickup");
             bookItemRepository.save(item);
             detail.setStatus("Waiting_Pickup");
@@ -444,7 +483,8 @@ public class BorrowServiceImpl implements BorrowService {
         if (feeSetting != null) {
             try {
                 feePerBookPerDay = Double.parseDouble(feeSetting.getSettingValue());
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
 
         int borrowDays = normalizeBorrowDays(null);
@@ -463,8 +503,8 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new ConflictException(
                         localizedMessageService.get("backend.financial.walletNotFound")));
         if (wallet.getBalance().compareTo(finalFee) < 0) {
-                throw new ConflictException(localizedMessageService.get(
-                        "backend.borrow.insufficientBalanceForFee", String.format("%,.0f", finalFee)));
+            throw new ConflictException(localizedMessageService.get(
+                    "backend.borrow.insufficientBalanceForFee", String.format("%,.0f", finalFee)));
         }
         wallet.setBalance(wallet.getBalance().subtract(finalFee));
         walletRepository.save(wallet);
@@ -629,7 +669,6 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.borrow.reservedBookNotFound")));
 
 
-
         boolean alreadyReserved = reservationRepository.findByMember_MemberIdOrderByReservationDateDesc(member.getMemberId())
                 .stream()
                 .anyMatch(r -> r.getBook() != null
@@ -677,7 +716,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectReservationRequest(Integer reservationId, String staffUsername) {
+    public void rejectReservationRequest(Integer reservationId, String staffUsername, String reason) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.borrow.reservationNotFound")));
 
@@ -717,6 +756,12 @@ public class BorrowServiceImpl implements BorrowService {
 
         reservation.setStatus("Rejected");
         reservationRepository.save(reservation);
+        String content = localizedMessageService.get("systemNotification.reservation.rejectedWithRefund.content",
+                reservation.getBook().getTitle(), reservationId,
+                isDepositPaid ? localizedMessageService.get("systemNotification.reservation.refundSuffix") : "");
+        if (reason != null && !reason.trim().isEmpty()) {
+            content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
+        }
         sendInternalNotification(reservation.getMember(),
                 NotificationType.RESERVATION, NotificationEventType.RESERVATION_REJECTED, NotificationSource.LIBRARIAN,
                 "systemNotification.reservation.rejected.title",
@@ -776,13 +821,28 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<ReservationRequestDTO> getPendingReservationDTOs() {
+        java.util.Map<Integer, String> usernameMap = memberAccountRepository.findAll().stream()
+                .filter(ma -> ma.getMember() != null)
+                .collect(Collectors.toMap(
+                        ma -> ma.getMember().getMemberId(),
+                        ma -> ma.getUsername(),
+                        (ex, rep) -> ex
+                ));
         return getAllPendingReservations().stream()
-                .map(r -> new ReservationRequestDTO(
-                        r.getReservationId(),
-                        r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getFullName() : "N/A",
-                        r.getBook().getTitle(),
-                        r.getReservationDate(),
-                        1))
+                .map(r -> {
+                    String email = r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getEmail() : "";
+                    String phone = r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getPhone() : "";
+                    String username = r.getMember() != null ? usernameMap.getOrDefault(r.getMember().getMemberId(), "") : "";
+                    return new ReservationRequestDTO(
+                            r.getReservationId(),
+                            r.getMember() != null && r.getMember().getUser() != null ? r.getMember().getUser().getFullName() : "N/A",
+                            r.getBook().getTitle(),
+                            r.getReservationDate(),
+                            1,
+                            email,
+                            phone,
+                            username);
+                })
                 .toList();
     }
 
@@ -791,8 +851,8 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getBorrowsByMemberAndStatus(String username, String status) {
         Integer id = getMemberIdByUsername(username);
         return id == null ? new ArrayList<>() : borrowRepository.findAll().stream()
-                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()) && status.equalsIgnoreCase(b.getStatus()))
-                .toList();
+                                                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()) && status.equalsIgnoreCase(b.getStatus()))
+                                                .toList();
     }
 
     @Override
@@ -848,8 +908,8 @@ public class BorrowServiceImpl implements BorrowService {
     public List<Borrow> getAllBorrowHistoryByMember(String username) {
         Integer id = getMemberIdByUsername(username);
         return id == null ? new ArrayList<>() : borrowRepository.findAll().stream()
-                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()))
-                .toList();
+                                                .filter(b -> b.getMember() != null && id.equals(b.getMember().getMemberId()))
+                                                .toList();
     }
 
     @Override
@@ -1181,5 +1241,69 @@ public class BorrowServiceImpl implements BorrowService {
 
         return borrow;
     }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public Borrow memberSubmitBankMultiBookBorrowRequest(String username, List<Integer> bookIds, Integer numberOfDays) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
+        }
+
+        Member member = memberRepository.findByAccountUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.member.currentNotFound")));
+
+        long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
+        int maxLimit = getEffectiveBorrowLimit(member);
+        if (currentBorrowed + bookIds.size() > maxLimit) {
+            throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.tierLimitExceeded"));
+        }
+
+        int borrowDays = normalizeBorrowDays(numberOfDays);
+
+        Borrow borrow = new Borrow();
+        borrow.setMember(member);
+        borrow.setBorrowDate(LocalDateTime.now());
+        borrow.setStatus(BorrowServiceImpl.PAYMENT_PENDING);
+        borrow = borrowRepository.save(borrow);
+
+        List<String> titles = new ArrayList<>();
+        for (Integer bookId : bookIds) {
+            Book book = bookRepository.findById(bookId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
+
+            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+            boolean hasAvailableItem = items.stream()
+                    .anyMatch(item -> "Available".equalsIgnoreCase(item.getStatus()));
+            if (!hasAvailableItem) {
+                throw new IllegalArgumentException(
+                        localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
+            }
+
+            // Member không trùng yêu cầu
+            long activeOrPending = borrowDetailRepository.countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
+            if (activeOrPending > 0) {
+                throw new ConflictException("Bạn đang có phiếu mượn sách '" + book.getTitle() + "' đang chờ xử lý hoặc đang mượn rồi.");
+            }
+
+            BorrowDetail detail = new BorrowDetail();
+            detail.setBorrow(borrow);
+            detail.setBook(book);
+            detail.setBookItem(null);
+            detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
+            detail.setStatus(BorrowServiceImpl.PAYMENT_PENDING);
+            detail.setRenewCount(0);
+            borrowDetailRepository.save(detail);
+
+            titles.add(book.getTitle());
+        }
+
+        auditLogService.log(com.lms.enums.ActionType.REQUEST_BORROW,
+                localizedMessageService.get("backend.borrow.audit.multiRequested", username, bookIds.size(),
+                        String.join(", ", titles), borrowDays));
+
+        return borrow;
+    }
+
 }
 

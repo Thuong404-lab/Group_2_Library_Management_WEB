@@ -56,6 +56,62 @@
 
     <div class="tab-content" id="borrowTabsContent">
         <div class="card card-classic shadow-sm">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <form method="get" th:action="@{/member/borrow/management}" id="filterForm">
+                    <!-- Giữ nguyên tab hiện tại -->
+                    <input type="hidden" name="tab" th:value="${activeTab != null ? activeTab : 'borrowing'}" />
+                    
+                    <!-- Dòng 1: Tìm kiếm theo tiêu đề sách -->
+                    <div class="form-row mb-3">
+                        <div class="col-12">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white border-right-0 text-muted"><i class="bi bi-search"></i></span>
+                                </div>
+                                <input type="text" name="search" id="searchInput" th:value="${search}" class="form-control border-left-0" 
+                                       th:placeholder="#{member.loan.searchPlaceholder}" placeholder="Search by Book Title..." />
+                                <div class="input-group-append">
+                                    <button class="btn btn-classic-primary" type="submit" id="searchBtn">
+                                        <i class="bi bi-search mr-1"></i> <span th:text="#{common.search}">Search</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dòng 2: Lọc ngày mượn, ngày trả và trạng thái -->
+                    <div class="form-row align-items-end">
+                        <!-- Từ ngày (Ngày mượn/đăng ký) -->
+                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                            <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{common.fromDate}">From Date</label>
+                            <input type="date" name="fromDate" id="fromDateInput" th:value="${fromDate}" th:min="${minDate}" th:max="${maxDate}" class="form-control w-100" />
+                        </div>
+                        
+                        <!-- Đến ngày (Ngày trả/hạn trả) -->
+                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                            <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{common.toDate}">To Date</label>
+                            <input type="date" name="toDate" id="toDateInput" th:value="${toDate}" th:min="${minDate}" th:max="${maxDate}" class="form-control w-100" />
+                        </div>
+                        
+                        <!-- Lọc trạng thái -->
+                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                            <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{common.status}">Status</label>
+                            <select name="status" id="statusSelect" class="form-control w-100">
+                                <option th:each="opt : ${statusOptions}"
+                                        th:value="${opt.value}"
+                                        th:text="${opt.labelKey != null && opt.labelKey != '' ? #messages.msg(opt.labelKey) : '-- All statuses --'}"
+                                        th:selected="${opt.value == status}">-- All statuses --</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Nút Lọc và Xóa bộ lọc -->
+                        <div class="col-md-3 col-sm-6 d-flex align-items-center">
+                            <button type="submit" id="filterBtn" class="btn btn-classic-primary flex-grow-1 mr-2" th:text="#{common.filter}">Filter</button>
+                            <a th:href="@{/member/borrow/management(tab=${activeTab != null ? activeTab : 'borrowing'})}" class="btn btn-classic-outline" th:title="#{common.clearFilter}"><i class="bi bi-x-lg"></i></a>
+                        </div>
+                    </div>
+                </form>
+            </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
 
@@ -98,12 +154,13 @@
                                     <span th:if="${item.daysLeft > 2 && item.status == 'Borrowed'}" class="badge badge-classic-status badge-classic-success" th:text="#{loan.status.borrowed}">Borrowing</span>
                                     <span th:if="${item.status == 'Overdue'}" class="badge badge-classic-status badge-classic-danger" th:text="#{loan.status.overdue}">Overdue</span>
                                     <span th:if="${item.status == 'Pending'}" class="badge badge-classic-status badge-classic-warn" th:text="#{loan.status.pendingBorrow}">Pending Loan Approval</span>
+                                    <span th:if="${item.status == 'Waiting_Pickup'}" class="badge badge-classic-status" style="background-color: #e2f0fd; color: #1a73e8; border: 1px solid #adc1f9;" th:text="#{loan.status.waitingPickup}">Waiting Physical Copy Pickup</span>
                                     <span th:if="${item.status == 'Return_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-08" th:text="#{loan.status.pendingReturn}">Pending Return Approval</span>
                                     <span th:if="${item.status == 'Renew_Pending'}" class="badge badge-classic-status member-borrow-span-background-color-border-color-09" th:text="#{loan.status.pendingRenewal}">Pending Renewal Approval</span>
 
                                     <small class="text-danger fw-semibold" th:if="${item.status == 'Borrowed' && item.daysLeft <= 2}" th:text="|(${#messages.msg('loan.daysLeft', item.daysLeft)})|"></small>
                                 </div>
-                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending'}"
+                                <div class="progress progress-classic mt-2" th:if="${item.status != 'Pending' && item.status != 'Waiting_Pickup'}"
                                              th:title="${#messages.msg('loan.progress', item.progressPercentage)}" data-bs-toggle="tooltip">
                                     <div class="progress-bar" role="progressbar"
                                          th:data-presentation-width="${item.progressPercentage}"
@@ -227,6 +284,46 @@
                     </table>
 
                 </div>
+                <!-- Phân trang -->
+                <nav th:if="${totalPages > 1}" class="my-3"
+                     th:with="startPage=${totalPages <= 10 ? 0 : (currentPage < 9 ? 0 : (currentPage - 8 > totalPages - 10 ? totalPages - 10 : currentPage - 8))}, endPage=${startPage + 9 < totalPages ? startPage + 9 : totalPages - 1}">
+                    <ul class="pagination justify-content-center mb-3">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link page-link-classic" 
+                               th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=0)}"
+                               th:text="#{pagination.first}">First</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link page-link-classic" 
+                               th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage - 1})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item disabled" th:if="${startPage > 0}">
+                            <span class="page-link page-link-classic">…</span>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                            th:classappend="${i == currentPage} ? 'active' : ''">
+                            <a class="page-link page-link-classic" 
+                               th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${i})}"
+                               th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item disabled" th:if="${endPage < totalPages - 1}">
+                            <span class="page-link page-link-classic">…</span>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link page-link-classic" 
+                               th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage + 1})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link page-link-classic" 
+                               th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${totalPages - 1})}"
+                               th:text="#{pagination.last}">Last</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -414,6 +511,24 @@
                     var form = document.getElementById(currentReturnFormId);
                     if (form) form.submit();
                 }
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var statusSelect = document.getElementById('statusSelect');
+            var filterBtn = document.getElementById('filterBtn');
+            if (statusSelect && filterBtn) {
+                function updateFilterBtn() {
+                    if (statusSelect.value === '') {
+                        filterBtn.disabled = true;
+                        filterBtn.classList.add('disabled');
+                    } else {
+                        filterBtn.disabled = false;
+                        filterBtn.classList.remove('disabled');
+                    }
+                }
+                statusSelect.addEventListener('change', updateFilterBtn);
+                updateFilterBtn(); // initial run
             }
         });
     </script>
