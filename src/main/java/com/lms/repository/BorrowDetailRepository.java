@@ -107,6 +107,7 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "AND bd.borrow.borrowDate >= :oneMonthAgo ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findBorrowHistoryInOneMonth(@Param("memberId") Integer memberId, @Param("oneMonthAgo") LocalDateTime oneMonthAgo);
     List<BorrowDetail> findByStatus(String status);
+    List<BorrowDetail> findByStatusIgnoreCaseAndDueDateLessThanEqual(String status, LocalDateTime dueDate);
 
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.bookItem.barcode = :barcode " +
             "AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending')")

@@ -100,7 +100,6 @@ public class BorrowController extends LocalizedControllerSupport {
         model.addAttribute("maxRenewalDays", getPositiveIntSetting("Max_Renewal_Days", 7));
         model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
         model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
-        model.addAttribute("memberDiscountPercent", member.getTier() != null && member.getTier().getDiscountPercent() != null ? member.getTier().getDiscountPercent() : BigDecimal.ZERO);
 
         java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);
         java.time.LocalDate maxDate = java.time.LocalDate.now();
@@ -452,22 +451,28 @@ public class BorrowController extends LocalizedControllerSupport {
 
             // 6. Xử lý luồng thanh toán qua Chuyển khoản (BANK - PayOS)
             if ("BANK".equalsIgnoreCase(paymentMethod) && finalFee.compareTo(BigDecimal.ZERO) > 0) {
-                // FIX: Không gọi vòng lặp tạo phiếu mượn trước khi thanh toán.
-                // Luồng tạo phiếu mượn sẽ được thực hiện khi nhận Webhook/Callback giao dịch thành công.
-                com.lms.entity.PayOsPayment payment = payOsPaymentService.createTopUp(member, finalFee);
-
-                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedWithBank"));
-                return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                java.util.List<Integer> requestedBookIds = java.util.Collections.nCopies(quantity, bookId);
+                com.lms.entity.Borrow pendingBorrow = null;
+                try {
+                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), requestedBookIds, numberOfDays);
+                    com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
+                    return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                } catch (Exception paymentError) {
+                    if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {
+                        borrowService.cancelPendingBankBorrow(pendingBorrow.getBorrowId(), "CREATE_FAILED");
+                    }
+                    throw paymentError;
+                }
             }
 
-            // Trường hợp tổng chi phí bằng 0 (Miễn phí hoàn toàn)
+            // Zero-fee loans can be submitted immediately without opening a payment link.
             for (int i = 0; i < quantity; i++) {
                 borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
             }
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
             return "redirect:/member/borrow/management?tab=borrowing";
 
-        } catch (ApplicationException e) {
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.requestFailed", e));
             return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
         }

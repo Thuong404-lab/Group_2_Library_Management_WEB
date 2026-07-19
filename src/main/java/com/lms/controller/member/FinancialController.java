@@ -260,6 +260,7 @@ public class FinancialController extends LocalizedControllerSupport {
         return switch (transactionType.toUpperCase()) {
             case "TOP_UP" -> "transaction.type.topUp";
             case "BORROW_FEE" -> "transaction.type.borrowFee";
+            case "RENEWAL_FEE" -> "transaction.type.renewalFee";
             case "DEPOSIT" -> "transaction.type.deposit";
             case "FINE" -> "transaction.type.fine";
             case "DAMAGE_FEE" -> "transaction.type.damageFee";
@@ -276,6 +277,7 @@ public class FinancialController extends LocalizedControllerSupport {
             case "COMPLETED", "PAID" -> "transaction.status.completed";
             case "FAILED" -> "transaction.status.failed";
             case "CANCELED", "CANCELLED" -> "transaction.status.canceled";
+            case "REFUNDED" -> "transaction.status.refunded";
             default -> "transaction.status.pending";
         };
     }

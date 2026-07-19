@@ -9,6 +9,7 @@ public class MemberBorrowDTO {
     private String bookImage;
     private String bookIdStr;
     private String borrowIdStr;
+    private boolean barcodeAssigned;
     private LocalDateTime actionDate;
     private LocalDateTime dueDate;
     private LocalDateTime returnDate; // Dành cho tab Lịch sử
@@ -45,4 +46,6 @@ public class MemberBorrowDTO {
     public void setRenewCount(int renewCount) { this.renewCount = renewCount; }
     public String getBorrowIdStr() { return borrowIdStr; }
     public void setBorrowIdStr(String borrowIdStr) { this.borrowIdStr = borrowIdStr; }
+    public boolean isBarcodeAssigned() { return barcodeAssigned; }
+    public void setBarcodeAssigned(boolean barcodeAssigned) { this.barcodeAssigned = barcodeAssigned; }
 }

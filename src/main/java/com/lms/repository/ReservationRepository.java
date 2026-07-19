@@ -35,6 +35,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
     @Query("""
             select case when count(r) > 0 then true else false end
             from Reservation r
+            where r.book.bookId = :bookId
+              and r.member.memberId <> :memberId
+              and upper(r.status) in :statuses
+            """)
+    boolean existsActiveReservationByOtherMemberForBook(
+            @Param("bookId") Integer bookId,
+            @Param("memberId") Integer memberId,
+            @Param("statuses") List<String> statuses);
+    @Query("""
+            select case when count(r) > 0 then true else false end
+            from Reservation r
             where r.member.memberId = :memberId
               and r.book.bookId = :bookId
               and upper(r.status) in :statuses

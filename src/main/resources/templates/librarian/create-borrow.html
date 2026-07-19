@@ -346,8 +346,16 @@
                             <strong class="borrow-info-value borrow-semantic-text--danger" th:text="${#temporals.format(selectedRenewal.dueDate, 'dd/MM/yyyy')}">14/07/2026</strong>
                         </div>
                         <div class="col-md-6">
-                            <span class="borrow-info-label" th:text="#{librarian.borrowDesk.newDueDate}">New Due Date (7 additional days)</span>
-                            <strong class="borrow-info-value borrow-semantic-text--success" th:text="${#temporals.format(selectedRenewal.dueDate.plusDays(7), 'dd/MM/yyyy')}">21/07/2026</strong>
+                            <span class="borrow-info-label" th:text="#{librarian.borrowDesk.requestedRenewalDays}">Requested renewal days</span>
+                            <strong class="borrow-info-value" th:text="${selectedRenewalDays != null ? selectedRenewalDays + ' ' + #messages.msg('common.days') : '-'}">4 days</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="borrow-info-label" th:text="#{librarian.borrowDesk.heldRenewalFee}">Held renewal fee</span>
+                            <strong class="borrow-info-value" th:text="${selectedRenewalFee != null ? #numbers.formatDecimal(selectedRenewalFee, 0, 'COMMA', 0, 'POINT') + ' VND' : '-'}">20,000 VND</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="borrow-info-label" th:text="#{librarian.borrowDesk.newDueDate}">New due date</span>
+                            <strong class="borrow-info-value borrow-semantic-text--success" th:text="${selectedRenewalNewDueDate != null ? #temporals.format(selectedRenewalNewDueDate, 'dd/MM/yyyy') : '-'}">21/07/2026</strong>
                         </div>
                     </div>
 

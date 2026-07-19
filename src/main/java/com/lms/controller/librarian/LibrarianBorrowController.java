@@ -160,7 +160,14 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             try {
                 BorrowDetail selectedRenew = borrowService.getBorrowDetailById(renewId);
                 if ("Renew_Pending".equalsIgnoreCase(selectedRenew.getStatus())) {
-                    model.addAttribute("selectedRenewal", selectedRenew);
+                    model.addAttribute("selectedRenewal", selectedRenew);                    transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                                    renewId, "RENEWAL_FEE", "Pending")
+                            .ifPresent(hold -> {
+                                int requestedDays = hold.getRenewalDays() == null ? 0 : hold.getRenewalDays();
+                                model.addAttribute("selectedRenewalDays", requestedDays);
+                                model.addAttribute("selectedRenewalFee", hold.getAmount() == null ? BigDecimal.ZERO : hold.getAmount().abs());
+                                model.addAttribute("selectedRenewalNewDueDate", selectedRenew.getDueDate().plusDays(requestedDays));
+                            });
                 }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.renewalDetailsFailed", e));
