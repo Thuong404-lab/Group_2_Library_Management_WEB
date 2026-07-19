@@ -4,7 +4,8 @@
 <head>
 </head>
 <body>
-    <nav th:fragment="sidebar" class="col-md-3 col-lg-2 d-md-block bg-custom-dark sidebar-container p-3 sidebar-nav-background-min-height-color-01">
+    <nav th:fragment="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar-container role-sidebar p-3 sidebar-nav-background-min-height-color-01"
+         th:aria-label="#{staff.sidebar.navigation}">
         <!-- Brand -->
         <div class="d-flex align-items-center mb-4 mt-2">
             <div class="bg-warning text-dark rounded p-2 me-3 sidebar-div-width-height-display-02">
@@ -12,7 +13,7 @@
             </div>
             <div>
                 <h4 class="mb-0 fw-bold text-white" th:text="#{app.name}">Library Management System</h4>
-                <small class="text-secondary fw-bold sidebar-small-letter-spacing-03">LIBRARY SYSTEM</small>
+                <small class="fw-bold sidebar-small-letter-spacing-03" th:text="#{sidebar.systemLabel}">LIBRARY SYSTEM</small>
             </div>
         </div>
         <hr class="border-secondary mb-4">
@@ -20,17 +21,17 @@
         <ul class="nav flex-column gap-2">
 
             <!-- FOR MEMBER -->
-            <div sec:authorize="hasRole('MEMBER')">
+            <th:block sec:authorize="hasRole('MEMBER')">
                 <!-- All member account links have been moved to the top header profile dropdown -->
                 <li class="nav-item">
                     <a class="nav-link text-white fs-5 py-2 active rounded sidebar-a-background-04" th:href="@{/}">
                         <i class="bi bi-search me-3"></i> <span th:text="#{sidebar.memberHome}">Home (Find books)</span>
                     </a>
                 </li>
-            </div>
+            </th:block>
 
             <!-- FOR GUEST -->
-            <div sec:authorize="!isAuthenticated()">
+            <th:block sec:authorize="!isAuthenticated()">
                 <li class="nav-item">
                     <a class="nav-link text-white fs-5 py-2 active rounded sidebar-a-background-04" th:href="@{/}">
                         <i class="bi bi-search me-3"></i> <span th:text="#{sidebar.catalog}">Book Catalog</span>
@@ -46,13 +47,13 @@
                         <i class="bi bi-person-plus me-3"></i> <span th:text="#{nav.register}">Register</span>
                     </a>
                 </li>
-            </div>
+            </th:block>
 
             <!-- ADMIN / LIBRARIAN (Basic links) -->
-            <div sec:authorize="hasRole('ADMIN')">
+            <th:block sec:authorize="hasRole('ADMIN')">
                 <li class="nav-item">
                     <a class="nav-link text-light fs-5 py-2" th:href="@{/admin/dashboard}">
-                        <i class="bi bi-speedometer2 me-3"></i> Admin Dashboard
+                        <i class="bi bi-speedometer2 me-3"></i> <span th:text="#{nav.adminDashboard}">Admin Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -60,11 +61,11 @@
                         <i class="bi bi-search me-3"></i> <span th:text="#{sidebar.findBooks}">Find books</span>
                     </a>
                 </li>
-            </div>
-            <div sec:authorize="hasRole('LIBRARIAN')">
+            </th:block>
+            <th:block sec:authorize="hasRole('LIBRARIAN')">
                 <li class="nav-item">
                     <a class="nav-link text-light fs-5 py-2" th:href="@{/librarian/dashboard}">
-                        <i class="bi bi-speedometer2 me-3"></i> Librarian Dashboard
+                        <i class="bi bi-speedometer2 me-3"></i> <span th:text="#{nav.librarianDashboard}">Librarian Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -72,7 +73,7 @@
                         <i class="bi bi-search me-3"></i> <span th:text="#{sidebar.findBooks}">Find books</span>
                     </a>
                 </li>
-            </div>
+            </th:block>
         </ul>
     </nav>
 </body>

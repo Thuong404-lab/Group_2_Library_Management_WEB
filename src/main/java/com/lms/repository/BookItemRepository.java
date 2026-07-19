@@ -1,6 +1,8 @@
 package com.lms.repository;
 import com.lms.entity.BookItem;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +13,10 @@ import java.util.Set;
 @Repository
 public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
     Optional<BookItem> findByBarcode(String barcode);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select item from BookItem item where item.barcode = :barcode")
+    Optional<BookItem> findByBarcodeForUpdate(@Param("barcode") String barcode);
 
     long countByStatusIgnoreCase(String status);
 

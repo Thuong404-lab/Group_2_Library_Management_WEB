@@ -93,6 +93,13 @@ public class BorrowController extends LocalizedControllerSupport {
 
         model.addAttribute("borrowingCount", currentBorrows.size());
         model.addAttribute("reservationCount", reservations.size());
+        Member member = getCurrentMember(principal);
+        BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance()).orElse(BigDecimal.ZERO);
+        model.addAttribute("walletBalance", walletBalance);
+        model.addAttribute("maxRenewalDays", getPositiveIntSetting("Max_Renewal_Days", 7));
+        model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
+        model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
 
         java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);
         java.time.LocalDate maxDate = java.time.LocalDate.now();
@@ -444,22 +451,28 @@ public class BorrowController extends LocalizedControllerSupport {
 
             // 6. Xử lý luồng thanh toán qua Chuyển khoản (BANK - PayOS)
             if ("BANK".equalsIgnoreCase(paymentMethod) && finalFee.compareTo(BigDecimal.ZERO) > 0) {
-                // FIX: Không gọi vòng lặp tạo phiếu mượn trước khi thanh toán.
-                // Luồng tạo phiếu mượn sẽ được thực hiện khi nhận Webhook/Callback giao dịch thành công.
-                com.lms.entity.PayOsPayment payment = payOsPaymentService.createTopUp(member, finalFee);
-
-                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedWithBank"));
-                return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                java.util.List<Integer> requestedBookIds = java.util.Collections.nCopies(quantity, bookId);
+                com.lms.entity.Borrow pendingBorrow = null;
+                try {
+                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), requestedBookIds, numberOfDays);
+                    com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
+                    return "redirect:/member/payments/payos/" + payment.getOrderCode();
+                } catch (Exception paymentError) {
+                    if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {
+                        borrowService.cancelPendingBankBorrow(pendingBorrow.getBorrowId(), "CREATE_FAILED");
+                    }
+                    throw paymentError;
+                }
             }
 
-            // Trường hợp tổng chi phí bằng 0 (Miễn phí hoàn toàn)
+            // Zero-fee loans can be submitted immediately without opening a payment link.
             for (int i = 0; i < quantity; i++) {
                 borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
             }
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
             return "redirect:/member/borrow/management?tab=borrowing";
 
-        } catch (ApplicationException e) {
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.requestFailed", e));
             return "redirect:/member/borrow/create?bookId=" + bookId + "&error=borrow";
         }
@@ -492,6 +505,7 @@ public class BorrowController extends LocalizedControllerSupport {
         }
     }
 
+    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
                               Principal principal,
@@ -519,10 +533,12 @@ public class BorrowController extends LocalizedControllerSupport {
     }
 
     @PostMapping("/renew/{borrowDetailId}")
-    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId,
+                            @RequestParam("renewalDays") Integer renewalDays,
+                            Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null) return "redirect:/login";
         try {
-            borrowService.memberSubmitRenewRequest(borrowDetailId);
+            borrowService.memberSubmitRenewRequest(principal.getName(), borrowDetailId, renewalDays);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.renewalSubmitted"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.renewalSubmitFailed", e));
@@ -584,6 +600,13 @@ public class BorrowController extends LocalizedControllerSupport {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+    private int getPositiveIntSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key).map(setting -> setting.getSettingValue())
+                    .filter(v -> v != null && !v.isBlank()).map(String::trim).map(Integer::parseInt)
+                    .filter(v -> v > 0).orElse(defaultValue);
+        } catch (NumberFormatException ignored) { return defaultValue; }
+    }
 
     private Integer getMaxBorrowDays() {
         return systemSettingRepository.findAll().stream()
@@ -595,7 +618,7 @@ public class BorrowController extends LocalizedControllerSupport {
                 .map(Integer::parseInt)
                 .filter(value -> value > 0)
                 .findFirst()
-                .orElse(14);
+                .orElse(14); // Giá trị mặc định nếu database chưa có key này
     }
 
     public static class StatusOption {

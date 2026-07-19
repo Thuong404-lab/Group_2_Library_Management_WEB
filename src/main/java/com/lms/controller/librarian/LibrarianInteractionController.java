@@ -155,7 +155,8 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             Model model) {
 
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(
-                PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, page), PAGE_SIZE,
+                        Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
 
         return "librarian/acquisition-request-list";
     }

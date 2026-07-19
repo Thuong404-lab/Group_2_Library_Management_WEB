@@ -1,43 +1,26 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
-    <meta charset="UTF-8">
-    <title>Membership Benefits</title>
+    <title th:text="#{member.benefits.title}">Membership Tier Benefits</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/benefits.css}" />
-      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
-  </head>
+</head>
 <body>
-
-<div class="container">
-    <div class="card">
-        <div class="header">
-            <h2>Current Membership Tier: <span th:text="${tierBenefits != null ? tierBenefits.tierName : 'None'}">Gold</span></h2>
-        </div>
-
-        <div class="info">
-            <span class="bold">Discount Percent: </span>
-            <span th:text="${tierBenefits != null ? tierBenefits.discountPercent : 0}">0</span>%
-        </div>
-
-        <div class="info">
-            <span class="bold">Borrowing Limit: </span>
-            <span th:text="${tierBenefits != null ? tierBenefits.borrowLimit : 0}">0</span> books
-        </div>
-
-        <div class="info">
-            <span class="bold">Detailed Privileges: </span>
-            <p th:text="${tierBenefits != null ? tierBenefits.benefits : 'No privilege description available.'}">Privilege descriptions go here...</p>
-        </div>
-
-        <hr>
-
-        <div class="btn-group">
-            <a href="/" class="btn-link member-benefits-a-color-01">🏠 Back to Home</a>
-            <span class="member-benefits-span-color-02">|</span>
-            <a href="/member/membership/tier" class="btn-link member-benefits-a-color-03">→ View Tier Progression</a>
-        </div>
+<main layout:fragment="content" class="legacy-member-benefits-page member-palette-page">
+    <div class="container legacy-member-benefits-container">
+        <header class="legacy-member-benefits-hero member-dashboard-hero">
+            <div><span th:text="#{member.benefits.eyebrow}">YOUR MEMBERSHIP</span><h1 th:text="#{member.benefits.heading}">Your Benefits</h1><p th:text="#{member.benefits.description}">Based on your current membership tier</p></div>
+            <a th:href="@{/member/membership/tier}" class="member-ui-button member-ui-button--inverse" th:text="#{member.benefits.viewProgress}">View Tier Progress</a>
+        </header>
+        <section class="legacy-member-benefits-card member-reference-list" th:if="${tierBenefits != null}">
+            <div class="legacy-member-benefits-heading member-reference-list__header"><span th:text="#{member.tier.current}">Current Membership Tier</span><h2 th:text="${tierBenefits.tierName}">Tier</h2></div>
+            <div class="legacy-member-benefits-body member-reference-list__body">
+                <article class="member-reference-list__item"><span th:text="#{member.tier.discount}">Discount</span><strong th:text="${tierBenefits.discountPercent} + '%'">0%</strong></article>
+                <article class="member-reference-list__item"><span th:text="#{member.tier.borrowLimit}">Borrowing Limit</span><strong th:text="#{common.bookCount(${tierBenefits.borrowLimit})}">0 books</strong></article>
+                <article class="legacy-member-benefits-detail member-reference-list__item"><span th:text="#{member.benefits.details}">Benefit Details</span><p th:text="${tierBenefits.benefits != null && !tierBenefits.benefits.trim().isEmpty() ? tierBenefits.benefits : #messages.msg('member.benefits.notConfigured')}">Benefit details</p></article>
+            </div>
+        </section>
+        <section class="legacy-member-benefits-empty member-reference-list__item" th:if="${tierBenefits == null}"><i class="bi bi-person-exclamation" aria-hidden="true"></i><p th:text="#{member.benefits.noData}">No tier benefit configuration was found for your account.</p></section>
     </div>
-</div>
-
+</main>
 </body>
 </html>

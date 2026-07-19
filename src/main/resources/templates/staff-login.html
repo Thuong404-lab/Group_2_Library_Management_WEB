@@ -1,124 +1,123 @@
 <!DOCTYPE html>
 <html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="#{staffLogin.title}">Staff Login - Library Management System</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <!-- Bootstrap 5 CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/pages/staff-login.css}" />
-    <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
-      <link rel="stylesheet" th:href="@{/css/utilities.css}" />
-  </head>
-
-<body>
-
-    <div class="login-container">
-
-        <!-- Left Side: Image (Staff) -->
-        <div class="login-image">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/pages/login.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/staff-login.css}">
+    <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}">
+</head>
+<body class="auth-page auth-page--staff-login">
+    <main class="login-container auth-shell">
+        <section class="login-image auth-visual" th:aria-label="#{password.imageArea}">
             <div class="image-text">
+                <span class="auth-visual-eyebrow" th:text="#{staffLogin.audience}">For administrators and librarians</span>
                 <h2 th:text="#{staffLogin.hero.title}">Library Administration</h2>
                 <p th:text="#{staffLogin.hero.description}">Operate and oversee all library activities accurately and efficiently.</p>
             </div>
-        </div>
+        </section>
 
-        <!-- Right Side: Form -->
-        <div class="login-form-wrapper">
-            <div class="login-form">
-                <div th:replace="~{fragments/language-switcher :: switcher}"></div>
-                <div class="brand-logo" th:text="#{staffLogin.portal}">Staff Portal</div>
-                <div class="brand-subtitle" th:text="#{staffLogin.audience}">For administrators and librarians</div>
+        <section class="login-form-wrapper auth-form-panel" th:aria-label="#{staffLogin.portal}">
+            <div class="login-form auth-form-card">
+                <div class="auth-toolbar">
+                    <div th:replace="~{fragments/language-switcher :: switcher}"></div>
+                </div>
 
-                <div th:if="${param.error}" class="alert alert-danger mb-4" role="alert">
+                <a class="brand-logo auth-brand" th:href="@{/}" th:text="#{staffLogin.portal}">Staff Portal</a>
+                <p class="brand-subtitle" th:text="#{staffLogin.audience}">For administrators and librarians</p>
+
+                <div th:if="${param.error}" class="alert alert-danger auth-alert mb-4" role="alert" aria-live="polite">
+                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
                     <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null}">
                         <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}" th:text="#{staffLogin.invalidCredentials}">Incorrect staff username or password.</span>
                         <span th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}" th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"></span>
                     </span>
                     <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION == null}" th:text="#{staffLogin.accessDenied}">Incorrect staff username or password, or you do not have permission to access this area.</span>
                 </div>
-                <div th:if="${param.logout}" class="alert alert-success mb-4" role="alert">
+                <div th:if="${param.logout}" class="alert alert-success auth-alert mb-4" role="status" aria-live="polite">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
                     <span th:text="#{staffLogin.logoutSuccess}">You have safely logged out of the administration system.</span>
                 </div>
 
-                <form th:action="@{/staff-login}" method="post" class="needs-validation" novalidate>
-                    <div class="mb-4">
+                <form th:action="@{/staff-login}" method="post" class="needs-validation auth-form" novalidate>
+                    <div class="auth-field">
                         <label for="username" class="form-label" th:text="#{staffLogin.username}">Staff username</label>
                         <input type="text" class="form-control" id="username" name="username"
-                            th:placeholder="#{staffLogin.username.placeholder}" placeholder="Enter username" th:value="${session.SPRING_SECURITY_LAST_USERNAME}" required autocomplete="username">
+                               th:placeholder="#{staffLogin.username.placeholder}" placeholder="Enter username"
+                               th:value="${session.SPRING_SECURITY_LAST_USERNAME}"
+                               required autocomplete="username" autofocus>
                         <div class="invalid-feedback" th:text="#{staffLogin.username.required}">Please enter your staff username.</div>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="auth-field">
                         <label for="password" class="form-label" th:text="#{auth.password}">Password</label>
-                        <div class="position-relative">
-                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••"
-                                required autocomplete="current-password">
-                            <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer toggle-password" data-target="password" style="cursor: pointer; z-index: 10;"></i>
+                        <div class="auth-password-field">
+                            <input type="password" class="form-control" id="password" name="password"
+                                   th:placeholder="#{auth.password.placeholder}" placeholder="Enter your password"
+                                   required autocomplete="current-password">
+                            <button type="button" class="password-toggle toggle-password" data-target="password"
+                                    th:aria-label="#{auth.password.show}" th:title="#{auth.password.show}">
+                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                            </button>
                             <div class="invalid-feedback" th:text="#{auth.password.required}">Please enter your password.</div>
                         </div>
                     </div>
 
-                    <button id="submitBtn" class="btn btn-primary-custom w-100 position-relative d-flex justify-content-center align-items-center gap-2" type="submit">
+                    <button id="submitBtn" class="btn btn-primary-custom auth-primary-button w-100" type="submit">
                         <span id="submitText" th:text="#{staffLogin.submit}">Access System</span>
                         <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     </button>
                 </form>
 
-                <div class="text-center">
-                    <a th:href="@{/login}" class="back-link"><span aria-hidden="true">←</span> <span th:text="#{staffLogin.backToMember}">Back to guest and member login</span></a>
-                </div>
+                <p class="auth-form-footer">
+                    <a th:href="@{/login}" class="auth-link back-link">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        <span th:text="#{staffLogin.backToMember}">Back to guest and member login</span>
+                    </a>
+                </p>
             </div>
-        </div>
+        </section>
+    </main>
 
-    </div>
-
-    <!-- Bootstrap Validation Script -->
     <script th:replace="~{fragments/language-switcher :: script}"></script>
-    <script>
+    <script th:inline="javascript">
         (function () {
-            'use strict'
+            'use strict';
 
-            // Password toggle logic
-            const togglePasswords = document.querySelectorAll('.toggle-password');
-            togglePasswords.forEach(icon => {
-                icon.addEventListener('click', function() {
-                    const targetId = this.getAttribute('data-target');
-                    const input = document.getElementById(targetId);
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        this.classList.remove('bi-eye-slash');
-                        this.classList.add('bi-eye');
-                    } else {
-                        input.type = 'password';
-                        this.classList.remove('bi-eye');
-                        this.classList.add('bi-eye-slash');
-                    }
+            const showPasswordLabel = /*[[#{auth.password.show}]]*/ 'Show password';
+            const hidePasswordLabel = /*[[#{auth.password.hide}]]*/ 'Hide password';
+
+            document.querySelectorAll('.toggle-password').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const input = document.getElementById(button.dataset.target);
+                    const icon = button.querySelector('i');
+                    const showPassword = input.type === 'password';
+                    input.type = showPassword ? 'text' : 'password';
+                    icon.className = showPassword ? 'bi bi-eye' : 'bi bi-eye-slash';
+                    button.setAttribute('aria-label', showPassword ? hidePasswordLabel : showPasswordLabel);
+                    button.setAttribute('title', showPassword ? hidePasswordLabel : showPasswordLabel);
                 });
             });
 
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms)
-                .forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        } else {
-                            // Valid form, disable button
-                            const btn = document.getElementById('submitBtn');
-                            const spinner = document.getElementById('submitSpinner');
-                            btn.disabled = true;
-                            spinner.classList.remove('d-none');
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
+            document.querySelectorAll('.needs-validation').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    } else {
+                        const button = document.getElementById('submitBtn');
+                        const spinner = document.getElementById('submitSpinner');
+                        button.disabled = true;
+                        spinner.classList.remove('d-none');
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
     </script>
 </body>
-
 </html>

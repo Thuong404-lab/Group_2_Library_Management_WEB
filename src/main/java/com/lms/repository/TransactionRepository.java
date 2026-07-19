@@ -12,9 +12,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-// Người phụ trách: Trần Ngọc Linh Đang (CE191088)
+// NgÆ°á»i phá»¥ trÃ¡ch: Tráº§n Ngá»c Linh Äang (CE191088)
 
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
+
+    Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+            Integer borrowDetailId, String transactionType, String status);
 
     @Query("select coalesce(sum(t.amount), 0) " +
             "from Transaction t " +
@@ -160,7 +163,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     List<Transaction> findByBorrow_BorrowId(Integer borrowId);
 
     // =========================================================================
-    // PHƯƠNG THỨC MỚI: Lấy tất cả giao dịch tài chính phát sinh của Độc giả trong vòng 365 ngày qua
+    // PHÆ¯Æ NG THá»¨C Má»šI: Láº¥y táº¥t cáº£ giao dá»‹ch tÃ i chÃ­nh phÃ¡t sinh cá»§a Äá»™c giáº£ trong vÃ²ng 365 ngÃ y qua
     // =========================================================================
     @Query("SELECT t FROM Transaction t " +
             "WHERE t.wallet.member.memberId = :memberId " +
@@ -181,3 +184,4 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }
+

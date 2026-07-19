@@ -170,7 +170,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
         try {
             memberReviewService.submitReview(principal.getName(), request);
-            flash.addFlashAttribute("reviewSubmittedSuccess", true);
+            flash.addFlashAttribute("success", message("backend.review.submitted"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewRequest", request);
