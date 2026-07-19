@@ -140,6 +140,8 @@ public class SystemServiceImpl implements SystemService {
     @Transactional
     public void updateBorrowingPolicies(Integer maxBorrowDays,
                                         Integer maxRenewalDays,
+                                        Integer maxRenewalRequests,
+                                        Integer renewalRejectionCooldownHours,
                                         Map<Integer, Integer> tierBorrowLimits,
                                         Map<Integer, BigDecimal> tierSpendingConditions,
                                         BigDecimal borrowFeePerBook,
@@ -152,6 +154,8 @@ public class SystemServiceImpl implements SystemService {
 
         validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
         validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
+        validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
+        validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateAndUpdateTiers(tierBorrowLimits, tierSpendingConditions);
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
@@ -168,6 +172,14 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Max_Renewal_Days",
                 String.valueOf(maxRenewalDays),
                 messages.get("backend.settings.description.maxRenewalDays"));
+
+        saveOrUpdateSetting("MAX_RENEWAL_REQUESTS_PER_LOAN",
+                String.valueOf(maxRenewalRequests),
+                messages.get("backend.settings.description.maxRenewalRequests"));
+
+        saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
+                String.valueOf(renewalRejectionCooldownHours),
+                messages.get("backend.settings.description.renewalCooldown"));
 
         saveOrUpdateSetting("Max_Books_Per_Member",
                 String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),

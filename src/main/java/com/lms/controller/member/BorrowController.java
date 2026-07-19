@@ -99,6 +99,7 @@ public class BorrowController extends LocalizedControllerSupport {
         model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("maxRenewalDays", getPositiveIntSetting("Max_Renewal_Days", 7));
         model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
+        model.addAttribute("maxRenewalRequests", getPositiveIntSetting("MAX_RENEWAL_REQUESTS_PER_LOAN", 3));
         model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
 
         java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);

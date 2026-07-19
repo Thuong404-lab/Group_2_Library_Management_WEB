@@ -40,6 +40,8 @@ public class SettingsController extends LocalizedControllerSupport {
     @PostMapping("/policies")
     public String updateBorrowingPolicies(@RequestParam Integer maxBorrowDays,
             @RequestParam Integer maxRenewalDays,
+            @RequestParam Integer maxRenewalRequests,
+            @RequestParam Integer renewalRejectionCooldownHours,
             @RequestParam(required = false) List<Integer> tierIds,
             @RequestParam(required = false) List<Integer> tierBorrowLimits,
             @RequestParam(required = false) List<BigDecimal> tierSpendingConditions,
@@ -69,6 +71,8 @@ public class SettingsController extends LocalizedControllerSupport {
             systemService.updateBorrowingPolicies(
                     maxBorrowDays,
                     maxRenewalDays,
+                    maxRenewalRequests,
+                    renewalRejectionCooldownHours,
                     borrowLimitsByTier,
                     spendingConditionsByTier,
                     borrowFeePerBook,

@@ -282,7 +282,8 @@ public class PayOsPaymentService {
             throw new ForbiddenException(messages.get("backend.financial.loanOwnerMismatch"));
         }
         String status = normalize(borrow.getStatus());
-        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)) {
+        if (!"ACTIVE".equals(status) && !"BORROWING".equals(status) && !"OVERDUE".equals(status)
+                && !"PAYMENT_PENDING".equals(status)) {
             throw new ConflictException(messages.get("backend.payment.loanNotPayable"));
         }
         if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
