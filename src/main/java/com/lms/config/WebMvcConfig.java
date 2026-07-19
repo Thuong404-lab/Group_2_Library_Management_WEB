@@ -2,6 +2,7 @@ package com.lms.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -18,6 +19,16 @@ import java.util.Locale;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     public static final String LOCALE_COOKIE_NAME = "LMS_LOCALE";
+    private final MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor;
+
+    public WebMvcConfig() {
+        this.memberLocalePreferenceInterceptor = null;
+    }
+
+    @Autowired
+    public WebMvcConfig(MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor) {
+        this.memberLocalePreferenceInterceptor = memberLocalePreferenceInterceptor;
+    }
 
     @Bean
     public LocaleResolver localeResolver() {
@@ -37,6 +48,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(localeChangeInterceptor());
+        if (memberLocalePreferenceInterceptor != null) {
+            registry.addInterceptor(memberLocalePreferenceInterceptor);
+        }
     }
 
     @Override

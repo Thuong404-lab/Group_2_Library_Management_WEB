@@ -82,6 +82,8 @@
               role="button"
               data-toggle="dropdown"
               aria-expanded="false"
+              th:data-member-key="${#authentication.name}"
+              th:data-latest-notification-id="${latestNotifications != null && !latestNotifications.isEmpty() ? latestNotifications[0].notificationId : 0}"
 
             >
               <i class="bi bi-bell-fill header-i-font-size-07"></i>
@@ -99,10 +101,6 @@
             >
               <div class="member-notification-heading">
                 <h6 th:text="#{notification.heading}">Library notifications</h6>
-                <button type="button" id="markAllNotificationsRead" class="member-notification-mark-all"
-                        th:disabled="${unreadNotificationCount == null || unreadNotificationCount == 0}">
-                  <span th:text="#{notification.markAllRead}">Mark all as read</span>
-                </button>
               </div>
 
               <a

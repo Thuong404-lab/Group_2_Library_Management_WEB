@@ -3,6 +3,8 @@ package com.lms.service.impl;
 import com.lms.dto.response.MemberNotificationResponse;
 import com.lms.entity.*;
 import com.lms.enums.NotificationType;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.repository.*;
 import com.lms.service.MemberNotificationService;
@@ -24,24 +26,41 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
 
     private final MemberAccountRepository memberAccountRepository;
     private final MemberNotificationRepository memberNotificationRepository;
-    private final MemberRepository memberRepository;
+    private final NotificationRepository notificationRepository;
 
     // Sử dụng Constructor Injection để Spring quản lý các Repository
     public MemberNotificationServiceImpl(MemberAccountRepository memberAccountRepository,
                                          MemberNotificationRepository memberNotificationRepository,
-                                         MemberRepository memberRepository) {
+                                         NotificationRepository notificationRepository) {
         this.memberAccountRepository = memberAccountRepository;
         this.memberNotificationRepository = memberNotificationRepository;
-        this.memberRepository = memberRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberNotificationResponse> getMyNotifications(String username, Pageable pageable) {
+    public Page<MemberNotificationResponse> getMyNotifications(String username,
+                                                                NotificationSource source,
+                                                                NotificationType type,
+                                                                Pageable pageable) {
         Member member = getMemberByUsername(username);
         return memberNotificationRepository
-                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId(), pageable)
+                .findNotificationPage(member.getMemberId(), source, type, pageable)
                 .map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countMyNotifications(String username) {
+        return memberNotificationRepository.countByMember_MemberId(
+                getMemberByUsername(username).getMemberId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countMyNotificationsBySource(String username, NotificationSource source) {
+        return memberNotificationRepository.countByMember_MemberIdAndNotification_NotificationSource(
+                getMemberByUsername(username).getMemberId(), source);
     }
 
     private Member getMemberByUsername(String username) {
@@ -58,24 +77,22 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
     private MemberNotificationResponse mapToResponse(MemberNotification mn) {
         MemberNotificationResponse response = new MemberNotificationResponse();
         response.setNotificationId(mn.getNotification().getNotificationId());
-        response.setTitle(mn.getNotification().getTitle());
-        response.setContent(mn.getNotification().getContent());
+        response.setTitle(messages.renderNotificationTitle(mn.getNotification()));
+        response.setContent(messages.renderNotificationContent(mn.getNotification()));
         response.setNotificationType(mn.getNotification().getNotificationType() != null
                 ? mn.getNotification().getNotificationType()
                 : NotificationType.GENERAL);
         response.setSentDate(mn.getNotification().getCreatedDate());
         response.setRead(Boolean.TRUE.equals(mn.getIsRead()));
-        response.setFromLibrarian(mn.getNotification().getStaff() != null);
+        NotificationSource source = mn.getNotification().getNotificationSource() != null
+                ? mn.getNotification().getNotificationSource()
+                : (mn.getNotification().getStaff() != null ? NotificationSource.LIBRARIAN : NotificationSource.SYSTEM);
+        response.setNotificationSource(source);
+        response.setEventType(mn.getNotification().getEventType() != null
+                ? mn.getNotification().getEventType()
+                : NotificationEventType.GENERAL);
+        response.setFromLibrarian(source == NotificationSource.LIBRARIAN);
         return response;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<MemberNotificationResponse> getAllMyNotifications(String username) {
-        Member member = getMemberByUsername(username);
-        return memberNotificationRepository
-                .findByMember_MemberIdOrderByNotification_CreatedDateDesc(member.getMemberId())
-                .stream().map(this::mapToResponse).toList();
     }
 
     @Override
@@ -121,33 +138,17 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
     @Override
     @Transactional
     public void sendNotificationToUser(String username, String title, String content) {
-        memberRepository.findByAccountUsername(username).ifPresent(member -> {
-            Notification notification = createNotification(title, content);
-            MemberNotification mn = new MemberNotification();
-            mn.setMember(member);
-            mn.setNotification(notification);
-            mn.setIsRead(false);
-            memberNotificationRepository.save(mn);
-        });
-    }
+        Member member = getMemberByUsername(username);
+        Notification notification = notificationRepository.save(createNotification(title, content));
 
-    @Override
-    @Transactional
-    public void sendNotificationToAllLibrarians(String title, String content) {
-        // Lấy tất cả tài khoản, lọc theo Role và gửi thông báo
-        memberAccountRepository.findAll().forEach(acc -> {
-            boolean isLibrarian = acc.getRoles().stream()
-                    .anyMatch(role -> role.getName() != null && role.getName().toUpperCase().contains("LIBRARIAN"));
-
-            if (isLibrarian && acc.getMember() != null) {
-                Notification notification = createNotification(title, content);
-                MemberNotification mn = new MemberNotification();
-                mn.setMember(acc.getMember());
-                mn.setNotification(notification);
-                mn.setIsRead(false);
-                memberNotificationRepository.save(mn);
-            }
-        });
+        MemberNotification memberNotification = new MemberNotification();
+        memberNotification.setId(new MemberNotificationId(
+                member.getMemberId(), notification.getNotificationId()));
+        memberNotification.setMember(member);
+        memberNotification.setNotification(notification);
+        memberNotification.setIsRead(false);
+        memberNotification.setReadDate(null);
+        memberNotificationRepository.save(memberNotification);
     }
 
     // Phương thức bổ trợ để tạo notification tránh lặp code
@@ -156,6 +157,10 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
         n.setTitle(title);
         n.setContent(content);
         n.setCreatedDate(LocalDateTime.now());
+        n.setNotificationType(NotificationType.GENERAL);
+        n.setNotificationSource(NotificationSource.SYSTEM);
+        n.setEventType(NotificationEventType.GENERAL);
+        n.setStatus("Active");
         return n;
     }
 }

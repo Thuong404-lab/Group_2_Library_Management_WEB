@@ -16,5 +16,7 @@ public interface BookAcquisitionRequestRepository extends JpaRepository<BookAcqu
     boolean existsByMember_MemberIdAndTitleIgnoreCaseAndStatusIn(
             Integer memberId, String title, Collection<AcquisitionRequestStatus> statuses);
 
+    long countByStatus(AcquisitionRequestStatus status);
+
     Page<BookAcquisitionRequest> findByMember_MemberIdOrderByCreatedDateDesc(Integer memberId, Pageable pageable);
 }

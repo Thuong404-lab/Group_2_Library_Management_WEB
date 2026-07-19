@@ -220,14 +220,24 @@
                         <input type="date" name="returnDate" th:value="${defaultReturnDate}" class="form-control scan-input" required />
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">
-                            <span th:text="#{librarian.returnDesk.condition}">Book Condition After Return</span> <span class="text-danger">*</span>
-                        </label>
-                        <select name="conditionNote" id="conditionNoteSelect" class="form-select scan-input" required>
+                        <label
+                                class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c"><span th:text="#{librarian.returnDesk.condition}">Book Condition After Return</span> <span class="text-danger">*</span></label>
+                        <select name="conditionNote" id="returnCondition" class="form-select scan-input" required>
                             <option value="Tốt - Sách nguyên vẹn, sạch đẹp" th:text="#{book.condition.good}">Good / Intact and clean</option>
                             <option value="Hư hỏng nhẹ - Quăn mép, sờn bìa, rách nhỏ" th:text="#{book.condition.minorDamage}">Minor damage (Bent corners, worn cover, or small tears)</option>
-                            <option value="Mất hoặc Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng" th:text="#{book.condition.severeDamage}">Lost or severely damaged (Compensation required)</option>
+                            <option value="Hư hỏng nặng - Rách trang lớn, mất trang, ướt hỏng" th:text="#{book.condition.severeDamage}">Severely damaged (Compensation required)</option>
+                            <option value="Mất sách - Không thể hoàn trả bản sách" th:text="#{book.condition.lost}">Lost book (Compensation required)</option>
                         </select>
+                    </div>
+                    <div id="damageCompensationPreview" class="return-compensation-preview mb-4" hidden
+                         th:attr="data-unit-amount=${damageCompensationAmount != null ? damageCompensationAmount : 120000}">
+                        <span class="return-compensation-label" th:text="#{librarian.returnDesk.compensationWillCreate}">A compensation charge will be created automatically</span>
+                        <strong>
+                            <span data-compensation-total
+                                  th:text="${#numbers.formatDecimal(damageCompensationAmount != null ? damageCompensationAmount : 120000, 0, 'COMMA', 0, 'POINT')}">120,000</span>
+                            <span th:text="#{currency.vnd}">VND</span>
+                        </strong>
+                        <small><span th:text="#{librarian.returnDesk.compensationBookCount}">Selected books:</span> <strong data-compensation-count>1</strong></small>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.additionalNotes}">Additional Notes (Optional)</label>
@@ -293,6 +303,26 @@
 
             const selectedReturnsLabel = /*[[#{librarian.returnDesk.selectedReturns}]]*/ 'Receive Selected Returns';
             const selectedReturnsCountLabel = /*[[#{librarian.returnDesk.selectedReturnsCount}]]*/ 'Receive Selected Returns ({0})';
+            const returnCondition = document.getElementById('returnCondition');
+            const compensationPreview = document.getElementById('damageCompensationPreview');
+
+            function updateCompensationPreview() {
+                if (!returnCondition || !compensationPreview) return;
+                const condition = (returnCondition.value || '').toLocaleLowerCase('vi');
+                const requiresCompensation = condition.includes('hư hỏng nặng') || condition.includes('mất sách')
+                    || condition.includes('severe damage') || condition.includes('lost');
+                compensationPreview.hidden = !requiresCompensation;
+                if (!requiresCompensation) return;
+
+                const selectedCount = Math.max(1, barcodeContainer.querySelectorAll('input[name="barcodes"]').length);
+                const unitAmount = Number(compensationPreview.dataset.unitAmount || 120000);
+                const totalTarget = compensationPreview.querySelector('[data-compensation-total]');
+                const countTarget = compensationPreview.querySelector('[data-compensation-count]');
+                if (totalTarget) totalTarget.textContent = new Intl.NumberFormat('vi-VN').format(unitAmount * selectedCount);
+                if (countTarget) countTarget.textContent = selectedCount;
+            }
+
+            returnCondition?.addEventListener('change', updateCompensationPreview);
 
             const msgDuplicate = /*[[#{librarian.returnDesk.duplicateBarcode}]]*/ 'Mã vạch này đã có trong danh sách quét.';
             const msgNotFoundTemplate = /*[[#{librarian.returnDesk.notFound}]]*/ 'Không tìm thấy lượt mượn đang hoạt động cho mã vạch này: {0}.';
@@ -538,17 +568,7 @@
                             barcodeContainer.appendChild(input);
                         }
                     }
-                    if (conditionNoteSelect) {
-                        conditionNoteSelect.selectedIndex = 0;
-                    }
-                    if (damageFineInput) {
-                        damageFineInput.value = '0';
-                    }
-                    const defaultRadio = document.getElementById('payMethodCash');
-                    if (defaultRadio) {
-                        defaultRadio.checked = true;
-                    }
-                    toggleFineInput();
+                    updateCompensationPreview();
                 });
             }
 

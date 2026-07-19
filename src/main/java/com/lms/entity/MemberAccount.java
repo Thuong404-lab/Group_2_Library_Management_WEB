@@ -22,6 +22,9 @@ public class MemberAccount {
     @Column(length = 50)
     private String status = "Active";
 
+    @Column(name = "preferred_language", nullable = false, length = 5)
+    private String preferredLanguage = "en";
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "Member_Account_Roles",
@@ -95,6 +98,14 @@ public class MemberAccount {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    public void setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
     }
 
     public java.util.Set<Role> getRoles() {

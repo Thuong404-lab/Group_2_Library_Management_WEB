@@ -1,0 +1,86 @@
+/* Compact bilingual selector shared by public, member, librarian, and admin pages. */
+.language-switcher {
+    --language-switcher-accent: var(--app-color-primary, var(--member-color-primary, #8b5a2b));
+    --language-switcher-accent-dark: var(--app-color-primary-active, var(--member-color-primary-active, #4a3b32));
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 36px;
+    padding: 4px;
+    box-sizing: border-box;
+    border: 1px solid rgba(139, 90, 43, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 5px 16px rgba(44, 30, 22, 0.08);
+    font-family: "Lora", Georgia, serif;
+    vertical-align: middle;
+}
+
+.language-switcher__icon {
+    display: inline-flex;
+    flex: 0 0 26px;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    color: var(--language-switcher-accent);
+}
+
+.language-switcher__icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.8;
+}
+
+.language-switcher__option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 27px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 7px;
+    color: #74675e;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    text-decoration: none !important;
+    transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.language-switcher__option:hover {
+    background: #f5f0e8;
+    color: var(--language-switcher-accent-dark);
+}
+
+.language-switcher__option.active {
+    background: var(--language-switcher-accent-dark);
+    box-shadow: 0 2px 7px rgba(44, 30, 22, 0.18);
+    color: #fffdf8;
+}
+
+.language-switcher__option:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.22);
+}
+
+.login-form > .language-switcher,
+.forgot-password-form > .language-switcher,
+.reset-password-form > .language-switcher {
+    margin-bottom: 16px;
+}
+
+@media (max-width: 575.98px) {
+    .language-switcher {
+        min-height: 34px;
+        padding: 3px;
+    }
+
+    .language-switcher__option {
+        min-width: 30px;
+        height: 26px;
+        padding-inline: 7px;
+    }
+}

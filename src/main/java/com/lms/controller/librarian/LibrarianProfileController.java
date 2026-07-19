@@ -32,8 +32,10 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
     public String viewProfile(Principal principal, Model model) {
         // Spring Security đã lọc quyền trước đó, ở đây chỉ việc lấy đúng thông tin cá nhân
         String username = principal.getName();
-        User librarian = profileService.getProfile(username);
-        model.addAttribute("librarian", librarian);
+        if (!model.containsAttribute("librarian")) {
+            User librarian = profileService.getProfile(username);
+            model.addAttribute("librarian", librarian);
+        }
         return "librarian/profile";
     }
 
@@ -50,7 +52,8 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
 
         try {
             String currentUsername = principal.getName();
-            profileService.updateProfile(currentUsername, fullName, email, phone, avatarFile);
+            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -66,7 +69,22 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
 
             redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
+                String field = ((com.lms.exception.ValidationException) e).getField();
+                redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
+            }
+            User tempUser = new User();
+            tempUser.setFullName(fullName);
+            tempUser.setEmail(email);
+            tempUser.setPhone(phone);
+            try {
+                User current = profileService.getProfile(principal.getName());
+                tempUser.setAvatar(current.getAvatar());
+                tempUser.setStatus(current.getStatus());
+            } catch (Exception ignored) {}
+            redirectAttributes.addFlashAttribute("librarian", tempUser);
         }
         return "redirect:/librarian/profile";
     }

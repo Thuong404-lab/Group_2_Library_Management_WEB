@@ -42,38 +42,53 @@
 
                             <!-- Lọc theo Danh mục -->
                             <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
-                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80" th:text="#{catalog.genre}">Genre</h6>
-                                <div class="form-check mb-1" th:each="genre : ${genres}">
-                                    <input class="form-check-input" type="radio" name="genreId"
+                                <h6 class="fw-bold mb-3 u-color-2c1e16-5ab7ae80" th:text="#{catalog.genre}">Genre</h6>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="genreId"
+                                        value="" id="genreAll"
+                                        th:checked="${selectedGenreId == null}" onchange="this.form.submit()">
+                                    <label class="custom-control-label text-muted d-flex justify-content-between cursor-pointer fw-bold"
+                                        for="genreAll">
+                                        <span th:text="#{common.all}">All</span>
+                                    </label>
+                                </div>
+                                <div class="custom-control custom-radio mb-2" th:each="genre : ${genres}">
+                                    <input class="custom-control-input" type="radio" name="genreId"
                                         th:value="${genre.genreId}" th:id="'genre' + ${genre.genreId}"
                                         th:checked="${selectedGenreId == genre.genreId}" onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted d-flex justify-content-between"
+                                    <label class="custom-control-label text-muted d-flex justify-content-between cursor-pointer"
                                         th:for="'genre' + ${genre.genreId}">
                                         <span th:text="${genre.genreName}">Literature</span>
                                     </label>
                                 </div>
                             </div>
 
-                            <!-- Lọc theo Tình trạng -->
+                            <!-- Preserve availability filtering while retaining dev's auto-submit controls. -->
                             <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
-                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80" th:text="#{catalog.availability}">Availability</h6>
-                                <div class="form-check mb-1">
-                                    <input class="form-check-input" type="radio" name="status" id="status1"
+                                <h6 class="fw-bold mb-3 u-color-2c1e16-5ab7ae80" th:text="#{catalog.availability}">Availability</h6>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="status" id="statusAll"
+                                        value="" th:checked="${selectedStatus == null || selectedStatus.isEmpty()}"
+                                        onchange="this.form.submit()">
+                                    <label class="custom-control-label text-muted cursor-pointer fw-bold" for="statusAll"
+                                        th:text="#{common.all}">All</label>
+                                </div>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="status" id="statusAvailable"
                                         value="Active" th:checked="${selectedStatus == 'Active'}"
                                         onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted" for="status1" th:text="#{book.status.availableWithCopies}">Available (copies in stock)</label>
+                                    <label class="custom-control-label text-muted cursor-pointer" for="statusAvailable"
+                                        th:text="#{book.status.availableWithCopies}">Available (copies in stock)</label>
                                 </div>
-                                <div class="form-check mb-1">
-                                    <input class="form-check-input" type="radio" name="status" id="status2"
+                                <div class="custom-control custom-radio mb-2">
+                                    <input class="custom-control-input" type="radio" name="status" id="statusUnavailable"
                                         value="Inactive" th:checked="${selectedStatus == 'Inactive'}"
                                         onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted" for="status2" th:text="#{book.status.unavailable}">Unavailable</label>
+                                    <label class="custom-control-label text-muted cursor-pointer" for="statusUnavailable"
+                                        th:text="#{book.status.unavailable}">Unavailable</label>
                                 </div>
                             </div>
 
-                            <!-- Button Lọc -->
-                            <button type="submit" class="btn btn-classic w-100 rounded-pill fw-bold py-2 shadow-sm u-font-family-playfair-display-serif-53670465"
-                               th:text="#{catalog.applyFilters}">Apply Filters</button>
                         </div>
                     </form>
                 </div>
@@ -82,14 +97,17 @@
                 <div class="col-lg-9 col-md-8">
                     <!-- Compact Search Bar (Shopee Style) -->
                     <div class="mb-4 position-relative" id="booksSearchContainer">
-                        <form action="/books" method="GET" class="input-group shadow-sm guest-books-form-position-z-index-border-radius-08">
+                        <form id="catalogSearchForm" action="/books" method="GET" class="input-group shadow-sm guest-books-form-position-z-index-border-radius-08">
                             <input type="hidden" name="genreId" th:if="${selectedGenreId != null}" th:value="${selectedGenreId}">
                             <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}">
                             <input type="hidden" name="sort" th:if="${sort != null}" th:value="${sort}">
                             <span class="input-group-text bg-white border-0 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
                             <input type="text" id="booksSearchInput" name="keyword" th:value="${keyword}"
                                 class="form-control border-0 py-2" th:placeholder="#{catalog.search.placeholder}" placeholder="Search this catalog..." autocomplete="off">
-                            <button class="btn px-4 fw-bold guest-books-button-background-color-border-09" type="submit" th:text="#{book.search.action}">Search</button>
+                            <button id="catalogSearchBtn" class="btn px-4 fw-bold guest-books-button-background-color-border-09 d-flex justify-content-center align-items-center gap-2" type="submit">
+                                <span id="catalogSearchText" th:text="#{book.search.action}">Search</span>
+                                <span id="catalogSearchSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
                         </form>
 
                         <!-- Dropdown Overlay -->
@@ -115,6 +133,21 @@
                                 if (!document.getElementById('booksSearchContainer').contains(e.target)) {
                                     searchDropdown.style.display = 'none';
                                 }
+                            });
+
+                            const catalogSearchForm = document.getElementById('catalogSearchForm');
+                            const catalogSearchBtn = document.getElementById('catalogSearchBtn');
+                            const catalogSearchSpinner = document.getElementById('catalogSearchSpinner');
+
+                            catalogSearchForm.addEventListener('submit', function(e) {
+                                searchInput.value = searchInput.value.trim();
+                                if (searchInput.value === '') {
+                                    e.preventDefault();
+                                    searchInput.focus();
+                                    return;
+                                }
+                                catalogSearchBtn.disabled = true;
+                                catalogSearchSpinner.classList.remove('d-none');
                             });
 
                             searchInput.addEventListener('input', function() {
@@ -183,7 +216,7 @@
                     <div class="row g-4" th:if="${bookPage != null && !bookPage.isEmpty()}">
 
                         <!-- Lặp qua từng cuốn sách trong Page -->
-                        <div class="col-lg-4 col-md-6 col-sm-6" th:each="book : ${bookPage.content}">
+                        <div class="col-lg-4 col-md-6 col-sm-6 mb-4" th:each="book : ${bookPage.content}">
                             <div class="card book-card h-100 border-0 shadow-sm position-relative guest-books-div-border-radius-cursor-16"
 
                                 th:onclick="'window.location.href=\'/books/' + ${book.bookId} + '\''">
@@ -193,27 +226,9 @@
                                     <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
                                         class="w-100 h-100 u-object-fit-cover-fd3ff4b2" alt="Book Cover">
 
-                                    <span
-                                        class="position-absolute top-0 end-0 m-2 badge bg-white text-primary shadow-sm rounded-pill px-2 py-1"
-                                        th:if="${book.status == 'Active'}"><i
-                                            class="bi bi-check-circle-fill me-1"></i><span th:text="#{book.status.available}">Available</span></span>
 
-                                    <!-- Hover Actions (Requires custom CSS to animate, but inline works for demo) -->
-                                    <div class="position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 opacity-0 overlay-hover transition-base guest-books-div-opacity-transition-cursor-19"
-                                       >
-                                        <a th:href="@{'/books/' + ${book.bookId}}"
-                                            class="btn btn-light rounded-pill mb-2 fw-bold w-75"><i
-                                                class="bi bi-eye me-1"></i> <span th:text="#{book.details}">View Details</span></a>
-                                        <button type="button" sec:authorize="isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
 
-                                            th:data-toast-message="#{book.borrow.comingSoon}"
-                                            onclick="showToast(this.dataset.toastMessage)"><i
-                                                class="bi bi-cart-plus me-1"></i> <span th:text="#{book.borrow}">Borrow Book</span></button>
-                                        <button sec:authorize="!isAuthenticated()" class="btn rounded-pill fw-bold w-75 guest-books-button-background-color-border-20"
 
-                                            onclick="window.location.href='/login'"><i class="bi bi-cart-plus me-1"></i>
-                                            <span th:text="#{book.borrow}">Borrow Book</span></button>
-                                    </div>
                                 </div>
 
                                 <div class="card-body p-3 d-flex flex-column">

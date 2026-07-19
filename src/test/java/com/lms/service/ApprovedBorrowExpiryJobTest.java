@@ -27,6 +27,16 @@ class ApprovedBorrowExpiryJobTest {
 
         when(messages.get(anyString())).thenReturn("Vi phạm quy định");
         when(messages.get(anyString(), any())).thenReturn("BOR-101");
+        doAnswer(invocation -> {
+            Notification notification = invocation.getArgument(0);
+            Object argument = invocation.getArgument(3);
+            notification.setTitle("Vi ph\u1ea1m quy \u0111\u1ecbnh");
+            notification.setContent("BOR-" + argument);
+            notification.setTitleKey(invocation.getArgument(1));
+            notification.setContentKey(invocation.getArgument(2));
+            notification.setMessageArguments("[\"" + argument + "\"]");
+            return null;
+        }).when(messages).prepareNotification(any(Notification.class), anyString(), anyString(), any());
 
         ApprovedBorrowExpiryJob job = new ApprovedBorrowExpiryJob(
                 borrowRepository,

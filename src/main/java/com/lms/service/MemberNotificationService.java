@@ -1,6 +1,8 @@
 package com.lms.service;
 
 import com.lms.dto.response.MemberNotificationResponse;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -8,9 +10,12 @@ import java.util.List;
 
 public interface MemberNotificationService {
 
-    Page<MemberNotificationResponse> getMyNotifications(String username, Pageable pageable);
+    Page<MemberNotificationResponse> getMyNotifications(
+            String username, NotificationSource source, NotificationType type, Pageable pageable);
 
-    List<MemberNotificationResponse> getAllMyNotifications(String username);
+    long countMyNotifications(String username);
+
+    long countMyNotificationsBySource(String username, NotificationSource source);
 
     List<MemberNotificationResponse> getLatestNotifications(String username);
 
@@ -22,6 +27,4 @@ public interface MemberNotificationService {
 
     // ======= BỔ SUNG PHƯƠNG THỨC GỬI THÔNG BÁO =======
     void sendNotificationToUser(String username, String title, String content);
-
-    void sendNotificationToAllLibrarians(String title, String content);
 }

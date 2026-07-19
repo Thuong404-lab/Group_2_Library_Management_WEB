@@ -13,6 +13,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
     <title>Library Management System</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}" />
@@ -30,6 +32,7 @@
       <link rel="stylesheet" th:href="@{/css/layouts/base.css}" />
       <link rel="stylesheet" th:href="@{/css/components/footer.css}" />
       <link rel="stylesheet" th:href="@{/css/components/header.css}" />
+      <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
       <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
       <link rel="stylesheet" th:href="@{/css/utilities.css}" />
   </head>
@@ -55,7 +58,6 @@
       var favoriteAddSuccess = /*[[#{favorite.add.success}]]*/ "Added to your favorites!";
       var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
       var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
-      var notificationMarkAllError = /*[[#{notification.markAll.error}]]*/ "Unable to mark all notifications as read.";
 
       var toastTimeoutId = null;
       function showToast(message) {
@@ -164,8 +166,6 @@
 
         function updateNotificationBadge(unreadCount) {
           var badge = document.getElementById("notificationBellBadge");
-          var markAllButton = document.getElementById("markAllNotificationsRead");
-          if (markAllButton) markAllButton.disabled = unreadCount <= 0;
           if (unreadCount <= 0) {
             if (badge) badge.remove();
             return;
@@ -179,6 +179,51 @@
           badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
         }
 
+        var latestNotificationId = Number(notificationToggle.dataset.latestNotificationId) || 0;
+        var notificationMemberKey = notificationToggle.dataset.memberKey || "member";
+        var notificationSeenStorageKey = "lms.notification.lastSeenId." + notificationMemberKey;
+
+        function getLastSeenNotificationId() {
+          try {
+            return Number(window.localStorage.getItem(notificationSeenStorageKey)) || 0;
+          } catch (error) {
+            return 0;
+          }
+        }
+
+        function rememberNotificationsAsSeen() {
+          try {
+            window.localStorage.setItem(notificationSeenStorageKey, String(latestNotificationId));
+          } catch (error) {
+            console.debug("Notification badge state could not be stored.", error);
+          }
+          updateNotificationBadge(0);
+        }
+
+        var lastSeenNotificationId = getLastSeenNotificationId();
+        if (latestNotificationId > 0 && lastSeenNotificationId >= latestNotificationId) {
+          updateNotificationBadge(0);
+        } else if (lastSeenNotificationId > 0) {
+          var unseenCount = Array.from(
+            notificationDropdown.querySelectorAll(".member-notification-item.is-unread[data-notification-id]")
+          ).filter(function (item) {
+            return Number(item.dataset.notificationId) > lastSeenNotificationId;
+          }).length;
+          updateNotificationBadge(unseenCount);
+        }
+
+        notificationToggle.addEventListener("click", function () {
+          rememberNotificationsAsSeen();
+        });
+
+        function notificationRequestHeaders() {
+          var headers = {"X-Requested-With": "XMLHttpRequest"};
+          var token = document.querySelector('meta[name="_csrf"]');
+          var header = document.querySelector('meta[name="_csrf_header"]');
+          if (token && header) headers[header.content] = token.content;
+          return headers;
+        }
+
         notificationDropdown.querySelectorAll(".member-notification-item").forEach(function (item) {
           item.addEventListener("click", function (event) {
             event.preventDefault();
@@ -190,7 +235,7 @@
             }
             var notificationId = item.dataset.notificationId;
             fetch("/member/interaction/notifications/" + notificationId + "/mark-read", {
-              method: "GET", credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
+              method: "POST", credentials: "same-origin", headers: notificationRequestHeaders()
             }).then(function (response) {
               if (!response.ok) throw new Error(notificationUpdateError);
               return response.json();
@@ -205,27 +250,6 @@
           });
         });
 
-        var markAllButton = document.getElementById("markAllNotificationsRead");
-        if (markAllButton) {
-          markAllButton.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            if (markAllButton.disabled) return;
-            markAllButton.disabled = true;
-          fetch("/member/interaction/notifications/mark-read", {
-            method: "GET", credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
-          }).then(function (response) {
-            if (!response.ok) throw new Error(notificationMarkAllError);
-            notificationDropdown.querySelectorAll(".member-notification-item.is-unread").forEach(function (item) {
-              item.classList.remove("is-unread");
-            });
-            updateNotificationBadge(0);
-          }).catch(function (error) {
-            markAllButton.disabled = false;
-            console.error(error);
-          });
-          });
-        }
       });
     </script>
 

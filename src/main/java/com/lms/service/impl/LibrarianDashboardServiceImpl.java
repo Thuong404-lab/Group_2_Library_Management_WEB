@@ -7,14 +7,17 @@ import com.lms.entity.Staff;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
 import com.lms.enums.NotificationType;
+import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.enums.UserStatus;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
+import com.lms.repository.BookAcquisitionRequestRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
+import com.lms.repository.FeedbackRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.StaffRepository;
@@ -44,6 +47,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     private final ReservationRepository reservationRepository;
     private final BookItemRepository bookItemRepository;
     private final BookRepository bookRepository;
+    private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
+    private final FeedbackRepository feedbackRepository;
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final MemberRepository memberRepository;
@@ -58,6 +63,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             ReservationRepository reservationRepository,
             BookItemRepository bookItemRepository,
             BookRepository bookRepository,
+            BookAcquisitionRequestRepository bookAcquisitionRequestRepository,
+            FeedbackRepository feedbackRepository,
             CategoryRepository categoryRepository,
             GenreRepository genreRepository,
             MemberRepository memberRepository,
@@ -70,6 +77,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         this.reservationRepository = reservationRepository;
         this.bookItemRepository = bookItemRepository;
         this.bookRepository = bookRepository;
+        this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
+        this.feedbackRepository = feedbackRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.memberRepository = memberRepository;
@@ -101,6 +110,14 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("pendingReservations",
                 reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
+        data.put("dueTodayDetails",
+                borrowDetailRepository.countByDueDateGreaterThanEqualAndDueDateLessThan(
+                        LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay()));
+        data.put("pendingReturns", borrowDetailRepository.countByStatusIgnoreCase("Return_Pending"));
+        data.put("pendingRenewals", borrowDetailRepository.countByStatusIgnoreCase("Renew_Pending"));
+        data.put("pendingAcquisitionRequests",
+                bookAcquisitionRequestRepository.countByStatus(AcquisitionRequestStatus.PENDING));
+        data.put("unansweredReviews", feedbackRepository.countAwaitingLibrarianResponse());
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
         data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
@@ -113,7 +130,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
-        data.put("notificationTypes", NotificationType.values());
+        data.put("notificationTypes", NotificationType.manualSelectableValues());
         data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE, Sort.by("requestId").descending())));

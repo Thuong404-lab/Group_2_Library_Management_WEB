@@ -58,7 +58,11 @@
                                 <td><span class="badge rounded-pill px-3 py-2 text-white admin-membership-tiers-span-background-10"
                                     th:text="${tier.discountPercent + '%'}"></span></td>
                                 <td th:text="#{common.bookCount(${tier.borrowLimit})}">0 books</td>
-                                <td><span th:text="${tier.benefits}"></span></td>
+                                <td>
+                                    <div class="mb-1" th:if="${tier.discountPercent > 0}" th:text="#{public.tiers.benefits.dynamic(${#numbers.formatDecimal(tier.discountPercent, 0, 'COMMA', 0, 'POINT')}, ${tier.borrowLimit})}"></div>
+                                    <div class="mb-1" th:if="${tier.discountPercent == 0}" th:text="#{public.tiers.benefits.dynamicNoDiscount(${tier.borrowLimit})}"></div>
+                                    <div class="mb-0 text-muted small" th:if="${tier.benefits != null && !tier.benefits.trim().isEmpty() && !tier.benefits.startsWith('Giảm') && !tier.benefits.startsWith('Mượn') && !tier.benefits.startsWith('Borrow') && !tier.benefits.contains('discount')}" th:text="${tier.benefits}"></div>
+                                </td>
                                 <td class="text-end pe-3">
                                     <button class="btn btn-sm btn-outline-classic me-1"
                                             data-bs-toggle="modal" th:data-bs-target="${'#editTierModal' + tier.tierId}">

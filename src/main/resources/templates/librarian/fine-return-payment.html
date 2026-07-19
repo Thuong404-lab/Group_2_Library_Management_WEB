@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
+<head>
+    <title th:text="#{librarian.returnPayment.title}">Return charge payment</title>
+    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/fines.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/fine-return-payment.css}">
+</head>
+<body>
+<main layout:fragment="content" th:with="activeMenu='fines'" class="finance-page fines-page return-payment-page">
+    <div th:if="${successMessage != null}" class="finance-alert finance-alert--success" th:text="${successMessage}"></div>
+    <div th:if="${error != null}" class="finance-alert finance-alert--danger" th:text="${error}"></div>
+    <section class="fine-desk-payment-modal return-payment-card">
+        <header class="modal-header">
+            <div>
+                <h2 class="modal-title" th:text="#{librarian.fines.paymentHeading}">Fine Payment Receipt</h2>
+                <p class="modal-subtitle" th:text="#{librarian.returnPayment.description}">Review all charges and select one payment method.</p>
+            </div>
+        </header>
+        <form id="returnFinePaymentForm" method="post" th:action="@{/librarian/members/fines/payment/{borrowId}/cash(borrowId=${borrowId})}" th:attr="data-cash-url=@{/librarian/members/fines/payment/{borrowId}/cash(borrowId=${borrowId})},data-wallet-url=@{/librarian/members/fines/payment/{borrowId}/wallet(borrowId=${borrowId})},data-kqpay-url=@{/librarian/payments/payos/fine/borrow/{borrowId}(borrowId=${borrowId})}">
+            <div class="modal-body">
+                <div class="fine-payment-receipt-grid">
+                    <section class="fine-payment-receipt-details">
+                        <h6 th:text="#{librarian.fines.paymentDetails}">Charge details</h6>
+                        <dl class="fine-payment-data-list">
+                            <div><dt th:text="#{librarian.returnPayment.borrowCode}">Loan code</dt><dd th:text="${'#' + borrowId}">#1</dd></div>
+                            <div><dt th:text="#{librarian.fines.member}">Member</dt><dd><span th:text="${member.user != null ? member.user.fullName : #messages.msg('common.member')}">Member</span><small class="return-payment-member-email" th:if="${member.user != null}" th:text="${member.user.email}">member@example.com</small></dd></div>
+                            <div class="return-payment-charge-row"><dt th:text="#{librarian.returnPayment.itemsHeading}">Charges</dt><dd>
+                                <span class="return-payment-charge" th:each="fine : ${fines}">
+                                    <span><strong th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">Fine</strong><small th:text="${'#' + fine.transactionId}">#1</small></span>
+                                    <strong class="amount-negative"><span th:text="${#numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+                                </span>
+                            </dd></div>
+                            <div><dt th:text="#{member.wallet.currentBalance}">Wallet balance</dt><dd><span th:text="${#numbers.formatDecimal(fines[0].wallet.balance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd></div>
+                            <div class="return-payment-total-row"><dt th:text="#{librarian.returnPayment.total}">Total payment</dt><dd class="amount-negative"><span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd></div>
+                        </dl>
+                    </section>
+                    <fieldset class="fine-payment-methods">
+                        <legend th:text="#{payment.method}">Payment method</legend>
+                        <label class="fine-payment-method-option"><input type="radio" name="paymentMethod" value="cash" checked><span><strong th:text="#{payment.method.cash}">Cash</strong><small th:text="#{librarian.fines.cashMethodHint}">Receive cash at the counter.</small></span></label>
+                        <label class="fine-payment-method-option"><input type="radio" name="paymentMethod" value="wallet"><span><strong th:text="#{payment.method.wallet}">Wallet</strong><small th:text="#{librarian.fines.walletMethodHint}">Deduct from the member wallet.</small></span></label>
+                        <label class="fine-payment-method-option"><input type="radio" name="paymentMethod" value="kqpay"><span><strong th:text="#{payment.method.kqpay}">KQPay</strong><small th:text="#{librarian.fines.kqpayMethodHint}">Create one QR for the total.</small></span></label>
+                    </fieldset>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <a class="btn btn-outline-classic" th:href="@{/librarian/loan/returns}" th:text="#{common.cancel}">Cancel</a>
+                <button type="submit" class="btn btn-classic" th:text="#{payment.confirm}">Confirm payment</button>
+            </footer>
+        </form>
+    </section>
+    <script>(() => { const form = document.getElementById('returnFinePaymentForm'); if (!form) return; const urls = {cash: form.dataset.cashUrl, wallet: form.dataset.walletUrl, kqpay: form.dataset.kqpayUrl}; form.addEventListener('change', event => { if (event.target.name === 'paymentMethod') form.action = urls[event.target.value]; }); })();</script>
+</main>
+</body>
+</html>

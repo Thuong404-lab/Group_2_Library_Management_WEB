@@ -18,6 +18,7 @@
 
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom dashboard-page-header"
+            th:if="${currentSection == 'books'}"
             th:classappend="${!(currentSection == 'books' && currentSubSection == 'inventory')} ? ' u-border-color-rgba-139-90-43-0-2-important-f8e732ba' : ''"
            >
             <div>
@@ -28,7 +29,6 @@
                     <span th:if="${currentSection == 'books' && currentSubSection == 'inventory'}" th:text="#{librarian.inventory.heading}">Book Inventory</span>
                     <span th:if="${currentSection == 'books' && currentSubSection == 'storage'}" th:text="#{librarian.storage.management}">Storage Management</span>
                     <span th:if="${currentSection == 'books' && (currentSubSection == '' || currentSubSection == null)}" th:text="#{librarian.inventory.booksManagement}">Book Management</span>
-                    <span th:unless="${currentSection == 'books'}" th:text="#{librarian.dashboard.heading}">Overview</span>
                 </h2>
                 <div class="app-page-description"
                     th:if="${currentSection == 'books' && currentSubSection == 'inventory'}">
@@ -37,11 +37,6 @@
                 <div class="text-muted"
                     th:if="${currentSection == 'books' && currentSubSection == 'storage'}">
                     <span th:text="#{librarian.storage.description}">Create and manage book storage locations.</span>
-                </div>
-                <div class="text-muted"
-                    th:unless="${currentSection == 'books' && (currentSubSection == 'inventory' || currentSubSection == 'storage')}">
-                    <span th:text="#{librarian.dashboard.today}">Today:</span>
-                    <span class="fw-bold" th:text="${#temporals.format(currentDate, 'dd/MM/yyyy')}">Today</span>
                 </div>
             </div>
         </div>
@@ -56,23 +51,31 @@
         <!-- Overview -->
         <section id="section-overview" class="lib-section"
             th:classappend="${currentSection == 'overview'} ? ' active' : ''">
-            <nav class="overview-quick-actions" th:aria-label="#{librarian.dashboard.quickActions}">
-                <a th:href="@{/librarian/borrow/create}" class="overview-quick-action overview-quick-action--primary">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                    <span th:text="#{librarian.dashboard.createLoan}">Create Loan</span>
-                </a>
-                <a th:href="@{/librarian/loan/returns}" class="overview-quick-action">
-                    <i class="bi bi-upc-scan" aria-hidden="true"></i>
-                    <span th:text="#{librarian.dashboard.confirmReturn}">Confirm Return</span>
-                </a>
-                <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-quick-action">
-                    <i class="bi bi-calendar3" aria-hidden="true"></i>
-                    <span th:text="#{librarian.dashboard.loanSchedule}">Loan Schedule</span>
-                </a>
-            </nav>
+            <header class="librarian-hero">
+                <div class="librarian-hero-copy">
+                    <span class="librarian-dashboard-eyebrow" th:text="#{librarian.dashboard.operationsCenter}">LIBRARIAN OPERATIONS</span>
+                    <h1 th:text="${#messages.msg('librarian.dashboard.greeting', currentUser?.fullName != null ? currentUser.fullName : 'Librarian')}">Good day, Librarian</h1>
+                    <p th:text="${#messages.msg('librarian.dashboard.dailySummary', #temporals.format(currentDate, 'dd/MM/yyyy'))}">Today's circulation priorities and service queues.</p>
+                </div>
+                <nav class="overview-quick-actions" th:aria-label="#{librarian.dashboard.quickActions}">
+                    <a th:href="@{/librarian/borrow/create}" class="overview-quick-action overview-quick-action--primary">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        <span th:text="#{librarian.dashboard.createLoan}">Create Loan</span>
+                    </a>
+                    <a th:href="@{/librarian/loan/returns}" class="overview-quick-action">
+                        <i class="bi bi-upc-scan" aria-hidden="true"></i>
+                        <span th:text="#{librarian.dashboard.confirmReturn}">Confirm Return</span>
+                    </a>
+                    <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-quick-action">
+                        <i class="bi bi-calendar3" aria-hidden="true"></i>
+                        <span th:text="#{librarian.dashboard.loanSchedule}">Loan Schedule</span>
+                    </a>
+                </nav>
+            </header>
 
             <!-- Statistics Cards -->
-            <div class="overview-kpi-grid">
+            <section class="overview-kpi-grid" aria-labelledby="librarianKpiTitle">
+                <h2 id="librarianKpiTitle" class="overview-kpi-section-title" th:text="#{librarian.dashboard.operationalKpis}">Operational indicators</h2>
 
                 <article class="overview-kpi-card overview-kpi-card--neutral">
                     <div class="overview-kpi-icon"><i class="bi bi-journal-arrow-up" aria-hidden="true"></i></div>
@@ -86,9 +89,9 @@
                 <article class="overview-kpi-card overview-kpi-card--success">
                     <div class="overview-kpi-icon"><i class="bi bi-check2-square" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
-                        <p class="overview-kpi-label" th:text="#{librarian.dashboard.availableCopies}">Available Copies</p>
-                        <strong class="overview-kpi-value" th:text="${availableItems}">0</strong>
-                        <span class="overview-kpi-caption" th:text="#{librarian.dashboard.availableCopiesCaption}">Ready to issue</span>
+                        <p class="overview-kpi-label" th:text="#{librarian.dashboard.dueToday}">Due Today</p>
+                        <strong class="overview-kpi-value" th:text="${dueTodayDetails}">0</strong>
+                        <span class="overview-kpi-caption" th:text="#{librarian.dashboard.dueTodayCaption}">Copies expected today</span>
                     </div>
                 </article>
 
@@ -113,12 +116,44 @@
                 <article class="overview-kpi-card overview-kpi-card--neutral">
                     <div class="overview-kpi-icon"><i class="bi bi-book" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
-                        <p class="overview-kpi-label" th:text="#{librarian.dashboard.totalTitles}">Total Titles</p>
-                        <strong class="overview-kpi-value" th:text="${totalBookCount}">0</strong>
-                        <span class="overview-kpi-caption" th:text="#{librarian.dashboard.totalTitlesCaption}">Titles in the system</span>
+                        <p class="overview-kpi-label" th:text="#{librarian.dashboard.availableCopies}">Available Copies</p>
+                        <strong class="overview-kpi-value" th:text="${availableItems}">0</strong>
+                        <span class="overview-kpi-caption" th:text="#{librarian.dashboard.availableCopiesCaption}">Ready to issue</span>
                     </div>
                 </article>
-            </div>
+            </section>
+
+            <section class="overview-work-queue" aria-labelledby="workQueueTitle">
+                <header class="overview-work-queue-header">
+                    <div>
+                        <span th:text="#{librarian.dashboard.priorityQueue}">PRIORITY QUEUE</span>
+                        <h2 id="workQueueTitle" th:text="#{librarian.dashboard.workQueue}">Tasks awaiting action</h2>
+                    </div>
+                    <p th:text="#{librarian.dashboard.workQueueDescription}">Open a queue to review and complete pending requests.</p>
+                </header>
+                <div class="overview-work-queue-grid">
+                    <a th:href="@{/librarian/borrow/create}" class="overview-work-item" th:classappend="${pendingReturns > 0} ? ' is-urgent'">
+                        <i class="bi bi-box-arrow-in-left" aria-hidden="true"></i>
+                        <div><strong th:text="${pendingReturns}">0</strong><span th:text="#{librarian.dashboard.pendingReturns}">Return requests</span></div>
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                    <a th:href="@{/librarian/borrow/create}" class="overview-work-item" th:classappend="${pendingRenewals > 0} ? ' has-work'">
+                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                        <div><strong th:text="${pendingRenewals}">0</strong><span th:text="#{librarian.dashboard.pendingRenewals}">Renewal requests</span></div>
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                    <a th:href="@{/librarian/interaction/acquisition-requests}" class="overview-work-item" th:classappend="${pendingAcquisitionRequests > 0} ? ' has-work'">
+                        <i class="bi bi-journal-plus" aria-hidden="true"></i>
+                        <div><strong th:text="${pendingAcquisitionRequests}">0</strong><span th:text="#{librarian.dashboard.pendingAcquisitions}">Book suggestions</span></div>
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                    <a th:href="@{/librarian/interaction/reviews}" class="overview-work-item" th:classappend="${unansweredReviews > 0} ? ' has-work'">
+                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                        <div><strong th:text="${unansweredReviews}">0</strong><span th:text="#{librarian.dashboard.unansweredReviews}">Reviews without response</span></div>
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </section>
 
 
             <!-- Main Dashboard Content -->

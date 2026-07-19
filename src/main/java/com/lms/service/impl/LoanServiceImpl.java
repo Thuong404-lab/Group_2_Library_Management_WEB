@@ -1,6 +1,9 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
@@ -8,6 +11,7 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LoanService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.service.FinancialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +35,8 @@ public class LoanServiceImpl implements LoanService {
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_DAMAGED = "Damaged";
+    private static final String STATUS_LOST = "Lost";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
     private static final String STATUS_OVERDUE = "Overdue";
@@ -44,6 +50,7 @@ public class LoanServiceImpl implements LoanService {
     private final SystemSettingRepository systemSettingRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final FinancialService financialService;
 
 
     public LoanServiceImpl(BorrowRepository borrowRepository,
@@ -55,7 +62,8 @@ public class LoanServiceImpl implements LoanService {
                            TransactionRepository transactionRepository,
                            SystemSettingRepository systemSettingRepository,
                            NotificationRepository notificationRepository,
-                           MemberNotificationRepository memberNotificationRepository) {
+                           MemberNotificationRepository memberNotificationRepository,
+                           FinancialService financialService) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.memberRepository = memberRepository;
@@ -66,6 +74,7 @@ public class LoanServiceImpl implements LoanService {
         this.systemSettingRepository = systemSettingRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.financialService = financialService;
     }
 
     // UC-13.1: Xem chi tiết phiếu mượn
@@ -137,8 +146,10 @@ public class LoanServiceImpl implements LoanService {
         updateParentBorrowStatus(borrow);
 
         // 5. Gửi thông báo đến độc giả
-        sendInternalNotification(borrow.getMember(), localizedMessageService.get("systemNotification.return.approved.title"),
-                localizedMessageService.get("systemNotification.return.approved.content", borrowId));
+        sendInternalNotification(borrow.getMember(),
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.approved.title",
+                "systemNotification.return.approved.content", borrowId);
     }
 
     // UC-13.3: Quầy mượn sách
@@ -277,10 +288,12 @@ public class LoanServiceImpl implements LoanService {
 
         Member member = detail.getBorrow().getMember();
         if (member != null && member.getMemberId() != null) {
-            sendInternalNotification(member, localizedMessageService.get("systemNotification.renewal.success.title"),
-                    localizedMessageService.get("systemNotification.renewal.success.content",
-                            detail.getBook().getTitle(), renewDays,
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+            sendInternalNotification(member,
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.success.title",
+                    "systemNotification.renewal.success.content",
+                    detail.getBook().getTitle(), renewDays,
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -317,9 +330,10 @@ public class LoanServiceImpl implements LoanService {
 
         BorrowDetail detail = activeLoans.get(0);
         BookItem item = detail.getBookItem();
+        boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
         if (item != null) {
-            item.setStatus(STATUS_AVAILABLE);
+            item.setStatus(resolveReturnedItemStatus(bookCondition));
             item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
             item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
             bookItemRepository.save(item);
@@ -337,6 +351,9 @@ public class LoanServiceImpl implements LoanService {
         if (returnDate.isAfter(detail.getDueDate())) {
             processOverdueFine(detail);
         }
+        if (requiresCompensation) {
+            financialService.issueDamageCompensation(detail.getBorrowDetailId());
+        }
 
         Transaction damageFineTx = null;
         if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0) {
@@ -345,8 +362,9 @@ public class LoanServiceImpl implements LoanService {
 
         updateParentBorrowStatus(detail.getBorrow());
         sendInternalNotification(detail.getBorrow().getMember(),
-                localizedMessageService.get("systemNotification.return.desk.title"),
-                localizedMessageService.get("systemNotification.return.desk.content", detail.getBook().getTitle()));
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.desk.title",
+                "systemNotification.return.desk.content", detail.getBook().getTitle());
 
         return damageFineTx;
     }
@@ -416,19 +434,22 @@ public class LoanServiceImpl implements LoanService {
         String formattedMoney = formatMoney(damageFine);
         if ("wallet".equals(resolvedMethod)) {
             sendInternalNotification(member,
-                    localizedMessageService.get("systemNotification.damageFine.paidWallet.title"),
-                    localizedMessageService.get("systemNotification.damageFine.paidWallet.content",
-                            formattedMoney, detail.getBook().getTitle()));
+                    NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.LIBRARIAN,
+                    "systemNotification.damageFine.paidWallet.title",
+                    "systemNotification.damageFine.paidWallet.content",
+                    formattedMoney, detail.getBook().getTitle());
         } else if ("cash".equals(resolvedMethod)) {
             sendInternalNotification(member,
-                    localizedMessageService.get("systemNotification.damageFine.paidCash.title"),
-                    localizedMessageService.get("systemNotification.damageFine.paidCash.content",
-                            formattedMoney, detail.getBook().getTitle()));
+                    NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.LIBRARIAN,
+                    "systemNotification.damageFine.paidCash.title",
+                    "systemNotification.damageFine.paidCash.content",
+                    formattedMoney, detail.getBook().getTitle());
         } else {
             sendInternalNotification(member,
-                    localizedMessageService.get("systemNotification.damageFine.created.title"),
-                    localizedMessageService.get("systemNotification.damageFine.created.content",
-                            formattedMoney, detail.getBook().getTitle()));
+                    NotificationType.FINANCE, NotificationEventType.FINE_CREATED, NotificationSource.LIBRARIAN,
+                    "systemNotification.damageFine.created.title",
+                    "systemNotification.damageFine.created.content",
+                    formattedMoney, detail.getBook().getTitle());
         }
 
         return savedTx;
@@ -536,10 +557,11 @@ public class LoanServiceImpl implements LoanService {
         }
 
         sendInternalNotification(borrow.getMember(),
-                localizedMessageService.get("systemNotification.borrow.pickup.title"),
-                localizedMessageService.get("systemNotification.borrow.collection.content", borrowId,
-                        LocalDateTime.now().plusDays(14)
-                                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.pickup.title",
+                "systemNotification.borrow.collection.content", borrowId,
+                LocalDateTime.now().plusDays(14)
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @Override
@@ -575,10 +597,11 @@ public class LoanServiceImpl implements LoanService {
 
         if (detail.getBorrow().getMember() != null) {
             sendInternalNotification(detail.getBorrow().getMember(),
-                    localizedMessageService.get("systemNotification.renewal.approved.title"),
-                    localizedMessageService.get("systemNotification.renewal.approved.content",
-                            detail.getBook().getTitle(),
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.approved.title",
+                    "systemNotification.renewal.approved.content",
+                    detail.getBook().getTitle(),
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -608,8 +631,11 @@ public class LoanServiceImpl implements LoanService {
                 content += localizedMessageService.get("common.rejectReasonPrefix", reason.trim());
             }
             sendInternalNotification(detail.getBorrow().getMember(),
-                    localizedMessageService.get("systemNotification.renewal.rejected.title"),
-                    content);
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_REJECTED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.rejected.title",
+                    "systemNotification.renewal.rejected.content",
+                    detail.getBook().getTitle(),
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -628,59 +654,32 @@ public class LoanServiceImpl implements LoanService {
     // --- Private Helper Methods ---
 
     /**
-     * Kiểm tra quá hạn và tính phí phạt, trừ tiền ví, lưu giao dịch
+     * Chuyển việc phát sinh khoản phạt quá hạn sang module tài chính.
+     * Khoản phạt chỉ được ghi nhận là công nợ; ví chỉ thay đổi khi thành viên thanh toán.
      */
     private void processOverdueFine(BorrowDetail detail) {
-        LocalDateTime dueDate = detail.getDueDate();
-        LocalDateTime now = LocalDateTime.now();
-        
-        if (now.isAfter(dueDate)) {
-            long overdueDays = ChronoUnit.DAYS.between(dueDate, now);
-            if (overdueDays > 0) {
-                // Đơn giá phạt mặc định: 5.000đ/ngày
-                BigDecimal fineRate = new BigDecimal("5000");
-                
-                // Lấy đơn giá phạt cấu hình động từ DB
-                Optional<SystemSetting> rateSetting = systemSettingRepository.findBySettingKey("FINE_RATE_PER_DAY");
-                if (rateSetting.isPresent()) {
-                    try {
-                        fineRate = new BigDecimal(rateSetting.get().getSettingValue());
-                    } catch (NumberFormatException ignored) { /* Use the documented default. */ }
-                }
-                
-                BigDecimal fineAmount = fineRate.multiply(new BigDecimal(overdueDays));
-                Member member = detail.getBorrow().getMember();
-                
-                // Lấy ví của thành viên
-                Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
-                        .orElseGet(() -> {
-                            Wallet newWallet = new Wallet();
-                            newWallet.setMember(member);
-                            newWallet.setBalance(BigDecimal.ZERO);
-                            return walletRepository.save(newWallet);
-                        });
-
-                // Khấu trừ số dư ví (cho phép ví âm)
-                wallet.setBalance(wallet.getBalance().subtract(fineAmount));
-                walletRepository.save(wallet);
-
-                // Ghi nhận giao dịch phạt
-                Transaction transaction = new Transaction();
-                transaction.setWallet(wallet);
-                transaction.setBorrow(detail.getBorrow());
-                transaction.setTransactionType("Fine");
-                transaction.setAmount(fineAmount);
-                transaction.setTransactionDate(now);
-                transaction.setStatus("Completed");
-                transactionRepository.save(transaction);
-
-                // Gửi thông báo hệ thống đến độc giả
-                sendInternalNotification(member, localizedMessageService.get("systemNotification.overdueFine.title"),
-                        localizedMessageService.get("systemNotification.overdueFine.content",
-                                fineAmount.setScale(0, java.math.RoundingMode.HALF_UP),
-                                detail.getBook().getTitle(), overdueDays));
-            }
+        if (detail != null && detail.getBorrowDetailId() != null) {
+            financialService.issueOverdueFine(detail.getBorrowDetailId());
         }
+    }
+
+    private boolean requiresDamageCompensation(String bookCondition) {
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("hư hỏng nặng")
+                || normalized.contains("mất sách")
+                || normalized.contains("severe damage")
+                || normalized.contains("lost");
+    }
+
+    private String resolveReturnedItemStatus(String bookCondition) {
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("mất sách") || normalized.contains("lost")) {
+            return STATUS_LOST;
+        }
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
+            return STATUS_DAMAGED;
+        }
+        return STATUS_AVAILABLE;
     }
 
     /**
@@ -714,13 +713,21 @@ public class LoanServiceImpl implements LoanService {
     /**
      * Tạo thông báo hệ thống và gửi cho độc giả
      */
-    private void sendInternalNotification(Member member, String title, String content) {
+    private void sendInternalNotification(Member member,
+                                          NotificationType type,
+                                          NotificationEventType eventType,
+                                          NotificationSource source,
+                                          String titleKey,
+                                          String contentKey,
+                                          Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             throw new DataProcessingException(localizedMessageService.get("backend.notification.memberMissing"));
         }
         Notification notif = new Notification();
-        notif.setTitle(title);
-        notif.setContent(content);
+        localizedMessageService.prepareNotification(notif, titleKey, contentKey, arguments);
+        notif.setNotificationType(type);
+        notif.setEventType(eventType);
+        notif.setNotificationSource(source);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus(STATUS_ACTIVE);
         Notification saved = notificationRepository.save(notif);
