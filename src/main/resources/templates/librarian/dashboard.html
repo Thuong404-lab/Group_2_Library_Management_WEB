@@ -10,6 +10,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
   </head>
 
 <body>
@@ -361,14 +362,17 @@
                                         
                                         <!-- Toolbar (Search) -->
                                         <div class="member-toolbar">
-                                            <form class="member-search-form" method="get" th:action="@{/librarian/dashboard}">
+                                            <form class="member-search-form" method="get" th:action="@{/librarian/dashboard}"
+                                                  data-auto-filter-form data-focus-key="librarianBookInventorySearchFocus">
                                                 <input type="hidden" name="section" value="books">
                                                 <input type="hidden" name="subsection" value="inventory">
                                                 <div class="input-group member-search-group">
                                                     <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
-                                                    <input class="form-control border-start-0 ps-0" type="text" name="keyword" th:value="${keyword}"
+                                                    <input class="form-control border-start-0 ps-0" type="search" name="keyword" th:value="${keyword}"
+                                                           data-auto-search
                                                            th:placeholder="#{librarian.inventory.searchPlaceholder}">
                                                     <select class="form-select member-filter-select" id="bookAvailabilityFilter" name="availability"
+                                                            data-auto-submit
                                                             th:aria-label="#{librarian.inventory.filterAvailability}">
                                                         <option value="" th:selected="${param.availability == null || #strings.isEmpty(param.availability[0])}"
                                                                 th:text="#{librarian.inventory.allAvailability}">All availability</option>
@@ -377,7 +381,8 @@
                                                         <option value="Unavailable" th:selected="${param.availability != null && param.availability[0] == 'Unavailable'}"
                                                                 th:text="#{book.status.unavailable}">Unavailable</option>
                                                     </select>
-                                                    <button type="submit" class="btn member-search-button text-nowrap" th:text="#{common.search}">Search</button>
+                                                    <button type="submit" class="btn member-search-button text-nowrap"
+                                                            th:text="#{common.search}">Search</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -519,8 +524,32 @@
                                         </button>
                                     </div>
                                 </header>
-                                <div class="card-classic shadow-sm mb-4 border-0" style="border-radius: 12px; overflow: hidden; background-color: var(--app-color-canvas, #faf9f5);">
-                                    <div class="card-body p-0">
+                                <div class="member-data-card">
+                                    <div class="member-data-card-body">
+                                    <div class="member-summary-chips"
+                                         th:aria-label="#{librarian.inventory.categorySummary}">
+                                        <span>
+                                            <strong th:text="${totalCategories ?: 0}">0</strong>
+                                            <span th:text="#{librarian.inventory.categories}">Categories</span>
+                                        </span>
+                                        <span>
+                                            <strong th:text="${totalGenres ?: 0}">0</strong>
+                                            <span th:text="#{librarian.inventory.genres}">Genres</span>
+                                        </span>
+                                    </div>
+                                    <div class="member-toolbar">
+                                        <div class="member-search-form">
+                                            <div class="input-group member-search-group">
+                                                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                                <input type="search" class="form-control border-start-0 ps-0" id="categoryGenreSearch"
+                                                       th:placeholder="#{librarian.inventory.categorySearchPlaceholder}"
+                                                       th:aria-label="#{librarian.inventory.categorySearchPlaceholder}"
+                                                       autocomplete="off">
+                                                <button type="button" class="btn member-search-button text-nowrap"
+                                                        id="categoryGenreSearchButton" th:text="#{common.search}">Search</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                         <div class="table-responsive">
                                     <table class="table table-hover align-middle border mb-0">
                                         <thead class="table-light">
@@ -528,8 +557,10 @@
                                         </thead>
                                         <tbody>
                                             <th:block th:each="category : ${categories}">
-                                                <tr class="bg-white admin-books-tr-cursor-20" data-bs-toggle="collapse"
-                                                    th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}">
+                                                <tr class="bg-white admin-books-tr-cursor-20 category-data-row" data-bs-toggle="collapse"
+                                                    th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}"
+                                                    th:data-category-id="${category.categoryId}"
+                                                    th:data-search-name="${#strings.toLowerCase(category.categoryName)}">
                                                     <td class="fw-bold u-color-4a3b32-8f35ff96">
                                                         <span th:text="${category.categoryName}">Category</span>
                                                         <i class="bi bi-chevron-down ms-2 small text-muted"></i>
@@ -545,7 +576,9 @@
                                                 </tr>
                                                 <tr th:each="genre : ${genres}"
                                                     th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
-                                                    class="collapse" th:classappend="'admin-category-genres-' + ${category.categoryId}">
+                                                    class="collapse genre-data-row" th:classappend="'admin-category-genres-' + ${category.categoryId}"
+                                                    th:data-parent-category-id="${category.categoryId}"
+                                                    th:data-search-name="${#strings.toLowerCase(genre.genreName)}">
                                                     <td>
                                                         <span class="genre-name" th:text="${genre.genreName}">Genre</span>
                                                     </td>
@@ -560,6 +593,12 @@
                                                 </tr>
                                             </th:block>
                                             <tr th:if="${#lists.isEmpty(categories)}"><td colspan="2" class="text-center text-muted py-4" th:text="#{librarian.inventory.noCategories}">No categories have been created.</td></tr>
+                                            <tr id="categoryGenreFilterEmptyState" hidden>
+                                                <td colspan="2" class="text-center text-muted py-5">
+                                                    <i class="bi bi-search fs-2 d-block mb-2" aria-hidden="true"></i>
+                                                    <span th:text="#{librarian.inventory.categoryEmptyFiltered}">No categories or genres match this search.</span>
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1469,6 +1508,55 @@
 
             availabilityFilter.addEventListener('change', applyAvailabilityFilter);
             applyAvailabilityFilter();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('categoryGenreSearch');
+            const categoryRows = Array.from(document.querySelectorAll('#admin-categories-pane .category-data-row'));
+            const genreRows = Array.from(document.querySelectorAll('#admin-categories-pane .genre-data-row'));
+            const emptyState = document.getElementById('categoryGenreFilterEmptyState');
+            const searchButton = document.getElementById('categoryGenreSearchButton');
+
+            if (!searchInput || !emptyState) return;
+
+            const normalize = value => (value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase()
+                .trim();
+
+            const filterCategoryGenres = function () {
+                const query = normalize(searchInput.value);
+                let visibleCategories = 0;
+
+                categoryRows.forEach(function (categoryRow) {
+                    const categoryId = categoryRow.dataset.categoryId;
+                    const categoryMatches = !query || normalize(categoryRow.dataset.searchName).includes(query);
+                    const childRows = genreRows.filter(row => row.dataset.parentCategoryId === categoryId);
+                    const matchingGenres = childRows.filter(row => normalize(row.dataset.searchName).includes(query));
+                    const showCategory = categoryMatches || matchingGenres.length > 0;
+
+                    categoryRow.hidden = !showCategory;
+                    if (showCategory) visibleCategories += 1;
+
+                    childRows.forEach(function (genreRow) {
+                        if (!query) {
+                            genreRow.hidden = false;
+                            genreRow.classList.remove('show');
+                            return;
+                        }
+                        const showGenre = showCategory && (categoryMatches || matchingGenres.includes(genreRow));
+                        genreRow.hidden = !showGenre;
+                        genreRow.classList.toggle('show', showGenre);
+                    });
+                });
+
+                emptyState.hidden = !query || visibleCategories > 0;
+            };
+
+            searchInput.addEventListener('input', filterCategoryGenres);
+            if (searchButton) searchButton.addEventListener('click', filterCategoryGenres);
         });
     </script>
     </div>
