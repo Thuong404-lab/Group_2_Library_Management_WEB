@@ -12,6 +12,8 @@ public interface ProfileService {
     // UC-4.1 & UC-16.1: Lấy thông tin Profile thông qua username/email đăng nhập
     User getProfile(String username);
 
+    long countActiveBorrows(String username);
+
     // UC-4.2 & UC-16.2: Cập nhật Profile
     void updateProfile(String username, String fullName, String email, String phone, MultipartFile avatarFile);
 

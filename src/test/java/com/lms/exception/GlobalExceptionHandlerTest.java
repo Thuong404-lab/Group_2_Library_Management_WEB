@@ -35,8 +35,8 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("status", 404))
-                .andExpect(model().attribute("error", "Không tìm thấy dữ liệu"))
-                .andExpect(model().attribute("errorMessage", "Không tìm thấy sách."));
+                .andExpect(model().attribute("error", "Data Not Found"))
+                .andExpect(model().attribute("errorMessage", "Book not found."));
     }
 
     @Test
@@ -45,8 +45,8 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Dữ liệu không hợp lệ"))
-                .andExpect(jsonPath("$.message").value("Số tiền không hợp lệ."))
+                .andExpect(jsonPath("$.error").value("Invalid Data"))
+                .andExpect(jsonPath("$.message").value("Invalid amount."))
                 .andExpect(jsonPath("$.path").value("/test/api/validation"));
     }
 
@@ -72,22 +72,22 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("status", 500))
-                .andExpect(model().attribute("error", "Lỗi hệ thống"))
+                .andExpect(model().attribute("error", "System Error"))
                 .andExpect(model().attribute("errorMessage",
-                        "Đã xảy ra lỗi phía máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên."));
+                        "A server error occurred. Please try again later or contact an administrator."));
     }
 
     @Controller
     static class ThrowingController {
         @GetMapping("/test/view/not-found")
         String notFound() {
-            throw new ResourceNotFoundException("Không tìm thấy sách.");
+            throw new ResourceNotFoundException("Book not found.");
         }
 
         @GetMapping("/test/api/validation")
         @ResponseBody
         Map<String, Object> validation() {
-            throw new ValidationException("Số tiền không hợp lệ.");
+            throw new ValidationException("Invalid amount.");
         }
 
         @GetMapping("/test/view/required")
@@ -97,7 +97,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/test/view/gateway")
         String gateway() {
-            throw new ExternalServiceException("Không thể kết nối cổng thanh toán.");
+            throw new ExternalServiceException("Unable to connect to the payment gateway.");
         }
 
         @GetMapping("/test/view/unexpected")

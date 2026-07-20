@@ -334,19 +334,19 @@ public class BorrowController extends LocalizedControllerSupport {
         Member member = null;
         try {
             member = memberRepository.findByAccountUsername(principal.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
+                    .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
             long activeOrPendingCount = borrowDetailRepository
                     .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
             if (activeOrPendingCount > 0) {
                 redirectAttributes.addFlashAttribute("errorMessage",
-                        "Bạn không thể tạo thêm yêu cầu: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
+                        message("backend.borrow.duplicateActiveRequestGeneric"));
                 return "redirect:/member/borrow/management?tab=borrowing";
             }
             // Kiểm tra số lượng bản vật lý khả dụng trong kho
             long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
             if (availableCount == 0) {
                 redirectAttributes.addFlashAttribute("errorMessage",
-                        "Sách này hiện không còn bản vật lý nào trong kho!");
+                        message("backend.borrow.stockUnavailable"));
                 return "redirect:/books/" + bookId;
             }
         } catch (ResourceNotFoundException e) {
@@ -431,13 +431,13 @@ public class BorrowController extends LocalizedControllerSupport {
 
         try {
             Member member = memberRepository.findByAccountUsername(principal.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
+                    .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
                     
             long activeOrPendingCount = borrowDetailRepository
                     .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
             if (activeOrPendingCount > 0) {
                 redirectAttributes.addFlashAttribute("errorMessage",
-                        "Bạn không thể tạo thêm yêu cầu: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
+                        message("backend.borrow.duplicateActiveRequestGeneric"));
                 return "redirect:/member/borrow/management?tab=borrowing";
             }
             // 3. Kiểm tra số lượng bản vật lý thực tế trong kho trước khi thực hiện

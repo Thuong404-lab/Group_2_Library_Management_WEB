@@ -65,9 +65,9 @@
                        th:max="${maxBorrowDays}"
                        th:value="${maxBorrowDays >= 14 ? 14 : maxBorrowDays}"
                        required
-                       placeholder="Nhập số ngày muốn mượn..."/>
-                <div id="borrowDaysError" class="text-danger small mt-1 d-none" style="font-weight: 600;">
-                    <i class="bi bi-exclamation-circle me-1"></i>Vui lòng nhập số ngày mượn hợp lệ.
+                        th:placeholder="#{member.borrowCreate.preferredDaysPlaceholder}"/>
+                 <div id="borrowDaysError" class="text-danger small mt-1 d-none" style="font-weight: 600;">
+                     <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{member.borrowCreate.validation.invalidDays}">Enter a valid number of loan days.</span>
                 </div>
                 <div class="form-text text-muted mt-2 fst-italic" style="font-size: 0.85rem;">
                     <i class="bi bi-info-circle me-1 text-primary"></i>
@@ -144,20 +144,20 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
                         <div>
                             <span class="text-muted small" th:text="#{member.borrowCreate.baseFee}">Phí mượn cơ bản:</span><br>
-                            <small class="text-secondary" id="baseFeeSubtext">1 cuốn × 14 ngày × 5,000đ</small>
+                        <small class="text-secondary" id="baseFeeSubtext">1 book × 14 days × 5,000 VND</small>
                         </div>
-                        <span class="fw-bold text-dark" id="baseFeeDisplay">70,000 VNĐ</span>
+                        <span class="fw-bold text-dark" id="baseFeeDisplay">70,000 VND</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
                         <div>
                             <span class="text-muted small" th:text="#{member.borrowCreate.memberDiscount}">Ưu đãi hạng thành viên:</span><br>
                             <small class="text-secondary" th:text="${member.tier != null ? #messages.msg('member.borrowCreate.memberDiscountSub', member.tier.tierName, discountPercent) : #messages.msg('member.borrowCreate.noDiscountSub')}"></small>
                         </div>
-                        <span class="fw-bold text-success">-<span id="discountDisplay">0</span> VNĐ</span>
+                        <span class="fw-bold text-success">-<span id="discountDisplay">0</span> VND</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="background-color: rgba(139, 90, 43, 0.05); border-top: 1px dashed rgba(139, 90, 43, 0.2);">
                         <span class="fw-bold" style="color: #8b5a2b;" th:text="#{member.borrowCreate.totalPayment}">Tổng thanh toán dự kiến:</span>
-                        <span class="fw-bold fs-5" style="color: #d32f2f;" id="finalFeeDisplay">0 VNĐ</span>
+                        <span class="fw-bold fs-5" style="color: #d32f2f;" id="finalFeeDisplay">0 VND</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
                         <span class="text-muted small" th:text="#{member.borrowCreate.walletBalance}">Số dư ví hiện tại:</span>
@@ -250,11 +250,12 @@
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
             const feePerBookPerDay = /*[[${feePerBookPerDay}]]*/ 5000;
 
-            const textSubmitBank = /*[[#{member.borrowCreate.submitBank}]]*/ "Thanh toán & Gửi yêu cầu";
-            const textSubmitWallet = /*[[#{member.borrowCreate.submitWallet}]]*/ "Gửi yêu cầu phê duyệt";
-            const textInvalidDays = /*[[#{member.borrowCreate.validation.invalidDays}]]*/ "Vui lòng nhập số ngày mượn hợp lệ.";
-            const textMaxExceeded = /*[[#{member.borrowCreate.validation.maxExceeded}]]*/ "Số ngày mượn vượt quá giới hạn tối đa ({0} ngày).";
-            const textBaseFeeSub = /*[[#{member.borrowCreate.baseFeeSub}]]*/ "{0} cuốn × {1} ngày × {2}đ";
+            const formattingLocale = /*[[${#locale.language}]]*/ "en";
+            const textSubmitBank = /*[[#{member.borrowCreate.submitBank}]]*/ "Pay and submit request";
+            const textSubmitWallet = /*[[#{member.borrowCreate.submitWallet}]]*/ "Submit for approval";
+            const textInvalidDays = /*[[#{member.borrowCreate.validation.invalidDays}]]*/ "Enter a valid number of loan days.";
+            const textMaxExceeded = /*[[#{member.borrowCreate.validation.maxExceeded}]]*/ "The loan period cannot exceed {0} days.";
+            const textBaseFeeSub = /*[[#{member.borrowCreate.baseFeeSub}]]*/ "{0} book(s) × {1} day(s) × {2} VND";
 
             window.calculateBorrowDetails = function () {
                 const maxDays = parseInt(borrowDaysInput.getAttribute("max")) || 14;
@@ -263,10 +264,10 @@
 
                 if (days <= 0 || days > maxDays) {
                     dueDateDisplay.textContent = "--/--/----";
-                    baseFeeSubtext.textContent = textBaseFeeSub.replace("{0}", 0).replace("{1}", 0).replace("{2}", feePerBookPerDay.toLocaleString('vi-VN'));
-                    baseFeeDisplay.textContent = "0 VNĐ";
+                    baseFeeSubtext.textContent = textBaseFeeSub.replace("{0}", 0).replace("{1}", 0).replace("{2}", feePerBookPerDay.toLocaleString(formattingLocale));
+                    baseFeeDisplay.textContent = "0 VND";
                     discountDisplay.textContent = "0";
-                    finalFeeDisplay.textContent = "0 VNĐ";
+                    finalFeeDisplay.textContent = "0 VND";
                     updateCheckoutUI();
                     return;
                 }
@@ -274,23 +275,23 @@
                 // 1. Hạn trả dự kiến
                 const dueDate = new Date();
                 dueDate.setDate(dueDate.getDate() + days);
-                dueDateDisplay.textContent = dueDate.toLocaleDateString("vi-VN");
+                dueDateDisplay.textContent = dueDate.toLocaleDateString(formattingLocale);
 
                 // 2. Phí cơ bản: qty × ngày × đơn giá
                 const baseFee = qty * days * feePerBookPerDay;
                 baseFeeSubtext.textContent = textBaseFeeSub
                     .replace("{0}", qty)
                     .replace("{1}", days)
-                    .replace("{2}", feePerBookPerDay.toLocaleString('vi-VN'));
-                baseFeeDisplay.textContent = `${baseFee.toLocaleString('vi-VN')} VNĐ`;
+                    .replace("{2}", feePerBookPerDay.toLocaleString(formattingLocale));
+                baseFeeDisplay.textContent = `${baseFee.toLocaleString(formattingLocale)} VND`;
 
                 // 3. Giảm giá hạng thành viên
                 const discountAmount = Math.round(baseFee * (discountPercent / 100));
-                discountDisplay.textContent = `${discountAmount.toLocaleString('vi-VN')}`;
+                discountDisplay.textContent = `${discountAmount.toLocaleString(formattingLocale)}`;
 
                 // 4. Tổng thanh toán
                 const finalFee = baseFee - discountAmount;
-                finalFeeDisplay.textContent = `${finalFee.toLocaleString('vi-VN')} VNĐ`;
+                finalFeeDisplay.textContent = `${finalFee.toLocaleString(formattingLocale)} VND`;
 
                 // 5. Cập nhật trạng thái nút và cảnh báo
                 updateCheckoutUI();

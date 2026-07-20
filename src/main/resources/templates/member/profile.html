@@ -17,7 +17,7 @@
         <div class="profile-hero-copy">
             <span class="member-page-eyebrow" th:text="#{nav.myAccount}">MY ACCOUNT</span>
             <h1 class="member-page-title" th:text="#{member.profile.heading}">My Profile</h1>
-            <p class="member-page-description">Manage your personal information, avatar, and security settings.</p>
+            <p class="member-page-description" th:text="#{member.profile.description}">Manage your personal information, avatar, and security settings.</p>
         </div>
         <a th:href="@{/}" class="notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.backHome}">Back to Home</span></a>
     </header>
@@ -32,10 +32,6 @@
     <div th:if="${passwordSuccess}" class="member-notifications-alert is-success mb-4" role="alert">
         <i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span>
     </div>
-    <div th:if="${passwordError}" class="member-notifications-alert is-error mb-4" role="alert">
-        <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
-    </div>
-
     <!-- Stat Cards Row -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -82,18 +78,19 @@
                 <div class="card-body text-center p-4">
                     <div class="avatar-container-classic mb-3">
                         <div th:if="${member?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100 profile-avatar-placeholder"
-                             th:text="${member != null ? #strings.substring(member.fullName, 0, 1).toUpperCase() : 'M'}">M</div>
-                        <img th:if="${member?.avatar != null}" id="avatarPreview" th:src="${member.avatar}" class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2">
-                        <img th:if="${member?.avatar == null}" id="avatarPreview" src="" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100 u-object-fit-cover-fd3ff4b2">
+                             th:text="${member != null and member.fullName != null and !#strings.isEmpty(#strings.trim(member.fullName)) ? #strings.substring(#strings.trim(member.fullName), 0, 1).toUpperCase() : 'M'}">M</div>
+                        <img th:if="${member?.avatar != null}" id="avatarPreview" th:src="${member.avatar}" th:alt="#{member.profile.avatarAlt}" class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2">
+                        <img th:if="${member?.avatar == null}" id="avatarPreview" src="" th:alt="#{member.profile.avatarAlt}" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100 u-object-fit-cover-fd3ff4b2">
 
                         <label for="avatarUpload" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" th:title="#{member.profile.changeAvatar}">
                             <i class="bi bi-camera-fill"></i>
                         </label>
                     </div>
+                    <p th:if="${avatarError}" class="profile-field-error mb-3" th:text="${avatarError}">Invalid profile image.</p>
                     <h4 class="fw-bold mb-1 profile-name" th:text="${member?.fullName}">Member Name</h4>
                     <p class="text-muted small mb-3" th:text="${member?.email}">email@example.com</p>
 
-                    <div class="d-flex justify-content-center mb-3 gap-2">
+                    <div class="d-flex justify-content-center mb-3 profile-status-badges">
                         <span class="badge-classic-status member-reference-pill" th:text="#{member.profile.reader}">Library Member</span>
                         <span th:if="${member?.status?.name() == 'Active'}" class="badge-classic-status badge-classic-success member-reference-pill" th:text="#{account.status.active}">Active</span>
                         <span th:if="${member?.status?.name() != 'Active'}" class="badge-classic-status badge-classic-danger member-reference-pill"
@@ -113,7 +110,7 @@
             <div class="profile-card mb-4" th:if="${#authentication.principal.attributes == null}">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 profile-section-title" th:text="#{member.profile.security}">Account Security</h6>
-                    <button class="member-ui-button member-ui-button--secondary w-100" data-toggle="modal" data-target="#changePasswordModal" th:disabled="${isInactiveMember}" th:text="#{member.profile.changePassword}">Change Password</button>
+                    <button type="button" class="member-ui-button member-ui-button--secondary w-100" data-toggle="modal" data-target="#changePasswordModal" th:disabled="${isInactiveMember}" th:text="#{member.profile.changePassword}">Change Password</button>
                 </div>
             </div>
 
@@ -135,7 +132,7 @@
                 </div>
                 <div class="card-body p-4">
                     <form id="profileForm" th:action="@{/member/profile/update}" method="post" enctype="multipart/form-data" class="m-0 needs-validation" novalidate>
-                        <input type="file" id="avatarUpload" name="avatarFile" accept="image/*" class="d-none">
+                        <input type="file" id="avatarUpload" name="avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" class="d-none">
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label text-muted small fw-bold" th:text="#{member.profile.fullName}">Full Name</label>
@@ -177,21 +174,27 @@
             <div class="modal-content modal-content-classic shadow-lg border-0">
                 <div class="modal-header border-bottom px-4 py-3">
                     <h5 class="modal-title fw-bold profile-section-title"><i class="bi bi-shield-lock-fill text-muted me-2"></i><span th:text="#{member.profile.passwordTitle}">Change Secure Password</span></h5>
-                    <button type="button" class="close text-muted" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form id="changePasswordForm" th:action="@{/member/change-password}" method="post" class="m-0 needs-validation" novalidate>
+                <form id="changePasswordForm" th:action="@{/member/change-password}" method="post" class="m-0 needs-validation" novalidate
+                      th:data-password-mismatch="#{backend.password.mismatch}">
                     <div class="modal-body p-4">
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold" th:text="#{member.profile.currentPassword}">Current Password</label>
-                            <input type="password" name="oldPassword" class="form-control" required>
+                        <div th:if="${passwordError}" class="member-notifications-alert is-error mb-3" role="alert">
+                            <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold" th:text="#{member.profile.newPassword}">New Password</label>
-                            <input type="password" name="newPassword" class="form-control" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
+                            <label for="oldPassword" class="form-label text-muted small fw-bold" th:text="#{member.profile.currentPassword}">Current Password</label>
+                            <input id="oldPassword" type="password" name="oldPassword" class="form-control" required>
+                            <div class="invalid-feedback" th:text="#{validation.passwordRequired}">Password is required.</div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
-                            <input type="password" name="confirmPassword" class="form-control" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
+                            <label for="newPassword" class="form-label text-muted small fw-bold" th:text="#{member.profile.newPassword}">New Password</label>
+                            <input id="newPassword" type="password" name="newPassword" class="form-control" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
+                            <div class="invalid-feedback" th:text="#{validation.passwordMin}">Password is invalid.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label text-muted small fw-bold" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
+                            <input id="confirmPassword" type="password" name="confirmPassword" class="form-control" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
+                            <div id="confirmPasswordFeedback" class="invalid-feedback" th:text="#{backend.password.mismatch}">Passwords do not match.</div>
                         </div>
                     </div>
                     <div class="modal-footer border-top p-3">
@@ -271,17 +274,19 @@
         const changePasswordForm = document.getElementById('changePasswordForm');
         if (changePasswordForm) {
             changePasswordForm.addEventListener('submit', function(event) {
-                const newPass = document.querySelector('input[name="newPassword"]').value;
-                const confirmPass = document.querySelector('input[name="confirmPassword"]').value;
-                const confirmInput = document.querySelector('input[name="confirmPassword"]');
-                let isValid = changePasswordForm.checkValidity();
+                const newPassInput = changePasswordForm.querySelector('input[name="newPassword"]');
+                const confirmInput = changePasswordForm.querySelector('input[name="confirmPassword"]');
+                const confirmFeedback = document.getElementById('confirmPasswordFeedback');
+                const mismatchMessage = changePasswordForm.dataset.passwordMismatch;
 
-                if (newPass !== confirmPass) {
-                    confirmInput.setCustomValidity("Passwords do not match");
-                    isValid = false;
-                } else {
-                    confirmInput.setCustomValidity("");
+                confirmInput.setCustomValidity('');
+
+                if (newPassInput.value !== confirmInput.value) {
+                    confirmInput.setCustomValidity(mismatchMessage);
+                    if (confirmFeedback) confirmFeedback.textContent = mismatchMessage;
                 }
+
+                const isValid = changePasswordForm.checkValidity();
 
                 if (!isValid) {
                     event.preventDefault();
@@ -298,6 +303,18 @@
                 }
                 changePasswordForm.classList.add('was-validated');
             });
+
+            const clearPasswordMismatch = function() {
+                const newPassInput = changePasswordForm.querySelector('input[name="newPassword"]');
+                const confirmInput = changePasswordForm.querySelector('input[name="confirmPassword"]');
+                if (newPassInput.value === confirmInput.value) confirmInput.setCustomValidity('');
+            };
+            changePasswordForm.querySelector('input[name="newPassword"]').addEventListener('input', clearPasswordMismatch);
+            changePasswordForm.querySelector('input[name="confirmPassword"]').addEventListener('input', clearPasswordMismatch);
+        }
+
+        if (document.querySelector('#changePasswordModal .member-notifications-alert.is-error') && window.jQuery) {
+            window.jQuery('#changePasswordModal').modal('show');
         }
     });
 </script>
