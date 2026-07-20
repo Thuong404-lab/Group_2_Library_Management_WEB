@@ -182,7 +182,8 @@
                                 </thead>
                                 <tbody>
                                     <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
-                                        th:data-book-availability="${book.status == 'Disposed' ? 'Unavailable' : 'Available'}">
+                                        th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}"
+                                        th:data-book-availability="${availableCopies > 0 ? 'Available' : 'Unavailable'}">
                                         <td class="ps-3 fw-bold"
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
@@ -206,8 +207,8 @@
                                             th:title="${book.description}">Description</td>
                                         <td>
                                             <span class="status-badge"
-                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
-                                                th:text="${book.status == 'Disposed' ? #messages.msg('book.status.unavailable') : (book.status == 'Active' ? #messages.msg('book.status.ready') : book.status)}">Active</span>
+                                                th:classappend="${availableCopies > 0} ? ' status-active' : ' status-zero'"
+                                                th:text="${availableCopies > 0} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
                                         </td>
                                         <td class="text-end member-actions">
                                             <button type="button" class="member-icon-action"
