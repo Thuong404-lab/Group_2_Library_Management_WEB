@@ -27,6 +27,8 @@ public class BorrowDetail {
     private String rejectionReason;
     @Column(name = "condition_note", length = 255)
     private String conditionNote;
+    @Column(name = "condition_code", length = 20)
+    private String conditionCode;
 
     public BorrowDetail() {
     }
@@ -64,4 +66,6 @@ public class BorrowDetail {
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public String getConditionNote() { return conditionNote; }
     public void setConditionNote(String conditionNote) { this.conditionNote = conditionNote; }
+    public String getConditionCode() { return conditionCode; }
+    public void setConditionCode(String conditionCode) { this.conditionCode = conditionCode; }
 }

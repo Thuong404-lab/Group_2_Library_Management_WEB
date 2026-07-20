@@ -88,6 +88,9 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
 
+    @EntityGraph(attributePaths = {"borrow", "book", "bookItem"})
+    List<BorrowDetail> findByBorrow_BorrowIdIn(List<Integer> borrowIds);
+
     @Query("SELECT COUNT(bd) FROM BorrowDetail bd WHERE bd.borrow.member.memberId = :memberId " +
             "AND bd.status IN ('Payment_Pending', 'Pending', 'Waiting_Pickup', 'Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending')")
     long countActiveBorrowedBooks(@Param("memberId") Integer memberId);

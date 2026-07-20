@@ -35,6 +35,22 @@ public class Transaction {
     @Column(length = 50)
     private String status = "Completed";
 
+    @Column(name = "reference_code", length = 64, unique = true)
+    private String referenceCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "performed_by_staff_id")
+    private Staff performedByStaff;
+
+    @Column(length = 20)
+    private String channel;
+
+    @Column(name = "balance_before", precision = 18, scale = 2)
+    private BigDecimal balanceBefore;
+
+    @Column(name = "balance_after", precision = 18, scale = 2)
+    private BigDecimal balanceAfter;
+
     public Transaction() {
     }
 
@@ -66,5 +82,15 @@ public class Transaction {
     public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getReferenceCode() { return referenceCode; }
+    public void setReferenceCode(String referenceCode) { this.referenceCode = referenceCode; }
+    public Staff getPerformedByStaff() { return performedByStaff; }
+    public void setPerformedByStaff(Staff performedByStaff) { this.performedByStaff = performedByStaff; }
+    public String getChannel() { return channel; }
+    public void setChannel(String channel) { this.channel = channel; }
+    public BigDecimal getBalanceBefore() { return balanceBefore; }
+    public void setBalanceBefore(BigDecimal balanceBefore) { this.balanceBefore = balanceBefore; }
+    public BigDecimal getBalanceAfter() { return balanceAfter; }
+    public void setBalanceAfter(BigDecimal balanceAfter) { this.balanceAfter = balanceAfter; }
 }
 
