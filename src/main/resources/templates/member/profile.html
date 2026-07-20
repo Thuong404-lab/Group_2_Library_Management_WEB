@@ -103,7 +103,7 @@
             <div class="card card-profile-classic" th:if="${#authentication.principal.attributes == null}">
                 <div class="card-body p-4 u-background-color-fdfbf7-71083b05">
                     <h6 class="fw-bold mb-3 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.security}">Account Security</h6>
-                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal" th:text="#{member.profile.changePassword}">Change Password</button>
+                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal" th:disabled="${isInactiveMember}" th:text="#{member.profile.changePassword}">Change Password</button>
                 </div>
             </div>
 
@@ -127,6 +127,7 @@
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.fullName}">Full Name</label>
+                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:value="${member?.fullName}" maxlength="50" required th:readonly="${isInactiveMember}">
                                 <input type="text" name="fullName" class="form-control form-control-classic py-2" th:classappend="${fullNameError} ? 'is-invalid' : ''" th:value="${member?.fullName}" minlength="2" maxlength="50" required th:data-msg-required="#{validation.fullNameRequired}" th:data-msg-length="#{validation.fullNameMax}">
                                 <div class="invalid-feedback" th:text="${fullNameError != null ? fullNameError : #messages.msg('validation.fullNameRequired')}">Please enter a valid full name.</div>
                             </div>
@@ -137,6 +138,15 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted small" th:text="#{member.profile.email}">Email Address</label>
+                                <input type="email" name="email" class="form-control form-control-classic py-2" th:value="${member?.email}" required th:readonly="${isInactiveMember}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.phone}">Phone Number</label>
+                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:value="${member?.phone}" required th:readonly="${isInactiveMember}">
+                            </div>
+
+                            <div class="col-12 mt-3 text-end">
+                                <button type="submit" class="btn btn-classic-primary fw-bold px-4 shadow-sm" th:disabled="${isInactiveMember}" th:text="#{member.profile.save}">Save Changes</button>
                                 <input type="email" name="email" class="form-control form-control-classic py-2 bg-light text-muted" th:classappend="${emailError} ? 'is-invalid' : ''" th:value="${member?.email}" required th:data-msg-required="#{validation.emailRequired}" th:data-msg-type="#{validation.email}" readonly>
                                 <div class="invalid-feedback" th:text="${emailError != null ? emailError : #messages.msg('validation.emailRequired')}">Please enter a valid email.</div>
                             </div>

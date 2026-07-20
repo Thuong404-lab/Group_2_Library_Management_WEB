@@ -399,6 +399,8 @@ public class AccountServiceImpl implements AccountService {
         user.setPhone(trim(request.getPhone()));
 
         account.setUsername(trim(request.getUsername()));
+        account.setStatus(normalizeStatus(request.getStatus()));
+        user.setStatus(toUserStatus(normalizeStatus(request.getStatus())));
         userRepository.save(user);
         memberAccountRepository.save(account);
 

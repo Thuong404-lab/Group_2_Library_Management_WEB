@@ -112,6 +112,16 @@
                           th:data-add-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
                           th:data-remove-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/remove'}">
                         <button type="submit"
+                                th:disabled="${isInactiveMember != null and isInactiveMember}"
+                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
+                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
+                            <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
+                        </button>
+                    </form>
+
+                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
+                        <button type="submit" class="btn btn-outline-classic w-100 py-2" th:disabled="${isInactiveMember != null and isInactiveMember}">
+                            <i class="bi bi-bookmark me-1"></i> <span th:text="#{guest.bookDetail.reserve}">Reserve</span>
                                 th:class="${favoriteBookIds.contains(book.bookId) ? 'book-detail-button book-detail-button--secondary js-favorite-button active' : 'book-detail-button book-detail-button--secondary js-favorite-button'}">
                             <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill' : 'bi bi-heart'}" aria-hidden="true"></i>
                             <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
@@ -144,6 +154,8 @@
                     </form>
                     <form th:action="@{/member/borrow/create}" method="get">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
+                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active' or (isInactiveMember != null and isInactiveMember)}" th:title="${book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : ''}">
+                            <i class="bi bi-book me-1"></i> <span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
                         <button type="submit" class="book-detail-button book-detail-button--primary"
                                 th:disabled="${book.status != 'Active' or availableCount == 0}"
                                 th:title="${availableCount == 0 ? #messages.msg('guest.bookDetail.unavailableHint') : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
@@ -163,6 +175,11 @@
                 <span class="book-review-count member-reference-pill" th:text="#{guest.bookDetail.reviewCount(${reviewCount})}">0 reviews</span>
             </div>
 
+            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')"
+                 th:if="${reviewBorrowEligible and !reviewAlreadySubmitted and !isInactiveMember}">
+                <h5 class="fw-bold mb-4 u-color-4a3b32-8f35ff96">
+                    <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span>
+                </h5>
             <div class="write-review-box member-reference-list__item" sec:authorize="hasRole('MEMBER')"
                  th:if="${reviewBorrowEligible and !reviewAlreadySubmitted}">
                 <h3><i class="bi bi-pencil-square" aria-hidden="true"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span></h3>

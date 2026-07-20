@@ -25,6 +25,7 @@ public class MemberNotificationModelAdvice {
         model.addAttribute("latestNotifications", null);
         model.addAttribute("showNotificationBell", false);
         model.addAttribute("unreadNotificationCount", 0L);
+        model.addAttribute("isInactiveMember", false);
 
         if (principal == null || authentication == null) {
             return;
@@ -39,6 +40,11 @@ public class MemberNotificationModelAdvice {
         }
 
         model.addAttribute("showNotificationBell", true);
+        
+        if (authentication.getPrincipal() instanceof com.lms.config.CustomUserDetails userDetails) {
+            boolean isInactive = "Inactive".equalsIgnoreCase(userDetails.getUser().getStatus().name());
+            model.addAttribute("isInactiveMember", isInactive);
+        }
 
         model.addAttribute(
                 "latestNotifications",

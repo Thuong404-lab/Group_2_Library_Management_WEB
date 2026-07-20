@@ -22,13 +22,19 @@ public class AuthenticationEventListener {
         Object principal = event.getAuthentication().getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
             Integer userId = userDetails.getUser().getId();
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
+                    .getRequestAttributes();
 
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
                 String ipAddress = request.getRemoteAddr();
                 String userAgent = request.getHeader("User-Agent");
-                authService.logLoginAction(userId, ipAddress, userAgent);
+                
+                if (userDetails.getAttributes() != null) {
+                    authService.logGoogleLoginAction(userId, ipAddress, userAgent);
+                } else {
+                    authService.logLoginAction(userId, ipAddress, userAgent);
+                }
             }
         }
     }
@@ -39,7 +45,8 @@ public class AuthenticationEventListener {
 
         if (principal instanceof CustomUserDetails userDetails) {
             Integer userId = userDetails.getUser().getId();
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
+                    .getRequestAttributes();
 
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();

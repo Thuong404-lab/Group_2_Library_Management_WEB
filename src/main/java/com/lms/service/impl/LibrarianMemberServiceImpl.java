@@ -222,6 +222,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         user.setEmail(trim(request.getEmail()));
         user.setPhone(trim(request.getPhone()));
         account.setUsername(trim(request.getUsername()));
+        applyStatus(account, request.getStatus());
 
         userRepository.save(user);
         memberAccountRepository.save(account);

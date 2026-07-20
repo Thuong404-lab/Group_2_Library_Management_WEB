@@ -234,6 +234,7 @@
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="username"
@@ -252,6 +253,7 @@
                                                                     pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
                                                                     inputmode="numeric"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                 <div class="invalid-feedback" data-error-for="phone"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
@@ -268,6 +270,7 @@
                                                                     data-label="Email"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="email"
@@ -298,16 +301,25 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    <span th:text="#{common.status}">Status</span>
+                                                                    <span th:text="#{common.status}">Status</span> <span class="text-danger">*</span>
                                                                 </label>
-                                                                <div class="member-readonly-field" role="textbox"
-                                                                    aria-readonly="true"
-                                                                    th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('account.status.inactive') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
-                                                                    Active
-                                                                </div>
-                                                                <input type="hidden" name="status"
-                                                                    th:value="${account.status}">
-                                                                <div class="invalid-feedback" data-error-for="status">
+                                                                <select class="form-select form-control" name="status"
+                                                                    th:data-label="#{common.status}" required
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
+                                                                    <option value="Active"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}"
+                                                                        th:text="#{account.status.active}">Active</option>
+                                                                    <option value="Inactive"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
+                                                                        th:text="#{account.status.inactive}">Inactive</option>
+                                                                    <option value="Blocked"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
+                                                                        th:text="#{account.status.blocked}">Blocked</option>
+                                                                </select>
+                                                                <div class="invalid-feedback" data-error-for="status"
+                                                                    th:data-default-message="#{validation.status}"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
+                                                                    <span th:text="#{validation.status}">Please select a status.</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -360,12 +372,12 @@
                                                         <div class="account-info-panel">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Username:</div>
+                                                                    <div class="small text-muted" th:text="#{member.profile.username}">Username</div>
                                                                     <div class="fw-bold" th:text="${account.username}">
                                                                         username</div>
                                                                 </div>
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Account ID:</div>
+                                                                    <div class="small text-muted" th:text="#{common.accountId}">Account ID</div>
                                                                     <div class="fw-bold" th:text="${account.accountId}">
                                                                         id</div>
                                                                 </div>
@@ -431,7 +443,7 @@
                                                         <div class="account-info-panel">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Username: </div>
+                                                                    <div class="small text-muted" th:text="#{member.profile.username}">Username</div>
                                                                     <div class="fw-bold mb-1"
                                                                         th:text="${account.username}">
                                                                         username
@@ -439,7 +451,7 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Account ID: </div>
+                                                                    <div class="small text-muted" th:text="#{common.accountId}">Account ID</div>
                                                                     <div class="fw-bold" th:text="${account.accountId}">
                                                                         id
                                                                     </div>
@@ -454,7 +466,7 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Email: </div>
+                                                                    <div class="small text-muted" th:text="#{common.email}">Email</div>
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
                                                                         <span
@@ -586,6 +598,13 @@
                     button.addEventListener("click", function () {
                         tooltip.hide();
                     });
+                });
+
+                document.querySelectorAll(".member-form-modal").forEach(function (modalEl) {
+                    if (modalEl.getAttribute("data-reopen-edit") === "true") {
+                        const bsModal = new bootstrap.Modal(modalEl);
+                        bsModal.show();
+                    }
                 });
             });
         </script>

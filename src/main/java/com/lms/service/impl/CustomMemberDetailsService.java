@@ -36,9 +36,7 @@ public class CustomMemberDetailsService implements UserDetailsService {
                         .orElseThrow(() -> new UsernameNotFoundException(
                                 messages.get("backend.account.memberUsernameNotFound", username))));
 
-        if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new DisabledException(messages.get("backend.account.disabled"));
-        }
+        // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
         List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_MEMBER"));
 
