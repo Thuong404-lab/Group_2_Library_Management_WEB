@@ -142,8 +142,9 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         MembershipTier tier = membershipTierRepository.findById(request.getTierId())
                 .orElseThrow(() -> new ValidationException(messages.get("validation.tier")));
-        Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
-                .orElseThrow(() -> new DataProcessingException(messages.get("backend.account.roleNotFound", "MEMBER")));
+        Role memberRole = roleRepository.findByNameIgnoreCase("ROLE_MEMBER")
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", "ROLE_MEMBER")));
 
         User user = new User();
         user.setFullName(trim(request.getFullName()));
