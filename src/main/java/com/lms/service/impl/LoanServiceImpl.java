@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -338,12 +339,34 @@ public class LoanServiceImpl implements LoanService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Transaction confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcode"));
+        }
+        if (returnDate == null || returnDate.isAfter(LocalDateTime.now())) {
+            throw new ValidationException(localizedMessageService.get("backend.return.invalidReturnDate"));
+        }
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
         if (activeLoans.isEmpty()) {
             throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
         }
 
         BorrowDetail detail = activeLoans.get(0);
+        if (detail.getBorrow() != null && detail.getBorrow().getBorrowDate() != null
+                && returnDate.isBefore(detail.getBorrow().getBorrowDate())) {
+            throw new ValidationException(localizedMessageService.get("backend.return.beforeBorrowDate"));
+        }
+        if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0
+                && "wallet".equalsIgnoreCase(paymentMethod)) {
+            Member member = detail.getBorrow() == null ? null : detail.getBorrow().getMember();
+            BigDecimal balance = member == null || member.getMemberId() == null
+                    ? BigDecimal.ZERO
+                    : walletRepository.findByMemberMemberId(member.getMemberId())
+                            .map(Wallet::getBalance)
+                            .orElse(BigDecimal.ZERO);
+            if (balance == null || balance.compareTo(damageFine) < 0) {
+                throw new ConflictException(localizedMessageService.get("backend.financial.insufficientBalanceSimple"));
+            }
+        }
         if ("Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
             rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
         }
@@ -352,12 +375,12 @@ public class LoanServiceImpl implements LoanService {
 
         if (item != null) {
             item.setStatus(resolveReturnedItemStatus(bookCondition));
-            item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tá»‘t");
+            item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
             item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
             bookItemRepository.save(item);
         }
 
-        String fullConditionNote = bookCondition != null ? bookCondition.trim() : "Tá»‘t";
+        String fullConditionNote = bookCondition != null ? bookCondition.trim() : "Tốt";
         if (damageNote != null && !damageNote.trim().isEmpty()) {
             fullConditionNote += " - " + damageNote.trim();
         }
@@ -367,7 +390,7 @@ public class LoanServiceImpl implements LoanService {
         detail.setStatus(STATUS_RETURNED);
         borrowDetailRepository.save(detail);
 
-        if (returnDate.isAfter(detail.getDueDate())) {
+        if (detail.getDueDate() != null && returnDate.isAfter(detail.getDueDate())) {
             processOverdueFine(detail);
         }
         if (requiresCompensation) {
@@ -431,19 +454,28 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public Transaction confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
         if (barcodes == null || barcodes.isEmpty()) {
-            return null;
+            throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcodes"));
+        }
+        LinkedHashMap<String, String> uniqueBarcodes = new LinkedHashMap<>();
+        for (String barcode : barcodes) {
+            String normalized = barcode == null ? "" : barcode.trim();
+            if (normalized.isEmpty()) {
+                throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcode"));
+            }
+            String key = normalized.toUpperCase(java.util.Locale.ROOT);
+            if (uniqueBarcodes.putIfAbsent(key, normalized) != null) {
+                throw new ValidationException(localizedMessageService.get("backend.return.duplicateBarcodes"));
+            }
         }
         Transaction firstTx = null;
         boolean isFirst = true;
-        for (String barcode : barcodes) {
-            if (barcode != null && !barcode.trim().isEmpty()) {
-                BigDecimal fineForThis = isFirst ? damageFine : BigDecimal.ZERO;
-                Transaction tx = confirmReturnWithDetails(barcode.trim(), returnDate, bookCondition, damageNote, fineForThis, paymentMethod, staffUsername);
-                if (isFirst) {
-                    firstTx = tx;
-                }
-                isFirst = false;
+        for (String barcode : uniqueBarcodes.values()) {
+            BigDecimal fineForThis = isFirst ? damageFine : BigDecimal.ZERO;
+            Transaction tx = confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, fineForThis, paymentMethod, staffUsername);
+            if (isFirst) {
+                firstTx = tx;
             }
+            isFirst = false;
         }
         return firstTx;
     }
@@ -471,7 +503,11 @@ public class LoanServiceImpl implements LoanService {
 
         if ("wallet".equals(resolvedMethod)) {
             // Trừ tiền trực tiếp vào ví
-            wallet.setBalance(wallet.getBalance().subtract(damageFine));
+            BigDecimal currentBalance = wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance();
+            if (currentBalance.compareTo(damageFine) < 0) {
+                throw new ConflictException(localizedMessageService.get("backend.financial.insufficientBalanceSimple"));
+            }
+            wallet.setBalance(currentBalance.subtract(damageFine));
             walletRepository.save(wallet);
 
             transaction.setAmount(damageFine.abs().negate());

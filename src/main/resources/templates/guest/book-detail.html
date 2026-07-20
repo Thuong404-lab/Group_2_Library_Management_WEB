@@ -114,7 +114,8 @@
                     </a>
 
                     <!-- Reserve Button -->
-                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
+                    <form sec:authorize="hasRole('MEMBER')"
+                          th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
                           class="app-confirm-form"
                           data-confirm-title="Xác nhận đặt trước sách"
                           data-confirm-subject-label="Sách đặt trước"
@@ -128,7 +129,7 @@
                     </form>
 
                     <!-- Request Loan Button -->
-                    <form th:action="@{/member/borrow/create}" method="get">
+                    <form sec:authorize="hasRole('MEMBER')" th:action="@{/member/borrow/create}" method="get">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
                         <button type="submit" class="book-detail-button book-detail-button--primary"
                                 th:disabled="${book.status != 'Active' or availableCount == 0 or (isInactiveMember != null and isInactiveMember)}"
