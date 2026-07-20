@@ -4,6 +4,7 @@ import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
 import com.lms.exception.ValidationException;
 import com.lms.enums.ActionType;
+import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.SystemLogRepository;
@@ -38,17 +39,20 @@ public class SystemServiceImpl implements SystemService {
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final AuditLogService auditLogService;
+    private final MembershipTierRepository membershipTierRepository;
 
     public SystemServiceImpl(SystemSettingRepository systemSettingRepository,
                              SystemLogRepository systemLogRepository,
                              MemberAccountRepository memberAccountRepository,
                              StaffAccountRepository staffAccountRepository,
-                             AuditLogService auditLogService) {
+                             AuditLogService auditLogService,
+                             MembershipTierRepository membershipTierRepository) {
         this.systemSettingRepository = systemSettingRepository;
         this.systemLogRepository = systemLogRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.auditLogService = auditLogService;
+        this.membershipTierRepository = membershipTierRepository;
     }
 
     @Override
@@ -151,7 +155,7 @@ public class SystemServiceImpl implements SystemService {
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
         validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
-        validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
+        validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLockLimitNonNegative"));
         validatePercentage(bookDisposalConditionThreshold, messages.get("backend.settings.disposalThresholdRange"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
@@ -171,10 +175,11 @@ public class SystemServiceImpl implements SystemService {
                 String.valueOf(renewalRejectionCooldownHours),
                 messages.get("backend.settings.description.renewalCooldown"));
 
-
-        saveOrUpdateSetting("Max_Books_Per_Member",
-                String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
-                messages.get("backend.settings.description.maxBooks"));
+        if (tierBorrowLimits != null && !tierBorrowLimits.isEmpty()) {
+            saveOrUpdateSetting("Max_Books_Per_Member",
+                    String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
+                    messages.get("backend.settings.description.maxBooks"));
+        }
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
@@ -207,6 +212,27 @@ public class SystemServiceImpl implements SystemService {
         auditLogService.log(
                 ActionType.UPDATE_SETTINGS,
                 messages.get("backend.settings.audit.updated"));
+    }
+
+    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits, Map<Integer, BigDecimal> tierSpendingConditions) {
+        if (tierBorrowLimits != null) {
+            for (Map.Entry<Integer, Integer> entry : tierBorrowLimits.entrySet()) {
+                Integer tierId = entry.getKey();
+                Integer borrowLimit = entry.getValue();
+                validateZeroOrPositive(borrowLimit, messages.get("backend.settings.maxBooksNonNegative"));
+                if (tierId != null && membershipTierRepository != null) {
+                    membershipTierRepository.findById(tierId).ifPresent(tier -> {
+                        tier.setBorrowLimit(borrowLimit);
+                        if (tierSpendingConditions != null && tierSpendingConditions.containsKey(tierId)) {
+                            BigDecimal condition = tierSpendingConditions.get(tierId);
+                            validateZeroOrPositive(condition, messages.get("backend.settings.spendingConditionNonNegative"));
+                            tier.setCondition(condition);
+                        }
+                        membershipTierRepository.save(tier);
+                    });
+                }
+            }
+        }
     }
 
     private void saveOrUpdateSetting(String key, String value, String description) {

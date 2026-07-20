@@ -40,6 +40,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public LocaleResolver localeResolver() {
         CookieLocaleResolver resolver = new CookieLocaleResolver(LOCALE_COOKIE_NAME);
         resolver.setDefaultLocale(Locale.ENGLISH);
+        resolver.setCookiePath("/");
         resolver.setCookieMaxAge(Duration.ofDays(365));
         return resolver;
     }
@@ -53,6 +54,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor());
         registry.addInterceptor(inactiveMemberInterceptor).addPathPatterns("/member/**", "/api/**");
         if (memberLocalePreferenceInterceptor != null) {
             registry.addInterceptor(memberLocalePreferenceInterceptor);
