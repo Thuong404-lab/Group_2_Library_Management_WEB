@@ -15,13 +15,14 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/layouts/admin-base.css}" />
     <link rel="stylesheet" th:href="@{/css/components/header.css}" />
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}" />
     <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
     <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
     <link rel="stylesheet" th:href="@{/css/utilities.css}" />
     <th:block layout:fragment="styles"></th:block>
+    <!-- The Admin design system is authoritative over legacy page styles. -->
+    <link rel="stylesheet" th:href="@{/css/layouts/admin-base.css}" />
   </head>
 
 <body class="app-shell app-shell--staff staff-shell staff-shell--admin">
@@ -73,10 +74,43 @@
             </li>
 
             <li class="menu-item">
-                <a th:href="@{/admin/books}" class="menu-link" th:classappend="${activeMenu == 'books'} ? 'active'">
-                    <i class="bi bi-book-half menu-icon"></i>
-                    <span class="menu-text" th:text="#{admin.nav.books}">Books</span>
+                <a href="#adminBookManagementMenu" data-bs-toggle="collapse" class="menu-link"
+                   th:classappend="${activeMenu == 'books'} ? 'active'"
+                   th:aria-expanded="${activeMenu == 'books'}"
+                   aria-controls="adminBookManagementMenu">
+                    <span class="d-flex align-items-center">
+                        <i class="bi bi-book-half menu-icon"></i>
+                        <span class="menu-text" th:text="#{librarian.inventory.booksManagement}">Book Management</span>
+                    </span>
+                    <i class="bi bi-chevron-down ms-auto menu-text u-font-size-0-75rem-8b511f07" aria-hidden="true"></i>
                 </a>
+                <ul class="collapse list-unstyled mb-0" id="adminBookManagementMenu"
+                    th:classappend="${activeMenu == 'books'} ? ' show'">
+                    <li class="menu-item my-1">
+                        <a th:href="@{/admin/books(subsection='inventory')}" class="menu-link py-2"
+                           th:classappend="${activeMenu == 'books' and (param.subsection == null or param.subsection[0] == 'inventory') and param.tab == null} ? 'active-submenu'">
+                            <span class="menu-text" th:text="#{librarian.inventory.heading}">Book Title Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/admin/books(subsection='inventory', tab='categories')}" class="menu-link py-2"
+                           th:classappend="${activeMenu == 'books' and param.tab != null and param.tab[0] == 'categories'} ? 'active-submenu'">
+                            <span class="menu-text" th:text="#{librarian.inventory.tab.categories}">Category &amp; Genre Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/admin/books(subsection='inventory', tab='audit')}" class="menu-link py-2"
+                           th:classappend="${activeMenu == 'books' and param.tab != null and param.tab[0] == 'audit'} ? 'active-submenu'">
+                            <span class="menu-text" th:text="#{librarian.inventory.tab.audit}">BookItem Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/admin/books(subsection='storage')}" class="menu-link py-2"
+                           th:classappend="${activeMenu == 'books' and param.subsection != null and param.subsection[0] == 'storage'} ? 'active-submenu'">
+                            <span class="menu-text" th:text="#{librarian.storage.management}">Bookshelf Management</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
             <li class="menu-item">
@@ -105,11 +139,11 @@
                 <a href="#settingsMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'settings' || activeMenu == 'tiers'} ? 'active'"
                    >
-                    <span>
+                    <span class="d-flex align-items-center">
                         <i class="bi bi-gear-fill menu-icon"></i>
                         <span class="menu-text" th:text="#{admin.nav.settings}">Settings</span>
                     </span>
-                    <i class="bi bi-chevron-down menu-text u-font-size-0-75rem-8b511f07"></i>
+                    <i class="bi bi-chevron-down ms-auto menu-text u-font-size-0-75rem-8b511f07"></i>
                 </a>
                 <ul class="collapse list-unstyled mb-0" id="settingsMenu"
                     th:classappend="${activeMenu == 'settings' || activeMenu == 'tiers'} ? 'show'">

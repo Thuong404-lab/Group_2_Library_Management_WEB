@@ -109,6 +109,35 @@ public class InventoryController extends LocalizedControllerSupport {
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
     }
 
+    @PostMapping("/copies/add/{id}")
+    public String addBookCopies(@PathVariable Integer id,
+            @RequestParam Integer quantity,
+            @RequestParam Integer shelfId,
+            @RequestParam(required = false) String bookCondition,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.addBookCopies(id, quantity, shelfId, bookCondition);
+            redirectAttributes.addFlashAttribute("success", message("backend.inventory.copiesAdded", quantity));
+        } catch (ApplicationException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
+    }
+
+    @PostMapping("/copies/delete/{id}")
+    public String deleteBookCopies(@PathVariable Integer id,
+            @RequestParam(required = false) java.util.List<Integer> itemIds,
+            RedirectAttributes redirectAttributes) {
+        try {
+            int deletedCount = itemIds == null ? 0 : new java.util.HashSet<>(itemIds).size();
+            inventoryService.deleteBookCopies(id, itemIds);
+            redirectAttributes.addFlashAttribute("success", message("backend.inventory.copiesDeleted", deletedCount));
+        } catch (ApplicationException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
+    }
+
     @GetMapping("/categories")
     public String manageCategories() {
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
