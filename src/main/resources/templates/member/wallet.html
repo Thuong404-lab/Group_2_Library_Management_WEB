@@ -5,132 +5,161 @@
 <head>
     <!-- UC-8.1 and UC-8.4 UI maintained by Pham Kien Quoc. -->
     <title th:text="#{member.wallet.title}">Wallet &amp; Transaction History</title>
-    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/member/wallet.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
-  </head>
+</head>
 
 <body>
-    <div layout:fragment="content" class="container finance-page wallet-page">
-        <div class="finance-header">
-            <h2 class="page-title mb-0" th:text="#{member.wallet.heading}">Wallet &amp; Fines</h2>
-        </div>
+<main layout:fragment="content" class="member-notifications-page member-palette-page">
+    <div class="member-notifications-container">
+        <header class="member-notifications-header member-dashboard-hero notifications-hero">
+            <div class="notifications-hero-copy">
+                <span class="member-notifications-eyebrow" th:text="#{member.wallet.status}">Wallet Status</span>
+                <h1 th:text="#{member.wallet.heading}">Wallet &amp; Fines</h1>
+                <p th:text="#{member.wallet.description}">Used to pay borrowing fees, fines, and other library transactions.</p>
+                <div class="member-notifications-summary">
+                    <span>
+                        <strong th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
+                        <span th:text="#{currency.vnd}">VND</span>
+                    </span>
+                    <span th:if="${totalUnpaidFines != null and totalUnpaidFines > 0}" style="color: var(--member-color-on-dark); border-color: rgba(255,255,255,.3); background: var(--member-color-danger-ink);">
+                        <strong th:text="${#numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT')}">0</strong> <span th:text="#{currency.vnd}">VND</span>
+                        <span style="margin-left: 4px;" th:text="#{member.wallet.unpaidFines}">Unpaid</span>
+                    </span>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-2 text-end">
+                <button type="button" class="notifications-hero-action member-ui-button member-ui-button--inverse"
+                        data-toggle="modal" data-target="#memberTopUpModal">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i><span th:text="#{wallet.topUp}">Top Up</span>
+                </button>
+                <a th:href="@{/member/borrow/reservations}" class="notifications-hero-action member-ui-button member-ui-button--inverse">
+                    <i class="bi bi-arrow-return-left" aria-hidden="true"></i><span th:text="#{transaction.type.refund}">Refund</span>
+                </a>
+            </div>
+        </header>
 
-        <div class="finance-alert finance-alert--success" role="alert" th:if="${success}" th:text="${success}"></div>
-        <div class="finance-alert finance-alert--danger" role="alert" th:if="${error}" th:text="${error}"></div>
+        <div class="member-notifications-alert is-success" role="alert" th:if="${success}" th:text="${success}"></div>
+        <div class="member-notifications-alert is-error" role="alert" th:if="${error}" th:text="${error}"></div>
 
-        <div class="row g-4 mb-4 wallet-overview-row">
-            <div class="col-lg-5">
-                <div class="card balance-card h-100">
-                    <div class="card-body p-4 d-flex flex-column justify-content-between">
-                        <div class="d-flex justify-content-between align-items-start mb-4">
-                            <div>
-                                <div class="balance-label opacity-75 mb-1" th:text="#{member.wallet.currentBalance}">Current Balance</div>
-                                <h1 class="balance-value mb-0">
-                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span class="balance-unit" th:text="#{currency.vnd}">VND</span>
-                                </h1>
-                            </div>
-                            <i class="bi bi-wallet2 display-6 opacity-50"></i>
-                        </div>
-                        <div class="wallet-balance-info mb-4">
-                            <div>
-                                <div class="small mb-1" th:text="#{member.wallet.status}">Wallet Status</div>
-                                <div class="fw-semibold">
-                                    <span class="wallet-status-dot" aria-hidden="true"></span><span th:text="#{member.wallet.active}">Active</span>
-                                </div>
-                            </div>
-                            <div class="wallet-balance-note">
-                                <span th:text="#{member.wallet.description}">Used to pay borrowing fees, fines, and other library transactions.</span>
-                            </div>
-                        </div>
-                        <div class="balance-actions">
-                            <button type="button" class="btn app-primary-action"
-                                    data-toggle="modal" data-target="#memberTopUpModal">
-                                <i class="bi bi-plus-circle me-1"></i> <span th:text="#{wallet.topUp}">Top Up</span>
-                            </button>
-                            <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn btn-wallet-light px-4">
-                                <i class="bi bi-clock-history me-1"></i> <span th:text="#{member.wallet.topUpHistory}">Top-up History</span>
-                            </a>
-                            <a th:href="@{/member/borrow/reservations}" class="btn btn-wallet-light px-4">
-                                <span th:text="#{transaction.type.refund}">Refund</span>
-                            </a>
-                            <a th:href="@{/member/financial/transactions}" class="btn btn-wallet-outline px-4">
-                                <span th:text="#{member.wallet.allTransactions}">All Transactions</span>
-                            </a>
-                        </div>
-                    </div>
+        <section class="member-notifications-card member-reference-list mb-4">
+            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
+                <div class="member-notification-toolbar-copy">
+                    <h2 th:text="#{member.wallet.unpaidFines}">Unpaid Fines</h2>
+                </div>
+                <div class="member-notification-type-filter" th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}">
+                    <button type="button" class="member-ui-button member-ui-button--primary"
+                            data-toggle="modal" data-target="#finePaymentModal">
+                        <span th:text="#{member.wallet.payAll}">Pay All</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="col-lg-7">
-                <div class="card classic-card fine-summary h-100"
-                     th:classappend="${unpaidFines == null or #lists.isEmpty(unpaidFines)} ? ' fine-summary-clear' : ''">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                            <div>
-                                <h5 class="section-title mb-1">
-                                    <span th:text="#{member.wallet.unpaidFines}">Unpaid Fines</span>
-                                </h5>
-                                <div class="text-muted small" th:text="#{member.wallet.unpaidFinesDescription}">Overdue or damage fines awaiting payment.</div>
-                            </div>
-                            <div class="text-end">
-                                <div class="small text-muted" th:text="#{member.wallet.totalFines}">Total Fines</div>
-                                <div class="fine-total-amount amount-negative">
-                                    <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span th:text="#{currency.vnd}">VND</span>
-                                </div>
-                                <button th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}"
-                                        type="button" class="btn btn-pay-fine btn-sm px-3 mt-2"
-                                        data-toggle="modal" data-target="#finePaymentModal">
-                                    <span th:text="#{member.wallet.payAll}">Pay All</span>
-                                </button>
-                            </div>
+            <div class="member-notifications-list member-reference-list__body" th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}">
+                <article class="member-notification-row member-reference-list__item" th:each="fine : ${unpaidFines}">
+                    <span class="member-notification-row-icon" aria-hidden="true" style="color: var(--member-color-danger-ink); background: var(--member-color-danger-soft);"><i class="bi bi-exclamation-circle"></i></span>
+                    <div class="member-notification-row-content">
+                        <div class="member-notification-row-meta">
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">Overdue Fine</span>
+                            </span>
+                            <span class="member-notification-unread-label member-reference-pill" style="color: var(--member-color-danger-ink); background: var(--member-color-canvas); border-color: var(--member-color-danger-soft);">
+                                <span th:text="#{payment.status.unpaid}">Unpaid</span>
+                            </span>
                         </div>
-
-                        <div class="fine-list">
-                            <div th:if="${unpaidFines == null or #lists.isEmpty(unpaidFines)}" class="fine-empty-state">
-                                <div>
-                                    <div class="fine-empty-icon" aria-hidden="true">&#10003;</div>
-                                    <div class="fine-empty-title" th:text="#{member.wallet.noFines}">You have no outstanding fines</div>
-                                    <div class="fine-empty-note">
-                                        <span th:text="#{member.wallet.noFinesDescription}">Your account has no overdue or book damage fees to pay.</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div th:each="fine : ${unpaidFines}"
-                                 class="fine-item d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 mb-3">
-                                <div>
-                                    <h6 class="fine-item-title"
-                                        th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">
-                                        Overdue Fine
-                                    </h6>
-                                    <small class="text-muted"
-                                           th:text="${fine.transactionDate != null ? #messages.msg('member.wallet.incurredAt', #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm')) : #messages.msg('member.wallet.unknownDate')}">
-                                        Incurred at
-                                    </small>
-                                </div>
-                                <div class="text-end">
-                                    <h5 class="amount-negative fine-item-amount-display">
-                                        <span th:text="${fine.amount != null ? #numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                        <span th:text="#{currency.vnd}">VND</span>
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
+                        <h3 style="color: var(--member-color-danger-ink);">
+                            <strong th:text="${fine.amount != null ? #numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</strong> <span th:text="#{currency.vnd}">VND</span>
+                        </h3>
                     </div>
-                </div>
+                    <time class="member-notification-row-time text-end"
+                          th:text="${fine.transactionDate != null ? #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</time>
+                </article>
             </div>
-        </div>
+            
+            <div class="member-notifications-empty member-notifications-empty--compact" th:if="${unpaidFines == null or #lists.isEmpty(unpaidFines)}">
+                <span><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                <h2 th:text="#{member.wallet.noFines}">You have no outstanding fines</h2>
+                <p th:text="#{member.wallet.noFinesDescription}">Your account has no overdue or book damage fees to pay.</p>
+            </div>
+        </section>
 
-        <div class="modal fade" id="finePaymentModal" tabindex="-1" aria-labelledby="finePaymentModalLabel" aria-hidden="true">
+        <section class="member-notifications-card member-reference-list">
+            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
+                <div class="member-notification-toolbar-copy">
+                    <h2 th:text="#{transaction.history}">Transaction History</h2>
+                </div>
+                <form method="get" th:action="@{/member/financial/transactions}" class="member-notification-type-filter d-flex m-0" data-auto-filter-form>
+                    <select name="type" class="form-select m-0" th:aria-label="#{transaction.filterType}" data-auto-submit>
+                        <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{common.all}">All</option>
+                        <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
+                        <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}" th:text="#{transaction.type.borrowFee}">Borrowing Fee</option>
+                        <option value="RENEWAL_FEE" th:selected="${selectedType == 'RENEWAL_FEE'}" th:text="#{transaction.type.renewalFee}">Renewal Fee</option>
+                        <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}" th:text="#{transaction.type.deposit}">Deposit</option>
+                        <option value="FINE" th:selected="${selectedType == 'FINE'}" th:text="#{transaction.type.fine}">Fine</option>
+                        <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage Fee</option>
+                        <option value="REFUND" th:selected="${selectedType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</option>
+                    </select>
+                    <button type="submit" class="member-ui-button member-ui-button--secondary d-none d-md-block" th:text="#{common.filter}">Filter</button>
+                </form>
+            </div>
+
+            <div class="member-notifications-empty member-notifications-empty--compact" th:if="${historyRows == null or #lists.isEmpty(historyRows)}">
+                <span><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                <p th:text="#{transaction.empty}">No transactions found.</p>
+            </div>
+
+            <div class="member-notifications-list member-reference-list__body" th:if="${historyRows != null and !#lists.isEmpty(historyRows)}">
+                <article class="member-notification-row member-reference-list__item" th:each="row : ${historyRows}">
+                    <span class="member-notification-row-icon" aria-hidden="true" 
+                          th:style="${row.amount != null and row.amount.signum() >= 0 ? 'color: var(--member-color-success-ink); background: var(--member-color-success-soft);' : 'color: var(--member-color-danger-ink); background: var(--member-color-danger-soft);'}">
+                        <i class="bi bi-currency-exchange" th:if="${row.typeLabel == 'transaction.type.deposit' or row.typeLabel == 'transaction.type.refund'}"></i>
+                        <i class="bi bi-wallet-fill" th:if="${row.typeLabel == 'transaction.type.topUp'}"></i>
+                        <i class="bi bi-receipt" th:if="${row.typeLabel == 'transaction.type.borrowFee' or row.typeLabel == 'transaction.type.renewalFee'}"></i>
+                        <i class="bi bi-exclamation-octagon" th:if="${row.typeLabel == 'transaction.type.fine' or row.typeLabel == 'transaction.type.damageFee'}"></i>
+                    </span>
+                    <div class="member-notification-row-content">
+                        <div class="member-notification-row-meta">
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="${row.code}">#TXN-1</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="${#messages.msg(row.typeLabel)}">Transaction Type</span>
+                            </span>
+                            <span class="member-notification-unread-label member-reference-pill"
+                                  th:style="${row.completed ? 'color: var(--member-color-success-ink); background: var(--member-color-canvas); border-color: var(--member-color-success-soft);' : 'color: var(--member-color-warning-ink); background: var(--member-color-canvas); border-color: var(--member-color-warning-soft);'}">
+                                <span th:text="${#messages.msg(row.statusLabel)}">Completed</span>
+                            </span>
+                        </div>
+                        <h3 th:style="${row.amount != null and row.amount.signum() >= 0 ? 'color: var(--member-color-success-ink);' : 'color: var(--member-color-danger-ink);'}">
+                            <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
+                            <strong th:text="${row.amount != null ? #numbers.formatDecimal(row.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
+                            <span th:text="#{currency.vnd}">VND</span>
+                        </h3>
+                    </div>
+                    <time class="member-notification-row-time text-end"
+                          th:text="${row.occurredAt != null ? #temporals.format(row.occurredAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026 08:00</time>
+                </article>
+            </div>
+
+            <nav class="member-notification-pagination" th:if="${transactionPage != null && transactionPage.totalPages > 1}"
+                 th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))},
+                          endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
+                <a class="member-page-control" th:classappend="${transactionPage.first} ? ' is-disabled'" th:href="@{/member/financial/transactions(page=0,type=${selectedType})}" th:aria-label="#{pagination.first}"><i class="bi bi-chevron-double-left" aria-hidden="true"></i></a>
+                <a class="member-page-control" th:classappend="${transactionPage.first} ? ' is-disabled'" th:href="@{/member/financial/transactions(page=${transactionPage.number-1},type=${selectedType})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+                <span th:text="${(transactionPage.number + 1) + ' / ' + transactionPage.totalPages}">1 / 1</span>
+                <a class="member-page-control" th:classappend="${transactionPage.last} ? ' is-disabled'" th:href="@{/member/financial/transactions(page=${transactionPage.number+1},type=${selectedType})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                <a class="member-page-control" th:classappend="${transactionPage.last} ? ' is-disabled'" th:href="@{/member/financial/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}" th:aria-label="#{pagination.last}"><i class="bi bi-chevron-double-right" aria-hidden="true"></i></a>
+            </nav>
+        </section>
+
+        <div class="modal fade member-standard-dialog" id="finePaymentModal" tabindex="-1" aria-labelledby="finePaymentModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <div>
-                            <h5 class="modal-title" id="finePaymentModalLabel" th:text="#{member.wallet.finePayment}">Fine Payment</h5>
-                            <div class="small opacity-75" th:text="#{member.wallet.finePaymentDescription}">Review the details and select a payment method</div>
+                            <span class="member-page-eyebrow" th:text="#{member.wallet.unpaidFines}">UNPAID FINES</span>
+                            <h2 class="modal-title" id="finePaymentModalLabel" th:text="#{member.wallet.finePayment}">Fine Payment</h2>
                         </div>
                     </div>
                     <form method="post" id="finePaymentForm"
@@ -166,57 +195,57 @@
                             </div>
 
                             <div class="fine-payment-side">
-                            <h6 class="fine-payment-summary-title" th:text="#{member.wallet.paymentSummary}">Payment Summary</h6>
-                            <div class="fine-payment-row">
-                                <span class="text-muted" th:text="#{member.wallet.fineCount}">Number of Fines</span>
-                                <span class="fine-payment-value">
-                                    <span th:text="#{member.wallet.fineCountValue(${unpaidFines != null ? #lists.size(unpaidFines) : 0})}">0 fines</span>
-                                </span>
-                            </div>
-                            <div class="fine-payment-row">
-                                <span class="text-muted" th:text="#{member.wallet.balance}">Wallet Balance</span>
-                                <span class="fine-payment-value">
-                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                                </span>
-                            </div>
-                            <div class="fine-payment-row mb-4">
-                                <span class="text-muted" th:text="#{member.wallet.totalPayment}">Total Payment</span>
-                                <span class="fine-payment-value amount-negative">
-                                    <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                                </span>
-                            </div>
-                            <label class="form-label" th:text="#{payment.method}">Payment Method</label>
-                            <div class="fine-payment-method mb-2">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="radio" name="finePayMethod" id="finePayWallet" value="wallet" checked>
-                                    <label class="form-check-label" for="finePayWallet" th:text="#{payment.method.wallet}">Member Wallet</label>
+                                <h6 class="fine-payment-summary-title" th:text="#{member.wallet.paymentSummary}">Payment Summary</h6>
+                                <div class="fine-payment-row">
+                                    <span class="text-muted" th:text="#{member.wallet.fineCount}">Number of Fines</span>
+                                    <span class="fine-payment-value">
+                                        <span th:text="#{member.wallet.fineCountValue(${unpaidFines != null ? #lists.size(unpaidFines) : 0})}">0 fines</span>
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="fine-payment-method">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="radio" name="finePayMethod" id="finePayPayOs" value="payos">
-                                    <label class="form-check-label" for="finePayPayOs" th:text="#{payment.method.kqpay}">KQPay Transfer</label>
+                                <div class="fine-payment-row">
+                                    <span class="text-muted" th:text="#{member.wallet.balance}">Wallet Balance</span>
+                                    <span class="fine-payment-value">
+                                        <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
+                                    </span>
                                 </div>
-                            </div>
+                                <div class="fine-payment-row mb-4">
+                                    <span class="text-muted" th:text="#{member.wallet.totalPayment}">Total Payment</span>
+                                    <span class="fine-payment-value amount-negative">
+                                        <span th:text="${totalUnpaidFines != null ? #numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
+                                    </span>
+                                </div>
+                                <label class="member-form-label" th:text="#{payment.method}">Payment Method</label>
+                                <div class="fine-payment-method mb-2">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" name="finePayMethod" id="finePayWallet" value="wallet" checked>
+                                        <label class="form-check-label" for="finePayWallet" th:text="#{payment.method.wallet}">Member Wallet</label>
+                                    </div>
+                                </div>
+                                <div class="fine-payment-method">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" name="finePayMethod" id="finePayPayOs" value="payos">
+                                        <label class="form-check-label" for="finePayPayOs" th:text="#{payment.method.kqpay}">KQPay Transfer</label>
+                                    </div>
+                                </div>
                             </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn app-secondary-action" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                            <button type="submit" class="btn btn-pay-fine" th:text="#{payment.confirm}">Confirm Payment</button>
+                            <button type="button" class="member-secondary-action member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                            <button type="submit" class="member-primary-action member-ui-button member-ui-button--primary" th:text="#{payment.confirm}">Confirm Payment</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="modal fade" id="memberTopUpModal" tabindex="-1" aria-labelledby="memberTopUpModalLabel" aria-hidden="true">
+        <div class="modal fade member-standard-dialog" id="memberTopUpModal" tabindex="-1" aria-labelledby="memberTopUpModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <div>
-                            <h5 class="modal-title" id="memberTopUpModalLabel" th:text="#{member.wallet.topUpTitle}">Top Up Wallet</h5>
-                            <div class="small opacity-75" th:text="#{member.wallet.topUpQr}">Pay using a KQPay QR code</div>
+                            <span class="member-page-eyebrow" th:text="#{member.wallet.status}">WALLET STATUS</span>
+                            <h2 class="modal-title" id="memberTopUpModalLabel" th:text="#{member.wallet.topUpTitle}">Top Up Wallet</h2>
                         </div>
                     </div>
                     <form method="post" th:action="@{/member/payments/payos/top-up}" id="memberTopUpForm">
@@ -227,112 +256,37 @@
                                     <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
                                 </strong>
                             </div>
-                            <label for="memberTopUpAmount" class="form-label" th:text="#{member.wallet.topUpAmount}">Top-up Amount</label>
-                            <div class="input-group finance-amount-group mb-2">
-                                <input id="memberTopUpAmount" name="amount" type="text" inputmode="numeric"
-                                       data-vnd-input data-min-amount="10000" data-max-amount="500000000"
-                                       th:data-min-message="#{validation.money.minimum('{0}')}"
-                                       th:data-max-message="#{validation.money.maximum('{0}')}"
-                                       required class="form-control" th:placeholder="#{member.wallet.amountPlaceholder}" autocomplete="off" autofocus/>
-                                <span class="input-group-text finance-currency-unit" th:text="#{currency.vnd}">VND</span>
+                            <div class="member-form-field">
+                                <label for="memberTopUpAmount" th:text="#{member.wallet.topUpAmount}">Top-up Amount</label>
+                                <div class="input-group">
+                                    <input id="memberTopUpAmount" name="amount" type="text" inputmode="numeric"
+                                           data-vnd-input data-min-amount="10000" data-max-amount="500000000"
+                                           th:data-min-message="#{validation.money.minimum('{0}')}"
+                                           th:data-max-message="#{validation.money.maximum('{0}')}"
+                                           required class="form-control" th:placeholder="#{member.wallet.amountPlaceholder}" autocomplete="off" autofocus/>
+                                    <span class="input-group-text" th:text="#{currency.vnd}">VND</span>
+                                </div>
+                                <div class="member-field-support mt-2">
+                                    <span th:text="#{member.wallet.minimumAmount}">Minimum amount: 10,000 VND.</span>
+                                </div>
                             </div>
-                            <div class="form-text mb-3" th:text="#{member.wallet.minimumAmount}">Minimum amount: 10,000 VND.</div>
-                            <div class="d-flex flex-wrap gap-2" id="memberTopUpQuickAmounts">
-                                <button type="button" class="btn btn-outline-secondary btn-sm mr-2 mb-2" data-amount="50000">50.000</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm mr-2 mb-2" data-amount="100000">100.000</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm mr-2 mb-2" data-amount="200000">200.000</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm mb-2" data-amount="500000">500.000</button>
+                            <div class="d-flex flex-wrap gap-2 mt-3" id="memberTopUpQuickAmounts">
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="50000">50.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="100000">100.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="200000">200.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="500000">500.000</button>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn app-secondary-action" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                            <button type="submit" class="btn app-primary-action" th:text="#{payment.pay}">Pay</button>
+                            <button type="button" class="member-secondary-action member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                            <button type="submit" class="member-primary-action member-ui-button member-ui-button--primary" th:text="#{payment.pay}">Pay</button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="card classic-card mt-4">
-            <div class="card-header classic-card-header">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <h5 class="section-title mb-0" th:text="#{transaction.history}">Transaction History</h5>
-                    <form method="get" th:action="@{/member/financial/transactions}" class="transaction-filter d-flex" data-auto-filter-form>
-                        <select name="type" class="form-select" th:aria-label="#{transaction.filterType}" data-auto-submit>
-                            <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{common.all}">All</option>
-                            <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
-                            <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}" th:text="#{transaction.type.borrowFee}">Borrowing Fee</option>
-                            <option value="RENEWAL_FEE" th:selected="${selectedType == 'RENEWAL_FEE'}" th:text="#{transaction.type.renewalFee}">Renewal Fee</option>
-                            <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}" th:text="#{transaction.type.deposit}">Deposit</option>
-                            <option value="FINE" th:selected="${selectedType == 'FINE'}" th:text="#{transaction.type.fine}">Fine</option>
-                            <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage Fee</option>
-                            <option value="REFUND" th:selected="${selectedType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</option>
-                        </select>
-                        <button type="submit" class="btn btn-classic px-4" th:text="#{common.filter}">Filter</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card-body">
-                <div th:if="${historyRows == null or #lists.isEmpty(historyRows)}"
-                     class="text-center text-muted py-5">
-                    <span th:text="#{transaction.empty}">No transactions found.</span>
-                </div>
-
-                <div class="table-responsive"
-                     th:if="${historyRows != null and !#lists.isEmpty(historyRows)}">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th th:text="#{transaction.code}">Transaction ID</th>
-                                <th th:text="#{common.dateTime}">Date &amp; Time</th>
-                                <th th:text="#{transaction.type}">Transaction Type</th>
-                                <th th:text="#{transaction.amount}">Amount</th>
-                                <th th:text="#{common.status}">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="row : ${historyRows}">
-                                <td>
-                                    <span class="transaction-code" th:text="${row.code}">#TXN-1</span>
-                                </td>
-                                <td th:text="${row.occurredAt != null ? #temporals.format(row.occurredAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">
-                                    01/01/2026 08:00
-                                </td>
-                                <td th:text="${#messages.msg(row.typeLabel)}">Transaction Type</td>
-                                <td class="wallet-transaction-amount"
-                                    th:classappend="${row.amount != null and row.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
-                                    <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
-                                    <span th:text="${row.amount != null ? #numbers.formatDecimal(row.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                    <span th:text="#{currency.vnd}">VND</span>
-                                </td>
-                                <td>
-                                    <span class="transaction-status"
-                                          th:classappend="${row.completed} ? ' status-completed' : ' status-pending'"
-                                      th:text="${#messages.msg(row.statusLabel)}">Completed</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="app-pagination-region" th:if="${transactionPage != null && transactionPage.totalPages > 1}"
-                     th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))}">
-                    <nav th:aria-label="#{transaction.pagination}" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
-                        <ul class="pagination app-pagination">
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=0,type=${selectedType})}" th:text="#{pagination.first}">First</a></li>
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.number-1},type=${selectedType})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left"></i></a></li>
-                            <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
-                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/member/financial/transactions(page=${i},type=${selectedType})}" th:text="${i+1}">1</a></li>
-                            <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">…</span></li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.number+1},type=${selectedType})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right"></i></a></li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}" th:text="#{pagination.last}">Last</a></li>
-                        </ul>
-                    </nav>
                 </div>
             </div>
         </div>
     </div>
+    
     <th:block layout:fragment="scripts">
         <script th:src="@{/js/payos-money-input.js}"></script>
         <script>
@@ -361,5 +315,6 @@
             });
         </script>
     </th:block>
+</main>
 </body>
 </html>

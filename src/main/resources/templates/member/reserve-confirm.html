@@ -4,101 +4,103 @@
 <head>
     <!-- UC-8.3 deposit UI maintained by Pham Kien Quoc. -->
     <title th:text="#{reservation.confirmPage.title}">Deposit Payment</title>
-    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/member/reserve-confirm.css}" />
-  </head>
+</head>
 <body>
-<div layout:fragment="content" class="container finance-page reserve-confirm-page">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="finance-header">
-                <div>
-                    <h2 class="finance-title">
-                <span th:text="#{reservation.confirmPage.heading}">Book Reservation Deposit</span>
-                    </h2>
-            <div class="finance-description" th:text="#{reservation.confirmPage.description}">Review the details and confirm payment from your wallet.</div>
-                </div>
-            <a th:href="@{/}" class="btn app-secondary-action" th:text="#{common.back}">Back</a>
+<main layout:fragment="content" class="member-notifications-page member-palette-page">
+    <div class="member-notifications-container reserve-container">
+        <header class="member-notifications-header member-dashboard-hero notifications-hero">
+            <div class="notifications-hero-copy">
+                <span class="member-notifications-eyebrow" th:text="#{reservation.book}">RESERVATION</span>
+                <h1 th:text="#{reservation.confirmPage.heading}">Book Reservation Deposit</h1>
+                <p th:text="#{reservation.confirmPage.description}">Review the details and confirm payment from your wallet.</p>
             </div>
+            <a th:href="@{/}" class="member-notifications-back notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.back}">Back</span></a>
+        </header>
 
-            <div class="alert alert-warning d-flex gap-2" th:if="${!canPayDeposit}">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <div>
+        <div class="member-notifications-alert is-error" role="alert" th:if="${!canPayDeposit}">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             <span th:text="#{reservation.confirmPage.insufficientBalance}">Your wallet balance is insufficient.</span>
-                </div>
-            </div>
+        </div>
 
-            <section class="finance-card reserve-confirm-card">
-                <div class="card-header">
-                    <h2 class="reserve-section-title" th:text="#{reservation.confirmPage.bookInfo}">Book Information</h2>
+        <div class="reserve-content-grid">
+            <section class="member-notifications-card member-reference-list">
+                <div class="member-notification-toolbar member-reference-list__header">
+                    <div class="member-notification-toolbar-copy">
+                        <h2 th:text="#{reservation.confirmPage.bookInfo}">Book Information</h2>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="member-notifications-list member-reference-list__body p-4">
                     <div class="reserve-book-summary">
                         <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/120/160'}"
                              th:alt="${book.title}"
-                             class="member-reserve-confirm-img-width-height-fit-02"
-                            >
+                             class="reserve-book-img">
                         <div class="reserve-book-copy">
-                                    <h3 th:text="${book.title}">Book Title</h3>
-                            <div class="reserve-book-meta">
-                                ISBN:
-                                        <span th:text="${book.isbn != null ? book.isbn : #messages.msg('book.isbn.missing')}">ISBN</span>
-                            </div>
-                            <div class="reserve-book-meta">
-                                        <span th:text="#{catalog.genre}">Genre</span>:
-                                        <span th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</span>
-                            </div>
-                            <div>
-                                <span class="status-badge status-completed" th:if="${book.status == 'Active'}" th:text="#{reservation.confirmPage.available}">Available for Reservation</span>
-                                <span class="status-badge" th:unless="${book.status == 'Active'}" th:text="${book.status}">Status</span>
+                            <h3 th:text="${book.title}">Book Title</h3>
+                            <div class="member-notification-row-meta mt-2">
+                                <span class="member-notification-row-type member-reference-pill">
+                                    ISBN: <span th:text="${book.isbn != null ? book.isbn : #messages.msg('book.isbn.missing')}">ISBN</span>
+                                </span>
+                                <span class="member-notification-row-type member-reference-pill">
+                                    <span th:text="#{catalog.genre}">Genre</span>: <span th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</span>
+                                </span>
+                                <span class="member-notification-row-type member-reference-pill" th:if="${book.status == 'Active'}">
+                                    <span th:text="#{reservation.confirmPage.available}">Available for Reservation</span>
+                                </span>
+                                <span class="member-notification-row-type member-reference-pill" th:unless="${book.status == 'Active'}">
+                                    <span th:text="${book.status}">Status</span>
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="finance-card reserve-confirm-card">
-                <div class="card-header">
-                    <h2 class="reserve-section-title" th:text="#{reservation.confirmPage.paymentInfo}">Payment Information</h2>
+            <section class="member-notifications-card member-reference-list mt-4">
+                <div class="member-notification-toolbar member-reference-list__header">
+                    <div class="member-notification-toolbar-copy">
+                        <h2 th:text="#{reservation.confirmPage.paymentInfo}">Payment Information</h2>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="member-notifications-list member-reference-list__body p-4">
                     <div class="deposit-summary-row">
-                            <span class="text-muted" th:text="#{member.wallet.currentBalance}">Current Wallet Balance</span>
+                        <span class="member-notifications-eyebrow mb-0" th:text="#{member.wallet.currentBalance}">Current Wallet Balance</span>
                         <strong class="amount-positive">
                             <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                            VND
+                            <span th:text="#{currency.vnd}">VND</span>
                         </strong>
                     </div>
-                    <div class="deposit-summary-row">
-                            <span class="text-muted" th:text="#{reservation.confirmPage.depositDue}">Deposit Due</span>
+                    <div class="deposit-summary-row mt-3">
+                        <span class="member-notifications-eyebrow mb-0" th:text="#{reservation.confirmPage.depositDue}">Deposit Due</span>
                         <strong class="amount-negative">
-                            -
-                            <span th:text="${depositAmount != null ? #numbers.formatDecimal(depositAmount, 0, 'COMMA', 0, 'POINT') : '50,000'}">50,000</span>
-                            VND
+                            - <span th:text="${depositAmount != null ? #numbers.formatDecimal(depositAmount, 0, 'COMMA', 0, 'POINT') : '50,000'}">50,000</span>
+                            <span th:text="#{currency.vnd}">VND</span>
                         </strong>
                     </div>
+                    <hr class="reserve-divider">
                     <div class="deposit-summary-row is-total">
-                            <span th:text="#{reservation.confirmPage.balanceAfter}">Balance After Payment</span>
+                        <span class="member-notifications-eyebrow mb-0" style="color: var(--member-color-ink);" th:text="#{reservation.confirmPage.balanceAfter}">Balance After Payment</span>
                         <strong th:classappend="${remainingBalance != null && remainingBalance.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
                             <span th:text="${remainingBalance != null ? #numbers.formatDecimal(remainingBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                            VND
+                            <span th:text="#{currency.vnd}">VND</span>
                         </strong>
                     </div>
                 </div>
             </section>
 
-            <div class="reserve-confirm-actions">
-                    <a th:href="@{/}" class="btn app-secondary-action" th:text="#{common.cancel}">Cancel</a>
-                <form method="post" class="app-confirm-form"
+            <div class="reserve-confirm-actions mt-4">
+                <a th:href="@{/}" class="member-ui-button member-ui-button--secondary" th:text="#{common.cancel}">Cancel</a>
+                <form method="post" class="app-confirm-form m-0"
                       th:action="@{/member/borrow/reserve/{id}(id=${book.bookId})}"
-                            th:data-confirm-title="#{reservation.confirmPage.confirmTitle}"
-                            th:data-confirm-subject-label="#{reservation.book}"
+                      th:data-confirm-title="#{reservation.confirmPage.confirmTitle}"
+                      th:data-confirm-subject-label="#{reservation.book}"
                       th:data-confirm-subject="${book.title}"
-                            th:data-confirm-message="#{reservation.deposit.confirmMessage}"
-                            th:data-confirm-action="#{payment.confirm}">
+                      th:data-confirm-message="#{reservation.deposit.confirmMessage}"
+                      th:data-confirm-action="#{payment.confirm}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit"
-                            class="btn app-primary-action"
+                            class="member-ui-button member-ui-button--primary"
                             th:disabled="${!canPayDeposit}">
                         <span th:text="#{reservation.confirmPage.submit}">Reserve and Pay Deposit</span>
                     </button>
@@ -106,6 +108,6 @@
             </div>
         </div>
     </div>
-</div>
+</main>
 </body>
 </html>
