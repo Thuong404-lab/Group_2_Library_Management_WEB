@@ -15,6 +15,7 @@ import java.util.Optional;
 
 @Repository
 public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Integer> {
+    boolean existsByBookItem_BookItemId(Integer bookItemId);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select bd from BorrowDetail bd where bd.borrowDetailId = :id")
     Optional<BorrowDetail> findByIdForUpdate(@Param("id") Integer id);

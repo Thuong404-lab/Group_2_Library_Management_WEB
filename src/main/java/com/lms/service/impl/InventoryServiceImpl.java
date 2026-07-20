@@ -11,6 +11,7 @@ import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.AuthorRepository;
 import com.lms.repository.BookItemRepository;
+import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
@@ -38,11 +39,17 @@ public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_DAMAGED = "Damaged";
     private static final String STATUS_DISPOSED = "Disposed";
     private static final String STATUS_ACTIVE = "Active";
+    private static final Set<String> ALLOWED_BOOK_CONDITIONS = Set.of(
+            "Good / Intact and clean",
+            "Minor damage (Bent corners, worn cover, or small tears)",
+            "Severely damaged (Compensation required)",
+            "Lost book (Compensation required)");
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final BookItemRepository bookItemRepository;
+    private final BorrowDetailRepository borrowDetailRepository;
     private final ShelfRepository shelfRepository;
     private final AuthorRepository authorRepository;
     private final LocalizedMessageService messages;
@@ -51,6 +58,7 @@ public class InventoryServiceImpl implements InventoryService {
             CategoryRepository categoryRepository,
             GenreRepository genreRepository,
             BookItemRepository bookItemRepository,
+            BorrowDetailRepository borrowDetailRepository,
             ShelfRepository shelfRepository,
             AuthorRepository authorRepository,
             LocalizedMessageService messages) {
@@ -58,6 +66,7 @@ public class InventoryServiceImpl implements InventoryService {
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.bookItemRepository = bookItemRepository;
+        this.borrowDetailRepository = borrowDetailRepository;
         this.shelfRepository = shelfRepository;
         this.authorRepository = authorRepository;
         this.messages = messages;
@@ -242,6 +251,69 @@ public class InventoryServiceImpl implements InventoryService {
             item.setShelf(shelf);
             bookItemRepository.save(item);
         }
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void addBookCopies(Integer bookId, Integer quantity, Integer shelfId, String bookCondition) {
+        if (quantity == null || quantity < 1 || quantity > 999) {
+            throw new ValidationException(messages.get("backend.inventory.copyQuantityInvalid"));
+        }
+        if (shelfId == null) {
+            throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
+        }
+        String normalizedCondition = bookCondition == null ? "" : bookCondition.trim();
+        if (!ALLOWED_BOOK_CONDITIONS.contains(normalizedCondition)) {
+            throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
+        }
+
+        Book book = findBookById(bookId);
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
+        Set<String> existingBarcodes = bookItemRepository.findByBook_BookId(bookId).stream()
+                .map(BookItem::getBarcode)
+                .collect(java.util.stream.Collectors.toSet());
+        int sequence = 1;
+
+        for (int added = 0; added < quantity; added++) {
+            String barcode;
+            do {
+                barcode = String.format("BC%03d-%03d", bookId, sequence++);
+            } while (existingBarcodes.contains(barcode));
+
+            BookItem item = new BookItem();
+            item.setBook(book);
+            item.setShelf(shelf);
+            item.setBarcode(barcode);
+            item.setStatus(STATUS_AVAILABLE);
+            item.setBookCondition(normalizedCondition);
+            bookItemRepository.save(item);
+            existingBarcodes.add(barcode);
+        }
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteBookCopies(Integer bookId, List<Integer> bookItemIds) {
+        if (bookItemIds == null || bookItemIds.isEmpty()) {
+            throw new ValidationException(messages.get("backend.inventory.selectCopiesToDelete"));
+        }
+
+        List<BookItem> items = bookItemRepository.findAllById(bookItemIds);
+        if (items.size() != new HashSet<>(bookItemIds).size()
+                || items.stream().anyMatch(item -> !item.getBook().getBookId().equals(bookId))) {
+            throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
+        }
+
+        for (BookItem item : items) {
+            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+                throw new ConflictException(messages.get("backend.inventory.deleteUnavailableCopyConflict"));
+            }
+            if (borrowDetailRepository.existsByBookItem_BookItemId(item.getBookItemId())) {
+                throw new ConflictException(messages.get("backend.inventory.deleteCopyHistoryConflict"));
+            }
+        }
+        bookItemRepository.deleteAll(items);
     }
 
     @Override
