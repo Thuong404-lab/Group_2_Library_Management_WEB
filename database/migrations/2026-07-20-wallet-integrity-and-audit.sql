@@ -1,3 +1,5 @@
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
@@ -19,6 +21,10 @@ IF COL_LENGTH('dbo.Transactions', 'balance_after') IS NULL
     ALTER TABLE dbo.Transactions ADD balance_after decimal(18,2) NULL;
 IF COL_LENGTH('dbo.BorrowDetails', 'condition_code') IS NULL
     ALTER TABLE dbo.BorrowDetails ADD condition_code varchar(20) NULL;
+
+-- SQL Server compiles column references for the whole batch before executing
+-- ALTER TABLE, so start a new batch before reading the newly added column.
+GO
 
 UPDATE dbo.BorrowDetails
 SET condition_code = CASE
