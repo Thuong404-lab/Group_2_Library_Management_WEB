@@ -174,7 +174,11 @@ public class LoanController extends LocalizedControllerSupport {
                 throw new ValidationException(message("backend.return.invalidBarcodes"));
             }
 
-            if (conditionNote != null && (conditionNote.contains("Hư hỏng nhẹ") || conditionNote.contains("Hư hỏng nặng"))) {
+            // Minor damage uses the manually entered repair fine. Severe damage and
+            // lost books are charged by issueDamageCompensation() using the amount
+            // configured in system settings, so requiring damageFine for them would
+            // either block the form or charge the member twice.
+            if (isMinorDamage(conditionNote)) {
                 if (damageFine == null || damageFine.compareTo(BigDecimal.ZERO) <= 0) {
                     throw new ValidationException(message("librarian.returnDesk.fineRequired"));
                 }
@@ -231,6 +235,11 @@ public class LoanController extends LocalizedControllerSupport {
                 || normalized.contains("mất sách")
                 || normalized.contains("severe damage")
                 || normalized.contains("lost");
+    }
+
+    private boolean isMinorDamage(String conditionNote) {
+        String normalized = conditionNote == null ? "" : conditionNote.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage");
     }
 
     /**
