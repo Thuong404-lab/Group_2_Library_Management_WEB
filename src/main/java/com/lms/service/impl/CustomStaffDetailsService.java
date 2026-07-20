@@ -35,9 +35,7 @@ public class CustomStaffDetailsService implements UserDetailsService {
         StaffAccount account = staffAccountRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(messages.get("backend.account.staffUsernameNotFound", username)));
 
-        if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new DisabledException(messages.get("backend.account.disabled"));
-        }
+        // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
         List<GrantedAuthority> authorities = account.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()))

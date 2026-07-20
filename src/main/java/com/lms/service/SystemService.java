@@ -2,7 +2,6 @@ package com.lms.service;
 
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
-import com.lms.entity.MembershipTier;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
@@ -24,8 +23,6 @@ public interface SystemService {
     Map<String, String> getSettingMap();
 
     int getIntSetting(String settingKey, int defaultValue);
-
-    List<MembershipTier> getMembershipTiers();
 
     void updateBorrowingPolicies(Integer maxBorrowDays,
                                  Integer maxRenewalDays,

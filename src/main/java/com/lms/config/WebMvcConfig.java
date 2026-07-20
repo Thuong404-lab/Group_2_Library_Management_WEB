@@ -15,8 +15,14 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Locale;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.lms.config.InactiveMemberInterceptor;
+
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private InactiveMemberInterceptor inactiveMemberInterceptor;
 
     public static final String LOCALE_COOKIE_NAME = "LMS_LOCALE";
     private final MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor;
@@ -47,7 +53,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(localeChangeInterceptor());
+        registry.addInterceptor(inactiveMemberInterceptor).addPathPatterns("/member/**", "/api/**");
         if (memberLocalePreferenceInterceptor != null) {
             registry.addInterceptor(memberLocalePreferenceInterceptor);
         }
