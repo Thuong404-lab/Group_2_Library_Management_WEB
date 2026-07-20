@@ -650,7 +650,7 @@
                                 </select>
                                 <label for="rejectReasonText" th:text="#{rejection.detail}">Details sent to
                                     member</label>
-                                <textarea id="rejectReasonText" name="reason" required minlength="5" maxlength="500"
+                                <textarea id="rejectReasonText" name="reason" minlength="5" maxlength="500"
                                     th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}"
                                     aria-describedby="rejectReasonCount rejectReasonError"></textarea>
                                 <div class="acquisition-reason-support">
@@ -767,7 +767,22 @@
                         const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
                         reason.value = value;
                         updateCounter();
-                        const message = !reasonCode.value ? /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type." : value === "" ? messages.required : value.length < 5 ? messages.minimum : value.length > 500 ? messages.maximum : !/\p{L}/u.test(value) ? messages.letters : "";
+                        
+                        let message = "";
+                        if (!reasonCode.value) {
+                            message = /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type.";
+                        } else if (reasonCode.value === "OTHER" && value === "") {
+                            message = messages.required;
+                        } else if (value !== "") {
+                            if (value.length < 5) {
+                                message = messages.minimum;
+                            } else if (value.length > 500) {
+                                message = messages.maximum;
+                            } else if (!/\p{L}/u.test(value)) {
+                                message = messages.letters;
+                            }
+                        }
+                        
                         if (message) {
                             event.preventDefault();
                             reason.classList.add("is-invalid");
@@ -780,6 +795,14 @@
                         reason.classList.remove("is-invalid");
                         error.textContent = "";
                         updateCounter();
+                    });
+                    
+                    reasonCode.addEventListener("change", function () {
+                        if (reasonCode.value === "OTHER") {
+                            reason.setAttribute("required", "required");
+                        } else {
+                            reason.removeAttribute("required");
+                        }
                     });
                 });
 
