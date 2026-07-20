@@ -61,6 +61,22 @@ public class AccountController extends LocalizedControllerSupport {
         return listAccounts(page, keyword, "", "", model);
     }
 
+    @GetMapping("/create/validate")
+    @ResponseBody
+    public Map<String, String> validateAccountCreate(
+            @RequestParam(required = false, defaultValue = "") String fullName,
+            @RequestParam(required = false, defaultValue = "") String email,
+            @RequestParam(required = false, defaultValue = "") String phone,
+            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam(required = false, defaultValue = "") String password,
+            @RequestParam(required = false, defaultValue = "") String accountType,
+            @RequestParam(required = false) Integer tierId,
+            @RequestParam(required = false, defaultValue = "Active") String status) {
+        AdminAccountCreateRequest request = new AdminAccountCreateRequest(
+                fullName, email, phone, username, password, accountType, tierId, status);
+        return accountService.validateAccountCreate(request);
+    }
+
     @PostMapping("/create")
     public String createAccount(@RequestParam String fullName,
             @RequestParam String email,

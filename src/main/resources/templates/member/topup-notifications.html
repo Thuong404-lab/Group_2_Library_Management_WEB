@@ -5,88 +5,84 @@
     <!-- UC-8.5 UI maintained by Pham Kien Quoc. -->
     <meta charset="UTF-8">
     <title th:text="#{member.topupNotifications.title}">Top-up Notifications</title>
-    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
-    <link rel="stylesheet" th:href="@{/css/pages/member/topup-notifications.css}"/>
+    <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}"/>
 </head>
 <body>
-<div layout:fragment="content" class="container finance-page topup-notifications-page">
-    <div class="finance-header">
-        <div>
-            <h2 class="finance-title" th:text="#{member.topupNotifications.heading}">Top-up Notifications</h2>
-            <div class="finance-description" th:text="#{member.topupNotifications.description}">Track notifications related to wallet top-ups.</div>
-        </div>
-        <a th:href="@{/member/financial/transactions(type='TOP_UP')}" class="btn app-secondary-action">
-            <span th:text="#{member.wallet.topUpHistory}">Top-up History</span>
-        </a>
-    </div>
-
-    <div class="finance-alert finance-alert--success" role="alert" th:if="${success}" th:text="${success}"></div>
-
-    <form method="post" th:action="@{/member/financial/topup-notifications/mark-all-read(page=${currentPage})}"
-          class="notification-toolbar" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-        <button type="submit" class="btn app-secondary-action">
-                <span th:text="#{notification.markAllRead}">Mark All as Read</span>
-        </button>
-    </form>
-
-    <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="notification-empty-state">
-        <span class="notification-empty-icon" aria-hidden="true"><i class="bi bi-bell"></i></span>
-                <h2 th:text="#{member.topupNotifications.empty}">No Top-up Notifications</h2>
-                <p th:text="#{member.topupNotifications.emptyDescription}">Top-up updates will appear here.</p>
-    </div>
-
-    <div class="notification-list" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
-        <article class="notification-item"
-                 th:each="memberNotification : ${notifications}">
-            <div class="notification-item-head">
-                <div class="notification-item-copy">
-                        <h2 th:text="${localizedNotificationTitles[memberNotification.notification.notificationId]}">Top-up Successful</h2>
-                    <p th:text="${localizedNotificationContents[memberNotification.notification.notificationId]}">
-                            Your wallet has just been topped up.
-                    </p>
-                </div>
-                <time th:text="${memberNotification.notification.createdDate != null ? #temporals.format(memberNotification.notification.createdDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
-                    01/01/2026 08:00
-                </time>
+<main layout:fragment="content" class="member-notifications-page member-palette-page">
+    <div class="member-notifications-container">
+        <header class="member-notifications-header member-dashboard-hero notifications-hero">
+            <div class="notifications-hero-copy">
+                <span class="member-notifications-eyebrow" th:text="#{member.notifications.title}">NOTIFICATIONS</span>
+                <h1 th:text="#{member.topupNotifications.heading}">Top-up Notifications</h1>
+                <p th:text="#{member.topupNotifications.description}">Track notifications related to wallet top-ups.</p>
             </div>
+            <a th:href="@{/member/financial/transactions}" class="notifications-hero-action member-ui-button member-ui-button--inverse">
+                <i class="bi bi-arrow-return-left" aria-hidden="true"></i> <span th:text="#{member.topupNotifications.back}">Back to Transaction History</span>
+            </a>
+        </header>
 
-            <div class="notification-item-footer">
-                <span class="notification-read-status"
-                      th:classappend="${memberNotification.isRead} ? ' is-read' : ' is-unread'"
-                              th:text="${memberNotification.isRead ? #messages.msg('notification.read') : #messages.msg('member.notifications.unread')}">
-                            Unread
-                </span>
-                <form method="post"
-                      th:if="${!memberNotification.isRead}"
-                      th:action="@{/member/financial/topup-notifications/{id}/mark-read(id=${memberNotification.notification.notificationId}, page=${currentPage})}">
+        <div class="member-notifications-alert is-success" role="alert" th:if="${success}" th:text="${success}"></div>
+
+        <section class="member-notifications-card member-reference-list">
+            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
+                <div class="member-notification-toolbar-copy">
+                    <h2><span th:text="#{member.topupNotifications.heading}">Top-up Notifications</span> <span class="member-notification-count" th:if="${notificationPage != null and notificationPage.totalElements > 0}" th:text="${notificationPage.totalElements}">0</span></h2>
+                </div>
+                
+                <form method="post" th:action="@{/member/financial/topup-notifications/mark-all-read(page=${currentPage})}"
+                      class="member-notification-type-filter" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="app-secondary-action notification-action">
-                                    <span th:text="#{notification.markRead}">Mark as Read</span>
+                    <button type="submit" class="member-ui-button member-ui-button--secondary">
+                        <span th:text="#{notification.markAllRead}">Mark All as Read</span>
                     </button>
                 </form>
             </div>
-        </article>
-    </div>
 
-    <div class="app-pagination-region" th:if="${notificationPage != null and notificationPage.totalPages > 1}"
-         th:with="startPage=${notificationPage.totalPages <= 10 ? 0 : (notificationPage.number < 9 ? 0 : (notificationPage.number - 8 > notificationPage.totalPages - 10 ? notificationPage.totalPages - 10 : notificationPage.number - 8))}">
-            <nav th:aria-label="#{notification.pagination}" th:with="endPage=${startPage + 9 < notificationPage.totalPages ? startPage + 9 : notificationPage.totalPages - 1}">
-            <ul class="pagination app-pagination">
-                    <li class="page-item" th:classappend="${notificationPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=0)}" th:text="#{pagination.first}">First</a></li>
-                    <li class="page-item" th:classappend="${notificationPage.first} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${notificationPage.number-1})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left"></i></a></li>
-                <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == notificationPage.number} ? 'active'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${i})}" th:text="${i+1}">1</a></li>
-                <li class="page-item disabled" th:if="${endPage < notificationPage.totalPages-1}"><span class="page-link">…</span></li>
-                <li class="page-item" th:classappend="${notificationPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${notificationPage.number+1})}" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a></li>
-                    <li class="page-item" th:classappend="${notificationPage.last} ? 'disabled'"><a class="page-link" th:href="@{/member/financial/topup-notifications(page=${notificationPage.totalPages-1})}" th:text="#{pagination.last}">Last</a></li>
-            </ul>
-        </nav>
-    </div>
+            <div class="member-notifications-empty member-notifications-empty--compact" th:if="${notifications == null or #lists.isEmpty(notifications)}">
+                <span><i class="bi bi-bell-slash" aria-hidden="true"></i></span>
+                <h2 th:text="#{member.topupNotifications.empty}">No Top-up Notifications</h2>
+                <p th:text="#{member.topupNotifications.emptyDescription}">Top-up updates will appear here.</p>
+            </div>
 
-    <a th:href="@{/member/financial/transactions}" class="app-secondary-action notification-back-action">
-            <span th:text="#{member.topupNotifications.back}">Back to Transaction History</span>
-    </a>
-</div>
+            <div class="member-notifications-list member-reference-list__body" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
+                <article class="member-notification-row member-reference-list__item"
+                         th:each="memberNotification : ${notifications}"
+                         th:classappend="${!memberNotification.isRead ? 'is-unread' : ''}">
+                    <span class="member-notification-row-icon" aria-hidden="true"><i class="bi bi-bell-fill"></i></span>
+                    <div class="member-notification-row-content">
+                        <div class="member-notification-row-meta">
+                            <span class="member-notification-row-type member-reference-pill"><i class="bi bi-wallet2" aria-hidden="true"></i> <span th:text="#{transaction.type.topUp}">Top Up</span></span>
+                            <span class="member-notification-unread-label member-reference-pill" th:if="${!memberNotification.isRead}" th:text="#{member.notifications.unread}">New</span>
+                        </div>
+                        <h3 th:text="${localizedNotificationTitles[memberNotification.notification.notificationId]}">Top-up Successful</h3>
+                        <p th:text="${localizedNotificationContents[memberNotification.notification.notificationId]}">Your wallet has just been topped up.</p>
+                    </div>
+                    
+                    <time class="member-notification-row-time text-end" th:text="${memberNotification.notification.createdDate != null ? #temporals.format(memberNotification.notification.createdDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">
+                        01/01/2026 08:00
+                    </time>
+                    <div class="member-notification-row-actions text-end" th:if="${!memberNotification.isRead}">
+                        <form method="post" th:action="@{/member/financial/topup-notifications/{id}/mark-read(id=${memberNotification.notification.notificationId}, page=${currentPage})}">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="member-ui-button member-ui-button--compact member-ui-button--secondary">
+                                <span th:text="#{notification.markRead}">Mark as Read</span>
+                            </button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+            
+            <nav class="member-notification-pagination" th:if="${notificationPage != null and notificationPage.totalPages > 1}"
+                 th:with="startPage=${notificationPage.totalPages <= 10 ? 0 : (notificationPage.number < 9 ? 0 : (notificationPage.number - 8 > notificationPage.totalPages - 10 ? notificationPage.totalPages - 10 : notificationPage.number - 8))},
+                          endPage=${startPage + 9 < notificationPage.totalPages ? startPage + 9 : notificationPage.totalPages - 1}">
+                <a class="member-page-control" th:classappend="${notificationPage.first} ? ' is-disabled'" th:href="@{/member/financial/topup-notifications(page=0)}" th:aria-label="#{pagination.first}"><i class="bi bi-chevron-double-left" aria-hidden="true"></i></a>
+                <a class="member-page-control" th:classappend="${notificationPage.first} ? ' is-disabled'" th:href="@{/member/financial/topup-notifications(page=${notificationPage.number-1})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+                <span th:text="${(notificationPage.number + 1) + ' / ' + notificationPage.totalPages}">1 / 1</span>
+                <a class="member-page-control" th:classappend="${notificationPage.last} ? ' is-disabled'" th:href="@{/member/financial/topup-notifications(page=${notificationPage.number+1})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                <a class="member-page-control" th:classappend="${notificationPage.last} ? ' is-disabled'" th:href="@{/member/financial/topup-notifications(page=${notificationPage.totalPages-1})}" th:aria-label="#{pagination.last}"><i class="bi bi-chevron-double-right" aria-hidden="true"></i></a>
+            </nav>
+        </section>
+    </div>
+</main>
 </body>
 </html>

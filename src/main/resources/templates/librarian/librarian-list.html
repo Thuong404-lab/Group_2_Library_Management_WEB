@@ -6,6 +6,7 @@
     <title th:text="#{librarian.staff.title}">Librarians</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
@@ -30,24 +31,26 @@
                 <!-- Search & Filter + Back Button -->
                 <div class="member-toolbar">
                     <!-- Search & Filter -->
-                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}">
+                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}"
+                        data-auto-filter-form data-focus-key="librarianStaffFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                 th:value="${keyword}"
                                 th:placeholder="#{librarian.staff.searchPlaceholder}">
-                            <select class="form-select member-filter-select" name="status"
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{librarian.staff.statusFilter}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{librarian.staff.allStatuses}">All statuses</option>
                                 <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{status.active}">Active</option>
                                 <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{status.inactive}">Inactive</option>
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{status.blocked}">Blocked</option>
                             </select>
-                            <button class="btn member-search-button text-nowrap" type="submit">
-                                <span th:text="#{common.search}">Search</span>
-                            </button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/librarian/librarians}">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -56,12 +59,12 @@
                 <div class="table-responsive member-table-wrap">
                     <table class="table table-hover align-middle stable-table-layout member-table">
                         <colgroup>
-                            <col class="u-width-7-2d9383cf">
-                            <col class="u-width-16-9fe033fb">
-                            <col class="librarian-librarian-list-col-width-07">
-                            <col class="librarian-librarian-list-col-width-08">
-                            <col class="u-width-17-9278e232">
-                            <col class="u-width-15-f7f760e2">
+                            <col class="librarian-col-index">
+                            <col class="librarian-col-username">
+                            <col class="librarian-col-user">
+                            <col class="librarian-col-role">
+                            <col class="librarian-col-status">
+                            <col class="librarian-col-actions">
                         </colgroup>
                         <thead>
                             <tr>

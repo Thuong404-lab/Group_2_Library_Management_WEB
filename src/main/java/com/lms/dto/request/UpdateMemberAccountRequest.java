@@ -9,13 +9,13 @@ import jakarta.validation.constraints.Size;
 public class UpdateMemberAccountRequest {
 
     @NotBlank(message = "{validation.fullNameRequired}")
-    @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
+    @Pattern(regexp = "^$|^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
             message = "{validation.fullNameLetters}")
-    @Pattern(regexp = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$",
+    @Pattern(regexp = "^$|^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$",
             message = "{validation.fullNameWords}")
-    @Pattern(regexp = "^(?!.*([\\p{L}])\\1\\1).*$",
+    @Pattern(regexp = "^$|^(?!.*([\\p{L}])\\1\\1).*$",
             message = "{validation.fullNameTriple}")
-    @Pattern(regexp = "^(?!([\\p{L}])\\1+$).+$",
+    @Pattern(regexp = "^$|^(?!([\\p{L}])\\1+$).+$",
             message = "{validation.fullNameRepeated}")
     @Size(max = 50, message = "{validation.fullNameMax}")
     private String fullName;
@@ -31,7 +31,7 @@ public class UpdateMemberAccountRequest {
     private String email;
 
     @NotBlank(message = "{validation.phoneRequired}")
-    @Pattern(regexp = "^(?!0{10}$)0\\d{9}$",
+    @Pattern(regexp = "^$|^(?!0{10}$)0\\d{9}$",
             message = "{validation.phone}")
     private String phone;
 
