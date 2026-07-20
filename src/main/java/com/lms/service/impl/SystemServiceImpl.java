@@ -1,10 +1,12 @@
 package com.lms.service.impl;
 
+import com.lms.entity.MembershipTier;
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
 import com.lms.exception.ValidationException;
 import com.lms.enums.ActionType;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.SystemLogRepository;
 import com.lms.repository.SystemSettingRepository;
@@ -38,17 +40,20 @@ public class SystemServiceImpl implements SystemService {
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final AuditLogService auditLogService;
+    private final MembershipTierRepository membershipTierRepository;
 
     public SystemServiceImpl(SystemSettingRepository systemSettingRepository,
                              SystemLogRepository systemLogRepository,
                              MemberAccountRepository memberAccountRepository,
                              StaffAccountRepository staffAccountRepository,
-                             AuditLogService auditLogService) {
+                             AuditLogService auditLogService,
+                             MembershipTierRepository membershipTierRepository) {
         this.systemSettingRepository = systemSettingRepository;
         this.systemLogRepository = systemLogRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.auditLogService = auditLogService;
+        this.membershipTierRepository = membershipTierRepository;
     }
 
     @Override
@@ -207,6 +212,34 @@ public class SystemServiceImpl implements SystemService {
         auditLogService.log(
                 ActionType.UPDATE_SETTINGS,
                 messages.get("backend.settings.audit.updated"));
+    }
+
+    @Override
+    public List<MembershipTier> getMembershipTiers() {
+        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
+    }
+
+    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits,
+                                        Map<Integer, BigDecimal> tierSpendingConditions) {
+        List<MembershipTier> tiers = getMembershipTiers();
+        if (tiers.isEmpty()) {
+            throw new ValidationException(messages.get("backend.settings.noTiers"));
+        }
+
+        for (MembershipTier tier : tiers) {
+            Integer borrowLimit = tierBorrowLimits == null ? null : tierBorrowLimits.get(tier.getTierId());
+            validatePositive(borrowLimit,
+                    messages.get("backend.settings.tierBorrowLimitPositive", tier.getTierName()));
+            BigDecimal spendingCondition = tierSpendingConditions == null
+                    ? null
+                    : tierSpendingConditions.get(tier.getTierId());
+            validateZeroOrPositive(spendingCondition,
+                    messages.get("backend.settings.tierSpendingNonNegative", tier.getTierName()));
+            tier.setBorrowLimit(borrowLimit);
+            tier.setCondition(spendingCondition);
+        }
+
+        membershipTierRepository.saveAll(tiers);
     }
 
     private void saveOrUpdateSetting(String key, String value, String description) {

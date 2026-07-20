@@ -1,5 +1,6 @@
 package com.lms.service;
 
+import com.lms.entity.MembershipTier;
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,8 @@ public interface SystemService {
     Map<String, String> getSettingMap();
 
     int getIntSetting(String settingKey, int defaultValue);
+
+    List<MembershipTier> getMembershipTiers();
 
     void updateBorrowingPolicies(Integer maxBorrowDays,
                                  Integer maxRenewalDays,

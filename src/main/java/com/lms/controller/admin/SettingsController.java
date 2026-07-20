@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SettingsController - Cấu hình Hệ thống
@@ -29,6 +32,7 @@ public class SettingsController extends LocalizedControllerSupport {
     @GetMapping
     public String showSettings(Model model) {
         model.addAttribute("settingMap", systemService.getSettingMap());
+        model.addAttribute("tiers", systemService.getMembershipTiers());
         return "admin/settings";
     }
 
@@ -49,6 +53,20 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
+            Map<Integer, Integer> borrowLimitsByTier = new HashMap<>();
+            Map<Integer, BigDecimal> spendingConditionsByTier = new HashMap<>();
+            if (tierIds != null) {
+                for (int i = 0; i < tierIds.size(); i++) {
+                    Integer tierId = tierIds.get(i);
+                    if (tierBorrowLimits != null && i < tierBorrowLimits.size()) {
+                        borrowLimitsByTier.put(tierId, tierBorrowLimits.get(i));
+                    }
+                    if (tierSpendingConditions != null && i < tierSpendingConditions.size()) {
+                        spendingConditionsByTier.put(tierId, tierSpendingConditions.get(i));
+                    }
+                }
+            }
+
             systemService.updateBorrowingPolicies(
                     maxBorrowDays,
                     maxRenewalDays,
