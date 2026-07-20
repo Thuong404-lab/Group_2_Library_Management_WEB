@@ -25,16 +25,14 @@ public interface SystemService {
     int getIntSetting(String settingKey, int defaultValue);
 
     void updateBorrowingPolicies(Integer maxBorrowDays,
-                                 Integer maxRenewalDays,
-                                 Integer maxRenewalRequests,
-                                 Integer renewalRejectionCooldownHours,
-                                 Map<Integer, Integer> tierBorrowLimits,
-                                 Map<Integer, BigDecimal> tierSpendingConditions,
-                                 BigDecimal borrowFeePerBook,
-                                 BigDecimal finePerDay,
-                                 BigDecimal damageCompensationAmount,
-                                 Integer damageCompensationThreshold,
-                                 Integer overdueViolationLockLimit,
-                                 Integer bookDisposalConditionThreshold,
-                                 BigDecimal depositAmount);
+            Integer maxRenewalDays,
+            Integer maxRenewalRequests,
+            Integer renewalRejectionCooldownHours,
+            BigDecimal borrowFeePerBook,
+            BigDecimal finePerDay,
+            BigDecimal damageCompensationAmount,
+            Integer damageCompensationThreshold,
+            Integer overdueViolationLockLimit,
+            Integer bookDisposalConditionThreshold,
+            BigDecimal depositAmount);
 }

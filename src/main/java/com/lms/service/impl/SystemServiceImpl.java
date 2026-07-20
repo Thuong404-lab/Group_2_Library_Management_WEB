@@ -40,10 +40,10 @@ public class SystemServiceImpl implements SystemService {
     private final AuditLogService auditLogService;
 
     public SystemServiceImpl(SystemSettingRepository systemSettingRepository,
-                             SystemLogRepository systemLogRepository,
-                             MemberAccountRepository memberAccountRepository,
-                             StaffAccountRepository staffAccountRepository,
-                             AuditLogService auditLogService) {
+            SystemLogRepository systemLogRepository,
+            MemberAccountRepository memberAccountRepository,
+            StaffAccountRepository staffAccountRepository,
+            AuditLogService auditLogService) {
         this.systemSettingRepository = systemSettingRepository;
         this.systemLogRepository = systemLogRepository;
         this.memberAccountRepository = memberAccountRepository;
@@ -129,24 +129,21 @@ public class SystemServiceImpl implements SystemService {
     @Override
     @Transactional
     public void updateBorrowingPolicies(Integer maxBorrowDays,
-                                        Integer maxRenewalDays,
-                                        Integer maxRenewalRequests,
-                                        Integer renewalRejectionCooldownHours,
-                                        Map<Integer, Integer> tierBorrowLimits,
-                                        Map<Integer, BigDecimal> tierSpendingConditions,
-                                        BigDecimal borrowFeePerBook,
-                                        BigDecimal finePerDay,
-                                        BigDecimal damageCompensationAmount,
-                                        Integer damageCompensationThreshold,
-                                        Integer overdueViolationLockLimit,
-                                        Integer bookDisposalConditionThreshold,
-                                        BigDecimal depositAmount) {
+            Integer maxRenewalDays,
+            Integer maxRenewalRequests,
+            Integer renewalRejectionCooldownHours,
+            BigDecimal borrowFeePerBook,
+            BigDecimal finePerDay,
+            BigDecimal damageCompensationAmount,
+            Integer damageCompensationThreshold,
+            Integer overdueViolationLockLimit,
+            Integer bookDisposalConditionThreshold,
+            BigDecimal depositAmount) {
 
         validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
         validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
         validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
-        validateAndUpdateTiers(tierBorrowLimits, tierSpendingConditions);
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
@@ -170,11 +167,6 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
                 String.valueOf(renewalRejectionCooldownHours),
                 messages.get("backend.settings.description.renewalCooldown"));
-
-
-        saveOrUpdateSetting("Max_Books_Per_Member",
-                String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
-                messages.get("backend.settings.description.maxBooks"));
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),

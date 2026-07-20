@@ -46,7 +46,6 @@ public class CustomMemberDetailsService implements UserDetailsService {
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
-                authorities
-        );
+                authorities);
     }
 }

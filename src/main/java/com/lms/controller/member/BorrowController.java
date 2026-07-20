@@ -50,16 +50,16 @@ public class BorrowController extends LocalizedControllerSupport {
     private final BookItemRepository bookItemRepository;
 
     public BorrowController(BorrowService borrowService,
-                            MemberFavoriteService memberFavoriteService,
-                            BookService bookService,
-                            LoanService loanService,
-                            MemberRepository memberRepository,
-                            ReservationRepository reservationRepository,
-                            WalletRepository walletRepository,
-                            SystemSettingRepository systemSettingRepository,
-                            BorrowDetailRepository borrowDetailRepository,
-                            PayOsPaymentService payOsPaymentService,
-                            BookItemRepository bookItemRepository) {
+            MemberFavoriteService memberFavoriteService,
+            BookService bookService,
+            LoanService loanService,
+            MemberRepository memberRepository,
+            ReservationRepository reservationRepository,
+            WalletRepository walletRepository,
+            SystemSettingRepository systemSettingRepository,
+            BorrowDetailRepository borrowDetailRepository,
+            PayOsPaymentService payOsPaymentService,
+            BookItemRepository bookItemRepository) {
         this.borrowService = borrowService;
         this.bookService = bookService;
         this.loanService = loanService;
@@ -75,14 +75,15 @@ public class BorrowController extends LocalizedControllerSupport {
 
     @GetMapping("/management")
     public String viewBorrowManagement(@RequestParam(value = "tab", defaultValue = "borrowing") String tab,
-                                       @RequestParam(value = "search", required = false) String search,
-                                       @RequestParam(value = "status", required = false) String status,
-                                       @RequestParam(value = "fromDate", required = false) String fromDate,
-                                       @RequestParam(value = "toDate", required = false) String toDate,
-                                       @RequestParam(value = "page", defaultValue = "0") int page,
-                                       Principal principal,
-                                       Model model) {
-        if (principal == null) return "redirect:/login";
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "fromDate", required = false) String fromDate,
+            @RequestParam(value = "toDate", required = false) String toDate,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            Principal principal,
+            Model model) {
+        if (principal == null)
+            return "redirect:/login";
 
         String username = principal.getName();
         model.addAttribute("activeTab", tab);
@@ -109,31 +110,37 @@ public class BorrowController extends LocalizedControllerSupport {
         for (MemberBorrowDTO b : currentBorrows) {
             if (b.getActionDate() != null) {
                 java.time.LocalDate d = b.getActionDate().toLocalDate();
-                if (d.isBefore(minDate)) minDate = d;
+                if (d.isBefore(minDate))
+                    minDate = d;
             }
             if (b.getDueDate() != null) {
                 java.time.LocalDate d = b.getDueDate().toLocalDate();
-                if (d.isAfter(maxDate)) maxDate = d;
+                if (d.isAfter(maxDate))
+                    maxDate = d;
             }
         }
         for (MemberBorrowDTO r : reservations) {
             if (r.getActionDate() != null) {
                 java.time.LocalDate d = r.getActionDate().toLocalDate();
-                if (d.isBefore(minDate)) minDate = d;
+                if (d.isBefore(minDate))
+                    minDate = d;
             }
             if (r.getDueDate() != null) {
                 java.time.LocalDate d = r.getDueDate().toLocalDate();
-                if (d.isAfter(maxDate)) maxDate = d;
+                if (d.isAfter(maxDate))
+                    maxDate = d;
             }
         }
         for (MemberBorrowDTO h : history) {
             if (h.getActionDate() != null) {
                 java.time.LocalDate d = h.getActionDate().toLocalDate();
-                if (d.isBefore(minDate)) minDate = d;
+                if (d.isBefore(minDate))
+                    minDate = d;
             }
             if (h.getReturnDate() != null) {
                 java.time.LocalDate d = h.getReturnDate().toLocalDate();
-                if (d.isAfter(maxDate)) maxDate = d;
+                if (d.isAfter(maxDate))
+                    maxDate = d;
             }
         }
 
@@ -201,14 +208,16 @@ public class BorrowController extends LocalizedControllerSupport {
                     toDate = maxDate.toString();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         List<MemberBorrowDTO> filteredList = new java.util.ArrayList<>();
         for (MemberBorrowDTO item : rawList) {
             boolean matchesSearch = true;
             if (search != null && !search.trim().isEmpty()) {
                 String title = item.getBookTitle();
-                if (title == null || !title.toLowerCase(java.util.Locale.ROOT).contains(search.trim().toLowerCase(java.util.Locale.ROOT))) {
+                if (title == null || !title.toLowerCase(java.util.Locale.ROOT)
+                        .contains(search.trim().toLowerCase(java.util.Locale.ROOT))) {
                     matchesSearch = false;
                 }
             }
@@ -225,7 +234,8 @@ public class BorrowController extends LocalizedControllerSupport {
                     }
                 } else if ("reserved".equalsIgnoreCase(tab)) {
                     if ("Ready".equalsIgnoreCase(status)) {
-                        matchesStatus = "Ready".equalsIgnoreCase(item.getStatus()) || "Active".equalsIgnoreCase(item.getStatus());
+                        matchesStatus = "Ready".equalsIgnoreCase(item.getStatus())
+                                || "Active".equalsIgnoreCase(item.getStatus());
                     } else {
                         matchesStatus = status.equalsIgnoreCase(item.getStatus());
                     }
@@ -279,8 +289,10 @@ public class BorrowController extends LocalizedControllerSupport {
         int totalItems = filteredList.size();
         int totalPages = (int) Math.ceil((double) totalItems / pageSize);
 
-        if (page < 0) page = 0;
-        if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
+        if (page < 0)
+            page = 0;
+        if (totalPages > 0 && page >= totalPages)
+            page = totalPages - 1;
 
         List<MemberBorrowDTO> pagedList = new java.util.ArrayList<>();
         if (totalItems > 0) {
@@ -304,11 +316,12 @@ public class BorrowController extends LocalizedControllerSupport {
 
     @GetMapping("/create")
     public String showCreateRequestForm(@RequestParam(value = "bookId", required = false) Integer bookId,
-                                        Model model,
-                                        Principal principal,
-                                        RedirectAttributes redirectAttributes,
-                                        HttpServletResponse response) {
-        if (principal == null) return "redirect:/login";
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes,
+            HttpServletResponse response) {
+        if (principal == null)
+            return "redirect:/login";
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
@@ -322,15 +335,18 @@ public class BorrowController extends LocalizedControllerSupport {
         try {
             member = memberRepository.findByAccountUsername(principal.getName())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
-            long activeOrPendingCount = borrowDetailRepository.countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
+            long activeOrPendingCount = borrowDetailRepository
+                    .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
             if (activeOrPendingCount > 0) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Yêu cầu bị từ chối: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Yêu cầu bị từ chối: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
                 return "redirect:/member/borrow/management?tab=borrowing";
             }
             // Kiểm tra số lượng bản vật lý khả dụng trong kho
             long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
             if (availableCount == 0) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Sách này hiện không còn bản vật lý nào trong kho!");
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Sách này hiện không còn bản vật lý nào trong kho!");
                 return "redirect:/books/" + bookId;
             }
         } catch (ResourceNotFoundException e) {
@@ -348,15 +364,17 @@ public class BorrowController extends LocalizedControllerSupport {
                 .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
                 .orElse(BigDecimal.ZERO);
         double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
-                ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
-        BigDecimal feePerBookPerDay = BigDecimal.valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
-                .map(s -> {
-                    try {
-                        return Integer.parseInt(s.getSettingValue());
-                    } catch (Exception e) {
-                        return 5000;
-                    }
-                }).orElse(5000));
+                ? member.getTier().getDiscountPercent().doubleValue()
+                : 0.0;
+        BigDecimal feePerBookPerDay = BigDecimal
+                .valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
+                        .map(s -> {
+                            try {
+                                return Integer.parseInt(s.getSettingValue());
+                            } catch (Exception e) {
+                                return 5000;
+                            }
+                        }).orElse(5000));
 
         model.addAttribute("member", member);
         model.addAttribute("walletBalance", walletBalance);
@@ -387,12 +405,13 @@ public class BorrowController extends LocalizedControllerSupport {
 
     @PostMapping("/request/submit")
     public String submitBorrowRequest(@RequestParam(value = "bookId", required = false) Integer bookId,
-                                      @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
-                                      @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
-                                      @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
-                                      Principal principal,
-                                      RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+            @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
+            @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
+            @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
         if (bookId == null) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
@@ -401,12 +420,14 @@ public class BorrowController extends LocalizedControllerSupport {
         // 1. Validate số ngày mượn hợp lệ
         Integer maxDaysAllowed = getMaxBorrowDays();
         if (numberOfDays < 1 || numberOfDays > maxDaysAllowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBorrowDays", maxDaysAllowed));
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    message("backend.borrow.invalidBorrowDays", maxDaysAllowed));
             return "redirect:/member/borrow/create?bookId=" + bookId;
         }
 
         // 2. Chuẩn hóa số lượng
-        if (quantity == null || quantity < 1) quantity = 1;
+        if (quantity == null || quantity < 1)
+            quantity = 1;
 
         try {
             // 3. Kiểm tra số lượng bản vật lý thực tế trong kho trước khi thực hiện
@@ -416,18 +437,27 @@ public class BorrowController extends LocalizedControllerSupport {
                 return "redirect:/books/" + bookId;
             }
             if (quantity > availableStock) {
-                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockExceeded", availableStock));
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        message("backend.borrow.stockExceeded", availableStock));
                 return "redirect:/member/borrow/create?bookId=" + bookId;
             }
 
             // 4. Tính toán chi phí mượn sách có áp dụng giảm giá thành viên
             Member member = memberRepository.findByAccountUsername(principal.getName())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
-            BigDecimal feePerBookPerDay = BigDecimal.valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
-                    .map(s -> { try { return Integer.parseInt(s.getSettingValue()); } catch (Exception e) { return 5000; } })
-                    .orElse(5000));
+            BigDecimal feePerBookPerDay = BigDecimal
+                    .valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
+                            .map(s -> {
+                                try {
+                                    return Integer.parseInt(s.getSettingValue());
+                                } catch (Exception e) {
+                                    return 5000;
+                                }
+                            })
+                            .orElse(5000));
             double discount = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
-                    ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+                    ? member.getTier().getDiscountPercent().doubleValue()
+                    : 0.0;
             BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf((long) quantity * numberOfDays));
             BigDecimal finalFee = baseFee.subtract(baseFee.multiply(BigDecimal.valueOf(discount / 100)));
 
@@ -438,7 +468,8 @@ public class BorrowController extends LocalizedControllerSupport {
             // 5. Xử lý luồng thanh toán qua Ví thành viên (WALLET)
             if ("WALLET".equalsIgnoreCase(paymentMethod)) {
                 if (walletBalance.compareTo(finalFee) < 0) {
-                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.insufficientWalletBalance"));
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            message("backend.borrow.insufficientWalletBalance"));
                     return "redirect:/member/borrow/create?bookId=" + bookId;
                 }
 
@@ -447,7 +478,8 @@ public class BorrowController extends LocalizedControllerSupport {
                     borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
                 }
 
-                redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
+                redirectAttributes.addFlashAttribute("successMessage",
+                        message("backend.borrow.requestSubmittedQuantity", quantity));
                 return "redirect:/member/borrow/management?tab=borrowing";
             }
 
@@ -456,8 +488,10 @@ public class BorrowController extends LocalizedControllerSupport {
                 java.util.List<Integer> requestedBookIds = java.util.Collections.nCopies(quantity, bookId);
                 com.lms.entity.Borrow pendingBorrow = null;
                 try {
-                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), requestedBookIds, numberOfDays);
-                    com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
+                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(),
+                            requestedBookIds, numberOfDays);
+                    com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member,
+                            pendingBorrow.getBorrowId());
                     return "redirect:/member/payments/payos/" + payment.getOrderCode();
                 } catch (Exception paymentError) {
                     if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {
@@ -471,7 +505,8 @@ public class BorrowController extends LocalizedControllerSupport {
             for (int i = 0; i < quantity; i++) {
                 borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
             }
-            redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.requestSubmittedQuantity", quantity));
+            redirectAttributes.addFlashAttribute("successMessage",
+                    message("backend.borrow.requestSubmittedQuantity", quantity));
             return "redirect:/member/borrow/management?tab=borrowing";
 
         } catch (Exception e) {
@@ -482,10 +517,11 @@ public class BorrowController extends LocalizedControllerSupport {
 
     @GetMapping("/reserve/form/{bookId}")
     public String showReserveForm(@PathVariable Integer bookId,
-                                  Model model,
-                                  Principal principal,
-                                  RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
         try {
             Book book = bookService.findBookById(bookId);
             Member member = getCurrentMember(principal);
@@ -502,48 +538,57 @@ public class BorrowController extends LocalizedControllerSupport {
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
             return "member/reserve-confirm";
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.depositViewFailed", e));
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageWithDetail("backend.borrow.depositViewFailed", e));
             return "redirect:/member/borrow/management?tab=reserved";
         }
     }
 
-    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt trước và lưu vết hệ thống
+    // FIX CHÍNH TẠI ĐÂY: Đồng bộ gọi chính xác qua borrowService để tạo bản ghi đặt
+    // trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
-                              Principal principal,
-                              RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
         try {
             borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationSubmitted"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.reservationFailed", e));
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageWithDetail("backend.borrow.reservationFailed", e));
         }
         return "redirect:/member/borrow/management?tab=reserved";
     }
 
     @PostMapping("/cancel-reservation/{reservationId}")
-    public String cancelReservation(@PathVariable Integer reservationId, Principal principal, RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+    public String cancelReservation(@PathVariable Integer reservationId, Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
         try {
             borrowService.memberCancelReservation(principal.getName(), reservationId);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationCancelled"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.reservationCancelFailed", e));
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageWithDetail("backend.borrow.reservationCancelFailed", e));
         }
         return "redirect:/member/borrow/management?tab=reserved";
     }
 
     @PostMapping("/renew/{borrowDetailId}")
     public String renewBook(@PathVariable("borrowDetailId") Integer borrowDetailId,
-                            @RequestParam("renewalDays") Integer renewalDays,
-                            Principal principal, RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+            @RequestParam("renewalDays") Integer renewalDays,
+            Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
         try {
             borrowService.memberSubmitRenewRequest(principal.getName(), borrowDetailId, renewalDays);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.renewalSubmitted"));
         } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.borrow.renewalSubmitFailed", e));
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageWithDetail("backend.borrow.renewalSubmitFailed", e));
         }
         return "redirect:/member/borrow/management?tab=borrowing";
     }
@@ -602,12 +647,15 @@ public class BorrowController extends LocalizedControllerSupport {
                 .findFirst()
                 .orElse(BigDecimal.valueOf(50000));
     }
+
     private int getPositiveIntSetting(String key, int defaultValue) {
         try {
             return systemSettingRepository.findBySettingKeyIgnoreCase(key).map(setting -> setting.getSettingValue())
                     .filter(v -> v != null && !v.isBlank()).map(String::trim).map(Integer::parseInt)
                     .filter(v -> v > 0).orElse(defaultValue);
-        } catch (NumberFormatException ignored) { return defaultValue; }
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
     }
 
     private Integer getMaxBorrowDays() {
@@ -632,7 +680,12 @@ public class BorrowController extends LocalizedControllerSupport {
             this.labelKey = labelKey;
         }
 
-        public String getValue() { return value; }
-        public String getLabelKey() { return labelKey; }
+        public String getValue() {
+            return value;
+        }
+
+        public String getLabelKey() {
+            return labelKey;
+        }
     }
 }

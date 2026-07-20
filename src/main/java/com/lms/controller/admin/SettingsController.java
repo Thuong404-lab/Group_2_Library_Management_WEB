@@ -1,4 +1,5 @@
 package com.lms.controller.admin;
+
 import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
@@ -37,9 +38,6 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam Integer maxRenewalDays,
             @RequestParam Integer maxRenewalRequests,
             @RequestParam Integer renewalRejectionCooldownHours,
-            @RequestParam(required = false) List<Integer> tierIds,
-            @RequestParam(required = false) List<Integer> tierBorrowLimits,
-            @RequestParam(required = false) List<BigDecimal> tierSpendingConditions,
             @RequestParam BigDecimal borrowFeePerBook,
             @RequestParam BigDecimal finePerDay,
             @RequestParam BigDecimal damageCompensationAmount,
@@ -54,8 +52,6 @@ public class SettingsController extends LocalizedControllerSupport {
                     maxRenewalDays,
                     maxRenewalRequests,
                     renewalRejectionCooldownHours,
-                    borrowLimitsByTier,
-                    spendingConditionsByTier,
                     borrowFeePerBook,
                     finePerDay,
                     damageCompensationAmount,

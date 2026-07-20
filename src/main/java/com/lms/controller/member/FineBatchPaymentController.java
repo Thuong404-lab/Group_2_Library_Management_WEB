@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.UnauthorizedException;
@@ -21,7 +22,7 @@ public class FineBatchPaymentController extends LocalizedControllerSupport {
     private final MemberRepository memberRepository;
 
     public FineBatchPaymentController(FineBatchPaymentService paymentService,
-                                      MemberRepository memberRepository) {
+            MemberRepository memberRepository) {
         this.paymentService = paymentService;
         this.memberRepository = memberRepository;
     }

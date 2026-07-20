@@ -60,35 +60,6 @@
                     <p th:text="${book.description != null && !book.description.trim().isEmpty() ? book.description : #messages.msg('guest.bookDetail.descriptionPending')}">Book description...</p>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-sm-6">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong>ISBN:</strong> <span th:text="${book.isbn}"></span></li>
-                            <li class="mb-2"><strong th:text="#{guest.bookDetail.language}">Language:</strong> <span th:text="#{language.vietnamese}">Vietnamese</span></li>
-                            <li class="mb-2"><strong th:text="#{guest.bookDetail.storage}">Storage:</strong> <span th:text="#{guest.bookDetail.readingStorage}">Reading Loan Storage</span></li>
-                            <li class="mb-2"><strong th:text="#{guest.bookDetail.location}">Location:</strong> <span th:text="#{guest.bookDetail.sampleLocation}">Shelf A - Compartment 3</span></li>
-                        </ul>
-                    </div>
-                    <div class="col-sm-6">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong th:text="#{book.genre}">Genre:</strong> <span th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}"></span></li>
-                            <li class="mb-2"><strong th:text="#{common.status}">Status:</strong> <span th:class="${book.status == 'Active' ? 'badge bg-success' : 'badge bg-danger'}" th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}"></span></li>
-                            <li class="mb-2">
-                                <strong th:text="#{guest.bookDetail.rating}">Rating:</strong>
-                                <span class="text-warning">★</span>
-                                <span class="text-muted" th:text="${reviewCount > 0 ? '(' + #numbers.formatDecimal(averageRating, 1, 1) + ' / 5)' : #messages.msg('guest.bookDetail.noRating')}">(No ratings)</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <h5 class="fw-bold" th:text="#{guest.bookDetail.description}">Book Description</h5>
-                    <p class="text-muted lh-lg" th:text="${book.description != null ? book.description : #messages.msg('guest.bookDetail.descriptionPending')}">
-                        Book description...
-                    </p>
-                </div>
-
                 <hr class="guest-book-detail-hr-border-color-09">
 
                 <!-- Action Buttons -->
@@ -113,34 +84,12 @@
                           th:data-remove-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/remove'}">
                         <button type="submit"
                                 th:disabled="${isInactiveMember != null and isInactiveMember}"
-                                th:class="${favoriteBookIds.contains(book.bookId) ? 'btn btn-outline-classic w-100 py-2 js-favorite-button active' : 'btn btn-outline-classic w-100 py-2 js-favorite-button'}">
-                            <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1'}"></i>
-                            <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
-                        </button>
-                    </form>
-
-                    <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post" class="flex-grow-1 mr-2 mb-2">
-                        <button type="submit" class="btn btn-outline-classic w-100 py-2" th:disabled="${isInactiveMember != null and isInactiveMember}">
-                            <i class="bi bi-bookmark me-1"></i> <span th:text="#{guest.bookDetail.reserve}">Reserve</span>
                                 th:class="${favoriteBookIds.contains(book.bookId) ? 'book-detail-button book-detail-button--secondary js-favorite-button active' : 'book-detail-button book-detail-button--secondary js-favorite-button'}">
                             <i th:class="${favoriteBookIds.contains(book.bookId) ? 'bi bi-heart-fill' : 'bi bi-heart'}" aria-hidden="true"></i>
                             <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
                         </button>
                     </form>
-                    <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"
-                          th:action="@{/member/cart/add}" method="post">
-                        <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="book-detail-button book-detail-button--secondary"
-                                th:disabled="${book.status != 'Active' or availableCount == 0}"
-                                th:title="${availableCount == 0 ? #messages.msg('guest.bookDetail.unavailableHint') : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
-                            <i class="bi bi-bag-plus" aria-hidden="true"></i><span th:text="#{guest.bookDetail.addToCart}">Add to Cart</span>
-                        </button>
-                    </form>
-                    <a sec:authorize="hasRole('MEMBER')" th:if="${bookInCart}"
-                       th:href="@{/member/cart}"
-                       class="book-detail-button book-detail-button--secondary active">
-                        <i class="bi bi-bag-check" aria-hidden="true"></i><span th:text="#{guest.bookDetail.viewCart}">View Cart</span>
-                    </a>
+                    
                     <form th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
                           class="app-confirm-form"
                           data-confirm-title="Xác nhận đặt trước sách"
@@ -148,16 +97,31 @@
                           th:data-confirm-subject="${book.title}"
                           data-confirm-message="Hệ thống sẽ tạm giữ tiền đặt cọc từ ví thành viên để giữ chỗ. Bạn có đồng ý tiếp tục?"
                           data-confirm-action="Xác nhận &amp; Trừ tiền">
-                        <button type="submit" class="book-detail-button book-detail-button--secondary">
+                        <button type="submit" class="book-detail-button book-detail-button--secondary" th:disabled="${isInactiveMember != null and isInactiveMember}">
                             <i class="bi bi-bookmark" aria-hidden="true"></i><span th:text="#{guest.bookDetail.reserve}">Reserve</span>
                         </button>
                     </form>
+
+                    <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"
+                          th:action="@{/member/cart/add}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.bookId}" />
+                        <button type="submit" class="book-detail-button book-detail-button--secondary"
+                                th:disabled="${book.status != 'Active' or availableCount == 0 or (isInactiveMember != null and isInactiveMember)}"
+                                th:title="${availableCount == 0 ? #messages.msg('guest.bookDetail.unavailableHint') : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
+                            <i class="bi bi-bag-plus" aria-hidden="true"></i><span th:text="#{guest.bookDetail.addToCart}">Add to Cart</span>
+                        </button>
+                    </form>
+                    
+                    <a sec:authorize="hasRole('MEMBER')" th:if="${bookInCart}"
+                       th:href="@{/member/cart}"
+                       class="book-detail-button book-detail-button--secondary active">
+                        <i class="bi bi-bag-check" aria-hidden="true"></i><span th:text="#{guest.bookDetail.viewCart}">View Cart</span>
+                    </a>
+
                     <form th:action="@{/member/borrow/create}" method="get">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
-                        <button type="submit" class="btn btn-classic-borrow w-100 py-2 fw-bold" th:disabled="${book.status != 'Active' or (isInactiveMember != null and isInactiveMember)}" th:title="${book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : ''}">
-                            <i class="bi bi-book me-1"></i> <span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
                         <button type="submit" class="book-detail-button book-detail-button--primary"
-                                th:disabled="${book.status != 'Active' or availableCount == 0}"
+                                th:disabled="${book.status != 'Active' or availableCount == 0 or (isInactiveMember != null and isInactiveMember)}"
                                 th:title="${availableCount == 0 ? #messages.msg('guest.bookDetail.unavailableHint') : (book.status != 'Active' ? #messages.msg('guest.bookDetail.unavailableHint') : '')}">
                             <i class="bi bi-book" aria-hidden="true"></i><span th:text="#{guest.bookDetail.requestLoan}">Request Loan</span>
                         </button>
@@ -175,13 +139,8 @@
                 <span class="book-review-count member-reference-pill" th:text="#{guest.bookDetail.reviewCount(${reviewCount})}">0 reviews</span>
             </div>
 
-            <div class="bg-white rounded shadow-sm p-4 mb-5 write-review-box" sec:authorize="hasRole('MEMBER')"
-                 th:if="${reviewBorrowEligible and !reviewAlreadySubmitted and !isInactiveMember}">
-                <h5 class="fw-bold mb-4 u-color-4a3b32-8f35ff96">
-                    <i class="bi bi-pencil-square me-2 u-color-8b5a2b-d7f13118"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span>
-                </h5>
             <div class="write-review-box member-reference-list__item" sec:authorize="hasRole('MEMBER')"
-                 th:if="${reviewBorrowEligible and !reviewAlreadySubmitted}">
+                 th:if="${reviewBorrowEligible and !reviewAlreadySubmitted and !isInactiveMember}">
                 <h3><i class="bi bi-pencil-square" aria-hidden="true"></i><span th:text="#{guest.bookDetail.submitReview}">Submit a Book Review</span></h3>
                 <form id="bookDetailReviewForm"
                       th:action="@{'/member/interaction/books/' + ${book.bookId} + '/reviews'}"
