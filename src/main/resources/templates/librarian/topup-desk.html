@@ -28,6 +28,7 @@
                     class="card-classic finance-card p-4 mb-4">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
+                    <input type="hidden" name="requestId" th:value="${topupRequestId}">
 
                     <h5 class="section-title mb-4">
                                 <span th:text="#{librarian.topupDesk.formTitle}">Top Up Member Wallet</span>
@@ -95,7 +96,7 @@
                         <div class="input-group finance-amount-group">
                             <input type="text" inputmode="numeric" class="form-control" name="amount" id="topupAmount"
                                        th:value="${amount != null ? amount : ''}" th:placeholder="#{librarian.topupDesk.amountPlaceholder}"
-                                data-vnd-input data-min-amount="10000" th:data-min-message="#{validation.money.minimum('{0}')}" th:data-max-message="#{validation.money.maximum('{0}')}" autocomplete="off">
+                                data-vnd-input data-min-amount="10000" data-max-amount="500000000" th:data-min-message="#{validation.money.minimum('{0}')}" th:data-max-message="#{validation.money.maximum('{0}')}" autocomplete="off">
                             <span class="input-group-text finance-currency-unit librarian-topup-desk-span-background-02" th:text="#{currency.vnd}">VND</span>
                         </div>
                         <div id="topupAmountRequired" class="invalid-feedback">

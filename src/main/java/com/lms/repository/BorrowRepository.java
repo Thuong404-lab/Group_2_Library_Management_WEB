@@ -33,6 +33,9 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
 
     List<Borrow> findByMember_MemberIdOrderByBorrowDateDesc(Integer memberId);
 
+    Page<Borrow> findByMember_MemberIdAndBorrowDateGreaterThanEqualAndBorrowDateLessThanOrderByBorrowDateDesc(
+            Integer memberId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
 
     // --- BỔ SUNG ĐẦY ĐỦ CÁC PHƯƠNG THỨC PHÂN TRANG (PAGINATION) THEO CHUẨN JPA ---
 

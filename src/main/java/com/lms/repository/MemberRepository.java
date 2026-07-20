@@ -21,6 +21,16 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
     // call this method after tier summary chips were removed.
     long countByTier_TierNameIgnoreCase(String tierName);
 
+    /** Kiểm tra tier đang được dùng — O(1), thay thế findAll().stream().anyMatch() */
+    boolean existsByTier_TierId(Integer tierId);
+
+    /** Số lượng member ở một tier cụ thể */
+    long countByTier_TierId(Integer tierId);
+
+    /** GROUP BY tier_id để build map đếm member trong 1 query */
+    @Query("SELECT m.tier.tierId, COUNT(m) FROM Member m WHERE m.tier IS NOT NULL GROUP BY m.tier.tierId")
+    List<Object[]> countGroupByTierId();
+
     Optional<Member> findByUserEmail(String email);
 
     Optional<Member> findByUserPhone(String phone);

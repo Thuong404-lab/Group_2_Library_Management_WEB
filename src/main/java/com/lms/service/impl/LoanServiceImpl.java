@@ -363,6 +363,7 @@ public class LoanServiceImpl implements LoanService {
         }
         detail.setReturnDate(returnDate);
         detail.setConditionNote(fullConditionNote);
+        detail.setConditionCode(resolveConditionCode(bookCondition));
         detail.setStatus(STATUS_RETURNED);
         borrowDetailRepository.save(detail);
 
@@ -799,6 +800,16 @@ public class LoanServiceImpl implements LoanService {
         return STATUS_AVAILABLE;
     }
 
+    private String resolveConditionCode(String bookCondition) {
+        String itemStatus = resolveReturnedItemStatus(bookCondition);
+        if (STATUS_LOST.equals(itemStatus)) return "LOST";
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (STATUS_DAMAGED.equals(itemStatus)
+                || normalized.contains("minor damage")
+                || normalized.contains("h\u01b0 h\u1ecfng")) return "DAMAGED";
+        return "GOOD";
+    }
+
     /**
      * Cáº­p nháº­t tráº¡ng thÃ¡i cá»§a phiáº¿u mÆ°á»£n cha dá»±a trÃªn cÃ¡c chi tiáº¿t sÃ¡ch Ä‘Ã£ tráº£
      */
@@ -926,4 +937,3 @@ public class LoanServiceImpl implements LoanService {
         return transactionRepository.findByBorrow_BorrowId(borrowId);
     }
 }
-

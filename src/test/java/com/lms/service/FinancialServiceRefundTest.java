@@ -77,7 +77,7 @@ class FinancialServiceRefundTest {
         Reservation reservation = new Reservation(14, member, null, null, "Refund_Pending");
 
         when(reservationRepository.findByIdForUpdate(14)).thenReturn(Optional.of(reservation));
-        when(walletRepository.findByMemberMemberId(7)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByMemberIdForUpdate(7)).thenReturn(Optional.of(wallet));
         when(systemSettingRepository.findBySettingKeyIgnoreCase("Deposit_Amount")).thenReturn(Optional.empty());
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
