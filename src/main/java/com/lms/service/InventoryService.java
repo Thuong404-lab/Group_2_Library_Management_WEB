@@ -32,6 +32,10 @@ public interface InventoryService {
 
     void addNewBook(String title, String isbn, Integer genreId, Integer quantity, String description, String coverImageUrl, Integer shelfId, String bookCondition, String authorName);
 
+    void addBookCopies(Integer bookId, Integer quantity, Integer shelfId, String bookCondition);
+
+    void deleteBookCopies(Integer bookId, List<Integer> bookItemIds);
+
     void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status, String coverImageUrl, Integer shelfId, String description, String author);
 
     void updateBookStatus(Integer bookId, String status);
