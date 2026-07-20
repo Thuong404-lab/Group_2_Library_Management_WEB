@@ -13,6 +13,7 @@ import com.lms.entity.SystemSetting;
 import com.lms.service.PayOsPaymentService;
 import com.lms.service.FinancialService;
 import com.lms.entity.PayOsPayment;
+import com.lms.util.BorrowCodeFormatter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.springframework.data.domain.Page;
@@ -25,8 +26,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import com.lms.entity.BorrowDetail;
+import com.lms.entity.Reservation;
+import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 public class LibrarianBorrowController extends LocalizedControllerSupport {
@@ -98,6 +104,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("activeMenu", "borrow-list");
 
         return "librarian/borrow-list";
     }
@@ -107,7 +114,20 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
                                        @RequestParam(value = "renewId", required = false) Integer renewId,
                                        @RequestParam(value = "reservationId", required = false) Integer reservationId,
-                                       Model model) {
+                                       Model model,
+                                       HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+        java.util.Map<Integer, String> usernameByMemberId = memberAccountRepository.findAll().stream()
+                .filter(ma -> ma.getMember() != null)
+                .collect(Collectors.toMap(
+                        ma -> ma.getMember().getMemberId(),
+                        ma -> ma.getUsername(),
+                        (existing, replacement) -> existing
+                ));
+        model.addAttribute("usernameByMemberId", usernameByMemberId);
+
         model.addAttribute("borrowRequest", new BorrowRequest());
         model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
@@ -127,8 +147,10 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         if (requestId != null) {
             try {
                 Borrow selectedBorrow = borrowService.getBorrowById(requestId);
-                model.addAttribute("selectedRequest", selectedBorrow);
-                model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                if ("Pending".equalsIgnoreCase(selectedBorrow.getStatus())) {
+                    model.addAttribute("selectedRequest", selectedBorrow);
+                    model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
             }
@@ -136,7 +158,17 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         
         if (renewId != null) {
             try {
-                model.addAttribute("selectedRenewal", borrowService.getBorrowDetailById(renewId));
+                BorrowDetail selectedRenew = borrowService.getBorrowDetailById(renewId);
+                if ("Renew_Pending".equalsIgnoreCase(selectedRenew.getStatus())) {
+                    model.addAttribute("selectedRenewal", selectedRenew);                    transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                                    renewId, "RENEWAL_FEE", "Pending")
+                            .ifPresent(hold -> {
+                                int requestedDays = hold.getRenewalDays() == null ? 0 : hold.getRenewalDays();
+                                model.addAttribute("selectedRenewalDays", requestedDays);
+                                model.addAttribute("selectedRenewalFee", hold.getAmount() == null ? BigDecimal.ZERO : hold.getAmount().abs());
+                                model.addAttribute("selectedRenewalNewDueDate", selectedRenew.getDueDate().plusDays(requestedDays));
+                            });
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.renewalDetailsFailed", e));
             }
@@ -144,33 +176,44 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
         if (reservationId != null) {
             try {
-                model.addAttribute("selectedReservation", borrowService.getReservationById(reservationId));
+                Reservation selectedReservation = borrowService.getReservationById(reservationId);
+                if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
+                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
+                    model.addAttribute("selectedReservation", selectedReservation);
+                }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.reservationDetailsFailed", e));
             }
         }
 
+        model.addAttribute("activeMenu", "borrow-desk");
         return "librarian/create-borrow";
     }
 
-    // CHỨC NĂNG PHÊ DUYỆT ĐƠN MƯỢN ONLINE: Chuyển đổi trạng thái từ Pending -> Active
+    // Approving reserves physical copies; the loan only becomes Active after handover.
     @PostMapping("/librarian/borrow/approve/{borrowId}")
-    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId, Principal principal, RedirectAttributes redirectAttributes) {
+    public String approveMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                       @RequestParam("barcodes") List<String> barcodes,
+                                       Principal principal,
+                                       RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.approvePendingRequest(borrowId, staffUsername);
+            borrowService.approvePendingRequest(borrowId, barcodes, staffUsername);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.approved"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
         }
-        return "redirect:/librarian/borrow/create";
+        return "redirect:/librarian/borrow/list?status=Waiting_Pickup";
     }
 
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
     @PostMapping("/librarian/borrow/reject/{borrowId}")
-    public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId, RedirectAttributes redirectAttributes) {
+    public String rejectMemberRequest(@PathVariable("borrowId") Integer borrowId,
+                                      @RequestParam("reasonCode") String reasonCode,
+                                      @RequestParam("reason") String reason,
+                                      RedirectAttributes redirectAttributes) {
         try {
-            borrowService.rejectPendingRequest(borrowId);
+            borrowService.rejectPendingRequest(borrowId, reasonCode, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
@@ -194,10 +237,14 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
     // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
     @PostMapping("/librarian/reservations/reject/{id}")
-    public String rejectReservationRequest(@PathVariable("id") Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String rejectReservationRequest(@PathVariable("id") Integer id,
+                                           @RequestParam("reasonCode") String reasonCode,
+                                      @RequestParam("reason") String reason,
+                                           Principal principal,
+                                           RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            borrowService.rejectReservationRequest(id, staffUsername);
+            borrowService.rejectReservationRequest(id, staffUsername, reasonCode, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.reservation.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.rejectFailed", e));
@@ -208,16 +255,28 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
 
     // Xem trước thông tin phiếu mượn (Review Bill)
+    @GetMapping("/librarian/borrow/review")
+    public String redirectReviewWithoutPreviewData() {
+        return "redirect:/librarian/borrow/create";
+    }
+
     @PostMapping("/librarian/borrow/review")
     public String reviewCreateBorrow(@RequestParam("memberIdentifier") String memberIdentifier,
                                      @RequestParam(value = "numberOfDays", required = false) Integer numberOfDays,
                                      @RequestParam("rawBarcodes") String rawBarcodes,
+                                     @RequestParam(value = "paymentMethod", required = false, defaultValue = "CASH") String paymentMethod,
                                      Model model,
                                      RedirectAttributes redirectAttributes) {
-        if (numberOfDays == null || numberOfDays <= 0) {
-            numberOfDays = 14; // Giá trị mặc định nếu người dùng nhập rỗng
+        int maxBorrowDays = borrowService.getMaxBorrowDays();
+        if (numberOfDays == null || numberOfDays < 1 || numberOfDays > maxBorrowDays) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidDays", maxBorrowDays));
+            return "redirect:/librarian/borrow/create";
         }
         try {
+            if (memberIdentifier == null || memberIdentifier.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.memberIdentifierRequired"));
+                return "redirect:/librarian/borrow/create";
+            }
             // 1. Tìm thành viên
             java.util.Optional<com.lms.entity.Member> optMember = memberRepository.findByUserEmail(memberIdentifier.trim());
             if (optMember.isEmpty()) {
@@ -228,8 +287,13 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 return "redirect:/librarian/borrow/create";
             }
             com.lms.entity.Member member = optMember.get();
-            if (member.getUser().getStatus() != com.lms.enums.UserStatus.Active) {
+            if (member.getUser() == null || member.getUser().getStatus() != com.lms.enums.UserStatus.Active) {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.member.inactive"));
+                return "redirect:/librarian/borrow/create";
+            }
+            List<String> eligibilityReasons = getBorrowIneligibilityReasons(member);
+            if (!eligibilityReasons.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", eligibilityReasons.get(0));
                 return "redirect:/librarian/borrow/create";
             }
 
@@ -238,12 +302,18 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.required"));
                 return "redirect:/librarian/borrow/create";
             }
-            java.util.List<String> barcodeList = java.util.Arrays.asList(rawBarcodes.split("\\s*,\\s*"));
+            Set<String> barcodeSet = new LinkedHashSet<>();
+            for (String rawBarcode : rawBarcodes.split("\\s*,\\s*")) {
+                String barcode = rawBarcode.trim();
+                if (barcode.isEmpty()) continue;
+                if (!barcodeSet.add(barcode)) {
+                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.duplicate", barcode));
+                    return "redirect:/librarian/borrow/create";
+                }
+            }
             java.util.List<com.lms.entity.BookItem> validItems = new java.util.ArrayList<>();
             
-            for (String barcode : barcodeList) {
-                barcode = barcode.trim();
-                if (barcode.isEmpty()) continue;
+            for (String barcode : barcodeSet) {
                 java.util.Optional<com.lms.entity.BookItem> optItem = bookItemRepository.findByBarcode(barcode);
                 if (optItem.isEmpty()) {
                     redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.notFound", barcode));
@@ -259,6 +329,15 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             
             if (validItems.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.barcode.noneValid"));
+                return "redirect:/librarian/borrow/create";
+            }
+
+            long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
+            int configuredLimit = getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10);
+            int maxLimit = member.getTier() != null && member.getTier().getBorrowLimit() != null
+                    ? member.getTier().getBorrowLimit() : configuredLimit;
+            if (currentBorrowCount + validItems.size() > Math.max(1, maxLimit)) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.tierLimitExceeded"));
                 return "redirect:/librarian/borrow/create";
             }
 
@@ -290,6 +369,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             model.addAttribute("billDays", days);
             model.addAttribute("billRawBarcodes", rawBarcodes);
             model.addAttribute("billMemberIdentifier", memberIdentifier);
+            model.addAttribute("billPaymentMethod", paymentMethod);
             model.addAttribute("billFeePerBookPerDay", baseFee);
             model.addAttribute("billBaseFee", totalBaseFee);
             model.addAttribute("billDiscount", discount);
@@ -325,7 +405,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 }
                 borrowService.activatePendingBankBorrow(borrow.getBorrowId());
             }
-            redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.createdAtDesk"));
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.loan.createdAtDeskWithCode", BorrowCodeFormatter.format(borrow.getBorrowId())));
         } catch (ApplicationException e) {
             if (borrow != null && "BANK".equalsIgnoreCase(request.getPaymentMethod())) {
                 try {
@@ -335,6 +415,9 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 }
             }
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.failed", e));
+            redirectAttributes.addFlashAttribute("billMemberIdentifier", request.getMemberIdentifier());
+            redirectAttributes.addFlashAttribute("billDays", request.getNumberOfDays());
+            redirectAttributes.addFlashAttribute("billRawBarcodes", rawBarcodes);
         }
         return "redirect:/librarian/borrow/create";
     }
@@ -376,9 +459,25 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             if (itemOpt.isPresent()) {
                 com.lms.entity.BookItem item = itemOpt.get();
                 data.put("found", true);
+                data.put("bookId", item.getBook().getBookId());
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
                 String rawStatus = item.getStatus();
+                
+                long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(item.getBook().getBookId(), "Available");
+                data.put("availableCount", availableCount);
+                
+                // Debug logging to console
+                try {
+                    java.util.List<com.lms.entity.BookItem> allItems = bookItemRepository.findByBook_BookId(item.getBook().getBookId());
+                    System.out.println("DEBUG BOOK LOOKUP: Book ID = " + item.getBook().getBookId() + ", Title = " + item.getBook().getTitle() + ", Available Count in DB = " + availableCount);
+                    for (com.lms.entity.BookItem bi : allItems) {
+                        System.out.println("DEBUG BOOK ITEM: Barcode = " + bi.getBarcode() + ", Status = " + bi.getStatus());
+                    }
+                } catch (Exception e) {
+                    System.err.println("DEBUG BOOK LOOKUP ERROR: " + e.getMessage());
+                }
+                
                 String vnStatus = message("book.status.available");
                 if ("Borrowed".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.borrowed");
                 else if ("Lost".equalsIgnoreCase(rawStatus)) vnStatus = message("loan.status.lost");
@@ -416,11 +515,15 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             response.put("email", member.getUser().getEmail());
             response.put("phone", member.getUser().getPhone());
             response.put("status", member.getUser().getStatus().name());
+            List<String> eligibilityReasons = getBorrowIneligibilityReasons(member);
+            boolean eligible = member.getUser().getStatus() == com.lms.enums.UserStatus.Active && eligibilityReasons.isEmpty();
+            response.put("eligible", eligible);
+            response.put("reasons", eligibilityReasons);
             
-            int maxBorrowLimit = 0;
+            int maxBorrowLimit = getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10);
             if (member.getTier() != null) {
                 response.put("memberLevel", member.getTier().getTierName());
-                maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit() : 0;
+                maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit() : maxBorrowLimit;
             } else {
                 response.put("memberLevel", message("backend.member.defaultTier"));
             }
@@ -435,10 +538,37 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         return response;
     }
 
+    private List<String> getBorrowIneligibilityReasons(com.lms.entity.Member member) {
+        List<String> reasons = new java.util.ArrayList<>();
+        if (borrowDetailRepository.countByBorrow_Member_MemberIdAndStatusIgnoreCase(member.getMemberId(), "Overdue") > 0) {
+            reasons.add(message("backend.borrow.blockedByOverdue"));
+        }
+        if (!transactionRepository.findUnpaidFineTransactions(member.getMemberId(), List.of("FINE", "DAMAGE_FEE")).isEmpty()) {
+            reasons.add(message("backend.borrow.blockedByUnpaidFine"));
+        }
+        return reasons;
+    }
+
+    private int getPositiveSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .filter(value -> value > 0)
+                    .orElse(defaultValue);
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
+    }
+
     @GetMapping("/librarian/borrow/member/{memberId}")
     public String viewMemberBorrowHistory(@PathVariable Integer memberId,
                                           @RequestParam(value = "startDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate startDate,
                                           @RequestParam(value = "endDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                          @RequestParam(value = "borrowPage", defaultValue = "0") int borrowPageNumber,
+                                          @RequestParam(value = "txPage", defaultValue = "0") int transactionPageNumber,
                                           Model model) {
         com.lms.entity.Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new com.lms.exception.ForbiddenException(message("backend.member.notFoundOrForbidden")));
@@ -446,7 +576,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         // Determine user account creation date
         java.time.LocalDateTime minBorrow = borrowRepository.findMinBorrowDateByMemberId(memberId);
         java.time.LocalDateTime minTx = transactionRepository.findMinTransactionDateByMemberId(memberId);
-        java.time.LocalDateTime creationDateTime = java.time.LocalDateTime.now().minusDays(30); // fallback default
+        java.time.LocalDateTime creationDateTime = java.time.LocalDateTime.now();
         if (minBorrow != null && minTx != null) {
             creationDateTime = minBorrow.isBefore(minTx) ? minBorrow : minTx;
         } else if (minBorrow != null) {
@@ -457,7 +587,11 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         LocalDate creationDate = creationDateTime.toLocalDate();
         LocalDate today = LocalDate.now();
 
-        // Enforce date bounds
+        boolean invalidDateRange = (startDate != null && endDate != null && startDate.isAfter(endDate))
+                || (startDate != null && (startDate.isBefore(creationDate) || startDate.isAfter(today)))
+                || (endDate != null && (endDate.isBefore(creationDate) || endDate.isAfter(today)));
+
+        // Enforce safe date bounds after retaining an explicit validation message.
         LocalDate filterStart = startDate;
         if (filterStart == null) {
             filterStart = creationDate;
@@ -483,48 +617,53 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         }
 
         if (filterStart.isAfter(filterEnd)) {
-            filterStart = filterEnd;
+            filterStart = creationDate;
+            filterEnd = today;
         }
 
-        // Load filtered list of borrows
+        // Load one page and batch-fetch its details to avoid N+1 queries.
         List<Borrow> allBorrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
-        LocalDate finalFilterStart = filterStart;
-        LocalDate finalFilterEnd = filterEnd;
-        List<Borrow> filteredBorrows = allBorrows.stream()
-                .filter(b -> {
-                    java.time.LocalDateTime bd = b.getBorrowDate();
-                    if (bd == null) return false;
-                    return !bd.isBefore(finalFilterStart.atStartOfDay()) && !bd.isAfter(finalFilterEnd.atTime(23, 59, 59));
-                })
-                .toList();
+        java.time.LocalDateTime rangeStart = filterStart.atStartOfDay();
+        java.time.LocalDateTime rangeEndExclusive = filterEnd.plusDays(1).atStartOfDay();
+        Page<Borrow> borrowPage = borrowRepository
+                .findByMember_MemberIdAndBorrowDateGreaterThanEqualAndBorrowDateLessThanOrderByBorrowDateDesc(
+                        memberId, rangeStart, rangeEndExclusive,
+                        PageRequest.of(Math.max(0, borrowPageNumber), 10));
+        List<Borrow> filteredBorrows = borrowPage.getContent();
 
-        // Mappings
-        java.util.Map<Integer, List<BorrowDetail>> detailsByBorrowId = new java.util.HashMap<>();
-        java.util.Map<Integer, List<Transaction>> transactionsByBorrowId = new java.util.HashMap<>();
-        for (Borrow borrow : filteredBorrows) {
-            detailsByBorrowId.put(borrow.getBorrowId(), borrowDetailRepository.findByBorrowId(borrow.getBorrowId()));
-            transactionsByBorrowId.put(borrow.getBorrowId(), transactionRepository.findByBorrow_BorrowId(borrow.getBorrowId()));
-        }
+        List<Integer> borrowIds = filteredBorrows.stream().map(Borrow::getBorrowId).toList();
+        java.util.Map<Integer, List<BorrowDetail>> detailsByBorrowId = borrowIds.isEmpty()
+                ? java.util.Map.of()
+                : borrowDetailRepository.findByBorrow_BorrowIdIn(borrowIds).stream()
+                        .collect(Collectors.groupingBy(detail -> detail.getBorrow().getBorrowId()));
 
-        // Stats (all time)
-        List<BorrowDetail> allMemberDetails = borrowDetailRepository.findBorrowHistoryLimit365Days(memberId, java.time.LocalDateTime.of(2000, 1, 1, 0, 0));
-        int totalBorrows = allMemberDetails.size();
-        int completedBorrows = 0;
-        int activeBorrows = 0;
-        for (BorrowDetail bd : allMemberDetails) {
-            if ("Returned".equalsIgnoreCase(bd.getStatus())) {
-                completedBorrows++;
-            } else if ("Borrowed".equalsIgnoreCase(bd.getStatus()) || "Overdue".equalsIgnoreCase(bd.getStatus()) || "Return_Pending".equalsIgnoreCase(bd.getStatus()) || "Approved".equalsIgnoreCase(bd.getStatus()) || "Waiting_Pickup".equalsIgnoreCase(bd.getStatus())) {
-                activeBorrows++;
-            }
-        }
+        java.util.Map<Integer, List<Transaction>> transactionsByBorrowId = borrowIds.isEmpty()
+                ? java.util.Map.of()
+                : transactionRepository.findByBorrow_BorrowIdInOrderByTransactionDateDesc(borrowIds).stream()
+                        .collect(Collectors.groupingBy(transaction -> transaction.getBorrow().getBorrowId()));
+
+        // Stats are receipt counts, matching the labels shown to librarians.
+        int totalBorrows = allBorrows.size();
+        int completedBorrows = (int) allBorrows.stream()
+                .filter(borrow -> "RETURNED".equals(normalizeStatus(borrow.getStatus())))
+                .count();
+        Set<String> activeStatuses = Set.of("ACTIVE", "BORROWED", "OVERDUE", "RETURN_PENDING", "APPROVED", "WAITING_PICKUP", "RENEW_PENDING");
+        int activeBorrows = (int) allBorrows.stream()
+                .filter(borrow -> activeStatuses.contains(normalizeStatus(borrow.getStatus())))
+                .count();
 
         com.lms.entity.MemberAccount account = memberAccountRepository.findByMemberMemberId(memberId).orElse(null);
         com.lms.entity.Wallet wallet = walletRepository.findByMemberMemberId(memberId).orElse(null);
 
         model.addAttribute("member", member);
         model.addAttribute("accountUsername", account != null ? account.getUsername() : message("librarian.memberDetail.noAccount"));
-        model.addAttribute("accountStatus", account != null ? account.getStatus() : "Inactive");
+        String accountStatus = account != null ? account.getStatus() : "Inactive";
+        if (member.getUser() == null || member.getUser().getStatus() == null
+                || member.getUser().getStatus() != com.lms.enums.UserStatus.Active) {
+            accountStatus = member.getUser() != null && member.getUser().getStatus() != null
+                    ? member.getUser().getStatus().name() : "Inactive";
+        }
+        model.addAttribute("accountStatus", accountStatus);
         model.addAttribute("walletBalance", wallet != null && wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO);
 
         model.addAttribute("totalBorrows", totalBorrows);
@@ -537,10 +676,16 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("maxDate", today.toString());
 
         model.addAttribute("borrows", filteredBorrows);
+        model.addAttribute("borrowPage", borrowPage);
         model.addAttribute("detailsByBorrowId", detailsByBorrowId);
         model.addAttribute("transactionsByBorrowId", transactionsByBorrowId);
+        model.addAttribute("dateFilterError", invalidDateRange ? message("librarian.borrowMember.invalidDateRange") : null);
         model.addAttribute("activeMenu", "borrow-schedule");
 
         return "librarian/borrow-member-detail";
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "UNKNOWN" : status.trim().toUpperCase(java.util.Locale.ROOT).replace('-', '_');
     }
 }

@@ -1,6 +1,9 @@
 package com.lms.service.impl;
 
 import com.lms.entity.*;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
@@ -8,6 +11,8 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LoanService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.util.BorrowCodeFormatter;
+import com.lms.service.FinancialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +25,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * LoanServiceImpl - Xử lý Logic Quản lý Phiếu mượn (Thủ thư)
- * Người phụ trách: Huỳnh Gia Hưng (CE190488)
+ * LoanServiceImpl - Xá»­ lÃ½ Logic Quáº£n lÃ½ Phiáº¿u mÆ°á»£n (Thá»§ thÆ°)
+ * NgÆ°á»i phá»¥ trÃ¡ch: Huá»³nh Gia HÆ°ng (CE190488)
  */
 @Service
 public class LoanServiceImpl implements LoanService {
@@ -31,6 +36,8 @@ public class LoanServiceImpl implements LoanService {
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_DAMAGED = "Damaged";
+    private static final String STATUS_LOST = "Lost";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
     private static final String STATUS_OVERDUE = "Overdue";
@@ -39,11 +46,15 @@ public class LoanServiceImpl implements LoanService {
     private final MemberRepository memberRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final BookItemRepository bookItemRepository;
+    private final BookRepository bookRepository;
+    private final MemberAccountRepository memberAccountRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final ReservationRepository reservationRepository;
     private final SystemSettingRepository systemSettingRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final FinancialService financialService;
 
 
     public LoanServiceImpl(BorrowRepository borrowRepository,
@@ -51,24 +62,32 @@ public class LoanServiceImpl implements LoanService {
                            MemberRepository memberRepository,
                            StaffAccountRepository staffAccountRepository,
                            BookItemRepository bookItemRepository,
+                           BookRepository bookRepository,
+                           MemberAccountRepository memberAccountRepository,
                            WalletRepository walletRepository,
                            TransactionRepository transactionRepository,
+                           ReservationRepository reservationRepository,
                            SystemSettingRepository systemSettingRepository,
                            NotificationRepository notificationRepository,
-                           MemberNotificationRepository memberNotificationRepository) {
+                           MemberNotificationRepository memberNotificationRepository,
+                           FinancialService financialService) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.memberRepository = memberRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.bookItemRepository = bookItemRepository;
+        this.bookRepository = bookRepository;
+        this.memberAccountRepository = memberAccountRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.reservationRepository = reservationRepository;
         this.systemSettingRepository = systemSettingRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.financialService = financialService;
     }
 
-    // UC-13.1: Xem chi tiết phiếu mượn
+    // UC-13.1: Xem chi tiáº¿t phiáº¿u mÆ°á»£n
     @Override
     @Transactional(readOnly = true)
     public Borrow getLoanDetails(Integer borrowId) {
@@ -76,7 +95,7 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.notFoundById", borrowId)));
     }
 
-    // UC-13.2: Xác nhận trả sách trực tiếp bằng quét mã vạch (Barcode) tại quầy
+    // UC-13.2: XÃ¡c nháº­n tráº£ sÃ¡ch trá»±c tiáº¿p báº±ng quÃ©t mÃ£ váº¡ch (Barcode) táº¡i quáº§y
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void confirmReturn(String barcode) {
@@ -85,27 +104,32 @@ public class LoanServiceImpl implements LoanService {
 
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
-                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus()) || "Return_Pending".equalsIgnoreCase(d.getStatus())))
+                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus()) || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.activeHistoryNotFound")));
 
-        // 1. Cập nhật trạng thái sách vật lý
+        if ("Renew_Pending".equalsIgnoreCase(activeDetail.getStatus())) {
+            rejectRenewal(activeDetail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
+        }
+
+        // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½
         item.setStatus(STATUS_AVAILABLE);
         bookItemRepository.save(item);
 
-        // 2. Tính toán phạt quá hạn nếu có
+        // 2. TÃ­nh toÃ¡n pháº¡t quÃ¡ háº¡n náº¿u cÃ³
         processOverdueFine(activeDetail);
 
-        // 3. Cập nhật trạng thái chi tiết mượn
+        // 3. Cáº­p nháº­t tráº¡ng thÃ¡i chi tiáº¿t mÆ°á»£n
         activeDetail.setReturnDate(LocalDateTime.now());
         activeDetail.setStatus(STATUS_RETURNED);
         borrowDetailRepository.save(activeDetail);
 
-        // 4. Kiểm tra và cập nhật trạng thái phiếu mượn cha
+        // 4. Kiá»ƒm tra vÃ  cáº­p nháº­t tráº¡ng thÃ¡i phiáº¿u mÆ°á»£n cha
         updateParentBorrowStatus(activeDetail.getBorrow());
     }
 
-    // Phê duyệt yêu cầu trả sách trực tuyến từ độc giả
+    // PhÃª duyá»‡t yÃªu cáº§u tráº£ sÃ¡ch trá»±c tuyáº¿n tá»« Ä‘á»™c giáº£
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approveOnlineReturn(Integer borrowId) {
@@ -116,32 +140,34 @@ public class LoanServiceImpl implements LoanService {
         
         for (BorrowDetail detail : details) {
             if ("Return_Pending".equalsIgnoreCase(detail.getStatus()) || STATUS_BORROWED.equalsIgnoreCase(detail.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(detail.getStatus())) {
-                // 1. Cập nhật trạng thái sách vật lý về Available
+                // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½ vá» Available
                 if (detail.getBookItem() != null) {
                     BookItem item = detail.getBookItem();
                     item.setStatus(STATUS_AVAILABLE);
                     bookItemRepository.save(item);
                 }
 
-                // 2. Tính toán phạt quá hạn nếu có
+                // 2. TÃ­nh toÃ¡n pháº¡t quÃ¡ háº¡n náº¿u cÃ³
                 processOverdueFine(detail);
 
-                // 3. Cập nhật trạng thái chi tiết mượn
+                // 3. Cáº­p nháº­t tráº¡ng thÃ¡i chi tiáº¿t mÆ°á»£n
                 detail.setReturnDate(LocalDateTime.now());
                 detail.setStatus(STATUS_RETURNED);
                 borrowDetailRepository.save(detail);
             }
         }
 
-        // 4. Cập nhật trạng thái phiếu mượn cha
+        // 4. Cáº­p nháº­t tráº¡ng thÃ¡i phiáº¿u mÆ°á»£n cha
         updateParentBorrowStatus(borrow);
 
-        // 5. Gửi thông báo đến độc giả
-        sendInternalNotification(borrow.getMember(), localizedMessageService.get("systemNotification.return.approved.title"),
-                localizedMessageService.get("systemNotification.return.approved.content", borrowId));
+        // 5. Gá»­i thÃ´ng bÃ¡o Ä‘áº¿n Ä‘á»™c giáº£
+        sendInternalNotification(borrow.getMember(),
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.approved.title",
+                "systemNotification.return.approved.content", BorrowCodeFormatter.format(borrowId));
     }
 
-    // UC-13.3: Quầy mượn sách
+    // UC-13.3: Quáº§y mÆ°á»£n sÃ¡ch
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void processBorrowDesk(String memberIdentifier, List<String> barcodes, String staffUsername) {
@@ -237,7 +263,7 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
-    // UC-13.4: Gia hạn mượn
+    // UC-13.4: Gia háº¡n mÆ°á»£n
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void processRenewal(Integer borrowDetailId) {
@@ -249,7 +275,7 @@ public class LoanServiceImpl implements LoanService {
             throw new ConflictException(localizedMessageService.get("backend.loan.renewBorrowedOnly"));
         }
 
-        // Đọc cấu hình số lần gia hạn tối đa (mặc định là 2)
+        // Äá»c cáº¥u hÃ¬nh sá»‘ láº§n gia háº¡n tá»‘i Ä‘a (máº·c Ä‘á»‹nh lÃ  2)
         int maxRenewals = 2;
         Optional<SystemSetting> setting = systemSettingRepository.findBySettingKey("MAX_RENEWALS");
         if (setting.isPresent()) {
@@ -262,7 +288,7 @@ public class LoanServiceImpl implements LoanService {
             throw new ConflictException(localizedMessageService.get("backend.loan.maxRenewals", maxRenewals));
         }
 
-        // Đọc cấu hình số ngày gia hạn thêm mỗi lần (mặc định là 7 ngày)
+        // Äá»c cáº¥u hÃ¬nh sá»‘ ngÃ y gia háº¡n thÃªm má»—i láº§n (máº·c Ä‘á»‹nh lÃ  7 ngÃ y)
         int renewDays = 7;
         Optional<SystemSetting> renewDaysSetting = systemSettingRepository.findBySettingKey("RENEW_DAYS");
         if (renewDaysSetting.isPresent()) {
@@ -277,14 +303,16 @@ public class LoanServiceImpl implements LoanService {
 
         Member member = detail.getBorrow().getMember();
         if (member != null && member.getMemberId() != null) {
-            sendInternalNotification(member, localizedMessageService.get("systemNotification.renewal.success.title"),
-                    localizedMessageService.get("systemNotification.renewal.success.content",
-                            detail.getBook().getTitle(), renewDays,
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+            sendInternalNotification(member,
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.success.title",
+                    "systemNotification.renewal.success.content",
+                    detail.getBook().getTitle(), renewDays,
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
-    // Thêm 3 phương thức này vào thân lớp LoanServiceImpl.java
+    // ThÃªm 3 phÆ°Æ¡ng thá»©c nÃ y vÃ o thÃ¢n lá»›p LoanServiceImpl.java
 
     @Override
     @Transactional(readOnly = true)
@@ -298,51 +326,196 @@ public class LoanServiceImpl implements LoanService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
+        confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, BigDecimal.ZERO, "cash", staffUsername);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String staffUsername) {
+        confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, damageFine, "cash", staffUsername);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Transaction confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
         if (activeLoans.isEmpty()) {
             throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
         }
 
         BorrowDetail detail = activeLoans.get(0);
+        if ("Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+            rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
+        }
         BookItem item = detail.getBookItem();
+        boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
         if (item != null) {
-            item.setStatus(STATUS_AVAILABLE);
-            item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
+            item.setStatus(resolveReturnedItemStatus(bookCondition));
+            item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tá»‘t");
             item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
             bookItemRepository.save(item);
         }
 
-        String fullConditionNote = bookCondition != null ? bookCondition.trim() : "Tốt";
+        String fullConditionNote = bookCondition != null ? bookCondition.trim() : "Tá»‘t";
         if (damageNote != null && !damageNote.trim().isEmpty()) {
             fullConditionNote += " - " + damageNote.trim();
         }
         detail.setReturnDate(returnDate);
         detail.setConditionNote(fullConditionNote);
+        detail.setConditionCode(resolveConditionCode(bookCondition));
         detail.setStatus(STATUS_RETURNED);
         borrowDetailRepository.save(detail);
 
         if (returnDate.isAfter(detail.getDueDate())) {
             processOverdueFine(detail);
         }
+        if (requiresCompensation) {
+            financialService.issueDamageCompensation(detail.getBorrowDetailId());
+        }
+
+        Transaction damageFineTx = null;
+        if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0) {
+            damageFineTx = processDamageFine(detail, damageFine, paymentMethod);
+        }
 
         updateParentBorrowStatus(detail.getBorrow());
         sendInternalNotification(detail.getBorrow().getMember(),
-                localizedMessageService.get("systemNotification.return.desk.title"),
-                localizedMessageService.get("systemNotification.return.desk.content", detail.getBook().getTitle()));
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.desk.title",
+                "systemNotification.return.desk.content", detail.getBook().getTitle());
+
+        return damageFineTx;
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
-        if (barcodes == null || barcodes.isEmpty()) {
-            return;
+    public BorrowDetail recoverMissingBookItem(Integer borrowDetailId, String barcode) {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new ValidationException(localizedMessageService.get("backend.barcode.required"));
         }
+        BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+        if (!List.of(STATUS_BORROWED, STATUS_OVERDUE, "Return_Pending", "Renew_Pending").stream()
+                .anyMatch(status -> status.equalsIgnoreCase(detail.getStatus()))) {
+            throw new ConflictException(localizedMessageService.get("backend.return.recoveryInactiveLoan"));
+        }
+        if (detail.getBookItem() != null) {
+            throw new ConflictException(localizedMessageService.get("backend.return.recoveryAlreadyAssigned",
+                    detail.getBookItem().getBarcode()));
+        }
+
+        BookItem item = bookItemRepository.findByBarcodeForUpdate(barcode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", barcode.trim())));
+        if (detail.getBook() == null || item.getBook() == null
+                || !detail.getBook().getBookId().equals(item.getBook().getBookId())) {
+            throw new ConflictException(localizedMessageService.get("backend.return.recoveryWrongBook", barcode.trim(),
+                    detail.getBook() == null ? "-" : detail.getBook().getTitle()));
+        }
+        if (borrowDetailRepository.findActiveLoansByBarcode(item.getBarcode()).stream()
+                .anyMatch(active -> !active.getBorrowDetailId().equals(detail.getBorrowDetailId()))) {
+            throw new ConflictException(localizedMessageService.get("backend.return.recoveryBarcodeInUse", item.getBarcode()));
+        }
+        if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus()) && !STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.return.recoveryInvalidItemStatus",
+                    item.getBarcode(), item.getStatus()));
+        }
+
+        detail.setBookItem(item);
+        item.setStatus(STATUS_BORROWED);
+        bookItemRepository.save(item);
+        return borrowDetailRepository.save(detail);
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Transaction confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
+        if (barcodes == null || barcodes.isEmpty()) {
+            return null;
+        }
+        Transaction firstTx = null;
+        boolean isFirst = true;
         for (String barcode : barcodes) {
             if (barcode != null && !barcode.trim().isEmpty()) {
-                confirmReturnWithDetails(barcode.trim(), returnDate, bookCondition, damageNote, staffUsername);
+                BigDecimal fineForThis = isFirst ? damageFine : BigDecimal.ZERO;
+                Transaction tx = confirmReturnWithDetails(barcode.trim(), returnDate, bookCondition, damageNote, fineForThis, paymentMethod, staffUsername);
+                if (isFirst) {
+                    firstTx = tx;
+                }
+                isFirst = false;
             }
         }
+        return firstTx;
+    }
+
+    private Transaction processDamageFine(BorrowDetail detail, BigDecimal damageFine, String paymentMethod) {
+        Member member = detail.getBorrow().getMember();
+        if (member == null) {
+            return null;
+        }
+        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                .orElseGet(() -> {
+                    Wallet newWallet = new Wallet();
+                    newWallet.setMember(member);
+                    newWallet.setBalance(BigDecimal.ZERO);
+                    return walletRepository.save(newWallet);
+                });
+
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setBorrow(detail.getBorrow());
+        transaction.setTransactionType("DAMAGE_FEE");
+        transaction.setTransactionDate(LocalDateTime.now());
+
+        String resolvedMethod = (paymentMethod != null) ? paymentMethod.trim().toLowerCase() : "cash";
+
+        if ("wallet".equals(resolvedMethod)) {
+            // Trừ tiền trực tiếp vào ví
+            wallet.setBalance(wallet.getBalance().subtract(damageFine));
+            walletRepository.save(wallet);
+
+            transaction.setAmount(damageFine.abs().negate());
+            transaction.setStatus("Completed");
+        } else if ("cash".equals(resolvedMethod)) {
+            // Thanh toán tiền mặt tại quầy (không trừ ví, giao dịch hoàn thành ngay)
+            transaction.setAmount(damageFine.abs().negate());
+            transaction.setStatus("Completed");
+        } else {
+            // Thanh toán qua ngân hàng (chờ quét mã QR)
+            transaction.setAmount(damageFine.abs().negate());
+            transaction.setStatus("Pending");
+        }
+
+        Transaction savedTx = transactionRepository.save(transaction);
+
+        // Gửi thông báo hệ thống đến độc giả
+        String formattedMoney = formatMoney(damageFine);
+        if ("wallet".equals(resolvedMethod)) {
+            sendInternalNotification(member,
+                    NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.LIBRARIAN,
+                    "systemNotification.damageFine.paidWallet.title",
+                    "systemNotification.damageFine.paidWallet.content",
+                    formattedMoney, detail.getBook().getTitle());
+        } else if ("cash".equals(resolvedMethod)) {
+            sendInternalNotification(member,
+                    NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.LIBRARIAN,
+                    "systemNotification.damageFine.paidCash.title",
+                    "systemNotification.damageFine.paidCash.content",
+                    formattedMoney, detail.getBook().getTitle());
+        } else {
+            sendInternalNotification(member,
+                    NotificationType.FINANCE, NotificationEventType.FINE_CREATED, NotificationSource.LIBRARIAN,
+                    "systemNotification.damageFine.created.title",
+                    "systemNotification.damageFine.created.content",
+                    formattedMoney, detail.getBook().getTitle());
+        }
+
+        return savedTx;
+    }
+
+    private String formatMoney(BigDecimal amount) {
+        BigDecimal safeAmount = amount == null ? BigDecimal.ZERO : amount;
+        return localizedMessageService.get("currency.vndAmount", String.format("%,.0f", safeAmount));
     }
 
     @Override
@@ -366,9 +539,10 @@ public class LoanServiceImpl implements LoanService {
             // Get all current borrow details of this member
             List<BorrowDetail> allMemberDetails = borrowDetailRepository.findCurrentBorrowsByMemberId(member.getMemberId());
             for (BorrowDetail d : allMemberDetails) {
-                if (d.getBookItem() != null && ("Borrowed".equalsIgnoreCase(d.getStatus())
+                if ("Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
-                        || "Return_Pending".equalsIgnoreCase(d.getStatus()))) {
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus())
+                        || "Renew_Pending".equalsIgnoreCase(d.getStatus())) {
                     results.add(d);
                 }
             }
@@ -378,16 +552,17 @@ public class LoanServiceImpl implements LoanService {
         // 2. Otherwise, treat as Barcode or BorrowId
         List<Borrow> matchingBorrows = new ArrayList<>();
 
-        // Check if query is borrowId (with or without 'BOR-' prefix)
-        String borrowIdStr = cleanQuery;
-        if (borrowIdStr.toUpperCase().startsWith("BOR-")) {
-            borrowIdStr = borrowIdStr.substring(4);
+        // Loan codes use one canonical format only: BOR-{borrowId}.
+        if (cleanQuery.matches("^BOR-[1-9]\\d*$")) {
+            String borrowIdStr = cleanQuery.substring(4);
+            try {
+                Integer id = Integer.parseInt(borrowIdStr);
+                Optional<Borrow> borrowOpt = borrowRepository.findById(id);
+                borrowOpt.ifPresent(matchingBorrows::add);
+            } catch (NumberFormatException ignored) {
+                // An identifier larger than Integer.MAX_VALUE cannot be a valid borrow ID.
+            }
         }
-        try {
-            Integer id = Integer.parseInt(borrowIdStr);
-            Optional<Borrow> borrowOpt = borrowRepository.findById(id);
-            borrowOpt.ifPresent(matchingBorrows::add);
-        } catch (NumberFormatException ignored) {}
 
         // Check if query is barcode
         List<BorrowDetail> barcodeDetails = borrowDetailRepository.findActiveLoansByBarcode(cleanQuery);
@@ -401,9 +576,10 @@ public class LoanServiceImpl implements LoanService {
         for (Borrow b : matchingBorrows) {
             List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(b.getBorrowId());
             for (BorrowDetail d : details) {
-                if (d.getBookItem() != null && ("Borrowed".equalsIgnoreCase(d.getStatus())
+                if ("Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
-                        || "Return_Pending".equalsIgnoreCase(d.getStatus()))) {
+                        || "Return_Pending".equalsIgnoreCase(d.getStatus())
+                        || "Renew_Pending".equalsIgnoreCase(d.getStatus())) {
                     if (!results.contains(d)) {
                         results.add(d);
                     }
@@ -424,11 +600,16 @@ public class LoanServiceImpl implements LoanService {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.notWaitingPickup"));
         }
 
+        List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
+        if (details.isEmpty() || details.stream().anyMatch(d -> d.getBookItem() == null
+                || d.getBookItem().getBarcode() == null || d.getBookItem().getBarcode().isBlank())) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.barcodeRequiredBeforePickup"));
+        }
+
         borrow.setStatus(STATUS_ACTIVE);
         borrow.setBorrowDate(LocalDateTime.now());
         borrowRepository.save(borrow);
 
-        List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
         for (BorrowDetail detail : details) {
             detail.setStatus(STATUS_BORROWED);
             detail.setDueDate(LocalDateTime.now().plusDays(14));
@@ -442,10 +623,11 @@ public class LoanServiceImpl implements LoanService {
         }
 
         sendInternalNotification(borrow.getMember(),
-                localizedMessageService.get("systemNotification.borrow.pickup.title"),
-                localizedMessageService.get("systemNotification.borrow.collection.content", borrowId,
-                        LocalDateTime.now().plusDays(14)
-                                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+                NotificationType.LOAN, NotificationEventType.LOAN_COLLECTED, NotificationSource.LIBRARIAN,
+                "systemNotification.borrow.pickup.title",
+                "systemNotification.borrow.collection.content", BorrowCodeFormatter.format(borrowId),
+                LocalDateTime.now().plusDays(14)
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @Override
@@ -457,62 +639,122 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, noRollbackFor = ConflictException.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
-        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+        BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
-
-        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus()))
             throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
+        Transaction hold = findPendingRenewalHold(borrowDetailId);
+        // Renewal limits were validated when the immutable wallet hold was created.
+        // Pending requests keep that policy snapshot even if an administrator changes settings later.
+        if (detail.getDueDate() == null || !detail.getDueDate().isAfter(LocalDateTime.now())) {
+            rejectRenewal(borrowDetailId, "SYSTEM", "APPROVAL_EXPIRED", null);
+            throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedExpired"));
+        }
+        MemberAccount account = memberAccountRepository.findByMemberMemberId(detail.getBorrow().getMember().getMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.account.memberNotFound")));
+        if (!"Active".equalsIgnoreCase(account.getStatus())) {
+            rejectRenewal(borrowDetailId, "SYSTEM", "ACCOUNT_RESTRICTED", null);
+            throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedAccountInactive"));
+        }
+        if (detail.getBook() != null && detail.getBorrow() != null && detail.getBorrow().getMember() != null) {
+            Integer bookId = detail.getBook().getBookId();
+            bookRepository.findByIdForUpdate(bookId)
+                    .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.book.notFound")));
+            long waitingReservations = reservationRepository.countActiveReservationsByOtherMemberForBook(
+                    bookId, detail.getBorrow().getMember().getMemberId(),
+                    List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE"));
+            long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, STATUS_AVAILABLE);
+            if (waitingReservations > availableCopies) {
+                rejectRenewal(borrowDetailId, "SYSTEM", "RESERVED_BY_OTHER", null);
+                throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedReserved"));
+            }
+        }
+        if (hold.getRenewalDays() == null || hold.getRenewalDays() < 1) {
+            rejectRenewal(borrowDetailId, "SYSTEM", "OTHER", "Invalid stored renewal request.");
+            throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedInvalidSnapshot"));
         }
 
-        int renewDays = 7;
-        Optional<SystemSetting> renewDaysSetting = systemSettingRepository.findBySettingKey("RENEW_DAYS");
-        if (renewDaysSetting.isPresent()) {
-            try {
-                renewDays = Integer.parseInt(renewDaysSetting.get().getSettingValue());
-            } catch (NumberFormatException ignored) { /* Use the documented default. */ }
-        }
-
-        detail.setDueDate(detail.getDueDate().plusDays(renewDays));
-        detail.setRenewCount(detail.getRenewCount() + 1);
-        detail.setStatus(STATUS_BORROWED); // Trở về trạng thái đang mượn
+        detail.setDueDate(detail.getDueDate().plusDays(hold.getRenewalDays()));
+        detail.setRenewCount((detail.getRenewCount() == null ? 0 : detail.getRenewCount()) + 1);
+        detail.setStatus(STATUS_BORROWED);
+        hold.setStatus("Completed");
         borrowDetailRepository.save(detail);
-
-        if (detail.getBorrow().getMember() != null) {
-            sendInternalNotification(detail.getBorrow().getMember(),
-                    localizedMessageService.get("systemNotification.renewal.approved.title"),
-                    localizedMessageService.get("systemNotification.renewal.approved.content",
-                            detail.getBook().getTitle(),
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
-        }
+        transactionRepository.save(hold);
+        if (detail.getBorrow().getMember() != null) sendInternalNotification(detail.getBorrow().getMember(),
+                NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                "systemNotification.renewal.approved.title", "systemNotification.renewal.approved.content",
+                detail.getBook().getTitle(), detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void rejectRenewal(Integer borrowDetailId, String staffUsername) {
-        BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
+    public void rejectRenewal(Integer borrowDetailId, String staffUsername, String reasonCode, String reason) {
+        var rejection = com.lms.util.RejectionReasonValidator.validate("RENEWAL", reasonCode, reason);
+        BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
-
-        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus()))
             throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
-        }
-
-        // Trả về trạng thái cũ: Kiểm tra nếu đã quá hạn thực tế chưa
-        if (detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now())) {
-            detail.setStatus("Overdue");
-        } else {
-            detail.setStatus(STATUS_BORROWED);
-        }
+        Transaction hold = findPendingRenewalHold(borrowDetailId);
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(detail.getBorrow().getMember().getMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
+        BigDecimal refund = hold.getAmount() == null ? BigDecimal.ZERO : hold.getAmount().abs();
+        wallet.setBalance((wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance()).add(refund));
+        hold.setStatus("Refunded");
+        Transaction refundTransaction = new Transaction();
+        refundTransaction.setWallet(wallet);
+        refundTransaction.setBorrow(detail.getBorrow());
+        refundTransaction.setBorrowDetail(detail);
+        refundTransaction.setRenewalDays(hold.getRenewalDays());
+        refundTransaction.setTransactionType("REFUND");
+        refundTransaction.setAmount(refund);
+        refundTransaction.setTransactionDate(LocalDateTime.now());
+        refundTransaction.setStatus("Completed");
+        detail.setStatus(detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now()) ? STATUS_OVERDUE : STATUS_BORROWED);
+        detail.setRejectionCode(rejection.code());
+        detail.setRejectionReason(rejection.detail());
+        walletRepository.save(wallet);
+        transactionRepository.save(hold);
+        transactionRepository.save(refundTransaction);
         borrowDetailRepository.save(detail);
 
         if (detail.getBorrow().getMember() != null) {
-            sendInternalNotification(detail.getBorrow().getMember(),
-                    localizedMessageService.get("systemNotification.renewal.rejected.title"),
-                    localizedMessageService.get("systemNotification.renewal.rejected.content",
-                            detail.getBook().getTitle(),
-                            detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+            boolean systemDecision = "SYSTEM".equalsIgnoreCase(staffUsername);
+            boolean autoExpired = "APPROVAL_EXPIRED".equalsIgnoreCase(rejection.code());
+            boolean hasDetail = rejection.detail() != null;
+            String contentKey = autoExpired
+                    ? (hasDetail ? "systemNotification.renewal.expired.contentWithReason" : "systemNotification.renewal.expired.contentWithoutDetail")
+                    : (hasDetail ? "systemNotification.renewal.refunded.contentWithReason" : "systemNotification.renewal.refunded.contentWithoutDetail");
+            Object translatedReason = localizedMessageService.messageArgument("rejection.code." + rejection.code());
+            if (hasDetail) {
+                sendInternalNotification(detail.getBorrow().getMember(),
+                        NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
+                        systemDecision ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
+                        autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
+                        contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason, rejection.detail());
+            } else {
+                sendInternalNotification(detail.getBorrow().getMember(),
+                        NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
+                        systemDecision ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
+                        autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
+                        contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason);
+            }
         }
+    }
+
+    private Transaction findPendingRenewalHold(Integer borrowDetailId) {
+        return transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                        borrowDetailId, "RENEWAL_FEE", "Pending")
+                .orElseThrow(() -> new ConflictException(localizedMessageService.get("backend.renewal.holdNotFound")));
+    }
+
+    private int getPositiveIntSetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key).map(SystemSetting::getSettingValue)
+                    .filter(v -> v != null && !v.isBlank()).map(String::trim).map(Integer::parseInt)
+                    .filter(v -> v > 0).orElse(defaultValue);
+        } catch (NumberFormatException ignored) { return defaultValue; }
     }
 
     @Override
@@ -530,63 +772,46 @@ public class LoanServiceImpl implements LoanService {
     // --- Private Helper Methods ---
 
     /**
-     * Kiểm tra quá hạn và tính phí phạt, trừ tiền ví, lưu giao dịch
+     * Chuyá»ƒn viá»‡c phÃ¡t sinh khoáº£n pháº¡t quÃ¡ háº¡n sang module tÃ i chÃ­nh.
+     * Khoáº£n pháº¡t chá»‰ Ä‘Æ°á»£c ghi nháº­n lÃ  cÃ´ng ná»£; vÃ­ chá»‰ thay Ä‘á»•i khi thÃ nh viÃªn thanh toÃ¡n.
      */
     private void processOverdueFine(BorrowDetail detail) {
-        LocalDateTime dueDate = detail.getDueDate();
-        LocalDateTime now = LocalDateTime.now();
-        
-        if (now.isAfter(dueDate)) {
-            long overdueDays = ChronoUnit.DAYS.between(dueDate, now);
-            if (overdueDays > 0) {
-                // Đơn giá phạt mặc định: 5.000đ/ngày
-                BigDecimal fineRate = new BigDecimal("5000");
-                
-                // Lấy đơn giá phạt cấu hình động từ DB
-                Optional<SystemSetting> rateSetting = systemSettingRepository.findBySettingKey("FINE_RATE_PER_DAY");
-                if (rateSetting.isPresent()) {
-                    try {
-                        fineRate = new BigDecimal(rateSetting.get().getSettingValue());
-                    } catch (NumberFormatException ignored) { /* Use the documented default. */ }
-                }
-                
-                BigDecimal fineAmount = fineRate.multiply(new BigDecimal(overdueDays));
-                Member member = detail.getBorrow().getMember();
-                
-                // Lấy ví của thành viên
-                Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
-                        .orElseGet(() -> {
-                            Wallet newWallet = new Wallet();
-                            newWallet.setMember(member);
-                            newWallet.setBalance(BigDecimal.ZERO);
-                            return walletRepository.save(newWallet);
-                        });
-
-                // Khấu trừ số dư ví (cho phép ví âm)
-                wallet.setBalance(wallet.getBalance().subtract(fineAmount));
-                walletRepository.save(wallet);
-
-                // Ghi nhận giao dịch phạt
-                Transaction transaction = new Transaction();
-                transaction.setWallet(wallet);
-                transaction.setBorrow(detail.getBorrow());
-                transaction.setTransactionType("Fine");
-                transaction.setAmount(fineAmount);
-                transaction.setTransactionDate(now);
-                transaction.setStatus("Completed");
-                transactionRepository.save(transaction);
-
-                // Gửi thông báo hệ thống đến độc giả
-                sendInternalNotification(member, localizedMessageService.get("systemNotification.overdueFine.title"),
-                        localizedMessageService.get("systemNotification.overdueFine.content",
-                                fineAmount.setScale(0, java.math.RoundingMode.HALF_UP),
-                                detail.getBook().getTitle(), overdueDays));
-            }
+        if (detail != null && detail.getBorrowDetailId() != null) {
+            financialService.issueOverdueFine(detail.getBorrowDetailId());
         }
     }
 
+    private boolean requiresDamageCompensation(String bookCondition) {
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("hư hỏng nặng")
+                || normalized.contains("mất sách")
+                || normalized.contains("severe damage")
+                || normalized.contains("lost");
+    }
+
+    private String resolveReturnedItemStatus(String bookCondition) {
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("mất sách") || normalized.contains("lost")) {
+            return STATUS_LOST;
+        }
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
+            return STATUS_DAMAGED;
+        }
+        return STATUS_AVAILABLE;
+    }
+
+    private String resolveConditionCode(String bookCondition) {
+        String itemStatus = resolveReturnedItemStatus(bookCondition);
+        if (STATUS_LOST.equals(itemStatus)) return "LOST";
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (STATUS_DAMAGED.equals(itemStatus)
+                || normalized.contains("minor damage")
+                || normalized.contains("h\u01b0 h\u1ecfng")) return "DAMAGED";
+        return "GOOD";
+    }
+
     /**
-     * Cập nhật trạng thái của phiếu mượn cha dựa trên các chi tiết sách đã trả
+     * Cáº­p nháº­t tráº¡ng thÃ¡i cá»§a phiáº¿u mÆ°á»£n cha dá»±a trÃªn cÃ¡c chi tiáº¿t sÃ¡ch Ä‘Ã£ tráº£
      */
     private void updateParentBorrowStatus(Borrow borrow) {
         List<BorrowDetail> allDetails = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
@@ -614,15 +839,23 @@ public class LoanServiceImpl implements LoanService {
     }
 
     /**
-     * Tạo thông báo hệ thống và gửi cho độc giả
+     * Táº¡o thÃ´ng bÃ¡o há»‡ thá»‘ng vÃ  gá»­i cho Ä‘á»™c giáº£
      */
-    private void sendInternalNotification(Member member, String title, String content) {
+    private void sendInternalNotification(Member member,
+                                          NotificationType type,
+                                          NotificationEventType eventType,
+                                          NotificationSource source,
+                                          String titleKey,
+                                          String contentKey,
+                                          Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             throw new DataProcessingException(localizedMessageService.get("backend.notification.memberMissing"));
         }
         Notification notif = new Notification();
-        notif.setTitle(title);
-        notif.setContent(content);
+        localizedMessageService.prepareNotification(notif, titleKey, contentKey, arguments);
+        notif.setNotificationType(type);
+        notif.setEventType(eventType);
+        notif.setNotificationSource(source);
         notif.setCreatedDate(LocalDateTime.now());
         notif.setStatus(STATUS_ACTIVE);
         Notification saved = notificationRepository.save(notif);

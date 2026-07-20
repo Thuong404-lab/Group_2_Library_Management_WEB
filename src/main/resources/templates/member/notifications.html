@@ -5,50 +5,54 @@
   <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
 </head>
 <body>
-<main layout:fragment="content" class="member-notifications-page">
+<main layout:fragment="content" class="member-notifications-page member-palette-page">
   <div class="member-notifications-container">
-    <header class="member-notifications-header">
-      <div>
+    <header class="member-notifications-header member-dashboard-hero notifications-hero">
+      <div class="notifications-hero-copy">
                 <span class="member-notifications-eyebrow" th:text="#{member.notifications.eyebrow}">NOTIFICATION CENTER</span>
                 <h1 th:text="#{member.notifications.title}">My Notifications</h1>
                 <p th:text="#{member.notifications.description}">Latest library updates about your activity and account.</p>
                 <div class="member-notifications-summary" th:aria-label="#{member.notifications.summary}">
-                    <span th:text="${#messages.msg('member.notifications.count', notifications != null ? notifications.size() : 0)}">0 notifications</span>
-                    <span th:text="${#messages.msg('member.notifications.fromLibrarian', librarianNotifications != null ? librarianNotifications.size() : 0)}">0 from librarians</span>
-                    <span th:text="${#messages.msg('member.notifications.fromSystem', systemNotifications != null ? systemNotifications.size() : 0)}">0 from the system</span>
+                    <span th:text="${#messages.msg('member.notifications.count', totalNotificationCount != null ? totalNotificationCount : 0)}">0 notifications</span>
+                    <span th:text="${#messages.msg('member.notifications.fromLibrarian', librarianNotificationCount != null ? librarianNotificationCount : 0)}">0 from librarians</span>
+                    <span th:text="${#messages.msg('member.notifications.fromSystem', systemNotificationCount != null ? systemNotificationCount : 0)}">0 from the system</span>
         </div>
       </div>
-                <a th:href="@{/}" class="member-notifications-back"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.backHome}">Back to Home</span></a>
+                <a th:href="@{/}" class="member-notifications-back notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.backHome}">Back to Home</span></a>
     </header>
 
-    <div th:if="${success}" class="member-notifications-alert is-success" th:text="${success}"></div>
-    <div th:if="${error}" class="member-notifications-alert is-error" th:text="${error}"></div>
-
-    <section class="member-notifications-card" aria-labelledby="notification-list-title">
-      <div class="member-notification-toolbar">
-        <div class="member-notification-toolbar-copy">
-                    <h2 id="notification-list-title" th:text="#{member.notifications.all}">All Notifications</h2>
-                    <p th:text="#{member.notifications.browse}">Browse notifications by source and content type.</p>
-        </div>
+    <section class="member-notifications-card member-reference-list" th:aria-label="#{member.notifications.all}">
+      <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
         <div class="member-notification-source-tabs" role="tablist" th:aria-label="#{member.notifications.sources}">
-                        <button type="button" id="librarianNotificationsTab" class="is-active" data-notification-source="librarian" role="tab" aria-selected="true" aria-controls="memberNotificationsList"><i class="bi bi-person-badge" aria-hidden="true"></i><span th:text="#{member.notifications.librarian}">Librarian Notifications</span><b th:text="${librarianNotifications != null ? librarianNotifications.size() : 0}">0</b></button>
-                        <button type="button" id="systemNotificationsTab" data-notification-source="system" role="tab" aria-selected="false" aria-controls="memberNotificationsList"><i class="bi bi-gear" aria-hidden="true"></i><span th:text="#{member.notifications.system}">System Notifications</span><b th:text="${systemNotifications != null ? systemNotifications.size() : 0}">0</b></button>
+                        <button type="button" class="member-tab-control" id="allNotificationsTab" th:classappend="${selectedNotificationSource == 'all'} ? 'is-active'" data-notification-source="all" role="tab" th:aria-selected="${selectedNotificationSource == 'all'}" aria-controls="memberNotificationsList"><i class="bi bi-inboxes" aria-hidden="true"></i><span th:text="#{member.notifications.all}">All Notifications</span><b th:text="${totalNotificationCount}">0</b></button>
+                        <button type="button" class="member-tab-control" id="librarianNotificationsTab" th:classappend="${selectedNotificationSource == 'librarian'} ? 'is-active'" data-notification-source="librarian" role="tab" th:aria-selected="${selectedNotificationSource == 'librarian'}" aria-controls="memberNotificationsList"><i class="bi bi-person-badge" aria-hidden="true"></i><span th:text="#{member.notifications.librarian}">Librarian Notifications</span><b th:text="${librarianNotificationCount}">0</b></button>
+                        <button type="button" class="member-tab-control" id="systemNotificationsTab" th:classappend="${selectedNotificationSource == 'system'} ? 'is-active'" data-notification-source="system" role="tab" th:aria-selected="${selectedNotificationSource == 'system'}" aria-controls="memberNotificationsList"><i class="bi bi-gear" aria-hidden="true"></i><span th:text="#{member.notifications.system}">System Notifications</span><b th:text="${systemNotificationCount}">0</b></button>
         </div>
         <label class="member-notification-type-filter" for="notificationTypeFilter">
                             <span th:text="#{member.notifications.filterType}">Filter by Type</span>
           <select id="notificationTypeFilter">
-                                <option value="ALL" th:text="#{member.notifications.typeAll}">All Notification Types</option>
-                                <option value="GENERAL" th:text="#{notification.type.general}">General Notification</option>
-                                <option value="ANNOUNCEMENT" th:text="#{notification.type.announcement}">Important Announcement</option>
-                                <option value="MAINTENANCE" th:text="#{notification.type.maintenance}">System Maintenance</option>
-                                <option value="EVENT" th:text="#{notification.type.event}">Event / Program</option>
-                                <option value="REMINDER" th:text="#{notification.type.reminder}">Reminder</option>
+                                <option value="ALL" th:selected="${selectedNotificationType == 'ALL'}" th:text="#{member.notifications.typeAll}">All Notification Types</option>
+                                <option value="GENERAL" th:selected="${selectedNotificationType == 'GENERAL'}" th:text="#{notification.type.general}">General Notification</option>
+                                <option value="ANNOUNCEMENT" th:selected="${selectedNotificationType == 'ANNOUNCEMENT'}" th:text="#{notification.type.announcement}">Important Announcement</option>
+                                <option value="MAINTENANCE" th:selected="${selectedNotificationType == 'MAINTENANCE'}" th:text="#{notification.type.maintenance}">System Maintenance</option>
+                                <option value="EVENT" th:selected="${selectedNotificationType == 'EVENT'}" th:text="#{notification.type.event}">Event / Program</option>
+                                <option value="REMINDER" th:selected="${selectedNotificationType == 'REMINDER'}" th:text="#{notification.type.reminder}">Reminder</option>
+                                <option value="LOAN" th:selected="${selectedNotificationType == 'LOAN'}" th:text="#{notification.type.loan}">Loan</option>
+                                <option value="RESERVATION" th:selected="${selectedNotificationType == 'RESERVATION'}" th:text="#{notification.type.reservation}">Reservation</option>
+                                <option value="FINANCE" th:selected="${selectedNotificationType == 'FINANCE'}" th:text="#{notification.type.finance}">Finance</option>
+                                <option value="REVIEW" th:selected="${selectedNotificationType == 'REVIEW'}" th:text="#{notification.type.review}">Review</option>
+                                <option value="ACQUISITION" th:selected="${selectedNotificationType == 'ACQUISITION'}" th:text="#{notification.type.acquisition}">Book Acquisition</option>
           </select>
         </label>
+        <button type="button" id="pageMarkAllNotificationsRead" class="member-notification-mark-read-all member-ui-button member-ui-button--secondary member-ui-button--compact"
+                th:disabled="${unreadNotificationCount == null || unreadNotificationCount == 0}">
+          <i class="bi bi-check2-all" aria-hidden="true"></i>
+          <span th:text="#{notification.markAllRead}">Mark all as read</span>
+        </button>
       </div>
 
-      <div id="memberNotificationsList" class="member-notifications-list" role="tabpanel" aria-live="polite" th:if="${notifications != null && !notifications.isEmpty()}">
-        <article class="member-notification-row"
+      <div id="memberNotificationsList" class="member-notifications-list member-reference-list__body" role="tabpanel" aria-live="polite" th:if="${notifications != null && !notifications.isEmpty()}">
+        <article class="member-notification-row member-reference-list__item"
                  th:each="notification : ${notifications}"
                  th:id="'notification-' + ${notification.notificationId}"
                  th:data-source="${notification.fromLibrarian} ? 'librarian' : 'system'"
@@ -57,19 +61,55 @@
           <span class="member-notification-row-icon" aria-hidden="true"><i th:class="${notification.fromLibrarian} ? 'bi bi-person-badge' : 'bi bi-gear'"></i></span>
           <div class="member-notification-row-content">
             <div class="member-notification-row-meta">
-              <span class="member-notification-row-type"
+              <span class="member-notification-row-type member-reference-pill"
                     th:text="${#messages.msg('notification.type.' + #strings.toLowerCase(notification.notificationType.name()))}">General Notification</span>
-                            <span class="member-notification-unread-label" th:if="${notification.read == false}"><i aria-hidden="true"></i> <span th:text="#{member.notifications.unread}">Unread</span></span>
+                            <span class="member-notification-unread-label member-reference-pill" th:if="${notification.read == false}"><i aria-hidden="true"></i> <span th:text="#{member.notifications.unread}">Unread</span></span>
+                            <button type="button" class="member-notification-mark-read member-ui-button member-ui-button--secondary member-ui-button--compact"
+                                    th:if="${notification.read == false}"
+                                    th:data-notification-id="${notification.notificationId}">
+                              <i class="bi bi-check2" aria-hidden="true"></i>
+                              <span th:text="#{notification.markRead}">Mark as read</span>
+                            </button>
             </div>
                             <h3 th:text="${notification.title}">Title</h3>
                             <p class="member-notification-content" th:text="${notification.content}">Content</p>
-                            <button type="button" class="member-notification-content-toggle" hidden aria-expanded="false" th:text="#{common.showMore}">Show More</button>
+                            <button type="button" class="member-notification-content-toggle member-text-action" hidden aria-expanded="false" th:text="#{common.showMore}">Show More</button>
           </div>
-                            <time class="member-notification-row-time" th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Sent date</time>
+                            <time class="member-notification-row-time"
+                                  th:datetime="${notification.sentDate}"
+                                  th:text="${notification.sentDate != null ? #temporals.format(notification.sentDate, 'dd/MM/yyyy · HH:mm') : #messages.msg('common.unknownDate')}">Sent date</time>
         </article>
       </div>
-                    <div id="notificationFilterEmpty" class="member-notifications-empty member-notifications-empty--compact" hidden><span><i class="bi bi-bell-slash" aria-hidden="true"></i></span><p th:text="#{member.notifications.filterEmpty}">No notifications match the selected filters.</p></div>
-                    <div class="member-notifications-empty" th:if="${notifications == null || notifications.isEmpty()}"><span><i class="bi bi-bell" aria-hidden="true"></i></span><h2 th:text="#{member.notifications.empty}">No Notifications Yet</h2><p th:text="#{member.notifications.emptyDescription}">New library updates will appear here.</p></div>
+                    <div id="notificationFilterEmpty" class="member-notifications-empty member-notifications-empty--compact" th:if="${(notifications == null || notifications.isEmpty()) && (selectedNotificationSource != 'all' || selectedNotificationType != 'ALL')}">
+                      <span><i class="bi bi-bell-slash" aria-hidden="true"></i></span>
+                      <p th:text="#{member.notifications.filterEmpty}">No notifications match the selected filters.</p>
+                      <button type="button" id="clearNotificationFilters"
+                              class="member-notification-filter-reset member-ui-button member-ui-button--secondary member-ui-button--compact">
+                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                        <span th:text="#{common.clearFilters}">Clear Filters</span>
+                      </button>
+                    </div>
+                    <div class="member-notifications-empty" th:if="${(notifications == null || notifications.isEmpty()) && selectedNotificationSource == 'all' && selectedNotificationType == 'ALL'}"><span><i class="bi bi-bell" aria-hidden="true"></i></span><h2 th:text="#{member.notifications.empty}">No Notifications Yet</h2><p th:text="#{member.notifications.emptyDescription}">New library updates will appear here.</p></div>
+
+      <nav class="member-notification-pagination"
+           th:if="${notificationPage != null && notificationPage.totalPages > 1}"
+           th:aria-label="#{notification.pagination}">
+        <a class="member-page-control" th:href="@{/member/interaction/notifications(page=${notificationPage.number - 1},source=${selectedNotificationSource},type=${selectedNotificationType})}"
+           th:classappend="${notificationPage.first} ? ' is-disabled'"
+           th:aria-disabled="${notificationPage.first}"
+           th:tabindex="${notificationPage.first} ? -1 : 0"
+           th:aria-label="#{pagination.previous}">
+          <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </a>
+        <span th:text="${(notificationPage.number + 1) + ' / ' + notificationPage.totalPages}">1 / 1</span>
+        <a class="member-page-control" th:href="@{/member/interaction/notifications(page=${notificationPage.number + 1},source=${selectedNotificationSource},type=${selectedNotificationType})}"
+           th:classappend="${notificationPage.last} ? ' is-disabled'"
+           th:aria-disabled="${notificationPage.last}"
+           th:tabindex="${notificationPage.last} ? -1 : 0"
+           th:aria-label="#{pagination.next}">
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </a>
+      </nav>
     </section>
   </div>
 </main>
@@ -77,29 +117,36 @@
         <script th:inline="javascript">
             const showMoreLabel = /*[[#{common.showMore}]]*/ "Show More";
             const showLessLabel = /*[[#{common.showLess}]]*/ "Show Less";
+            const pageNotificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
+            const pageNotificationMarkAllError = /*[[#{notification.markAll.error}]]*/ "Unable to mark all notifications as read.";
+            const pageNotificationMarkedRead = /*[[#{backend.notification.markedRead}]]*/ "";
+            const pageNotificationMarkedAllRead = /*[[#{backend.notification.markedAllRead}]]*/ "";
+            const notificationPageSuccess = /*[[${success}]]*/ null;
+            const notificationPageError = /*[[${error}]]*/ null;
+            if (notificationPageSuccess) window.AppFeedback.success(notificationPageSuccess);
+            if (notificationPageError) window.AppFeedback.error(notificationPageError);
     document.addEventListener("DOMContentLoaded", function () {
-      var source = new URLSearchParams(window.location.search).get("source") || "librarian";
+      var source = /*[[${selectedNotificationSource}]]*/ "all";
       var typeFilter = document.getElementById("notificationTypeFilter");
       var tabs = Array.from(document.querySelectorAll("[data-notification-source]"));
       var rows = Array.from(document.querySelectorAll(".member-notification-row[data-source]"));
-      var empty = document.getElementById("notificationFilterEmpty");
 
       function applyFilters() {
-        var type = typeFilter.value;
-        var visibleCount = 0;
-        rows.forEach(function (row) {
-          var visible = row.dataset.source === source && (source === "system" || type === "ALL" || row.dataset.type === type);
-          row.hidden = !visible;
-          if (visible) visibleCount++;
-        });
         tabs.forEach(function (tab) {
           var active = tab.dataset.notificationSource === source;
           tab.classList.toggle("is-active", active);
           tab.setAttribute("aria-selected", String(active));
         });
-        typeFilter.closest("label").hidden = source !== "librarian";
-        empty.hidden = visibleCount !== 0;
         requestAnimationFrame(updateContentToggles);
+      }
+
+      function navigateToFilter(nextSource, nextType) {
+        var url = new URL(window.location.href);
+        url.searchParams.set("source", nextSource);
+        url.searchParams.set("type", nextType);
+        url.searchParams.set("page", "0");
+        url.searchParams.delete("notificationId");
+        window.location.href = url.toString();
       }
 
       function updateContentToggles() {
@@ -122,15 +169,72 @@
 
       tabs.forEach(function (tab) {
         tab.addEventListener("click", function () {
-          source = tab.dataset.notificationSource;
-          applyFilters();
+          var nextSource = tab.dataset.notificationSource;
+          navigateToFilter(nextSource, "ALL");
         });
       });
-      typeFilter.addEventListener("change", applyFilters);
+      typeFilter.addEventListener("change", function () {
+        navigateToFilter(source, typeFilter.value);
+      });
+
+      var clearFiltersButton = document.getElementById("clearNotificationFilters");
+      if (clearFiltersButton) clearFiltersButton.addEventListener("click", function () {
+        navigateToFilter("all", "ALL");
+      });
+
+      function csrfHeaders() {
+        var headers = {"X-Requested-With": "XMLHttpRequest"};
+        var token = document.querySelector('meta[name="_csrf"]');
+        var header = document.querySelector('meta[name="_csrf_header"]');
+        if (token && header) headers[header.content] = token.content;
+        return headers;
+      }
+
+      function markRowRead(row) {
+        row.classList.remove("is-unread");
+        var label = row.querySelector(".member-notification-unread-label");
+        var button = row.querySelector(".member-notification-mark-read");
+        if (label) label.remove();
+        if (button) button.remove();
+      }
+
+      document.querySelectorAll(".member-notification-mark-read").forEach(function (button) {
+        button.addEventListener("click", function () {
+          button.disabled = true;
+          fetch("/member/interaction/notifications/" + button.dataset.notificationId + "/mark-read", {
+            method: "POST", credentials: "same-origin", headers: csrfHeaders()
+          }).then(function (response) {
+            if (!response.ok) throw new Error(pageNotificationUpdateError);
+            return response.json();
+          }).then(function (data) {
+            markRowRead(button.closest(".member-notification-row"));
+            var markAllButton = document.getElementById("pageMarkAllNotificationsRead");
+            if (markAllButton) markAllButton.disabled = Number(data.unreadCount) <= 0;
+            window.AppFeedback.success(pageNotificationMarkedRead);
+          }).catch(function () {
+            button.disabled = false;
+            window.AppFeedback.error(pageNotificationUpdateError);
+          });
+        });
+      });
+
+      var markAllButton = document.getElementById("pageMarkAllNotificationsRead");
+      if (markAllButton) markAllButton.addEventListener("click", function () {
+        markAllButton.disabled = true;
+        fetch("/member/interaction/notifications/mark-read", {
+          method: "POST", credentials: "same-origin", headers: csrfHeaders()
+        }).then(function (response) {
+          if (!response.ok) throw new Error(pageNotificationMarkAllError);
+          rows.forEach(markRowRead);
+          window.AppFeedback.success(pageNotificationMarkedAllRead);
+        }).catch(function () {
+          markAllButton.disabled = false;
+          window.AppFeedback.error(pageNotificationMarkAllError);
+        });
+      });
 
       var requestedId = new URLSearchParams(window.location.search).get("notificationId");
       var requested = requestedId ? document.getElementById("notification-" + requestedId) : null;
-      if (requested) source = requested.dataset.source;
       applyFilters();
       if (requested) requestAnimationFrame(function () { requested.scrollIntoView({behavior: "smooth", block: "center"}); });
     });

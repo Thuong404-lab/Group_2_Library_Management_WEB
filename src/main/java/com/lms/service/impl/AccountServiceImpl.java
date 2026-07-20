@@ -429,7 +429,7 @@ public class AccountServiceImpl implements AccountService {
     private void validateFullName(String fullName, Map<String, String> errors) {
         if (fullName.isEmpty()) {
             errors.put("fullName", messages.get("validation.fullNameRequired"));
-        } else if (fullName.length() > 50) {
+        } else if (fullName.length() < 2 || fullName.length() > 50) {
             errors.put("fullName", messages.get("validation.fullNameMax"));
         } else if (!fullName.matches(FULL_NAME_PATTERN)) {
             errors.put("fullName", messages.get("validation.fullNameLetters"));

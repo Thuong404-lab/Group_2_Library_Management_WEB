@@ -1,11 +1,16 @@
 package com.lms.service;
 
+import com.lms.util.BorrowCodeFormatter;
+
 import com.lms.entity.BookItem;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Notification;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
+import com.lms.enums.NotificationEventType;
+import com.lms.enums.NotificationSource;
+import com.lms.enums.NotificationType;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
@@ -85,8 +90,14 @@ public class ApprovedBorrowExpiryJob {
             // Tạo thông báo gửi đến độc giả chỉ rõ điều khoản vi phạm quy định nhận sách và không hoàn phí
             try {
                 Notification notif = new Notification();
-                notif.setTitle(messages.get("systemNotification.borrow.pickupExpired.title"));
-                notif.setContent(messages.get("systemNotification.borrow.pickupExpired.content", borrow.getBorrowId()));
+                messages.prepareNotification(
+                        notif,
+                        "systemNotification.borrow.pickupExpired.title",
+                        "systemNotification.borrow.pickupExpired.content",
+                        BorrowCodeFormatter.format(borrow.getBorrowId()));
+                notif.setNotificationType(NotificationType.LOAN);
+                notif.setEventType(NotificationEventType.LOAN_PICKUP_EXPIRED);
+                notif.setNotificationSource(NotificationSource.SYSTEM);
                 notif.setCreatedDate(LocalDateTime.now());
                 notif.setStatus("Active");
                 Notification saved = notificationRepository.save(notif);

@@ -25,8 +25,8 @@
         </div>
     </div>
 
-    <div th:if="${message != null}" class="alert alert-success" role="alert" th:text="${message}"></div>
-    <div th:if="${error != null}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+    <div th:if="${message != null}" class="finance-alert finance-alert--success" role="alert" th:text="${message}"></div>
+    <div th:if="${error != null}" class="finance-alert finance-alert--danger" role="alert" th:text="${error}"></div>
 
     <section class="finance-card fees-section">
         <div class="fees-section-header">
@@ -51,7 +51,7 @@
                     </thead>
                     <tbody>
                     <tr th:each="fee : ${pendingFees}">
-                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${T(com.lms.util.BorrowCodeFormatter).format(fee.borrowId)}">1</td>
                         <td th:text="${fee.quantity}">1</td>
                         <td th:text="${fee.days}">10</td>
                         <td class="fees-amount">
@@ -90,7 +90,7 @@
                     </thead>
                     <tbody>
                     <tr th:each="fee : ${payableFees}">
-                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${T(com.lms.util.BorrowCodeFormatter).format(fee.borrowId)}">1</td>
                         <td th:text="${fee.quantity}">1</td>
                         <td th:text="${fee.days}">10</td>
                         <td class="fees-amount">
@@ -145,7 +145,7 @@
                     </thead>
                     <tbody>
                     <tr th:each="fee : ${paidFees}">
-                        <td th:text="${fee.borrowId}">1</td>
+                        <td th:text="${T(com.lms.util.BorrowCodeFormatter).format(fee.borrowId)}">1</td>
                         <td th:text="${fee.transactionId != null ? fee.transactionId : '-'}">10</td>
                         <td th:text="${fee.quantity}">1</td>
                         <td class="fees-amount">

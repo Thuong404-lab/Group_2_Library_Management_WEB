@@ -20,7 +20,7 @@
         </a>
     </div>
 
-    <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+    <div class="finance-alert finance-alert--success" role="alert" th:if="${success}" th:text="${success}"></div>
 
     <form method="post" th:action="@{/member/financial/topup-notifications/mark-all-read(page=${currentPage})}"
           class="notification-toolbar" th:if="${notifications != null and !#lists.isEmpty(notifications)}">
@@ -41,8 +41,8 @@
                  th:each="memberNotification : ${notifications}">
             <div class="notification-item-head">
                 <div class="notification-item-copy">
-                        <h2 th:text="${memberNotification.notification.title}">Top-up Successful</h2>
-                    <p th:text="${memberNotification.notification.content}">
+                        <h2 th:text="${localizedNotificationTitles[memberNotification.notification.notificationId]}">Top-up Successful</h2>
+                    <p th:text="${localizedNotificationContents[memberNotification.notification.notificationId]}">
                             Your wallet has just been topped up.
                     </p>
                 </div>
@@ -54,7 +54,7 @@
             <div class="notification-item-footer">
                 <span class="notification-read-status"
                       th:classappend="${memberNotification.isRead} ? ' is-read' : ' is-unread'"
-                              th:text="${memberNotification.isRead} ? #messages.msg('notification.read') : #messages.msg('member.notifications.unread')}">
+                              th:text="${memberNotification.isRead ? #messages.msg('notification.read') : #messages.msg('member.notifications.unread')}">
                             Unread
                 </span>
                 <form method="post"

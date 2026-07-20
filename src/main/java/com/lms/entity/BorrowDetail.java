@@ -21,8 +21,14 @@ public class BorrowDetail {
     private Integer renewCount = 0;
     @Column(length = 50)
     private String status = "Borrowed";
+    @Column(name = "rejection_code", length = 50)
+    private String rejectionCode;
+    @Column(name = "rejection_reason", length = 500, columnDefinition = "nvarchar(500)")
+    private String rejectionReason;
     @Column(name = "condition_note", length = 255)
     private String conditionNote;
+    @Column(name = "condition_code", length = 20)
+    private String conditionCode;
 
     public BorrowDetail() {
     }
@@ -54,6 +60,12 @@ public class BorrowDetail {
     public void setRenewCount(Integer renewCount) { this.renewCount = renewCount; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getRejectionCode() { return rejectionCode; }
+    public void setRejectionCode(String rejectionCode) { this.rejectionCode = rejectionCode; }
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public String getConditionNote() { return conditionNote; }
     public void setConditionNote(String conditionNote) { this.conditionNote = conditionNote; }
+    public String getConditionCode() { return conditionCode; }
+    public void setConditionCode(String conditionCode) { this.conditionCode = conditionCode; }
 }

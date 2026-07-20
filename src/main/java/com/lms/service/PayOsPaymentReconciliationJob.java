@@ -36,7 +36,7 @@ public class PayOsPaymentReconciliationJob {
     @EventListener(ApplicationReadyEvent.class)
     public void recoverRecentPaymentsAfterRestart() {
         reconcile(paymentRepository.findRecoverableOrderCodes(
-                List.of(PayOsPaymentService.PENDING, "EXPIRED", "FAILED", PayOsPaymentService.PAID),
+                List.of(PayOsPaymentService.PENDING, PayOsPaymentService.PAID),
                 LocalDateTime.now().minusDays(7)));
     }
 
@@ -49,7 +49,7 @@ public class PayOsPaymentReconciliationJob {
 
     private void recoverRecentPayments() {
         reconcile(paymentRepository.findRecoverableOrderCodes(
-                List.of(PayOsPaymentService.PENDING, "EXPIRED", "FAILED", PayOsPaymentService.PAID),
+                List.of(PayOsPaymentService.PENDING, PayOsPaymentService.PAID),
                 LocalDateTime.now().minusDays(7)));
     }
 

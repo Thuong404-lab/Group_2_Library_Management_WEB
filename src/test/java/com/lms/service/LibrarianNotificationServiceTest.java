@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -97,7 +98,7 @@ class LibrarianNotificationServiceTest {
         request.setContent("  Hệ thống tạm ngưng trong 30 phút.  ");
 
         when(staffAccountRepository.findByUsername("librarian")).thenReturn(Optional.of(account));
-        when(memberRepository.findAll()).thenReturn(List.of(member));
+        when(memberRepository.findAllWithActiveAccount()).thenReturn(List.of(member));
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
             Notification notification = invocation.getArgument(0);
             notification.setNotificationId(11);
@@ -113,7 +114,28 @@ class LibrarianNotificationServiceTest {
         assertThat(saved.getStaff()).isSameAs(sender);
         assertThat(saved.getTitle()).isEqualTo("Bảo trì hệ thống");
         assertThat(saved.getContent()).isEqualTo("Hệ thống tạm ngưng trong 30 phút.");
+        verify(memberRepository).findAllWithActiveAccount();
+        verify(memberRepository, never()).findAll();
         verify(memberNotificationRepository).saveAll(any());
+    }
+
+    @Test
+    void rejectsSystemBusinessTypeForManualNotification() {
+        MemberRepository memberRepository = mock(MemberRepository.class);
+        NotificationRepository notificationRepository = mock(NotificationRepository.class);
+        LibrarianInteractionServiceImpl service = service(
+                memberRepository,
+                notificationRepository,
+                mock(MemberNotificationRepository.class),
+                mock(StaffAccountRepository.class));
+        LibrarianNotificationSendRequest request = validRequest();
+        request.setNotificationType(NotificationType.LOAN);
+
+        assertThatThrownBy(() -> service.sendNotificationToMembers(request, "librarian"))
+                .isInstanceOf(ValidationException.class);
+
+        verify(notificationRepository, never()).save(any());
+        verify(memberRepository, never()).findAllWithActiveAccount();
     }
 
     @Test

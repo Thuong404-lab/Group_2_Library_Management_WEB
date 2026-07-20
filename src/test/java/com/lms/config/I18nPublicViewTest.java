@@ -41,10 +41,24 @@ class I18nPublicViewTest {
     }
 
     @Test
+    void authenticationPagesResolveAllMessagesInBothLanguages() throws Exception {
+        for (String language : java.util.List.of("en", "vi")) {
+            for (String path : java.util.List.of("/login", "/staff-login", "/register", "/forgot-password")) {
+                mockMvc.perform(get(path).param("lang", language))
+                        .andExpect(status().isOk())
+                        .andExpect(content().string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("??"))));
+            }
+        }
+    }
+
+    @Test
     void catalogPageUsesEnglishByDefault() throws Exception {
         mockMvc.perform(get("/books"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Apply Filters")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Availability")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Apply Filters"))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Sort by:")));
     }
 
@@ -82,9 +96,9 @@ class I18nPublicViewTest {
 
     @Test
     void adminDashboardUsesEnglishByDefault() throws Exception {
-        mockMvc.perform(get("/admin/dashboard").with(user("admin").roles("ADMIN")))
+                mockMvc.perform(get("/admin/dashboard").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Overview Statistics")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Risk Overview")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("System Log")));
     }
 

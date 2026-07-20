@@ -1,182 +1,33 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layout/base}">
-
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{catalog.title}">Book Catalog - Library Management System</title>
     <link rel="stylesheet" th:href="@{/css/pages/guest/books.css}" />
-  </head>
-
+</head>
 <body>
-    <div layout:fragment="content">
-        <div class="container py-4">
+<main layout:fragment="content" class="guest-catalog-page member-palette-page">
+    <div class="container guest-catalog-container">
+        <header class="catalog-hero member-dashboard-hero">
+            <div class="catalog-hero-copy">
+                <span class="catalog-eyebrow" th:text="#{catalog.eyebrow}">LIBRARY COLLECTION</span>
+                <h1 th:text="#{catalog.heading}">Explore the catalog</h1>
+                <p th:text="#{catalog.description}">Find books by title, author, ISBN, genre, and availability.</p>
+            </div>
+            <span class="catalog-result-pill"
+                  th:text="#{catalog.resultCount(${bookPage != null ? bookPage.totalElements : 0})}">Showing 0 results</span>
+        </header>
 
-            <!-- Breadcrumb & Header Section -->
-            <nav aria-label="breadcrumb" class="mb-4 pt-3">
-                <ol class="breadcrumb bg-transparent p-0 mb-0">
-                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none u-color-8b5a2b-93ece783"><i
-                                class="bi bi-house-door"></i> <span th:text="#{nav.home}">Home</span></a></li>
-                    <li class="breadcrumb-item active fw-bold u-color-4a3b32-1ba01220" aria-current="page" th:text="#{footer.exploreBooks}">Explore books
-                    </li>
-                </ol>
-            </nav>
+        <div class="catalog-layout">
+            <aside class="catalog-filter-column">
+                <form action="/books" method="GET" class="catalog-filter-card" id="filterForm">
+                    <input type="hidden" name="keyword" th:if="${keyword != null}" th:value="${keyword}">
+                    <input type="hidden" name="sort" id="hiddenSort" th:value="${sort}">
 
-            <!-- Hero banner removed to reduce redundancy -->
-
-            <!-- Main Content: Filter Sidebar + Book Grid -->
-            <div class="row">
-                <!-- Filter Sidebar (Left) -->
-                <div class="col-lg-3 col-md-4 mb-4">
-                    <form action="/books" method="GET" class="card shadow-sm sticky-top guest-books-form-border-radius-top-z-index-03" id="filterForm"
-                       >
-                        <input type="hidden" name="keyword" th:if="${keyword != null}" th:value="${keyword}">
-                        <input type="hidden" name="sort" id="hiddenSort" th:value="${sort}">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336"
-                                   ><i
-                                        class="bi bi-funnel me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{catalog.filters}">Filters</span></h5>
-                                <a href="/books" class="btn btn-sm btn-link text-decoration-none p-0 u-color-8b5a2b-93ece783"
-                                   th:text="#{catalog.clearFilters}">Clear filters</a>
-                            </div>
-
-                            <!-- Lọc theo Danh mục -->
-                            <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
-                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80" th:text="#{catalog.genre}">Genre</h6>
-                                <div class="form-check mb-1" th:each="genre : ${genres}">
-                                    <input class="form-check-input" type="radio" name="genreId"
-                                        th:value="${genre.genreId}" th:id="'genre' + ${genre.genreId}"
-                                        th:checked="${selectedGenreId == genre.genreId}" onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted d-flex justify-content-between"
-                                        th:for="'genre' + ${genre.genreId}">
-                                        <span th:text="${genre.genreName}">Literature</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Lọc theo Tình trạng -->
-                            <div class="mb-3 border-top pt-3 u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
-                                <h6 class="fw-bold mb-2 u-color-2c1e16-5ab7ae80" th:text="#{catalog.availability}">Availability</h6>
-                                <div class="form-check mb-1">
-                                    <input class="form-check-input" type="radio" name="status" id="status1"
-                                        value="Active" th:checked="${selectedStatus == 'Active'}"
-                                        onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted" for="status1" th:text="#{book.status.availableWithCopies}">Available (copies in stock)</label>
-                                </div>
-                                <div class="form-check mb-1">
-                                    <input class="form-check-input" type="radio" name="status" id="status2"
-                                        value="Inactive" th:checked="${selectedStatus == 'Inactive'}"
-                                        onchange="this.form.submit()">
-                                    <label class="form-check-label text-muted" for="status2" th:text="#{book.status.unavailable}">Unavailable</label>
-                                </div>
-                            </div>
-
-                            <!-- Button Lọc -->
-                            <button type="submit" class="btn btn-classic w-100 rounded-pill fw-bold py-2 shadow-sm u-font-family-playfair-display-serif-53670465"
-                               th:text="#{catalog.applyFilters}">Apply Filters</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Book Grid (Right) -->
-                <div class="col-lg-9 col-md-8">
-                    <!-- Compact Search Bar (Shopee Style) -->
-                    <div class="mb-4 position-relative" id="booksSearchContainer">
-                        <form action="/books" method="GET" class="input-group shadow-sm guest-books-form-position-z-index-border-radius-08">
-                            <input type="hidden" name="genreId" th:if="${selectedGenreId != null}" th:value="${selectedGenreId}">
-                            <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}">
-                            <input type="hidden" name="sort" th:if="${sort != null}" th:value="${sort}">
-                            <span class="input-group-text bg-white border-0 u-color-8b5a2b-93ece783"><i class="bi bi-search"></i></span>
-                            <input type="text" id="booksSearchInput" name="keyword" th:value="${keyword}"
-                                class="form-control border-0 py-2" th:placeholder="#{catalog.search.placeholder}" placeholder="Search this catalog..." autocomplete="off">
-                            <button class="btn px-4 fw-bold guest-books-button-background-color-border-09" type="submit" th:text="#{book.search.action}">Search</button>
-                        </form>
-
-                        <!-- Dropdown Overlay -->
-                        <div id="booksSearchDropdown" class="dropdown-menu w-100 shadow border-0 mt-1 p-0 guest-books-div-border-radius-display-position-10">
-                            <div id="booksLiveSearchSuggestions" class="bg-white">
-                                <div class="list-group list-group-flush" id="booksSuggestionList">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- JS for Compact Live Search -->
-                    <script th:inline="javascript">
-                        document.addEventListener("DOMContentLoaded", function() {
-                            const catalogLoadingMessage = /*[[#{catalog.loading}]]*/ 'Searching...';
-                            const catalogEmptyMessage = /*[[#{book.search.empty}]]*/ 'No matching books found.';
-                            const searchInput = document.getElementById('booksSearchInput');
-                            const searchDropdown = document.getElementById('booksSearchDropdown');
-                            const suggestionList = document.getElementById('booksSuggestionList');
-                            let timeoutId;
-
-                            document.addEventListener('click', function(e) {
-                                if (!document.getElementById('booksSearchContainer').contains(e.target)) {
-                                    searchDropdown.style.display = 'none';
-                                }
-                            });
-
-                            searchInput.addEventListener('input', function() {
-                                const keyword = this.value.trim();
-                                if (keyword === '') {
-                                    searchDropdown.style.display = 'none';
-                                    return;
-                                }
-
-                                searchDropdown.style.display = 'block';
-                                clearTimeout(timeoutId);
-                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small"><div class="spinner-border spinner-border-sm me-2" role="status"></div> ' + catalogLoadingMessage + '</div>';
-
-                                timeoutId = setTimeout(() => {
-                                    fetch('/api/books/search/suggest?keyword=' + encodeURIComponent(keyword))
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            suggestionList.innerHTML = '';
-                                            if (data.length === 0) {
-                                                suggestionList.innerHTML = '<div class="p-2 text-center text-muted small">' + catalogEmptyMessage + '</div>';
-                                                return;
-                                            }
-                                            data.forEach(book => {
-                                                const item = document.createElement('a');
-                                                item.href = '/books/' + book.bookId;
-                                                item.className = 'list-group-item list-group-item-action d-flex align-items-center border-0 py-2 px-2 suggestion-item';
-                                                item.innerHTML = `
-                                                    <img src="${book.thumbnailUrl}" class="rounded me-2 shadow-sm guest-books-img-width-height-fit-11">
-                                                    <div class="flex-grow-1 overflow-hidden">
-                                                        <h6 class="mb-0 text-truncate fw-bold guest-books-h6-color-font-size-12">${book.title}</h6>
-                                                        <small class="text-muted text-truncate d-block u-font-size-0-75rem-8b511f07">${book.authorName}</small>
-                                                    </div>
-                                                `;
-                                                item.addEventListener('mouseenter', function() { this.style.backgroundColor = '#f8f9fa'; });
-                                                item.addEventListener('mouseleave', function() { this.style.backgroundColor = 'transparent'; });
-                                                suggestionList.appendChild(item);
-                                            });
-                                        });
-                                }, 300);
-                            });
-                        });
-                    </script>
-
-                    <!-- Advanced Status Bar -->
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm guest-books-div-background-border-14"
-                       >
-                        <div class="d-flex align-items-center mb-2 mb-md-0">
-                            <span class="text-muted me-3" th:text="#{catalog.resultCount(${bookPage != null ? bookPage.totalElements : 0})}">Showing 0 results</span>
-
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <label class="text-muted small me-2 text-nowrap mb-0" th:text="#{catalog.sortBy}">Sort by:</label>
-                            <select class="form-select form-select-sm fw-medium rounded-pill px-3 guest-books-select-min-width-background-border-15"
-
-                                onchange="document.getElementById('hiddenSort').value = this.value; document.getElementById('filterForm').submit();">
-                                <option value="newest" th:selected="${sort == 'newest' || sort == null}" th:text="#{catalog.sort.newest}">Newest
-                                </option>
-                                <option value="oldest" th:selected="${sort == 'oldest'}" th:text="#{catalog.sort.oldest}">Oldest</option>
-                                <option value="title_asc" th:selected="${sort == 'title_asc'}" th:text="#{catalog.sort.titleAsc}">Title: A - Z</option>
-                                <option value="title_desc" th:selected="${sort == 'title_desc'}" th:text="#{catalog.sort.titleDesc}">Title: Z - A</option>
-                            </select>
-                        </div>
+                    <div class="catalog-filter-heading">
+                        <h2><i class="bi bi-funnel" aria-hidden="true"></i><span th:text="#{catalog.filters}">Filters</span></h2>
+                        <a href="/books" th:text="#{catalog.clearFilters}">Clear filters</a>
                     </div>
 
                     <!-- Lưới hiển thị Sách (3 cột vì Sidebar chiếm diện tích) -->
@@ -243,62 +94,242 @@
                                     </div>
                                 </div>
                             </div>
+                    <fieldset class="catalog-filter-group">
+                        <legend th:text="#{catalog.genre}">Genre</legend>
+                        <label class="catalog-filter-option" for="genreAll">
+                            <input type="radio" name="genreId" value="" id="genreAll"
+                                   th:checked="${selectedGenreId == null}" onchange="this.form.submit()">
+                            <span th:text="#{common.all}">All</span>
+                        </label>
+                        <label class="catalog-filter-option" th:each="genre : ${genres}" th:for="'genre' + ${genre.genreId}">
+                            <input type="radio" name="genreId" th:value="${genre.genreId}"
+                                   th:id="'genre' + ${genre.genreId}"
+                                   th:checked="${selectedGenreId == genre.genreId}" onchange="this.form.submit()">
+                            <span th:text="${genre.genreName}">Literature</span>
+                        </label>
+                    </fieldset>
+
+                    <fieldset class="catalog-filter-group">
+                        <legend th:text="#{catalog.availability}">Availability</legend>
+                        <label class="catalog-filter-option" for="statusAll">
+                            <input type="radio" name="status" id="statusAll" value=""
+                                   th:checked="${selectedStatus == null || selectedStatus.isEmpty()}" onchange="this.form.submit()">
+                            <span th:text="#{common.all}">All</span>
+                        </label>
+                        <label class="catalog-filter-option" for="statusAvailable">
+                            <input type="radio" name="status" id="statusAvailable" value="Active"
+                                   th:checked="${selectedStatus == 'Active'}" onchange="this.form.submit()">
+                            <span th:text="#{book.status.availableWithCopies}">Available</span>
+                        </label>
+                        <label class="catalog-filter-option" for="statusUnavailable">
+                            <input type="radio" name="status" id="statusUnavailable" value="Inactive"
+                                   th:checked="${selectedStatus == 'Inactive'}" onchange="this.form.submit()">
+                            <span th:text="#{book.status.unavailable}">Unavailable</span>
+                        </label>
+                    </fieldset>
+                </form>
+            </aside>
+
+            <section class="catalog-results" th:aria-label="#{catalog.heading}">
+                <div class="catalog-search-wrap" id="booksSearchContainer">
+                    <form id="catalogSearchForm" action="/books" method="GET" class="catalog-search-form">
+                        <input type="hidden" name="genreId" th:if="${selectedGenreId != null}" th:value="${selectedGenreId}">
+                        <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}">
+                        <input type="hidden" name="sort" th:if="${sort != null}" th:value="${sort}">
+                        <span class="catalog-search-icon"><i class="bi bi-search" aria-hidden="true"></i></span>
+                        <input type="text" id="booksSearchInput" name="keyword" th:value="${keyword}"
+                               th:placeholder="#{catalog.search.placeholder}" autocomplete="off">
+                        <button id="catalogSearchBtn" class="catalog-search-button" type="submit">
+                            <span id="catalogSearchText" th:text="#{book.search.action}">Search</span>
+                            <span id="catalogSearchSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </form>
+                    <div id="booksSearchDropdown" class="catalog-search-dropdown" hidden>
+                        <div id="booksLiveSearchSuggestions">
+                            <div id="booksSuggestionList"></div>
                         </div>
-
                     </div>
-
-                    <!-- Pagination below grid -->
-                    <nav class="mt-5 mb-5" th:if="${bookPage != null && bookPage.totalPages > 1}"
-                        th:with="startPage=${bookPage.totalPages <= 10 ? 0 : (bookPage.number < 9 ? 0 : (bookPage.number - 8 > bookPage.totalPages - 10 ? bookPage.totalPages - 10 : bookPage.number - 8))}, endPage=${startPage + 9 < bookPage.totalPages ? startPage + 9 : bookPage.totalPages - 1}">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic border-0 shadow-sm rounded-pill mx-1 px-3 py-2 text-dark"
-                                    th:href="@{/books(page=0, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
-                                    <span th:text="#{pagination.first}">First</span>
-                                </a>
-                            </li>
-                            <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic border-0 shadow-sm rounded-circle mx-1 px-3 py-2 text-dark"
-                                    th:href="@{/books(page=${bookPage.number - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
-                                    <i class="bi bi-chevron-left"></i>
-                                </a>
-                            </li>
-                            <li class="page-item disabled" th:if="${startPage > 0}">
-                                <span class="page-link page-link-classic border-0 bg-transparent px-2 py-2">…</span>
-                            </li>
-                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(startPage, endPage)}">
-                                <a class="page-link page-link-classic border-0 shadow-sm rounded-circle mx-1 px-3 py-2"
-                                    th:classappend="${pageNum == bookPage.number ? 'bg-primary text-white fw-bold' : 'text-dark'}"
-                                    th:href="@{/books(page=${pageNum}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}"
-                                    th:text="${pageNum + 1}">1</a>
-                            </li>
-                            <li class="page-item disabled" th:if="${endPage < bookPage.totalPages - 1}">
-                                <span class="page-link page-link-classic border-0 bg-transparent px-2 py-2">…</span>
-                            </li>
-                            <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic border-0 shadow-sm rounded-circle mx-1 px-3 py-2 text-dark"
-                                    th:href="@{/books(page=${bookPage.number + 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
-                                    <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </li>
-                            <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
-                                <a class="page-link page-link-classic border-0 shadow-sm rounded-pill mx-1 px-3 py-2 text-dark"
-                                    th:href="@{/books(page=${bookPage.totalPages - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}">
-                                    <span th:text="#{pagination.last}">Last</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
                 </div>
-            </div>
 
-            <!-- Modals removed as per user request to navigate to detail page instead -->
+                <div class="catalog-toolbar">
+                    <span th:text="#{catalog.resultCount(${bookPage != null ? bookPage.totalElements : 0})}">Showing 0 results</span>
+                    <label for="catalogSort">
+                        <span th:text="#{catalog.sortBy}">Sort by:</span>
+                        <select id="catalogSort" onchange="document.getElementById('hiddenSort').value = this.value; document.getElementById('filterForm').submit();">
+                            <option value="newest" th:selected="${sort == 'newest' || sort == null}" th:text="#{catalog.sort.newest}">Newest</option>
+                            <option value="oldest" th:selected="${sort == 'oldest'}" th:text="#{catalog.sort.oldest}">Oldest</option>
+                            <option value="title_asc" th:selected="${sort == 'title_asc'}" th:text="#{catalog.sort.titleAsc}">Title: A - Z</option>
+                            <option value="title_desc" th:selected="${sort == 'title_desc'}" th:text="#{catalog.sort.titleDesc}">Title: Z - A</option>
+                        </select>
+                    </label>
+                </div>
 
-            <!-- Add CSS for overlay hover -->
+                <div class="catalog-book-grid" th:if="${bookPage != null && !bookPage.isEmpty()}">
+                    <article class="catalog-book-card member-reference-list__item" th:each="book : ${bookPage.content}">
+                        <a class="catalog-book-link" th:href="@{'/books/' + ${book.bookId}}">
+                            <span class="catalog-cover-wrap">
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
+                                     class="catalog-cover" th:alt="${book.title}"
+                                     onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
+                            </span>
+                            <span class="catalog-book-copy">
+                                <span class="catalog-genre member-reference-pill"
+                                      th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</span>
+                                <strong th:text="${book.title}">Book title</strong>
+                                <span class="catalog-author">
+                                    <i class="bi bi-pen" aria-hidden="true"></i>
+                                    <span th:if="${book.authors != null && !book.authors.isEmpty()}"
+                                          th:text="${book.authors.iterator().next().authorName}">Author</span>
+                                    <span th:unless="${book.authors != null && !book.authors.isEmpty()}" th:text="#{book.unknownAuthor}">Unknown author</span>
+                                </span>
+                                <span class="catalog-book-footer">
+                                    <span class="catalog-status member-reference-pill"
+                                          th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
+                                          th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
+                                    <span class="catalog-isbn" th:text="#{catalog.isbn(${book.isbn != null ? book.isbn : #messages.msg('common.none')})}">ISBN</span>
+                                </span>
+                            </span>
+                        </a>
+                    </article>
+                </div>
 
+                <div class="catalog-empty member-reference-list__item" th:if="${bookPage == null || bookPage.isEmpty()}">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <h2 th:text="#{catalog.emptyTitle}">No books found</h2>
+                    <p th:text="#{catalog.emptyDescription}">Try changing the search term or filters.</p>
+                    <a href="/books" class="member-ui-button member-ui-button--secondary" th:text="#{catalog.clearFilters}">Clear filters</a>
+                </div>
+
+                <nav class="catalog-pagination" th:if="${bookPage != null && bookPage.totalPages > 1}"
+                     th:with="startPage=${bookPage.totalPages <= 10 ? 0 : (bookPage.number < 9 ? 0 : (bookPage.number - 8 > bookPage.totalPages - 10 ? bookPage.totalPages - 10 : bookPage.number - 8))}, endPage=${startPage + 9 < bookPage.totalPages ? startPage + 9 : bookPage.totalPages - 1}">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
+                            <a class="page-link member-page-control" th:href="@{/books(page=0, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}" th:text="#{pagination.first}">First</a>
+                        </li>
+                        <li class="page-item" th:classappend="${bookPage.first ? 'disabled' : ''}">
+                            <a class="page-link member-page-control" th:href="@{/books(page=${bookPage.number - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+                        </li>
+                        <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">&hellip;</span></li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(startPage, endPage)}" th:classappend="${pageNum == bookPage.number ? 'active' : ''}">
+                            <a class="page-link member-page-control" th:href="@{/books(page=${pageNum}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}" th:text="${pageNum + 1}">1</a>
+                        </li>
+                        <li class="page-item disabled" th:if="${endPage < bookPage.totalPages - 1}"><span class="page-link">&hellip;</span></li>
+                        <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
+                            <a class="page-link member-page-control" th:href="@{/books(page=${bookPage.number + 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                        </li>
+                        <li class="page-item" th:classappend="${bookPage.last ? 'disabled' : ''}">
+                            <a class="page-link member-page-control" th:href="@{/books(page=${bookPage.totalPages - 1}, keyword=${keyword}, genreId=${selectedGenreId}, status=${selectedStatus}, sort=${sort})}" th:text="#{pagination.last}">Last</a>
+                        </li>
+                    </ul>
+                </nav>
+            </section>
         </div>
     </div>
-    </div>
-</body>
+</main>
 
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            const loadingMessage = /*[[#{catalog.loading}]]*/ "Searching...";
+            const emptyMessage = /*[[#{book.search.empty}]]*/ "No matching books found.";
+            const errorMessage = /*[[#{catalog.search.error}]]*/ "Search suggestions are temporarily unavailable.";
+            const container = document.getElementById("booksSearchContainer");
+            const form = document.getElementById("catalogSearchForm");
+            const input = document.getElementById("booksSearchInput");
+            const dropdown = document.getElementById("booksSearchDropdown");
+            const list = document.getElementById("booksSuggestionList");
+            const button = document.getElementById("catalogSearchBtn");
+            const spinner = document.getElementById("catalogSearchSpinner");
+            let timeoutId;
+
+            function hideDropdown() {
+                dropdown.hidden = true;
+            }
+
+            function showMessage(message, loading) {
+                list.replaceChildren();
+                const row = document.createElement("div");
+                row.className = "catalog-suggestion-message";
+                if (loading) {
+                    const indicator = document.createElement("span");
+                    indicator.className = "spinner-border spinner-border-sm";
+                    indicator.setAttribute("aria-hidden", "true");
+                    row.appendChild(indicator);
+                }
+                row.appendChild(document.createTextNode(message));
+                list.appendChild(row);
+                dropdown.hidden = false;
+            }
+
+            function addSuggestion(book) {
+                const item = document.createElement("a");
+                item.href = "/books/" + book.bookId;
+                item.className = "catalog-suggestion-item";
+
+                const image = document.createElement("img");
+                image.src = book.thumbnailUrl || "/images/book-cover-placeholder.svg";
+                image.alt = "";
+                image.addEventListener("error", function () {
+                    this.src = "/images/book-cover-placeholder.svg";
+                }, { once: true });
+
+                const copy = document.createElement("span");
+                const title = document.createElement("strong");
+                const author = document.createElement("small");
+                title.textContent = book.title || "";
+                author.textContent = book.authorName || "";
+                copy.append(title, author);
+                item.append(image, copy);
+                list.appendChild(item);
+            }
+
+            document.addEventListener("click", function (event) {
+                if (!container.contains(event.target)) hideDropdown();
+            });
+
+            form.addEventListener("submit", function (event) {
+                input.value = input.value.trim();
+                if (input.value === "") {
+                    event.preventDefault();
+                    input.focus();
+                    return;
+                }
+                button.disabled = true;
+                spinner.classList.remove("d-none");
+            });
+
+            input.addEventListener("input", function () {
+                const keyword = this.value.trim();
+                window.clearTimeout(timeoutId);
+                if (keyword === "") {
+                    hideDropdown();
+                    return;
+                }
+                showMessage(loadingMessage, true);
+                timeoutId = window.setTimeout(function () {
+                    fetch("/api/books/search/suggest?keyword=" + encodeURIComponent(keyword), {
+                        headers: { "Accept": "application/json" }
+                    })
+                        .then(function (response) {
+                            if (!response.ok) throw new Error(errorMessage);
+                            return response.json();
+                        })
+                        .then(function (books) {
+                            list.replaceChildren();
+                            if (!Array.isArray(books) || books.length === 0) {
+                                showMessage(emptyMessage, false);
+                                return;
+                            }
+                            books.forEach(addSuggestion);
+                            dropdown.hidden = false;
+                        })
+                        .catch(function () {
+                            showMessage(errorMessage, false);
+                        });
+                }, 300);
+            });
+        });
+    </script>
+</th:block>
+</body>
 </html>

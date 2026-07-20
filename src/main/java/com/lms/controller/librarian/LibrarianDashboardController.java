@@ -23,6 +23,8 @@ public class LibrarianDashboardController {
     @GetMapping("/dashboard")
     public String viewDashboard(
             @RequestParam(defaultValue = "0") int bookPage,
+            @RequestParam(defaultValue = "0") int shelfPage,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             Model model,
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
@@ -43,7 +45,8 @@ public class LibrarianDashboardController {
         if ("users".equalsIgnoreCase(section)) {
             return "redirect:/librarian/members";
         }
-        model.mergeAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
+        model.mergeAttributes(dashboardService.getDashboardData(bookPage, shelfPage, reviewPage, requestPage, keyword));
+        model.addAttribute("keyword", keyword);
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
     }

@@ -7,6 +7,9 @@ import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
 import com.lms.entity.Notification;
+import com.lms.entity.User;
+import com.lms.enums.UserStatus;
+import com.lms.entity.Wallet;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -26,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -56,9 +60,68 @@ class BorrowBankPaymentLifecycleTest {
     @InjectMocks BorrowServiceImpl service;
 
     @Test
+    void approvedOnlineRequestWaitsForPickupBeforeBecomingBorrowed() {
+        Member member = new Member();
+        member.setMemberId(7);
+
+        Borrow borrow = new Borrow();
+        borrow.setBorrowId(42);
+        borrow.setMember(member);
+        borrow.setStatus("Pending");
+        borrow.setBorrowDate(LocalDateTime.now());
+
+        Book book = new Book();
+        book.setBookId(11);
+        book.setTitle("Clean Code");
+        BookItem item = new BookItem();
+        item.setBook(book);
+        item.setBarcode("BC-001");
+        item.setStatus("Available");
+
+        BorrowDetail detail = new BorrowDetail();
+        detail.setBorrow(borrow);
+        detail.setBook(book);
+        detail.setBookItem(item);
+        detail.setStatus("Pending");
+        detail.setDueDate(borrow.getBorrowDate().plusDays(14));
+
+        Wallet wallet = new Wallet();
+        wallet.setMember(member);
+        wallet.setBalance(BigDecimal.valueOf(2_000_000));
+
+        when(borrowRepository.findById(42)).thenReturn(Optional.of(borrow));
+        when(borrowDetailRepository.findByBorrowId(42)).thenReturn(List.of(detail));
+        when(bookItemRepository.findByBarcode("BC-001")).thenReturn(Optional.of(item));
+        when(bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(book.getBookId(), "Available")).thenReturn(1L);
+        when(walletRepository.findByMemberMemberId(7)).thenReturn(Optional.of(wallet));
+        when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification notification = invocation.getArgument(0);
+            notification.setNotificationId(99);
+            return notification;
+        });
+
+        service.approvePendingRequest(42, List.of("BC-001"), "librarian");
+
+        assertThat(borrow.getStatus()).isEqualTo("Waiting_Pickup");
+        assertThat(detail.getStatus()).isEqualTo("Waiting_Pickup");
+        assertThat(item.getStatus()).isEqualTo("Waiting_Pickup");
+
+        service.confirmPhysicalPickup(42, "librarian");
+
+        assertThat(borrow.getStatus()).isEqualTo("Active");
+        assertThat(detail.getStatus()).isEqualTo("Borrowed");
+        assertThat(item.getStatus()).isEqualTo("Borrowed");
+        verify(transactionRepository).save(any());
+    }
+
+    @Test
     void bankCheckoutStaysPendingUntilPaymentIsConfirmed() {
         Member member = new Member();
         member.setMemberId(7);
+        User user = new User();
+        user.setStatus(UserStatus.Active);
+        member.setUser(user);
         Book book = new Book();
         book.setTitle("Clean Code");
         BookItem item = new BookItem();
@@ -74,7 +137,7 @@ class BorrowBankPaymentLifecycleTest {
 
         when(memberRepository.findByUserEmail("0900000000")).thenReturn(Optional.empty());
         when(memberRepository.findByUserPhone("0900000000")).thenReturn(Optional.of(member));
-        when(bookItemRepository.findByBarcode("BC-001")).thenReturn(Optional.of(item));
+        when(bookItemRepository.findByBarcodeForUpdate("BC-001")).thenReturn(Optional.of(item));
         when(borrowDetailRepository.countActiveBorrowedBooks(7)).thenReturn(0L);
         when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> {
             Borrow borrow = invocation.getArgument(0);

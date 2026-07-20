@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.lms.entity.Reservation;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
 import org.springframework.data.domain.Page;
 
@@ -31,9 +32,19 @@ public interface FinancialService {
 
     Page<Transaction> getTransactionHistory(Integer memberId, int page, String type);
 
-    void createFine(Integer memberId, Double amount, String reason);
+    void issueOverdueFine(Integer borrowDetailId);
+
+    void issueDamageCompensation(Integer borrowDetailId);
+
+    BigDecimal getDamageCompensationAmount();
+
+    List<Transaction> getPendingFines();
+
+    void payFineByCash(Integer fineId);
+
+    void payFineByWalletAtDesk(Integer fineId);
 
     Page<Transaction> getAllTransactions(int page, String type);
 
-    void topUpMemberAccount(String memberPhone, Double amount);
+    void topUpMemberAccount(String memberLookup, BigDecimal amount, String requestId, Staff performedBy);
 }

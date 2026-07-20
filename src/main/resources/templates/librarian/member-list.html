@@ -130,6 +130,10 @@
                                                     <i class="bi bi-eye-slash text-muted"></i>
                                                 </button>
                                             </div>
+                                            <input class="form-control validate-field" name="password" type="password"
+                                                required minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" th:placeholder="#{reset.newPassword.placeholder}"
+                                                autocomplete="new-password"
+                                                th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
                                                 th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'd-block'"
                                                 th:text="${fieldErrors != null and fieldErrors['password'] != null ? fieldErrors['password'] : #messages.msg('validation.passwordMin')}">

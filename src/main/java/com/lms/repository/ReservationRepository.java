@@ -28,10 +28,36 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     List<Reservation> findByStatusInOrderByReservationDateAsc(Collection<String> statuses);
 
+    List<Reservation> findByStatusIgnoreCaseAndReservationDateLessThanEqual(
+            String status, java.time.LocalDateTime cutoff);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Reservation r where r.reservationId = :reservationId")
     Optional<Reservation> findByIdForUpdate(@Param("reservationId") Integer reservationId);
 
+    @Query("""
+            select case when count(r) > 0 then true else false end
+            from Reservation r
+            where r.book.bookId = :bookId
+              and r.member.memberId <> :memberId
+              and upper(r.status) in :statuses
+            """)
+    boolean existsActiveReservationByOtherMemberForBook(
+            @Param("bookId") Integer bookId,
+            @Param("memberId") Integer memberId,
+            @Param("statuses") List<String> statuses);
+
+    @Query("""
+            select count(r)
+            from Reservation r
+            where r.book.bookId = :bookId
+              and r.member.memberId <> :memberId
+              and upper(trim(r.status)) in :statuses
+            """)
+    long countActiveReservationsByOtherMemberForBook(
+            @Param("bookId") Integer bookId,
+            @Param("memberId") Integer memberId,
+            @Param("statuses") List<String> statuses);
     @Query("""
             select case when count(r) > 0 then true else false end
             from Reservation r

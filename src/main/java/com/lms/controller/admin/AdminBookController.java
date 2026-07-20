@@ -24,6 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminBookController extends LocalizedControllerSupport {
 
     private static final String BOOKS_REDIRECT = "redirect:/admin/books";
+    private static final String CATEGORIES_REDIRECT = BOOKS_REDIRECT + "?subsection=inventory&tab=categories";
+    private static final String AUDIT_REDIRECT = BOOKS_REDIRECT + "?subsection=inventory&tab=audit";
+    private static final String STORAGE_REDIRECT = BOOKS_REDIRECT + "?subsection=storage";
 
     private final LibrarianDashboardService dashboardService;
     private final InventoryService inventoryService;
@@ -42,9 +45,13 @@ public class AdminBookController extends LocalizedControllerSupport {
 
     @GetMapping("/books")
     public String viewBooks(@RequestParam(defaultValue = "0") int bookPage,
+            @RequestParam(defaultValue = "0") int shelfPage,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAllAttributes(dashboardService.getDashboardData(Math.max(0, bookPage), 0, 0));
+        model.addAllAttributes(dashboardService.getDashboardData(
+                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword));
+        model.addAttribute("keyword", keyword);
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
         }
@@ -115,7 +122,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/categories/edit/{id}")
@@ -127,7 +134,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/categories/delete/{id}")
@@ -138,7 +145,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/genres/edit/{id}")
@@ -150,7 +157,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/genres/delete/{id}")
@@ -161,7 +168,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT + "?tab=categories";
+        return CATEGORIES_REDIRECT;
     }
 
     @PostMapping("/inventory/audit")
@@ -175,7 +182,36 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return AUDIT_REDIRECT;
+    }
+
+    @PostMapping("/inventory/copies/add/{id}")
+    public String addBookCopies(@PathVariable Integer id,
+            @RequestParam Integer quantity,
+            @RequestParam Integer shelfId,
+            @RequestParam String bookCondition,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.addBookCopies(id, quantity, shelfId, bookCondition);
+            success(redirectAttributes, message("backend.inventory.copiesAdded", quantity));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return AUDIT_REDIRECT;
+    }
+
+    @PostMapping("/inventory/copies/delete/{id}")
+    public String deleteBookCopies(@PathVariable Integer id,
+            @RequestParam(required = false) java.util.List<Integer> itemIds,
+            RedirectAttributes redirectAttributes) {
+        try {
+            int deletedCount = itemIds == null ? 0 : new java.util.HashSet<>(itemIds).size();
+            inventoryService.deleteBookCopies(id, itemIds);
+            success(redirectAttributes, message("backend.inventory.copiesDeleted", deletedCount));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return AUDIT_REDIRECT;
     }
 
     @PostMapping("/storage/add")
@@ -187,7 +223,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return STORAGE_REDIRECT;
     }
 
     @PostMapping("/storage/update/{id}")
@@ -199,7 +235,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return STORAGE_REDIRECT;
     }
 
     @PostMapping("/storage/delete/{id}")
@@ -210,7 +246,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
-        return BOOKS_REDIRECT;
+        return STORAGE_REDIRECT;
     }
 
     private String storeCover(MultipartFile coverImage) {

@@ -12,9 +12,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-// Người phụ trách: Trần Ngọc Linh Đang (CE191088)
+// NgÆ°á»i phá»¥ trÃ¡ch: Tráº§n Ngá»c Linh Äang (CE191088)
 
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
+
+    boolean existsByReferenceCode(String referenceCode);
+
+    Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+            Integer borrowDetailId, String transactionType, String status);
+
+    long countByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCase(Integer borrowDetailId, String transactionType);
+
+    Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDescTransactionIdDesc(
+            Integer borrowDetailId, String transactionType, String status);
 
     @Query("select coalesce(sum(t.amount), 0) " +
             "from Transaction t " +
@@ -92,6 +102,31 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("types") List<String> types);
 
     @Query("""
+            select t
+            from Transaction t
+            where upper(t.transactionType) in :types
+              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+            order by t.transactionDate asc, t.transactionId asc
+            """)
+    List<Transaction> findAllPendingFineTransactions(@Param("types") List<String> types);
+
+    @Query("""
+            select t
+            from Transaction t
+            where t.borrow.borrowId = :borrowId
+              and upper(t.transactionType) in :types
+              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+            order by t.transactionDate asc, t.transactionId asc
+            """)
+    List<Transaction> findPendingFineTransactionsByBorrowId(@Param("borrowId") Integer borrowId,
+            @Param("types") List<String> types);
+
+    Optional<Transaction> findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+            Integer borrowId,
+            String transactionType,
+            String status);
+
+    @Query("""
             select case when count(t) > 0 then true else false end
             from Transaction t
             where t.wallet.member.memberId = :memberId
@@ -132,10 +167,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Page<Transaction> findByWalletMemberMemberIdOrderByTransactionDateDesc(
             Integer memberId,
             Pageable pageable);
+
+    Page<Transaction> findByWalletMemberMemberIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(
+            Integer memberId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<Transaction> findByBorrow_BorrowId(Integer borrowId);
+    List<Transaction> findByBorrow_BorrowIdInOrderByTransactionDateDesc(List<Integer> borrowIds);
 
     // =========================================================================
-    // PHƯƠNG THỨC MỚI: Lấy tất cả giao dịch tài chính phát sinh của Độc giả trong vòng 365 ngày qua
+    // PHÆ¯Æ NG THá»¨C Má»šI: Láº¥y táº¥t cáº£ giao dá»‹ch tÃ i chÃ­nh phÃ¡t sinh cá»§a Äá»™c giáº£ trong vÃ²ng 365 ngÃ y qua
     // =========================================================================
     @Query("SELECT t FROM Transaction t " +
             "WHERE t.wallet.member.memberId = :memberId " +

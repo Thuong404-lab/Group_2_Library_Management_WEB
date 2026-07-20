@@ -2,6 +2,7 @@ package com.lms.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
 
+import java.util.List;
 import java.util.Set;
 @Entity
 @Table(name = "Books")
@@ -32,6 +33,9 @@ public class Book {
         inverseJoinColumns = @JoinColumn(name = "author_id")
     )
     private Set<Author> authors;
+
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
+    private List<BookItem> bookItems;
 
     public Book() {
     }
@@ -64,4 +68,7 @@ public class Book {
 
     public Set<Author> getAuthors() { return authors; }
     public void setAuthors(Set<Author> authors) { this.authors = authors; }
+
+    public List<BookItem> getBookItems() { return bookItems; }
+    public void setBookItems(List<BookItem> bookItems) { this.bookItems = bookItems; }
 }

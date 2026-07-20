@@ -115,7 +115,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         if (!model.containsAttribute("notificationRequest")) {
             model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
         }
-        model.addAttribute("notificationTypes", NotificationType.values());
+        model.addAttribute("notificationTypes", NotificationType.manualSelectableValues());
         model.addAttribute("members", librarianInteractionService.getAllMembers());
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
@@ -155,7 +155,8 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             Model model) {
 
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(
-                PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("requestId").ascending())));
+                PageRequest.of(Math.max(0, page), PAGE_SIZE,
+                        Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
 
         return "librarian/acquisition-request-list";
     }
@@ -194,6 +195,8 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
         if (request.getNotificationType() == null) {
             fieldErrors.put("notificationType", message("backend.librarian.notification.typeRequired"));
+        } else if (!request.getNotificationType().isManualSelectable()) {
+            fieldErrors.put("notificationType", message("backend.librarian.notification.typeInvalidForManual"));
         }
 
         String normalizedTitle = normalizeNotificationTitle(request.getTitle());
