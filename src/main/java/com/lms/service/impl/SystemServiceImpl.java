@@ -190,6 +190,34 @@ public class SystemServiceImpl implements SystemService {
                 messages.get("backend.settings.audit.updated"));
     }
 
+    @Override
+    public List<MembershipTier> getMembershipTiers() {
+        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
+    }
+
+    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits,
+                                        Map<Integer, BigDecimal> tierSpendingConditions) {
+        List<MembershipTier> tiers = getMembershipTiers();
+        if (tiers.isEmpty()) {
+            throw new ValidationException(messages.get("backend.settings.noTiers"));
+        }
+
+        for (MembershipTier tier : tiers) {
+            Integer borrowLimit = tierBorrowLimits == null ? null : tierBorrowLimits.get(tier.getTierId());
+            validatePositive(borrowLimit,
+                    messages.get("backend.settings.tierBorrowLimitPositive", tier.getTierName()));
+            BigDecimal spendingCondition = tierSpendingConditions == null
+                    ? null
+                    : tierSpendingConditions.get(tier.getTierId());
+            validateZeroOrPositive(spendingCondition,
+                    messages.get("backend.settings.tierSpendingNonNegative", tier.getTierName()));
+            tier.setBorrowLimit(borrowLimit);
+            tier.setCondition(spendingCondition);
+        }
+
+        membershipTierRepository.saveAll(tiers);
+    }
+
     private void saveOrUpdateSetting(String key, String value, String description) {
         SystemSetting setting = systemSettingRepository.findBySettingKeyIgnoreCase(key)
                 .orElseGet(SystemSetting::new);
