@@ -1,7 +1,7 @@
 package com.lms.controller.admin;
-import com.lms.exception.ApplicationException;
-import com.lms.controller.LocalizedControllerSupport;
 
+import com.lms.controller.LocalizedControllerSupport;
+import com.lms.exception.ApplicationException;
 import com.lms.service.SystemService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SettingsController - Cấu hình Hệ thống
@@ -49,6 +52,22 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
+            Map<Integer, Integer> borrowLimitsByTier = new HashMap<>();
+            Map<Integer, BigDecimal> spendingConditionsByTier = new HashMap<>();
+            if (tierIds != null) {
+                for (int i = 0; i < tierIds.size(); i++) {
+                    Integer tierId = tierIds.get(i);
+                    if (tierId != null) {
+                        if (tierBorrowLimits != null && i < tierBorrowLimits.size()) {
+                            borrowLimitsByTier.put(tierId, tierBorrowLimits.get(i));
+                        }
+                        if (tierSpendingConditions != null && i < tierSpendingConditions.size()) {
+                            spendingConditionsByTier.put(tierId, tierSpendingConditions.get(i));
+                        }
+                    }
+                }
+            }
+
             systemService.updateBorrowingPolicies(
                     maxBorrowDays,
                     maxRenewalDays,

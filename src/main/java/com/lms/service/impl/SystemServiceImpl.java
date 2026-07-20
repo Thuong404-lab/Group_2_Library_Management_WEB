@@ -1,10 +1,12 @@
 package com.lms.service.impl;
 
+import com.lms.entity.MembershipTier;
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
 import com.lms.exception.ValidationException;
 import com.lms.enums.ActionType;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.SystemLogRepository;
 import com.lms.repository.SystemSettingRepository;
@@ -38,17 +40,20 @@ public class SystemServiceImpl implements SystemService {
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final AuditLogService auditLogService;
+    private final MembershipTierRepository membershipTierRepository;
 
     public SystemServiceImpl(SystemSettingRepository systemSettingRepository,
                              SystemLogRepository systemLogRepository,
                              MemberAccountRepository memberAccountRepository,
                              StaffAccountRepository staffAccountRepository,
-                             AuditLogService auditLogService) {
+                             AuditLogService auditLogService,
+                             MembershipTierRepository membershipTierRepository) {
         this.systemSettingRepository = systemSettingRepository;
         this.systemLogRepository = systemLogRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.auditLogService = auditLogService;
+        this.membershipTierRepository = membershipTierRepository;
     }
 
     @Override
@@ -58,67 +63,43 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public Page<SystemLog> getSystemLogs(int page, String action, String keyword, String actionType) {
-        PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10);
-        String trimmedKeyword = keyword == null ? "" : keyword.trim();
-        String section = normalizeLogSection(action);
+        PageRequest pageable = PageRequest.of(page, 10);
 
-        Page<SystemLog> logs = systemLogRepository.searchLogsBySection(
-                section, trimmedKeyword, actionType == null ? "" : actionType.trim(), pageRequest);
+        String kw = keyword != null ? keyword.trim() : "";
+        String actType = actionType != null ? actionType.trim() : "";
 
-        logs.forEach(this::populateActorUsername);
-        return logs;
-    }
-
-    private String normalizeLogSection(String section) {
-        if ("operations".equalsIgnoreCase(section)) {
-            return "operations";
-        }
-        if ("circulation".equalsIgnoreCase(section)) {
-            return "circulation";
-        }
-        return "auth";
-    }
-
-    private void populateActorUsername(SystemLog log) {
-        if (log.getUser() == null || log.getUser().getId() == null) {
-            log.setActorUsername("System");
-            return;
+        if (action != null && !action.trim().isEmpty()) {
+            return systemLogRepository.searchLogsBySection(action.trim(), kw, actType, pageable);
         }
 
-        Integer userId = log.getUser().getId();
-        String username = memberAccountRepository.findByMember_User_Id(userId)
-                .map(account -> account.getUsername())
-                .orElseGet(() -> staffAccountRepository.findByStaff_User_Id(userId)
-                        .map(account -> account.getUsername())
-                        .orElse("System"));
-        log.setActorUsername(username);
+        if (!kw.isEmpty()) {
+            return systemLogRepository.searchLogs(kw, pageable);
+        }
+
+        return systemLogRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     @Override
     public List<SystemSetting> getAllSettings() {
-        return systemSettingRepository.findAll(Sort.by("settingKey").ascending());
+        return systemSettingRepository.findAll();
     }
 
     @Override
     public Map<String, String> getSettingMap() {
-        Map<String, String> settingMap = new LinkedHashMap<>();
-
-        for (SystemSetting setting : getAllSettings()) {
-            settingMap.put(setting.getSettingKey(), setting.getSettingValue());
+        List<SystemSetting> settings = getAllSettings();
+        Map<String, String> map = new LinkedHashMap<>();
+        for (SystemSetting setting : settings) {
+            map.put(setting.getSettingKey(), setting.getSettingValue());
         }
-
-        return settingMap;
+        return map;
     }
 
     @Override
     public int getIntSetting(String settingKey, int defaultValue) {
         return systemSettingRepository.findBySettingKeyIgnoreCase(settingKey)
-                .map(SystemSetting::getSettingValue)
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .map(value -> {
+                .map(setting -> {
                     try {
-                        return Integer.parseInt(value);
+                        return Integer.parseInt(setting.getSettingValue());
                     } catch (NumberFormatException e) {
                         return defaultValue;
                     }
@@ -173,7 +154,7 @@ public class SystemServiceImpl implements SystemService {
 
 
         saveOrUpdateSetting("Max_Books_Per_Member",
-                String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
+                String.valueOf(tierBorrowLimits != null ? tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1) : 1),
                 messages.get("backend.settings.description.maxBooks"));
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
@@ -218,6 +199,31 @@ public class SystemServiceImpl implements SystemService {
         setting.setDescription(description);
 
         systemSettingRepository.save(setting);
+    }
+
+    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits, Map<Integer, BigDecimal> tierSpendingConditions) {
+        if (tierBorrowLimits != null && !tierBorrowLimits.isEmpty()) {
+            tierBorrowLimits.forEach((tierId, limit) -> {
+                if (tierId != null && limit != null) {
+                    validateZeroOrPositive(limit, messages.get("backend.settings.tierBorrowLimitNonNegative"));
+                    membershipTierRepository.findById(tierId).ifPresent(tier -> {
+                        tier.setBorrowLimit(limit);
+                        membershipTierRepository.save(tier);
+                    });
+                }
+            });
+        }
+        if (tierSpendingConditions != null && !tierSpendingConditions.isEmpty()) {
+            tierSpendingConditions.forEach((tierId, condition) -> {
+                if (tierId != null && condition != null) {
+                    validateZeroOrPositive(condition, messages.get("backend.settings.tierConditionNonNegative"));
+                    membershipTierRepository.findById(tierId).ifPresent(tier -> {
+                        tier.setCondition(condition);
+                        membershipTierRepository.save(tier);
+                    });
+                }
+            });
+        }
     }
 
     private void validatePositive(Integer value, String message) {
