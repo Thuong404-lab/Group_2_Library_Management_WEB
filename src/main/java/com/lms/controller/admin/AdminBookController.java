@@ -45,9 +45,13 @@ public class AdminBookController extends LocalizedControllerSupport {
 
     @GetMapping("/books")
     public String viewBooks(@RequestParam(defaultValue = "0") int bookPage,
+            @RequestParam(defaultValue = "0") int shelfPage,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        model.addAllAttributes(dashboardService.getDashboardData(Math.max(0, bookPage), 0, 0));
+        model.addAllAttributes(dashboardService.getDashboardData(
+                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword));
+        model.addAttribute("keyword", keyword);
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
         }
@@ -175,6 +179,35 @@ public class AdminBookController extends LocalizedControllerSupport {
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
                     summary.getOrDefault("Disposed", 0L)));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return AUDIT_REDIRECT;
+    }
+
+    @PostMapping("/inventory/copies/add/{id}")
+    public String addBookCopies(@PathVariable Integer id,
+            @RequestParam Integer quantity,
+            @RequestParam Integer shelfId,
+            @RequestParam String bookCondition,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.addBookCopies(id, quantity, shelfId, bookCondition);
+            success(redirectAttributes, message("backend.inventory.copiesAdded", quantity));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return AUDIT_REDIRECT;
+    }
+
+    @PostMapping("/inventory/copies/delete/{id}")
+    public String deleteBookCopies(@PathVariable Integer id,
+            @RequestParam(required = false) java.util.List<Integer> itemIds,
+            RedirectAttributes redirectAttributes) {
+        try {
+            int deletedCount = itemIds == null ? 0 : new java.util.HashSet<>(itemIds).size();
+            inventoryService.deleteBookCopies(id, itemIds);
+            success(redirectAttributes, message("backend.inventory.copiesDeleted", deletedCount));
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }

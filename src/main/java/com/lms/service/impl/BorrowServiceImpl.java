@@ -1016,6 +1016,7 @@ public class BorrowServiceImpl implements BorrowService {
             }
             MemberBorrowDTO dto = new MemberBorrowDTO();
             dto.setId(res.getReservationId());
+            dto.setBookId(res.getBook().getBookId());
             dto.setBookTitle(res.getBook().getTitle());
             dto.setAuthorName(getAuthorNames(res.getBook()));
             dto.setBookImage(res.getBook().getCoverImageUrl());
@@ -1047,6 +1048,7 @@ public class BorrowServiceImpl implements BorrowService {
     private MemberBorrowDTO toMemberBorrowDTO(BorrowDetail detail) {
         MemberBorrowDTO dto = new MemberBorrowDTO();
         dto.setId(detail.getBorrowDetailId());
+        dto.setBookId(detail.getBook().getBookId());
         dto.setBookTitle(detail.getBook().getTitle());
         dto.setAuthorName(getAuthorNames(detail.getBook()));
         dto.setBookImage(detail.getBook().getCoverImageUrl());
