@@ -639,9 +639,9 @@
 
             function toggleFineInput() {
                 if (conditionNoteSelect && fineInputContainer) {
-                    const value = conditionNoteSelect.value;
+                    const value = (conditionNoteSelect.value || '').toLocaleLowerCase('vi');
                     const fineError = document.getElementById('fineError');
-                    if (value.includes('Hư hỏng nhẹ') || value.includes('Mất hoặc Hư hỏng nặng')) {
+                    if (value.includes('hư hỏng nhẹ') || value.includes('minor damage')) {
                         fineInputContainer.style.display = 'block';
                     } else {
                         fineInputContainer.style.display = 'none';
@@ -661,8 +661,8 @@
                 if (returnForm) {
                     returnForm.addEventListener('submit', function(e) {
                         if (conditionNoteSelect && damageFineInput) {
-                            const value = conditionNoteSelect.value;
-                            if (value.includes('Hư hỏng nhẹ') || value.includes('Mất hoặc Hư hỏng nặng')) {
+                            const value = (conditionNoteSelect.value || '').toLocaleLowerCase('vi');
+                            if (value.includes('hư hỏng nhẹ') || value.includes('minor damage')) {
                                 const fineVal = parseFloat(damageFineInput.value) || 0;
                                 if (fineVal <= 0) {
                                     e.preventDefault();
