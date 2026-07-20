@@ -1,4 +1,136 @@
 /* Presentation owner for templates/member/borrow.html */
+.borrow-page {
+    width: calc(100% - 48px);
+    max-width: 1200px;
+    padding: 48px 0 72px;
+    margin-right: auto;
+    margin-left: auto;
+    color: var(--member-color-body);
+    font-family: var(--member-font-ui);
+}
+
+.borrow-page .borrow-hero {
+    align-items: center;
+    min-height: 208px;
+    padding: 32px 40px;
+    margin-bottom: 28px;
+}
+
+.borrow-hero-copy, .borrow-hero-action {
+    position: relative;
+    z-index: 1;
+}
+
+.borrow-page .borrow-hero .member-page-eyebrow {
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, .86);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: .12em;
+}
+
+.borrow-page .borrow-hero .member-page-title {
+    margin: 0;
+    color: #fff;
+    font-family: var(--member-font-display);
+    font-size: clamp(30px, 3vw, 40px);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+}
+
+.borrow-page .borrow-hero .member-page-description {
+    max-width: 680px;
+    margin-top: 10px;
+    color: rgba(255, 255, 255, .8);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.borrow-card {
+    overflow: hidden;
+    border: 1px solid var(--member-color-hairline);
+    border-radius: 16px;
+    background: var(--member-color-surface-soft);
+    box-shadow: var(--member-card-shadow);
+}
+
+@media (max-width: 767.98px) {
+    .borrow-page {
+        width: calc(100% - 32px);
+        padding: 32px 0 48px;
+    }
+    .borrow-page .borrow-hero {
+        align-items: stretch;
+        min-height: 0;
+        padding: 28px 24px;
+    }
+}
+
+/* --- TABS --- */
+.member-notification-source-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid var(--member-color-hairline);
+    border-radius: 12px;
+    background: var(--member-color-canvas);
+}
+
+.member-notification-source-tabs a,
+.member-notification-source-tabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--member-color-muted) !important;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease;
+}
+
+.member-notification-source-tabs a:hover,
+.member-notification-source-tabs button:hover {
+    background: var(--member-color-surface-soft);
+    color: var(--member-color-ink) !important;
+}
+
+.member-notification-source-tabs a.is-active,
+.member-notification-source-tabs button.is-active {
+    background: var(--member-palette-50) !important;
+    color: var(--member-palette-900) !important;
+}
+
+.member-notification-source-tabs b {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 9999px;
+    background: var(--member-color-surface-soft);
+    color: var(--member-color-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.member-notification-source-tabs a.is-active b,
+.member-notification-source-tabs button.is-active b {
+    background: var(--member-color-canvas);
+    color: var(--member-palette-700);
+}
 
 /* --- CARD VÀ BẢNG THÔNG TIN --- */
 .table-classic thead th {
@@ -474,4 +606,94 @@ body .member-loan-page .member-borrow-span-background-color-border-color-09.memb
     .member-loan-table tbody tr.member-loan-row:hover {
         transform: none;
     }
+}
+
+/* --- BORROW FILTER BAR STYLING --- */
+.borrow-filter-bar {
+    padding: 18px 24px !important;
+    background: var(--member-color-surface-soft) !important;
+    border-bottom: 1px solid var(--member-color-hairline) !important;
+}
+
+.borrow-filter-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--member-color-muted) !important;
+    font-family: var(--member-font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.borrow-input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 8px;
+    background: var(--member-color-canvas);
+    border: 1px solid var(--member-color-hairline);
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.borrow-input-group:focus-within {
+    border-color: var(--member-palette-500);
+    box-shadow: 0 0 0 3px var(--member-focus-ring);
+}
+
+.borrow-input-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 12px;
+    color: var(--member-color-muted);
+    font-size: 14px;
+}
+
+.borrow-input-group .borrow-input {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.borrow-input {
+    display: block;
+    width: 100%;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--member-color-hairline);
+    border-radius: 8px;
+    background: var(--member-color-canvas);
+    color: var(--member-color-ink);
+    font-family: var(--member-font-ui);
+    font-size: 13px;
+    line-height: 1.4;
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.borrow-input:focus {
+    border-color: var(--member-palette-500);
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--member-focus-ring);
+}
+
+.borrow-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%238b5a2b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 10px;
+    padding-right: 32px;
+}
+
+.borrow-filter-bar .member-ui-button {
+    min-height: 40px;
+    height: 40px;
+    font-size: 13px;
+}
+
+.borrow-filter-actions {
+    gap: 14px !important;
 }

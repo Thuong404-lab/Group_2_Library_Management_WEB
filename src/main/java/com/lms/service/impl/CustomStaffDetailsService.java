@@ -4,7 +4,6 @@ import com.lms.config.CustomUserDetails;
 import com.lms.entity.StaffAccount;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.service.LocalizedMessageService;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,9 +18,7 @@ import java.util.List;
 @Service
 public class CustomStaffDetailsService implements UserDetailsService {
 
-
     private final LocalizedMessageService messages;
-
 
     private final StaffAccountRepository staffAccountRepository;
 
@@ -33,7 +30,8 @@ public class CustomStaffDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         StaffAccount account = staffAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(messages.get("backend.account.staffUsernameNotFound", username)));
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        messages.get("backend.account.staffUsernameNotFound", username)));
 
         // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
@@ -47,7 +45,6 @@ public class CustomStaffDetailsService implements UserDetailsService {
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
-                authorities
-        );
+                authorities);
     }
 }

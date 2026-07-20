@@ -30,12 +30,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     }
 
     public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId, Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes) {
-        this.user = user;
-        this.username = username;
-        this.passwordHash = passwordHash;
-        this.status = status;
-        this.accountId = accountId;
-        this.authorities = authorities;
+        this(user, username, passwordHash, status, accountId, authorities);
         this.attributes = attributes;
     }
 
@@ -93,7 +88,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isEnabled() {
-        return !"Blocked".equalsIgnoreCase(status);
+        return isAccountNonLocked();
     }
 
     @Override

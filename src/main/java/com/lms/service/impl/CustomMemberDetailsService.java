@@ -5,7 +5,6 @@ import com.lms.entity.MemberAccount;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -46,7 +45,6 @@ public class CustomMemberDetailsService implements UserDetailsService {
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
-                authorities
-        );
+                authorities);
     }
 }

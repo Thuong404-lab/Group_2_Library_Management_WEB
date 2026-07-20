@@ -1,7 +1,7 @@
 # Master Prompt — Library Management Web
 
-> Prompt dùng chung cho toàn bộ source code của dự án.  
-> Khi sử dụng, hãy điền phần **Nhiệm vụ hiện tại** và **Phạm vi được phép thay đổi**.  
+> Prompt dùng chung cho toàn bộ source code của dự án.
+> Khi sử dụng, hãy điền phần **Nhiệm vụ hiện tại** và **Phạm vi được phép thay đổi**.
 > Quy tắc trong prompt này ưu tiên sự đúng đắn, bảo toàn nghiệp vụ và khả năng bảo trì hơn việc refactor hình thức.
 
 ## 1. Vai trò

@@ -5,7 +5,6 @@ import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
-import com.lms.entity.Borrow;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.Transaction;
 import com.lms.service.LoanService;

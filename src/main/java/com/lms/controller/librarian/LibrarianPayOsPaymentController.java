@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
@@ -27,15 +28,15 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
     private final MemberRepository memberRepository;
 
     public LibrarianPayOsPaymentController(PayOsPaymentService paymentService,
-                                           MemberRepository memberRepository) {
+            MemberRepository memberRepository) {
         this.paymentService = paymentService;
         this.memberRepository = memberRepository;
     }
 
     @PostMapping("/top-up")
     public String createTopUp(@RequestParam String memberPhone,
-                              @RequestParam BigDecimal amount,
-                              RedirectAttributes redirectAttributes) {
+            @RequestParam BigDecimal amount,
+            RedirectAttributes redirectAttributes) {
         try {
             Member member = findMember(memberPhone);
             PayOsPayment payment = paymentService.createTopUpForLibrarian(member, amount);
@@ -50,7 +51,7 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @PostMapping("/fine/{fineId}")
     public String createFinePayment(@PathVariable Integer fineId,
-                                    RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             PayOsPayment payment = paymentService.createFinePaymentForLibrarian(fineId);
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
@@ -62,7 +63,7 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @PostMapping("/fine/borrow/{borrowId}")
     public String createBorrowFinePayment(@PathVariable Integer borrowId,
-                                          RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             PayOsPayment payment = paymentService.createFineBatchPaymentForLibrarian(borrowId);
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
@@ -74,7 +75,7 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @GetMapping("/return")
     public String paymentReturn(@RequestParam(required = false) Long orderCode,
-                                RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         if (orderCode == null) {
             redirectAttributes.addFlashAttribute("error", message("backend.payment.orderUnknown"));
             return "redirect:/librarian/members/topup";
@@ -101,7 +102,8 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
         result.put("status", payment.getStatus());
         result.put("paidAt", payment.getPaidAt());
         result.put("transactionId", payment.getTransaction() == null
-                ? null : payment.getTransaction().getTransactionId());
+                ? null
+                : payment.getTransaction().getTransactionId());
         return result;
     }
 

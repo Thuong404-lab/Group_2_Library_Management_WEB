@@ -9,67 +9,66 @@
 </head>
 
 <body>
-<main layout:fragment="content" class="member-notifications-page member-palette-page">
-    <div class="member-notifications-container">
+<div layout:fragment="content" class="container member-page borrow-page member-palette-page">
 
-        <header class="member-notifications-header member-dashboard-hero notifications-hero">
-            <div class="notifications-hero-copy">
-                <span class="member-notifications-eyebrow" th:text="#{member.loan.eyebrow}">YOUR LIBRARY ACTIVITY</span>
-                <h1 th:text="#{member.loan.heading}">Loan and Return Management</h1>
-                <p th:text="#{member.loan.description}">Track current loans, reservations, renewals, and borrowing history.</p>
-            </div>
-            <a th:href="@{/books}" class="notifications-hero-action member-ui-button member-ui-button--inverse">
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <span th:text="#{member.loan.borrowNew}">Borrow a New Book</span>
-            </a>
-        </header>
+    <div class="member-page-header member-dashboard-hero borrow-hero">
+        <div class="borrow-hero-copy">
+            <span class="member-page-eyebrow" th:text="#{member.loan.eyebrow}">YOUR LIBRARY ACTIVITY</span>
+            <h1 class="member-page-title"><span th:text="#{member.loan.heading}">Loan and Return Management</span></h1>
+            <p class="member-page-description"><span th:text="#{member.loan.description}">Track current loans, reservations, renewals, and borrowing history.</span></p>
+        </div>
+        <a th:href="@{/books}" class="member-primary-action borrow-hero-action member-ui-button member-ui-button--inverse">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span th:text="#{member.loan.borrowNew}">Borrow a New Book</span>
+        </a>
+    </div>
 
-        <!-- Thanh Điều Hướng Tabs Điều Kiện & Filter -->
-        <section class="member-notifications-card member-reference-list" th:aria-label="#{member.loan.heading}">
-            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
-                <div class="member-notification-source-tabs" role="tablist">
-                    <a th:href="@{/member/borrow/management(tab='borrowing')}"
-                       class="member-tab-control" th:classappend="${activeTab == 'borrowing' || activeTab == null} ? 'is-active'">
-                        <span th:text="#{member.loan.tab.borrowing}">Currently Borrowing</span> <b th:text="${borrowingCount}">0</b>
-                    </a>
-                    <a th:href="@{/member/borrow/management(tab='reserved')}"
-                       class="member-tab-control" th:classappend="${activeTab == 'reserved'} ? 'is-active'">
-                        <span th:text="#{member.loan.tab.reservations}">Reservations</span> <b th:text="${reservationCount}">0</b>
-                    </a>
-                    <a th:href="@{/member/borrow/management(tab='history')}"
-                       class="member-tab-control" th:classappend="${activeTab == 'history'} ? 'is-active'">
-                        <span th:text="#{member.loan.tab.history}">Loan History</span>
-                    </a>
-                </div>
+    <!-- Thanh Điều Hướng Tabs Điều Kiện & Filter -->
+    <div class="borrow-card member-reference-list" th:aria-label="#{member.loan.heading}">
+        <div class="member-notification-toolbar member-reference-list__header p-3">
+            <div class="member-notification-source-tabs" role="tablist">
+                <a th:href="@{/member/borrow/management(tab='borrowing')}"
+                   class="member-tab-control" th:classappend="${activeTab == 'borrowing' || activeTab == null} ? 'is-active'">
+                    <span th:text="#{member.loan.tab.borrowing}">Currently Borrowing</span> <b th:text="${borrowingCount}">0</b>
+                </a>
+                <a th:href="@{/member/borrow/management(tab='reserved')}"
+                   class="member-tab-control" th:classappend="${activeTab == 'reserved'} ? 'is-active'">
+                    <span th:text="#{member.loan.tab.reservations}">Reservations</span> <b th:text="${reservationCount}">0</b>
+                </a>
+                <a th:href="@{/member/borrow/management(tab='history')}"
+                   class="member-tab-control" th:classappend="${activeTab == 'history'} ? 'is-active'">
+                    <span th:text="#{member.loan.tab.history}">Loan History</span>
+                </a>
             </div>
+        </div>
 
             <!-- Form Tìm Kiếm & Lọc -->
-            <div class="p-3 border-bottom" style="background: var(--member-color-surface-soft);">
+            <div class="borrow-filter-bar">
                 <form method="get" th:action="@{/member/borrow/management}" id="filterForm" class="row g-2 align-items-end">
                     <input type="hidden" name="tab" th:value="${activeTab != null ? activeTab : 'borrowing'}" />
                     
-                    <div class="col-lg-4 col-md-12">
-                        <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{member.loan.searchPlaceholder}">Search Book Title</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                            <input type="text" name="search" id="searchInput" th:value="${search}" class="form-control border-start-0" 
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="searchInput" class="borrow-filter-label" th:text="#{book.title}">Book Title</label>
+                        <div class="borrow-input-group">
+                            <span class="borrow-input-icon"><i class="bi bi-search"></i></span>
+                            <input type="text" name="search" id="searchInput" th:value="${search}" class="borrow-input" 
                                    th:placeholder="#{member.loan.searchPlaceholder}" placeholder="Search by Book Title..." />
                         </div>
                     </div>
                     
                     <div class="col-lg-2 col-md-3 col-6">
-                        <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{common.fromDate}">From Date</label>
-                        <input type="date" name="fromDate" id="fromDateInput" th:value="${fromDate}" th:min="${minDate}" th:max="${maxDate}" class="form-control" />
+                        <label for="fromDateInput" class="borrow-filter-label" th:text="#{common.fromDate}">From Date</label>
+                        <input type="date" name="fromDate" id="fromDateInput" th:value="${fromDate}" th:min="${minDate}" th:max="${maxDate}" class="borrow-input" />
                     </div>
                     
                     <div class="col-lg-2 col-md-3 col-6">
-                        <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{common.toDate}">To Date</label>
-                        <input type="date" name="toDate" id="toDateInput" th:value="${toDate}" th:min="${minDate}" th:max="${maxDate}" class="form-control" />
+                        <label for="toDateInput" class="borrow-filter-label" th:text="#{common.toDate}">To Date</label>
+                        <input type="date" name="toDate" id="toDateInput" th:value="${toDate}" th:min="${minDate}" th:max="${maxDate}" class="borrow-input" />
                     </div>
                     
-                    <div class="col-lg-2 col-md-3 col-6">
-                        <label class="form-label text-muted small font-weight-bold mb-1" th:text="#{common.status}">Status</label>
-                        <select name="status" id="statusSelect" class="form-select">
+                    <div class="col-lg-3 col-md-6 col-6">
+                        <label for="statusSelect" class="borrow-filter-label" th:text="#{common.status}">Status</label>
+                        <select name="status" id="statusSelect" class="borrow-input borrow-select">
                             <option th:each="opt : ${statusOptions}"
                                     th:value="${opt.value}"
                                     th:text="${opt.labelKey != null && opt.labelKey != '' ? #messages.msg(opt.labelKey) : '-- All statuses --'}"
@@ -77,9 +76,14 @@
                         </select>
                     </div>
                     
-                    <div class="col-lg-2 col-md-3 col-6 d-flex gap-1">
-                        <button type="submit" id="filterBtn" class="member-ui-button member-ui-button--primary flex-grow-1" th:text="#{common.filter}">Filter</button>
-                        <a th:href="@{/member/borrow/management(tab=${activeTab != null ? activeTab : 'borrowing'})}" class="member-ui-button member-ui-button--secondary" th:title="#{common.clearFilter}"><i class="bi bi-x-lg"></i></a>
+                    <div class="col-lg-2 col-md-6 col-6 d-flex gap-3 borrow-filter-actions">
+                        <button type="submit" id="filterBtn" class="member-ui-button member-ui-button--primary flex-grow-1">
+                            <i class="bi bi-funnel-fill me-1"></i><span th:text="#{common.filter}">Filter</span>
+                        </button>
+                        <a th:href="@{/member/borrow/management(tab=${activeTab != null ? activeTab : 'borrowing'})}" 
+                           class="member-ui-button member-ui-button--secondary" th:title="#{common.clearFilter}">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
                     </div>
                 </form>
             </div>
@@ -282,7 +286,7 @@
                        th:aria-label="#{pagination.last}"><i class="bi bi-chevron-double-right" aria-hidden="true"></i></a>
                 </nav>
             </div>
-        </section>
+        </div>
 
         <!-- Modals -->
         <th:block th:if="${activeTab == 'reserved'}">
@@ -569,22 +573,5 @@
         </script>
     </th:block>
 </main>
-</body>
-</html> {
-                        filterBtn.disabled = true;
-                        filterBtn.classList.add('disabled');
-                    } else {
-                        filterBtn.disabled = false;
-                        filterBtn.classList.remove('disabled');
-                    }
-                }
-                statusSelect.addEventListener('change', updateFilterBtn);
-                updateFilterBtn(); // initial run
-            }
-        });
-
-
-    </script>
-</div>
 </body>
 </html>

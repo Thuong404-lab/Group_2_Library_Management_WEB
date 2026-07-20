@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/admin_base}">
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
 
 <head>
     <title th:text="#{admin.logs.title}">System Logs</title>
@@ -28,13 +28,11 @@
                     <div class="system-log-filter-field">
                         <label for="systemLogKeyword" th:text="#{admin.logs.keyword}">Keyword</label>
                         <input id="systemLogKeyword" type="text" name="keyword" class="form-control"
-                            th:placeholder="#{admin.logs.searchPlaceholder}"
-                            th:value="${keyword}">
+                            th:placeholder="#{admin.logs.searchPlaceholder}" th:value="${keyword}">
                     </div>
                     <input type="hidden" name="section" th:value="${currentSection}">
                     <div class="system-log-filter-actions">
-                        <button type="submit"
-                            class="btn btn-classic system-log-search-button"
+                        <button type="submit" class="btn btn-classic system-log-search-button"
                             th:title="#{common.search}" th:aria-label="#{common.search}">
                             <i class="bi bi-search" aria-hidden="true"></i>
                         </button>
@@ -44,54 +42,67 @@
                         </a>
                     </div>
                     <nav class="system-log-section-nav" th:aria-label="#{admin.logs.groups}">
-                        <button type="submit"
-                            onclick="this.form.section.value='auth'; this.form.actionType.value=''"
+                        <button type="submit" onclick="this.form.section.value='auth'; this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'auth'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'auth'} ? 'page'">
-                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i><span th:text="#{admin.logs.auth}">Login / Logout</span>
+                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i><span
+                                th:text="#{admin.logs.auth}">Login / Logout</span>
                         </button>
                         <button type="submit"
                             onclick="this.form.section.value='operations'; this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'operations'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'operations'} ? 'page'">
-                            <i class="bi bi-activity" aria-hidden="true"></i><span th:text="#{admin.logs.operations}">Status / CRUD</span>
+                            <i class="bi bi-activity" aria-hidden="true"></i><span
+                                th:text="#{admin.logs.operations}">Status / CRUD</span>
                         </button>
                         <button type="submit"
                             onclick="this.form.section.value='circulation'; this.form.actionType.value=''"
                             class="btn btn-sm"
                             th:classappend="${currentSection == 'circulation'} ? 'btn-classic' : 'btn-outline-classic'"
                             th:attr="aria-current=${currentSection == 'circulation'} ? 'page'">
-                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i><span th:text="#{admin.logs.circulation}">Loans / Returns / Reservations</span>
+                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i><span
+                                th:text="#{admin.logs.circulation}">Loans / Returns / Reservations</span>
                         </button>
                     </nav>
                 </form>
                 <div class="system-log-title-row">
-                <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
-                    <i class="bi bi-journal-text me-2 text-classic"></i>
-                    <span th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.authHistory') : (currentSection == 'operations' ? #messages.msg('admin.logs.operationsHistory') : #messages.msg('admin.logs.circulationHistory'))}">
-                        Log List
-                    </span>
-                </h5>
-                <select form="systemLogFilterForm" class="form-select system-log-tab-filter" name="actionType" th:aria-label="#{admin.logs.filterAction}" onchange="this.form.submit()">
-                    <option value="" th:text="#{admin.logs.allActions}">All activities</option>
-                    <th:block th:if="${currentSection == 'auth'}">
-                        <option value="LOGIN" th:selected="${actionType == 'LOGIN'}" th:text="#{admin.logs.action.login}">Login</option>
-                        <option value="LOGOUT" th:selected="${actionType == 'LOGOUT'}" th:text="#{admin.logs.action.logout}">Logout</option>
-                        <option value="GOOGLE" th:selected="${actionType == 'GOOGLE'}" th:text="#{admin.logs.action.google}">Google Login</option>
-                    </th:block>
-                    <th:block th:if="${currentSection == 'operations'}">
-                        <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}" th:text="#{admin.logs.action.create_account}">Create Account</option>
-                        <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}" th:text="#{admin.logs.action.update_account}">Update Account</option>
-                        <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}" th:text="#{admin.logs.action.update_settings}">Update Settings</option>
-                    </th:block>
-                    <th:block th:if="${currentSection == 'circulation'}">
-                        <option value="REQUEST_BORROW" th:selected="${actionType == 'REQUEST_BORROW'}" th:text="#{admin.logs.action.request_borrow}">Loan Request</option>
-                        <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}" th:text="#{admin.logs.action.request_return}">Return Request</option>
-                        <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}" th:text="#{admin.logs.action.reserve_book}">Reserve Book</option>
-                    </th:block>
-                </select>
+                    <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                        <i class="bi bi-journal-text me-2 text-classic"></i>
+                        <span
+                            th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.authHistory') : (currentSection == 'operations' ? #messages.msg('admin.logs.operationsHistory') : #messages.msg('admin.logs.circulationHistory'))}">
+                            Log List
+                        </span>
+                    </h5>
+                    <select form="systemLogFilterForm" class="form-select system-log-tab-filter" name="actionType"
+                        th:aria-label="#{admin.logs.filterAction}" onchange="this.form.submit()">
+                        <option value="" th:text="#{admin.logs.allActions}">All activities</option>
+                        <th:block th:if="${currentSection == 'auth'}">
+                            <option value="LOGIN" th:selected="${actionType == 'LOGIN'}"
+                                th:text="#{admin.logs.action.login}">Login</option>
+                            <option value="LOGOUT" th:selected="${actionType == 'LOGOUT'}"
+                                th:text="#{admin.logs.action.logout}">Logout</option>
+                            <option value="GOOGLE" th:selected="${actionType == 'GOOGLE'}"
+                                th:text="#{admin.logs.action.google}">Google Login</option>
+                        </th:block>
+                        <th:block th:if="${currentSection == 'operations'}">
+                            <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}"
+                                th:text="#{admin.logs.action.create_account}">Create Account</option>
+                            <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}"
+                                th:text="#{admin.logs.action.update_account}">Update Account</option>
+                            <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}"
+                                th:text="#{admin.logs.action.update_settings}">Update Settings</option>
+                        </th:block>
+                        <th:block th:if="${currentSection == 'circulation'}">
+                            <option value="REQUEST_BORROW" th:selected="${actionType == 'REQUEST_BORROW'}"
+                                th:text="#{admin.logs.action.request_borrow}">Loan Request</option>
+                            <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}"
+                                th:text="#{admin.logs.action.request_return}">Return Request</option>
+                            <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}"
+                                th:text="#{admin.logs.action.reserve_book}">Reserve Book</option>
+                        </th:block>
+                    </select>
                 </div>
 
             </div>
@@ -118,7 +129,8 @@
                             <tr th:if="${logs == null or logs.content.isEmpty()}">
                                 <td colspan="4" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    <span th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.noAuth') : (currentSection == 'operations' ? #messages.msg('admin.logs.noOperations') : #messages.msg('admin.logs.noCirculation'))}">
+                                    <span
+                                        th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.noAuth') : (currentSection == 'operations' ? #messages.msg('admin.logs.noOperations') : #messages.msg('admin.logs.noCirculation'))}">
                                         No system logs.
                                     </span>
                                 </td>
@@ -180,8 +192,10 @@
                                         <span th:case="'LOGIN'" th:text="#{backend.auth.audit.login}"></span>
                                         <span th:case="'LOGOUT'" th:text="#{backend.auth.audit.logout}"></span>
                                         <span th:case="'GOOGLE'" th:text="#{backend.auth.audit.google_login}"></span>
-                                        <span th:case="'UPDATE_SETTINGS'" th:text="#{backend.settings.audit.updated}"></span>
-                                        <span th:case="*" th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
+                                        <span th:case="'UPDATE_SETTINGS'"
+                                            th:text="#{backend.settings.audit.updated}"></span>
+                                        <span th:case="*"
+                                            th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
                                             No description
                                         </span>
                                     </th:block>
@@ -192,15 +206,15 @@
                 </div>
             </div>
 
-            <div class="member-pagination app-pagination-region"
-                th:if="${logs != null and logs.totalPages > 1}"
+            <div class="member-pagination app-pagination-region" th:if="${logs != null and logs.totalPages > 1}"
                 th:with="startPage=${logs.totalPages <= 10 ? 0 : (logs.number < 9 ? 0 : (logs.number - 8 > logs.totalPages - 10 ? logs.totalPages - 10 : logs.number - 8))}">
                 <nav th:aria-label="#{admin.logs.pagination}"
                     th:with="endPage=${startPage + 9 < logs.totalPages ? startPage + 9 : logs.totalPages - 1}">
                     <ul class="pagination mb-0 app-pagination">
                         <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
                             <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword}, actionType=${actionType})}" th:aria-label="#{common.first}" th:text="#{common.first}">
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=0, keyword=${keyword}, actionType=${actionType})}"
+                                th:aria-label="#{common.first}" th:text="#{common.first}">
                                 First
                             </a>
                         </li>
@@ -220,7 +234,8 @@
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == logs.number} ? 'active'">
                             <a class="page-link page-link-classic"
-                                th:href="@{/admin/system/logs(section=${currentSection}, page=${i}, keyword=${keyword}, actionType=${actionType})}" th:text="${i + 1}">
+                                th:href="@{/admin/system/logs(section=${currentSection}, page=${i}, keyword=${keyword}, actionType=${actionType})}"
+                                th:text="${i + 1}">
                                 1
                             </a>
                         </li>

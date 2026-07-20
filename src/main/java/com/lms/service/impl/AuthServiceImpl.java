@@ -259,7 +259,8 @@ public class AuthServiceImpl implements AuthService {
 
     private String buildPasswordResetEmail(String fullName, String resetLink) {
         String safeName = HtmlUtils.htmlEscape(fullName == null || fullName.isBlank()
-                ? messages.get("backend.auth.resetEmail.defaultName") : fullName);
+                ? messages.get("backend.auth.resetEmail.defaultName")
+                : fullName);
         String safeResetLink = HtmlUtils.htmlEscape(resetLink);
         return """
                 <!doctype html>
@@ -279,14 +280,15 @@ public class AuthServiceImpl implements AuthService {
                     <tr><td style="padding:18px 32px;background:#f2e9df;color:#765b42;text-align:center;font-size:12px;">%s</td></tr>
                   </table>
                 </td></tr></table></body></html>
-                """.formatted(
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.brand")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.greeting")), safeName,
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.instruction")), safeResetLink,
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.button")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.expiry")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.ignore")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.signature")));
+                """
+                .formatted(
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.brand")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.greeting")), safeName,
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.instruction")), safeResetLink,
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.button")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.expiry")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.ignore")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.signature")));
     }
 
     @Override

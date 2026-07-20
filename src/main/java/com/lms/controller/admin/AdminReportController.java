@@ -33,6 +33,7 @@ public class AdminReportController {
         model.addAttribute("report", report);
         model.addAttribute("fromDate", report.getFromDate());
         model.addAttribute("toDate", report.getToDate());
+        model.addAttribute("maxDate", LocalDate.now());
         return "admin/report-console";
     }
 
