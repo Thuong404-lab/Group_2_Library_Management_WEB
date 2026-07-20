@@ -367,7 +367,7 @@ public class BorrowController extends LocalizedControllerSupport {
                 ? member.getTier().getDiscountPercent().doubleValue()
                 : 0.0;
         BigDecimal feePerBookPerDay = BigDecimal
-                .valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
+                .valueOf(systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK")
                         .map(s -> {
                             try {
                                 return Integer.parseInt(s.getSettingValue());
@@ -454,7 +454,7 @@ public class BorrowController extends LocalizedControllerSupport {
 
             // 4. Tính toán chi phí mượn sách có áp dụng giảm giá thành viên
             BigDecimal feePerBookPerDay = BigDecimal
-                    .valueOf(systemSettingRepository.findBySettingKey("FEE_PER_BOOK_PER_DAY")
+                    .valueOf(systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK")
                             .map(s -> {
                                 try {
                                     return Integer.parseInt(s.getSettingValue());
@@ -481,10 +481,9 @@ public class BorrowController extends LocalizedControllerSupport {
                     return "redirect:/member/borrow/create?bookId=" + bookId;
                 }
 
-                // Đủ tiền trong ví -> Thực hiện tạo phiếu mượn & trừ tiền lập tức
-                for (int i = 0; i < quantity; i++) {
-                    borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-                }
+                // Create one pending request; the fee is charged atomically when the librarian approves it.
+                borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(),
+                        java.util.Collections.nCopies(quantity, bookId), numberOfDays);
 
                 redirectAttributes.addFlashAttribute("successMessage",
                         message("backend.borrow.requestSubmittedQuantity", quantity));
@@ -510,9 +509,8 @@ public class BorrowController extends LocalizedControllerSupport {
             }
 
             // Zero-fee loans can be submitted immediately without opening a payment link.
-            for (int i = 0; i < quantity; i++) {
-                borrowService.memberSubmitBorrowRequest(principal.getName(), bookId, numberOfDays);
-            }
+            borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(),
+                    java.util.Collections.nCopies(quantity, bookId), numberOfDays);
             redirectAttributes.addFlashAttribute("successMessage",
                     message("backend.borrow.requestSubmittedQuantity", quantity));
             return "redirect:/member/borrow/management?tab=borrowing";

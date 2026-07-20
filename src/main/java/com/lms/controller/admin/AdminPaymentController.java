@@ -1,4 +1,5 @@
 package com.lms.controller.admin;
+
 import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
@@ -30,8 +31,8 @@ public class AdminPaymentController extends LocalizedControllerSupport {
     private final PayOsPaymentAuditService auditService;
 
     public AdminPaymentController(AdminPaymentService adminPaymentService,
-                                  PayOsPaymentService paymentService,
-                                  PayOsPaymentAuditService auditService) {
+            PayOsPaymentService paymentService,
+            PayOsPaymentAuditService auditService) {
         this.adminPaymentService = adminPaymentService;
         this.paymentService = paymentService;
         this.auditService = auditService;
@@ -39,13 +40,13 @@ public class AdminPaymentController extends LocalizedControllerSupport {
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
-                       @RequestParam(required = false) String keyword,
-                       @RequestParam(required = false) String status,
-                       @RequestParam(required = false) String purpose,
-                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-                       @RequestParam(defaultValue = "0") int issuePage,
-                       Model model) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String purpose,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "0") int issuePage,
+            Model model) {
         PaymentSearchCriteria criteria = new PaymentSearchCriteria(keyword, status, purpose, fromDate, toDate);
         model.addAttribute("payments", adminPaymentService.searchPayments(criteria, page));
         model.addAttribute("openIssues", adminPaymentService.getOpenIssues(issuePage));
@@ -58,8 +59,8 @@ public class AdminPaymentController extends LocalizedControllerSupport {
 
     @GetMapping("/{orderCode}")
     public String detail(@PathVariable Long orderCode,
-                         @RequestParam(defaultValue = "0") int auditPage,
-                         Model model) {
+            @RequestParam(defaultValue = "0") int auditPage,
+            Model model) {
         PayOsPayment payment = adminPaymentService.getPayment(orderCode);
         model.addAttribute("payment", payment);
         model.addAttribute("audits", adminPaymentService.getPaymentAudits(payment.getPaymentId(), auditPage));
@@ -75,14 +76,16 @@ public class AdminPaymentController extends LocalizedControllerSupport {
         result.put("orderCode", payment.getOrderCode());
         result.put("status", payment.getStatus());
         result.put("paidAt", payment.getPaidAt());
-        result.put("transactionId", payment.getTransaction() == null ? null : payment.getTransaction().getTransactionId());
+        result.put("transactionId",
+                payment.getTransaction() == null ? null : payment.getTransaction().getTransactionId());
         return result;
     }
 
     @PostMapping("/{orderCode}/reconcile")
     public String reconcile(@PathVariable Long orderCode, RedirectAttributes redirectAttributes) {
         PayOsPayment payment = adminPaymentService.getPayment(orderCode);
-        auditService.record(payment, "RECONCILIATION_REQUESTED", "ADMIN", payment.getStatus(), payment.getStatus(), true,
+        auditService.record(payment, "RECONCILIATION_REQUESTED", "ADMIN", payment.getStatus(), payment.getStatus(),
+                true,
                 message("backend.payment.audit.manualReconciliation"));
         try {
             PayOsPayment refreshed = paymentService.reconcileForStaff(orderCode);
@@ -98,22 +101,22 @@ public class AdminPaymentController extends LocalizedControllerSupport {
 
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportPayments(@RequestParam(required = false) String keyword,
-                                                  @RequestParam(required = false) String status,
-                                                  @RequestParam(required = false) String purpose,
-                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-                                                  @RequestParam(defaultValue = "csv") String format) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String purpose,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "csv") String format) {
         return download(adminPaymentService.exportPayments(
                 new PaymentSearchCriteria(keyword, status, purpose, fromDate, toDate), format));
     }
 
     @GetMapping("/audit-logs")
     public String auditLogs(@RequestParam(defaultValue = "0") int page,
-                            @RequestParam(required = false) String keyword,
-                            @RequestParam(required = false) String eventType,
-                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-                            Model model) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String eventType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            Model model) {
         model.addAttribute("audits", adminPaymentService.searchAudits(keyword, eventType, fromDate, toDate, page));
         model.addAttribute("keyword", keyword);
         model.addAttribute("eventType", eventType);
@@ -124,10 +127,10 @@ public class AdminPaymentController extends LocalizedControllerSupport {
 
     @GetMapping("/audit-logs/export")
     public ResponseEntity<byte[]> exportAudits(@RequestParam(required = false) String keyword,
-                                                @RequestParam(required = false) String eventType,
-                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-                                                @RequestParam(defaultValue = "csv") String format) {
+            @RequestParam(required = false) String eventType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "csv") String format) {
         return download(adminPaymentService.exportAudits(keyword, eventType, fromDate, toDate, format));
     }
 

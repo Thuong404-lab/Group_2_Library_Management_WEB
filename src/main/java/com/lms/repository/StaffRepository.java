@@ -15,7 +15,9 @@ import java.util.Optional;
 public interface StaffRepository extends JpaRepository<Staff, Integer> {
 
         Optional<Staff> findByUserId(Integer userId);
+
         Page<Staff> findByStaffTypeIgnoreCase(String staffType, Pageable pageable);
+
         long countByStaffTypeIgnoreCase(String staffType);
 
         @Query("SELECT COUNT(s) FROM Staff s " +

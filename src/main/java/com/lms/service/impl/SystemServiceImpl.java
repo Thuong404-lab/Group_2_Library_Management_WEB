@@ -1,12 +1,10 @@
 package com.lms.service.impl;
 
-import com.lms.entity.MembershipTier;
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
 import com.lms.exception.ValidationException;
 import com.lms.enums.ActionType;
 import com.lms.repository.MemberAccountRepository;
-import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.SystemLogRepository;
 import com.lms.repository.SystemSettingRepository;
@@ -40,66 +38,82 @@ public class SystemServiceImpl implements SystemService {
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final AuditLogService auditLogService;
-    private final MembershipTierRepository membershipTierRepository;
 
     public SystemServiceImpl(SystemSettingRepository systemSettingRepository,
-                             SystemLogRepository systemLogRepository,
-                             MemberAccountRepository memberAccountRepository,
-                             StaffAccountRepository staffAccountRepository,
-                             AuditLogService auditLogService,
-                             MembershipTierRepository membershipTierRepository) {
+            SystemLogRepository systemLogRepository,
+            MemberAccountRepository memberAccountRepository,
+            StaffAccountRepository staffAccountRepository,
+            AuditLogService auditLogService) {
         this.systemSettingRepository = systemSettingRepository;
         this.systemLogRepository = systemLogRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.auditLogService = auditLogService;
-        this.membershipTierRepository = membershipTierRepository;
-    }
-
-    @Override
-    public void restoreData(String backupFilePath) {
-        // TODO: Implement restore sau nếu cần
     }
 
     @Override
     public Page<SystemLog> getSystemLogs(int page, String action, String keyword, String actionType) {
-        PageRequest pageable = PageRequest.of(page, 10);
+        PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10);
+        String trimmedKeyword = keyword == null ? "" : keyword.trim();
+        String section = normalizeLogSection(action);
 
-        String kw = keyword != null ? keyword.trim() : "";
-        String actType = actionType != null ? actionType.trim() : "";
+        Page<SystemLog> logs = systemLogRepository.searchLogsBySection(
+                section, trimmedKeyword, actionType == null ? "" : actionType.trim(), pageRequest);
 
-        if (action != null && !action.trim().isEmpty()) {
-            return systemLogRepository.searchLogsBySection(action.trim(), kw, actType, pageable);
+        logs.forEach(this::populateActorUsername);
+        return logs;
+    }
+
+    private String normalizeLogSection(String section) {
+        if ("operations".equalsIgnoreCase(section)) {
+            return "operations";
+        }
+        if ("circulation".equalsIgnoreCase(section)) {
+            return "circulation";
+        }
+        return "auth";
+    }
+
+    private void populateActorUsername(SystemLog log) {
+        if (log.getUser() == null || log.getUser().getId() == null) {
+            log.setActorUsername("System");
+            return;
         }
 
-        if (!kw.isEmpty()) {
-            return systemLogRepository.searchLogs(kw, pageable);
-        }
-
-        return systemLogRepository.findAllByOrderByCreatedAtDesc(pageable);
+        Integer userId = log.getUser().getId();
+        String username = memberAccountRepository.findByMember_User_Id(userId)
+                .map(account -> account.getUsername())
+                .orElseGet(() -> staffAccountRepository.findByStaff_User_Id(userId)
+                        .map(account -> account.getUsername())
+                        .orElse("System"));
+        log.setActorUsername(username);
     }
 
     @Override
     public List<SystemSetting> getAllSettings() {
-        return systemSettingRepository.findAll();
+        return systemSettingRepository.findAll(Sort.by("settingKey").ascending());
     }
 
     @Override
     public Map<String, String> getSettingMap() {
-        List<SystemSetting> settings = getAllSettings();
-        Map<String, String> map = new LinkedHashMap<>();
-        for (SystemSetting setting : settings) {
-            map.put(setting.getSettingKey(), setting.getSettingValue());
+        Map<String, String> settingMap = new LinkedHashMap<>();
+
+        for (SystemSetting setting : getAllSettings()) {
+            settingMap.put(setting.getSettingKey(), setting.getSettingValue());
         }
-        return map;
+
+        return settingMap;
     }
 
     @Override
     public int getIntSetting(String settingKey, int defaultValue) {
         return systemSettingRepository.findBySettingKeyIgnoreCase(settingKey)
-                .map(setting -> {
+                .map(SystemSetting::getSettingValue)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(value -> {
                     try {
-                        return Integer.parseInt(setting.getSettingValue());
+                        return Integer.parseInt(value);
                     } catch (NumberFormatException e) {
                         return defaultValue;
                     }
@@ -110,24 +124,21 @@ public class SystemServiceImpl implements SystemService {
     @Override
     @Transactional
     public void updateBorrowingPolicies(Integer maxBorrowDays,
-                                        Integer maxRenewalDays,
-                                        Integer maxRenewalRequests,
-                                        Integer renewalRejectionCooldownHours,
-                                        Map<Integer, Integer> tierBorrowLimits,
-                                        Map<Integer, BigDecimal> tierSpendingConditions,
-                                        BigDecimal borrowFeePerBook,
-                                        BigDecimal finePerDay,
-                                        BigDecimal damageCompensationAmount,
-                                        Integer damageCompensationThreshold,
-                                        Integer overdueViolationLockLimit,
-                                        Integer bookDisposalConditionThreshold,
-                                        BigDecimal depositAmount) {
+            Integer maxRenewalDays,
+            Integer maxRenewalRequests,
+            Integer renewalRejectionCooldownHours,
+            BigDecimal borrowFeePerBook,
+            BigDecimal finePerDay,
+            BigDecimal damageCompensationAmount,
+            Integer damageCompensationThreshold,
+            Integer overdueViolationLockLimit,
+            Integer bookDisposalConditionThreshold,
+            BigDecimal depositAmount) {
 
         validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
         validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
         validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
-        validateAndUpdateTiers(tierBorrowLimits, tierSpendingConditions);
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
@@ -151,11 +162,6 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
                 String.valueOf(renewalRejectionCooldownHours),
                 messages.get("backend.settings.description.renewalCooldown"));
-
-
-        saveOrUpdateSetting("Max_Books_Per_Member",
-                String.valueOf(tierBorrowLimits != null ? tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1) : 1),
-                messages.get("backend.settings.description.maxBooks"));
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
@@ -188,34 +194,6 @@ public class SystemServiceImpl implements SystemService {
         auditLogService.log(
                 ActionType.UPDATE_SETTINGS,
                 messages.get("backend.settings.audit.updated"));
-    }
-
-    @Override
-    public List<MembershipTier> getMembershipTiers() {
-        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
-    }
-
-    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits,
-                                        Map<Integer, BigDecimal> tierSpendingConditions) {
-        List<MembershipTier> tiers = getMembershipTiers();
-        if (tiers.isEmpty()) {
-            throw new ValidationException(messages.get("backend.settings.noTiers"));
-        }
-
-        for (MembershipTier tier : tiers) {
-            Integer borrowLimit = tierBorrowLimits == null ? null : tierBorrowLimits.get(tier.getTierId());
-            validatePositive(borrowLimit,
-                    messages.get("backend.settings.tierBorrowLimitPositive", tier.getTierName()));
-            BigDecimal spendingCondition = tierSpendingConditions == null
-                    ? null
-                    : tierSpendingConditions.get(tier.getTierId());
-            validateZeroOrPositive(spendingCondition,
-                    messages.get("backend.settings.tierSpendingNonNegative", tier.getTierName()));
-            tier.setBorrowLimit(borrowLimit);
-            tier.setCondition(spendingCondition);
-        }
-
-        membershipTierRepository.saveAll(tiers);
     }
 
     private void saveOrUpdateSetting(String key, String value, String description) {

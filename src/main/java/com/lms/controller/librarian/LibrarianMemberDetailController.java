@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+
 import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-
 /**
  * Read-only member detail flow linked from the librarian member list.
  */
@@ -38,10 +38,10 @@ public class LibrarianMemberDetailController extends LocalizedControllerSupport 
     private final FinancialService financialService;
 
     public LibrarianMemberDetailController(MemberRepository memberRepository,
-                                           MemberAccountRepository memberAccountRepository,
-                                           WalletRepository walletRepository,
-                                           TransactionRepository transactionRepository,
-                                           FinancialService financialService) {
+            MemberAccountRepository memberAccountRepository,
+            WalletRepository walletRepository,
+            TransactionRepository transactionRepository,
+            FinancialService financialService) {
         this.memberRepository = memberRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.walletRepository = walletRepository;
@@ -51,20 +51,22 @@ public class LibrarianMemberDetailController extends LocalizedControllerSupport 
 
     @GetMapping("/{memberId}/details")
     public String viewMemberDetail(@PathVariable Integer memberId,
-                                   @RequestParam(defaultValue = "0") int page,
-                                   @RequestParam(required = false, defaultValue = "") String type,
-                                   Model model,
-                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "") String type,
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new com.lms.exception.ForbiddenException(message("backend.member.notFoundOrForbidden")));
+                .orElseThrow(
+                        () -> new com.lms.exception.ForbiddenException(message("backend.member.notFoundOrForbidden")));
 
         int safePage = Math.max(page, 0);
         String selectedType = type == null ? "" : type.trim();
         PageRequest pageable = PageRequest.of(safePage, TRANSACTION_PAGE_SIZE);
         Page<Transaction> transactionPage = selectedType.isBlank()
                 ? transactionRepository.findByWalletMemberMemberIdOrderByTransactionDateDesc(memberId, pageable)
-                : transactionRepository.findByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-                        memberId, selectedType, pageable);
+                : transactionRepository
+                        .findByWalletMemberMemberIdAndTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
+                                memberId, selectedType, pageable);
 
         model.addAttribute("member", member);
         model.addAttribute("memberAccount", memberAccountRepository.findByMemberMemberId(memberId).orElse(null));
@@ -83,9 +85,9 @@ public class LibrarianMemberDetailController extends LocalizedControllerSupport 
 
     @PostMapping("/{memberId}/reservations/{reservationId}/refund")
     public String refundReservationDeposit(@PathVariable Integer memberId,
-                                           @PathVariable Integer reservationId,
-                                           @RequestParam(required = false) String returnTo,
-                                           RedirectAttributes redirectAttributes) {
+            @PathVariable Integer reservationId,
+            @RequestParam(required = false) String returnTo,
+            RedirectAttributes redirectAttributes) {
         try {
             financialService.refundReservationDeposit(memberId, reservationId);
             redirectAttributes.addFlashAttribute("success", message("backend.financial.refundApproved"));

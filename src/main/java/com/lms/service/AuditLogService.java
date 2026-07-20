@@ -21,7 +21,7 @@ public class AuditLogService {
     private final UserRepository userRepository;
 
     public AuditLogService(SystemLogRepository systemLogRepository,
-                           UserRepository userRepository) {
+            UserRepository userRepository) {
         this.systemLogRepository = systemLogRepository;
         this.userRepository = userRepository;
     }

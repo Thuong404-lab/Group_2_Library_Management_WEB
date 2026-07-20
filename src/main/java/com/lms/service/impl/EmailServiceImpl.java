@@ -38,7 +38,8 @@ public class EmailServiceImpl implements EmailService {
         message.setSubject(subject);
         message.setText(text);
         // Cần cấu hình spring.mail.username trong application.properties
-        // message.setFrom("your-email@example.com"); // Có thể set từ đây hoặc cấu hình trong properties
+        // message.setFrom("your-email@example.com"); // Có thể set từ đây hoặc cấu hình
+        // trong properties
 
         try {
             mailSender.send(message);
