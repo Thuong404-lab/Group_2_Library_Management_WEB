@@ -229,31 +229,6 @@ public class SystemServiceImpl implements SystemService {
         systemSettingRepository.save(setting);
     }
 
-    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits, Map<Integer, BigDecimal> tierSpendingConditions) {
-        if (tierBorrowLimits != null && !tierBorrowLimits.isEmpty()) {
-            tierBorrowLimits.forEach((tierId, limit) -> {
-                if (tierId != null && limit != null) {
-                    validateZeroOrPositive(limit, messages.get("backend.settings.tierBorrowLimitNonNegative"));
-                    membershipTierRepository.findById(tierId).ifPresent(tier -> {
-                        tier.setBorrowLimit(limit);
-                        membershipTierRepository.save(tier);
-                    });
-                }
-            });
-        }
-        if (tierSpendingConditions != null && !tierSpendingConditions.isEmpty()) {
-            tierSpendingConditions.forEach((tierId, condition) -> {
-                if (tierId != null && condition != null) {
-                    validateZeroOrPositive(condition, messages.get("backend.settings.tierConditionNonNegative"));
-                    membershipTierRepository.findById(tierId).ifPresent(tier -> {
-                        tier.setCondition(condition);
-                        membershipTierRepository.save(tier);
-                    });
-                }
-            });
-        }
-    }
-
     private void validatePositive(Integer value, String message) {
         if (value == null || value <= 0) {
             throw new ValidationException(message);
