@@ -176,35 +176,419 @@
             border-left: 4px solid #dcb38a;
         }
 
-        #borrowMenu .menu-link {
-            color: #e6dfd7 !important;
-            font-weight: 400;
-        }
+/*
+ * Librarian visual contract
+ * -------------------------
+ * This block intentionally lives in the shared layout stylesheet and is scoped
+ * to the staff shell. It is loaded after page styles so old screens inherit the
+ * same visual language without changing their Thymeleaf or JavaScript contract.
+ */
+.staff-shell {
+    --app-color-canvas: #ffffff;
+    --app-color-surface-soft: #fceee7;
+    --app-color-surface-card: #fffaf7;
+    --app-color-hairline: #eadfd5;
+    --app-color-hairline-soft: #f2e8e0;
+    --app-color-ink: #2e1a08;
+    --app-color-body: #513215;
+    --app-color-body-strong: #2e1a08;
+    --app-color-muted: #78685d;
+    --app-color-muted-soft: #9a887b;
+    --app-color-application-primary: #8b5a2b;
+    --app-color-application-primary-hover: #724922;
+    --app-color-application-primary-active: #513215;
+    --app-color-focus-application-ring: rgba(166, 108, 53, 0.24);
+    --app-radius-md: 10px;
+    --app-radius-lg: 16px;
+    background: #ffffff;
+    color: var(--app-color-body);
+    font-family: var(--app-font-ui);
+}
 
-        #borrowMenu .menu-link:hover {
-            color: #fdfbf7 !important;
-            background-color: var(--sidebar-hover);
-        }
+.staff-shell .main-wrapper,
+.staff-shell .content-area {
+    min-width: 0;
+    background: #ffffff;
+}
 
-        #borrowMenu .menu-link.active-submenu {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
+.staff-shell .content-area {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+    padding: 32px clamp(20px, 3vw, 40px) 48px;
+}
 
-        #financeMenu .menu-link {
-            color: #e6dfd7 !important;
-            font-weight: 400;
-        }
+.staff-shell h1,
+.staff-shell h2,
+.staff-shell h3,
+.staff-shell h4,
+.staff-shell h5,
+.staff-shell h6 {
+    color: var(--app-color-ink);
+    font-family: var(--app-font-display);
+}
 
-        #financeMenu .menu-link:hover {
-            color: #fdfbf7 !important;
-            background-color: var(--sidebar-hover);
-        }
+.staff-shell .topbar {
+    height: 68px;
+    padding-inline: clamp(20px, 3vw, 40px);
+    border-color: var(--app-color-hairline);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 18px rgba(81, 50, 21, 0.05);
+    backdrop-filter: blur(12px);
+}
 
-        #financeMenu .menu-link.active-submenu {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
+.staff-shell .toggle-btn,
+.staff-shell .user-dropdown-toggle {
+    min-height: 40px;
+    border-radius: var(--app-radius-md);
+}
+
+.staff-shell .toggle-btn {
+    width: 40px;
+    padding: 0;
+    color: var(--app-color-application-primary);
+}
+
+.staff-shell .toggle-btn:hover {
+    background: var(--app-color-surface-soft);
+}
+
+.staff-shell .toggle-btn:focus-visible,
+.staff-shell .user-dropdown-toggle:focus-visible,
+.staff-shell .menu-link:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--app-color-focus-application-ring);
+}
+
+.staff-shell .sidebar {
+    background: linear-gradient(180deg, #513215 0%, #2e1a08 100%);
+    box-shadow: 8px 0 28px rgba(46, 26, 8, 0.12);
+}
+
+.staff-shell .sidebar-header {
+    height: 68px;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.staff-shell .sidebar-menu {
+    padding: 18px 12px 28px;
+}
+
+.staff-shell .menu-item {
+    margin-bottom: 5px;
+}
+
+.staff-shell .menu-link {
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.78);
+    font-family: var(--app-font-ui);
+    font-size: 0.9rem;
+}
+
+.staff-shell .menu-link:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+}
+
+.staff-shell .menu-link.active,
+.staff-shell .menu-link.active-submenu {
+    border-color: rgba(245, 178, 127, 0.34);
+    border-left-color: rgba(245, 178, 127, 0.34);
+    background: #8b5a2b;
+    color: #ffffff;
+    box-shadow: 0 7px 18px rgba(27, 14, 3, 0.2);
+}
+
+.staff-shell .sidebar-menu .collapse {
+    padding-top: 5px;
+}
+
+.staff-shell .sidebar-menu .collapse .menu-link {
+    min-height: 38px;
+    margin-left: 10px;
+    padding-block: 8px;
+    font-size: 0.82rem;
+}
+
+/* Page headings share the compact editorial style used by the public home. */
+.staff-shell :is(.app-page-header, .member-page-header, .dashboard-page-header, .finance-header, .detail-page-header, .borrow-page-header) {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 0 28px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid var(--app-color-hairline);
+    background: transparent;
+}
+
+.staff-shell :is(.app-page-eyebrow, .member-page-eyebrow) {
+    display: block;
+    margin: 0 0 7px;
+    color: #a66c35;
+    font: 700 0.72rem/1.3 var(--app-font-ui);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.staff-shell :is(.app-page-title, .member-page-title, .finance-title, .detail-page-title, .borrow-page-title),
+.staff-shell .content-area > div > div:first-child > div:first-child > h2 {
+    margin: 0 0 6px;
+    color: var(--app-color-ink);
+    font: 600 clamp(1.75rem, 2.4vw, 2.25rem)/1.15 var(--app-font-display);
+    letter-spacing: -0.02em;
+}
+
+.staff-shell :is(.app-page-description, .member-page-description, .finance-description, .detail-page-description, .borrow-page-description) {
+    max-width: 760px;
+    margin: 0;
+    color: var(--app-color-muted);
+    font: 400 0.95rem/1.6 var(--app-font-ui);
+}
+
+/* Surfaces */
+.staff-shell :is(.card, .card-classic, .app-card, .finance-card, .classic-card, .card-box) {
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(68, 48, 35, 0.055);
+}
+
+.staff-shell :is(.card, .card-classic, .app-card, .finance-card):not(.modal-content) {
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.staff-shell :is(.card, .card-classic, .app-card, .finance-card):not(.modal-content):hover {
+    border-color: rgba(139, 90, 43, 0.34);
+    box-shadow: 0 12px 28px rgba(68, 48, 35, 0.08);
+}
+
+.staff-shell :is(.card-header, .app-card-header) {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg) var(--app-radius-lg) 0 0;
+    background: #fffaf7;
+}
+
+.staff-shell :is(.card-body, .app-card-body) {
+    color: var(--app-color-body);
+}
+
+/* Controls and buttons */
+.staff-shell :is(.form-control, .form-select, .input-group-text) {
+    min-height: 42px;
+    border-color: var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    background-color: #ffffff;
+    color: var(--app-color-body-strong);
+    font-family: var(--app-font-ui);
+}
+
+.staff-shell :is(.form-control, .form-select):hover {
+    border-color: rgba(139, 90, 43, 0.42);
+}
+
+.staff-shell :is(.form-control, .form-select):focus {
+    border-color: #a66c35;
+    box-shadow: 0 0 0 3px var(--app-color-focus-application-ring);
+}
+
+.staff-shell :is(.btn, .app-primary-action, .app-secondary-action, .detail-back-button, .report-action) {
+    min-height: 40px;
+    border-radius: var(--app-radius-md);
+    font-family: var(--app-font-ui);
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.staff-shell :is(.btn-primary, .btn-classic, .app-primary-action, .member-primary-action, .report-action-primary) {
+    border-color: #8b5a2b;
+    background: #8b5a2b;
+    color: #ffffff;
+}
+
+.staff-shell :is(.btn-primary, .btn-classic, .app-primary-action, .member-primary-action, .report-action-primary):hover {
+    transform: translateY(-1px);
+    border-color: #724922;
+    background: #724922;
+    color: #ffffff;
+}
+
+.staff-shell :is(.btn-primary, .btn-classic, .app-primary-action, .member-primary-action, .report-action-primary):active {
+    transform: translateY(1px);
+    border-color: #513215;
+    background: #513215;
+}
+
+.staff-shell :is(.btn-outline-primary, .btn-outline-classic, .app-secondary-action, .detail-back-button) {
+    border-color: rgba(139, 90, 43, 0.38);
+    background: #ffffff;
+    color: #724922;
+}
+
+.staff-shell :is(.btn-outline-primary, .btn-outline-classic, .app-secondary-action, .detail-back-button):hover {
+    transform: translateY(-1px);
+    border-color: #8b5a2b;
+    background: #fceee7;
+    color: #513215;
+}
+
+.staff-shell :is(.btn, .app-primary-action, .app-secondary-action):focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--app-color-focus-application-ring);
+}
+
+.staff-shell :is(.btn, .app-primary-action, .app-secondary-action):disabled,
+.staff-shell :is(.btn, .app-primary-action, .app-secondary-action).disabled {
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* Tables, pills, feedback and pagination */
+.staff-shell .table-responsive,
+.staff-shell .app-table-wrap {
+    overflow: auto;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    background: #ffffff;
+}
+
+.staff-shell .table {
+    margin-bottom: 0;
+    color: var(--app-color-body);
+    font-family: var(--app-font-ui);
+    vertical-align: middle;
+}
+
+.staff-shell .table > thead > tr > th {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--app-color-hairline);
+    background: #fffaf7;
+    color: var(--app-color-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.staff-shell .table > tbody > tr > td {
+    padding: 15px 16px;
+    border-color: var(--app-color-hairline-soft);
+    background: #ffffff;
+}
+
+.staff-shell .table-hover > tbody > tr:hover > * {
+    background: #fffaf7;
+    color: inherit;
+}
+
+.staff-shell :is(.badge, .status-badge, .app-pill) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 5px 11px;
+    border: 1px solid rgba(195, 128, 64, 0.42);
+    border-radius: 999px;
+    background: rgba(245, 178, 127, 0.2);
+    color: #513215;
+    font-family: var(--app-font-ui);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.staff-shell :is(.alert, .app-alert, .finance-alert) {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    box-shadow: none;
+    font-family: var(--app-font-ui);
+}
+
+.staff-shell .pagination {
+    justify-content: center;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.staff-shell .pagination .page-link {
+    min-width: 40px;
+    height: 40px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-md);
+    background: #ffffff;
+    color: #724922;
+}
+
+.staff-shell .pagination .page-link:hover {
+    border-color: #8b5a2b;
+    background: #fceee7;
+}
+
+.staff-shell .pagination .page-item.active .page-link {
+    border-color: #8b5a2b;
+    background: #8b5a2b;
+    color: #ffffff;
+}
+
+.staff-shell .modal-content {
+    overflow: hidden;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: var(--app-radius-lg);
+    background: #ffffff;
+    box-shadow: var(--app-color-overlay-shadow);
+}
+
+.staff-shell .modal-header,
+.staff-shell .modal-footer {
+    padding: 18px 22px;
+    border-color: var(--app-color-hairline);
+    background: #fffaf7;
+}
+
+.staff-shell .modal-body {
+    padding: 22px;
+}
+
+@media (max-width: 767.98px) {
+    .staff-shell .content-area {
+        padding: 22px 16px 36px;
+    }
+
+    .staff-shell :is(.app-page-header, .member-page-header, .dashboard-page-header, .finance-header, .detail-page-header, .borrow-page-header) {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .staff-shell :is(.app-page-header, .member-page-header, .dashboard-page-header, .finance-header, .detail-page-header, .borrow-page-header) :is(.btn, a.btn, button) {
+        width: 100%;
+    }
+
+    .staff-shell .staff-user-name {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-shell *,
+    .staff-shell *::before,
+    .staff-shell *::after {
+        scroll-behavior: auto;
+        transition-duration: 0.01ms;
+    }
+}
 
         .menu-icon {
             font-size: 1.1rem;
@@ -437,6 +821,86 @@
 
 .librarian-base-a-background-border-left-min-height-04 {
     background: transparent; border-left: none; min-height: auto; padding-left: 50px;
+}
+
+/* One interaction contract for every Librarian sidebar group. */
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link {
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link:hover,
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link:focus {
+    border-color: rgba(245, 178, 127, 0.2);
+    background: rgba(249, 215, 195, 0.11);
+    color: #ffffff;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link.active {
+    border-color: rgba(245, 178, 127, 0.34);
+    background: #8b5a2b;
+    color: #ffffff;
+    box-shadow: 0 7px 18px rgba(27, 14, 3, 0.2);
+}
+
+/* Loan pages already identify the active child; avoid highlighting both levels. */
+.staff-shell--librarian .sidebar-menu > .menu-item > a[href="#borrowMenu"].active {
+    border-color: transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 400;
+    box-shadow: none;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > a[href="#borrowMenu"].active:hover,
+.staff-shell--librarian .sidebar-menu > .menu-item > a[href="#borrowMenu"].active:focus {
+    border-color: rgba(245, 178, 127, 0.2);
+    background: rgba(249, 215, 195, 0.11);
+    color: #ffffff;
+}
+
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) {
+    padding: 5px 0 6px 12px;
+}
+
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-item {
+    margin: 0 0 3px;
+}
+
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-link {
+    min-height: 40px;
+    margin: 0;
+    padding: 8px 12px 8px 42px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.72) !important;
+    font-size: 0.84rem;
+    font-weight: 400;
+    line-height: 1.35;
+    box-shadow: none;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-link:hover,
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-link:focus {
+    border-color: rgba(245, 178, 127, 0.18);
+    background: rgba(249, 215, 195, 0.1);
+    color: #ffffff !important;
+    box-shadow: none;
+}
+
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-link.active-submenu {
+    border-color: rgba(245, 178, 127, 0.28);
+    background: rgba(249, 215, 195, 0.16);
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 #f5b27f;
+}
+
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-link.active-submenu:hover,
+.staff-shell--librarian :is(#borrowMenu, #bookManagementMenu, #userManagementMenu, #financeMenu) .menu-link.active-submenu:focus {
+    border-color: rgba(245, 178, 127, 0.4);
+    background: rgba(249, 215, 195, 0.2);
 }
 
 .librarian-base-ul-border-10 {

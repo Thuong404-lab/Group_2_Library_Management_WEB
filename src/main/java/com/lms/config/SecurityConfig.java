@@ -59,7 +59,6 @@ public class SecurityConfig {
     public SecurityFilterChain staffSecurityFilterChain(HttpSecurity http, CustomStaffDetailsService staffDetailsService) throws Exception {
         http
             .securityMatcher("/admin/**", "/librarian/**", "/staff-login", "/staff-logout")
-            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/staff-login").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -87,7 +86,6 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain memberSecurityFilterChain(HttpSecurity http, CustomMemberDetailsService memberDetailsService) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password",
                         "/css/**", "/js/**", "/books/**", "/api/books/**", "/about",

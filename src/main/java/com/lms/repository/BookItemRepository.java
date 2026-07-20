@@ -22,11 +22,24 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     long countByShelf_ShelfId(Integer shelfId);
 
+    @Query("select item.shelf.shelfId, count(item) from BookItem item where item.shelf is not null group by item.shelf.shelfId")
+    List<Object[]> countBookItemsByShelf();
+
     long countByBook_BookId(Integer bookId);
 
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
 
     List<BookItem> findByBook_BookId(Integer bookId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select item
+            from BookItem item
+            where item.book.bookId = :bookId
+              and lower(item.status) = 'available'
+            order by item.bookItemId asc
+            """)
+    List<BookItem> findAvailableByBookIdForUpdate(@Param("bookId") Integer bookId);
 
     Optional<BookItem> findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(Integer bookId, String status);
 

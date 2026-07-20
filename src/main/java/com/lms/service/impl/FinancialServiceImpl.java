@@ -8,6 +8,7 @@ import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
 import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
 import com.lms.enums.NotificationEventType;
@@ -67,6 +68,8 @@ public class FinancialServiceImpl implements FinancialService {
     private static final BigDecimal DEFAULT_DAMAGE_COMPENSATION_AMOUNT = BigDecimal.valueOf(120000);
     private static final int DEFAULT_BORROW_FEE_DAYS = 10;
     private static final BigDecimal DEFAULT_BORROW_FEE_PER_BOOK = BigDecimal.valueOf(5000);
+    private static final BigDecimal MIN_TOP_UP = BigDecimal.valueOf(10_000);
+    private static final BigDecimal MAX_WALLET_BALANCE = BigDecimal.valueOf(500_000_000);
     private static final int MEMBER_TRANSACTION_PAGE_SIZE = 10;
     private static final int LIBRARIAN_TRANSACTION_PAGE_SIZE = 12;
 
@@ -161,7 +164,7 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidBorrowFee"));
         }
 
-        var wallet = walletRepository.findByMemberMemberId(memberId)
+        var wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
 
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
@@ -213,7 +216,7 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ConflictException(localizedMessageService.get("backend.financial.depositNotPayable"));
         }
 
-        Wallet wallet = walletRepository.findByMemberMemberId(memberId)
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal depositAmount = getReservationDepositAmount();
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
@@ -273,7 +276,7 @@ public class FinancialServiceImpl implements FinancialService {
 
         Borrow borrow = detail.getBorrow();
         Member member = borrow.getMember();
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
         Transaction transaction = transactionRepository
                 .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
@@ -313,7 +316,7 @@ public class FinancialServiceImpl implements FinancialService {
 
         Borrow borrow = detail.getBorrow();
         Member member = borrow.getMember();
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
         Transaction transaction = transactionRepository
                 .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
@@ -402,24 +405,38 @@ public class FinancialServiceImpl implements FinancialService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void topUpMemberAccount(String memberPhone, Double amount) {
-        if (memberPhone == null || memberPhone.trim().isEmpty()) {
+    public void topUpMemberAccount(String memberLookup, BigDecimal amount, String requestId, Staff performedBy) {
+        if (memberLookup == null || memberLookup.trim().isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.financial.memberLookupRequired"));
         }
-        if (amount == null || amount <= 0) {
-            throw new ValidationException(localizedMessageService.get("backend.financial.topupPositive"));
+        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.invalidRequest"));
         }
+        String referenceCode = "CASH-TOPUP-" + requestId.trim();
+        if (transactionRepository.existsByReferenceCode(referenceCode)) return;
 
-        Member member = findMemberByLookup(memberPhone.trim());
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+        BigDecimal topUpAmount = requireTopUpAmount(amount);
+
+        Member member = findMemberByLookup(memberLookup.trim());
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
+        if (transactionRepository.existsByReferenceCode(referenceCode)) return;
 
-        BigDecimal topUpAmount = BigDecimal.valueOf(amount).abs();
-        BigDecimal newBalance = balanceOf(wallet.getBalance()).add(topUpAmount);
+        BigDecimal oldBalance = balanceOf(wallet.getBalance());
+        BigDecimal newBalance = oldBalance.add(topUpAmount);
+        if (newBalance.compareTo(MAX_WALLET_BALANCE) > 0) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.walletLimit", MAX_WALLET_BALANCE));
+        }
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
-        saveWalletTransaction(wallet, null, TOP_UP_TYPE, topUpAmount, COMPLETED_STATUS);
+        Transaction transaction = saveWalletTransaction(wallet, null, TOP_UP_TYPE, topUpAmount, COMPLETED_STATUS);
+        transaction.setReferenceCode(referenceCode);
+        transaction.setPerformedByStaff(performedBy);
+        transaction.setChannel("CASH");
+        transaction.setBalanceBefore(oldBalance);
+        transaction.setBalanceAfter(newBalance);
+        transactionRepository.save(transaction);
 
         createMemberNotification(
                 member,
@@ -478,7 +495,7 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ConflictException(localizedMessageService.get("backend.financial.refundPendingOnly"));
         }
 
-        Wallet wallet = walletRepository.findByMemberMemberId(memberId)
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal refundAmount = getReservationDepositAmount();
         if (refundAmount.signum() <= 0) {
@@ -552,6 +569,17 @@ public class FinancialServiceImpl implements FinancialService {
         wallet.setMember(member);
         wallet.setBalance(BigDecimal.ZERO);
         return walletRepository.save(wallet);
+    }
+
+    private BigDecimal requireTopUpAmount(BigDecimal amount) {
+        if (amount == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.topupPositive"));
+        }
+        BigDecimal value = amount.stripTrailingZeros();
+        if (value.scale() > 0 || value.compareTo(MIN_TOP_UP) < 0 || value.compareTo(MAX_WALLET_BALANCE) > 0) {
+            throw new ValidationException(localizedMessageService.get("backend.payment.amountRange"));
+        }
+        return value;
     }
 
     private Transaction saveWalletTransaction(Wallet wallet,

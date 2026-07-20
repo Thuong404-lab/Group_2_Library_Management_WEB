@@ -117,6 +117,7 @@
                           class="btn btn-sm btn-review-edit member-ui-button member-ui-button--secondary"
                           data-toggle="modal"
                           data-target="#editReviewModal"
+                          th:disabled="${isInactiveMember}"
                           th:data-feedback-id="${review.feedbackId}"
                           th:data-edit-url="@{/member/interaction/reviews/{id}/edit(id=${review.feedbackId}, page=${myReviews.number})}"
                           th:data-review-title="${review.book.title}"
@@ -129,6 +130,7 @@
                                 class="btn btn-sm btn-outline-danger review-delete-trigger member-ui-button member-ui-button--danger-outline"
                                 data-toggle="modal"
                                 data-target="#deleteReviewModal"
+                                th:disabled="${isInactiveMember}"
                                 th:data-delete-url="@{'/member/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                                 th:data-review-title="${review.book.title}"
                                 th:aria-label="#{member.reviews.delete}">

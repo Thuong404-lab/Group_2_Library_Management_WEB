@@ -20,6 +20,11 @@ public interface AuthService {
     void logLoginAction(Integer userId, String ipAddress, String userAgent);
 
     /**
+     * Ghi log khi đăng nhập bằng Google
+     */
+    void logGoogleLoginAction(Integer userId, String ipAddress, String userAgent);
+
+    /**
      * Ghi log khi đăng xuất
      */
     void logLogoutAction(Integer userId, String ipAddress, String userAgent);

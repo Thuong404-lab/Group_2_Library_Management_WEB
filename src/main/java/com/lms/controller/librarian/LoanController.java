@@ -5,7 +5,6 @@ import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
-import com.lms.entity.Borrow;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.Transaction;
 import com.lms.service.LoanService;
@@ -173,8 +172,18 @@ public class LoanController extends LocalizedControllerSupport {
             if (barcodes == null || barcodes.isEmpty()) {
                 throw new ValidationException(message("backend.return.invalidBarcodes"));
             }
+            if (returnDate == null || returnDate.isAfter(LocalDate.now())) {
+                throw new ValidationException(message("backend.return.invalidReturnDate"));
+            }
+            if (barcodes.size() > 1 && isMinorDamage(conditionNote)) {
+                throw new ValidationException(message("backend.return.minorDamageSingleOnly"));
+            }
 
-            if (conditionNote != null && (conditionNote.contains("Hư hỏng nhẹ") || conditionNote.contains("Hư hỏng nặng"))) {
+            // Minor damage uses the manually entered repair fine. Severe damage and
+            // lost books are charged by issueDamageCompensation() using the amount
+            // configured in system settings, so requiring damageFine for them would
+            // either block the form or charge the member twice.
+            if (isMinorDamage(conditionNote)) {
                 if (damageFine == null || damageFine.compareTo(BigDecimal.ZERO) <= 0) {
                     throw new ValidationException(message("librarian.returnDesk.fineRequired"));
                 }
@@ -231,6 +240,11 @@ public class LoanController extends LocalizedControllerSupport {
                 || normalized.contains("mất sách")
                 || normalized.contains("severe damage")
                 || normalized.contains("lost");
+    }
+
+    private boolean isMinorDamage(String conditionNote) {
+        String normalized = conditionNote == null ? "" : conditionNote.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage");
     }
 
     /**
@@ -320,12 +334,13 @@ public class LoanController extends LocalizedControllerSupport {
      */
     @PostMapping("/renew/reject/{id}")
     public String rejectRenewal(@PathVariable("id") Integer borrowDetailId,
+                                @RequestParam("reasonCode") String reasonCode,
                                 @RequestParam("reason") String reason,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
         try {
             String staffUsername = (principal != null) ? principal.getName() : "admin";
-            loanService.rejectRenewal(borrowDetailId, staffUsername, reason);
+            loanService.rejectRenewal(borrowDetailId, staffUsername, reasonCode, reason);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.rejected"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.rejectFailed", e));

@@ -103,6 +103,7 @@
                           th:data-confirm-message="#{reservation.deposit.confirmMessage}"
                           th:data-confirm-action="#{payment.confirm}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn app-primary-action reservation-action" th:disabled="${isInactiveMember}">
                         <button type="submit" class="btn app-primary-action reservation-action member-ui-button member-ui-button--primary">
                             <span th:text="#{reservation.deposit.pay}">Pay Deposit</span>
                         </button>
@@ -118,6 +119,7 @@
                           th:data-confirm-action="#{reservation.cancel.confirm}"
                           data-confirm-tone="danger">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn app-secondary-action reservation-action is-danger" th:disabled="${isInactiveMember}">
                         <button type="submit" class="btn app-secondary-action reservation-action is-danger member-ui-button member-ui-button--danger-outline">
                             <span th:text="#{common.cancel}">Cancel</span>
                         </button>
@@ -132,6 +134,7 @@
                           th:data-confirm-message="#{reservation.refund.confirmMessage}"
                           th:data-confirm-action="#{reservation.refund.request}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn app-primary-action reservation-action" th:disabled="${isInactiveMember}">
                         <button type="submit" class="btn app-primary-action reservation-action member-ui-button member-ui-button--primary">
                             <span th:text="#{reservation.refund.request}">Request Refund</span>
                         </button>

@@ -16,10 +16,10 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
 
     List<SystemLog> findByUser_Id(Integer userId);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = { "user" })
     Page<SystemLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = { "user" })
     @Query("""
             SELECT log
             FROM SystemLog log
@@ -51,7 +51,7 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
             """)
     Page<SystemLog> searchLogs(@Param("keyword") String keyword, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = { "user" })
     @Query("""
             SELECT log
             FROM SystemLog log

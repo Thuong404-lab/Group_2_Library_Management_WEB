@@ -23,12 +23,41 @@
             <h2 id="admin-report-filter-title" th:text="#{admin.reports.period}">Report Period</h2>
             <p th:text="#{admin.reports.periodHint}">Select a start and end date to update all statistics.</p>
         </div>
-        <form class="admin-report-filter-form" method="get" th:action="@{/admin/reports}">
-            <div class="admin-report-field"><label for="adminReportFromDate" th:text="#{common.fromDate}">From Date</label><input id="adminReportFromDate" type="date" name="fromDate" th:value="${fromDate}"></div>
-            <div class="admin-report-field"><label for="adminReportToDate" th:text="#{common.toDate}">To Date</label><input id="adminReportToDate" type="date" name="toDate" th:value="${toDate}"></div>
+        <form class="admin-report-filter-form" method="get" th:action="@{/admin/reports}" data-report-date-filter>
+            <div class="admin-report-field"><label for="adminReportFromDate" th:text="#{common.fromDate}">From Date</label><input id="adminReportFromDate" type="date" name="fromDate" th:value="${fromDate}" th:max="${maxDate}"><small class="admin-report-field-error" data-date-error hidden th:text="#{common.dateRangeInvalid}">Start date must not be later than end date.</small></div>
+            <div class="admin-report-field"><label for="adminReportToDate" th:text="#{common.toDate}">To Date</label><input id="adminReportToDate" type="date" name="toDate" th:value="${toDate}" th:max="${maxDate}"></div>
             <button class="admin-report-action admin-report-action-primary" type="submit" th:text="#{admin.reports.view}">View Report</button>
         </form>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
+                const from = form.querySelector('[name="fromDate"]');
+                const to = form.querySelector('[name="toDate"]');
+                const error = form.querySelector('[data-date-error]');
+                function sync() {
+                    to.min = from.value || '';
+                    if (from.value && to.value && from.value <= to.value) {
+                        error.hidden = true;
+                        from.classList.remove('is-invalid');
+                        to.classList.remove('is-invalid');
+                    }
+                }
+                from.addEventListener('change', sync);
+                to.addEventListener('change', sync);
+                form.addEventListener('submit', function (event) {
+                    if (from.value && to.value && from.value > to.value) {
+                        event.preventDefault();
+                        error.hidden = false;
+                        from.classList.add('is-invalid');
+                        to.classList.add('is-invalid');
+                    }
+                });
+                sync();
+            });
+        });
+    </script>
 
     <section class="admin-report-kpi-grid" th:aria-label="#{admin.reports.mainMetrics}">
         <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i class="bi bi-journal-text"></i></span><div><p th:text="#{admin.reports.loans}">Loans</p><strong th:text="${report.totalBorrows}">0</strong><small th:text="#{admin.reports.loansHint}">Loans in the report period</small></div></article>

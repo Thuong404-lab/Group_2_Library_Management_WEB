@@ -16,6 +16,7 @@ import java.util.Locale;
 public class LocalizedMessageService {
 
     private static final ObjectMapper JSON = new ObjectMapper();
+    private static final String MESSAGE_ARGUMENT_PREFIX = "@@i18n:";
     private final MessageSource messageSource;
     private final MemberAccountRepository memberAccountRepository;
 
@@ -42,7 +43,12 @@ public class LocalizedMessageService {
     }
 
     public String getEnglish(String key, Object... arguments) {
-        return messageSource.getMessage(key, arguments, Locale.ENGLISH);
+        return messageSource.getMessage(key, resolveMessageArguments(arguments, Locale.ENGLISH), Locale.ENGLISH);
+    }
+
+    /** Stores a message-bundle key as a locale-aware notification argument. */
+    public String messageArgument(String key) {
+        return MESSAGE_ARGUMENT_PREFIX + key;
     }
 
     /**
@@ -83,12 +89,43 @@ public class LocalizedMessageService {
             Object[] arguments = serializedArguments == null || serializedArguments.isBlank()
                     ? new Object[0]
                     : JSON.readValue(serializedArguments, Object[].class);
-            return messageSource.getMessage(key, arguments, fallback, LocaleContextHolder.getLocale());
+            Locale locale = LocaleContextHolder.getLocale();
+            String effectiveKey = key;
+            if (key.endsWith(".contentWithReason") && arguments.length > 0) {
+                Object detail = arguments[arguments.length - 1];
+                if (detail == null || "null".equalsIgnoreCase(String.valueOf(detail).trim())) {
+                    effectiveKey = key.substring(0, key.length() - ".contentWithReason".length())
+                            + ".contentWithoutDetail";
+                    arguments = java.util.Arrays.copyOf(arguments, arguments.length - 1);
+                }
+            }
+            return messageSource.getMessage(effectiveKey, resolveMessageArguments(arguments, locale), fallback, locale);
         } catch (JsonProcessingException exception) {
             return fallback;
         }
     }
 
+    private Object[] resolveMessageArguments(Object[] arguments, Locale locale) {
+        if (arguments == null || arguments.length == 0) {
+            return new Object[0];
+        }
+        Object[] resolved = arguments.clone();
+        for (int index = 0; index < resolved.length; index++) {
+            Object argument = resolved[index];
+            if (argument instanceof String value) {
+                if (value.startsWith(MESSAGE_ARGUMENT_PREFIX)) {
+                    String messageKey = value.substring(MESSAGE_ARGUMENT_PREFIX.length());
+                    resolved[index] = messageSource.getMessage(messageKey, null, messageKey, locale);
+                } else {
+                    String legacyReason = messageSource.getMessage("rejection.code." + value, null, null, locale);
+                    if (legacyReason != null) {
+                        resolved[index] = legacyReason;
+                    }
+                }
+            }
+        }
+        return resolved;
+    }
     private Locale resolveMemberLocale(Member member) {
         if (memberAccountRepository == null || member == null || member.getMemberId() == null) {
             return LocaleContextHolder.getLocale();

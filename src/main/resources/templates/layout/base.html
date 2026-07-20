@@ -1,368 +1,365 @@
 <!doctype html>
-<html
-  th:lang="${#locale.language}"
-  th:data-confirm-title="#{common.confirmAction}"
-  th:data-confirm-subtitle="#{common.confirmSubtitle}"
-  th:data-confirm-information="#{common.information}"
-  th:data-confirm-cancel="#{common.back}"
-  th:data-confirm-message="#{common.confirmQuestion}"
-  th:data-confirm-action="#{common.confirm}"
-  xmlns:th="http://www.thymeleaf.org"
-  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
->
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
-    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE" th:text="#{app.name}">Library Management System</title>
-    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
-    <link rel="stylesheet" th:href="@{/css/bootstrap.css}" />
-    <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}" />
-    <!-- Bootstrap Icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
-    />
-    <!-- Classic Theme Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" th:href="@{/css/layouts/base.css}" />
-    <link rel="stylesheet" th:href="@{/css/components/footer.css}" />
-    <link rel="stylesheet" th:href="@{/css/components/header.css}" />
-    <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
-    <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
-    <link rel="stylesheet" th:href="@{/css/utilities.css}" />
-    <th:block layout:fragment="styles"></th:block>
-  </head>
-  <body class="bg-classic app-shell app-shell--public">
-    <header th:replace="~{fragments/header :: header}"></header>
+<html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}"
+  th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}"
+  th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}"
+  th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 
-    <main class="base-main-background-min-height-01 app-public-main">
-      <div layout:fragment="content"></div>
-    </main>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
+  <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE" th:text="#{app.name}">Library Management System</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+  <link rel="stylesheet" th:href="@{/css/bootstrap.css}" />
+  <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <!-- Classic Theme Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" th:href="@{/css/layouts/base.css}" />
+  <link rel="stylesheet" th:href="@{/css/components/footer.css}" />
+  <link rel="stylesheet" th:href="@{/css/components/header.css}" />
+  <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
+  <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
+  <link rel="stylesheet" th:href="@{/css/utilities.css}" />
+  <th:block layout:fragment="styles"></th:block>
+</head>
 
-    <footer th:replace="~{fragments/footer :: footer}"></footer>
+<body class="bg-classic app-shell app-shell--public">
+  <header th:replace="~{fragments/header :: header}"></header>
 
-    <div id="appFeedbackRegion"
-         class="app-feedback-region"
-         aria-live="polite"
-         aria-atomic="true"
-         th:data-success-title="#{feedback.successTitle}"
-         th:data-error-title="#{feedback.errorTitle}"
-         th:data-warning-title="#{feedback.warningTitle}"
-         th:data-info-title="#{feedback.infoTitle}">
-      <div id="customToast" class="app-feedback-toast" role="status" hidden>
-        <span class="app-feedback-toast__icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
-        <div class="app-feedback-toast__copy">
-          <strong id="toastTitle" class="app-feedback-toast__title"></strong>
-          <span id="toastMessage" class="app-feedback-toast__message"></span>
-        </div>
-        <button type="button" class="app-feedback-toast__close" th:aria-label="#{common.close}">
-          <i class="bi bi-x-lg" aria-hidden="true"></i>
-        </button>
+  <main class="base-main-background-min-height-01 app-public-main">
+    <div layout:fragment="content"></div>
+  </main>
+
+  <footer th:replace="~{fragments/footer :: footer}"></footer>
+
+  <div id="appFeedbackRegion" class="app-feedback-region" aria-live="polite" aria-atomic="true"
+    th:data-success-title="#{feedback.successTitle}" th:data-error-title="#{feedback.errorTitle}"
+    th:data-warning-title="#{feedback.warningTitle}" th:data-info-title="#{feedback.infoTitle}">
+    <div id="customToast" class="app-feedback-toast" role="status" hidden>
+      <span class="app-feedback-toast__icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+      <div class="app-feedback-toast__copy">
+        <strong id="toastTitle" class="app-feedback-toast__title"></strong>
+        <span id="toastMessage" class="app-feedback-toast__message"></span>
       </div>
+      <button type="button" class="app-feedback-toast__close" th:aria-label="#{common.close}">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
     </div>
+  </div>
 
-    <script th:inline="javascript">
-      var favoriteAddError = /*[[#{favorite.add.error}]]*/ "Unable to add this book to favorites.";
-      var favoriteAddSuccess = /*[[#{favorite.add.success}]]*/ "Added to your favorites!";
-      var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
-      var favoriteDefaultLabel = /*[[#{guest.bookDetail.favorite}]]*/ "Favorite";
-      var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
+  <script th:inline="javascript">
+    var favoriteAddError = /*[[#{favorite.add.error}]]*/ "Unable to add this book to favorites.";
+    var favoriteAddSuccess = /*[[#{favorite.add.success}]]*/ "Added to your favorites!";
+    var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
+    var favoriteDefaultLabel = /*[[#{guest.bookDetail.favorite}]]*/ "Favorite";
+    var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
 
-      window.AppFeedback = (function () {
-        var hideTimer = null;
-        var icons = {
-          success: "bi bi-check-lg",
-          error: "bi bi-exclamation-lg",
-          warning: "bi bi-exclamation-triangle",
-          info: "bi bi-info-lg"
+    window.AppFeedback = (function () {
+      var hideTimer = null;
+      var icons = {
+        success: "bi bi-check-lg",
+        error: "bi bi-exclamation-lg",
+        warning: "bi bi-exclamation-triangle",
+        info: "bi bi-info-lg"
+      };
+
+      function refs() {
+        var region = document.getElementById("appFeedbackRegion");
+        var toast = document.getElementById("customToast");
+        if (!region || !toast) return null;
+        return {
+          region: region,
+          toast: toast,
+          title: document.getElementById("toastTitle"),
+          message: document.getElementById("toastMessage"),
+          icon: toast.querySelector(".app-feedback-toast__icon i")
         };
+      }
 
-        function refs() {
-          var region = document.getElementById("appFeedbackRegion");
-          var toast = document.getElementById("customToast");
-          if (!region || !toast) return null;
-          return {
-            region: region,
-            toast: toast,
-            title: document.getElementById("toastTitle"),
-            message: document.getElementById("toastMessage"),
-            icon: toast.querySelector(".app-feedback-toast__icon i")
-          };
-        }
+      function hide() {
+        var elements = refs();
+        if (!elements || elements.toast.hidden) return;
+        elements.toast.classList.remove("is-visible");
+        window.setTimeout(function () { elements.toast.hidden = true; }, 210);
+      }
 
-        function hide() {
-          var elements = refs();
-          if (!elements || elements.toast.hidden) return;
-          elements.toast.classList.remove("is-visible");
-          window.setTimeout(function () { elements.toast.hidden = true; }, 210);
-        }
+      function show(message, tone, options) {
+        var elements = refs();
+        if (!elements || !message) return;
+        var normalizedTone = icons[tone] ? tone : "info";
+        var settings = options || {};
+        window.clearTimeout(hideTimer);
+        elements.toast.className = "app-feedback-toast is-" + normalizedTone;
+        elements.title.textContent = settings.title || elements.region.dataset[normalizedTone + "Title"] || elements.region.dataset.infoTitle;
+        elements.message.textContent = String(message);
+        elements.icon.className = icons[normalizedTone];
+        elements.toast.hidden = false;
+        window.requestAnimationFrame(function () { elements.toast.classList.add("is-visible"); });
+        if (settings.persistent !== true) hideTimer = window.setTimeout(hide, settings.duration || 4000);
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        var closeButton = document.querySelector(".app-feedback-toast__close");
+        if (closeButton) closeButton.addEventListener("click", hide);
 
-        function show(message, tone, options) {
-          var elements = refs();
-          if (!elements || !message) return;
-          var normalizedTone = icons[tone] ? tone : "info";
-          var settings = options || {};
-          window.clearTimeout(hideTimer);
-          elements.toast.className = "app-feedback-toast is-" + normalizedTone;
-          elements.title.textContent = settings.title || elements.region.dataset[normalizedTone + "Title"] || elements.region.dataset.infoTitle;
-          elements.message.textContent = String(message);
-          elements.icon.className = icons[normalizedTone];
-          elements.toast.hidden = false;
-          window.requestAnimationFrame(function () { elements.toast.classList.add("is-visible"); });
-          if (settings.persistent !== true) hideTimer = window.setTimeout(hide, settings.duration || 4000);
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-          var closeButton = document.querySelector(".app-feedback-toast__close");
-          if (closeButton) closeButton.addEventListener("click", hide);
-
-          /*
-           * Backward-compatible adapter for member/guest pages that still render
-           * action feedback as an in-page Bootstrap/app/finance alert. Keeping
-           * this in the shared layout gives every action the canonical toast
-           * without changing controller flash attributes or form workflows.
-           */
-          var legacyFeedback = Array.from(document.querySelectorAll([
-            ".alert-success",
-            ".alert-danger",
-            ".app-alert--success",
-            ".app-alert--danger",
-            ".finance-alert--success",
-            ".finance-alert--danger"
-          ].join(","))).filter(function (element) {
-            var isHidden = element.hidden
-              || element.classList.contains("d-none")
-              || element.getAttribute("aria-hidden") === "true"
-              || element.closest(".modal,[hidden]") !== null;
-            return !isHidden && element.textContent.trim().length > 0;
-          });
-
-          if (legacyFeedback.length > 0) {
-            var selected = legacyFeedback.find(function (element) {
-              return element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger");
-            }) || legacyFeedback[0];
-            var tone = selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")
-              ? "error"
-              : "success";
-            var message = selected.textContent.trim();
-
-            legacyFeedback.forEach(function (element) {
-              element.hidden = true;
-              element.setAttribute("aria-hidden", "true");
-            });
-            show(message, tone);
-          }
+        /*
+         * Backward-compatible adapter for member/guest pages that still render
+         * action feedback as an in-page Bootstrap/app/finance alert. Keeping
+         * this in the shared layout gives every action the canonical toast
+         * without changing controller flash attributes or form workflows.
+         */
+        var legacyFeedback = Array.from(document.querySelectorAll([
+          ".alert-success",
+          ".alert-danger",
+          ".app-alert--success",
+          ".app-alert--danger",
+          ".finance-alert--success",
+          ".finance-alert--danger"
+        ].join(","))).filter(function (element) {
+          var isHidden = element.hidden
+            || element.classList.contains("d-none")
+            || element.getAttribute("aria-hidden") === "true"
+            || element.closest(".modal,[hidden]") !== null;
+          return !isHidden && element.textContent.trim().length > 0;
         });
 
-        return {
-          show: show,
-          hide: hide,
-          success: function (message, options) { show(message, "success", options); },
-          error: function (message, options) { show(message, "error", options); },
-          warning: function (message, options) { show(message, "warning", options); },
-          info: function (message, options) { show(message, "info", options); }
-        };
-      })();
+        if (legacyFeedback.length > 0) {
+          var selected = legacyFeedback.find(function (element) {
+            return element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger");
+          }) || legacyFeedback[0];
+          var tone = selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")
+            ? "error"
+            : "success";
+          var message = selected.textContent.trim();
 
-      function showToast(message) {
-        window.AppFeedback.success(message);
-      }
-
-      document.addEventListener("submit", function (event) {
-        var form = event.target;
-        if (!form.matches(".favorite-form")) {
-          return;
-        }
-
-        event.preventDefault();
-        var button = form.querySelector(".js-favorite-button");
-        if (button) {
-          button.disabled = true;
-        }
-
-        fetch(form.action, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            Accept: "application/json",
-            "X-Requested-With": "XMLHttpRequest",
-          },
-        })
-          .then(function (response) {
-            if (response.status === 401 || response.status === 403) {
-              window.location.href = "/login";
-              return null;
-            }
-            return response.json().catch(function () { return {}; }).then(function (data) {
-              if (!response.ok) {
-                throw new Error(data.message || favoriteAddError);
-              }
-              return data;
-            });
-          })
-          .then(function (data) {
-            if (!data) {
-              return;
-            }
-
-            var bookId = form.dataset.bookId;
-            document
-              .querySelectorAll('.favorite-form[data-book-id="' + bookId + '"]')
-              .forEach(function (favoriteForm) {
-                favoriteForm.action = data.favorite
-                  ? favoriteForm.dataset.removeUrl
-                  : favoriteForm.dataset.addUrl;
-                var favoriteButton = favoriteForm.querySelector(".js-favorite-button");
-                if (favoriteButton) setFavoriteButtonState(favoriteButton, data.favorite);
-              });
-
-            window.AppFeedback.success(data.message || favoriteAddSuccess);
-          })
-          .catch(function (error) {
-            window.AppFeedback.error(error.message || favoriteAddError);
-          })
-          .finally(function () {
-            if (button) {
-              button.disabled = false;
-            }
+          legacyFeedback.forEach(function (element) {
+            element.hidden = true;
+            element.setAttribute("aria-hidden", "true");
           });
+          show(message, tone);
+        }
       });
 
-      function setFavoriteButtonState(button, favorite) {
-        if (!favorite) {
-          button.classList.remove("btn-danger", "active");
-          var emptyIcon = button.querySelector("i");
-          if (emptyIcon) emptyIcon.className = "bi bi-heart";
-          var emptyLabel = button.querySelector("span");
-          if (emptyLabel) emptyLabel.innerText = favoriteDefaultLabel;
-          return;
-        }
-        button.classList.remove("btn-outline-danger");
-        button.classList.add("btn-danger", "active");
+      return {
+        show: show,
+        hide: hide,
+        success: function (message, options) { show(message, "success", options); },
+        error: function (message, options) { show(message, "error", options); },
+        warning: function (message, options) { show(message, "warning", options); },
+        info: function (message, options) { show(message, "info", options); }
+      };
+    })();
 
-        var icon = button.querySelector("i");
-        if (icon) {
-          icon.className =
-            icon.className.indexOf("me-1") >= 0
-              ? "bi bi-heart-fill me-1"
-              : "bi bi-heart-fill mr-2";
-        }
+    function showToast(message) {
+      window.AppFeedback.success(message);
+    }
 
-        var label = button.querySelector("span");
-        if (label) {
-          label.innerText = favoriteAddedLabel;
-        }
+    document.addEventListener("submit", function (event) {
+      var form = event.target;
+      if (!form.matches(".favorite-form")) {
+        return;
       }
 
-      document.addEventListener("DOMContentLoaded", function () {
-        var notificationDropdown = document.getElementById(
-          "notificationDropdown",
-        );
-        var notificationToggle = document.getElementById("notificationToggle");
-        if (!notificationDropdown || !notificationToggle) {
-          return;
-        }
+      event.preventDefault();
+      var button = form.querySelector(".js-favorite-button");
+      if (button) {
+        button.disabled = true;
+      }
 
-        function updateNotificationBadge(unreadCount) {
-          var badge = document.getElementById("notificationBellBadge");
-          if (unreadCount <= 0) {
-            if (badge) badge.remove();
+      fetch(form.action, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          [document.querySelector('meta[name="_csrf_header"]')?.content || "X-CSRF-TOKEN"]:
+            document.querySelector('meta[name="_csrf"]')?.content || "",
+        },
+      })
+        .then(function (response) {
+          if (response.redirected && new URL(response.url, window.location.origin).pathname === "/login") {
+            window.location.assign(response.url);
+            return null;
+          }
+          if (response.status === 401 || response.status === 403) {
+            window.location.href = "/login";
+            return null;
+          }
+          var contentType = response.headers.get("content-type") || "";
+          if (!contentType.toLowerCase().includes("application/json")) {
+            throw new Error(favoriteAddError);
+          }
+          return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) {
+              throw new Error(data.message || favoriteAddError);
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (!data) {
             return;
           }
-          if (!badge) {
-            badge = document.createElement("span");
-            badge.id = "notificationBellBadge";
-            badge.className = "badge badge-danger position-absolute header-notification-badge";
-            notificationToggle.appendChild(badge);
-          }
-          badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
-        }
 
-        var latestNotificationId = Number(notificationToggle.dataset.latestNotificationId) || 0;
-        var notificationMemberKey = notificationToggle.dataset.memberKey || "member";
-        var notificationSeenStorageKey = "lms.notification.lastSeenId." + notificationMemberKey;
-
-        function getLastSeenNotificationId() {
-          try {
-            return Number(window.localStorage.getItem(notificationSeenStorageKey)) || 0;
-          } catch (error) {
-            return 0;
-          }
-        }
-
-        function rememberNotificationsAsSeen() {
-          try {
-            window.localStorage.setItem(notificationSeenStorageKey, String(latestNotificationId));
-          } catch (error) {
-            console.debug("Notification badge state could not be stored.", error);
-          }
-          updateNotificationBadge(0);
-        }
-
-        var lastSeenNotificationId = getLastSeenNotificationId();
-        if (latestNotificationId > 0 && lastSeenNotificationId >= latestNotificationId) {
-          updateNotificationBadge(0);
-        } else if (lastSeenNotificationId > 0) {
-          var unseenCount = Array.from(
-            notificationDropdown.querySelectorAll(".member-notification-item.is-unread[data-notification-id]")
-          ).filter(function (item) {
-            return Number(item.dataset.notificationId) > lastSeenNotificationId;
-          }).length;
-          updateNotificationBadge(unseenCount);
-        }
-
-        notificationToggle.addEventListener("click", function () {
-          rememberNotificationsAsSeen();
-        });
-
-        function notificationRequestHeaders() {
-          var headers = {"X-Requested-With": "XMLHttpRequest"};
-          var token = document.querySelector('meta[name="_csrf"]');
-          var header = document.querySelector('meta[name="_csrf_header"]');
-          if (token && header) headers[header.content] = token.content;
-          return headers;
-        }
-
-        notificationDropdown.querySelectorAll(".member-notification-item").forEach(function (item) {
-          item.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            var targetUrl = item.href;
-            if (!item.classList.contains("is-unread")) {
-              window.location.href = targetUrl;
-              return;
-            }
-            var notificationId = item.dataset.notificationId;
-            fetch("/member/interaction/notifications/" + notificationId + "/mark-read", {
-              method: "POST", credentials: "same-origin", headers: notificationRequestHeaders()
-            }).then(function (response) {
-              if (!response.ok) throw new Error(notificationUpdateError);
-              return response.json();
-            }).then(function (data) {
-              item.classList.remove("is-unread");
-              updateNotificationBadge(Number(data.unreadCount) || 0);
-              window.location.href = targetUrl;
-            }).catch(function (error) {
-              console.error(error);
-              window.location.href = targetUrl;
+          var bookId = form.dataset.bookId;
+          document
+            .querySelectorAll('.favorite-form[data-book-id="' + bookId + '"]')
+            .forEach(function (favoriteForm) {
+              favoriteForm.action = data.favorite
+                ? favoriteForm.dataset.removeUrl
+                : favoriteForm.dataset.addUrl;
+              var favoriteButton = favoriteForm.querySelector(".js-favorite-button");
+              if (favoriteButton) setFavoriteButtonState(favoriteButton, data.favorite);
             });
+
+          window.AppFeedback.success(data.message || favoriteAddSuccess);
+        })
+        .catch(function (error) {
+          window.AppFeedback.error(error.message || favoriteAddError);
+        })
+        .finally(function () {
+          if (button) {
+            button.disabled = false;
+          }
+        });
+    });
+
+    function setFavoriteButtonState(button, favorite) {
+      if (!favorite) {
+        button.classList.remove("btn-danger", "active");
+        var emptyIcon = button.querySelector("i");
+        if (emptyIcon) emptyIcon.className = "bi bi-heart";
+        var emptyLabel = button.querySelector("span");
+        if (emptyLabel) emptyLabel.innerText = favoriteDefaultLabel;
+        return;
+      }
+      button.classList.remove("btn-outline-danger");
+      button.classList.add("btn-danger", "active");
+
+      var icon = button.querySelector("i");
+      if (icon) {
+        icon.className =
+          icon.className.indexOf("me-1") >= 0
+            ? "bi bi-heart-fill me-1"
+            : "bi bi-heart-fill mr-2";
+      }
+
+      var label = button.querySelector("span");
+      if (label) {
+        label.innerText = favoriteAddedLabel;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var notificationDropdown = document.getElementById(
+        "notificationDropdown",
+      );
+      var notificationToggle = document.getElementById("notificationToggle");
+      if (!notificationDropdown || !notificationToggle) {
+        return;
+      }
+
+      function updateNotificationBadge(unreadCount) {
+        var badge = document.getElementById("notificationBellBadge");
+        if (unreadCount <= 0) {
+          if (badge) badge.remove();
+          return;
+        }
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.id = "notificationBellBadge";
+          badge.className = "badge badge-danger position-absolute header-notification-badge";
+          notificationToggle.appendChild(badge);
+        }
+        badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+      }
+
+      var latestNotificationId = Number(notificationToggle.dataset.latestNotificationId) || 0;
+      var notificationMemberKey = notificationToggle.dataset.memberKey || "member";
+      var notificationSeenStorageKey = "lms.notification.lastSeenId." + notificationMemberKey;
+
+      function getLastSeenNotificationId() {
+        try {
+          return Number(window.localStorage.getItem(notificationSeenStorageKey)) || 0;
+        } catch (error) {
+          return 0;
+        }
+      }
+
+      function rememberNotificationsAsSeen() {
+        try {
+          window.localStorage.setItem(notificationSeenStorageKey, String(latestNotificationId));
+        } catch (error) {
+          console.debug("Notification badge state could not be stored.", error);
+        }
+        updateNotificationBadge(0);
+      }
+
+      var lastSeenNotificationId = getLastSeenNotificationId();
+      if (latestNotificationId > 0 && lastSeenNotificationId >= latestNotificationId) {
+        updateNotificationBadge(0);
+      } else if (lastSeenNotificationId > 0) {
+        var unseenCount = Array.from(
+          notificationDropdown.querySelectorAll(".member-notification-item.is-unread[data-notification-id]")
+        ).filter(function (item) {
+          return Number(item.dataset.notificationId) > lastSeenNotificationId;
+        }).length;
+        updateNotificationBadge(unseenCount);
+      }
+
+      notificationToggle.addEventListener("click", function () {
+        rememberNotificationsAsSeen();
+      });
+
+      function notificationRequestHeaders() {
+        var headers = { "X-Requested-With": "XMLHttpRequest" };
+        var token = document.querySelector('meta[name="_csrf"]');
+        var header = document.querySelector('meta[name="_csrf_header"]');
+        if (token && header) headers[header.content] = token.content;
+        return headers;
+      }
+
+      notificationDropdown.querySelectorAll(".member-notification-item").forEach(function (item) {
+        item.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          var targetUrl = item.href;
+          if (!item.classList.contains("is-unread")) {
+            window.location.href = targetUrl;
+            return;
+          }
+          var notificationId = item.dataset.notificationId;
+          fetch("/member/interaction/notifications/" + notificationId + "/mark-read", {
+            method: "POST", credentials: "same-origin", headers: notificationRequestHeaders()
+          }).then(function (response) {
+            if (!response.ok) throw new Error(notificationUpdateError);
+            return response.json();
+          }).then(function (data) {
+            item.classList.remove("is-unread");
+            updateNotificationBadge(Number(data.unreadCount) || 0);
+            window.location.href = targetUrl;
+          }).catch(function (error) {
+            console.error(error);
+            window.location.href = targetUrl;
           });
         });
-
       });
-    </script>
 
-    <!-- TODO: Thêm các script JS chung -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script th:src="@{/js/bootstrap.bundle.js}"></script>
-    <script th:replace="~{fragments/language-switcher :: script}"></script>
-    <th:block layout:fragment="scripts"></th:block>
-    <script th:src="@{/js/dynamic-presentation.js}"></script>
-    <script th:src="@{/js/confirmation-dialog.js}"></script>
-  </body>
+    });
+  </script>
+
+  <!-- TODO: Thêm các script JS chung -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script th:src="@{/js/bootstrap.bundle.js}"></script>
+  <script th:replace="~{fragments/language-switcher :: script}"></script>
+  <th:block layout:fragment="scripts"></th:block>
+  <script th:src="@{/js/dynamic-presentation.js}"></script>
+  <script th:src="@{/js/confirmation-dialog.js}"></script>
+</body>
+
 </html>

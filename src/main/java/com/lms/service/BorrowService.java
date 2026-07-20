@@ -18,7 +18,7 @@ public interface BorrowService {
     // Luá»“ng Ä‘Äƒng kÃ½ mÆ°á»£n trá»±c tuyáº¿n (Chá» duyá»‡t)
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, List<String> barcodes, String staffUsername);
-    void rejectPendingRequest(Integer borrowId, String reason);
+    void rejectPendingRequest(Integer borrowId, String reasonCode, String reason);
 
     void confirmPhysicalPickup(Integer borrowId, String staffUsername);
 
@@ -29,7 +29,7 @@ public interface BorrowService {
     // Luá»“ng Äáº¶T TRÆ¯á»šC SÃCH - RESERVATION (Má»›i nÃ¢ng cáº¥p)
     Reservation memberSubmitReservationRequest(String username, Integer bookId);
     void approveReservationRequest(Integer reservationId, String staffUsername);
-    void rejectReservationRequest(Integer reservationId, String staffUsername, String reason);
+    void rejectReservationRequest(Integer reservationId, String staffUsername, String reasonCode, String reason);
     void memberCancelReservation(String username, Integer reservationId);
     Reservation getReservationById(Integer reservationId);
 

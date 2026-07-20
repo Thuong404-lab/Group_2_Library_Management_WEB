@@ -182,15 +182,16 @@
                                 </thead>
                                 <tbody>
                                     <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
-                                        th:data-book-availability="${book.status == 'Disposed' ? 'Unavailable' : 'Available'}">
+                                        th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}"
+                                        th:data-book-availability="${availableCopies > 0 ? 'Available' : 'Unavailable'}">
                                         <td class="ps-3 fw-bold"
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
                                             <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                th:src="${book.coverImageUrl}" th:alt="#{book.coverAlt}" class="rounded border u-width-40px-height-56px-object-fit-cover-8457e107"
+                                                th:src="${book.coverImageUrl}" th:alt="#{book.coverAlt}" class="inventory-cover-frame"
                                                >
                                             <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
-                                                class="bg-light rounded border d-flex align-items-center justify-content-center text-muted u-width-40px-height-56px-0055c9ad"
+                                                class="inventory-cover-frame inventory-cover-frame--placeholder"
                                                >
                                                 <i class="bi bi-book"></i>
                                             </div>
@@ -206,8 +207,8 @@
                                             th:title="${book.description}">Description</td>
                                         <td>
                                             <span class="status-badge"
-                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
-                                                th:text="${book.status == 'Disposed' ? #messages.msg('book.status.unavailable') : (book.status == 'Active' ? #messages.msg('book.status.ready') : book.status)}">Active</span>
+                                                th:classappend="${availableCopies > 0} ? ' status-active' : ' status-zero'"
+                                                th:text="${availableCopies > 0} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
                                         </td>
                                         <td class="text-end member-actions">
                                             <button type="button" class="member-icon-action"
@@ -286,6 +287,26 @@
                                             data-bs-target="#addGenreModal" th:text="#{librarian.inventory.addGenre}">Add Genre</button>
                                     </div>
                                 </div>
+                                <div class="category-management-toolbar">
+                                    <div class="member-summary-chips category-summary-chips"
+                                         th:aria-label="#{librarian.inventory.categorySummary}">
+                                        <span>
+                                            <strong th:text="${totalCategories ?: 0}">0</strong>
+                                            <span th:text="#{librarian.inventory.categories}">Categories</span>
+                                        </span>
+                                        <span>
+                                            <strong th:text="${totalGenres ?: 0}">0</strong>
+                                            <span th:text="#{librarian.inventory.genres}">Genres</span>
+                                        </span>
+                                    </div>
+                                    <div class="input-group category-search-group">
+                                        <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                        <input type="search" class="form-control" id="categoryGenreSearch"
+                                               th:placeholder="#{librarian.inventory.categorySearchPlaceholder}"
+                                               th:aria-label="#{librarian.inventory.categorySearchPlaceholder}"
+                                               autocomplete="off">
+                                    </div>
+                                </div>
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle border mb-0">
                                         <thead class="table-light">
@@ -293,8 +314,10 @@
                                         </thead>
                                         <tbody>
                                             <th:block th:each="category : ${categories}">
-                                                <tr class="bg-white admin-books-tr-cursor-20" data-bs-toggle="collapse"
-                                                    th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}">
+                                                <tr class="bg-white admin-books-tr-cursor-20 category-data-row" data-bs-toggle="collapse"
+                                                    th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}"
+                                                    th:data-category-id="${category.categoryId}"
+                                                    th:data-search-name="${#strings.toLowerCase(category.categoryName)}">
                                                     <td class="fw-bold u-color-4a3b32-8f35ff96">
                                                         <span th:text="${category.categoryName}">Category</span>
                                                         <i class="bi bi-chevron-down ms-2 small text-muted"></i>
@@ -310,7 +333,9 @@
                                                 </tr>
                                                 <tr th:each="genre : ${genres}"
                                                     th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
-                                                    class="collapse" th:classappend="'admin-category-genres-' + ${category.categoryId}">
+                                                    class="collapse genre-data-row" th:classappend="'admin-category-genres-' + ${category.categoryId}"
+                                                    th:data-parent-category-id="${category.categoryId}"
+                                                    th:data-search-name="${#strings.toLowerCase(genre.genreName)}">
                                                     <td>
                                                         <span class="genre-name" th:text="${genre.genreName}">Genre</span>
                                                     </td>
@@ -325,6 +350,12 @@
                                                 </tr>
                                             </th:block>
                                             <tr th:if="${#lists.isEmpty(categories)}"><td colspan="2" class="text-center text-muted py-4" th:text="#{librarian.inventory.noCategories}">No categories have been created.</td></tr>
+                                            <tr id="categoryGenreFilterEmptyState" hidden>
+                                                <td colspan="2" class="text-center text-muted py-5">
+                                                    <i class="bi bi-search fs-2 d-block mb-2" aria-hidden="true"></i>
+                                                    <span th:text="#{librarian.inventory.categoryEmptyFiltered}">No categories or genres match this search.</span>
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -436,9 +467,9 @@
                                                 <td th:text="${stat.index + 1 + (books.number * books.size)}">1</td>
                                                 <td>
                                                     <img th:if="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}" th:src="${book.coverImageUrl}"
-                                                        class="rounded border admin-books-img-width-height-fit-27" th:alt="#{book.coverAlt}">
+                                                        class="inventory-cover-frame" th:alt="#{book.coverAlt}">
                                                     <div th:unless="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}"
-                                                        class="bg-light rounded border d-flex align-items-center justify-content-center text-muted admin-books-div-width-height-28"><i class="bi bi-book"></i></div>
+                                                        class="inventory-cover-frame inventory-cover-frame--placeholder"><i class="bi bi-book"></i></div>
                                                 </td>
                                                 <td><div class="fw-bold text-classic" th:text="${book.title}">Book title</div>
                                                     <div class="small text-muted" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</div></td>
@@ -839,37 +870,45 @@
             </div> <!-- Close inventory panel -->
 
                 <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
-                    <div class="card-classic shadow-sm">
+                    <div class="member-data-card">
                         <div class="card-header bg-white border-bottom p-4 border-color">
                             <h5 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
                                 <i class="bi bi-archive me-2 text-classic"></i><span th:text="#{librarian.storage.management}">Bookshelf Management</span>
                             </h5>
                             <div class="text-muted small" th:text="#{librarian.storage.description}">Create and manage book storage locations.</div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
+                        <div class="member-data-card-body">
+                            <div class="table-responsive member-table-wrap">
+                                <table class="table table-hover align-middle stable-table-layout member-table">
+                                    <colgroup>
+                                        <col class="bookshelf-name-column">
+                                        <col class="bookshelf-location-column">
+                                        <col class="bookshelf-total-column">
+                                        <col class="bookshelf-actions-column">
+                                    </colgroup>
                                     <thead class="table-light text-uppercase small text-muted">
                                         <tr>
-                                            <th th:text="#{common.number}">No.</th>
                                             <th th:text="#{librarian.storage.name}">Location Name</th>
                                             <th th:text="#{librarian.storage.location}">Location</th>
-                                            <th th:text="#{common.actions}">Actions</th>
+                                            <th class="text-center" th:text="#{librarian.storage.totalBooks}">Total books</th>
+                                            <th class="text-end" th:text="#{common.actions}">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="shelf, iterStat : ${shelfPage.content}">
-                                            <td class="ps-4 fw-bold" th:text="${shelfPage.number * shelfPage.size + iterStat.index + 1}">1</td>
+                                        <tr th:each="shelf : ${shelfPage.content}">
                                             <td th:text="${shelf.shelfName}">Location name</td>
                                             <td th:text="${shelf.location}">Location</td>
-                                            <td class="table-fixed-action">
-                                                <a th:href="@{/librarian/storage/edit/{id}(id=${shelf.shelfId})}" class="btn btn-sm btn-outline-classic me-1" th:title="#{common.update}">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                            <td class="text-center fw-semibold" th:text="${shelfBookCounts[shelf.shelfId] ?: 0}">0</td>
+                                            <td class="text-end member-actions">
+                                                <button type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                    th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
+                                                    th:title="#{common.update}" th:aria-label="#{common.update}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button type="button" class="member-icon-action member-icon-action-danger"
                                                     data-bs-toggle="modal"
                                                     th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
-                                                    th:title="#{common.delete}">
+                                                    th:title="#{common.delete}" th:aria-label="#{common.delete}">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -883,7 +922,6 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
                         <nav class="member-pagination app-pagination-region" th:if="${shelfPage != null && shelfPage.totalPages > 1}">
                             <ul class="pagination app-pagination">
                                 <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
@@ -903,6 +941,7 @@
                                 </li>
                             </ul>
                         </nav>
+                        </div>
                         <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
                             <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1"
                                 th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
@@ -1206,6 +1245,54 @@
 
             availabilityFilter.addEventListener('change', applyAvailabilityFilter);
             applyAvailabilityFilter();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('categoryGenreSearch');
+            const categoryRows = Array.from(document.querySelectorAll('#admin-categories-pane .category-data-row'));
+            const genreRows = Array.from(document.querySelectorAll('#admin-categories-pane .genre-data-row'));
+            const emptyState = document.getElementById('categoryGenreFilterEmptyState');
+
+            if (!searchInput || !emptyState) return;
+
+            const normalize = value => (value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase()
+                .trim();
+
+            const filterCategoryGenres = function () {
+                const query = normalize(searchInput.value);
+                let visibleCategories = 0;
+
+                categoryRows.forEach(function (categoryRow) {
+                    const categoryId = categoryRow.dataset.categoryId;
+                    const categoryMatches = !query || normalize(categoryRow.dataset.searchName).includes(query);
+                    const childRows = genreRows.filter(row => row.dataset.parentCategoryId === categoryId);
+                    const matchingGenres = childRows.filter(row => normalize(row.dataset.searchName).includes(query));
+                    const showCategory = categoryMatches || matchingGenres.length > 0;
+
+                    categoryRow.hidden = !showCategory;
+                    if (showCategory) visibleCategories += 1;
+
+                    childRows.forEach(function (genreRow) {
+                        if (!query) {
+                            genreRow.hidden = false;
+                            genreRow.classList.remove('show');
+                            return;
+                        }
+
+                        const showGenre = showCategory && (categoryMatches || matchingGenres.includes(genreRow));
+                        genreRow.hidden = !showGenre;
+                        genreRow.classList.toggle('show', showGenre);
+                    });
+                });
+
+                emptyState.hidden = !query || visibleCategories > 0;
+            };
+
+            searchInput.addEventListener('input', filterCategoryGenres);
         });
     </script>
 </div>

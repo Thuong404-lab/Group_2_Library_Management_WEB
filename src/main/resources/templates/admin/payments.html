@@ -7,7 +7,7 @@
     <div class="app-page-header">
         <div>
             <h2 class="app-page-title" th:text="#{admin.payments.heading}">Online Payments</h2>
-            <p class="app-page-description" th:text="#{admin.payments.description}">Track KQPay transactions, statuses, and reconciliation issues.</p>
+            <p class="app-page-description" th:text="#{admin.payments.description}">Track Pay transactions, statuses, and reconciliation issues.</p>
         </div>
         <div class="app-page-actions">
             <a class="btn btn-outline-classic" th:href="@{/admin/payments/audit-logs}"><i class="bi bi-journal-text me-1"></i> <span th:text="#{admin.payments.auditLog}">Audit Log</span></a>
@@ -58,7 +58,7 @@
     </div>
 
     <div class="app-card mb-4">
-        <div class="app-card-header"><h3 class="app-section-title" th:text="#{admin.payments.transactions}">KQPay Transactions</h3><span class="app-pagination-summary" th:text="#{common.results(${payments.totalElements})}">0 results</span></div>
+        <div class="app-card-header"><h3 class="app-section-title" th:text="#{admin.payments.transactions}">Pay Transactions</h3><span class="app-pagination-summary" th:text="#{common.results(${payments.totalElements})}">0 results</span></div>
         <div class="app-table-wrap">
             <table class="app-table">
                 <thead class="table-light"><tr><th th:text="#{admin.payments.orderCode}">Order Code</th><th th:text="#{role.member}">Member</th><th th:text="#{admin.payments.purpose}">Purpose</th><th class="text-end" th:text="#{common.amount}">Amount</th><th th:text="#{common.status}">Status</th><th th:text="#{common.time}">Time</th><th></th></tr></thead>
@@ -71,7 +71,13 @@
                     <td class="text-end fw-semibold"><span th:text="${#numbers.formatDecimal(p.amount,0,'COMMA',0,'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     <td><span class="payment-status" th:classappend="${p.status == 'PAID' ? ' status-paid' : (p.status == 'PENDING' ? ' status-pending' : ' status-failed')}" th:text="${#messages.msg('payment.admin.status.' + #strings.toLowerCase(p.status))}">Paid</span></td>
                     <td><span th:text="${#temporals.format(p.createdAt,'dd/MM/yyyy HH:mm')}">-</span></td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-classic" th:href="@{/admin/payments/{code}(code=${p.orderCode})}" th:text="#{common.details}">Details</a></td>
+                    <td class="text-end">
+                        <a class="btn btn-outline-classic payment-detail-action"
+                           th:href="@{/admin/payments/{code}(code=${p.orderCode})}"
+                           th:title="#{common.details}" th:aria-label="#{common.details}">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
+                        </a>
+                    </td>
                 </tr>
                 </tbody>
             </table>

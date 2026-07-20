@@ -35,7 +35,7 @@
                 <p class="app-section-description" th:text="#{librarian.report.periodHint}">Select start and end dates.</p>
             </div>
         </div>
-        <form class="report-filter-form" method="get" th:action="@{/librarian/reports}">
+        <form class="report-filter-form" method="get" th:action="@{/librarian/reports}" data-report-date-filter>
             <div class="report-filter-field">
                     <label for="reportFromDate" th:text="#{librarian.report.fromDate}">From Date</label>
                 <input id="reportFromDate" type="date" name="fromDate" th:value="${fromDate}" th:max="${maxDate}">
@@ -43,10 +43,40 @@
             <div class="report-filter-field">
                     <label for="reportToDate" th:text="#{librarian.report.toDate}">To Date</label>
                 <input id="reportToDate" type="date" name="toDate" th:value="${toDate}" th:max="${maxDate}">
+                <small class="report-filter-field-error" data-date-error hidden th:text="#{common.dateRangeInvalid}">Start date must not be later than end date.</small>
             </div>
                 <button class="report-action report-action-primary report-filter-submit" type="submit" th:text="#{librarian.report.view}">View Report</button>
         </form>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
+                const from = form.querySelector('[name="fromDate"]');
+                const to = form.querySelector('[name="toDate"]');
+                const error = form.querySelector('[data-date-error]');
+                function sync() {
+                    to.min = from.value || '';
+                    if (from.value && to.value && from.value <= to.value) {
+                        error.hidden = true;
+                        from.classList.remove('is-invalid');
+                        to.classList.remove('is-invalid');
+                    }
+                }
+                from.addEventListener('change', sync);
+                to.addEventListener('change', sync);
+                form.addEventListener('submit', function (event) {
+                    if (from.value && to.value && from.value > to.value) {
+                        event.preventDefault();
+                        error.hidden = false;
+                        from.classList.add('is-invalid');
+                        to.classList.add('is-invalid');
+                    }
+                });
+                sync();
+            });
+        });
+    </script>
 
     <section class="report-stat-grid" th:aria-label="#{librarian.report.activityMetrics}">
         <article class="report-stat-card app-card">

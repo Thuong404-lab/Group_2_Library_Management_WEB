@@ -1,4 +1,5 @@
 package com.lms.controller.librarian;
+
 import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
@@ -8,6 +9,7 @@ import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.entity.Member;
 import com.lms.entity.Transaction;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.StaffRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.FineBatchPaymentService;
@@ -17,7 +19,6 @@ import com.lms.service.OverdueReminderService;
 import com.lms.service.OverdueViolationQueryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Librarian member-management UC flows maintained by Pham Kien Quoc:
@@ -46,7 +48,6 @@ import java.util.Map;
 @RequestMapping("/librarian")
 public class MemberMgmtController extends LocalizedControllerSupport {
     private static final String TOP_UP_TYPE = "TOP_UP";
-    private static final int MEMBER_SEARCH_LIMIT = 5;
 
     private final LibrarianMemberService memberService;
     private final FinancialService financialService;
@@ -55,14 +56,16 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     private final OverdueReminderService overdueReminderService;
     private final OverdueViolationQueryService overdueViolationQueryService;
     private final FineBatchPaymentService fineBatchPaymentService;
+    private final StaffRepository staffRepository;
 
     public MemberMgmtController(LibrarianMemberService memberService,
-                                FinancialService financialService,
-                                TransactionRepository transactionRepository,
-                                MemberRepository memberRepository,
-                                OverdueReminderService overdueReminderService,
-                                OverdueViolationQueryService overdueViolationQueryService,
-                                FineBatchPaymentService fineBatchPaymentService) {
+            FinancialService financialService,
+            TransactionRepository transactionRepository,
+            MemberRepository memberRepository,
+            OverdueReminderService overdueReminderService,
+            OverdueViolationQueryService overdueViolationQueryService,
+            FineBatchPaymentService fineBatchPaymentService,
+            StaffRepository staffRepository) {
         this.memberService = memberService;
         this.financialService = financialService;
         this.transactionRepository = transactionRepository;
@@ -70,6 +73,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         this.overdueReminderService = overdueReminderService;
         this.overdueViolationQueryService = overdueViolationQueryService;
         this.fineBatchPaymentService = fineBatchPaymentService;
+        this.staffRepository = staffRepository;
     }
 
     @GetMapping("/members")
@@ -182,7 +186,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @GetMapping("/members/fines")
     public String manageFines(Model model,
-                              @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         var overdueViolations = overdueViolationQueryService.getActiveOverdueViolations();
         model.addAttribute("overdueViolations", overdueViolations);
         model.addAttribute("pendingFines", financialService.getPendingFines());
@@ -198,9 +202,9 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @GetMapping("/members/fines/payment/{borrowId}")
     public String showBorrowFinePayment(@PathVariable Integer borrowId,
-                                        Model model,
-                                        @AuthenticationPrincipal CustomUserDetails userDetails,
-                                        RedirectAttributes redirectAttributes) {
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
         List<Transaction> fines = fineBatchPaymentService.getPendingForBorrow(borrowId);
         if (fines.isEmpty()) {
             redirectAttributes.addFlashAttribute("success", message("backend.payment.noFinesDue"));
@@ -219,7 +223,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/payment/{borrowId}/cash")
     public String payBorrowFinesByCash(@PathVariable Integer borrowId,
-                                       RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             fineBatchPaymentService.payBorrowFinesByCash(borrowId);
             redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
@@ -232,7 +236,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/payment/{borrowId}/wallet")
     public String payBorrowFinesByWallet(@PathVariable Integer borrowId,
-                                         RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             fineBatchPaymentService.payBorrowFinesFromWallet(borrowId);
             redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
@@ -245,7 +249,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/{fineId}/cash-payment")
     public String payFineByCash(@PathVariable Integer fineId,
-                                RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             financialService.payFineByCash(fineId);
             redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
@@ -257,7 +261,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/{fineId}/wallet-payment")
     public String payFineByWallet(@PathVariable Integer fineId,
-                                  RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             financialService.payFineByWalletAtDesk(fineId);
             redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
@@ -299,7 +303,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @GetMapping("/members/refunds")
     public String viewPendingRefunds(Model model,
-                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         model.addAttribute("pendingRefundRequests", financialService.getPendingReservationDepositRefunds());
         model.addAttribute("reservationDepositAmount", financialService.getReservationDepositAmount());
         addCurrentUser(model, userDetails);
@@ -308,11 +312,13 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @GetMapping("/members/topup")
     public String showTopupDesk(Model model,
-                                @RequestParam(required = false, defaultValue = "") String memberKeyword,
-                                @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @RequestParam(required = false, defaultValue = "") String memberKeyword,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         addTopupDeskStats(model);
-        model.addAttribute("recentTopups", transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
+        model.addAttribute("recentTopups",
+                transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
         model.addAttribute("topupMembers", memberRepository.findAll());
+        model.addAttribute("topupRequestId", UUID.randomUUID().toString());
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
     }
@@ -320,10 +326,15 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     @PostMapping("/members/topup")
     public String topUpMemberAccount(
             @RequestParam String memberPhone,
-            @RequestParam Double amount,
+            @RequestParam BigDecimal amount,
+            @RequestParam String requestId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            financialService.topUpMemberAccount(memberPhone, amount);
+            var staff = userDetails != null && userDetails.getUser() != null
+                    ? staffRepository.findByUserId(userDetails.getUser().getId()).orElse(null)
+                    : null;
+            financialService.topUpMemberAccount(memberPhone, amount, requestId, staff);
             redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -352,8 +363,8 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     private Map<String, String> bindingErrors(BindingResult bindingResult) {
         Map<String, String> errors = new LinkedHashMap<>();
-        bindingResult.getFieldErrors().forEach(error ->
-                errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
+        bindingResult.getFieldErrors()
+                .forEach(error -> errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
         return errors;
     }
 
@@ -376,39 +387,12 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         return value == null ? "" : value.trim();
     }
 
-    private List<Member> searchMembers(String keyword) {
-        String normalizedKeyword = trim(keyword);
-        if (normalizedKeyword.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Integer, Member> memberMap = new LinkedHashMap<>();
-        if (normalizedKeyword.matches("\\d+")) {
-            try {
-                memberRepository.findById(Integer.valueOf(normalizedKeyword))
-                        .ifPresent(member -> memberMap.put(member.getMemberId(), member));
-            } catch (NumberFormatException ignored) {
-                // Từ khóa có thể là số điện thoại dài, tiếp tục tìm theo chuỗi.
-            }
-        }
-
-        memberRepository
-                .findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(
-                        normalizedKeyword,
-                        normalizedKeyword,
-                        normalizedKeyword,
-                        PageRequest.of(0, MEMBER_SEARCH_LIMIT))
-                .getContent()
-                .forEach(member -> memberMap.putIfAbsent(member.getMemberId(), member));
-
-        return List.copyOf(memberMap.values());
-    }
-
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
         }
     }
+
     @GetMapping("/api/member-info")
     @ResponseBody
     public Map<String, Object> getMemberInfo(@RequestParam("identifier") String identifier) {
@@ -417,30 +401,35 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             Member member = memberRepository.findByUserEmail(identifier.trim())
                     .or(() -> memberRepository.findByUserPhone(identifier.trim()))
                     .orElse(null);
-            
+
             if (member == null || member.getUser() == null) {
                 data.put("found", false);
                 return data;
             }
-            
+
             data.put("found", true);
             data.put("name", member.getUser().getFullName());
             data.put("email", member.getUser().getEmail());
             data.put("phone", member.getUser().getPhone());
-            
+
             String rawStatus = member.getUser().getStatus().toString();
             String localizedStatus = message("status.active");
-            if ("Inactive".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.blocked");
-            else if ("Banned".equalsIgnoreCase(rawStatus)) localizedStatus = message("status.banned");
+            if ("Inactive".equalsIgnoreCase(rawStatus))
+                localizedStatus = message("status.blocked");
+            else if ("Banned".equalsIgnoreCase(rawStatus))
+                localizedStatus = message("status.banned");
             data.put("status", localizedStatus);
             data.put("rawStatus", rawStatus);
-            
+
             String tierName = member.getTier() != null ? member.getTier().getTierName() : "Standard";
-            if ("Standard".equalsIgnoreCase(tierName)) tierName = message("tier.standard");
-            else if ("Premium".equalsIgnoreCase(tierName)) tierName = message("tier.premium");
-            else if ("VIP".equalsIgnoreCase(tierName)) tierName = message("tier.vip");
+            if ("Standard".equalsIgnoreCase(tierName))
+                tierName = message("tier.standard");
+            else if ("Premium".equalsIgnoreCase(tierName))
+                tierName = message("tier.premium");
+            else if ("VIP".equalsIgnoreCase(tierName))
+                tierName = message("tier.vip");
             data.put("tier", tierName);
-            
+
         } catch (ApplicationException e) {
             data.put("found", false);
             data.put("error", e.getMessage());

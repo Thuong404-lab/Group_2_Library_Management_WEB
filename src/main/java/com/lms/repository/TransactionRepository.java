@@ -16,6 +16,8 @@ import java.util.Optional;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
 
+    boolean existsByReferenceCode(String referenceCode);
+
     Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
             Integer borrowDetailId, String transactionType, String status);
 
@@ -165,7 +167,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Page<Transaction> findByWalletMemberMemberIdOrderByTransactionDateDesc(
             Integer memberId,
             Pageable pageable);
+
+    Page<Transaction> findByWalletMemberMemberIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(
+            Integer memberId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<Transaction> findByBorrow_BorrowId(Integer borrowId);
+    List<Transaction> findByBorrow_BorrowIdInOrderByTransactionDateDesc(List<Integer> borrowIds);
 
     // =========================================================================
     // PHÆ¯Æ NG THá»¨C Má»šI: Láº¥y táº¥t cáº£ giao dá»‹ch tÃ i chÃ­nh phÃ¡t sinh cá»§a Äá»™c giáº£ trong vÃ²ng 365 ngÃ y qua
@@ -189,4 +195,3 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }
-

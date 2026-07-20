@@ -4,7 +4,6 @@
       layout:decorate="~{layout/librarian_base}">
 <head>
     <title th:text="#{librarian.borrowMember.title}">Chi tiết giao dịch thành viên</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         .borrow-management-page {
             min-width: 0;
@@ -324,7 +323,10 @@
             <!-- Cột 1: Thông tin ảnh và Tên -->
             <div class="col-md-4 profile-col border-end">
                 <div class="profile-avatar flex-shrink-0"
-                     th:text="${#strings.substring(member.user?.fullName ?: 'U', 0, 1).toUpperCase()}">U</div>
+                     th:if="${member.user == null or member.user.avatar == null or #strings.isEmpty(member.user.avatar)}"
+                     th:text="${member.user != null and member.user.fullName != null and !#strings.isEmpty(member.user.fullName) ? #strings.toUpperCase(#strings.substring(member.user.fullName, 0, 1)) : 'U'}">U</div>
+                <img class="profile-avatar flex-shrink-0" th:if="${member.user != null and member.user.avatar != null and !#strings.isEmpty(member.user.avatar)}"
+                     th:src="${member.user.avatar}" th:alt="#{librarian.memberDetail.avatarAlt}">
                 <div>
                     <h5 class="fw-bold text-dark m-0" th:text="${member.user?.fullName}">Tên độc giả</h5>
                     <small class="font-monospace text-muted" th:text="#{librarian.borrowMember.cardNumber(${member.memberId})}">Card ID: MEM-1</small>
@@ -398,10 +400,14 @@
 
     <h4 class="fw-bold text-dark mb-4" style="font-family: 'Playfair Display', serif;">
         <i class="bi bi-clock-history me-2 text-classic"></i><span th:text="#{librarian.borrowMember.history}">Loan History &amp; Financial Activity</span>
+        <a class="btn btn-classic-outline btn-sm ms-2"
+           th:href="@{/librarian/members/{id}/details(id=${member.memberId})}"
+           th:text="#{librarian.borrowMember.fullFinancialHistory}">Full financial history</a>
     </h4>
 
     <!-- Bộ lọc dòng thời gian -->
     <div class="borrow-card p-3 mb-4">
+        <div th:if="${dateFilterError != null}" class="alert alert-danger py-2" role="alert" th:text="${dateFilterError}"></div>
         <form method="get" th:action="@{/librarian/borrow/member/{id}(id=${member.memberId})}" class="row g-3 align-items-center">
             <div class="col-auto">
                 <span class="small fw-bold text-classic"><i class="bi bi-filter-left me-1"></i><span th:text="#{librarian.borrowMember.dateFilter}">Date filter:</span></span>
@@ -440,17 +446,17 @@
                     <span th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">12/07/2026</span>
                 </span>
             </div>
-            <div th:if="${not #maps.isEmpty(detailsByBorrowId) and not #lists.isEmpty(detailsByBorrowId[borrow.borrowId])}">
-                <span th:if="${borrow.status == 'Pending'}" class="status-badge status-pending" th:text="#{librarian.borrowMember.status.pending}">Pending approval</span>
-                <span th:if="${borrow.status == 'Approved' or borrow.status == 'Waiting_Pickup'}" class="status-badge status-pending" style="background-color: #e2f0fd; color: #1a73e8; border: 1px solid #adc1f9;" th:text="#{librarian.borrowMember.status.pickup}">Awaiting physical copy pickup</span>
-                <span th:if="${borrow.status == 'Active' or borrow.status == 'Borrowed'}" class="status-badge status-borrowed" th:text="#{librarian.borrowDesk.currentlyBorrowed}">Currently borrowed</span>
-                <span th:if="${borrow.status == 'Returned'}" class="status-badge status-returned" th:text="#{librarian.borrowMember.completedLoans}">Completed</span>
-                <span th:if="${borrow.status == 'Overdue'}" class="status-badge status-overdue" th:text="#{librarian.fines.overdueReasonPrefix}">Overdue</span>
-                <span th:if="${borrow.status == 'Rejected'}" class="status-badge status-rejected" th:text="#{librarian.acquisition.rejected}">Rejected</span>
-                <span th:if="${borrow.status == 'Canceled'}" class="status-badge status-canceled" th:text="#{librarian.borrowMember.status.canceled}">Canceled</span>
-                <span th:if="${borrow.status == 'Return_Pending'}" class="status-badge status-return-pending" th:text="#{librarian.borrowMember.status.returnPending}">Return requested</span>
-                <span th:if="${borrow.status != 'Pending' and borrow.status != 'Approved' and borrow.status != 'Waiting_Pickup' and borrow.status != 'Active' and borrow.status != 'Borrowed' and borrow.status != 'Returned' and borrow.status != 'Overdue' and borrow.status != 'Rejected' and borrow.status != 'Canceled' and borrow.status != 'Return_Pending'}"
-                      class="status-badge status-unknown" th:text="${borrow.status}">Unknown</span>
+            <div th:with="stat=${borrow.status != null ? #strings.toUpperCase(#strings.replace(#strings.trim(borrow.status), '-', '_')) : 'UNKNOWN'}">
+                <span th:if="${stat == 'PENDING'}" class="status-badge status-pending" th:text="#{librarian.borrowMember.status.pending}">Pending approval</span>
+                <span th:if="${stat == 'APPROVED' or stat == 'WAITING_PICKUP'}" class="status-badge status-pending" th:text="#{librarian.borrowMember.status.pickup}">Awaiting physical copy pickup</span>
+                <span th:if="${stat == 'ACTIVE' or stat == 'BORROWED'}" class="status-badge status-borrowed" th:text="#{librarian.borrowDesk.currentlyBorrowed}">Currently borrowed</span>
+                <span th:if="${stat == 'RETURNED'}" class="status-badge status-returned" th:text="#{librarian.borrowMember.completedLoans}">Completed</span>
+                <span th:if="${stat == 'OVERDUE'}" class="status-badge status-overdue" th:text="#{librarian.fines.overdueReasonPrefix}">Overdue</span>
+                <span th:if="${stat == 'REJECTED'}" class="status-badge status-rejected" th:text="#{librarian.acquisition.rejected}">Rejected</span>
+                <span th:if="${stat == 'CANCELED' or stat == 'CANCELLED'}" class="status-badge status-canceled" th:text="#{librarian.borrowMember.status.canceled}">Canceled</span>
+                <span th:if="${stat == 'RETURN_PENDING' or stat == 'RENEW_PENDING'}" class="status-badge status-return-pending" th:text="${stat == 'RETURN_PENDING' ? #messages.msg('librarian.borrowMember.status.returnPending') : #messages.msg('librarian.borrowMember.detailRenewPending')}">Return requested</span>
+                <span th:if="${stat != 'PENDING' and stat != 'APPROVED' and stat != 'WAITING_PICKUP' and stat != 'ACTIVE' and stat != 'BORROWED' and stat != 'RETURNED' and stat != 'OVERDUE' and stat != 'REJECTED' and stat != 'CANCELED' and stat != 'CANCELLED' and stat != 'RETURN_PENDING' and stat != 'RENEW_PENDING'}"
+                      class="status-badge status-unknown" th:text="#{librarian.borrowMember.status.unknown}">Unknown</span>
             </div>
         </div>
 
@@ -492,7 +498,7 @@
                         <td class="text-start text-wrap">
                             <span th:if="${detail.conditionNote != null and !#strings.isEmpty(detail.conditionNote)}"
                                   th:text="${detail.conditionNote}"
-                                  th:class="${'badge rounded-pill px-2 py-1 small ' + (detail.conditionNote.contains('Hư hỏng') or detail.conditionNote.contains('Mất') ? 'bg-warning text-dark' : 'bg-success text-white')}"
+                                  th:class="${'badge rounded-pill px-2 py-1 small ' + (detail.conditionCode == 'DAMAGED' or detail.conditionCode == 'LOST' ? 'bg-warning text-dark' : 'bg-success text-white')}"
                                   style="font-size:0.75rem; font-weight:500;">Good</span>
                             <span th:if="${detail.conditionNote == null or #strings.isEmpty(detail.conditionNote)}"
                                   class="text-muted fst-italic small">—</span>
@@ -507,7 +513,7 @@
                                 <span th:if="${stat == 'RENEW_PENDING'}" class="status-badge status-renew-pending" th:text="#{librarian.borrowMember.detailRenewPending}">Renewal requested</span>
                                 <span th:if="${stat == 'CANCELED'}" class="status-badge status-canceled" th:text="#{librarian.borrowMember.status.canceled}">Canceled</span>
                                 <span th:if="${stat == 'REJECTED'}" class="status-badge status-rejected" th:text="#{librarian.acquisition.reject}">Reject</span>
-                                <span th:if="${stat == 'APPROVED' or stat == 'WAITING_PICKUP'}" class="status-badge status-pending" style="background-color: #e2f0fd; color: #1a73e8; border: 1px solid #adc1f9;" th:text="#{librarian.borrowMember.status.pickup}">Awaiting physical copy pickup</span>
+                                <span th:if="${stat == 'APPROVED' or stat == 'WAITING_PICKUP'}" class="status-badge status-pending" th:text="#{librarian.borrowMember.status.pickup}">Awaiting physical copy pickup</span>
                                 <span th:if="${stat != 'BORROWED' and stat != 'OVERDUE' and stat != 'RETURNED' and stat != 'RETURN_PENDING' and stat != 'PENDING' and stat != 'RENEW_PENDING' and stat != 'CANCELED' and stat != 'REJECTED' and stat != 'APPROVED' and stat != 'WAITING_PICKUP'}"
                                       class="status-badge status-inactive" th:text="${detail.status}">N/A</span>
                             </th:block>
@@ -551,11 +557,15 @@
                                 <span th:if="${tx.transactionType == 'OVERDUE_FINE'}"><i class="bi bi-clock-history me-1 text-danger"></i><span th:text="#{librarian.borrowMember.overdueFine}">Overdue fine</span></span>
                                 <span th:if="${tx.transactionType == 'DEPOSIT'}"><i class="bi bi-safe me-1 text-warning"></i><span th:text="#{librarian.borrowMember.deposit}">Deposit</span></span>
                                 <span th:if="${tx.transactionType == 'FINE'}"><i class="bi bi-exclamation-triangle me-1 text-danger"></i><span th:text="#{librarian.borrowMember.fine}">Fine</span></span>
-                                <span th:if="${tx.transactionType != 'BORROW_FEE' and tx.transactionType != 'OVERDUE_FINE' and tx.transactionType != 'DEPOSIT' and tx.transactionType != 'FINE'}"
+                                <span th:if="${tx.transactionType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top up</span>
+                                <span th:if="${tx.transactionType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage fee</span>
+                                <span th:if="${tx.transactionType == 'RENEWAL_FEE'}" th:text="#{transaction.type.renewalFee}">Renewal fee</span>
+                                <span th:if="${tx.transactionType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</span>
+                                <span th:if="${tx.transactionType != 'BORROW_FEE' and tx.transactionType != 'OVERDUE_FINE' and tx.transactionType != 'DEPOSIT' and tx.transactionType != 'FINE' and tx.transactionType != 'TOP_UP' and tx.transactionType != 'DAMAGE_FEE' and tx.transactionType != 'RENEWAL_FEE' and tx.transactionType != 'REFUND'}"
                                       th:text="${tx.transactionType}">Transaction</span>
                             </td>
-                            <td class="font-monospace fw-bold text-danger">
-                                <span>-</span><span th:text="${#numbers.formatDecimal(tx.amount.abs(), 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
+                            <td class="font-monospace fw-bold" th:classappend="${tx.amount != null and tx.amount.signum() >= 0 ? 'text-success' : 'text-danger'}">
+                                <span th:text="${tx.amount != null and tx.amount.signum() >= 0 ? '+ ' : '- '}">- </span><span th:text="${#numbers.formatDecimal(tx.amount != null ? tx.amount.abs() : 0, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
                             </td>
                             <td class="text-muted"
                                 th:text="${tx.transactionDate != null ? #temporals.format(tx.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
@@ -571,6 +581,18 @@
             </div>
         </div>
     </div>
+
+    <nav th:if="${borrowPage != null and borrowPage.totalPages > 1}" th:aria-label="#{transaction.pagination}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${borrowPage.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/librarian/borrow/member/{id}(id=${member.memberId},startDate=${startDate},endDate=${endDate},borrowPage=${borrowPage.number - 1})}" th:text="#{common.previous}">Previous</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link" th:text="#{common.pageOf(${borrowPage.number + 1},${borrowPage.totalPages})}">Page</span></li>
+            <li class="page-item" th:classappend="${borrowPage.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/librarian/borrow/member/{id}(id=${member.memberId},startDate=${startDate},endDate=${endDate},borrowPage=${borrowPage.number + 1})}" th:text="#{common.next}">Next</a>
+            </li>
+        </ul>
+    </nav>
 
 </div>
 </body>

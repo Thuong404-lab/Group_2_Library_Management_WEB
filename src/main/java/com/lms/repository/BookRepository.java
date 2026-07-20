@@ -10,10 +10,17 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecificationExecutor<Book> {
     long countByStatusIgnoreCase(String status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select b from Book b where b.bookId = :bookId")
+    Optional<Book> findByIdForUpdate(@Param("bookId") Integer bookId);
     
     boolean existsByGenre_GenreId(Integer genreId);
 

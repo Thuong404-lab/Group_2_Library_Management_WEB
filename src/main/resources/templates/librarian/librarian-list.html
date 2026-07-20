@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/librarian_base}">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
     <title th:text="#{librarian.staff.title}">Librarians</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
@@ -14,40 +15,50 @@
         <header class="member-page-header">
             <div>
                 <h1 class="member-page-title" th:text="#{librarian.staff.heading}">Librarians</h1>
-                <p class="member-page-description" th:text="#{librarian.staff.description}">View librarian profiles, roles, and account statuses.</p>
+                <p class="member-page-description" th:text="#{librarian.staff.description}">View librarian profiles,
+                    roles, and account statuses.</p>
             </div>
         </header>
 
         <section class="member-data-card">
             <div class="member-data-card-body">
                 <div class="member-summary-chips" th:aria-label="#{librarian.staff.summary}">
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> <span th:text="#{librarian.staff.totalLabel}">librarians</span></span>
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong> <span th:text="#{status.active}">active</span></span>
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['inactive'] : 0}">0</strong> <span th:text="#{status.inactive}">inactive</span></span>
-                    <span><strong th:text="${librarianSummary != null ? librarianSummary['blocked'] : 0}">0</strong> <span th:text="#{status.blocked}">blocked</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> <span
+                            th:text="#{librarian.staff.totalLabel}">librarians</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong>
+                        <span th:text="#{status.active}">active</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['inactive'] : 0}">0</strong>
+                        <span th:text="#{status.inactive}">inactive</span></span>
+                    <span><strong th:text="${librarianSummary != null ? librarianSummary['blocked'] : 0}">0</strong>
+                        <span th:text="#{status.blocked}">blocked</span></span>
                 </div>
 
                 <!-- Search & Filter + Back Button -->
                 <div class="member-toolbar">
                     <!-- Search & Filter -->
-                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}">
+                    <form class="member-search-form" method="get" th:action="@{/librarian/librarians}"
+                        data-auto-filter-form data-focus-key="librarianStaffFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                th:value="${keyword}"
-                                th:placeholder="#{librarian.staff.searchPlaceholder}">
-                            <select class="form-select member-filter-select" name="status"
+                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
+                                th:value="${keyword}" th:placeholder="#{librarian.staff.searchPlaceholder}">
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{librarian.staff.statusFilter}">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{librarian.staff.allStatuses}">All statuses</option>
-                                <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{status.active}">Active</option>
-                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{status.inactive}">Inactive</option>
-                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{status.blocked}">Blocked</option>
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}"
+                                    th:text="#{librarian.staff.allStatuses}">All statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}"
+                                    th:text="#{status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}"
+                                    th:text="#{status.inactive}">Inactive</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}"
+                                    th:text="#{status.blocked}">Blocked</option>
                             </select>
-                            <button class="btn member-search-button text-nowrap" type="submit">
-                                <span th:text="#{common.search}">Search</span>
-                            </button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/librarian/librarians}">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -56,12 +67,12 @@
                 <div class="table-responsive member-table-wrap">
                     <table class="table table-hover align-middle stable-table-layout member-table">
                         <colgroup>
-                            <col class="u-width-7-2d9383cf">
-                            <col class="u-width-16-9fe033fb">
-                            <col class="librarian-librarian-list-col-width-07">
-                            <col class="librarian-librarian-list-col-width-08">
-                            <col class="u-width-17-9278e232">
-                            <col class="u-width-15-f7f760e2">
+                            <col class="librarian-col-index">
+                            <col class="librarian-col-username">
+                            <col class="librarian-col-user">
+                            <col class="librarian-col-role">
+                            <col class="librarian-col-status">
+                            <col class="librarian-col-actions">
                         </colgroup>
                         <thead>
                             <tr>
@@ -143,7 +154,8 @@
                                 <td class="text-end pe-3 member-actions">
                                     <button type="button" class="member-icon-action view-detail-tooltip-trigger"
                                         data-bs-toggle="modal" th:data-bs-target="${'#viewStaffModal' + staff.staffId}"
-                                        th:data-bs-title="#{librarian.staff.viewDetails}" data-bs-custom-class="view-detail-tooltip"
+                                        th:data-bs-title="#{librarian.staff.viewDetails}"
+                                        data-bs-custom-class="view-detail-tooltip"
                                         th:aria-label="#{librarian.staff.viewDetails}">
                                         <i class="bi bi-eye"></i>
                                     </button>
@@ -155,7 +167,8 @@
                                             <div class="modal-content">
 
                                                 <div class="modal-header member-modal-header">
-                                                    <h5 class="modal-title member-modal-title-accent" th:text="#{librarian.staff.details}">Librarian details</h5>
+                                                    <h5 class="modal-title member-modal-title-accent"
+                                                        th:text="#{librarian.staff.details}">Librarian details</h5>
                                                 </div>
 
                                                 <div class="modal-body member-modal-body">
@@ -163,7 +176,8 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.staffId}">Staff ID</span>
+                                                                <span th:text="#{librarian.staff.staffId}">Staff
+                                                                    ID</span>
                                                             </div>
                                                             <div class="fw-bold text-classic"
                                                                 th:text="${'ST' + staff.staffId}">
@@ -183,7 +197,8 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.fullName}">Full name</span>
+                                                                <span th:text="#{librarian.staff.fullName}">Full
+                                                                    name</span>
                                                             </div>
                                                             <div class="fw-bold"
                                                                 th:text="${staff.user != null ? staff.user.fullName : #messages.msg('librarian.staff.noFullName')}">
@@ -206,7 +221,8 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.phone}">Phone number</span>
+                                                                <span th:text="#{librarian.staff.phone}">Phone
+                                                                    number</span>
                                                             </div>
                                                             <div>
                                                                 <i class="bi bi-telephone text-classic me-1"></i>
@@ -240,7 +256,8 @@
 
                                                         <div class="col-md-6">
                                                             <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.type}">Staff type</span>
+                                                                <span th:text="#{librarian.staff.type}">Staff
+                                                                    type</span>
                                                             </div>
                                                             <span class="librarian-role-badge"
                                                                 th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}">
@@ -283,7 +300,8 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword}, status=${selectedStatus})}" th:text="#{pagination.first}">First</a>
+                                    th:href="@{/librarian/librarians(page=0, keyword=${keyword}, status=${selectedStatus})}"
+                                    th:text="#{pagination.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
@@ -319,7 +337,8 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus})}" th:text="#{pagination.last}">Last</a>
+                                    th:href="@{/librarian/librarians(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus})}"
+                                    th:text="#{pagination.last}">Last</a>
                             </li>
                         </ul>
                     </nav>
