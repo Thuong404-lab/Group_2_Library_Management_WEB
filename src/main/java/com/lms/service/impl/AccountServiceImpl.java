@@ -132,16 +132,14 @@ public class AccountServiceImpl implements AccountService {
 
         MembershipTier selectedTier = null;
         if ("MEMBER".equals(roleName)) {
-            selectedTier = membershipTierRepository.findAll().stream()
-                    .filter(tier -> "Regular".equalsIgnoreCase(tier.getTierName()))
-                    .findFirst()
+            selectedTier = membershipTierRepository.findById(request.getTierId())
                     .orElseThrow(() -> new AccountFormValidationException(
                             Map.of("tierId", messages.get("backend.account.regularTierNotFound"))));
         }
 
-        Role role = roleRepository.findByNameIgnoreCase(roleName)
+        Role role = roleRepository.findByNameIgnoreCase(canonicalRoleName(roleName))
                 .orElseThrow(() -> new DataProcessingException(
-                        messages.get("backend.account.roleNotFound", roleName)));
+                        messages.get("backend.account.roleNotFound", canonicalRoleName(roleName))));
 
         User user = new User();
         user.setFullName(fullName);
@@ -510,6 +508,11 @@ public class AccountServiceImpl implements AccountService {
 
     private String normalizeRole(String role) {
         return trim(role).toUpperCase();
+    }
+
+    private String canonicalRoleName(String role) {
+        String normalized = normalizeRole(role);
+        return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
     }
 
     private String normalizeStatus(String status) {

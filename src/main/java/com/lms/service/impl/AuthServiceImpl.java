@@ -213,6 +213,10 @@ public class AuthServiceImpl implements AuthService {
         account.setPasswordHash(pass);
         account.setMember(member);
         account.setStatus("Active");
+        Role memberRole = roleRepository.findByNameIgnoreCase("ROLE_MEMBER")
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", "ROLE_MEMBER")));
+        account.getRoles().add(memberRole);
 
         account = memberAccountRepository.save(account);
 

@@ -1,9 +1,10 @@
 /*
  * Library Management Web - safe demonstration data
- * Run manually after Flyway has applied V1. All people, contacts and payment references are fictitious.
+ * Run manually after Flyway has applied every migration. Safe to rerun after a complete application.
+ * All people, contacts and payment references are fictitious.
  * Demo password for every seeded account: Demo@123
  */
-USE [tes];
+USE [LibraryManagementWeb];
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -13,8 +14,41 @@ GO
 BEGIN TRY
     BEGIN TRANSACTION;
 
+    IF OBJECT_ID(N'dbo.DemoSeedHistory', N'U') IS NULL
+        THROW 51000, 'Run all Flyway migrations before applying the demonstration seed.', 1;
+
     DECLARE @PasswordHash VARCHAR(255) = '$2a$10$0ZPpDwDviBhxvqCU0rl46uMDpgIrZ93eBGJXDmJMXqlYmUTBuoTlW';
     DECLARE @Now DATETIME2(6) = SYSUTCDATETIME();
+    DECLARE @SeedKey VARCHAR(100) = 'library-demo-v1';
+
+    IF EXISTS (SELECT 1 FROM dbo.DemoSeedHistory WHERE seed_key = @SeedKey)
+    BEGIN
+        PRINT 'Demonstration seed already applied; no changes were made.';
+        COMMIT TRANSACTION;
+        RETURN;
+    END;
+
+    /* Adopt a complete seed created before DemoSeedHistory existed. */
+    IF EXISTS (SELECT 1 FROM dbo.Staff_Accounts WHERE username = 'admin')
+       AND EXISTS (SELECT 1 FROM dbo.Staff_Accounts WHERE username = 'librarian01')
+       AND EXISTS (SELECT 1 FROM dbo.Member_Accounts WHERE username = 'member20')
+       AND EXISTS (SELECT 1 FROM dbo.Books WHERE book_id = 30)
+       AND EXISTS (SELECT 1 FROM dbo.Transactions WHERE transaction_id = 20)
+       AND EXISTS (SELECT 1 FROM dbo.Notifications WHERE notification_id = 12)
+    BEGIN
+        INSERT dbo.DemoSeedHistory(seed_key) VALUES (@SeedKey);
+        PRINT 'Existing complete demonstration seed registered; no duplicate rows were inserted.';
+        COMMIT TRANSACTION;
+        RETURN;
+    END;
+
+    /* Refuse to mix fixed-ID demo rows with existing or partially seeded data. */
+    IF EXISTS (SELECT 1 FROM dbo.Roles)
+       OR EXISTS (SELECT 1 FROM dbo.Users)
+       OR EXISTS (SELECT 1 FROM dbo.Books)
+       OR EXISTS (SELECT 1 FROM dbo.Transactions)
+       OR EXISTS (SELECT 1 FROM dbo.Notifications)
+        THROW 51001, 'Database is not empty or contains a partial demo seed; no changes were made.', 1;
 
     SET IDENTITY_INSERT dbo.Roles ON;
     INSERT dbo.Roles(role_id,name) VALUES
@@ -484,6 +518,8 @@ BEGIN TRY
       (6,'REQUEST_RETURN','127.0.0.1',N'Demo Browser',N'Thành viên gửi yêu cầu trả.',DATEADD(hour,-2,@Now)),
       (7,'RESERVE_BOOK','127.0.0.1',N'Demo Browser',N'Thành viên đặt trước sách.',DATEADD(day,-1,@Now)),
       (3,'UPDATE_SETTINGS','127.0.0.1',N'Demo Browser',N'Kiểm tra cấu hình nghiệp vụ.',DATEADD(day,-1,@Now));
+
+    INSERT dbo.DemoSeedHistory(seed_key) VALUES (@SeedKey);
 
     COMMIT TRANSACTION;
 END TRY
