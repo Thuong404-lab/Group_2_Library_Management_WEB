@@ -39,6 +39,11 @@ public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_DAMAGED = "Damaged";
     private static final String STATUS_DISPOSED = "Disposed";
     private static final String STATUS_ACTIVE = "Active";
+    private static final Set<String> ALLOWED_BOOK_CONDITIONS = Set.of(
+            "Good / Intact and clean",
+            "Minor damage (Bent corners, worn cover, or small tears)",
+            "Severely damaged (Compensation required)",
+            "Lost book (Compensation required)");
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
@@ -257,6 +262,10 @@ public class InventoryServiceImpl implements InventoryService {
         if (shelfId == null) {
             throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
         }
+        String normalizedCondition = bookCondition == null ? "" : bookCondition.trim();
+        if (!ALLOWED_BOOK_CONDITIONS.contains(normalizedCondition)) {
+            throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
+        }
 
         Book book = findBookById(bookId);
         Shelf shelf = shelfRepository.findById(shelfId)
@@ -277,9 +286,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setShelf(shelf);
             item.setBarcode(barcode);
             item.setStatus(STATUS_AVAILABLE);
-            item.setBookCondition(bookCondition == null || bookCondition.isBlank()
-                    ? "Good / Intact and clean"
-                    : bookCondition.trim());
+            item.setBookCondition(normalizedCondition);
             bookItemRepository.save(item);
             existingBarcodes.add(barcode);
         }
