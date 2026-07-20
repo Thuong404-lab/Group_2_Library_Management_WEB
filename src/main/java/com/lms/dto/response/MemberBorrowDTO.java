@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class MemberBorrowDTO {
     private Integer id;
+    private Integer bookId;
     private String bookTitle;
     private String authorName;
     private String bookImage;
@@ -25,6 +26,8 @@ public class MemberBorrowDTO {
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
+    public Integer getBookId() { return bookId; }
+    public void setBookId(Integer bookId) { this.bookId = bookId; }
     public String getBookTitle() { return bookTitle; }
     public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }
     public String getAuthorName() { return authorName; }
