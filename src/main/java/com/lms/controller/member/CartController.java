@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
+import java.util.Locale;
 
 @Controller
 @RequestMapping("/member/cart")
@@ -81,7 +82,7 @@ public class CartController extends LocalizedControllerSupport {
 
         // 3. Chặn nếu số lượng thêm vào vượt số lượng khả dụng trong kho
         if (currentInCart >= availableStock) {
-            String errorMessage = "Không thể thêm sách! Số lượng trong giỏ hiện tại đã đạt giới hạn tối đa có sẵn trong kho (" + availableStock + " cuốn).";
+            String errorMessage = message("backend.cart.stockLimitReached", availableStock);
 
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 return org.springframework.http.ResponseEntity
@@ -179,6 +180,21 @@ public class CartController extends LocalizedControllerSupport {
         List<Integer> requestedBookIds = selectedBookIds.stream()
                 .filter(java.util.Objects::nonNull)
                 .toList();
+        @SuppressWarnings("unchecked")
+        List<Integer> cartBookIds = session.getAttribute("BOOK_CART") instanceof List<?>
+                ? (List<Integer>) session.getAttribute("BOOK_CART")
+                : List.of();
+        java.util.Map<Integer, Long> requestedCounts = requestedBookIds.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        java.util.function.Function.identity(),
+                        java.util.stream.Collectors.counting()));
+        boolean selectionMatchesCart = !requestedCounts.isEmpty() && requestedCounts.entrySet().stream()
+                .allMatch(entry -> java.util.Collections.frequency(cartBookIds, entry.getKey()) >= entry.getValue());
+        if (!selectionMatchesCart) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
+            return "redirect:/member/cart";
+        }
+
         List<Book> allCartItems = cartService.getCartItems(session);
         List<Book> selectedCartItems = new java.util.ArrayList<>();
         for (Integer id : requestedBookIds) {
@@ -222,24 +238,40 @@ public class CartController extends LocalizedControllerSupport {
             return "redirect:/member/cart";
         }
 
-        List<Book> cartItems = cartService.getCartItems(session);
-        List<Integer> cartBookIds = cartItems.stream().map(Book::getBookId).toList();
-        boolean allInCart = selectedBookIds.stream().allMatch(cartBookIds::contains);
+        String normalizedPaymentMethod = paymentMethod == null
+                ? ""
+                : paymentMethod.trim().toUpperCase(Locale.ROOT);
+        if (!"WALLET".equals(normalizedPaymentMethod) && !"BANK".equals(normalizedPaymentMethod)) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidPaymentMethod"));
+            return "redirect:/member/cart";
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Integer> cartBookIds = session.getAttribute("BOOK_CART") instanceof List<?>
+                ? (List<Integer>) session.getAttribute("BOOK_CART")
+                : List.of();
+        java.util.Map<Integer, Long> selectedCounts = selectedBookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        java.util.function.Function.identity(),
+                        java.util.stream.Collectors.counting()));
+        boolean allInCart = !selectedCounts.isEmpty() && selectedCounts.entrySet().stream()
+                .allMatch(entry -> java.util.Collections.frequency(cartBookIds, entry.getKey()) >= entry.getValue());
 
         if (!allInCart) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Quy trình lập phiếu thất bại: Sách đã được thanh toán hoặc không còn trong giỏ sách.");
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
             return "redirect:/member/cart";
         }
 
         try {
             Member member = memberRepository.findByAccountUsername(principal.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
+                    .orElseThrow(() -> new ResourceNotFoundException(message("backend.cart.memberNotFound")));
             BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), selectedBookIds, numberOfDays);
             BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                     .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
                     .orElse(BigDecimal.ZERO);
 
-            if ("WALLET".equalsIgnoreCase(paymentMethod)) {
+            if ("WALLET".equals(normalizedPaymentMethod)) {
                 if (walletBalance.compareTo(previewFee) < 0) {
                     redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.insufficientWalletBalance"));
                     return "redirect:/member/cart";
@@ -252,11 +284,12 @@ public class CartController extends LocalizedControllerSupport {
                 return "redirect:/member/borrow/management?tab=borrowing";
             }
 
-            if ("BANK".equalsIgnoreCase(paymentMethod) && previewFee.compareTo(BigDecimal.ZERO) > 0) {
+            if ("BANK".equals(normalizedPaymentMethod) && previewFee.compareTo(BigDecimal.ZERO) > 0) {
                 com.lms.entity.Borrow pendingBorrow = null;
                 try {
                     pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
                     com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
+                    selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
                     return "redirect:/member/payments/payos/" + payment.getOrderCode();
                 } catch (Exception paymentError) {
                     if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {

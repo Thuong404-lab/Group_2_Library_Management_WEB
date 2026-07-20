@@ -279,6 +279,17 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             @RequestHeader(value = "Referer", required = false) String referer) {
 
+        if (principal == null) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(favoriteJson(false, message("error.unauthorized.message")));
+            }
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                    .location(URI.create("/login"))
+                    .build();
+        }
+
         try {
             memberFavoriteService.addToFavorites(principal.getName(), bookId);
             if (isAjax(requestedWith)) {
@@ -307,6 +318,17 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             RedirectAttributes flash,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             @RequestHeader(value = "Referer", required = false) String referer) {
+
+        if (principal == null) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(favoriteJson(false, message("error.unauthorized.message")));
+            }
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                    .location(URI.create("/login"))
+                    .build();
+        }
 
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);

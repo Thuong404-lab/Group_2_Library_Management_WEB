@@ -79,7 +79,8 @@
                 <!-- Action Buttons -->
                 <div class="book-detail-actions d-flex mt-3 flex-wrap gap-2" th:aria-label="#{common.actions}">
                     <!-- Favorite Button -->
-                    <form th:action="${favoriteBookIds.contains(book.bookId) ? '/member/interaction/favorites/' + book.bookId + '/remove' : '/member/interaction/favorites/' + book.bookId + '/add'}"
+                    <form sec:authorize="hasRole('MEMBER')"
+                          th:action="${favoriteBookIds.contains(book.bookId) ? '/member/interaction/favorites/' + book.bookId + '/remove' : '/member/interaction/favorites/' + book.bookId + '/add'}"
                           method="post" class="favorite-form" th:data-book-id="${book.bookId}"
                           th:data-add-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/add'}"
                           th:data-remove-url="@{'/member/interaction/favorites/' + ${book.bookId} + '/remove'}">
@@ -90,6 +91,11 @@
                             <span th:text="${favoriteBookIds.contains(book.bookId) ? #messages.msg('favorite.action.added') : #messages.msg('guest.bookDetail.favorite')}">Favorite</span>
                         </button>
                     </form>
+                    <a sec:authorize="!hasRole('MEMBER')" th:href="@{/login}"
+                       class="book-detail-button book-detail-button--secondary">
+                        <i class="bi bi-heart" aria-hidden="true"></i>
+                        <span th:text="#{guest.bookDetail.favorite}">Favorite</span>
+                    </a>
 
                     <!-- Add to Cart / View Cart Button -->
                     <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"

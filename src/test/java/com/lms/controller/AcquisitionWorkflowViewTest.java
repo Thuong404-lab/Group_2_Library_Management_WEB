@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -38,6 +39,27 @@ class AcquisitionWorkflowViewTest {
     @Autowired CustomMemberDetailsService memberDetailsService;
 
     @Test
+    void anonymousVisitorCannotSubmitFavoriteAction() throws Exception {
+        var availableBook = bookRepository.findAll().stream()
+                .filter(book -> "Active".equalsIgnoreCase(book.getStatus()))
+                .findFirst();
+        Assumptions.assumeTrue(availableBook.isPresent(), "Current database has no active book");
+        Integer bookId = availableBook.get().getBookId();
+
+        mockMvc.perform(get("/books/{id}", bookId))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("class=\"favorite-form\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/login\"")));
+
+        mockMvc.perform(post("/member/interaction/favorites/{bookId}/add", bookId)
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
     void rendersMemberAcquisitionPageWithCurrentDatabase() throws Exception {
         var accounts = memberAccountRepository.findAll(PageRequest.of(0, 1)).getContent();
         Assumptions.assumeFalse(accounts.isEmpty(), "Current database has no member account");
@@ -47,6 +69,37 @@ class AcquisitionWorkflowViewTest {
         mockMvc.perform(get("/member/interaction/acquisition-requests/new").with(user(memberUser)))
                 .andExpect(status().isOk())
                 .andExpect(view().name("member/book-acquisition-request"));
+    }
+
+    @Test
+    void rendersCartCheckoutAsOnePaymentForm() throws Exception {
+        var accounts = memberAccountRepository.findAll(PageRequest.of(0, 1)).getContent();
+        Assumptions.assumeFalse(accounts.isEmpty(), "Current database has no member account");
+        var memberUser = memberDetailsService.loadUserByUsername(accounts.get(0).getUsername());
+        var availableBook = bookRepository.findAll().stream()
+                .filter(book -> "Active".equalsIgnoreCase(book.getStatus()))
+                .findFirst();
+        Assumptions.assumeTrue(availableBook.isPresent(), "Current database has no active book");
+
+        Integer bookId = availableBook.get().getBookId();
+        MockHttpSession cartSession = new MockHttpSession();
+        cartSession.setAttribute("BOOK_CART", new java.util.ArrayList<>(java.util.List.of(bookId)));
+
+        mockMvc.perform(get("/member/cart/checkout")
+                        .param("selectedBookIds", String.valueOf(bookId))
+                        .param("numberOfDays", "14")
+                        .session(cartSession)
+                        .with(user(memberUser)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("member/cart-checkout"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"cartSubmitForm\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("action=\"/member/cart/submit\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"paymentMethod\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("value=\"WALLET\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("value=\"BANK\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-checkout-actions")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("form=\"cartSubmitForm\""))));
     }
 
     @Test
@@ -85,7 +138,7 @@ class AcquisitionWorkflowViewTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("member/borrow"))
                 .andExpect(model().attribute("activeTab", "borrowing"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-loan-hero")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("member-dashboard-hero borrow-hero")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"renewConfirmModal\"")));
         mockMvc.perform(get("/member/borrow/management")
                         .param("tab", "reserved")
@@ -144,14 +197,6 @@ class AcquisitionWorkflowViewTest {
                         .with(user(memberUser)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(availableBook.get().getTitle())));
-        mockMvc.perform(post("/member/cart/add")
-                        .param("bookId", String.valueOf(availableBookId))
-                        .session(cartSession)
-                        .with(user(memberUser))
-                        .with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/books/" + availableBookId))
-                .andExpect(flash().attributeExists("success"));
         mockMvc.perform(get("/member/cart/checkout")
                         .param("selectedBookIds", String.valueOf(availableBookId))
                         .param("numberOfDays", "14")
