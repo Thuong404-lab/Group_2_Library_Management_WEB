@@ -172,7 +172,8 @@
                                 </thead>
                                 <tbody>
                                     <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
-                                        th:data-book-availability="${book.status == 'Disposed' ? 'Unavailable' : 'Available'}">
+                                        th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}"
+                                        th:data-book-availability="${availableCopies > 0 ? 'Available' : 'Unavailable'}">
                                         <td class="ps-3 fw-bold"
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
@@ -196,8 +197,8 @@
                                             th:title="${book.description}">Description</td>
                                         <td>
                                             <span class="status-badge"
-                                                th:classappend="${book.status == 'Disposed'} ? ' status-disposed' : ' status-active'"
-                                                th:text="${book.status == 'Disposed' ? #messages.msg('book.status.unavailable') : (book.status == 'Active' ? #messages.msg('book.status.ready') : book.status)}">Active</span>
+                                                th:classappend="${availableCopies > 0} ? ' status-active' : ' status-zero'"
+                                                th:text="${availableCopies > 0} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
                                         </td>
                                         <td class="text-end member-actions">
                                             <button type="button" class="member-icon-action"
@@ -458,7 +459,7 @@
                                                 <td class="text-center"><span class="status-badge" th:with="lendable=${bookItemsByBookId[book.bookId] != null ? #lists.size(bookItemsByBookId[book.bookId].?[status == 'Available']) : 0}" th:classappend="${lendable == 0} ? ' status-zero' : ' status-active'" th:text="${lendable}">0</span></td>
                                                 <td class="text-end member-actions">
                                                     <button type="button" class="member-icon-action" data-bs-toggle="modal" th:data-bs-target="${'#addCopiesModal' + book.bookId}" th:title="#{librarian.inventory.addCopies}"><i class="bi bi-plus-lg"></i></button>
-                                                    <button type="button" class="member-icon-action member-icon-action-danger" data-bs-toggle="modal" th:data-bs-target="${'#viewCopiesModal' + book.bookId}" th:title="#{librarian.inventory.deleteCopies}"><i class="bi bi-trash"></i></button>
+                                                    <button type="button" class="member-icon-action" data-bs-toggle="modal" th:data-bs-target="${'#viewCopiesModal' + book.bookId}" th:title="#{librarian.inventory.viewCopies}" th:aria-label="#{librarian.inventory.viewCopies}"><i class="bi bi-eye"></i></button>
                                                 </td>
                                             </tr>
                                             <tr th:if="${books == null or books.totalElements == 0}"><td colspan="6" class="text-center text-muted py-5" th:text="#{librarian.inventory.empty}">No books in inventory.</td></tr>
@@ -725,7 +726,7 @@
                                     <h5 class="modal-title fw-bold admin-books-h5-color-font-family-31">
                                         <span th:text="#{librarian.inventory.copyList}">Book Copies</span> – <span th:text="${book.title}">Book title</span>
                                     </h5>
-                                    <form class="ms-auto flex-shrink-0" th:id="${'bulkDeleteCopiesForm' + book.bookId}" th:action="@{/admin/inventory/copies/delete/{id}(id=${book.bookId})}" method="post" th:onsubmit="|return confirm('#{librarian.inventory.deleteCopiesConfirm}')|">
+                                    <form class="ms-auto flex-shrink-0" th:id="${'bulkDeleteCopiesForm' + book.bookId}" th:action="@{/admin/inventory/copies/delete/{id}(id=${book.bookId})}" method="post" data-copy-delete-form th:data-confirm-message="#{librarian.inventory.deleteCopiesConfirm}">
                                         <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash me-2"></i><span th:text="#{librarian.inventory.deleteSelectedCopies}">Delete Selected</span></button>
                                     </form>
                                 </div>
@@ -747,7 +748,7 @@
                                                             th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : ' status-inactive')"
                                                             th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Lost' ? #messages.msg('loan.status.lost') : (item.status == 'Damaged' ? #messages.msg('librarian.inventory.status.damaged') : (item.status == 'Disposed' ? #messages.msg('librarian.inventory.status.disposed') : item.status))))}">Available</span>
                                                     </td>
-                                                    <td class="text-end member-actions"><form th:action="@{/admin/inventory/copies/delete/{id}(id=${book.bookId})}" method="post" th:onsubmit="|return confirm('#{librarian.inventory.deleteSingleCopyConfirm}')|"><input type="hidden" name="itemIds" th:value="${item.bookItemId}"><button type="submit" class="member-icon-action member-icon-action-danger"><i class="bi bi-trash"></i></button></form></td>
+                                                    <td class="text-end member-actions"><form th:action="@{/admin/inventory/copies/delete/{id}(id=${book.bookId})}" method="post" data-copy-delete-form th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}"><input type="hidden" name="itemIds" th:value="${item.bookItemId}"><button type="submit" class="member-icon-action member-icon-action-danger"><i class="bi bi-trash"></i></button></form></td>
                                                 </tr>
                                                 <tr th:if="${bookItemsByBookId == null or bookItemsByBookId[book.bookId] == null or #lists.isEmpty(bookItemsByBookId[book.bookId])}">
                                                     <td colspan="7" class="text-center text-muted py-4" th:text="#{librarian.inventory.noCopies}">No copies in inventory.</td>
@@ -1306,6 +1307,51 @@
                         selectAll.indeterminate = checked > 0 && checked < items.length;
                     });
                 });
+            });
+        });
+    </script>
+    <div class="modal fade" id="copyDeleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title" th:text="#{common.confirm}">Confirm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{common.close}"></button>
+                </div>
+                <div class="modal-body"><p class="mb-0" data-copy-delete-confirm-text></p></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                    <button type="button" class="btn btn-danger" data-copy-delete-confirm-button><i class="bi bi-trash me-2"></i><span th:text="#{common.delete}">Delete</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalElement = document.getElementById('copyDeleteConfirmModal');
+            if (!modalElement || typeof bootstrap === 'undefined') return;
+            const confirmModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            const messageElement = modalElement.querySelector('[data-copy-delete-confirm-text]');
+            const confirmButton = modalElement.querySelector('[data-copy-delete-confirm-button]');
+            let pendingForm = null;
+
+            document.querySelectorAll('[data-copy-delete-form]').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    pendingForm = form;
+                    messageElement.textContent = form.dataset.confirmMessage || '';
+                    confirmModal.show();
+                });
+            });
+            confirmButton.addEventListener('click', function () {
+                if (!pendingForm) return;
+                const form = pendingForm;
+                pendingForm = null;
+                confirmButton.disabled = true;
+                form.submit();
+            });
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                pendingForm = null;
+                confirmButton.disabled = false;
             });
         });
     </script>
