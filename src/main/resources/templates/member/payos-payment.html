@@ -5,141 +5,133 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupTitle') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeTitle') : #messages.msg('librarian.payos.fineTitle'))}">KQPay Payment</title>
-    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
-    <link rel="stylesheet" th:href="@{/css/payos-receipt.css}"/>
+    <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/member/member-payos.css}"/>
 </head>
 
 <body>
-<div layout:fragment="content" class="container finance-page">
-    <section class="payos-receipt">
-        <header class="payos-receipt-header">
-                <h2 th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHeading') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeHeading') : #messages.msg('librarian.payos.fineHeading'))}">KQPay Payment</h2>
+<main layout:fragment="content" class="member-notifications-page member-palette-page">
+    <div class="member-notifications-container">
+        <header class="member-notifications-header member-dashboard-hero notifications-hero">
+            <div class="notifications-hero-copy">
+                <span class="member-notifications-eyebrow" th:text="#{payos.status.pending}" th:if="${payment.status == 'PENDING'}">AWAITING PAYMENT</span>
+                <span class="member-notifications-eyebrow" th:text="#{payment.status.paid}" th:if="${payment.status == 'PAID'}" style="color: var(--member-color-success-ink);">PAID</span>
+                <span class="member-notifications-eyebrow" th:if="${payment.status != 'PENDING' and payment.status != 'PAID'}" style="color: var(--member-color-danger-ink);"
+                      th:text="${payment.status == 'EXPIRED' ? #messages.msg('payos.status.expired') : (payment.status == 'CANCELLED' ? #messages.msg('payos.status.canceled') : #messages.msg('payos.status.failed'))}">PAYMENT FAILED</span>
+                <h1 th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHeading') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeHeading') : #messages.msg('librarian.payos.fineHeading'))}">KQPay Payment</h1>
+                <p th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHelp') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowHelp') : #messages.msg('librarian.payos.fineHelp'))}">The page updates after KQPay confirms the transaction.</p>
+            </div>
+            <a th:if="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/fees}" class="notifications-hero-action member-ui-button member-ui-button--inverse">
+                <i class="bi bi-arrow-return-left" aria-hidden="true"></i> <span th:text="#{payos.backFees}">Back</span>
+            </a>
+            <a th:unless="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/transactions}" class="notifications-hero-action member-ui-button member-ui-button--inverse">
+                <i class="bi bi-arrow-return-left" aria-hidden="true"></i> <span th:text="#{member.reservations.backWallet}">Back</span>
+            </a>
         </header>
 
-        <div class="payos-receipt-body">
-            <div class="payos-customer-box">
-                <span class="payos-customer-label" th:text="#{librarian.payos.memberAccount}">Member Account:</span>
-                <p class="payos-customer-value"
-                      th:text="${payment.member.user != null ? payment.member.user.email : #messages.msg('common.member')}">
-                    member@example.com
-                </p>
-            </div>
-
-            <div class="payos-section-bar">
-                    <h3 class="payos-section-title"
-                        th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupInfo') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeInfo') : #messages.msg('librarian.payos.fineInfo'))}">Payment Information</h3>
-                    <span th:if="${payment.status == 'PENDING'}" class="payos-status payos-status-pending" th:text="#{payos.status.pending}">Awaiting Payment</span>
-                    <span th:if="${payment.status == 'PAID'}" class="payos-status payos-status-paid" th:text="#{payment.status.paid}">Paid</span>
-                <span th:if="${payment.status != 'PENDING' and payment.status != 'PAID'}"
-                      class="payos-status payos-status-failed"
-                          th:text="${payment.status == 'EXPIRED' ? #messages.msg('payos.status.expired') : (payment.status == 'CANCELLED' ? #messages.msg('payos.status.canceled') : #messages.msg('payos.status.failed'))}">
-                        Payment Failed
-                    </span>
-                </div>
-
-            <div class="payos-receipt-grid" th:classappend="${payment.status != 'PENDING'} ? ' no-qr' : ''">
-                <div class="payos-detail-card">
-                    <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{common.member}">Member</span>
-                        <span class="payos-detail-value"
-                              th:text="${payment.member.user != null ? payment.member.user.fullName : #messages.msg('common.member')}">Member</span>
-                    </div>
-                    <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{librarian.payos.memberId}">Member ID</span>
-                        <span class="payos-detail-value" th:text="${'TV-' + payment.member.memberId}">TV-1</span>
-                    </div>
-                    <div class="payos-detail-row" th:if="${payment.purpose == 'FINE_BATCH'}">
+        <div class="row">
+            <div class="col-lg-7 mb-4">
+                <section class="member-notifications-card payos-detail-section">
+                    <h2 class="payos-section-title" th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupInfo') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowFeeInfo') : #messages.msg('librarian.payos.fineInfo'))}">Payment Information</h2>
+                    
+                    <div class="payos-detail-list">
+                        <div class="payos-detail-row">
+                            <span class="payos-detail-label" th:text="#{common.member}">Member</span>
+                            <strong class="payos-detail-value" th:text="${payment.member.user != null ? payment.member.user.fullName : #messages.msg('common.member')}">Member</strong>
+                        </div>
+                        <div class="payos-detail-row">
+                            <span class="payos-detail-label" th:text="#{librarian.payos.memberId}">Member ID</span>
+                            <strong class="payos-detail-value" th:text="${'TV-' + payment.member.memberId}">TV-1</strong>
+                        </div>
+                        <div class="payos-detail-row">
+                            <span class="payos-detail-label" th:text="#{librarian.payos.memberAccount}">Member Account</span>
+                            <strong class="payos-detail-value" th:text="${payment.member.user != null ? payment.member.user.email : #messages.msg('common.member')}">member@example.com</strong>
+                        </div>
+                        <div class="payos-detail-row" th:if="${payment.purpose == 'FINE_BATCH'}">
                             <span class="payos-detail-label" th:text="#{payos.itemCount}">Payment Items</span>
-                        <span class="payos-detail-value">
+                            <strong class="payos-detail-value">
                                 <span th:text="#{payos.fineCount(${fineItems != null ? #lists.size(fineItems) : 0})}">0 fines</span>
-                        </span>
+                            </strong>
+                        </div>
+                        <div class="payos-detail-row" th:if="${payment.referenceId != null}">
+                            <span class="payos-detail-label"
+                                  th:text="${payment.purpose == 'BORROW_FEE' ? #messages.msg('loan.id') : #messages.msg('payos.fineId')}">Fine ID</span>
+                            <strong class="payos-detail-value" th:text="${'#' + payment.referenceId}">#1</strong>
+                        </div>
+                        <div class="payos-detail-row">
+                            <span class="payos-detail-label" th:text="#{payos.orderCode}">KQPay Order Code</span>
+                            <strong class="payos-detail-value" th:text="${payment.orderCode}">1</strong>
+                        </div>
+                        <div class="payos-detail-row">
+                            <span class="payos-detail-label" th:text="#{payos.createdAt}">Created At</span>
+                            <strong class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</strong>
+                        </div>
                     </div>
-                    <div class="payos-detail-row" th:if="${payment.referenceId != null}">
-                        <span class="payos-detail-label"
-                              th:text="${payment.purpose == 'BORROW_FEE' ? #messages.msg('loan.id') : #messages.msg('payos.fineId')}">Fine ID</span>
-                        <span class="payos-detail-value" th:text="${'#' + payment.referenceId}">#1</span>
-                    </div>
-                    <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{payos.orderCode}">KQPay Order Code</span>
-                        <span class="payos-detail-value" th:text="${payment.orderCode}">1</span>
-                    </div>
-                    <div class="payos-detail-row">
-                        <span class="payos-detail-label" th:text="#{payos.createdAt}">Created At</span>
-                        <span class="payos-detail-value" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
-                    </div>
-                    <div class="payos-fine-items"
-                         th:if="${payment.purpose == 'FINE_BATCH' and fineItems != null and !#lists.isEmpty(fineItems)}">
-                    <div class="payos-fine-items-title" th:text="#{payos.finesInOrder}">Fines in this Order</div>
-                        <div class="payos-fine-item" th:each="item : ${fineItems}">
-                            <span
-                                      th:text="#{payos.fineNumber(${item.fineTransaction.transactionId})}">Fine #1</span>
+                    
+                    <div class="payos-fine-items-box" th:if="${payment.purpose == 'FINE_BATCH' and fineItems != null and !#lists.isEmpty(fineItems)}">
+                        <h3 class="payos-fine-items-title" th:text="#{payos.finesInOrder}">Fines in this Order</h3>
+                        <div class="payos-fine-item-row" th:each="item : ${fineItems}">
+                            <span th:text="#{payos.fineNumber(${item.fineTransaction.transactionId})}">Fine #1</span>
                             <strong>
                                 <span th:text="${#numbers.formatDecimal(item.amountSnapshot, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
                             </strong>
                         </div>
                     </div>
-
-                    <div class="payos-qr-card" th:if="${payment.status == 'PENDING'}">
-                        <div class="payos-qr-frame">
-                            <img th:src="@{/member/payments/payos/{orderCode}/qr.png(orderCode=${payment.orderCode})}"
-                                th:alt="#{payos.qrAlt}" />
-                        </div>
-                        <div class="payos-qr-title"
-                            th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.scanAll') : #messages.msg('payos.scan')}">
-                            Scan VietQR to Pay
-                        </div>
-                        <div class="payos-qr-note"
-                            th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.batchQrHint') : #messages.msg('payos.qrHint')}">
-                            Do not change the amount or transfer description.
-                        </div>
-                        <div class="kqpay-countdown" data-kqpay-countdown th:data-expired-label="#{payment.qrExpired}"
-                            th:attr="data-expires-at=${paymentExpiresAt}">
-                            <span data-kqpay-label th:text="#{payos.expiresIn}">QR code expires in</span>
-                            <strong data-kqpay-time>05:00</strong>
-                        </div>
+                </section>
+            </div>
+            <div class="col-lg-5 mb-4">
+                <section class="member-notifications-card payos-qr-section" th:if="${payment.status == 'PENDING'}">
+                    <div class="payos-qr-frame">
+                        <img th:src="@{/member/payments/payos/{orderCode}/qr.png(orderCode=${payment.orderCode})}" th:alt="#{payos.qrAlt}" />
                     </div>
-                </div>
-
-                <p class="payos-help"
-                   th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupHelp') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowHelp') : #messages.msg('librarian.payos.fineHelp'))}">The page updates after KQPay confirms the transaction.</p>
-
-            <div th:if="${payment.status == 'PAID'}" class="payos-success">
-                <span th:if="${payment.purpose == 'FINE_BATCH'}">
-                    <span th:text="#{payos.batchSuccess(${fineItems != null ? #lists.size(fineItems) : 0})}">All fines were paid successfully.</span>
-                </span>
-                <span th:unless="${payment.purpose == 'FINE_BATCH'}">
-                    <span th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupSuccess') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowSuccess') : #messages.msg('librarian.payos.fineSuccess'))}">Payment was recorded successfully.</span>
-                    <span th:if="${payment.transaction != null}"><span th:text="#{transaction.code}">Transaction ID</span>: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
-                </span>
+                    <h3 class="payos-qr-title" th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.scanAll') : #messages.msg('payos.scan')}">Scan VietQR to Pay</h3>
+                    <p class="payos-qr-note" th:text="${payment.purpose == 'FINE_BATCH' ? #messages.msg('payos.batchQrHint') : #messages.msg('payos.qrHint')}">Do not change the amount or transfer description.</p>
+                    <div class="payos-countdown" data-kqpay-countdown th:data-expired-label="#{payment.qrExpired}" th:attr="data-expires-at=${paymentExpiresAt}">
+                        <span data-kqpay-label th:text="#{payos.expiresIn}">QR code expires in</span>
+                        <strong data-kqpay-time>05:00</strong>
+                    </div>
+                </section>
+                
+                <section class="member-notifications-card payos-success-section" th:if="${payment.status == 'PAID'}">
+                    <div class="payos-success-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <h3 class="payos-success-title" th:text="#{payment.status.paid}">Payment Successful</h3>
+                    <p class="payos-success-note">
+                        <span th:if="${payment.purpose == 'FINE_BATCH'}">
+                            <span th:text="#{payos.batchSuccess(${fineItems != null ? #lists.size(fineItems) : 0})}">All fines were paid successfully.</span>
+                        </span>
+                        <span th:unless="${payment.purpose == 'FINE_BATCH'}">
+                            <span th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.topupSuccess') : (payment.purpose == 'BORROW_FEE' ? #messages.msg('librarian.payos.borrowSuccess') : #messages.msg('librarian.payos.fineSuccess'))}">Payment was recorded successfully.</span>
+                            <span th:if="${payment.transaction != null}"><br><span th:text="#{transaction.code}">Transaction ID</span>: <strong th:text="${payment.transaction.transactionId}"></strong>.</span>
+                        </span>
+                    </p>
+                </section>
             </div>
-
-                <div class="payos-receipt-actions">
-                    <a th:if="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/fees}"
-                        class="payos-btn-secondary" th:text="#{payos.backFees}">Back to Borrowing Fees</a>
-                    <a th:unless="${payment.purpose == 'BORROW_FEE'}" th:href="@{/member/financial/transactions}"
-                        class="payos-btn-secondary" th:text="#{member.reservations.backWallet}">Back to Wallet</a>
-                </div>
-            </div>
-        </section>
+        </div>
     </div>
 
     <th:block layout:fragment="scripts">
         <script th:if="${payment.status == 'PENDING'}" th:src="@{/js/kqpay-countdown.js}"></script>
         <script th:if="${payment.status == 'PENDING'}" th:inline="javascript">
-                (() =                        const statusUrl = /*[[@{/member/payments/payos/{orderCode}/status(orderCode=${payment.orderCode})}]                            let at                                const timer = setInterva                                        if (++attempts > 60) { clearInterva                    ; }
-                          y {
-                        const respons e = await  fetch(statusUrl, { headers:  {  'Ac                        json' } });
-                                   ponse.ok) {
-                            const s                            json()).status;
-                                            == 'PENDING') {
-                                      earInterval(timer);
-                                                            ad                                    }
+            (() => {
+                const statusUrl = /*[[@{/member/payments/payos/{orderCode}/status(orderCode=${payment.orderCode})}]]*/ '';
+                let attempts = 0;
+                const timer = setInterval(async () => {
+                    if (++attempts > 60) { clearInterval(timer); return; }
+                    try {
+                        const response = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+                        if (response.ok) {
+                            const status = (await response.json()).status;
+                            if (status !== 'PENDING') {
+                                clearInterval(timer);
+                                window.location.reload();
+                            }
                         }
-                        } catch (            retry e this open */ }
+                    } catch (e) { /* retry */ }
                 }, 5000);
             })();
         </script>
     </th:block>
+</main>
 </body>
 
 </html>

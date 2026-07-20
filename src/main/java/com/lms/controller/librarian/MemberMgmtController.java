@@ -19,7 +19,6 @@ import com.lms.service.OverdueReminderService;
 import com.lms.service.OverdueViolationQueryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -49,7 +48,6 @@ import java.util.UUID;
 @RequestMapping("/librarian")
 public class MemberMgmtController extends LocalizedControllerSupport {
     private static final String TOP_UP_TYPE = "TOP_UP";
-    private static final int MEMBER_SEARCH_LIMIT = 5;
 
     private final LibrarianMemberService memberService;
     private final FinancialService financialService;
@@ -387,34 +385,6 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     private String trim(String value) {
         return value == null ? "" : value.trim();
-    }
-
-    private List<Member> searchMembers(String keyword) {
-        String normalizedKeyword = trim(keyword);
-        if (normalizedKeyword.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Integer, Member> memberMap = new LinkedHashMap<>();
-        if (normalizedKeyword.matches("\\d+")) {
-            try {
-                memberRepository.findById(Integer.valueOf(normalizedKeyword))
-                        .ifPresent(member -> memberMap.put(member.getMemberId(), member));
-            } catch (NumberFormatException ignored) {
-                // Từ khóa có thể là số điện thoại dài, tiếp tục tìm theo chuỗi.
-            }
-        }
-
-        memberRepository
-                .findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(
-                        normalizedKeyword,
-                        normalizedKeyword,
-                        normalizedKeyword,
-                        PageRequest.of(0, MEMBER_SEARCH_LIMIT))
-                .getContent()
-                .forEach(member -> memberMap.putIfAbsent(member.getMemberId(), member));
-
-        return List.copyOf(memberMap.values());
     }
 
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {

@@ -462,6 +462,18 @@ public class BorrowServiceImpl implements BorrowService {
                     "Số lượng mã vạch sách cung cấp không khớp với số lượng sách trong yêu cầu mượn.");
         }
 
+        Set<String> uniqueBarcodes = new LinkedHashSet<>();
+        for (String barcode : barcodes) {
+            String normalizedBarcode = barcode == null ? "" : barcode.trim();
+            if (normalizedBarcode.isEmpty()) {
+                throw new ValidationException(localizedMessageService.get("backend.barcode.required"));
+            }
+            if (!uniqueBarcodes.add(normalizedBarcode.toUpperCase(java.util.Locale.ROOT))) {
+                throw new ValidationException(
+                        localizedMessageService.get("backend.barcode.duplicate", normalizedBarcode));
+            }
+        }
+
         Member member = borrow.getMember();
 
         // Đếm số lượng yêu cầu cho mỗi bookId trong đơn hiện tại
@@ -1370,7 +1382,6 @@ public class BorrowServiceImpl implements BorrowService {
 
         List<Integer> normalizedBookIds = bookIds.stream()
                 .filter(java.util.Objects::nonNull)
-                .distinct()
                 .toList();
         if (normalizedBookIds.isEmpty())
             return java.math.BigDecimal.ZERO;
@@ -1402,7 +1413,6 @@ public class BorrowServiceImpl implements BorrowService {
 
         List<Integer> normalizedBookIds = bookIds.stream()
                 .filter(java.util.Objects::nonNull)
-                .distinct()
                 .toList();
         if (normalizedBookIds.isEmpty()) {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
@@ -1411,6 +1421,11 @@ public class BorrowServiceImpl implements BorrowService {
         Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         localizedMessageService.get("backend.member.currentNotFound")));
+
+        if (member.getUser() == null || member.getUser().getStatus() != UserStatus.Active) {
+            throw new ForbiddenException(localizedMessageService.get("backend.member.inactive"));
+        }
+        validateMemberBorrowEligibility(member);
 
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
@@ -1426,6 +1441,24 @@ public class BorrowServiceImpl implements BorrowService {
         borrow.setStatus("Pending");
         borrow = borrowRepository.save(borrow);
 
+        java.util.Map<Integer, Long> requestedCopiesByBook = normalizedBookIds.stream()
+                .collect(Collectors.groupingBy(java.util.function.Function.identity(), Collectors.counting()));
+        for (java.util.Map.Entry<Integer, Long> entry : requestedCopiesByBook.entrySet()) {
+            long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(entry.getKey(),
+                    "Available");
+            if (entry.getValue() > availableCopies) {
+                throw new ConflictException(
+                        localizedMessageService.get("backend.borrow.stockExceeded", availableCopies));
+            }
+            if (borrowDetailRepository.countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(),
+                    entry.getKey()) > 0) {
+                Book duplicateBook = bookRepository.findById(entry.getKey()).orElse(null);
+                String title = duplicateBook == null ? String.valueOf(entry.getKey()) : duplicateBook.getTitle();
+                throw new ConflictException(
+                        localizedMessageService.get("backend.borrow.duplicateActiveRequest", title));
+            }
+        }
+
         List<String> titles = new ArrayList<>();
         for (Integer bookId : normalizedBookIds) {
             Book book = bookRepository.findById(bookId)
@@ -1434,14 +1467,6 @@ public class BorrowServiceImpl implements BorrowService {
 
             if ("Inactive".equalsIgnoreCase(book.getStatus())) {
                 throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.bookUnavailable"));
-            }
-
-            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
-            boolean hasAvailableItem = items.stream()
-                    .anyMatch(item -> "Available".equalsIgnoreCase(item.getStatus()));
-            if (!hasAvailableItem) {
-                throw new IllegalArgumentException(
-                        localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
             }
 
             BorrowDetail detail = new BorrowDetail();
@@ -1472,6 +1497,11 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         localizedMessageService.get("backend.member.currentNotFound")));
 
+        if (member.getUser() == null || member.getUser().getStatus() != UserStatus.Active) {
+            throw new ForbiddenException(localizedMessageService.get("backend.member.inactive"));
+        }
+        validateMemberBorrowEligibility(member);
+
         long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
         int maxLimit = getEffectiveBorrowLimit(member);
         if (currentBorrowed + bookIds.size() > maxLimit) {
@@ -1488,26 +1518,24 @@ public class BorrowServiceImpl implements BorrowService {
 
         List<String> titles = new ArrayList<>();
         java.util.Set<Integer> validatedBookIds = new java.util.HashSet<>();
+        java.util.Map<Integer, java.util.ArrayDeque<BookItem>> availableItemsByBook = new java.util.HashMap<>();
         for (Integer bookId : bookIds) {
             Book book = bookRepository.findById(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
 
-            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
-            boolean hasAvailableItem = items.stream()
-                    .anyMatch(item -> "Available".equalsIgnoreCase(item.getStatus()));
-            if (!hasAvailableItem) {
-                throw new IllegalArgumentException(
-                        localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
+            if ("Inactive".equalsIgnoreCase(book.getStatus())) {
+                throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.bookUnavailable"));
             }
 
             if (validatedBookIds.add(bookId)) {
                 long requestedCopies = java.util.Collections.frequency(bookIds, bookId);
-                long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
-                if (requestedCopies > availableCopies) {
+                List<BookItem> availableItems = bookItemRepository.findAvailableByBookIdForUpdate(bookId);
+                if (requestedCopies > availableItems.size()) {
                     throw new ConflictException(
-                            localizedMessageService.get("backend.borrow.stockExceeded", availableCopies));
+                            localizedMessageService.get("backend.borrow.stockExceeded", availableItems.size()));
                 }
+                availableItemsByBook.put(bookId, new java.util.ArrayDeque<>(availableItems));
                 long activeOrPending = borrowDetailRepository
                         .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
                 if (activeOrPending > 0) {
@@ -1516,10 +1544,18 @@ public class BorrowServiceImpl implements BorrowService {
                 }
             }
 
+            BookItem reservedItem = availableItemsByBook.get(bookId).pollFirst();
+            if (reservedItem == null) {
+                throw new ConflictException(
+                        localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
+            }
+            reservedItem.setStatus(BorrowServiceImpl.PAYMENT_PENDING);
+            bookItemRepository.save(reservedItem);
+
             BorrowDetail detail = new BorrowDetail();
             detail.setBorrow(borrow);
             detail.setBook(book);
-            detail.setBookItem(null);
+            detail.setBookItem(reservedItem);
             detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
             detail.setStatus(BorrowServiceImpl.PAYMENT_PENDING);
             detail.setRenewCount(0);

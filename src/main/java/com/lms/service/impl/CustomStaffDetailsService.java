@@ -4,7 +4,6 @@ import com.lms.config.CustomUserDetails;
 import com.lms.entity.StaffAccount;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.service.LocalizedMessageService;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,7 +36,7 @@ public class CustomStaffDetailsService implements UserDetailsService {
         // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
         List<GrantedAuthority> authorities = account.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()))
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
 
         return new CustomUserDetails(

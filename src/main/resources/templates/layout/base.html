@@ -103,7 +103,6 @@
         window.requestAnimationFrame(function () { elements.toast.classList.add("is-visible"); });
         if (settings.persistent !== true) hideTimer = window.setTimeout(hide, settings.duration || 4000);
       }
-
       document.addEventListener("DOMContentLoaded", function () {
         var closeButton = document.querySelector(".app-feedback-toast__close");
         if (closeButton) closeButton.addEventListener("click", hide);
@@ -183,9 +182,17 @@
         },
       })
         .then(function (response) {
+          if (response.redirected && new URL(response.url, window.location.origin).pathname === "/login") {
+            window.location.assign(response.url);
+            return null;
+          }
           if (response.status === 401 || response.status === 403) {
             window.location.href = "/login";
             return null;
+          }
+          var contentType = response.headers.get("content-type") || "";
+          if (!contentType.toLowerCase().includes("application/json")) {
+            throw new Error(favoriteAddError);
           }
           return response.json().catch(function () { return {}; }).then(function (data) {
             if (!response.ok) {

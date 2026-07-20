@@ -131,7 +131,7 @@
     <!-- Barcode Scan Card -->
     <div class="card borrow-card mb-4">
         <div class="card-header">
-            <h5 class="card-title-custom mb-0"><i class="bi bi-qr-code-scan me-2 u-color-8b5a2b-93ece783"></i><span th:text="#{librarian.returnDesk.scanTitle}">Scan or enter the returned book barcode</span></h5>
+            <h5 class="card-title-custom mb-0"><i class="bi bi-upc-scan me-2 u-color-8b5a2b-93ece783" aria-hidden="true"></i><span th:text="#{librarian.returnDesk.scanTitle}">Scan or enter the returned book barcode</span></h5>
         </div>
         <div class="card-body p-4">
             <div class="mb-2">
@@ -140,7 +140,7 @@
                 </label>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0" style="border-color: var(--app-color-hairline);">
-                        <i class="bi bi-qr-code-scan text-muted"></i>
+                        <i class="bi bi-upc-scan text-muted" aria-hidden="true"></i>
                     </span>
                     <input type="text" id="barcodeScanInput" class="form-control border-start-0 scan-input"
                            th:placeholder="#{librarian.returnDesk.scanPlaceholder}" placeholder="Quét hoặc nhập mã vạch rồi nhấn Enter..." autofocus autocomplete="off" style="border-color: var(--app-color-hairline);" />
@@ -304,7 +304,8 @@
                         <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c">
                             <span th:text="#{loan.actualReturnDate}">Actual Return Date</span> <span class="text-danger">*</span>
                         </label>
-                        <input type="date" name="returnDate" th:value="${defaultReturnDate}" class="form-control scan-input" required />
+                        <input type="date" name="returnDate" th:value="${defaultReturnDate}"
+                               th:max="${defaultReturnDate}" class="form-control scan-input" required />
                     </div>
                     <div class="mb-4">
                         <label
@@ -384,7 +385,7 @@
             const bulkReturnBtn = document.getElementById('bulkReturnBtn');
             const bulkReturnBtnLabel = document.getElementById('bulkReturnBtnLabel');
             const barcodeContainer = document.getElementById('barcodeInputsContainer');
-            const conditionNoteSelect = document.getElementById('conditionNoteSelect');
+            const conditionNoteSelect = document.getElementById('returnCondition');
             const fineInputContainer = document.getElementById('fineInputContainer');
             const damageFineInput = document.getElementById('damageFineInput');
 
@@ -419,6 +420,13 @@
             const recoverPlaceholder = /*[[#{librarian.returnDesk.recoverBarcodePlaceholder}]]*/ 'Scan the physical copy barcode';
 
             const scannedBooks = [];
+            let barcodeLookupPending = false;
+
+            function escapeHtml(value) {
+                const node = document.createElement('span');
+                node.textContent = value == null ? '' : String(value);
+                return node.innerHTML;
+            }
 
             function scannedBookKey(book) {
                 return book.needsBarcode ? `detail-${book.borrowDetailId}` : `barcode-${(book.barcode || '').toLowerCase()}`;
@@ -445,18 +453,18 @@
                     const overdueBadge = book.isOverdue ? `<span class="status-badge status-overdue ms-1">${labelOverdue}</span>` : '';
                     const barcodeCell = book.needsBarcode
                         ? `<div class="input-group input-group-sm"><input type="text" class="form-control recovery-barcode-input" placeholder="${recoverPlaceholder}" autocomplete="off"><button type="button" class="btn btn-classic-primary recover-barcode-btn">${labelRecover}</button></div>`
-                        : `<span class="font-monospace text-dark fw-semibold">${book.barcode}</span>`;
+                        : `<span class="font-monospace text-dark fw-semibold">${escapeHtml(book.barcode)}</span>`;
                     const actionCell = book.needsBarcode
                         ? `<span class="text-danger small">${recoverPlaceholder}</span>`
-                        : `<div class="d-flex justify-content-center align-items-center gap-2"><button type="button" class="btn btn-classic-outline btn-sm px-3" data-bs-toggle="modal" data-bs-target="#confirmReturnModal" data-barcode="${book.barcode}">${labelReceive}</button><button type="button" class="btn btn-outline-danger btn-sm px-2 btn-remove-item"><i class="bi bi-trash"></i></button></div>`;
+                        : `<div class="d-flex justify-content-center align-items-center gap-2"><button type="button" class="btn btn-classic-outline btn-sm px-3" data-bs-toggle="modal" data-bs-target="#confirmReturnModal" data-barcode="${escapeHtml(book.barcode)}">${labelReceive}</button><button type="button" class="btn btn-outline-danger btn-sm px-2 btn-remove-item"><i class="bi bi-trash"></i></button></div>`;
                     row.innerHTML = `
                         <td class="text-center" style="width:60px"><input type="checkbox" class="form-check-input select-item" value="${book.barcode || ''}" ${book.needsBarcode ? 'disabled' : 'checked'} autocomplete="off"></td>
-                        <td class="text-start"><span class="font-monospace fw-bold text-classic">BOR-${book.borrowId}</span></td>
-                        <td class="text-start"><div class="fw-bold">${book.memberName}</div><small class="text-muted">${book.memberEmail}</small></td>
+                        <td class="text-start"><span class="font-monospace fw-bold text-classic">BOR-${escapeHtml(book.borrowId)}</span></td>
+                        <td class="text-start"><div class="fw-bold">${escapeHtml(book.memberName)}</div><small class="text-muted">${escapeHtml(book.memberEmail)}</small></td>
                         <td class="text-start">${barcodeCell}</td>
-                        <td class="text-start text-wrap"><div class="fw-semibold text-dark">${book.bookTitle}</div><small class="text-muted">Gia hạn: ${book.renewCount}</small></td>
-                        <td class="text-center"><span class="fw-semibold text-dark">${book.borrowDate}</span></td>
-                        <td class="text-center"><span class="fw-bold text-dark">${book.dueDate}</span>${overdueBadge}</td>
+                        <td class="text-start text-wrap"><div class="fw-semibold text-dark">${escapeHtml(book.bookTitle)}</div><small class="text-muted">Gia hạn: ${escapeHtml(book.renewCount)}</small></td>
+                        <td class="text-center"><span class="fw-semibold text-dark">${escapeHtml(book.borrowDate)}</span></td>
+                        <td class="text-center"><span class="fw-bold text-dark">${escapeHtml(book.dueDate)}</span>${overdueBadge}</td>
                         <td class="text-center">${actionCell}</td>`;
                     row.querySelector('.select-item')?.addEventListener('change', function() {
                         const boxes = document.querySelectorAll('.select-item:not(:disabled)');
@@ -508,7 +516,7 @@
             const feedback = document.getElementById('scanFeedback');
 
             function handleBarcodeAdd() {
-                if (!barcodeInput) return;
+                if (!barcodeInput || barcodeLookupPending) return;
                 const barcode = barcodeInput.value.trim();
                 if (barcode === '') return;
 
@@ -524,6 +532,9 @@
                     return;
                 }
 
+                barcodeLookupPending = true;
+                barcodeInput.disabled = true;
+                if (addBtn) addBtn.disabled = true;
                 const url = `/librarian/loan/returns/api/search?barcode=${encodeURIComponent(barcode)}`;
                 fetch(url)
                     .then(response => {
@@ -551,6 +562,12 @@
                     .catch(err => {
                         showFeedback(err.message || msgNotFoundTemplate.replace('{0}', barcode));
                         barcodeInput.value = '';
+                        barcodeInput.focus();
+                    })
+                    .finally(() => {
+                        barcodeLookupPending = false;
+                        barcodeInput.disabled = false;
+                        if (addBtn) addBtn.disabled = false;
                         barcodeInput.focus();
                     });
             }
@@ -582,7 +599,7 @@
 
             if (selectAllCheckbox) {
                 selectAllCheckbox.addEventListener('change', function() {
-                    const currentCheckboxes = document.querySelectorAll('.select-item');
+                    const currentCheckboxes = document.querySelectorAll('.select-item:not(:disabled)');
                     currentCheckboxes.forEach(cb => {
                         cb.checked = this.checked;
                     });
@@ -591,7 +608,7 @@
             }
 
             function toggleBulkButton() {
-                const currentCheckboxes = document.querySelectorAll('.select-item');
+                const currentCheckboxes = document.querySelectorAll('.select-item:not(:disabled)');
                 if (bulkReturnBtn && bulkReturnBtnLabel) {
                     const checkedCount = Array.from(currentCheckboxes).filter(c => c.checked).length;
                     if (checkedCount > 0) {
@@ -612,7 +629,7 @@
                     const triggerButton = event.relatedTarget;
                     if (!triggerButton) return;
 
-                    const currentCheckboxes = document.querySelectorAll('.select-item');
+                    const currentCheckboxes = document.querySelectorAll('.select-item:not(:disabled)');
 
                     if (triggerButton.id === 'bulkReturnBtn') {
                         const checkedCheckboxes = Array.from(currentCheckboxes).filter(c => c.checked);

@@ -5,7 +5,6 @@ import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
-import com.lms.entity.Borrow;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.Transaction;
 import com.lms.service.LoanService;
@@ -172,6 +171,12 @@ public class LoanController extends LocalizedControllerSupport {
         try {
             if (barcodes == null || barcodes.isEmpty()) {
                 throw new ValidationException(message("backend.return.invalidBarcodes"));
+            }
+            if (returnDate == null || returnDate.isAfter(LocalDate.now())) {
+                throw new ValidationException(message("backend.return.invalidReturnDate"));
+            }
+            if (barcodes.size() > 1 && isMinorDamage(conditionNote)) {
+                throw new ValidationException(message("backend.return.minorDamageSingleOnly"));
             }
 
             // Minor damage uses the manually entered repair fine. Severe damage and

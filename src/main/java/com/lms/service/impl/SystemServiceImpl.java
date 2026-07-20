@@ -52,11 +52,6 @@ public class SystemServiceImpl implements SystemService {
     }
 
     @Override
-    public void restoreData(String backupFilePath) {
-        // TODO: Implement restore sau nếu cần
-    }
-
-    @Override
     public Page<SystemLog> getSystemLogs(int page, String action, String keyword, String actionType) {
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), 10);
         String trimmedKeyword = keyword == null ? "" : keyword.trim();
