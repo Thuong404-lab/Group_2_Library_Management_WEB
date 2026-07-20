@@ -191,6 +191,8 @@
           headers: {
             Accept: "application/json",
             "X-Requested-With": "XMLHttpRequest",
+            [document.querySelector('meta[name="_csrf_header"]')?.content || "X-CSRF-TOKEN"]:
+              document.querySelector('meta[name="_csrf"]')?.content || "",
           },
         })
           .then(function (response) {

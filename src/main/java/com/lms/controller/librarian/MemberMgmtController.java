@@ -8,6 +8,7 @@ import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.entity.Member;
 import com.lms.entity.Transaction;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.StaffRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.FineBatchPaymentService;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Librarian member-management UC flows maintained by Pham Kien Quoc:
@@ -55,6 +57,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     private final OverdueReminderService overdueReminderService;
     private final OverdueViolationQueryService overdueViolationQueryService;
     private final FineBatchPaymentService fineBatchPaymentService;
+    private final StaffRepository staffRepository;
 
     public MemberMgmtController(LibrarianMemberService memberService,
                                 FinancialService financialService,
@@ -62,7 +65,8 @@ public class MemberMgmtController extends LocalizedControllerSupport {
                                 MemberRepository memberRepository,
                                 OverdueReminderService overdueReminderService,
                                 OverdueViolationQueryService overdueViolationQueryService,
-                                FineBatchPaymentService fineBatchPaymentService) {
+                                FineBatchPaymentService fineBatchPaymentService,
+                                StaffRepository staffRepository) {
         this.memberService = memberService;
         this.financialService = financialService;
         this.transactionRepository = transactionRepository;
@@ -70,6 +74,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         this.overdueReminderService = overdueReminderService;
         this.overdueViolationQueryService = overdueViolationQueryService;
         this.fineBatchPaymentService = fineBatchPaymentService;
+        this.staffRepository = staffRepository;
     }
 
     @GetMapping("/members")
@@ -313,6 +318,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         addTopupDeskStats(model);
         model.addAttribute("recentTopups", transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
         model.addAttribute("topupMembers", memberRepository.findAll());
+        model.addAttribute("topupRequestId", UUID.randomUUID().toString());
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
     }
@@ -320,10 +326,15 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     @PostMapping("/members/topup")
     public String topUpMemberAccount(
             @RequestParam String memberPhone,
-            @RequestParam Double amount,
+            @RequestParam BigDecimal amount,
+            @RequestParam String requestId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            financialService.topUpMemberAccount(memberPhone, amount);
+            var staff = userDetails != null && userDetails.getUser() != null
+                    ? staffRepository.findByUserId(userDetails.getUser().getId()).orElse(null)
+                    : null;
+            financialService.topUpMemberAccount(memberPhone, amount, requestId, staff);
             redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
