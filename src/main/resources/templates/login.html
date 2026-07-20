@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="#{auth.login.title}">Log in - Library Management System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/login.css}">
     <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}">
 </head>
+
 <body class="auth-page auth-page--member-login">
     <main class="login-container auth-shell">
         <section class="login-form-wrapper auth-form-panel" th:aria-label="#{auth.login}">
@@ -24,17 +28,25 @@
                 <div th:if="${param.error}" class="alert alert-danger auth-alert mb-4" role="alert" aria-live="polite">
                     <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
                     <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null}">
-                        <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}" th:text="#{auth.invalidCredentials}">Incorrect email or password.</span>
-                        <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User account is locked'}" th:text="#{auth.accountLocked}">Your account is blocked.</span>
-                        <span th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User account is locked'}" th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"></span>
+                        <span
+                            th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired'}"
+                            th:text="#{auth.invalidCredentials}">Incorrect email or password.</span>
+                        <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User account is locked'}"
+                            th:text="#{auth.accountLocked}">Your account is blocked.</span>
+                        <span
+                            th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION.message == 'Bad credentials' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User credentials have expired' or session.SPRING_SECURITY_LAST_EXCEPTION.message == 'User account is locked'}"
+                            th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"></span>
                     </span>
-                    <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION == null}" th:text="#{auth.invalidCredentials}">Incorrect email or password.</span>
+                    <span th:if="${session.SPRING_SECURITY_LAST_EXCEPTION == null}"
+                        th:text="#{auth.invalidCredentials}">Incorrect email or password.</span>
                 </div>
-                <div th:if="${param.logout}" class="alert alert-success auth-alert mb-4" role="status" aria-live="polite">
+                <div th:if="${param.logout}" class="alert alert-success auth-alert mb-4" role="status"
+                    aria-live="polite">
                     <i class="bi bi-check-circle" aria-hidden="true"></i>
                     <span th:text="#{auth.logoutSuccess}">You have logged out successfully.</span>
                 </div>
-                <div th:if="${param.expired}" class="alert alert-warning auth-alert mb-4" role="alert" aria-live="polite">
+                <div th:if="${param.expired}" class="alert alert-warning auth-alert mb-4" role="alert"
+                    aria-live="polite">
                     <i class="bi bi-clock-history" aria-hidden="true"></i>
                     <span th:text="#{auth.sessionExpired}">Your session has expired. Please log in again.</span>
                 </div>
@@ -45,41 +57,47 @@
 
                 <form th:action="@{/login}" method="post" class="needs-validation auth-form" novalidate>
                     <div class="auth-field">
-                        <label for="username" class="form-label" th:text="#{auth.usernameOrEmail}">Username / Email</label>
+                        <label for="username" class="form-label" th:text="#{auth.usernameOrEmail}">Username /
+                            Email</label>
                         <input type="text" class="form-control" id="username" name="username"
-                               th:placeholder="#{auth.usernameOrEmail.placeholder}"
-                               placeholder="Enter your email or username"
-                               th:value="${session.SPRING_SECURITY_LAST_USERNAME}"
-                               required autocomplete="username" autofocus>
-                        <div class="invalid-feedback" th:text="#{auth.usernameOrEmail.required}">Please enter your username or email.</div>
+                            th:placeholder="#{auth.usernameOrEmail.placeholder}"
+                            placeholder="Enter your email or username"
+                            th:value="${session.SPRING_SECURITY_LAST_USERNAME}" required autocomplete="username"
+                            autofocus>
+                        <div class="invalid-feedback" th:text="#{auth.usernameOrEmail.required}">Please enter your
+                            username or email.</div>
                     </div>
 
                     <div class="auth-field">
                         <div class="auth-label-row">
                             <label for="password" class="form-label" th:text="#{auth.password}">Password</label>
-                            <a th:href="@{/forgot-password}" class="auth-link" th:text="#{auth.forgotPassword}">Forgot password?</a>
+                            <a th:href="@{/forgot-password}" class="auth-link" th:text="#{auth.forgotPassword}">Forgot
+                                password?</a>
                         </div>
                         <div class="auth-password-field">
                             <input type="password" class="form-control" id="password" name="password"
-                                   th:placeholder="#{auth.password.placeholder}" placeholder="Enter your password"
-                                   required autocomplete="current-password">
+                                th:placeholder="#{auth.password.placeholder}" placeholder="Enter your password" required
+                                autocomplete="current-password">
                             <button type="button" class="password-toggle toggle-password" data-target="password"
-                                    th:aria-label="#{auth.password.show}" th:title="#{auth.password.show}">
+                                th:aria-label="#{auth.password.show}" th:title="#{auth.password.show}">
                                 <i class="bi bi-eye-slash" aria-hidden="true"></i>
                             </button>
-                            <div class="invalid-feedback" th:text="#{auth.password.required}">Please enter your password.</div>
+                            <div class="invalid-feedback" th:text="#{auth.password.required}">Please enter your
+                                password.</div>
                         </div>
                     </div>
 
                     <button id="submitBtn" class="btn btn-primary-custom auth-primary-button w-100" type="submit">
                         <span id="submitText" th:text="#{auth.login}">Log In</span>
-                        <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" role="status"
+                            aria-hidden="true"></span>
                     </button>
 
                     <div class="divider" th:text="#{auth.orContinueWith}">or continue with</div>
 
                     <a th:href="@{/oauth2/authorization/google}" class="btn btn-google w-100">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" th:alt="#{auth.googleLogoAlt}" alt="Google logo">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" th:alt="#{auth.googleLogoAlt}"
+                            alt="Google logo">
                         <span th:text="#{auth.googleLogin}">Continue with Google</span>
                     </a>
                 </form>
@@ -95,7 +113,8 @@
             <div class="image-text">
                 <span class="auth-visual-eyebrow" th:text="#{auth.memberAudience}">For guests and members</span>
                 <h2 th:text="#{auth.hero.title}">Discover Knowledge</h2>
-                <p th:text="#{auth.hero.description}">Thousands of books covering literature, business, science, and technology are waiting for you.</p>
+                <p th:text="#{auth.hero.description}">Thousands of books covering literature, business, science, and
+                    technology are waiting for you.</p>
             </div>
         </section>
     </main>
@@ -137,4 +156,5 @@
         })();
     </script>
 </body>
+
 </html>

@@ -27,8 +27,8 @@ public class CartServiceImpl implements CartService {
         List<Integer> cart = storedCart instanceof List<?>
                 ? (List<Integer>) storedCart
                 : storedCart instanceof Set<?>
-                    ? new ArrayList<>((Set<Integer>) storedCart)
-                    : new ArrayList<>();
+                        ? new ArrayList<>((Set<Integer>) storedCart)
+                        : new ArrayList<>();
         session.setAttribute(CART_SESSION_KEY, cart);
         return cart;
     }
@@ -49,7 +49,8 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<Book> getCartItems(HttpSession session) {
         List<Integer> cart = getOrCreateCart(session);
-        if (cart.isEmpty()) return new ArrayList<>();
+        if (cart.isEmpty())
+            return new ArrayList<>();
         Set<Integer> uniqueIds = new LinkedHashSet<>(cart);
         return bookRepository.findAllById(uniqueIds);
     }

@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -783,14 +782,6 @@ public class LoanServiceImpl implements LoanService {
         return transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
                         borrowDetailId, "RENEWAL_FEE", "Pending")
                 .orElseThrow(() -> new ConflictException(localizedMessageService.get("backend.renewal.holdNotFound")));
-    }
-
-    private int getPositiveIntSetting(String key, int defaultValue) {
-        try {
-            return systemSettingRepository.findBySettingKeyIgnoreCase(key).map(SystemSetting::getSettingValue)
-                    .filter(v -> v != null && !v.isBlank()).map(String::trim).map(Integer::parseInt)
-                    .filter(v -> v > 0).orElse(defaultValue);
-        } catch (NumberFormatException ignored) { return defaultValue; }
     }
 
     @Override

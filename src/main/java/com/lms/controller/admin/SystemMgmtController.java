@@ -18,13 +18,13 @@ public class SystemMgmtController {
         this.systemService = systemService;
     }
 
-     // UC-19.3: View System Logs
+    // UC-19.3: View System Logs
     @GetMapping("/logs")
     public String viewSystemLogs(@RequestParam(defaultValue = "0") int page,
-                                 @RequestParam(required = false, defaultValue = "auth") String section,
-                                 @RequestParam(required = false, defaultValue = "") String keyword,
-                                 @RequestParam(required = false, defaultValue = "") String actionType,
-                                 Model model) {
+            @RequestParam(required = false, defaultValue = "auth") String section,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String actionType,
+            Model model) {
 
         String currentSection = normalizeSection(section);
         model.addAttribute("logs", systemService.getSystemLogs(page, currentSection, keyword, actionType));

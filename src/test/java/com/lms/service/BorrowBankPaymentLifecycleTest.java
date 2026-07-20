@@ -159,6 +159,9 @@ class BorrowBankPaymentLifecycleTest {
     void memberBankCheckoutReservesEverySelectedPhysicalCopy() {
         Member member = new Member();
         member.setMemberId(7);
+        User user = new User();
+        user.setStatus(UserStatus.Active);
+        member.setUser(user);
 
         Book book = new Book();
         book.setBookId(11);

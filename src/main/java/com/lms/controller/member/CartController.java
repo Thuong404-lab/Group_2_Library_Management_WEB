@@ -37,10 +37,10 @@ public class CartController extends LocalizedControllerSupport {
     private final BookItemRepository bookItemRepository;
 
     public CartController(CartService cartService, BorrowService borrowService, BookService bookService,
-                          MemberRepository memberRepository, WalletRepository walletRepository,
-                          com.lms.service.PayOsPaymentService payOsPaymentService,
-                          SystemSettingRepository systemSettingRepository,
-                          BookItemRepository bookItemRepository) {
+            MemberRepository memberRepository, WalletRepository walletRepository,
+            com.lms.service.PayOsPaymentService payOsPaymentService,
+            SystemSettingRepository systemSettingRepository,
+            BookItemRepository bookItemRepository) {
         this.cartService = cartService;
         this.borrowService = borrowService;
         this.bookService = bookService;
@@ -53,12 +53,13 @@ public class CartController extends LocalizedControllerSupport {
 
     @PostMapping("/add")
     public Object addToCart(@RequestParam("bookId") Integer bookId, HttpSession session,
-                            Principal principal,
-                            RedirectAttributes redirectAttributes,
-                            @RequestHeader(value = "referer", required = false) String referer,
-                            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+            Principal principal,
+            RedirectAttributes redirectAttributes,
+            @RequestHeader(value = "referer", required = false) String referer,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
 
-        if (principal == null) return "redirect:/login";
+        if (principal == null)
+            return "redirect:/login";
 
         Book book;
         try {
@@ -74,7 +75,8 @@ public class CartController extends LocalizedControllerSupport {
             return "redirect:/books/" + bookId;
         }
 
-        // 1. Kiểm tra số lượng bản sao khả dụng thực tế trong kho bằng hàm JpaRepository của bạn
+        // 1. Kiểm tra số lượng bản sao khả dụng thực tế trong kho bằng hàm
+        // JpaRepository của bạn
         long availableStock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
 
         // 2. Lấy số lượng cuốn sách này hiện đã nằm trong giỏ sách Session
@@ -103,7 +105,8 @@ public class CartController extends LocalizedControllerSupport {
         String successMessage = message("backend.cart.added");
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
-            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("success", true, "message", successMessage));
+            return org.springframework.http.ResponseEntity
+                    .ok(java.util.Map.of("success", true, "message", successMessage));
         }
         redirectAttributes.addFlashAttribute("successMessage", successMessage);
         redirectAttributes.addFlashAttribute("success", successMessage);
@@ -122,7 +125,8 @@ public class CartController extends LocalizedControllerSupport {
     @SuppressWarnings("unchecked")
     @GetMapping
     public String viewCart(HttpSession session, Principal principal, Model model) {
-        if (principal == null) return "redirect:/login";
+        if (principal == null)
+            return "redirect:/login";
 
         Member member = memberRepository.findByAccountUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException(message("backend.cart.memberNotFound")));
@@ -141,7 +145,8 @@ public class CartController extends LocalizedControllerSupport {
         }
 
         double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
-                ? member.getTier().getDiscountPercent().doubleValue() : 0.0;
+                ? member.getTier().getDiscountPercent().doubleValue()
+                : 0.0;
 
         java.util.Map<Integer, Long> availableStocks = new java.util.HashMap<>();
         for (Book book : cartItems) {
@@ -156,7 +161,13 @@ public class CartController extends LocalizedControllerSupport {
         model.addAttribute("discountPercent", discountPercent);
 
         Integer maxBorrowDays = systemSettingRepository.findBySettingKey("MAX_BORROW_DAYS")
-                .map(s -> { try { return Integer.parseInt(s.getSettingValue()); } catch (Exception e) { return 30; } })
+                .map(s -> {
+                    try {
+                        return Integer.parseInt(s.getSettingValue());
+                    } catch (Exception e) {
+                        return 30;
+                    }
+                })
                 .orElse(30);
         model.addAttribute("maxBorrowDays", maxBorrowDays);
         return "member/cart";
@@ -164,10 +175,11 @@ public class CartController extends LocalizedControllerSupport {
 
     @GetMapping("/checkout")
     public String checkoutCart(@RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
-                               @RequestParam(value = "selectedBookIds", required = false) List<Integer> selectedBookIds,
-                               HttpSession session, Principal principal, Model model, RedirectAttributes redirectAttributes,
-                               HttpServletResponse response) {
-        if (principal == null) return "redirect:/login";
+            @RequestParam(value = "selectedBookIds", required = false) List<Integer> selectedBookIds,
+            HttpSession session, Principal principal, Model model, RedirectAttributes redirectAttributes,
+            HttpServletResponse response) {
+        if (principal == null)
+            return "redirect:/login";
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
@@ -210,7 +222,8 @@ public class CartController extends LocalizedControllerSupport {
         }
 
         List<Integer> validSelectedBookIds = selectedCartItems.stream().map(Book::getBookId).toList();
-        BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), validSelectedBookIds, numberOfDays);
+        BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), validSelectedBookIds,
+                numberOfDays);
 
         Member member = memberRepository.findByAccountUsername(principal.getName()).orElseThrow();
         BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
@@ -228,10 +241,11 @@ public class CartController extends LocalizedControllerSupport {
 
     @PostMapping("/submit")
     public String submitCartRequest(@RequestParam("numberOfDays") Integer numberOfDays,
-                                    @RequestParam(value = "selectedBookIds", required = false) List<Integer> selectedBookIds,
-                                    @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
-                                    HttpSession session, Principal principal, RedirectAttributes redirectAttributes) {
-        if (principal == null) return "redirect:/login";
+            @RequestParam(value = "selectedBookIds", required = false) List<Integer> selectedBookIds,
+            @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
+            HttpSession session, Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null)
+            return "redirect:/login";
 
         if (selectedBookIds == null || selectedBookIds.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.missingSelection"));
@@ -273,7 +287,8 @@ public class CartController extends LocalizedControllerSupport {
 
             if ("WALLET".equals(normalizedPaymentMethod)) {
                 if (walletBalance.compareTo(previewFee) < 0) {
-                    redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.insufficientWalletBalance"));
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            message("backend.borrow.insufficientWalletBalance"));
                     return "redirect:/member/cart";
                 }
 

@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}" th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}" th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}" th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}"
+    th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}"
+    th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}"
+    th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +16,9 @@
     <link rel="stylesheet" th:href="@{/css/bootstrap.css}">
     <link rel="stylesheet" th:href="@{/css/components/dynamic-states.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/components/header.css}" />
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}" />
     <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
@@ -19,265 +27,301 @@
     <th:block layout:fragment="styles"></th:block>
     <!-- Keep the librarian design system last so legacy page styles cannot fragment the staff UI. -->
     <link rel="stylesheet" th:href="@{/css/layouts/librarian-base.css}" />
-  </head>
+</head>
+
 <body class="app-shell app-shell--staff staff-shell staff-shell--librarian">
 
-<!-- Sidebar -->
-<aside class="sidebar staff-sidebar" id="sidebar" th:aria-label="#{staff.sidebar.navigation}">
-    <div class="sidebar-header">
-        <a th:href="@{/librarian/dashboard}" class="sidebar-brand">
-            <i class="bi bi-book-half"></i>
-            <span class="menu-text" th:text="#{staff.brand.librarian}">LMW Librarian</span>
-        </a>
-    </div>
-    <ul class="sidebar-menu">
-        <li class="menu-item">
-            <a th:href="@{/librarian/dashboard}" class="menu-link" th:classappend="${activeMenu == 'dashboard'} ? 'active'">
-                <i class="bi bi-grid-1x2-fill menu-icon"></i>
-                <span class="menu-text" th:text="#{staff.nav.dashboard}">Dashboard</span>
+    <!-- Sidebar -->
+    <aside class="sidebar staff-sidebar" id="sidebar" th:aria-label="#{staff.sidebar.navigation}">
+        <div class="sidebar-header">
+            <a th:href="@{/librarian/dashboard}" class="sidebar-brand">
+                <i class="bi bi-book-half"></i>
+                <span class="menu-text" th:text="#{staff.brand.librarian}">LMW Librarian</span>
             </a>
-        </li>
-
-        <li class="menu-item">
-            <a href="#borrowMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
-                th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'"
-                aria-expanded="false"
-                aria-controls="borrowMenu">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-journal-bookmark-fill menu-icon"></i>
-                    <span class="menu-text" th:text="#{staff.nav.loans}">Loan Management</span>
-                </div>
-                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
-            </a>
-            <ul class="collapse list-unstyled" id="borrowMenu">
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/list}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.borrowList}">Borrow List</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/loan/borrow-schedule}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.loanSchedule}">Loan Schedule</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/borrow/create}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.borrowDesk}">Borrowing Desk</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/loan/returns}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04" th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.returnDesk}">Return Desk</span>
-                    </a>
-            </ul>
-        </li>
-
-        <li class="menu-item">
-            <a th:href="@{/librarian/interaction/notifications/new}" class="menu-link" th:classappend="${activeMenu == 'notifications'} ? 'active'">
-                <i class="bi bi-bell-fill menu-icon text-white"></i>
-                <span class="menu-text" th:text="#{staff.nav.notifications}">Send Notifications</span>
-            </a>
-        </li>
-
-        <li class="menu-item">
-            <a th:href="@{/librarian/interaction/reviews}" class="menu-link" th:classappend="${activeMenu == 'reviews'} ? 'active'">
-                <i class="bi bi-star-fill menu-icon"></i>
-                <span class="menu-text" th:text="#{staff.nav.reviews}">Book Reviews</span>
-            </a>
-        </li>
-
-        <li class="menu-item">
-            <a th:href="@{/librarian/interaction/acquisition-requests}" class="menu-link" th:classappend="${activeMenu == 'suggestions'} ? 'active'">
-                <i class="bi bi-plus-square-fill menu-icon"></i>
-                <span class="menu-text" th:text="#{staff.nav.acquisition}">Book Acquisition Requests</span>
-            </a>
-        </li>
-
-        <li class="menu-item">
-            <a href="#bookManagementMenu" data-bs-toggle="collapse"
-                class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
-                th:classappend="${activeMenu == 'books'} ? 'active'"
-                aria-expanded="false"
-                aria-controls="bookManagementMenu">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-book-fill menu-icon"></i>
-                    <span class="menu-text" th:text="#{staff.nav.books}">Book Management</span>
-                </div>
-                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
-            </a>
-            <ul class="collapse list-unstyled ps-4" id="bookManagementMenu">
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
-                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab == null} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.heading}">Book Title Management</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='categories')}"
-                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'categories'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.tab.categories}">Category & Genre Management</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit')}"
-                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'audit'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.inventory.tab.audit}">BookItem Management</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
-                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${param.subsection != null && param.subsection[0] == 'storage'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{librarian.storage.management}">Bookshelf Management</span>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
-        <li class="menu-item">
-            <a href="#userManagementMenu" data-bs-toggle="collapse"
-                class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
-                th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
-                aria-expanded="false"
-                aria-controls="userManagementMenu">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-people-fill menu-icon"></i>
-                    <span class="menu-text" th:text="#{staff.nav.users}">User Management</span>
-                </div>
-                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
-            </a>
-            <ul class="collapse list-unstyled" id="userManagementMenu">
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members}"
-                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${activeMenu == 'members'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.members}">Member List</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/librarians}"
-                        class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                        th:classappend="${activeMenu == 'librarians'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.librarians}">Librarian List</span>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
-        <li class="menu-item">
-            <a th:href="@{/librarian/reports}" class="menu-link" th:classappend="${activeMenu == 'statistics'} ? 'active'">
-                <i class="bi bi-graph-up menu-icon"></i>
-                <span class="menu-text" th:text="#{staff.nav.reports}">Reports and Statistics</span>
-            </a>
-        </li>
-        <li class="menu-item">
-            <a href="#financeMenu" data-bs-toggle="collapse" class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
-               th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'active'"
-               aria-expanded="false"
-               aria-controls="financeMenu">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-wallet2 menu-icon"></i>
-                    <span class="menu-text" th:text="#{staff.nav.finance}">Finance</span>
-                </div>
-                <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
-            </a>
-            <ul class="collapse list-unstyled" id="financeMenu">
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/topup}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                       th:classappend="${activeMenu == 'topup'} ? 'active-submenu' : ''"
-                      >
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.topUp}">Wallet Top-up</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/transactions}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                       th:classappend="${activeMenu == 'transactions'} ? 'active-submenu' : ''"
-                      >
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.transactions}">Transaction Management</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/fines}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                       th:classappend="${activeMenu == 'fines'} ? 'active-submenu' : ''"
-                      >
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.fines}">Fines</span>
-                    </a>
-                </li>
-                <li class="menu-item my-1">
-                    <a th:href="@{/librarian/members/refunds}" class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
-                       th:classappend="${activeMenu == 'refunds'} ? 'active-submenu' : ''">
-                        <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.refunds}">Refund Approvals</span>
-                    </a>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</aside>
-
-<!-- Main Wrapper -->
-<div class="main-wrapper">
-    <!-- Topbar -->
-    <header class="topbar staff-topbar">
-        <div>
-            <button class="toggle-btn" id="sidebarToggle" type="button"
-                    aria-controls="sidebar" aria-expanded="true"
-                    th:aria-label="#{staff.sidebar.toggle}">
-                <i class="bi bi-list" aria-hidden="true"></i>
-            </button>
         </div>
+        <ul class="sidebar-menu">
+            <li class="menu-item">
+                <a th:href="@{/librarian/dashboard}" class="menu-link"
+                    th:classappend="${activeMenu == 'dashboard'} ? 'active'">
+                    <i class="bi bi-grid-1x2-fill menu-icon"></i>
+                    <span class="menu-text" th:text="#{staff.nav.dashboard}">Dashboard</span>
+                </a>
+            </li>
 
-        <div class="topbar-right">
-            <div th:replace="~{fragments/language-switcher :: switcher}"></div>
-            <div class="dropdown staff-user-dropdown">
-                <button type="button" class="user-dropdown-toggle staff-user-dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false"
-                        th:aria-label="#{staff.user.menu}">
-                    <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad">
-                        <i th:if="${#authentication.principal.user?.avatar == null}" class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
-                        <img th:if="${#authentication.principal.user?.avatar != null}" th:src="${#authentication.principal.user.avatar}"
-                             th:alt="#{common.profile}" class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
+            <li class="menu-item">
+                <a href="#borrowMenu" data-bs-toggle="collapse"
+                    class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                    th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'"
+                    aria-expanded="false" aria-controls="borrowMenu">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-journal-bookmark-fill menu-icon"></i>
+                        <span class="menu-text" th:text="#{staff.nav.loans}">Loan Management</span>
                     </div>
-                    <span class="staff-user-name" sec:authorize="isAuthenticated()" sec:authentication="name">Librarian</span>
-                    <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8" aria-hidden="true"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 librarian-base-ul-border-10">
-                    <li><a class="dropdown-item py-2" th:href="@{/librarian/profile}"><i class="bi bi-person-circle me-2 text-classic"></i><span th:text="#{common.profile}">Profile</span></a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form method="post" th:action="@{/staff-logout}" class="m-0">
-                            <button type="submit" class="dropdown-item py-2 text-danger"><i class="bi bi-box-arrow-right me-2"></i><span th:text="#{nav.logout}">Log out</span></button>
-                        </form>
+                    <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
+                </a>
+                <ul class="collapse list-unstyled" id="borrowMenu">
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/borrow/list}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'borrow-list'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.borrowList}">Borrow List</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/loan/borrow-schedule}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'borrow-schedule'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.loanSchedule}">Loan Schedule</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/borrow/create}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'borrow-desk'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.borrowDesk}">Borrowing Desk</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/loan/returns}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'returns'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.returnDesk}">Return Desk</span>
+                        </a>
+                </ul>
+            </li>
+
+            <li class="menu-item">
+                <a th:href="@{/librarian/interaction/notifications/new}" class="menu-link"
+                    th:classappend="${activeMenu == 'notifications'} ? 'active'">
+                    <i class="bi bi-bell-fill menu-icon text-white"></i>
+                    <span class="menu-text" th:text="#{staff.nav.notifications}">Send Notifications</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a th:href="@{/librarian/interaction/reviews}" class="menu-link"
+                    th:classappend="${activeMenu == 'reviews'} ? 'active'">
+                    <i class="bi bi-star-fill menu-icon"></i>
+                    <span class="menu-text" th:text="#{staff.nav.reviews}">Book Reviews</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a th:href="@{/librarian/interaction/acquisition-requests}" class="menu-link"
+                    th:classappend="${activeMenu == 'suggestions'} ? 'active'">
+                    <i class="bi bi-plus-square-fill menu-icon"></i>
+                    <span class="menu-text" th:text="#{staff.nav.acquisition}">Book Acquisition Requests</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a href="#bookManagementMenu" data-bs-toggle="collapse"
+                    class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                    th:classappend="${activeMenu == 'books'} ? 'active'" aria-expanded="false"
+                    aria-controls="bookManagementMenu">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-book-fill menu-icon"></i>
+                        <span class="menu-text" th:text="#{staff.nav.books}">Book Management</span>
+                    </div>
+                    <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
+                </a>
+                <ul class="collapse list-unstyled ps-4" id="bookManagementMenu">
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab == null} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{librarian.inventory.heading}">Book Title Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='categories')}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'categories'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{librarian.inventory.tab.categories}">Category & Genre Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit')}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'audit'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{librarian.inventory.tab.audit}">BookItem Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${param.subsection != null && param.subsection[0] == 'storage'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{librarian.storage.management}">Bookshelf Management</span>
+                        </a>
                     </li>
                 </ul>
+            </li>
+
+            <li class="menu-item">
+                <a href="#userManagementMenu" data-bs-toggle="collapse"
+                    class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                    th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
+                    aria-expanded="false" aria-controls="userManagementMenu">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-people-fill menu-icon"></i>
+                        <span class="menu-text" th:text="#{staff.nav.users}">User Management</span>
+                    </div>
+                    <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
+                </a>
+                <ul class="collapse list-unstyled" id="userManagementMenu">
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/members}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'members'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.members}">Member
+                                List</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/librarians}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'librarians'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.librarians}">Librarian List</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="menu-item">
+                <a th:href="@{/librarian/reports}" class="menu-link"
+                    th:classappend="${activeMenu == 'statistics'} ? 'active'">
+                    <i class="bi bi-graph-up menu-icon"></i>
+                    <span class="menu-text" th:text="#{staff.nav.reports}">Reports and Statistics</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#financeMenu" data-bs-toggle="collapse"
+                    class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
+                    th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'active'"
+                    aria-expanded="false" aria-controls="financeMenu">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-wallet2 menu-icon"></i>
+                        <span class="menu-text" th:text="#{staff.nav.finance}">Finance</span>
+                    </div>
+                    <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
+                </a>
+                <ul class="collapse list-unstyled" id="financeMenu">
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/members/topup}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'topup'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.topUp}">Wallet
+                                Top-up</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/members/transactions}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'transactions'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.transactions}">Transaction Management</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/members/fines}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'fines'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad"
+                                th:text="#{staff.nav.fines}">Fines</span>
+                        </a>
+                    </li>
+                    <li class="menu-item my-1">
+                        <a th:href="@{/librarian/members/refunds}"
+                            class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
+                            th:classappend="${activeMenu == 'refunds'} ? 'active-submenu' : ''">
+                            <span class="menu-text u-font-size-0-95rem-b8088cad" th:text="#{staff.nav.refunds}">Refund
+                                Approvals</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <!-- Topbar -->
+        <header class="topbar staff-topbar">
+            <div>
+                <button class="toggle-btn" id="sidebarToggle" type="button" aria-controls="sidebar" aria-expanded="true"
+                    th:aria-label="#{staff.sidebar.toggle}">
+                    <i class="bi bi-list" aria-hidden="true"></i>
+                </button>
             </div>
+
+            <div class="topbar-right">
+                <div th:replace="~{fragments/language-switcher :: switcher}"></div>
+                <div class="dropdown staff-user-dropdown">
+                    <button type="button" class="user-dropdown-toggle staff-user-dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{staff.user.menu}">
+                        <div class="user-avatar p-0 overflow-hidden u-border-2px-solid-8b5a2b-2bf825ad">
+                            <i th:if="${#authentication.principal.user?.avatar == null}"
+                                class="bi bi-person w-100 h-100 d-flex align-items-center justify-content-center m-0 u-background-color-8b5a2b-color-white-2f93b67b"></i>
+                            <img th:if="${#authentication.principal.user?.avatar != null}"
+                                th:src="${#authentication.principal.user.avatar}" th:alt="#{common.profile}"
+                                class="w-100 h-100 m-0 p-0 u-object-fit-cover-fd3ff4b2">
+                        </div>
+                        <span class="staff-user-name" sec:authorize="isAuthenticated()"
+                            sec:authentication="name">Librarian</span>
+                        <i class="bi bi-chevron-down ms-1 u-font-size-0-8rem-color-8b5a2b-39ce8ef8"
+                            aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 librarian-base-ul-border-10">
+                        <li><a class="dropdown-item py-2" th:href="@{/librarian/profile}"><i
+                                    class="bi bi-person-circle me-2 text-classic"></i><span
+                                    th:text="#{common.profile}">Profile</span></a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form method="post" th:action="@{/staff-logout}" class="m-0">
+                                <button type="submit" class="dropdown-item py-2 text-danger"><i
+                                        class="bi bi-box-arrow-right me-2"></i><span th:text="#{nav.logout}">Log
+                                        out</span></button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <div class="content-area staff-content-area">
+            <div layout:fragment="content"></div>
         </div>
-    </header>
-
-    <!-- Dynamic Content Area -->
-    <div class="content-area staff-content-area">
-        <div layout:fragment="content"></div>
     </div>
-</div>
 
-<!-- Scripts -->
-<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
-<script th:replace="~{fragments/language-switcher :: script}"></script>
-<script>
-    (function () {
-        var sidebarToggle = document.getElementById('sidebarToggle');
-        if (!sidebarToggle) return;
-        sidebarToggle.addEventListener('click', function () {
-            var collapsed = document.body.classList.toggle('sidebar-collapsed');
-            sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
-        });
-    })();
+    <!-- Scripts -->
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+    <script th:replace="~{fragments/language-switcher :: script}"></script>
+    <script>
+        (function () {
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            if (!sidebarToggle) return;
+            sidebarToggle.addEventListener('click', function () {
+                var collapsed = document.body.classList.toggle('sidebar-collapsed');
+                sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+            });
+        })();
 
-</script>
+    </script>
     <th:block layout:fragment="scripts"></th:block>
     <script th:src="@{/js/dynamic-presentation.js}"></script>
     <script th:src="@{/js/confirmation-dialog.js}"></script>
 </body>
+
 </html>

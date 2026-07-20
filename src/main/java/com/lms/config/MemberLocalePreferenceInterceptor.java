@@ -1,6 +1,5 @@
 package com.lms.config;
 
-import com.lms.entity.MemberAccount;
 import com.lms.repository.MemberAccountRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,7 +30,7 @@ public class MemberLocalePreferenceInterceptor implements HandlerInterceptor {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
                 || authentication.getAuthorities().stream()
-                .noneMatch(authority -> "ROLE_MEMBER".equals(authority.getAuthority()))) {
+                        .noneMatch(authority -> "ROLE_MEMBER".equals(authority.getAuthority()))) {
             return true;
         }
 

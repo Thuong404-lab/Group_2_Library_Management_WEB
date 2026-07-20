@@ -9,9 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SettingsController - Cấu hình Hệ thống
@@ -40,9 +37,6 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam Integer maxRenewalDays,
             @RequestParam Integer maxRenewalRequests,
             @RequestParam Integer renewalRejectionCooldownHours,
-            @RequestParam(required = false) List<Integer> tierIds,
-            @RequestParam(required = false) List<Integer> tierBorrowLimits,
-            @RequestParam(required = false) List<BigDecimal> tierSpendingConditions,
             @RequestParam BigDecimal borrowFeePerBook,
             @RequestParam BigDecimal finePerDay,
             @RequestParam BigDecimal damageCompensationAmount,
@@ -52,29 +46,11 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
-            Map<Integer, Integer> borrowLimitsByTier = new HashMap<>();
-            Map<Integer, BigDecimal> spendingConditionsByTier = new HashMap<>();
-            if (tierIds != null) {
-                for (int i = 0; i < tierIds.size(); i++) {
-                    Integer tierId = tierIds.get(i);
-                    if (tierId != null) {
-                        if (tierBorrowLimits != null && i < tierBorrowLimits.size()) {
-                            borrowLimitsByTier.put(tierId, tierBorrowLimits.get(i));
-                        }
-                        if (tierSpendingConditions != null && i < tierSpendingConditions.size()) {
-                            spendingConditionsByTier.put(tierId, tierSpendingConditions.get(i));
-                        }
-                    }
-                }
-            }
-
             systemService.updateBorrowingPolicies(
                     maxBorrowDays,
                     maxRenewalDays,
                     maxRenewalRequests,
                     renewalRejectionCooldownHours,
-                    borrowLimitsByTier,
-                    spendingConditionsByTier,
                     borrowFeePerBook,
                     finePerDay,
                     damageCompensationAmount,

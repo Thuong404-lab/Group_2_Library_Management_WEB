@@ -17,8 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.lms.dto.request.MemberReviewSubmitRequest;
 import com.lms.dto.request.MemberReviewUpdateRequest;
-import com.lms.exception.ResourceNotFoundException;
-import com.lms.exception.ValidationException;
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
