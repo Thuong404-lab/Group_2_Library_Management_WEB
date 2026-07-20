@@ -1,7 +1,7 @@
 package com.lms.controller.admin;
 
-import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
+import com.lms.exception.ApplicationException;
 import com.lms.service.SystemService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -54,15 +54,16 @@ public class SettingsController extends LocalizedControllerSupport {
         try {
             Map<Integer, Integer> borrowLimitsByTier = new HashMap<>();
             Map<Integer, BigDecimal> spendingConditionsByTier = new HashMap<>();
-
             if (tierIds != null) {
                 for (int i = 0; i < tierIds.size(); i++) {
                     Integer tierId = tierIds.get(i);
-                    if (tierBorrowLimits != null && i < tierBorrowLimits.size()) {
-                        borrowLimitsByTier.put(tierId, tierBorrowLimits.get(i));
-                    }
-                    if (tierSpendingConditions != null && i < tierSpendingConditions.size()) {
-                        spendingConditionsByTier.put(tierId, tierSpendingConditions.get(i));
+                    if (tierId != null) {
+                        if (tierBorrowLimits != null && i < tierBorrowLimits.size()) {
+                            borrowLimitsByTier.put(tierId, tierBorrowLimits.get(i));
+                        }
+                        if (tierSpendingConditions != null && i < tierSpendingConditions.size()) {
+                            spendingConditionsByTier.put(tierId, tierSpendingConditions.get(i));
+                        }
                     }
                 }
             }
