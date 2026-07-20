@@ -711,6 +711,22 @@
                                             <span><strong th:text="${inventoryStatusCounts['Available']} ?: 0">0</strong><span th:text="#{book.status.available}">Available</span></span>
                                             <span><strong th:text="${inventoryStatusCounts['Borrowed']} ?: 0">0</strong><span th:text="#{librarian.inventory.borrowedCopies}">Borrowed</span></span>
                                         </div>
+                                        <div class="member-toolbar">
+                                            <form class="member-search-form" method="get" th:action="@{/librarian/dashboard}"
+                                                  data-auto-filter-form data-focus-key="librarianBookItemSearchFocus">
+                                                <input type="hidden" name="section" value="books">
+                                                <input type="hidden" name="subsection" value="inventory">
+                                                <input type="hidden" name="tab" value="audit">
+                                                <div class="input-group member-search-group">
+                                                    <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                                    <input class="form-control border-start-0 ps-0" type="search" name="keyword"
+                                                           th:value="${keyword}" data-auto-search
+                                                           th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                                    <button type="submit" class="btn member-search-button text-nowrap"
+                                                            th:text="#{common.search}">Search</button>
+                                                </div>
+                                            </form>
+                                        </div>
                                         <div class="table-responsive member-table-wrap">
                                     <table class="table table-hover align-middle stable-table-layout member-table">
                                         <thead class="table-light text-uppercase small text-muted">
@@ -734,17 +750,18 @@
                                                 </td>
                                                 <td><div class="fw-bold text-classic" th:text="${book.title}">Book title</div>
                                                     <div class="small text-muted" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">Genre</div></td>
-                                                <td class="text-center fw-semibold" th:text="${bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0}">0</td>
                                                 <td class="text-center">
-                                                    <span class="status-badge status-active"
-                                                          th:text="${bookItemsByBookId[book.bookId] != null ? #lists.size(bookItemsByBookId[book.bookId].?[status == 'Available']) : 0}">0</span>
+                                                    <span class="status-badge"
+                                                          th:classappend="${(bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0) == 0} ? ' status-zero' : ' status-active'"
+                                                          th:text="${bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0}">0</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="status-badge"
+                                                          th:with="lendableCopies=${bookItemsByBookId[book.bookId] != null ? #lists.size(bookItemsByBookId[book.bookId].?[status == 'Available']) : 0}"
+                                                          th:classappend="${lendableCopies == 0} ? ' status-zero' : ' status-active'"
+                                                          th:text="${lendableCopies}">0</span>
                                                 </td>
                                                 <td class="text-end member-actions">
-                                                    <button type="button" class="member-icon-action" data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
-                                                            th:title="#{librarian.inventory.viewCopies}" th:aria-label="#{librarian.inventory.viewCopies}">
-                                                        <i class="bi bi-eye"></i>
-                                                    </button>
                                                     <button type="button" class="member-icon-action" data-bs-toggle="modal"
                                                             th:data-bs-target="${'#addCopiesModal' + book.bookId}"
                                                             th:title="#{librarian.inventory.addCopies}" th:aria-label="#{librarian.inventory.addCopies}">
@@ -764,11 +781,11 @@
                                 <nav class="member-pagination app-pagination-region" th:if="${books != null and books.totalPages > 1}"
                                     th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
                                     <ul class="pagination justify-content-center mb-0">
-                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit',bookPage=0)}" th:text="#{common.first}">First</a></li>
-                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit',bookPage=${books.number - 1})}"><i class="bi bi-chevron-left"></i></a></li>
-                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == books.number ? 'active' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit',bookPage=${i})}" th:text="${i + 1}">1</a></li>
-                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit',bookPage=${books.number + 1})}"><i class="bi bi-chevron-right"></i></a></li>
-                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit',bookPage=${books.totalPages - 1})}" th:text="#{common.last}">Last</a></li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=0, keyword=${keyword})}" th:text="#{common.first}">First</a></li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number - 1}, keyword=${keyword})}"><i class="bi bi-chevron-left"></i></a></li>
+                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == books.number ? 'active' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${i}, keyword=${keyword})}" th:text="${i + 1}">1</a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number + 1}, keyword=${keyword})}"><i class="bi bi-chevron-right"></i></a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.totalPages - 1}, keyword=${keyword})}" th:text="#{common.last}">Last</a></li>
                                     </ul>
                                 </nav>
                                     </div>
@@ -988,24 +1005,36 @@
                                         – <span th:text="${book.title}">Book title</span>
                                     </h5>
                                 </div>
-                                <form th:action="@{/librarian/inventory/copies/add/{id}(id=${book.bookId})}" method="post">
+                                <form class="add-copies-form" th:action="@{/librarian/inventory/copies/add/{id}(id=${book.bookId})}"
+                                      method="post" novalidate onsubmit="validateAddCopiesForm(event, this)">
                                     <div class="modal-body p-4">
                                         <div class="mb-3">
-                                            <label class="form-label fw-semibold" th:text="#{librarian.inventory.copyQuantity}">Quantity</label>
-                                            <input type="number" name="quantity" class="form-control" min="1" max="999" value="1" required>
+                                            <label class="form-label fw-semibold"><span th:text="#{librarian.inventory.copyQuantity}">Quantity</span> <span class="text-danger">*</span></label>
+                                            <input type="number" name="quantity" class="form-control add-copy-control"
+                                                   min="1" max="999" step="1" inputmode="numeric" value="1" required
+                                                   oninput="validateQuantity(this)">
+                                            <div class="invalid-feedback" th:text="#{librarian.inventory.validation.quantity}">Quantity must be between 1 and 999.</div>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label fw-semibold" th:text="#{librarian.inventory.shelf}">Shelf</label>
-                                            <select name="shelfId" class="form-select" required>
+                                            <label class="form-label fw-semibold"><span th:text="#{librarian.inventory.shelf}">Shelf</span> <span class="text-danger">*</span></label>
+                                            <select name="shelfId" class="form-select add-copy-control" required
+                                                    onchange="this.setCustomValidity(''); this.classList.remove('is-invalid')">
                                                 <option value="" selected disabled th:text="#{librarian.inventory.selectShelf}">Select Shelf</option>
                                                 <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
                                                         th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">Shelf</option>
                                             </select>
+                                            <div class="invalid-feedback" th:text="#{librarian.inventory.validation.shelfRequired}">Please select a shelf.</div>
                                         </div>
                                         <div>
-                                            <label class="form-label fw-semibold" th:text="#{librarian.inventory.condition}">Condition</label>
-                                            <input type="text" name="bookCondition" class="form-control"
-                                                   th:value="#{book.condition.default}" required>
+                                            <label class="form-label fw-semibold"><span th:text="#{librarian.inventory.condition}">Condition</span> <span class="text-danger">*</span></label>
+                                            <select name="bookCondition" class="form-select add-copy-control" required
+                                                    onchange="this.setCustomValidity(''); this.classList.remove('is-invalid')">
+                                                <option value="Good / Intact and clean" th:text="#{book.condition.good}">Good / Intact and clean</option>
+                                                <option value="Minor damage (Bent corners, worn cover, or small tears)" th:text="#{book.condition.minorDamage}">Minor damage (Bent corners, worn cover, or small tears)</option>
+                                                <option value="Severely damaged (Compensation required)" th:text="#{book.condition.severeDamage}">Severely damaged (Compensation required)</option>
+                                                <option value="Lost book (Compensation required)" th:text="#{book.condition.lost}">Lost book (Compensation required)</option>
+                                            </select>
+                                            <div class="invalid-feedback" th:text="#{common.validation.required}">Please fill out this field.</div>
                                         </div>
                                     </div>
                                     <div class="modal-footer border-top-0">
@@ -1039,7 +1068,7 @@
                                             <thead class="table-light text-uppercase small text-muted">
                                                 <tr>
                                                     <th th:text="#{common.number}">No.</th>
-                                                    <th class="text-center">
+                                                    <th class="text-center book-copy-select-cell">
                                                         <input class="form-check-input" type="checkbox" data-copy-select-all
                                                                th:data-book-id="${book.bookId}"
                                                                th:aria-label="#{librarian.inventory.selectAllCopies}">
@@ -1055,7 +1084,7 @@
                                                 <tr th:each="item, stat : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId] : {}}"
                                                     data-copy-row th:data-book-id="${book.bookId}">
                                                     <td th:text="${stat.index + 1}">1</td>
-                                                    <td class="text-center">
+                                                    <td class="text-center book-copy-select-cell">
                                                         <input class="form-check-input" type="checkbox" name="itemIds"
                                                                th:value="${item.bookItemId}"
                                                                th:form="${'bulkDeleteCopiesForm' + book.bookId}"
@@ -1444,6 +1473,8 @@
 
     <script th:inline="javascript">
         const adminBookMessages = {
+            required: /*[[#{common.validation.required}]]*/ 'Please fill out this field.',
+            shelfRequired: /*[[#{librarian.inventory.validation.shelfRequired}]]*/ 'Please select a shelf.',
             invalidIsbn: /*[[#{librarian.inventory.validation.isbn}]]*/ 'ISBN may contain digits only (0-9).',
             isbnRequired: /*[[#{librarian.inventory.validation.isbnRequired}]]*/ 'Please enter ISBN.',
             invalidName: /*[[#{librarian.inventory.validation.name}]]*/ 'Names may contain letters and spaces only.',
@@ -1527,8 +1558,8 @@
                 setFieldValidity(input, false, adminBookMessages.quantityRequired);
                 return false;
             }
-            const val = parseInt(input.value, 10);
-            const valid = !isNaN(val) && val >= 1 && val <= 999;
+            const val = Number(input.value);
+            const valid = Number.isInteger(val) && val >= 1 && val <= 999;
             setFieldValidity(input, valid, adminBookMessages.invalidQuantity);
             return valid;
         }
@@ -1579,6 +1610,30 @@
 
             const qtyInput = form.querySelector("input[name='quantity']");
             if (qtyInput && !validateQuantity(qtyInput)) {
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
+        function validateAddCopiesForm(event, form) {
+            let isValid = form.checkValidity();
+            form.classList.add('was-validated');
+
+            const quantityInput = form.querySelector("input[name='quantity']");
+            if (!validateQuantity(quantityInput)) isValid = false;
+
+            const shelfSelect = form.querySelector("select[name='shelfId']");
+            if (!shelfSelect.value) {
+                setFieldValidity(shelfSelect, false, adminBookMessages.shelfRequired);
+                isValid = false;
+            }
+
+            const conditionSelect = form.querySelector("select[name='bookCondition']");
+            if (!conditionSelect.value) {
+                setFieldValidity(conditionSelect, false, adminBookMessages.required);
                 isValid = false;
             }
 
