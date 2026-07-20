@@ -783,18 +783,18 @@ public class LoanServiceImpl implements LoanService {
 
     private boolean requiresDamageCompensation(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        return normalized.contains("hÆ° há»ng náº·ng")
-                || normalized.contains("máº¥t sÃ¡ch")
+        return normalized.contains("hư hỏng nặng")
+                || normalized.contains("mất sách")
                 || normalized.contains("severe damage")
                 || normalized.contains("lost");
     }
 
     private String resolveReturnedItemStatus(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        if (normalized.contains("máº¥t sÃ¡ch") || normalized.contains("lost")) {
+        if (normalized.contains("mất sách") || normalized.contains("lost")) {
             return STATUS_LOST;
         }
-        if (normalized.contains("hÆ° há»ng náº·ng") || normalized.contains("severe damage")) {
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
             return STATUS_DAMAGED;
         }
         return STATUS_AVAILABLE;
