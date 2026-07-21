@@ -1,6 +1,7 @@
 package com.lms.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "`BookItems`")
@@ -23,6 +24,9 @@ public class BookItem {
 
     @Column(name = "added_date", nullable = false, updatable = false)
     private LocalDate addedDate = LocalDate.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     public BookItem() {
     }
@@ -49,13 +53,18 @@ public class BookItem {
     public String getBookCondition() { return bookCondition; }
     public void setBookCondition(String bookCondition) { this.bookCondition = bookCondition; }
     public LocalDate getAddedDate() { return addedDate; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     @PrePersist
     private void assignAddedDate() {
         if (addedDate == null) {
             addedDate = LocalDate.now();
         }
+        updatedAt = LocalDateTime.now();
     }
+
+    @PreUpdate
+    private void assignUpdatedAt() { updatedAt = LocalDateTime.now(); }
 
     @Column(name = "damage_note", columnDefinition = "NVARCHAR(255)")
     private String damageNote;

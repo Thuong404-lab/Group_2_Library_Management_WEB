@@ -1458,14 +1458,17 @@
                                                         BC001-001</td>
                                                     <td th:text="${item.bookCondition}">Condition</td>
                                                     <td
-                                                        th:text="${item.addedDate != null ? #temporals.format(item.addedDate, 'dd/MM/yyyy') : #messages.msg('common.none')}">
+                                                        th:text="${item.updatedAt != null ? #temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm') : #messages.msg('common.none')}">
                                                         Date</td>
                                                     <td>
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : ' status-inactive')"
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Lost'} ? ' status-lost' : (${item.status == 'Damaged'} ? ' status-damaged' : ' status-inactive')))"
                                                             th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Lost' ? #messages.msg('loan.status.lost') : (item.status == 'Damaged' ? #messages.msg('librarian.inventory.status.damaged') : (item.status == 'Disposed' ? #messages.msg('librarian.inventory.status.disposed') : item.status))))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions">
+                                                        <button th:if="${item.status != 'Borrowed' and item.status != 'Disposed'}" type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                            th:data-bs-target="${'#editCopyModalLibrarian' + item.bookItemId}"
+                                                            th:title="#{librarian.inventory.editCopy}"><i class="bi bi-pencil-square"></i></button>
                                                         <form
                                                             th:action="@{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                                             method="post" data-copy-delete-form
@@ -1496,6 +1499,26 @@
                                         <ul class="pagination app-pagination justify-content-center mb-0"></ul>
                                     </nav>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed' and status != 'Disposed'] : {}}" th:id="${'editCopyModalLibrarian' + item.bookItemId}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header border-bottom border-color"><h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i><span th:text="#{librarian.inventory.editCopy}">Edit Copy</span> – <span th:text="${item.barcode}">Code</span></h5></div>
+                                <form th:action="@{/librarian/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})}" method="post">
+                                    <div class="modal-body p-4">
+                                        <label class="form-label fw-semibold" th:text="#{librarian.inventory.condition}">Condition</label>
+                                        <select name="bookCondition" class="form-select" required>
+                                            <option value="Good / Intact and clean" th:selected="${item.bookCondition == 'Good / Intact and clean' or item.bookCondition == 'Tốt' or item.bookCondition == 'Mới'}" th:disabled="${item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.good}">Good</option>
+                                            <option value="Minor damage (Bent corners, worn cover, or small tears)" th:selected="${item.bookCondition != null and item.bookCondition.startsWith('Minor damage')}" th:disabled="${item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                            <option value="Severely damaged (Compensation required)" th:selected="${item.status == 'Damaged'}" th:disabled="${item.status == 'Lost'}" th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                            <option value="Lost book (Compensation required)" th:selected="${item.status == 'Lost'}" th:text="#{book.condition.lost}">Lost</option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer border-top-0"><button type="button" class="btn btn-light border" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button><button type="submit" class="btn btn-classic" th:text="#{librarian.inventory.updateCopy}">Update</button></div>
+                                </form>
                             </div>
                         </div>
                     </div>
