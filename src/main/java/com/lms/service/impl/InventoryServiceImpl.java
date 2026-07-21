@@ -218,7 +218,12 @@ public class InventoryServiceImpl implements InventoryService {
             book.setGenre(genre);
         }
         if (status != null && !status.trim().isEmpty()) {
-            book.setStatus(status.trim());
+            String normalizedStatus = status.trim();
+            if (!STATUS_ACTIVE.equalsIgnoreCase(normalizedStatus)
+                    && !"Inactive".equalsIgnoreCase(normalizedStatus)) {
+                throw new ValidationException(messages.get("backend.inventory.statusRequired"));
+            }
+            book.setStatus(normalizedStatus);
         }
         // Chỉ cập nhật ảnh nếu có ảnh mới được upload
         if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
@@ -321,8 +326,13 @@ public class InventoryServiceImpl implements InventoryService {
         if (status == null || status.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.statusRequired"));
         }
+        String normalizedStatus = status.trim();
+        if (!STATUS_ACTIVE.equalsIgnoreCase(normalizedStatus)
+                && !"Inactive".equalsIgnoreCase(normalizedStatus)) {
+            throw new ValidationException(messages.get("backend.inventory.statusRequired"));
+        }
         Book book = findBookById(bookId);
-        book.setStatus(status.trim());
+        book.setStatus(normalizedStatus);
         bookRepository.save(book);
     }
 

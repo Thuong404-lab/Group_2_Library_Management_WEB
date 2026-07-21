@@ -77,4 +77,16 @@ class LoanControllerReturnFlowTest {
 
         verify(loanService, never()).confirmBatchReturnWithDetails(any(), any(), any(), any(), any(), any(), any());
     }
+
+    @Test
+    void fractionalDamageFineIsRejectedBeforeCallingService() {
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+
+        controller.confirmReturnBookWithDetails(
+                List.of("BC-001"), LocalDate.now(),
+                "Hư hỏng nhẹ - Rách nhỏ", "Rách nhẹ ở mép trang",
+                new BigDecimal("10.5"), "cash", null, redirect);
+
+        verify(loanService, never()).confirmBatchReturnWithDetails(any(), any(), any(), any(), any(), any(), any());
+    }
 }

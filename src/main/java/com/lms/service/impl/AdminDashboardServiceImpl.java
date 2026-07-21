@@ -15,6 +15,7 @@ import com.lms.repository.StaffRepository;
 import com.lms.repository.SystemLogRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.AdminDashboardService;
+import com.lms.util.FinancialTransactionPolicy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -37,13 +38,9 @@ import java.util.Map;
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private static final String ACTIVE_STATUS = "Active";
-    private static final String COMPLETED_STATUS = "Completed";
     private static final BigDecimal ONE_MILLION = BigDecimal.valueOf(1_000_000);
     private static final BigDecimal ONE_BILLION = BigDecimal.valueOf(1_000_000_000);
     private static final BigDecimal MAX_DISPLAY_PERCENT = BigDecimal.valueOf(999);
-    private static final List<String> REVENUE_TRANSACTION_TYPES = List.of(
-            "BORROW_FEE", "RENEWAL_FEE", "FINE", "DAMAGE_FEE",
-            "PAYMENT", "OVERDUE_FINE", "FEE");
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -105,9 +102,11 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 + staffAccountRepository.countByStatusIgnoreCase("Blocked"));
 
         BigDecimal monthlyRevenue = transactionRepository.sumRevenueByStatusAndTypesAndDateRange(
-                COMPLETED_STATUS, REVENUE_TRANSACTION_TYPES, monthStart, nextMonthStart);
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                FinancialTransactionPolicy.REVENUE_TYPES, monthStart, nextMonthStart);
         BigDecimal previousMonthRevenue = transactionRepository.sumRevenueByStatusAndTypesAndDateRange(
-                COMPLETED_STATUS, REVENUE_TRANSACTION_TYPES, previousMonthStart, monthStart);
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                FinancialTransactionPolicy.REVENUE_TYPES, previousMonthStart, monthStart);
         data.put("monthlyRevenue", defaultAmount(monthlyRevenue));
         data.put("monthlyRevenueDisplayValue", compactRevenueValue(monthlyRevenue));
         data.put("monthlyRevenueDisplayScale", compactRevenueScale(monthlyRevenue));
