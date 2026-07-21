@@ -346,7 +346,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) {
-        Member member = memberRepository.findByAccountUsername(username)
+        Member member = memberRepository.findByAccountUsernameForUpdate(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.member.currentNotFound")));
         Book book = bookRepository.findById(bookId)
@@ -457,6 +457,12 @@ public class BorrowServiceImpl implements BorrowService {
             throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
         }
 
+        Member member = borrow.getMember();
+        validateMemberBorrowEligibility(member);
+        if (borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId()) > getEffectiveBorrowLimit(member)) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.tierLimitExceeded"));
+        }
+
         if (barcodes == null || barcodes.size() != details.size()) {
             throw new ValidationException(
                     "Số lượng mã vạch sách cung cấp không khớp với số lượng sách trong yêu cầu mượn.");
@@ -474,8 +480,6 @@ public class BorrowServiceImpl implements BorrowService {
             }
         }
 
-        Member member = borrow.getMember();
-
         // Đếm số lượng yêu cầu cho mỗi bookId trong đơn hiện tại
         java.util.Map<Integer, Long> requestCounts = details.stream()
                 .collect(java.util.stream.Collectors.groupingBy(d -> d.getBook().getBookId(),
@@ -488,7 +492,7 @@ public class BorrowServiceImpl implements BorrowService {
             BorrowDetail detail = details.get(i);
             String barcode = barcodes.get(i).trim();
 
-            BookItem item = bookItemRepository.findByBarcode(barcode)
+            BookItem item = bookItemRepository.findByBarcodeForUpdate(barcode)
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mã vạch sách: " + barcode));
 
             // Đảm bảo sách này khớp với sách được yêu cầu trong phiếu mượn
@@ -1275,7 +1279,8 @@ public class BorrowServiceImpl implements BorrowService {
     }
 
     private int getEffectiveBorrowLimit(Member member) {
-        int configuredLimit = getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10);
+        int configuredLimit = getPositiveIntSetting("Max_Books_Per_Member",
+                getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10));
         int tierLimit = member != null && member.getTier() != null && member.getTier().getBorrowLimit() != null
                 ? member.getTier().getBorrowLimit()
                 : configuredLimit;
@@ -1418,7 +1423,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
         }
 
-        Member member = memberRepository.findByAccountUsername(username)
+        Member member = memberRepository.findByAccountUsernameForUpdate(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         localizedMessageService.get("backend.member.currentNotFound")));
 
@@ -1444,24 +1449,26 @@ public class BorrowServiceImpl implements BorrowService {
         java.util.Map<Integer, Long> requestedCopiesByBook = normalizedBookIds.stream()
                 .collect(Collectors.groupingBy(java.util.function.Function.identity(), Collectors.counting()));
         for (java.util.Map.Entry<Integer, Long> entry : requestedCopiesByBook.entrySet()) {
+            Book lockedBook = bookRepository.findByIdForUpdate(entry.getKey())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            localizedMessageService.get("backend.inventory.bookNotFound", entry.getKey())));
+            if ("Inactive".equalsIgnoreCase(lockedBook.getStatus())) {
+                throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.bookUnavailable"));
+            }
             long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(entry.getKey(),
                     "Available");
-            if (entry.getValue() > availableCopies) {
+            long pendingCopies = borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(entry.getKey(),
+                    "Pending");
+            long requestableCopies = Math.max(0, availableCopies - pendingCopies);
+            if (entry.getValue() > requestableCopies) {
                 throw new ConflictException(
-                        localizedMessageService.get("backend.borrow.stockExceeded", availableCopies));
-            }
-            if (borrowDetailRepository.countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(),
-                    entry.getKey()) > 0) {
-                Book duplicateBook = bookRepository.findById(entry.getKey()).orElse(null);
-                String title = duplicateBook == null ? String.valueOf(entry.getKey()) : duplicateBook.getTitle();
-                throw new ConflictException(
-                        localizedMessageService.get("backend.borrow.duplicateActiveRequest", title));
+                        localizedMessageService.get("backend.borrow.stockExceeded", requestableCopies));
             }
         }
 
         List<String> titles = new ArrayList<>();
         for (Integer bookId : normalizedBookIds) {
-            Book book = bookRepository.findById(bookId)
+            Book book = bookRepository.findByIdForUpdate(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
 
@@ -1493,7 +1500,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
         }
 
-        Member member = memberRepository.findByAccountUsername(username)
+        Member member = memberRepository.findByAccountUsernameForUpdate(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         localizedMessageService.get("backend.member.currentNotFound")));
 
@@ -1520,7 +1527,7 @@ public class BorrowServiceImpl implements BorrowService {
         java.util.Set<Integer> validatedBookIds = new java.util.HashSet<>();
         java.util.Map<Integer, java.util.ArrayDeque<BookItem>> availableItemsByBook = new java.util.HashMap<>();
         for (Integer bookId : bookIds) {
-            Book book = bookRepository.findById(bookId)
+            Book book = bookRepository.findByIdForUpdate(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
 
@@ -1531,17 +1538,14 @@ public class BorrowServiceImpl implements BorrowService {
             if (validatedBookIds.add(bookId)) {
                 long requestedCopies = java.util.Collections.frequency(bookIds, bookId);
                 List<BookItem> availableItems = bookItemRepository.findAvailableByBookIdForUpdate(bookId);
-                if (requestedCopies > availableItems.size()) {
+                long pendingCopies = borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(bookId,
+                        "Pending");
+                long requestableCopies = Math.max(0, availableItems.size() - pendingCopies);
+                if (requestedCopies > requestableCopies) {
                     throw new ConflictException(
-                            localizedMessageService.get("backend.borrow.stockExceeded", availableItems.size()));
+                            localizedMessageService.get("backend.borrow.stockExceeded", requestableCopies));
                 }
                 availableItemsByBook.put(bookId, new java.util.ArrayDeque<>(availableItems));
-                long activeOrPending = borrowDetailRepository
-                        .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
-                if (activeOrPending > 0) {
-                    throw new ConflictException(
-                            localizedMessageService.get("backend.borrow.duplicateActiveRequest", book.getTitle()));
-                }
             }
 
             BookItem reservedItem = availableItemsByBook.get(bookId).pollFirst();

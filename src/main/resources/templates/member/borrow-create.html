@@ -4,130 +4,117 @@
       layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{member.borrowCreate.title} + ' - LMW'">Phiếu đăng ký mượn sách - LMW</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/member/borrow-create.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/member/cart.css}" />
-    <style>
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
-    </style>
 </head>
 <body>
-<div layout:fragment="content" class="container member-borrow-create-page member-palette-page mt-5 mb-5 justify-content-center d-flex">
-    <div class="card member-borrow-create-card member-reference-list border-classic shadow-sm p-4 bg-white rounded-3" style="max-width: 650px; width: 100%;">
-        <h4 class="member-borrow-create-hero font-playfair fw-bold text-center mb-4" style="color: #4a3b32;">
-            <i class="bi bi-file-earmark-text me-2" style="color: #8b5a2b;"></i><span th:text="#{member.borrowCreate.title}">Phiếu Đăng Ký Mượn Sách Trực Tuyến</span>
-        </h4>
+<div layout:fragment="content" class="member-borrow-create-page member-palette-page">
+    <header class="member-notifications-header notifications-hero member-borrow-create-hero">
+        <div class="notifications-hero-copy member-borrow-create-hero-copy">
+            <span class="member-notifications-eyebrow" th:text="#{member.borrowCreate.eyebrow}">CREATE A LOAN REQUEST</span>
+            <h1 th:text="#{member.borrowCreate.title}">Online Book Loan Request</h1>
+            <p th:text="#{member.borrowCreate.description}">Review the selected book and choose a borrowing period before submitting.</p>
+        </div>
+    </header>
+    <div class="member-borrow-create-card member-reference-list">
 
         <!-- Alerts thông báo lỗi/thành công -->
-        <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>
+        <div th:if="${errorMessage != null}" class="alert alert-danger app-alert--danger" role="alert">
             <span th:text="${errorMessage}">Thông báo lỗi</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-            <i class="bi bi-check-circle me-2"></i>
+        <div th:if="${successMessage != null}" class="alert alert-success app-alert--success" role="status">
             <span th:text="${successMessage}">Success</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div class="alert alert-warning border-0 small mb-4" style="background-color:#fffbeb; color:#b45309;">
-            <i class="bi bi-info-circle-fill me-2"></i><span th:text="#{member.borrowCreate.noticeInfo}">Hệ thống sẽ duyệt và khấu trừ phí dịch vụ trực tiếp vào ví điện tử của bạn khi thủ thư phê duyệt cấp sách.</span>
+        <div class="member-borrow-create-notice">
+            <span th:text="#{member.borrowCreate.noticeInfo}">Hệ thống sẽ duyệt và khấu trừ phí dịch vụ trực tiếp vào ví điện tử của bạn khi thủ thư phê duyệt cấp sách.</span>
         </div>
 
         <!-- THÔNG TIN NGƯỜI MƯỢN -->
-        <div class="mb-4 p-3 rounded" style="background-color: #fdfbf7; border: 1px solid rgba(139, 90, 43, 0.15);">
-            <h6 class="fw-bold mb-2 text-uppercase small" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{member.borrowCreate.borrowerInfo}">Thông tin người mượn</h6>
-            <div class="d-flex align-items-center mb-1">
-                <i class="bi bi-person-check me-2 fs-5" style="color: #4a3b32;"></i>
-                <span class="fw-bold fs-5" style="color: #4a3b32;" th:text="${member.user.fullName}">Tên</span>
-                <span class="badge ms-2" style="background-color: #8b5a2b; font-size: 0.75rem;" th:text="${member.tier != null ? #messages.msg('member.borrowCreate.borrowerTierPrefix') + member.tier.tierName : #messages.msg('member.borrowCreate.borrowerTierGuest')}">Hạng VIP</span>
+        <div class="member-borrow-create-borrower">
+            <h2 th:text="#{member.borrowCreate.borrowerInfo}">Thông tin người mượn</h2>
+            <div class="member-borrow-create-borrower-heading">
+                <strong th:text="${member.user.fullName}">Tên</strong>
+                <span class="member-reference-pill" th:text="${member.tier != null ? #messages.msg('member.borrowCreate.borrowerTierPrefix') + member.tier.tierName : #messages.msg('member.borrowCreate.borrowerTierGuest')}">Hạng VIP</span>
             </div>
-            <div class="text-muted small">
-                <i class="bi bi-telephone me-1"></i> <span th:text="${member.user.phone}">SĐT</span> <span class="mx-2">|</span>
-                <i class="bi bi-envelope me-1"></i> <span th:text="${member.user.email}">Email</span>
+            <div class="member-borrow-create-contact">
+                <span th:text="${member.user.phone}">SĐT</span><span aria-hidden="true">·</span>
+                <span th:text="${member.user.email}">Email</span>
             </div>
         </div>
 
-        <form th:action="@{/member/borrow/request/submit}" method="post" id="borrowForm">
+        <form th:action="@{/member/borrow/request/submit}" method="post" id="borrowForm" class="member-borrow-create-form">
             <input type="hidden" name="bookId" th:value="${selectedBookId}" />
+            <input type="hidden" name="submissionToken" th:value="${borrowSubmissionToken}" />
 
             <!-- SỐ NGÀY MƯỢN MONG MUỐN -->
-            <div class="mb-4">
-                <label class="form-label fw-bold mb-2" style="color: #4a3b32 !important;" th:text="#{member.borrowCreate.preferredDays}">Số ngày mượn mong muốn</label>
+            <div class="member-borrow-create-field">
+                <label for="borrowDaysInput" th:text="#{member.borrowCreate.preferredDays}">Số ngày mượn mong muốn</label>
                 <input type="number"
-                       class="form-control border-classic"
-                       style="border-radius: 6px; padding: 0.6rem 0.75rem;"
+                       class="form-control"
                        name="numberOfDays"
                        id="borrowDaysInput"
                        min="1"
                        th:max="${maxBorrowDays}"
                        th:value="${maxBorrowDays >= 14 ? 14 : maxBorrowDays}"
                        required
-                       placeholder="Nhập số ngày muốn mượn..."/>
-                <div id="borrowDaysError" class="text-danger small mt-1 d-none" style="font-weight: 600;">
-                    <i class="bi bi-exclamation-circle me-1"></i>Vui lòng nhập số ngày mượn hợp lệ.
+                        th:placeholder="#{member.borrowCreate.preferredDaysPlaceholder}"/>
+                 <div id="borrowDaysError" class="member-borrow-create-validation d-none">
+                     <span th:text="#{member.borrowCreate.validation.invalidDays}">Enter a valid number of loan days.</span>
                 </div>
-                <div class="form-text text-muted mt-2 fst-italic" style="font-size: 0.85rem;">
-                    <i class="bi bi-info-circle me-1 text-primary"></i>
+                <div class="member-borrow-create-field-help">
                     <span th:text="#{member.borrowCreate.allowedLimitPrefix}">Quy định của thư viện cho phép mượn tối đa: </span>
                     <strong class="text-danger fw-bold" th:text="${maxBorrowDays} + ' ' + #{common.days} + '.'">14 ngày.</strong>
                 </div>
             </div>
 
             <!-- HẠN TRẢ DỰ KIẾN -->
-            <div class="mb-4 p-3 rounded text-center" style="background-color: #fff9f0; border: 1px dashed rgba(139, 90, 43, 0.3);">
-                <span class="d-block small text-uppercase fw-bold mb-1" style="color: #8b5a2b;" th:text="#{member.borrowCreate.expectedDueDate}">Hạn trả dự kiến</span>
-                <span class="fs-4 fw-bold" style="color: #d32f2f;" id="dueDateDisplay">--/--/----</span>
+            <div class="member-borrow-create-due-date">
+                <span th:text="#{member.borrowCreate.expectedDueDate}">Hạn trả dự kiến</span>
+                <strong id="dueDateDisplay">--/--/----</strong>
             </div>
 
             <!-- CHI TIẾT SÁCH MƯỢN -->
-            <div class="mb-4" th:if="${selectedBook != null}">
-                <div class="d-flex justify-content-between align-items-end mb-2">
-                    <h6 class="fw-bold text-uppercase small mb-0" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{member.borrowCreate.bookDetails}">Chi tiết sách mượn</h6>
-                    <span class="badge" style="background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b; border: 1px solid rgba(139, 90, 43, 0.2);" id="totalQtyBadge" th:text="#{member.borrowCreate.totalBookQty(1)}">Tổng: 1 cuốn</span>
+            <div class="member-borrow-create-section" th:if="${selectedBook != null}">
+                <div class="member-borrow-create-section-heading">
+                    <h3 th:text="#{member.borrowCreate.bookDetails}">Chi tiết sách mượn</h3>
+                    <span class="member-reference-pill" id="totalQtyBadge" th:text="#{member.borrowCreate.totalBookQty(1)}">Tổng: 1 cuốn</span>
                 </div>
-                <div class="p-3 rounded bg-light border-classic">
+                <div class="member-borrow-create-book member-reference-list__item">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <i class="bi bi-book text-secondary me-2"></i>
                             <span class="fw-bold text-dark" th:text="${selectedBook.title}">Tên sách</span>
                             <div class="text-muted small mt-1">
-                                <i class="bi bi-upc-scan me-1"></i>ISBN: <span th:text="${selectedBook.isbn != null ? selectedBook.isbn : 'N/A'}">BC001</span>
+                                ISBN: <span th:text="${selectedBook.isbn != null ? selectedBook.isbn : 'N/A'}">BC001</span>
                             </div>
                         </div>
                         <div class="text-end ms-3 flex-shrink-0">
                             <span th:if="${availableCount != null and availableCount > 0}"
-                                  class="badge"
-                                  style="background-color: rgba(34,197,94,0.1); color: #15803d; border: 1px solid rgba(34,197,94,0.3); font-size: 0.75rem; white-space: nowrap;">
-                                <i class="bi bi-box-seam me-1"></i><span th:text="#{member.borrowCreate.availableStockSuffix(${availableCount})}">Còn X bản</span>
+                                  class="member-reference-pill member-borrow-create-pill--success">
+                                <span th:text="#{member.borrowCreate.availableStockSuffix(${availableCount})}">Còn X bản</span>
                             </span>
                             <span th:if="${availableCount == null or availableCount == 0}"
-                                  class="badge"
-                                  style="background-color: rgba(239,68,68,0.1); color: #b91c1c; border: 1px solid rgba(239,68,68,0.3); font-size: 0.75rem;">
-                                <i class="bi bi-x-circle me-1"></i><span th:text="#{member.borrowCreate.outOfStock}">Hết trong kho</span>
+                                  class="member-reference-pill member-borrow-create-pill--danger">
+                                <span th:text="#{member.borrowCreate.outOfStock}">Hết trong kho</span>
                             </span>
                         </div>
                     </div>
 
                     <!-- BỘ CHỌN SỐ LƯỢNG -->
-                    <div class="d-flex align-items-center justify-content-between mt-3 pt-3" style="border-top: 1px dashed rgba(139,90,43,0.15);">
+                    <div class="member-borrow-create-quantity">
                         <span class="small fw-bold text-muted" th:text="#{member.borrowCreate.qtyBorrow}">Số lượng bản mượn:</span>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="member-borrow-create-stepper">
                             <button type="button" id="qtyDecrease"
-                                    class="btn btn-sm fw-bold"
-                                    style="width:32px;height:32px;padding:0;border:1px solid rgba(139,90,43,0.3);background:#fdfbf7;color:#8b5a2b;border-radius:6px;font-size:1.1rem;"
+                                    class="member-borrow-create-stepper-button"
                                     onclick="changeQty(-1)">−</button>
                             <input type="number" name="quantity" id="quantityInput"
                                    value="1" min="1" th:max="${availableCount != null ? availableCount : 1}"
-                                   readonly
-                                   style="width:52px;text-align:center;border:1px solid rgba(139,90,43,0.2);border-radius:6px;padding:4px;font-weight:700;color:#4a3b32;background:#fff;">
+                                   readonly>
                             <button type="button" id="qtyIncrease"
-                                    class="btn btn-sm fw-bold"
-                                    style="width:32px;height:32px;padding:0;border:1px solid rgba(139,90,43,0.3);background:#fdfbf7;color:#8b5a2b;border-radius:6px;font-size:1.1rem;"
+                                    class="member-borrow-create-stepper-button"
                                     onclick="changeQty(1)">+</button>
-                            <span class="small text-muted" th:if="${availableCount != null and availableCount > 0}" th:text="#{member.borrowCreate.qtyMaxPrefix(${availableCount})}">
+                            <span class="member-borrow-create-quantity-limit" th:if="${availableCount != null and availableCount > 0}" th:text="#{member.borrowCreate.qtyMaxPrefix(${availableCount})}">
                                 (tối đa X)
                             </span>
                         </div>
@@ -136,65 +123,67 @@
             </div>
 
             <!-- THÔNG TIN THANH TOÁN -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-end mb-2">
-                    <h6 class="fw-bold text-uppercase small mb-0" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{member.borrowCreate.paymentPreview}">Thông tin thanh toán dự kiến</h6>
+            <div class="member-borrow-create-section">
+                <div class="member-borrow-create-section-heading">
+                    <h3 th:text="#{member.borrowCreate.paymentPreview}">Thông tin thanh toán dự kiến</h3>
                 </div>
-                <ul class="list-group" style="border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 90, 43, 0.15);">
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
-                        <div>
-                            <span class="text-muted small" th:text="#{member.borrowCreate.baseFee}">Phí mượn cơ bản:</span><br>
-                            <small class="text-secondary" id="baseFeeSubtext">1 cuốn × 14 ngày × 5,000đ</small>
+                <ul class="list-group member-borrow-create-fees">
+                    <li class="list-group-item member-borrow-create-fee-row">
+                        <div class="member-borrow-create-fee-copy">
+                            <span class="member-borrow-create-fee-label" th:text="#{member.borrowCreate.baseFee}">Phí mượn cơ bản:</span>
+                            <small class="member-borrow-create-fee-note" id="baseFeeSubtext">1 book × 14 days × 5,000 VND</small>
                         </div>
-                        <span class="fw-bold text-dark" id="baseFeeDisplay">70,000 VNĐ</span>
+                        <span class="member-borrow-create-fee-value" id="baseFeeDisplay">70,000 VND</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
-                        <div>
-                            <span class="text-muted small" th:text="#{member.borrowCreate.memberDiscount}">Ưu đãi hạng thành viên:</span><br>
-                            <small class="text-secondary" th:text="${member.tier != null ? #messages.msg('member.borrowCreate.memberDiscountSub', member.tier.tierName, discountPercent) : #messages.msg('member.borrowCreate.noDiscountSub')}"></small>
+                    <li class="list-group-item member-borrow-create-fee-row">
+                        <div class="member-borrow-create-fee-copy">
+                            <span class="member-borrow-create-fee-label" th:text="#{member.borrowCreate.memberDiscount}">Ưu đãi hạng thành viên:</span>
+                            <small class="member-borrow-create-fee-note" th:text="${member.tier != null ? #messages.msg('member.borrowCreate.memberDiscountSub', member.tier.tierName, discountPercent) : #messages.msg('member.borrowCreate.noDiscountSub')}"></small>
                         </div>
-                        <span class="fw-bold text-success">-<span id="discountDisplay">0</span> VNĐ</span>
+                        <span class="member-borrow-create-fee-value member-borrow-create-fee-value--discount">-<span id="discountDisplay">0</span> VND</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="background-color: rgba(139, 90, 43, 0.05); border-top: 1px dashed rgba(139, 90, 43, 0.2);">
-                        <span class="fw-bold" style="color: #8b5a2b;" th:text="#{member.borrowCreate.totalPayment}">Tổng thanh toán dự kiến:</span>
-                        <span class="fw-bold fs-5" style="color: #d32f2f;" id="finalFeeDisplay">0 VNĐ</span>
+                    <li class="list-group-item member-borrow-create-fee-row member-borrow-create-fee-total">
+                        <span class="member-borrow-create-fee-total-label" th:text="#{member.borrowCreate.totalPayment}">Tổng thanh toán dự kiến:</span>
+                        <span class="member-borrow-create-fee-total-value" id="finalFeeDisplay">0 VND</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
-                        <span class="text-muted small" th:text="#{member.borrowCreate.walletBalance}">Số dư ví hiện tại:</span>
-                        <span class="fw-bold text-dark font-monospace" th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                    <li class="list-group-item member-borrow-create-fee-row member-borrow-create-wallet-row">
+                        <span class="member-borrow-create-fee-label" th:text="#{member.borrowCreate.walletBalance}">Số dư ví hiện tại:</span>
+                        <span class="member-borrow-create-wallet-value" th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
                     </li>
                 </ul>
-                <div id="walletWarning" class="alert alert-danger border-0 small mt-2 d-none">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="#{member.borrowCreate.walletWarning}">Số dư ví không đủ để thanh toán phí mượn dự kiến! Vui lòng nạp thêm tiền.</span>
+                <div id="walletWarning" class="member-borrow-create-wallet-warning d-none" role="alert">
+                    <span th:text="#{member.borrowCreate.walletWarning}">Số dư ví không đủ để thanh toán phí mượn dự kiến! Vui lòng nạp thêm tiền.</span>
                 </div>
             </div>
 
             <!-- PHƯƠNG THỨC THANH TOÁN -->
-            <div class="mb-4">
-                <h6 class="fw-bold text-uppercase small mb-3" style="color: #8b5a2b; letter-spacing: 0.5px;" th:text="#{member.borrowCreate.paymentMethod}">Phương thức thanh toán</h6>
-                <div class="d-flex flex-column gap-2">
-                    <div class="payment-option-card form-check p-3 rounded">
-                        <input class="form-check-input ms-1 me-3 cart-checkbox" type="radio" name="paymentMethod" id="payWallet" value="WALLET" checked>
-                        <label class="form-check-label fw-bold mb-0" for="payWallet" style="color: #4a3b32; cursor: pointer; user-select: none;">
-                            <i class="bi bi-wallet2 me-2 text-primary"></i><span th:text="#{member.borrowCreate.payWallet}">Trừ tiền trong ví</span>
+            <fieldset class="member-borrow-create-section member-borrow-create-payment-methods">
+                <legend th:text="#{member.borrowCreate.paymentMethod}">Phương thức thanh toán</legend>
+                <div class="member-borrow-create-payment-options">
+                    <div class="payment-option-card">
+                        <input class="form-check-input cart-checkbox" type="radio" name="paymentMethod" id="payWallet" value="WALLET" checked>
+                        <label for="payWallet">
+                            <span class="member-borrow-create-payment-radio" aria-hidden="true"></span>
+                            <span th:text="#{member.borrowCreate.payWallet}">Trừ tiền trong ví</span>
                         </label>
                     </div>
-                    <div class="payment-option-card form-check p-3 rounded">
-                        <input class="form-check-input ms-1 me-3 cart-checkbox" type="radio" name="paymentMethod" id="payBank" value="BANK">
-                        <label class="form-check-label fw-bold mb-0" for="payBank" style="color: #4a3b32; cursor: pointer; user-select: none;">
-                            <i class="bi bi-bank me-2 text-info"></i><span th:text="#{member.borrowCreate.payBank}">Thanh toán qua ngân hàng</span>
+                    <div class="payment-option-card">
+                        <input class="form-check-input cart-checkbox" type="radio" name="paymentMethod" id="payBank" value="BANK">
+                        <label for="payBank">
+                            <span class="member-borrow-create-payment-radio" aria-hidden="true"></span>
+                            <span th:text="#{member.borrowCreate.payBank}">Thanh toán qua ngân hàng</span>
                         </label>
                     </div>
                 </div>
-            </div>
+            </fieldset>
 
             <!-- NÚT HÀNH ĐỘNG -->
-            <div class="d-flex justify-content-between pt-4 mt-2" style="border-top: 1px dashed rgba(139, 90, 43, 0.2);">
-                <a th:href="@{'/books/' + ${selectedBookId}}" class="btn btn-outline-secondary px-4 py-2" style="border-color: #8b5a2b; color: #8b5a2b;">
-                    <i class="bi bi-arrow-left me-2"></i><span th:text="#{common.cancel}">Hủy bỏ</span>
+            <div class="member-borrow-create-actions">
+                <a th:href="@{'/books/' + ${selectedBookId}}" class="member-ui-button member-ui-button--secondary">
+                    <span th:text="#{common.cancel}">Hủy bỏ</span>
                 </a>
-                <button type="submit" class="btn text-white px-4 py-2" id="submitBtn" style="background-color: #8b5a2b; border-color: #8b5a2b; font-weight: 600;">
-                    <i class="bi bi-check-circle me-2" id="submitBtnIcon"></i><span id="submitBtnLabel" th:text="#{member.borrowCreate.submit}">Gửi yêu cầu phê duyệt</span>
+                <button type="submit" class="member-ui-button member-ui-button--primary" id="submitBtn">
+                    <span id="submitBtnLabel" th:text="#{member.borrowCreate.submit}">Gửi yêu cầu phê duyệt</span>
                 </button>
             </div>
         </form>
@@ -203,12 +192,6 @@
 
 <div layout:fragment="scripts">
     <script th:inline="javascript">
-        // Thay thế URL trong lịch sử để khi back lại sẽ về thẳng trang chi tiết sách sạch
-        var bookId = [[${selectedBookId}]];
-        if (window.history.replaceState && bookId) {
-            window.history.replaceState(null, "", "/books/" + bookId);
-        }
-
         // Ngăn chặn tải lại trang từ Cache khi người dùng nhấn nút Back của trình duyệt
         window.addEventListener("pageshow", function (event) {
             var historyTraversal = event.persisted ||
@@ -221,6 +204,7 @@
 
         // Bộ chọn số lượng +/-
         var maxQty = /*[[${availableCount != null ? availableCount : 1}]]*/ 1;
+        var totalQuantityText = /*[[#{member.borrowCreate.totalBookQty('__COUNT__')}]]*/ "Total: __COUNT__ book(s)";
         function changeQty(delta) {
             var input = document.getElementById('quantityInput');
             var current = parseInt(input.value) || 1;
@@ -229,7 +213,7 @@
             if (next > maxQty) next = maxQty;
             input.value = next;
             var badge = document.getElementById('totalQtyBadge');
-            if (badge) badge.textContent = next;
+            if (badge) badge.textContent = totalQuantityText.replace("__COUNT__", next);
             if (window.calculateBorrowDetails) window.calculateBorrowDetails();
             document.getElementById('qtyDecrease').disabled = (next <= 1);
             document.getElementById('qtyIncrease').disabled = (next >= maxQty);
@@ -250,11 +234,12 @@
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
             const feePerBookPerDay = /*[[${feePerBookPerDay}]]*/ 5000;
 
-            const textSubmitBank = /*[[#{member.borrowCreate.submitBank}]]*/ "Thanh toán & Gửi yêu cầu";
-            const textSubmitWallet = /*[[#{member.borrowCreate.submitWallet}]]*/ "Gửi yêu cầu phê duyệt";
-            const textInvalidDays = /*[[#{member.borrowCreate.validation.invalidDays}]]*/ "Vui lòng nhập số ngày mượn hợp lệ.";
-            const textMaxExceeded = /*[[#{member.borrowCreate.validation.maxExceeded}]]*/ "Số ngày mượn vượt quá giới hạn tối đa ({0} ngày).";
-            const textBaseFeeSub = /*[[#{member.borrowCreate.baseFeeSub}]]*/ "{0} cuốn × {1} ngày × {2}đ";
+            const formattingLocale = /*[[${#locale.language}]]*/ "en";
+            const textSubmitBank = /*[[#{member.borrowCreate.submitBank}]]*/ "Pay and submit request";
+            const textSubmitWallet = /*[[#{member.borrowCreate.submitWallet}]]*/ "Submit for approval";
+            const textInvalidDays = /*[[#{member.borrowCreate.validation.invalidDays}]]*/ "Enter a valid number of loan days.";
+            const textMaxExceeded = /*[[#{member.borrowCreate.validation.maxExceeded}]]*/ "The loan period cannot exceed {0} days.";
+            const textBaseFeeSub = /*[[#{member.borrowCreate.baseFeeSub}]]*/ "{0} book(s) × {1} day(s) × {2} VND";
 
             window.calculateBorrowDetails = function () {
                 const maxDays = parseInt(borrowDaysInput.getAttribute("max")) || 14;
@@ -263,10 +248,10 @@
 
                 if (days <= 0 || days > maxDays) {
                     dueDateDisplay.textContent = "--/--/----";
-                    baseFeeSubtext.textContent = textBaseFeeSub.replace("{0}", 0).replace("{1}", 0).replace("{2}", feePerBookPerDay.toLocaleString('vi-VN'));
-                    baseFeeDisplay.textContent = "0 VNĐ";
+                    baseFeeSubtext.textContent = textBaseFeeSub.replace("{0}", 0).replace("{1}", 0).replace("{2}", feePerBookPerDay.toLocaleString(formattingLocale));
+                    baseFeeDisplay.textContent = "0 VND";
                     discountDisplay.textContent = "0";
-                    finalFeeDisplay.textContent = "0 VNĐ";
+                    finalFeeDisplay.textContent = "0 VND";
                     updateCheckoutUI();
                     return;
                 }
@@ -274,23 +259,23 @@
                 // 1. Hạn trả dự kiến
                 const dueDate = new Date();
                 dueDate.setDate(dueDate.getDate() + days);
-                dueDateDisplay.textContent = dueDate.toLocaleDateString("vi-VN");
+                dueDateDisplay.textContent = dueDate.toLocaleDateString(formattingLocale);
 
                 // 2. Phí cơ bản: qty × ngày × đơn giá
                 const baseFee = qty * days * feePerBookPerDay;
                 baseFeeSubtext.textContent = textBaseFeeSub
                     .replace("{0}", qty)
                     .replace("{1}", days)
-                    .replace("{2}", feePerBookPerDay.toLocaleString('vi-VN'));
-                baseFeeDisplay.textContent = `${baseFee.toLocaleString('vi-VN')} VNĐ`;
+                    .replace("{2}", feePerBookPerDay.toLocaleString(formattingLocale));
+                baseFeeDisplay.textContent = `${baseFee.toLocaleString(formattingLocale)} VND`;
 
                 // 3. Giảm giá hạng thành viên
                 const discountAmount = Math.round(baseFee * (discountPercent / 100));
-                discountDisplay.textContent = `${discountAmount.toLocaleString('vi-VN')}`;
+                discountDisplay.textContent = `${discountAmount.toLocaleString(formattingLocale)}`;
 
                 // 4. Tổng thanh toán
                 const finalFee = baseFee - discountAmount;
-                finalFeeDisplay.textContent = `${finalFee.toLocaleString('vi-VN')} VNĐ`;
+                finalFeeDisplay.textContent = `${finalFee.toLocaleString(formattingLocale)} VND`;
 
                 // 5. Cập nhật trạng thái nút và cảnh báo
                 updateCheckoutUI();
@@ -306,17 +291,14 @@
                 const discountAmount = Math.round(baseFee * (discountPercent / 100));
                 const finalFee = baseFee - discountAmount;
 
-                const submitBtnIcon = document.getElementById("submitBtnIcon");
                 const submitBtnLabel = document.getElementById("submitBtnLabel");
 
                 if (days <= 0 || days > maxDays) {
                     walletWarning.classList.add("d-none");
                     submitBtn.disabled = true;
                     if (isBank) {
-                        if (submitBtnIcon) submitBtnIcon.className = "bi bi-bank me-2";
                         if (submitBtnLabel) submitBtnLabel.textContent = textSubmitBank;
                     } else {
-                        if (submitBtnIcon) submitBtnIcon.className = "bi bi-check-circle me-2";
                         if (submitBtnLabel) submitBtnLabel.textContent = textSubmitWallet;
                     }
                     return;
@@ -325,7 +307,6 @@
                 if (isBank) {
                     walletWarning.classList.add("d-none");
                     submitBtn.disabled = false;
-                    if (submitBtnIcon) submitBtnIcon.className = "bi bi-bank me-2";
                     if (submitBtnLabel) submitBtnLabel.textContent = textSubmitBank;
                 } else {
                     if (walletBalance < finalFee) {
@@ -335,7 +316,6 @@
                         walletWarning.classList.add("d-none");
                         submitBtn.disabled = false;
                     }
-                    if (submitBtnIcon) submitBtnIcon.className = "bi bi-check-circle me-2";
                     if (submitBtnLabel) submitBtnLabel.textContent = textSubmitWallet;
                 }
             }
@@ -367,7 +347,7 @@
                     if (this.value === "" || val <= 0) {
                         this.classList.add("is-invalid");
                         if (errorDiv) {
-                            errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>' + textInvalidDays;
+                            errorDiv.textContent = textInvalidDays;
                             errorDiv.classList.remove("d-none");
                         }
                         submitBtn.disabled = true;
@@ -375,7 +355,7 @@
                     } else if (val > maxDays) {
                         this.classList.add("is-invalid");
                         if (errorDiv) {
-                            errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>' + textMaxExceeded.replace("{0}", maxDays);
+                            errorDiv.textContent = textMaxExceeded.replace("{0}", maxDays);
                             errorDiv.classList.remove("d-none");
                         }
                         submitBtn.disabled = true;
@@ -393,6 +373,11 @@
             const borrowForm = document.getElementById("borrowForm");
             if (borrowForm) {
                 borrowForm.addEventListener("submit", function(e) {
+                    if (borrowForm.dataset.submitting === "true") {
+                        e.preventDefault();
+                        return;
+                    }
+
                     const errorDiv = document.getElementById("borrowDaysError");
                     const maxDays = parseInt(borrowDaysInput.getAttribute("max")) || 14;
                     const val = parseInt(borrowDaysInput.value) || 0;
@@ -402,14 +387,18 @@
                         borrowDaysInput.classList.add("is-invalid");
                         if (errorDiv) {
                             if (val > maxDays) {
-                                errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>' + textMaxExceeded.replace("{0}", maxDays);
+                                errorDiv.textContent = textMaxExceeded.replace("{0}", maxDays);
                             } else {
-                                errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>' + textInvalidDays;
+                                errorDiv.textContent = textInvalidDays;
                             }
                             errorDiv.classList.remove("d-none");
                         }
                         borrowDaysInput.focus();
+                        return;
                     }
+
+                    borrowForm.dataset.submitting = "true";
+                    if (submitBtn) submitBtn.disabled = true;
                 });
             }
 

@@ -11,7 +11,7 @@
 </head>
 
 <body>
-<main layout:fragment="content" class="member-notifications-page member-palette-page">
+<main layout:fragment="content" class="member-notifications-page member-palette-page member-wallet-page">
     <div class="member-notifications-container">
         <header class="member-notifications-header member-dashboard-hero notifications-hero">
             <div class="notifications-hero-copy">
@@ -19,17 +19,17 @@
                 <h1 th:text="#{member.wallet.heading}">Wallet &amp; Fines</h1>
                 <p th:text="#{member.wallet.description}">Used to pay borrowing fees, fines, and other library transactions.</p>
                 <div class="member-notifications-summary">
-                    <span>
+                    <span class="member-wallet-balance-summary">
                         <strong th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
                         <span th:text="#{currency.vnd}">VND</span>
                     </span>
-                    <span th:if="${totalUnpaidFines != null and totalUnpaidFines > 0}" style="color: var(--member-color-on-dark); border-color: rgba(255,255,255,.3); background: var(--member-color-danger-ink);">
+                    <span class="member-wallet-unpaid-summary" th:if="${totalUnpaidFines != null and totalUnpaidFines > 0}">
                         <strong th:text="${#numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT')}">0</strong> <span th:text="#{currency.vnd}">VND</span>
-                        <span style="margin-left: 4px;" th:text="#{member.wallet.unpaidFines}">Unpaid</span>
+                        <span class="member-wallet-unpaid-label" th:text="#{member.wallet.unpaidFines}">Unpaid</span>
                     </span>
                 </div>
             </div>
-            <div class="d-flex flex-column gap-2 text-end">
+            <div class="member-wallet-hero-actions">
                 <button type="button" class="notifications-hero-action member-ui-button member-ui-button--inverse"
                         data-toggle="modal" data-target="#memberTopUpModal">
                     <i class="bi bi-plus-circle" aria-hidden="true"></i><span th:text="#{wallet.topUp}">Top Up</span>
@@ -40,8 +40,8 @@
             </div>
         </header>
 
-        <div class="member-notifications-alert is-success" role="alert" th:if="${success}" th:text="${success}"></div>
-        <div class="member-notifications-alert is-error" role="alert" th:if="${error}" th:text="${error}"></div>
+        <div class="member-notifications-alert app-alert--success is-success" role="alert" th:if="${success}" th:text="${success}"></div>
+        <div class="member-notifications-alert app-alert--danger is-error" role="alert" th:if="${error}" th:text="${error}"></div>
 
         <section class="member-notifications-card member-reference-list mb-4">
             <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
@@ -57,18 +57,18 @@
             </div>
 
             <div class="member-notifications-list member-reference-list__body" th:if="${unpaidFines != null and !#lists.isEmpty(unpaidFines)}">
-                <article class="member-notification-row member-reference-list__item" th:each="fine : ${unpaidFines}">
-                    <span class="member-notification-row-icon" aria-hidden="true" style="color: var(--member-color-danger-ink); background: var(--member-color-danger-soft);"><i class="bi bi-exclamation-circle"></i></span>
+                <article class="member-notification-row member-reference-list__item member-wallet-fine-row" th:each="fine : ${unpaidFines}">
+                    <span class="member-notification-row-icon member-wallet-row-icon member-wallet-row-icon--debit" aria-hidden="true"><i class="bi bi-exclamation-circle"></i></span>
                     <div class="member-notification-row-content">
                         <div class="member-notification-row-meta">
                             <span class="member-notification-row-type member-reference-pill">
                                 <span th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">Overdue Fine</span>
                             </span>
-                            <span class="member-notification-unread-label member-reference-pill" style="color: var(--member-color-danger-ink); background: var(--member-color-canvas); border-color: var(--member-color-danger-soft);">
+                            <span class="member-notification-unread-label member-reference-pill member-wallet-status member-wallet-status--unpaid">
                                 <span th:text="#{payment.status.unpaid}">Unpaid</span>
                             </span>
                         </div>
-                        <h3 style="color: var(--member-color-danger-ink);">
+                        <h3 class="member-wallet-amount member-wallet-amount--debit">
                             <strong th:text="${fine.amount != null ? #numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</strong> <span th:text="#{currency.vnd}">VND</span>
                         </h3>
                     </div>
@@ -89,7 +89,7 @@
                 <div class="member-notification-toolbar-copy">
                     <h2 th:text="#{transaction.history}">Transaction History</h2>
                 </div>
-                <form method="get" th:action="@{/member/financial/transactions}" class="member-notification-type-filter d-flex m-0" data-auto-filter-form>
+                <form method="get" th:action="@{/member/financial/transactions}" class="member-notification-type-filter member-wallet-filter" data-auto-filter-form>
                     <select name="type" class="form-select m-0" th:aria-label="#{transaction.filterType}" data-auto-submit>
                         <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{common.all}">All</option>
                         <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
@@ -110,13 +110,16 @@
             </div>
 
             <div class="member-notifications-list member-reference-list__body" th:if="${historyRows != null and !#lists.isEmpty(historyRows)}">
-                <article class="member-notification-row member-reference-list__item" th:each="row : ${historyRows}">
-                    <span class="member-notification-row-icon" aria-hidden="true" 
-                          th:style="${row.amount != null and row.amount.signum() >= 0 ? 'color: var(--member-color-success-ink); background: var(--member-color-success-soft);' : 'color: var(--member-color-danger-ink); background: var(--member-color-danger-soft);'}">
+                <article class="member-notification-row member-reference-list__item member-wallet-transaction-row"
+                         th:classappend="${row.amount != null and row.amount.signum() >= 0 ? ' is-credit' : ' is-debit'}"
+                         th:each="row : ${historyRows}">
+                    <span class="member-notification-row-icon member-wallet-row-icon" aria-hidden="true"
+                          th:classappend="${row.amount != null and row.amount.signum() >= 0 ? ' member-wallet-row-icon--credit' : ' member-wallet-row-icon--debit'}">
                         <i class="bi bi-currency-exchange" th:if="${row.typeLabel == 'transaction.type.deposit' or row.typeLabel == 'transaction.type.refund'}"></i>
                         <i class="bi bi-wallet-fill" th:if="${row.typeLabel == 'transaction.type.topUp'}"></i>
                         <i class="bi bi-receipt" th:if="${row.typeLabel == 'transaction.type.borrowFee' or row.typeLabel == 'transaction.type.renewalFee'}"></i>
                         <i class="bi bi-exclamation-octagon" th:if="${row.typeLabel == 'transaction.type.fine' or row.typeLabel == 'transaction.type.damageFee'}"></i>
+                        <i class="bi bi-credit-card" th:if="${#strings.startsWith(row.typeLabel, 'transaction.type.kqpay') or row.typeLabel == 'transaction.type.other'}"></i>
                     </span>
                     <div class="member-notification-row-content">
                         <div class="member-notification-row-meta">
@@ -126,12 +129,13 @@
                             <span class="member-notification-row-type member-reference-pill">
                                 <span th:text="${#messages.msg(row.typeLabel)}">Transaction Type</span>
                             </span>
-                            <span class="member-notification-unread-label member-reference-pill"
-                                  th:style="${row.completed ? 'color: var(--member-color-success-ink); background: var(--member-color-canvas); border-color: var(--member-color-success-soft);' : 'color: var(--member-color-warning-ink); background: var(--member-color-canvas); border-color: var(--member-color-warning-soft);'}">
+                            <span class="member-notification-unread-label member-reference-pill member-wallet-status"
+                                  th:classappend="${row.completed ? ' member-wallet-status--completed' : ' member-wallet-status--pending'}">
                                 <span th:text="${#messages.msg(row.statusLabel)}">Completed</span>
                             </span>
                         </div>
-                        <h3 th:style="${row.amount != null and row.amount.signum() >= 0 ? 'color: var(--member-color-success-ink);' : 'color: var(--member-color-danger-ink);'}">
+                        <h3 class="member-wallet-amount"
+                            th:classappend="${row.amount != null and row.amount.signum() >= 0 ? ' member-wallet-amount--credit' : ' member-wallet-amount--debit'}">
                             <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
                             <strong th:text="${row.amount != null ? #numbers.formatDecimal(row.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
                             <span th:text="#{currency.vnd}">VND</span>
@@ -153,7 +157,7 @@
             </nav>
         </section>
 
-        <div class="modal fade member-standard-dialog" id="finePaymentModal" tabindex="-1" aria-labelledby="finePaymentModalLabel" aria-hidden="true">
+        <div class="modal fade member-standard-dialog member-wallet-dialog" id="finePaymentModal" tabindex="-1" aria-labelledby="finePaymentModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -239,7 +243,7 @@
             </div>
         </div>
 
-        <div class="modal fade member-standard-dialog" id="memberTopUpModal" tabindex="-1" aria-labelledby="memberTopUpModalLabel" aria-hidden="true">
+        <div class="modal fade member-standard-dialog member-wallet-dialog" id="memberTopUpModal" tabindex="-1" aria-labelledby="memberTopUpModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -270,7 +274,7 @@
                                     <span th:text="#{member.wallet.minimumAmount}">Minimum amount: 10,000 VND.</span>
                                 </div>
                             </div>
-                            <div class="d-flex flex-wrap gap-2 mt-3" id="memberTopUpQuickAmounts">
+                            <div class="member-wallet-quick-amounts" id="memberTopUpQuickAmounts">
                                 <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="50000">50.000</button>
                                 <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="100000">100.000</button>
                                 <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="200000">200.000</button>
