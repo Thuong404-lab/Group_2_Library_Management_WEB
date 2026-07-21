@@ -25,8 +25,17 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
 
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
 
-    long countByDueDateGreaterThanEqualAndDueDateLessThan(
-            LocalDateTime startDate, LocalDateTime endDate);
+    @Query("""
+            select count(bd)
+            from BorrowDetail bd
+            where bd.dueDate >= :startDate
+              and bd.dueDate < :endDate
+              and upper(trim(bd.status)) in :statuses
+            """)
+    long countCurrentLoansDueInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("statuses") List<String> statuses);
 
     @Query(value = """
             select count(*)
@@ -109,8 +118,20 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable);
 
-    List<BorrowDetail> findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
-            String status, LocalDateTime startDate, LocalDateTime endDate);
+    @EntityGraph(attributePaths = {"borrow.member.user", "book"})
+    @Query("""
+            select bd
+            from BorrowDetail bd
+            where bd.dueDate >= :startDate
+              and bd.dueDate < :endDate
+              and upper(trim(bd.status)) in :statuses
+            order by bd.dueDate asc, bd.borrowDetailId asc
+            """)
+    List<BorrowDetail> findCurrentLoansDueSoon(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("statuses") List<String> statuses,
+            Pageable pageable);
 
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.borrow.borrowId = :borrowId")
     List<BorrowDetail> findByBorrowId(@Param("borrowId") Integer borrowId);
@@ -155,8 +176,15 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     List<BorrowDetail> findReturnedBooksToday(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
 
     @EntityGraph(attributePaths = {"borrow.member.user", "book"})
-    @Query("SELECT bd FROM BorrowDetail bd ORDER BY bd.borrow.borrowDate DESC")
-    List<BorrowDetail> findRecentActivities(Pageable pageable);
+    @Query("""
+            select bd
+            from BorrowDetail bd
+            where upper(trim(bd.status)) in :statuses
+            order by bd.borrow.borrowDate desc, bd.borrowDetailId desc
+            """)
+    List<BorrowDetail> findRecentCirculationActivities(
+            @Param("statuses") List<String> statuses,
+            Pageable pageable);
 
     @Query("SELECT bd FROM BorrowDetail bd " +
            "JOIN FETCH bd.borrow b " +
