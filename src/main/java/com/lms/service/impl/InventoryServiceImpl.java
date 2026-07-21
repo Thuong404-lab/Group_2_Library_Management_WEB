@@ -322,6 +322,40 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void updateBookCopyCondition(Integer bookId, Integer bookItemId, String bookCondition) {
+        String normalizedCondition = bookCondition == null ? "" : bookCondition.trim();
+        if (!ALLOWED_BOOK_CONDITIONS.contains(normalizedCondition)) {
+            throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
+        }
+
+        BookItem item = bookItemRepository.findById(bookItemId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.copyNotFound")));
+        if (!item.getBook().getBookId().equals(bookId)) {
+            throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
+        }
+        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus()) || STATUS_DISPOSED.equalsIgnoreCase(item.getStatus())) {
+            throw new ConflictException(messages.get("backend.inventory.copyConditionLocked"));
+        }
+        if (conditionRank(normalizedCondition) < conditionRank(item.getBookCondition())) {
+            throw new ConflictException(messages.get("backend.inventory.copyConditionCannotImprove"));
+        }
+
+        item.setBookCondition(normalizedCondition);
+        int rank = conditionRank(normalizedCondition);
+        item.setStatus(rank >= 3 ? STATUS_LOST : (rank >= 2 ? STATUS_DAMAGED : STATUS_AVAILABLE));
+        bookItemRepository.save(item);
+    }
+
+    private int conditionRank(String condition) {
+        String value = condition == null ? "" : condition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (value.contains("lost") || value.contains("mất sách")) return 3;
+        if (value.contains("severely") || value.contains("hư hỏng nặng")) return 2;
+        if (value.contains("minor") || value.contains("hư hỏng nhẹ")) return 1;
+        return 0;
+    }
+
+    @Override
     public void updateBookStatus(Integer bookId, String status) {
         if (status == null || status.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.statusRequired"));
