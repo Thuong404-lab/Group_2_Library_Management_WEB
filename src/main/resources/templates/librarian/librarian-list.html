@@ -22,7 +22,8 @@
 
         <section class="member-data-card">
             <div class="member-data-card-body">
-                <div class="member-summary-chips" th:aria-label="#{librarian.staff.summary}">
+                <div class="member-summary-chips" th:aria-label="#{librarian.staff.summary}"
+                    th:title="#{librarian.staff.summaryScope}">
                     <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> <span
                             th:text="#{librarian.staff.totalLabel}">librarians</span></span>
                     <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong>
@@ -42,8 +43,9 @@
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
-                                th:value="${keyword}" th:placeholder="#{librarian.staff.searchPlaceholder}">
+                            <input class="form-control border-start-0 ps-0" type="search" name="keyword" data-auto-search
+                                maxlength="100" autocomplete="off" th:value="${keyword}"
+                                th:placeholder="#{librarian.staff.searchPlaceholder}">
                             <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{librarian.staff.statusFilter}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStatus)}"
@@ -86,197 +88,56 @@
                         </thead>
 
                         <tbody>
-                            <tr th:each="staff, iterStat : ${staffPage.content}"
-                                th:if="${staff.staffType != null and staff.staffType.toString().equalsIgnoreCase('Librarian')}"
-                                th:with="account=${accountByUserId != null and staff.user != null ? accountByUserId[staff.user.id] : null}">
+                            <tr th:each="staff, iterStat : ${staffPage.content}">
                                 <td class="ps-3 fw-bold"
                                     th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">
                                     1
                                 </td>
 
                                 <td>
-                                    <span class="fw-bold text-classic"
-                                        th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
+                                    <span class="fw-bold text-classic" th:text="${staff.username}">
                                         username
                                     </span>
 
                                     <div class="small text-muted"
-                                        th:text="${account != null ? 'ID: ' + account.accountId : 'ID: N/A'}">
-                                        ID: N/A
+                                        th:text="${#messages.msg('librarian.staff.accountId') + ': ' + staff.accountId}">
+                                        ID: 1
                                     </div>
                                 </td>
 
                                 <td>
-                                    <div th:if="${staff.user != null}">
-                                        <div class="fw-bold" th:text="${staff.user.fullName}">
-                                            Staff name
-                                        </div>
-
-                                        <div class="small text-muted">
-                                            <i class="bi bi-envelope me-1 text-classic"></i>
-                                            <span th:text="${staff.user.email}">email</span>
-                                        </div>
-
-                                        <div class="small text-muted" th:if="${staff.user.phone != null}">
-                                            <i class="bi bi-telephone me-1 text-classic"></i>
-                                            <span th:text="${staff.user.phone}">phone</span>
-                                        </div>
-                                    </div>
-
-                                    <div th:unless="${staff.user != null}" class="fst-italic text-muted small">
-                                        <span th:text="#{librarian.staff.noUserInformation}">No user information</span>
-                                    </div>
+                                    <div class="fw-bold" th:text="${staff.fullName}">Staff name</div>
                                 </td>
 
                                 <td>
                                     <span class="librarian-role-badge"
-                                        th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}">
+                                        th:text="${#messages.msg('role.librarian')}">
                                         Librarian
                                     </span>
                                 </td>
 
                                 <td>
-                                    <span class="status-badge"
-                                        th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
-                              staff.user.status.name() == 'Active' ? 'status-active' :
-                              staff.user.status.name() == 'Blocked' ? 'status-blocked' :
+                                    <span class="status-badge" th:classappend="${
+                              staff.status.name() == 'Active' ? 'status-active' :
+                              staff.status.name() == 'Blocked' ? 'status-blocked' :
                               'status-inactive'
-                          }" th:text="${staff.user.status.name() == 'Active' ? #messages.msg('status.active') : (staff.user.status.name() == 'Inactive' ? #messages.msg('status.inactive') : (staff.user.status.name() == 'Blocked' ? #messages.msg('status.blocked') : staff.user.status))}">
+                          }" th:text="${staff.status.name() == 'Active' ? #messages.msg('status.active') : (staff.status.name() == 'Inactive' ? #messages.msg('status.inactive') : #messages.msg('status.blocked'))}">
                                         Active
-                                    </span>
-
-                                    <span class="status-badge status-unknown"
-                                        th:if="${staff.user == null || staff.user.status == null}">
-                                        N/A
                                     </span>
                                 </td>
 
                                 <td class="text-end pe-3 member-actions">
                                     <button type="button" class="member-icon-action view-detail-tooltip-trigger"
-                                        data-bs-toggle="modal" th:data-bs-target="${'#viewStaffModal' + staff.staffId}"
+                                        data-bs-toggle="modal" data-bs-target="#viewStaffModal"
+                                        th:data-staff-id="${staff.staffId}" th:data-username="${staff.username}"
+                                        th:data-full-name="${staff.fullName}" th:data-staff-type="#{role.librarian}"
+                                        th:data-account-status="${staff.status.name()}"
+                                        th:data-status-label="${staff.status.name() == 'Active' ? #messages.msg('status.active') : (staff.status.name() == 'Inactive' ? #messages.msg('status.inactive') : #messages.msg('status.blocked'))}"
                                         th:data-bs-title="#{librarian.staff.viewDetails}"
                                         data-bs-custom-class="view-detail-tooltip"
                                         th:aria-label="#{librarian.staff.viewDetails}">
                                         <i class="bi bi-eye"></i>
                                     </button>
-
-                                    <!-- View Staff Modal -->
-                                    <div class="modal fade text-start librarian-detail-modal"
-                                        th:id="${'viewStaffModal' + staff.staffId}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                                            <div class="modal-content">
-
-                                                <div class="modal-header member-modal-header">
-                                                    <h5 class="modal-title member-modal-title-accent"
-                                                        th:text="#{librarian.staff.details}">Librarian details</h5>
-                                                </div>
-
-                                                <div class="modal-body member-modal-body">
-                                                    <div class="row g-3">
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.staffId}">Staff
-                                                                    ID</span>
-                                                            </div>
-                                                            <div class="fw-bold text-classic"
-                                                                th:text="${'ST' + staff.staffId}">
-                                                                ST1
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                Username
-                                                            </div>
-                                                            <div class="fw-bold"
-                                                                th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
-                                                                librarian01
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.fullName}">Full
-                                                                    name</span>
-                                                            </div>
-                                                            <div class="fw-bold"
-                                                                th:text="${staff.user != null ? staff.user.fullName : #messages.msg('librarian.staff.noFullName')}">
-                                                                Full name
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                Email
-                                                            </div>
-                                                            <div>
-                                                                <i class="bi bi-envelope text-classic me-1"></i>
-                                                                <span
-                                                                    th:text="${staff.user != null ? staff.user.email : #messages.msg('common.noEmail')}">
-                                                                    email
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.phone}">Phone
-                                                                    number</span>
-                                                            </div>
-                                                            <div>
-                                                                <i class="bi bi-telephone text-classic me-1"></i>
-                                                                <span
-                                                                    th:text="${staff.user != null && staff.user.phone != null ? staff.user.phone : #messages.msg('common.noPhone')}">
-                                                                    phone
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{common.status}">Status</span>
-                                                            </div>
-
-                                                            <span class="status-badge"
-                                                                th:if="${staff.user != null && staff.user.status != null}"
-                                                                th:classappend="${
-                                                      staff.user.status.name() == 'Active' ? 'status-active' :
-                                                      staff.user.status.name() == 'Blocked' ? 'status-blocked' :
-                                                      'status-inactive'
-                                                  }" th:text="${staff.user.status.name() == 'Active' ? #messages.msg('status.active') : (staff.user.status.name() == 'Inactive' ? #messages.msg('status.inactive') : (staff.user.status.name() == 'Blocked' ? #messages.msg('status.blocked') : staff.user.status))}">
-                                                                Active
-                                                            </span>
-
-                                                            <span class="status-badge status-unknown"
-                                                                th:if="${staff.user == null || staff.user.status == null}">
-                                                                N/A
-                                                            </span>
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div class="small text-muted text-uppercase fw-bold">
-                                                                <span th:text="#{librarian.staff.type}">Staff
-                                                                    type</span>
-                                                            </div>
-                                                            <span class="librarian-role-badge"
-                                                                th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}">
-                                                                Librarian
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="modal-footer member-modal-footer">
-                                                    <button type="button" class="btn member-modal-secondary"
-                                                        data-bs-dismiss="modal">
-                                                        <span th:text="#{common.close}">Close</span>
-                                                    </button>
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    </div>
                                 </td>
                             </tr>
 
@@ -346,6 +207,55 @@
 
             </div>
         </section>
+
+        <!-- One shared modal keeps the page compact and avoids duplicating staff details in the DOM. -->
+        <div class="modal fade text-start librarian-detail-modal" id="viewStaffModal" tabindex="-1"
+            aria-labelledby="viewStaffModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header member-modal-header">
+                        <h5 class="modal-title member-modal-title-accent" id="viewStaffModalLabel"
+                            th:text="#{librarian.staff.details}">Librarian details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            th:aria-label="#{common.close}"></button>
+                    </div>
+                    <div class="modal-body member-modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold"
+                                    th:text="#{librarian.staff.staffId}">Staff ID</div>
+                                <div class="fw-bold text-classic" data-detail-staff-id></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold"
+                                    th:text="#{librarian.staff.usernameLabel}">Username</div>
+                                <div class="fw-bold" data-detail-username></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold"
+                                    th:text="#{librarian.staff.fullName}">Full name</div>
+                                <div class="fw-bold" data-detail-full-name></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold"
+                                    th:text="#{common.status}">Status</div>
+                                <span class="status-badge" data-detail-status></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold"
+                                    th:text="#{librarian.staff.type}">Staff type</div>
+                                <span class="librarian-role-badge" data-detail-staff-type></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer member-modal-footer">
+                        <button type="button" class="btn member-modal-secondary" data-bs-dismiss="modal"
+                            th:text="#{common.close}">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll(".view-detail-tooltip-trigger").forEach(function (button) {
@@ -356,6 +266,25 @@
                     button.addEventListener("click", function () {
                         tooltip.hide();
                     });
+                });
+
+                const detailModal = document.getElementById("viewStaffModal");
+                detailModal.addEventListener("show.bs.modal", function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+
+                    detailModal.querySelector("[data-detail-staff-id]").textContent = button.dataset.staffId;
+                    detailModal.querySelector("[data-detail-username]").textContent = button.dataset.username;
+                    detailModal.querySelector("[data-detail-full-name]").textContent = button.dataset.fullName;
+                    detailModal.querySelector("[data-detail-staff-type]").textContent = button.dataset.staffType;
+
+                    const status = detailModal.querySelector("[data-detail-status]");
+                    const statusCode = button.dataset.accountStatus;
+                    status.textContent = button.dataset.statusLabel;
+                    status.className = "status-badge " + (
+                        statusCode === "Active" ? "status-active" :
+                        statusCode === "Blocked" ? "status-blocked" : "status-inactive"
+                    );
                 });
             });
         </script>

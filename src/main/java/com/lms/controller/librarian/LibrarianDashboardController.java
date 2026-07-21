@@ -84,10 +84,9 @@ public class LibrarianDashboardController {
 
         LibrarianListViewData data = dashboardService.getLibrarianList(page, keyword, status);
         model.addAttribute("staffPage", data.staffPage());
-        model.addAttribute("accountByUserId", data.accountByUserId());
         model.addAttribute("librarianSummary", data.summaryCounts());
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("selectedStatus", status);
+        model.addAttribute("keyword", data.keyword());
+        model.addAttribute("selectedStatus", data.selectedStatus());
         addCurrentUser(model, userDetails);
         return "librarian/librarian-list";
     }
