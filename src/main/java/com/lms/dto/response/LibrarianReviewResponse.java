@@ -11,6 +11,7 @@ public class LibrarianReviewResponse {
     private LocalDateTime createdDate;
     private String librarianResponse;
     private LocalDateTime responseDate;
+    private String moderationReason;
 
     public LibrarianReviewResponse() {
     }
@@ -86,4 +87,8 @@ public class LibrarianReviewResponse {
     public void setResponseDate(LocalDateTime responseDate) {
         this.responseDate = responseDate;
     }
+
+    public String getModerationReason() { return moderationReason; }
+
+    public void setModerationReason(String moderationReason) { this.moderationReason = moderationReason; }
 }

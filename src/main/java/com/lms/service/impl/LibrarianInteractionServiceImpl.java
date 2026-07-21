@@ -11,6 +11,8 @@ import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
+import com.lms.enums.FeedbackStatus;
+import com.lms.domain.ReviewPolicy;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import com.lms.service.LocalizedMessageService;
@@ -30,7 +32,6 @@ import java.util.Locale;
 @Service
 public class LibrarianInteractionServiceImpl implements LibrarianInteractionService {
 
-    private static final String DELETED_BY_MEMBER_STATUS = "DELETED_BY_MEMBER";
     private static final MessageSource TEST_FALLBACK_MESSAGES = createFallbackMessages();
 
     private final FeedbackRepository feedbackRepository;
@@ -62,7 +63,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Override
     @Transactional(readOnly = true)
     public Page<LibrarianReviewResponse> getReviewsForModeration(String status, Pageable pageable) {
-        Page<Feedback> feedbacks = feedbackRepository.findAll(pageable);
+        FeedbackStatus requestedStatus = parseFeedbackStatus(status);
+        Page<Feedback> feedbacks = requestedStatus == null
+                ? feedbackRepository.findAll(pageable)
+                : feedbackRepository.findByStatus(requestedStatus, pageable);
 
         return feedbacks.map(fb -> {
             LibrarianReviewResponse res = new LibrarianReviewResponse();
@@ -71,10 +75,11 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             res.setMemberName(fb.getMember().getUser().getFullName());
             res.setRating(fb.getRating());
             res.setComment(fb.getComment());
-            res.setStatus(fb.getStatus());
+            res.setStatus(fb.getStatus().name());
             res.setCreatedDate(fb.getCreatedDate());
             res.setLibrarianResponse(fb.getLibrarianResponse());
             res.setResponseDate(fb.getResponseDate());
+            res.setModerationReason(fb.getModerationReason());
             return res;
         });
     }
@@ -85,8 +90,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
 
-        if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
             throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
+        }
+
+        if (FeedbackStatus.APPROVED != feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.reviewReply.approvedOnly"));
         }
 
         String normalizedResponse = request.getResponse() == null ? "" : request.getResponse().strip()
@@ -96,7 +105,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             throw new ValidationException(msg("backend.librarian.reviewReply.required"));
         }
 
-        if (normalizedResponse.length() < 5 || normalizedResponse.length() > 1000) {
+        if (normalizedResponse.length() < ReviewPolicy.CONTENT_MIN_LENGTH
+                || normalizedResponse.length() > ReviewPolicy.CONTENT_MAX_LENGTH) {
             throw new ValidationException(msg("backend.librarian.reviewReply.range"));
         }
 
@@ -125,11 +135,76 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional
-    public void deleteReview(Integer feedbackId) {
+    public void approveReview(Integer feedbackId) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
 
-        feedbackRepository.delete(feedback);
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
+        }
+        if (FeedbackStatus.APPROVED == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.alreadyApproved"));
+        }
+
+        feedback.setStatus(FeedbackStatus.APPROVED);
+        feedback.setModerationReason(null);
+        feedback.setModeratedDate(LocalDateTime.now());
+        feedbackRepository.save(feedback);
+
+        sendPersonalNotification(feedback.getMember(), NotificationType.REVIEW,
+                NotificationEventType.REVIEW_APPROVED,
+                "notification.reviewApproved.title", "notification.reviewApproved.content",
+                feedback.getBook().getTitle());
+    }
+
+    @Override
+    @Transactional
+    public void rejectReview(Integer feedbackId, String reason) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
+
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
+        }
+        if (FeedbackStatus.REJECTED == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.alreadyRejected"));
+        }
+
+        String normalizedReason = normalizeSingleLine(reason);
+        if (normalizedReason.length() < ReviewPolicy.CONTENT_MIN_LENGTH
+                || normalizedReason.length() > ReviewPolicy.MODERATION_REASON_MAX_LENGTH) {
+            throw new ValidationException(msg("backend.librarian.reviewReject.reasonRange"));
+        }
+        if (normalizedReason.codePoints().noneMatch(Character::isLetter)) {
+            throw new ValidationException(msg("backend.librarian.reviewReject.reasonLetters"));
+        }
+
+        feedback.setStatus(FeedbackStatus.REJECTED);
+        feedback.setModerationReason(normalizedReason);
+        feedback.setModeratedDate(LocalDateTime.now());
+        feedback.setLibrarianResponse(null);
+        feedback.setResponseDate(null);
+        feedbackRepository.save(feedback);
+
+        sendPersonalNotification(feedback.getMember(), NotificationType.REVIEW,
+                NotificationEventType.REVIEW_REJECTED,
+                "notification.reviewRejected.title", "notification.reviewRejected.content",
+                feedback.getBook().getTitle(), normalizedReason);
+    }
+
+    private FeedbackStatus parseFeedbackStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return FeedbackStatus.valueOf(status.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ValidationException(msg("backend.librarian.review.statusInvalid"));
+        }
+    }
+
+    private String normalizeSingleLine(String value) {
+        return value == null ? "" : value.strip().replaceAll("\\s+", " ");
     }
 
     private void sendPersonalNotification(Member member,

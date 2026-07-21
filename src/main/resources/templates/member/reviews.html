@@ -73,6 +73,9 @@
                           >
                             Genre
                           </span>
+                          <span class="badge ms-1"
+                                th:classappend="${review.status.name() == 'APPROVED'} ? ' text-bg-success' : (${review.status.name() == 'PENDING'} ? ' text-bg-warning' : ' text-bg-secondary')"
+                                th:text="${#messages.msg('librarian.reviews.status.' + review.status.name())}">Status</span>
                         </div>
                       </div>
                     </td>
@@ -147,6 +150,11 @@
                         th:text="${review.comment}"
                       >
                         Review Content
+                      </div>
+                      <div class="alert alert-warning py-2"
+                           th:if="${review.status.name() == 'REJECTED' and review.moderationReason != null}">
+                        <strong th:text="#{member.reviews.rejectionReason}">Rejection reason:</strong>
+                        <span th:text="${review.moderationReason}"></span>
                       </div>
 
                       <div

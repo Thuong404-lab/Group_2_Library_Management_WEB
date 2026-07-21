@@ -8,12 +8,16 @@ import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.enums.NotificationRecipientType;
 import com.lms.enums.NotificationType;
+import com.lms.enums.FeedbackStatus;
+import com.lms.domain.ReviewPolicy;
 import com.lms.service.LibrarianInteractionService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -45,7 +50,10 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             Model model) {
 
         model.addAttribute("reviews", librarianInteractionService.getReviewsForModeration(
-                status, PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by("createdDate").descending())));
+                status, PageRequest.of(Math.max(0, page), ReviewPolicy.PAGE_SIZE,
+                        Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("feedbackId")))));
+        model.addAttribute("reviewStatuses", FeedbackStatus.values());
+        model.addAttribute("currentStatus", status == null ? "" : status.strip().toUpperCase(Locale.ROOT));
 
         return "librarian/reviews-response";
     }
@@ -53,8 +61,10 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
     @PostMapping("/reviews/{id}/reply")
     public String replyReview(
             @PathVariable("id") Integer feedbackId,
-            @ModelAttribute LibrarianReviewReplyRequest request,
+            @Valid @ModelAttribute LibrarianReviewReplyRequest request,
+            BindingResult bindingResult,
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String status,
             RedirectAttributes flash) {
 
         String response = request.getResponse() == null ? "" : request.getResponse().strip()
@@ -63,19 +73,21 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         String responseError = null;
         if (response.isEmpty()) {
             responseError = message("backend.librarian.reviewReply.required");
-        } else if (response.length() < 5) {
+        } else if (response.length() < ReviewPolicy.CONTENT_MIN_LENGTH) {
             responseError = message("backend.librarian.reviewReply.minimum");
-        } else if (response.length() > 1000) {
+        } else if (response.length() > ReviewPolicy.CONTENT_MAX_LENGTH) {
             responseError = message("backend.librarian.reviewReply.maximum");
         } else if (response.codePoints().noneMatch(Character::isLetter)) {
             responseError = message("backend.librarian.reviewReply.letters");
+        } else if (bindingResult.hasErrors()) {
+            responseError = bindingResult.getAllErrors().get(0).getDefaultMessage();
         }
 
         if (responseError != null) {
             flash.addFlashAttribute("reviewReplyErrorId", feedbackId);
             flash.addFlashAttribute("reviewReplyErrors", Map.of("response", responseError));
             flash.addFlashAttribute("reviewReplyValues", Map.of("response", response));
-            return reviewRedirect(page);
+            return reviewRedirect(page, status);
         }
 
         request.setResponse(response);
@@ -89,23 +101,40 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
         }
 
-        return reviewRedirect(page);
+        return reviewRedirect(page, status);
     }
 
-    @PostMapping("/reviews/{id}/delete")
-    public String deleteReview(
+    @PostMapping("/reviews/{id}/approve")
+    public String approveReview(
             @PathVariable("id") Integer feedbackId,
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String status,
             RedirectAttributes flash) {
 
         try {
-            librarianInteractionService.deleteReview(feedbackId);
-            flash.addFlashAttribute("success", message("backend.librarian.review.deleted"));
+            librarianInteractionService.approveReview(feedbackId);
+            flash.addFlashAttribute("success", message("backend.librarian.review.approved"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
         }
 
-        return reviewRedirect(page);
+        return reviewRedirect(page, status);
+    }
+
+    @PostMapping("/reviews/{id}/reject")
+    public String rejectReview(
+            @PathVariable("id") Integer feedbackId,
+            @RequestParam(required = false) String reason,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String status,
+            RedirectAttributes flash) {
+        try {
+            librarianInteractionService.rejectReview(feedbackId, reason);
+            flash.addFlashAttribute("success", message("backend.librarian.review.rejected"));
+        } catch (ApplicationException e) {
+            flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
+        }
+        return reviewRedirect(page, status);
     }
 
     @GetMapping("/notifications/new")
@@ -238,8 +267,17 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         return value == null ? "" : value.strip().replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
     }
 
-    private String reviewRedirect(int page) {
-        return "redirect:/librarian/interaction/reviews?page=" + Math.max(0, page);
+    private String reviewRedirect(int page, String status) {
+        String redirect = "redirect:/librarian/interaction/reviews?page=" + Math.max(0, page);
+        if (status == null || status.isBlank()) {
+            return redirect;
+        }
+        try {
+            return redirect + "&status=" + FeedbackStatus
+                    .valueOf(status.strip().toUpperCase(Locale.ROOT)).name();
+        } catch (IllegalArgumentException exception) {
+            return redirect;
+        }
     }
 
 }

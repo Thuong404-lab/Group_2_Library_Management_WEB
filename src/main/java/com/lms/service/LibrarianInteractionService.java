@@ -16,7 +16,9 @@ public interface LibrarianInteractionService {
 
     boolean replyReview(Integer feedbackId, LibrarianReviewReplyRequest request);
 
-    void deleteReview(Integer feedbackId);
+    void approveReview(Integer feedbackId);
+
+    void rejectReview(Integer feedbackId, String reason);
 
     void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
 

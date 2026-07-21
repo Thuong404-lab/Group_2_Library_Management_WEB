@@ -34,8 +34,22 @@
             </div>
             <span class="review-count"
                   th:if="${reviews != null}"
-                  th:text="#{librarian.reviews.count(${reviews.totalElements})}">0 reviews</span>
+                   th:text="#{librarian.reviews.count(${reviews.totalElements})}">0 reviews</span>
         </div>
+
+        <form method="get" th:action="@{/librarian/interaction/reviews}" class="d-flex gap-2 align-items-end mb-3">
+            <div>
+                <label for="reviewStatusFilter" class="form-label" th:text="#{librarian.reviews.filterStatus}">Status</label>
+                <select id="reviewStatusFilter" name="status" class="form-select">
+                    <option value="" th:selected="${currentStatus == ''}" th:text="#{librarian.reviews.filterAll}">All</option>
+                    <option th:each="reviewStatus : ${reviewStatuses}"
+                            th:value="${reviewStatus.name()}"
+                            th:selected="${currentStatus == reviewStatus.name()}"
+                            th:text="${#messages.msg('librarian.reviews.status.' + reviewStatus.name())}">Status</option>
+                </select>
+            </div>
+            <button type="submit" class="app-form-primary" th:text="#{common.filter}">Filter</button>
+        </form>
 
         <div class="app-table-wrap">
             <table class="app-table review-management-table">
@@ -60,9 +74,18 @@
 
                 <tbody th:if="${reviews != null and reviews.totalElements > 0}">
                 <tr th:each="review : ${reviews.content}">
-                    <td class="review-book-title"
-                        th:data-label="#{librarian.reviews.book}"
-                        th:text="${review.bookTitle}">Book title</td>
+                    <td class="review-book-title" th:data-label="#{librarian.reviews.book}">
+                        <div th:text="${review.bookTitle}">Book title</div>
+                        <span class="badge mt-2"
+                              th:classappend="${review.status == 'APPROVED'} ? ' text-bg-success' : (${review.status == 'PENDING'} ? ' text-bg-warning' : ' text-bg-secondary')"
+                              th:text="${#messages.msg('librarian.reviews.status.' + review.status)}">Status</span>
+                        <small class="d-block mt-2 text-muted"
+                               th:if="${review.createdDate != null}"
+                               th:text="${#temporals.format(review.createdDate, 'dd/MM/yyyy HH:mm')}"></small>
+                        <small class="d-block mt-2 text-danger"
+                               th:if="${review.status == 'REJECTED' and review.moderationReason != null}"
+                               th:text="${review.moderationReason}"></small>
+                    </td>
                     <td th:data-label="#{librarian.reviews.sender}" th:text="${review.memberName}">Sender</td>
                     <td th:data-label="#{member.reviews.rating}">
                         <span class="review-rating-badge">
@@ -77,6 +100,10 @@
                         <div th:if="${review.librarianResponse != null and !review.librarianResponse.isBlank()}"
                              class="review-response-text"
                              th:text="${review.librarianResponse}">Response</div>
+                        <small class="d-block mt-2 text-muted" th:if="${review.responseDate != null}">
+                            <span th:text="#{librarian.reviews.responseDate}">Response date</span>:
+                            <span th:text="${#temporals.format(review.responseDate, 'dd/MM/yyyy HH:mm')}"></span>
+                        </small>
                         <span th:if="${review.status == 'DELETED_BY_MEMBER' and (review.librarianResponse == null or review.librarianResponse.isBlank())}"
                               class="review-helper-text"
                               th:text="#{librarian.reviews.memberDeleted}">Member deleted</span>
@@ -86,19 +113,23 @@
                     </td>
                     <td class="review-action-cell" th:data-label="#{common.actions}">
                         <form class="app-detached-form"
-                              th:id="${'reviewDeleteForm-' + review.feedbackId}"
-                              th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                              th:if="${review.status != 'DELETED_BY_MEMBER'}"
+                              th:id="${'reviewRejectForm-' + review.feedbackId}"
+                              th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reject'}"
                               method="post">
                             <input type="hidden" name="page" th:value="${reviews.number}">
+                            <input type="hidden" name="status" th:value="${currentStatus}">
+                            <input type="hidden" name="reason" value="">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         </form>
 
-                        <form th:if="${review.status != 'DELETED_BY_MEMBER'}"
+                        <form th:if="${review.status == 'APPROVED'}"
                               th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                               method="post"
                               class="review-reply-box review-reply-form"
                               novalidate>
                             <input type="hidden" name="page" th:value="${reviews.number}">
+                            <input type="hidden" name="status" th:value="${currentStatus}">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             <textarea name="response"
                                       class="form-control validate-field review-response-input"
@@ -130,33 +161,41 @@
                                         class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
                                         data-bs-toggle="modal"
                                         data-bs-target="#librarianDeleteReviewModal"
-                                        th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
+                                        th:data-delete-form-id="${'reviewRejectForm-' + review.feedbackId}"
                                         th:data-book-title="${review.bookTitle}"
                                         th:data-member-name="${review.memberName}"
-                                        th:title="#{librarian.reviews.deleteAction}"
-                                        th:aria-label="#{librarian.reviews.deleteAction}">
+                                        th:title="#{librarian.reviews.rejectAction}"
+                                        th:aria-label="#{librarian.reviews.rejectAction}">
                                     <i class="bi bi-trash" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </form>
 
+                        <div class="app-form-actions" th:if="${review.status == 'PENDING' or review.status == 'REJECTED'}">
+                            <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/approve'}" method="post">
+                                <input type="hidden" name="page" th:value="${reviews.number}">
+                                <input type="hidden" name="status" th:value="${currentStatus}">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="app-form-primary" th:text="#{librarian.reviews.approve}">Approve</button>
+                            </form>
+                            <button type="button"
+                                    th:if="${review.status == 'PENDING'}"
+                                    class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#librarianDeleteReviewModal"
+                                    th:data-delete-form-id="${'reviewRejectForm-' + review.feedbackId}"
+                                    th:data-book-title="${review.bookTitle}"
+                                    th:data-member-name="${review.memberName}"
+                                    th:title="#{librarian.reviews.rejectAction}"
+                                    th:aria-label="#{librarian.reviews.rejectAction}">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
                         <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
                              class="review-deleted-note"
                              th:text="#{librarian.reviews.cannotRespond}">
                             The member deleted this review, so it cannot be answered.
-                        </div>
-                        <div class="app-form-actions app-form-actions--end" th:if="${review.status == 'DELETED_BY_MEMBER'}">
-                            <button type="button"
-                                    class="app-icon-action app-icon-action--delete librarian-review-delete-trigger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#librarianDeleteReviewModal"
-                                    th:data-delete-form-id="${'reviewDeleteForm-' + review.feedbackId}"
-                                    th:data-book-title="${review.bookTitle}"
-                                    th:data-member-name="${review.memberName}"
-                                    th:title="#{librarian.reviews.deleteAction}"
-                                    th:aria-label="#{librarian.reviews.deleteAction}">
-                                <i class="bi bi-trash" aria-hidden="true"></i>
-                            </button>
                         </div>
                     </td>
                 </tr>
@@ -180,10 +219,10 @@
              th:with="startPage=${reviews.totalPages <= 10 ? 0 : (reviews.number < 9 ? 0 : (reviews.number - 8 > reviews.totalPages - 10 ? reviews.totalPages - 10 : reviews.number - 8))}, endPage=${startPage + 9 < reviews.totalPages ? startPage + 9 : reviews.totalPages - 1}">
             <ul class="pagination app-pagination">
                 <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=0)}" th:text="#{pagination.first}">First</a>
+                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=0,status=${currentStatus})}" th:text="#{pagination.first}">First</a>
                 </li>
                 <li class="page-item" th:classappend="${reviews.first} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${reviews.number - 1})}" th:aria-label="#{pagination.previous}">
+                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${reviews.number - 1},status=${currentStatus})}" th:aria-label="#{pagination.previous}">
                         <i class="bi bi-chevron-left" aria-hidden="true"></i>
                     </a>
                 </li>
@@ -191,16 +230,16 @@
                 <li class="page-item"
                     th:each="i : ${#numbers.sequence(startPage, endPage)}"
                     th:classappend="${i == reviews.number ? 'active' : ''}">
-                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${i})}" th:text="${i + 1}">1</a>
+                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${i},status=${currentStatus})}" th:text="${i + 1}">1</a>
                 </li>
                 <li class="page-item disabled" th:if="${endPage < reviews.totalPages - 1}"><span class="page-link">…</span></li>
                 <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${reviews.number + 1})}" th:aria-label="#{pagination.next}">
+                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${reviews.number + 1},status=${currentStatus})}" th:aria-label="#{pagination.next}">
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </a>
                 </li>
                 <li class="page-item" th:classappend="${reviews.last} ? 'disabled'">
-                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${reviews.totalPages - 1})}" th:text="#{pagination.last}">Last</a>
+                    <a class="page-link" th:href="@{/librarian/interaction/reviews(page=${reviews.totalPages - 1},status=${currentStatus})}" th:text="#{pagination.last}">Last</a>
                 </li>
             </ul>
         </nav>
@@ -215,8 +254,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title" id="librarianDeleteReviewModalLabel" th:text="#{librarian.reviews.deleteTitle}">
-                        Delete review?
+                    <h2 class="modal-title" id="librarianDeleteReviewModalLabel" th:text="#{librarian.reviews.rejectTitle}">
+                        Reject review?
                     </h2>
                     <button type="button"
                             class="librarian-review-modal-close"
@@ -231,8 +270,12 @@
                         <strong id="librarianDeleteReviewMember"></strong>
                         <span th:text="#{librarian.reviews.deleteDescriptionMiddle}">for</span>
                         <strong id="librarianDeleteReviewBook"></strong>
-                        <span th:text="#{librarian.reviews.deleteDescriptionEnd}">will be removed from the system.</span>
+                        <span th:text="#{librarian.reviews.rejectDescriptionEnd}">will be rejected and hidden publicly.</span>
                     </p>
+                    <label for="librarianRejectReviewReason" class="form-label" th:text="#{librarian.reviews.rejectReason}">Reason</label>
+                    <textarea id="librarianRejectReviewReason" class="form-control" rows="3" minlength="5" maxlength="500"
+                              th:placeholder="#{librarian.reviews.rejectReasonPlaceholder}"></textarea>
+                    <div id="librarianRejectReviewReasonError" class="invalid-feedback" role="alert"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button"
@@ -242,7 +285,7 @@
                     <button type="button"
                             class="librarian-review-modal-confirm"
                             id="librarianConfirmDeleteReview"
-                            th:text="#{librarian.reviews.deleteAction}">Delete Review</button>
+                            th:text="#{librarian.reviews.rejectAction}">Reject Review</button>
                 </div>
             </div>
         </div>
@@ -299,18 +342,39 @@
             const memberName = document.getElementById("librarianDeleteReviewMember");
             const bookTitle = document.getElementById("librarianDeleteReviewBook");
             const confirmButton = document.getElementById("librarianConfirmDeleteReview");
+            const rejectReason = document.getElementById("librarianRejectReviewReason");
+            const rejectReasonError = document.getElementById("librarianRejectReviewReasonError");
             let deleteForm = null;
 
             document.querySelectorAll(".librarian-review-delete-trigger").forEach(function (trigger) {
                 trigger.addEventListener("click", function () {
                     deleteForm = document.getElementById(trigger.dataset.deleteFormId);
+                    if (rejectReason) {
+                        rejectReason.value = "";
+                        rejectReason.classList.remove("is-invalid");
+                    }
+                    if (rejectReasonError) rejectReasonError.textContent = "";
                     if (memberName) memberName.textContent = trigger.dataset.memberName || "";
                     if (bookTitle) bookTitle.textContent = trigger.dataset.bookTitle || "";
                 });
             });
             if (confirmButton) {
                 confirmButton.addEventListener("click", function () {
-                    if (deleteForm) deleteForm.submit();
+                    const reason = rejectReason ? rejectReason.value.trim().replace(/\s+/g, " ") : "";
+                    const message = reason.length < 5 ? /*[[#{backend.librarian.reviewReject.reasonRange}]]*/ "Please enter a reason."
+                        : reason.length > 500 ? /*[[#{backend.librarian.reviewReject.reasonRange}]]*/ "The reason is too long."
+                        : !/\p{L}/u.test(reason) ? /*[[#{backend.librarian.reviewReject.reasonLetters}]]*/ "The reason must contain letters." : "";
+                    if (rejectReason) rejectReason.classList.toggle("is-invalid", Boolean(message));
+                    if (rejectReasonError) rejectReasonError.textContent = message;
+                    if (message) {
+                        rejectReason.focus();
+                        return;
+                    }
+                    if (deleteForm) {
+                        const reasonInput = deleteForm.querySelector("input[name='reason']");
+                        if (reasonInput) reasonInput.value = reason;
+                        deleteForm.submit();
+                    }
                 });
             }
         });
