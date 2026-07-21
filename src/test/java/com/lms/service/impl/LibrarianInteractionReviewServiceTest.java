@@ -3,12 +3,17 @@ package com.lms.service.impl;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.dto.response.LibrarianReviewResponse;
 import com.lms.entity.Book;
+import com.lms.entity.BookAcquisitionRequest;
 import com.lms.entity.Feedback;
 import com.lms.entity.Member;
 import com.lms.entity.Notification;
+import com.lms.entity.Staff;
+import com.lms.entity.StaffAccount;
 import com.lms.entity.User;
 import com.lms.enums.FeedbackStatus;
+import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.exception.ConflictException;
+import com.lms.exception.ValidationException;
 import com.lms.repository.BookAcquisitionRequestRepository;
 import com.lms.repository.FeedbackRepository;
 import com.lms.repository.MemberNotificationRepository;
@@ -112,6 +117,65 @@ class LibrarianInteractionReviewServiceTest {
         verify(feedbackRepository, never()).delete(any());
     }
 
+    @Test
+    void approvingAcquisitionRecordsDecisionAndResponsibleStaff() {
+        BookAcquisitionRequest pending = acquisition(AcquisitionRequestStatus.PENDING);
+        Staff staff = new Staff();
+        staff.setStaffId(3);
+        StaffAccount account = new StaffAccount();
+        account.setStaff(staff);
+        when(acquisitionRequestRepository.findById(12)).thenReturn(Optional.of(pending));
+        when(staffAccountRepository.findByUsername("librarian")).thenReturn(Optional.of(account));
+        stubNotificationSave();
+
+        service.approveBookAcquisitionRequest(12, "  Add to the next purchasing batch.  ", "librarian");
+
+        assertEquals(AcquisitionRequestStatus.APPROVED, pending.getStatus());
+        assertEquals("Add to the next purchasing batch.", pending.getDecisionNote());
+        assertEquals(staff, pending.getProcessedBy());
+        assertEquals(true, pending.getProcessedDate() != null);
+        verify(acquisitionRequestRepository).saveAndFlush(pending);
+        verify(memberNotificationRepository).save(any());
+    }
+
+    @Test
+    void acquisitionDecisionRequiresMeaningfulText() {
+        BookAcquisitionRequest pending = acquisition(AcquisitionRequestStatus.PENDING);
+        when(acquisitionRequestRepository.findById(12)).thenReturn(Optional.of(pending));
+
+        assertThrows(ValidationException.class,
+                () -> service.approveBookAcquisitionRequest(12, "1234!", "librarian"));
+
+        verify(acquisitionRequestRepository, never()).saveAndFlush(any());
+        verify(staffAccountRepository, never()).findByUsername(any());
+    }
+
+    @Test
+    void acquisitionCannotBeProcessedTwice() {
+        BookAcquisitionRequest approved = acquisition(AcquisitionRequestStatus.APPROVED);
+        when(acquisitionRequestRepository.findById(12)).thenReturn(Optional.of(approved));
+
+        assertThrows(ConflictException.class,
+                () -> service.rejectBookAcquisitionRequest(12, "No supplier is currently available.", "librarian"));
+
+        verify(acquisitionRequestRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void acquisitionSearchValidatesStatusAndPassesNormalizedKeyword() {
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(acquisitionRequestRepository.searchForModeration(
+                AcquisitionRequestStatus.PENDING, "Effective Java", pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        service.getBookAcquisitionRequests(" pending ", "  Effective   Java ", pageable);
+
+        verify(acquisitionRequestRepository).searchForModeration(
+                AcquisitionRequestStatus.PENDING, "Effective Java", pageable);
+        assertThrows(ValidationException.class,
+                () -> service.getBookAcquisitionRequests("unknown", "", pageable));
+    }
+
     private Feedback review(FeedbackStatus status) {
         User user = new User();
         user.setFullName("Reader");
@@ -130,6 +194,24 @@ class LibrarianInteractionReviewServiceTest {
         feedback.setCreatedDate(LocalDateTime.now());
         feedback.setStatus(status);
         return feedback;
+    }
+
+    private BookAcquisitionRequest acquisition(AcquisitionRequestStatus status) {
+        User user = new User();
+        user.setFullName("Reader");
+        Member member = new Member();
+        member.setMemberId(7);
+        member.setUser(user);
+        BookAcquisitionRequest request = new BookAcquisitionRequest();
+        request.setRequestId(12);
+        request.setMember(member);
+        request.setTitle("Effective Java");
+        request.setAuthor("Joshua Bloch");
+        request.setRequestReason("Improve the Java collection.");
+        request.setDedupKey("TEXT:effective java|joshua bloch");
+        request.setStatus(status);
+        request.setCreatedDate(LocalDateTime.now());
+        return request;
     }
 
     private void stubNotificationSave() {

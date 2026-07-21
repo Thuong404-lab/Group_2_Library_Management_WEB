@@ -24,11 +24,11 @@ public interface LibrarianInteractionService {
 
     List<Member> getAllMembers();
 
-    Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
+    Page<BookAcquisitionRequest> getBookAcquisitionRequests(String status, String keyword, Pageable pageable);
 
-    void approveBookAcquisitionRequest(Integer requestId);
+    void approveBookAcquisitionRequest(Integer requestId, String note, String staffUsername);
 
-    void rejectBookAcquisitionRequest(Integer requestId, String reason);
+    void rejectBookAcquisitionRequest(Integer requestId, String reason, String staffUsername);
 
 
 }

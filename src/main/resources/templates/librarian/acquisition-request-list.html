@@ -29,6 +29,24 @@
                   th:text="#{librarian.acquisition.count(${requests.totalElements})}">0 requests</span>
         </div>
 
+        <form method="get" th:action="@{/librarian/interaction/acquisition-requests}" class="d-flex gap-2 align-items-end mb-3">
+            <div class="flex-grow-1">
+                <label for="acquisitionKeyword" class="form-label" th:text="#{librarian.acquisition.search}">Search</label>
+                <input id="acquisitionKeyword" name="keyword" class="form-control" maxlength="100"
+                       th:value="${acquisitionKeyword}" th:placeholder="#{librarian.acquisition.searchPlaceholder}">
+            </div>
+            <div>
+                <label for="acquisitionStatus" class="form-label" th:text="#{common.status}">Status</label>
+                <select id="acquisitionStatus" name="status" class="form-select">
+                    <option value="" th:selected="${currentAcquisitionStatus == ''}" th:text="#{librarian.acquisition.allStatuses}">All</option>
+                    <option th:each="itemStatus : ${acquisitionStatuses}" th:value="${itemStatus.name()}"
+                            th:selected="${currentAcquisitionStatus == itemStatus.name()}"
+                            th:text="${#messages.msg('request.status.' + #strings.toLowerCase(itemStatus.name()))}"></option>
+                </select>
+            </div>
+            <button type="submit" class="app-form-primary" th:text="#{common.filter}">Filter</button>
+        </form>
+
         <div class="app-table-wrap">
             <table class="app-table acquisition-requests-table">
                 <colgroup>
@@ -64,21 +82,24 @@
                     <td class="acquisition-reason" th:text="${request.requestReason != null ? request.requestReason : #messages.msg('librarian.acquisition.legacyReason')}">Request reason</td>
                     <td>
                         <span class="status-badge" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}"
-                              th:text="${request.status.name() == 'PENDING' ? #messages.msg('status.pendingApproval') : (request.status.name() == 'APPROVED' ? #messages.msg('librarian.acquisition.approved') : #messages.msg('librarian.acquisition.rejected'))}">Pending</span>
-                        <small class="acquisition-decision-note" th:if="${request.status.name() == 'REJECTED'}" th:text="${request.decisionNote}"></small>
+                              th:text="${#messages.msg('request.status.' + #strings.toLowerCase(request.status.name()))}">Pending</span>
+                        <small class="acquisition-decision-note" th:if="${request.decisionNote != null}"
+                               th:classappend="${' decision-' + #strings.toLowerCase(request.status.name())}"
+                               th:text="${request.decisionNote}"></small>
                     </td>
                     <td class="acquisition-actions">
                         <div th:if="${request.status.name() == 'PENDING'}" class="acquisition-action-group">
-                            <form th:action="@{/librarian/interaction/acquisition-requests/{id}/approve(id=${request.requestId})}" method="post">
-                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                <button type="submit" class="acquisition-approve-action" th:text="#{librarian.acquisition.approve}">Approve</button>
-                            </form>
+                            <button type="button" class="acquisition-approve-action" data-bs-toggle="modal" data-bs-target="#approveAcquisitionModal"
+                                    th:data-approve-url="@{/librarian/interaction/acquisition-requests/{id}/approve(id=${request.requestId})}"
+                                    th:data-book-title="${request.title}" th:text="#{librarian.acquisition.approve}">Approve</button>
                             <button type="button" class="acquisition-reject-action" data-bs-toggle="modal" data-bs-target="#rejectAcquisitionModal"
                                     th:data-reject-url="@{/librarian/interaction/acquisition-requests/{id}/reject(id=${request.requestId})}"
                                     th:data-book-title="${request.title}" th:text="#{librarian.acquisition.reject}">Reject</button>
                         </div>
                         <span th:if="${request.status.name() != 'PENDING'}" class="acquisition-processed-date"
-                              th:text="${request.processedDate != null ? #temporals.format(request.processedDate, 'dd/MM/yyyy HH:mm') : ''}"></span>
+                               th:text="${request.processedDate != null ? #temporals.format(request.processedDate, 'dd/MM/yyyy HH:mm') : ''}"></span>
+                        <small th:if="${request.processedBy != null and request.processedBy.user != null}"
+                               class="d-block text-muted" th:text="${request.processedBy.user.fullName}"></small>
                     </td>
                 </tr>
                 </tbody>
@@ -91,22 +112,51 @@
         <nav th:if="${requests != null && requests.totalPages > 1}" class="app-pagination-nav"
              th:with="startPage=${requests.totalPages <= 10 ? 0 : (requests.number < 9 ? 0 : (requests.number - 8 > requests.totalPages - 10 ? requests.totalPages - 10 : requests.number - 8))}, endPage=${startPage + 9 < requests.totalPages ? startPage + 9 : requests.totalPages - 1}">
             <ul class="pagination app-pagination">
-                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=0)}" th:text="#{pagination.first}">First</a></li>
-                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number - 1})}"><i class="bi bi-chevron-left"></i></a></li>
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=0,status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="#{pagination.first}">First</a></li>
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number - 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}"><i class="bi bi-chevron-left"></i></a></li>
                 <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == requests.number ? 'active' : ''}"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${i})}" th:text="${i + 1}">1</a></li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == requests.number ? 'active' : ''}"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${i},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="${i + 1}">1</a></li>
                 <li class="page-item disabled" th:if="${endPage < requests.totalPages - 1}"><span class="page-link">…</span></li>
-                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number + 1})}"><i class="bi bi-chevron-right"></i></a></li>
-                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.totalPages - 1})}" th:text="#{pagination.last}">Last</a></li>
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number + 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}"><i class="bi bi-chevron-right"></i></a></li>
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.totalPages - 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="#{pagination.last}">Last</a></li>
             </ul>
         </nav>
     </section>
+
+    <div class="modal fade acquisition-reject-modal" id="approveAcquisitionModal" tabindex="-1"
+         aria-labelledby="approveAcquisitionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+            <div class="modal-header"><div>
+                <h2 class="modal-title" id="approveAcquisitionModalLabel" th:text="#{librarian.acquisition.approveTitle}">Approve request</h2>
+                <p id="approveAcquisitionBookTitle"></p>
+            </div><button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}"><i class="bi bi-x-lg"></i></button></div>
+            <form id="approveAcquisitionForm" method="post" novalidate><div class="modal-body">
+                <input type="hidden" name="page" th:value="${requests.number}">
+                <input type="hidden" name="status" th:value="${currentAcquisitionStatus}">
+                <input type="hidden" name="keyword" th:value="${acquisitionKeyword}">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label for="approveAcquisitionNote" th:text="#{librarian.acquisition.approveNote}">Approval note</label>
+                <p class="form-text" th:text="#{librarian.acquisition.approvalMeaning}">Approval accepts the suggestion for procurement follow-up; it does not create inventory automatically.</p>
+                <textarea id="approveAcquisitionNote" name="note" required minlength="5" maxlength="500"
+                          th:placeholder="#{librarian.acquisition.approvePlaceholder}"
+                          aria-describedby="approveAcquisitionNoteCount approveAcquisitionNoteError"></textarea>
+                <div class="acquisition-reason-support"><span id="approveAcquisitionNoteCount" aria-live="polite">0/500</span></div>
+                <div id="approveAcquisitionNoteError" class="acquisition-field-error" role="alert" aria-live="assertive"></div>
+            </div><div class="modal-footer">
+                <button type="button" class="acquisition-modal-cancel" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                <button type="submit" class="acquisition-approve-action" th:text="#{librarian.acquisition.approve}">Approve</button>
+            </div></form>
+        </div></div>
+    </div>
 
     <div class="modal fade acquisition-reject-modal" id="rejectAcquisitionModal" tabindex="-1" aria-labelledby="rejectAcquisitionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
             <div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel" th:text="#{librarian.acquisition.rejectTitle}">Reject Request</h2><p id="rejectAcquisitionBookTitle"></p></div>
                 <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}"><i class="bi bi-x-lg"></i></button></div>
             <form id="rejectAcquisitionForm" method="post" novalidate><div class="modal-body">
+                <input type="hidden" name="page" th:value="${requests.number}">
+                <input type="hidden" name="status" th:value="${currentAcquisitionStatus}">
+                <input type="hidden" name="keyword" th:value="${acquisitionKeyword}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <label for="rejectAcquisitionReason" th:text="#{librarian.acquisition.rejectReason}">Rejection Reason</label>
                 <textarea id="rejectAcquisitionReason" name="reason" required minlength="5" maxlength="500" th:placeholder="#{librarian.acquisition.rejectPlaceholder}" aria-describedby="rejectAcquisitionReasonCount rejectAcquisitionReasonError"></textarea>
@@ -118,6 +168,11 @@
 
     <script th:inline="javascript">
         document.addEventListener("DOMContentLoaded", function () {
+            const approveForm = document.getElementById("approveAcquisitionForm");
+            const approveTitle = document.getElementById("approveAcquisitionBookTitle");
+            const approveNote = document.getElementById("approveAcquisitionNote");
+            const approveError = document.getElementById("approveAcquisitionNoteError");
+            const approveCounter = document.getElementById("approveAcquisitionNoteCount");
             const form = document.getElementById("rejectAcquisitionForm");
             const title = document.getElementById("rejectAcquisitionBookTitle");
             const reason = document.getElementById("rejectAcquisitionReason");
@@ -130,6 +185,36 @@
                 maximum: /*[[#{librarian.acquisition.validationMaximum}]]*/ "The reason cannot exceed 500 characters.",
                 letters: /*[[#{librarian.acquisition.validationLetters}]]*/ "The reason must contain letters."
             };
+            const validateDecision = (value) => value === "" ? messages.required
+                : value.length < 5 ? messages.minimum
+                : value.length > 500 ? messages.maximum
+                : !/\p{L}/u.test(value) ? messages.letters : "";
+            if (approveForm && approveTitle && approveNote && approveError && approveCounter) {
+                const updateApproveCounter = () => { approveCounter.textContent = approveNote.value.length + "/500"; };
+                document.querySelectorAll(".acquisition-approve-action[data-approve-url]").forEach(trigger =>
+                    trigger.addEventListener("click", function () {
+                        approveForm.action = trigger.dataset.approveUrl;
+                        approveTitle.textContent = trigger.dataset.bookTitle || "";
+                        approveNote.value = "";
+                        approveNote.classList.remove("is-invalid");
+                        approveError.textContent = "";
+                        updateApproveCounter();
+                    }));
+                approveForm.addEventListener("submit", function (event) {
+                    const value = approveNote.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                    approveNote.value = value;
+                    updateApproveCounter();
+                    const message = validateDecision(value);
+                    if (message) {
+                        event.preventDefault(); approveNote.classList.add("is-invalid");
+                        approveError.textContent = message; approveNote.focus();
+                    }
+                });
+                approveNote.addEventListener("input", function () {
+                    approveNote.classList.remove("is-invalid"); approveError.textContent = ""; updateApproveCounter();
+                });
+                updateApproveCounter();
+            }
             const updateCounter = () => { counter.textContent = reason.value.length + "/500"; };
             document.querySelectorAll(".acquisition-reject-action").forEach(trigger => trigger.addEventListener("click", function () {
                 form.action = trigger.dataset.rejectUrl; title.textContent = trigger.dataset.bookTitle || "";
@@ -137,7 +222,7 @@
             }));
             form.addEventListener("submit", function (event) {
                 const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n"); reason.value = value; updateCounter();
-                const message = value === "" ? messages.required : value.length < 5 ? messages.minimum : value.length > 500 ? messages.maximum : !/\p{L}/u.test(value) ? messages.letters : "";
+                const message = validateDecision(value);
                 if (message) { event.preventDefault(); reason.classList.add("is-invalid"); error.textContent = message; reason.focus(); }
             });
             reason.addEventListener("input", function () { reason.classList.remove("is-invalid"); error.textContent = ""; updateCounter(); });

@@ -9,7 +9,9 @@ import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.enums.NotificationRecipientType;
 import com.lms.enums.NotificationType;
 import com.lms.enums.FeedbackStatus;
+import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.domain.ReviewPolicy;
+import com.lms.domain.AcquisitionRequestPolicy;
 import com.lms.service.LibrarianInteractionService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -180,39 +182,56 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
     @GetMapping("/acquisition-requests")
     public String viewBookAcquisitionRequests(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(
-                PageRequest.of(Math.max(0, page), PAGE_SIZE,
+                status, keyword, PageRequest.of(Math.max(0, page), AcquisitionRequestPolicy.PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
+        model.addAttribute("acquisitionStatuses", AcquisitionRequestStatus.values());
+        model.addAttribute("currentAcquisitionStatus",
+                status == null ? "" : status.strip().toUpperCase(Locale.ROOT));
+        model.addAttribute("acquisitionKeyword", keyword == null ? "" : keyword.strip());
 
         return "librarian/acquisition-request-list";
     }
 
     @PostMapping("/acquisition-requests/{id}/approve")
     public String approveBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                                @RequestParam("note") String note,
+                                                @RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(required = false) String status,
+                                                @RequestParam(required = false) String keyword,
+                                                Principal principal,
                                                 RedirectAttributes flash) {
         try {
-            librarianInteractionService.approveBookAcquisitionRequest(requestId);
+            librarianInteractionService.approveBookAcquisitionRequest(
+                    requestId, note, principal.getName());
             flash.addFlashAttribute("success", message("backend.librarian.acquisition.approved"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/librarian/interaction/acquisition-requests";
+        return acquisitionRedirect(page, status, keyword, flash);
     }
 
     @PostMapping("/acquisition-requests/{id}/reject")
     public String rejectBookAcquisitionRequest(@PathVariable("id") Integer requestId,
                                                @RequestParam("reason") String reason,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(required = false) String status,
+                                               @RequestParam(required = false) String keyword,
+                                               Principal principal,
                                                RedirectAttributes flash) {
         try {
-            librarianInteractionService.rejectBookAcquisitionRequest(requestId, reason);
+            librarianInteractionService.rejectBookAcquisitionRequest(
+                    requestId, reason, principal.getName());
             flash.addFlashAttribute("success", message("backend.librarian.acquisition.rejected"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/librarian/interaction/acquisition-requests";
+        return acquisitionRedirect(page, status, keyword, flash);
     }
 
     private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {
@@ -278,6 +297,23 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         } catch (IllegalArgumentException exception) {
             return redirect;
         }
+    }
+
+    private String acquisitionRedirect(int page, String status, String keyword,
+                                       RedirectAttributes attributes) {
+        attributes.addAttribute("page", Math.max(0, page));
+        if (status != null && !status.isBlank()) {
+            try {
+                attributes.addAttribute("status", AcquisitionRequestStatus
+                        .valueOf(status.strip().toUpperCase(Locale.ROOT)).name());
+            } catch (IllegalArgumentException ignored) {
+                // Do not propagate a tampered filter value into the redirect URL.
+            }
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            attributes.addAttribute("keyword", keyword.strip());
+        }
+        return "redirect:/librarian/interaction/acquisition-requests";
     }
 
 }

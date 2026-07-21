@@ -24,6 +24,16 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
     
     boolean existsByGenre_GenreId(Integer genreId);
 
+    @Query("select (count(b) > 0) from Book b " +
+            "where upper(replace(replace(b.isbn, '-', ''), ' ', '')) = :isbn")
+    boolean existsByNormalizedIsbn(@Param("isbn") String isbn);
+
+    @Query("select (count(distinct b) > 0) from Book b join b.authors author " +
+            "where lower(trim(b.title)) = lower(:title) " +
+            "and lower(trim(author.authorName)) = lower(:author)")
+    boolean existsByNormalizedTitleAndAuthor(@Param("title") String title,
+                                             @Param("author") String author);
+
     @Query("SELECT DISTINCT b FROM Book b LEFT JOIN b.authors a " +
            "WHERE (:keyword IS NULL OR :keyword = '' OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(a.authorName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(b.isbn) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +

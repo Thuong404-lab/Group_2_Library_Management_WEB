@@ -145,7 +145,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("notificationRequest", new LibrarianNotificationSendRequest());
         data.put("notificationTypes", NotificationType.manualSelectableValues());
         data.put("members", interactionService.getAllMembers());
-        data.put("requests", interactionService.getBookAcquisitionRequests(
+        data.put("requests", interactionService.getBookAcquisitionRequests(null, null,
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
         data.put("shelves", storageService.getAllStorageLocations());
