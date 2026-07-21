@@ -39,7 +39,7 @@
             <div class="borrow-workspace">
 
                 <!-- BẢNG 1: DANH SÁCH TỔNG HỢP HÀNG ĐỢI XỬ LÝ (TABS) -->
-                <div class="borrow-queue-column">
+                <div class="borrow-queue-column" th:with="activeTab=${selectedRenewal != null ? 'renewals' : (selectedReservation != null ? 'reservations' : (param.tab != null ? param.tab[0] : 'borrows'))}">
                     <section class="borrow-panel borrow-queue-panel" aria-labelledby="borrowQueueTitle">
                         <div class="borrow-panel-header">
                             <div class="borrow-panel-heading">
@@ -51,9 +51,9 @@
                             </div>
                             <ul class="borrow-pill-tabs" id="requestTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="borrows-tab" data-bs-toggle="tab"
+                                    <button class="nav-link" th:classappend="${activeTab == 'borrows' ? 'active' : ''}" id="borrows-tab" data-bs-toggle="tab"
                                         data-bs-target="#borrows" type="button" role="tab" aria-controls="borrows"
-                                        aria-selected="true">
+                                        th:aria-selected="${activeTab == 'borrows'}">
                                         <i class="bi bi-cloud-arrow-up"></i> <span
                                             th:text="#{librarian.borrowDesk.loanRequests}">Loan Requests</span>
                                         <span class="borrow-tab-badge"
@@ -61,9 +61,9 @@
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="renewals-tab" data-bs-toggle="tab"
+                                    <button class="nav-link" th:classappend="${activeTab == 'renewals' ? 'active' : ''}" id="renewals-tab" data-bs-toggle="tab"
                                         data-bs-target="#renewals" type="button" role="tab" aria-controls="renewals"
-                                        aria-selected="false">
+                                        th:aria-selected="${activeTab == 'renewals'}">
                                         <i class="bi bi-arrow-repeat"></i> <span
                                             th:text="#{librarian.borrowDesk.renewals}">Renewals</span>
                                         <span class="borrow-tab-badge"
@@ -72,9 +72,9 @@
                                 </li>
 
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="reservations-tab" data-bs-toggle="tab"
+                                    <button class="nav-link" th:classappend="${activeTab == 'reservations' ? 'active' : ''}" id="reservations-tab" data-bs-toggle="tab"
                                         data-bs-target="#reservations" type="button" role="tab"
-                                        aria-controls="reservations" aria-selected="false">
+                                        aria-controls="reservations" th:aria-selected="${activeTab == 'reservations'}">
                                         <i class="bi bi-bookmark-star"></i> <span
                                             th:text="#{librarian.borrowDesk.reservations}">Reservations</span>
                                         <span class="borrow-tab-badge"
@@ -98,7 +98,7 @@
                             <div class="tab-content borrow-scrollable-list" id="requestTabsContent">
 
                                 <!-- TAB: ĐƠN MƯỢN ONLINE -->
-                                <div class="tab-pane fade show active" id="borrows" role="tabpanel"
+                                <div class="tab-pane fade" th:classappend="${activeTab == 'borrows' ? 'show active' : ''}" id="borrows" role="tabpanel"
                                     aria-labelledby="borrows-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="req : ${pendingRequests}"
@@ -135,7 +135,7 @@
                                 </div>
 
                                 <!-- TAB: YÊU CẦU GIA HẠN -->
-                                <div class="tab-pane fade" id="renewals" role="tabpanel" aria-labelledby="renewals-tab">
+                                <div class="tab-pane fade" th:classappend="${activeTab == 'renewals' ? 'show active' : ''}" id="renewals" role="tabpanel" aria-labelledby="renewals-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="ren : ${pendingRenewals}"
                                             th:href="@{/librarian/borrow/create(renewId=${ren.borrowDetailId})}"
@@ -173,7 +173,7 @@
 
 
                                 <!-- TAB: HÀNG ĐỢI ĐẶT TRƯỚC -->
-                                <div class="tab-pane fade" id="reservations" role="tabpanel"
+                                <div class="tab-pane fade" th:classappend="${activeTab == 'reservations' ? 'show active' : ''}" id="reservations" role="tabpanel"
                                     aria-labelledby="reservations-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="reserve : ${activeReservations}"
@@ -347,6 +347,19 @@
                                 </div>
                             </div>
 
+                            <div class="borrow-member-stats mt-3 mb-3 p-3 rounded" style="background-color: #f8f9fa; border-left: 3px solid #8b5a2b; font-size: 0.85rem;">
+                                <i class="bi bi-info-circle text-muted me-1"></i>
+                                <span class="fw-bold text-muted me-2" th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
+                                <span class="me-4">
+                                    <span th:classappend="${activeBorrowCount >= maxBorrowLimit} ? 'text-danger fw-bold' : 'text-dark fw-bold'" 
+                                          th:text="#{librarian.borrowDesk.activeBorrows(${activeBorrowCount}, ${maxBorrowLimit})}"></span>
+                                </span>
+                                <span>
+                                    <span th:classappend="${unpaidFines > 0} ? 'text-danger fw-bold' : 'text-success fw-bold'" 
+                                          th:text="#{librarian.borrowDesk.unpaidFines(${#numbers.formatDecimal(unpaidFines, 0, 'COMMA', 0, 'POINT')})}"></span>
+                                </span>
+                            </div>
+
                             <!-- Thanh quét mã vạch cho đơn hàng đợi trực tuyến (online request) -->
                             <h3 class="borrow-subsection-title mt-4"><i
                                     class="bi bi-qr-code-scan me-2 text-classic"></i><span
@@ -486,6 +499,19 @@
                                 </div>
                             </div>
 
+                            <div class="borrow-member-stats mt-3 mb-3 p-3 rounded" style="background-color: #f8f9fa; border-left: 3px solid #8b5a2b; font-size: 0.85rem;">
+                                <i class="bi bi-info-circle text-muted me-1"></i>
+                                <span class="fw-bold text-muted me-2" th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
+                                <span class="me-4">
+                                    <span th:classappend="${activeBorrowCount >= maxBorrowLimit} ? 'text-danger fw-bold' : 'text-dark fw-bold'" 
+                                          th:text="#{librarian.borrowDesk.activeBorrows(${activeBorrowCount}, ${maxBorrowLimit})}"></span>
+                                </span>
+                                <span>
+                                    <span th:classappend="${unpaidFines > 0} ? 'text-danger fw-bold' : 'text-success fw-bold'" 
+                                          th:text="#{librarian.borrowDesk.unpaidFines(${#numbers.formatDecimal(unpaidFines, 0, 'COMMA', 0, 'POINT')})}"></span>
+                                </span>
+                            </div>
+
                             <div class="borrow-decision-actions">
                                 <form
                                     th:action="@{/librarian/loan/renew/reject/{id}(id=${selectedRenewal.borrowDetailId})}"
@@ -501,7 +527,7 @@
                                     th:action="@{/librarian/loan/renew/approve/{id}(id=${selectedRenewal.borrowDetailId})}"
                                     method="post" class="borrow-action-form">
                                     <button type="button" class="app-form-primary"
-                                        th:data-confirm-message="#{librarian.borrowDesk.approveRenewalConfirm}"
+                                        th:data-confirm-message="#{librarian.borrowDesk.approveRenewalConfirm(${selectedRenewal.book.title}, ${selectedRenewal.borrow.member.user.fullName}, ${selectedRenewalNewDueDate != null ? #temporals.format(selectedRenewalNewDueDate, 'dd/MM/yyyy') : '-'})}"
                                         onclick="showConfirmModal(this.dataset.confirmMessage, this)">
                                         <span th:text="#{librarian.borrowDesk.approveRenewal}">Approve Renewal</span>
                                     </button>
@@ -544,6 +570,19 @@
                                 </div>
                             </div>
 
+                            <div class="borrow-member-stats mt-3 mb-3 p-3 rounded" style="background-color: #f8f9fa; border-left: 3px solid #8b5a2b; font-size: 0.85rem;">
+                                <i class="bi bi-info-circle text-muted me-1"></i>
+                                <span class="fw-bold text-muted me-2" th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
+                                <span class="me-4">
+                                    <span th:classappend="${activeBorrowCount >= maxBorrowLimit} ? 'text-danger fw-bold' : 'text-dark fw-bold'" 
+                                          th:text="#{librarian.borrowDesk.activeBorrows(${activeBorrowCount}, ${maxBorrowLimit})}"></span>
+                                </span>
+                                <span>
+                                    <span th:classappend="${unpaidFines > 0} ? 'text-danger fw-bold' : 'text-success fw-bold'" 
+                                          th:text="#{librarian.borrowDesk.unpaidFines(${#numbers.formatDecimal(unpaidFines, 0, 'COMMA', 0, 'POINT')})}"></span>
+                                </span>
+                            </div>
+
                             <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.reservedBook}">Reserved
                                 Book</h3>
                             <div class="app-table-wrap borrow-detail-table-wrap">
@@ -584,7 +623,7 @@
                                     th:action="@{/librarian/reservations/approve/{id}(id=${selectedReservation.reservationId})}"
                                     method="post" class="borrow-action-form">
                                     <button type="button" class="app-form-primary"
-                                        th:data-confirm-message="#{librarian.borrowDesk.approveReservationConfirm}"
+                                        th:data-confirm-message="#{librarian.borrowDesk.approveReservationConfirm(${selectedReservation.book.title}, ${selectedReservation.member.user.fullName})}"
                                         onclick="showConfirmModal(this.dataset.confirmMessage, this)">
                                         <span th:text="#{common.approve}">Approve</span>
                                     </button>

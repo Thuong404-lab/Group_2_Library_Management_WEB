@@ -155,6 +155,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 if ("Pending".equalsIgnoreCase(selectedBorrow.getStatus())) {
                     model.addAttribute("selectedRequest", selectedBorrow);
                     model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
+                    populateMemberStats(model, selectedBorrow.getMember(), usernameByMemberId);
                 }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
@@ -177,6 +178,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                                 model.addAttribute("selectedRenewalNewDueDate",
                                         selectedRenew.getDueDate().plusDays(requestedDays));
                             });
+                    populateMemberStats(model, selectedRenew.getBorrow().getMember(), usernameByMemberId);
                 }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.renewalDetailsFailed", e));
@@ -189,6 +191,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
                         || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
                     model.addAttribute("selectedReservation", selectedReservation);
+                    populateMemberStats(model, selectedReservation.getMember(), usernameByMemberId);
                 }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.reservationDetailsFailed", e));
@@ -197,6 +200,33 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
         model.addAttribute("activeMenu", "borrow-desk");
         return "librarian/create-borrow";
+    }
+
+    private void populateMemberStats(Model model, com.lms.entity.Member member, java.util.Map<Integer, String> usernameByMemberId) {
+        if (member == null) return;
+        Integer memberId = member.getMemberId();
+        
+        List<String> fineTypes = java.util.Arrays.asList("OVERDUE_FINE", "DAMAGE_COMPENSATION");
+        List<com.lms.entity.Transaction> unpaidFinesList = transactionRepository.findUnpaidFineTransactions(memberId, fineTypes);
+        java.math.BigDecimal totalUnpaidFines = java.math.BigDecimal.ZERO;
+        for (com.lms.entity.Transaction t : unpaidFinesList) {
+            if (t.getAmount() != null) {
+                totalUnpaidFines = totalUnpaidFines.add(t.getAmount());
+            }
+        }
+        model.addAttribute("unpaidFines", totalUnpaidFines);
+
+        String username = usernameByMemberId.get(memberId);
+        if (username != null) {
+            int activeBorrowCount = borrowService.getMemberCurrentBorrows(username).size();
+            model.addAttribute("activeBorrowCount", activeBorrowCount);
+        } else {
+            model.addAttribute("activeBorrowCount", 0);
+        }
+        
+        int maxAllowed = (member.getTier() != null && member.getTier().getBorrowLimit() != null) 
+                         ? member.getTier().getBorrowLimit() : 0;
+        model.addAttribute("maxBorrowLimit", maxAllowed);
     }
 
     // Approving reserves physical copies; the loan only becomes Active after

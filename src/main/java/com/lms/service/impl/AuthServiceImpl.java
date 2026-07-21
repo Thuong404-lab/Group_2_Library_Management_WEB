@@ -196,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setFullName(fullName);
         user.setEmail(email);
-        user.setPhone(phone);
+        user.setPhone(phone != null && phone.isBlank() ? null : phone);
         user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
@@ -210,7 +210,11 @@ public class AuthServiceImpl implements AuthService {
 
         MemberAccount account = new MemberAccount();
         account.setUsername(userName);
-        account.setPasswordHash(pass);
+        String passwordHash = pass;
+        if (passwordHash == null || passwordHash.isBlank()) {
+            passwordHash = passwordEncoder.encode(UUID.randomUUID().toString());
+        }
+        account.setPasswordHash(passwordHash);
         account.setMember(member);
         account.setStatus("Active");
         Role memberRole = roleRepository.findByNameIgnoreCase("ROLE_MEMBER")
