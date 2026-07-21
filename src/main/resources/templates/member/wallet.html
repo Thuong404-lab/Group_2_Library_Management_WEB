@@ -19,10 +19,13 @@
                 <h1 th:text="#{member.wallet.heading}">Wallet &amp; Fines</h1>
                 <p th:text="#{member.wallet.description}">Used to pay borrowing fees, fines, and other library transactions.</p>
                 <div class="member-notifications-summary">
-                    <span class="member-wallet-balance-summary">
-                        <strong th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
-                        <span th:text="#{currency.vnd}">VND</span>
-                    </span>
+                    <div class="member-wallet-balance-overview">
+                        <span class="member-wallet-balance-label" th:text="#{member.wallet.balance}">Wallet Balance</span>
+                        <span class="member-wallet-balance-summary">
+                            <strong th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
+                            <span th:text="#{currency.vnd}">VND</span>
+                        </span>
+                    </div>
                     <span class="member-wallet-unpaid-summary" th:if="${totalUnpaidFines != null and totalUnpaidFines > 0}">
                         <strong th:text="${#numbers.formatDecimal(totalUnpaidFines, 0, 'COMMA', 0, 'POINT')}">0</strong> <span th:text="#{currency.vnd}">VND</span>
                         <span class="member-wallet-unpaid-label" th:text="#{member.wallet.unpaidFines}">Unpaid</span>

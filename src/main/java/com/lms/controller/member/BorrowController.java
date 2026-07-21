@@ -339,7 +339,7 @@ public class BorrowController extends LocalizedControllerSupport {
             member = memberRepository.findByAccountUsername(principal.getName())
                     .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
             // Kiểm tra số lượng bản vật lý khả dụng trong kho
-            long availableCount = getRequestableCopyCount(bookId);
+            long availableCount = getAvailableCopyCount(bookId);
             if (availableCount == 0) {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         message("backend.borrow.stockUnavailable"));
@@ -399,9 +399,14 @@ public class BorrowController extends LocalizedControllerSupport {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.bookUnavailable"));
                 return "redirect:/";
             }
-            long availableCount = Math.min(getRequestableCopyCount(bookId), remainingBorrowLimit);
+            // Keep physical inventory and the member's selectable quantity separate.
+            // `availableCount` must mean the same thing as it does on book details
+            // and librarian inventory: physical BookItems whose status is Available.
+            long availableCount = getAvailableCopyCount(bookId);
+            long maxRequestQuantity = Math.min(availableCount, remainingBorrowLimit);
             model.addAttribute("selectedBook", book);
             model.addAttribute("availableCount", availableCount);
+            model.addAttribute("maxRequestQuantity", maxRequestQuantity);
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBook"));
             return "redirect:/";
@@ -449,7 +454,7 @@ public class BorrowController extends LocalizedControllerSupport {
                     .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
                     
             // 3. Kiểm tra số lượng bản vật lý thực tế trong kho trước khi thực hiện
-            long availableStock = getRequestableCopyCount(bookId);
+            long availableStock = getAvailableCopyCount(bookId);
             if (availableStock == 0) {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockUnavailable"));
                 return "redirect:/books/" + bookId;
@@ -675,14 +680,15 @@ public class BorrowController extends LocalizedControllerSupport {
     private int getEffectiveBorrowLimit(Member member) {
         int configuredLimit = getPositiveIntSetting("Max_Books_Per_Member",
                 getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10));
-        Integer tierLimit = member != null && member.getTier() != null ? member.getTier().getBorrowLimit() : null;
+        Integer tierLimit = member != null && member.getMemberId() != null
+                ? memberRepository.findCurrentBorrowLimitByMemberId(member.getMemberId())
+                        .orElse(member.getTier() != null ? member.getTier().getBorrowLimit() : null)
+                : null;
         return Math.max(1, tierLimit != null ? tierLimit : configuredLimit);
     }
 
-    private long getRequestableCopyCount(Integer bookId) {
-        long physicalAvailable = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
-        long pendingUnassigned = borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Pending");
-        return Math.max(0, physicalAvailable - pendingUnassigned);
+    private long getAvailableCopyCount(Integer bookId) {
+        return bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
     }
 
     private Integer getMaxBorrowDays() {

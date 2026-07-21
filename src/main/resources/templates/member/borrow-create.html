@@ -109,13 +109,17 @@
                                     class="member-borrow-create-stepper-button"
                                     onclick="changeQty(-1)">−</button>
                             <input type="number" name="quantity" id="quantityInput"
-                                   value="1" min="1" th:max="${availableCount != null ? availableCount : 1}"
+                                   value="1" min="1" th:max="${maxRequestQuantity != null ? maxRequestQuantity : 1}"
                                    readonly>
                             <button type="button" id="qtyIncrease"
                                     class="member-borrow-create-stepper-button"
                                     onclick="changeQty(1)">+</button>
-                            <span class="member-borrow-create-quantity-limit" th:if="${availableCount != null and availableCount > 0}" th:text="#{member.borrowCreate.qtyMaxPrefix(${availableCount})}">
+                            <span class="member-borrow-create-quantity-limit" th:if="${maxRequestQuantity != null and maxRequestQuantity > 0}" th:text="#{member.borrowCreate.qtyMaxPrefix(${maxRequestQuantity})}">
                                 (tối đa X)
+                            </span>
+                            <span class="member-borrow-create-quantity-limit" th:if="${remainingBorrowLimit != null}"
+                                  th:text="#{member.borrowCreate.remainingBorrowLimit(${remainingBorrowLimit})}">
+                                (remaining borrowing capacity: X)
                             </span>
                         </div>
                     </div>
@@ -203,8 +207,8 @@
         });
 
         // Bộ chọn số lượng +/-
-        var maxQty = /*[[${availableCount != null ? availableCount : 1}]]*/ 1;
-        var totalQuantityText = /*[[#{member.borrowCreate.totalBookQty('__COUNT__')}]]*/ "Total: __COUNT__ book(s)";
+        var maxQty = /*[[${maxRequestQuantity != null ? maxRequestQuantity : 1}]]*/ 1;
+        var totalQuantityText = /*[[#{member.borrowCreate.totalBookQty}]]*/ "Total: {0} book(s)";
         function changeQty(delta) {
             var input = document.getElementById('quantityInput');
             var current = parseInt(input.value) || 1;
@@ -213,7 +217,7 @@
             if (next > maxQty) next = maxQty;
             input.value = next;
             var badge = document.getElementById('totalQtyBadge');
-            if (badge) badge.textContent = totalQuantityText.replace("__COUNT__", next);
+            if (badge) badge.textContent = totalQuantityText.replace("{0}", next);
             if (window.calculateBorrowDetails) window.calculateBorrowDetails();
             document.getElementById('qtyDecrease').disabled = (next <= 1);
             document.getElementById('qtyIncrease').disabled = (next >= maxQty);
