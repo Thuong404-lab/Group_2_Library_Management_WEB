@@ -846,7 +846,7 @@ public class LoanServiceImpl implements LoanService {
 
     private boolean isGoodCondition(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        return normalized.startsWith("tốt") || normalized.startsWith("good");
+        return normalized.startsWith("tốt") || normalized.startsWith("good") || normalized.startsWith("new") || normalized.startsWith("mới");
     }
 
     private String resolveReturnedItemStatus(String bookCondition) {

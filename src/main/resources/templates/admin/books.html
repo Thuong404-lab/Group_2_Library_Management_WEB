@@ -435,6 +435,14 @@
                                             <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
                                             <input class="form-control border-start-0 ps-0" type="search" name="keyword"
                                                    th:value="${keyword}" th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                            <select class="form-select member-filter-select" name="bookCondition"
+                                                    th:aria-label="#{librarian.inventory.condition}">
+                                                <option value="" th:text="#{librarian.inventory.allConditions}">All conditions</option>
+                                                <option value="New" th:selected="${bookCondition == 'New'}" th:text="#{book.condition.good}">New</option>
+                                                <option value="Minor damage" th:selected="${bookCondition == 'Minor damage'}" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                                <option value="Severely damaged" th:selected="${bookCondition == 'Severely damaged'}" th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                                <option value="Lost book" th:selected="${bookCondition == 'Lost book'}" th:text="#{book.condition.lost}">Lost book</option>
+                                            </select>
                                             <button type="submit" class="btn member-search-button text-nowrap" th:text="#{common.search}">Search</button>
                                         </div>
                                     </form>
@@ -469,11 +477,11 @@
                                 <nav class="member-pagination app-pagination-region" th:if="${books != null and books.totalPages > 1}"
                                     th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
                                     <ul class="pagination justify-content-center mb-0">
-                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword})}" th:text="#{common.first}">First</a></li>
-                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword})}"><i class="bi bi-chevron-left"></i></a></li>
-                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == books.number ? 'active' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword})}" th:text="${i + 1}">1</a></li>
-                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword})}"><i class="bi bi-chevron-right"></i></a></li>
-                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword})}" th:text="#{common.last}">Last</a></li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})}" th:text="#{common.first}">First</a></li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})}"><i class="bi bi-chevron-left"></i></a></li>
+                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == books.number ? 'active' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})}" th:text="${i + 1}">1</a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})}"><i class="bi bi-chevron-right"></i></a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a class="page-link page-link-classic" th:href="@{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})}" th:text="#{common.last}">Last</a></li>
                                     </ul>
                                 </nav>
                             </div>
@@ -541,7 +549,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.condition}">Book Condition</span> </label>
                                             <input type="text" class="form-control text-muted" style="background-color: #f8f9fa; border-radius: 8px;" th:value="#{book.condition.default}" readonly>
-                                            <input type="hidden" name="bookCondition" value="Good / Intact and clean">
+                                            <input type="hidden" name="bookCondition" value="New">
                                             <div class="invalid-feedback" th:text="#{common.validation.required}">Please fill out this field.</div>
                                         </div>
                                         <div class="col-md-6">
@@ -710,10 +718,10 @@
                                         <div>
                                             <label class="form-label fw-semibold"><span th:text="#{librarian.inventory.condition}">Condition</span> <span class="text-danger">*</span></label>
                                             <select name="bookCondition" class="form-select add-copy-control" required>
-                                                <option value="Good / Intact and clean" th:text="#{book.condition.good}">Good / Intact and clean</option>
-                                                <option value="Minor damage (Bent corners, worn cover, or small tears)" th:text="#{book.condition.minorDamage}">Minor damage</option>
-                                                <option value="Severely damaged (Compensation required)" th:text="#{book.condition.severeDamage}">Severely damaged</option>
-                                                <option value="Lost book (Compensation required)" th:text="#{book.condition.lost}">Lost book</option>
+                                                <option value="New" th:text="#{book.condition.good}">New</option>
+                                                <option value="Minor damage" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                                <option value="Severely damaged" th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                                <option value="Lost book" th:text="#{book.condition.lost}">Lost book</option>
                                             </select>
                                         </div>
                                     </div>
@@ -773,10 +781,10 @@
                                     <div class="modal-body p-4">
                                         <label class="form-label fw-semibold" th:text="#{librarian.inventory.condition}">Condition</label>
                                         <select name="bookCondition" class="form-select" required>
-                                            <option value="Good / Intact and clean" th:selected="${item.bookCondition == 'Good / Intact and clean' or item.bookCondition == 'Tốt' or item.bookCondition == 'Mới'}" th:disabled="${item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.good}">Good</option>
-                                            <option value="Minor damage (Bent corners, worn cover, or small tears)" th:selected="${item.bookCondition != null and item.bookCondition.startsWith('Minor damage')}" th:disabled="${item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.minorDamage}">Minor damage</option>
-                                            <option value="Severely damaged (Compensation required)" th:selected="${item.status == 'Damaged'}" th:disabled="${item.status == 'Lost'}" th:text="#{book.condition.severeDamage}">Severely damaged</option>
-                                            <option value="Lost book (Compensation required)" th:selected="${item.status == 'Lost'}" th:text="#{book.condition.lost}">Lost</option>
+                                            <option value="New" th:selected="${item.bookCondition == 'New'}" th:disabled="${item.status == 'MinorDamaged' or item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.good}">New</option>
+                                            <option value="Minor damage" th:selected="${item.status == 'MinorDamaged'}" th:disabled="${item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                            <option value="Severely damaged" th:selected="${item.status == 'Damaged'}" th:disabled="${item.status == 'Lost'}" th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                            <option value="Lost book" th:selected="${item.status == 'Lost'}" th:text="#{book.condition.lost}">Lost book</option>
                                         </select>
                                     </div>
                                     <div class="modal-footer border-top-0"><button type="button" class="btn btn-light border" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button><button type="submit" class="btn btn-classic" th:text="#{librarian.inventory.updateCopy}">Update</button></div>
