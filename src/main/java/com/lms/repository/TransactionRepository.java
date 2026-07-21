@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
@@ -97,6 +98,47 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
               and t.transactionDate < :toDate
             """)
     BigDecimal sumAmountByTransactionTypeAndDateRange(@Param("transactionType") String transactionType,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
+
+    @EntityGraph(attributePaths = {"wallet", "wallet.member", "wallet.member.user", "performedByStaff", "performedByStaff.user"})
+    @Query("""
+            select t
+            from Transaction t
+            where upper(t.transactionType) = upper(:transactionType)
+              and lower(t.status) in :statuses
+              and t.transactionDate >= :fromDate
+              and t.transactionDate < :toDate
+            order by t.transactionDate desc, t.transactionId desc
+            """)
+    Page<Transaction> findCompletedTopUpsByDateRange(@Param("transactionType") String transactionType,
+            @Param("statuses") List<String> statuses,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = {"wallet", "wallet.member", "wallet.member.user", "performedByStaff", "performedByStaff.user"})
+    @Query("""
+            select t
+            from Transaction t
+            where upper(t.transactionType) = upper(:transactionType)
+              and lower(t.status) in :statuses
+            order by t.transactionDate desc, t.transactionId desc
+            """)
+    List<Transaction> findRecentCompletedTopUps(@Param("transactionType") String transactionType,
+            @Param("statuses") List<String> statuses,
+            Pageable pageable);
+
+    @Query("""
+            select coalesce(sum(t.amount), 0)
+            from Transaction t
+            where upper(t.transactionType) = upper(:transactionType)
+              and lower(t.status) in :statuses
+              and t.transactionDate >= :fromDate
+              and t.transactionDate < :toDate
+            """)
+    BigDecimal sumCompletedTopUpsByDateRange(@Param("transactionType") String transactionType,
+            @Param("statuses") List<String> statuses,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
