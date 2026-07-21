@@ -11,6 +11,7 @@ public class LibrarianNotificationSendRequest {
     private List<Integer> memberIds;
     private String title;
     private String content;
+    private String requestToken;
 
     public LibrarianNotificationSendRequest() {
     }
@@ -54,4 +55,7 @@ public class LibrarianNotificationSendRequest {
     public void setContent(String content) {
         this.content = content;
     }
+
+    public String getRequestToken() { return requestToken; }
+    public void setRequestToken(String requestToken) { this.requestToken = requestToken; }
 }
