@@ -67,12 +67,12 @@
                     <span th:if="${availableCount > 0}"
                           class="badge me-2"
                           style="background-color: rgba(34,197,94,0.1); color: #15803d; border: 1px solid rgba(34,197,94,0.3); font-size: 0.85rem; padding: 6px 12px; border-radius: 6px;">
-                        <i class="bi bi-box-seam me-1"></i>Còn <strong th:text="${availableCount}">0</strong> bản vật lý khả dụng
+                        <span th:text="#{guest.bookDetail.availableCopies(${availableCount})}">0 physical copies available</span>
                     </span>
                     <span th:if="${availableCount == 0}"
                           class="badge"
                           style="background-color: rgba(239,68,68,0.1); color: #b91c1c; border: 1px solid rgba(239,68,68,0.3); font-size: 0.85rem; padding: 6px 12px; border-radius: 6px;">
-                        <i class="bi bi-x-circle me-1"></i>Tạm thời hết bản vật lý trong kho
+                        <i class="bi bi-x-circle me-1"></i><span th:text="#{guest.bookDetail.noAvailableCopies}">No physical copies are currently available</span>
                     </span>
                 </div>
 
@@ -117,11 +117,11 @@
                     <form sec:authorize="hasRole('MEMBER')"
                           th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
                           class="app-confirm-form"
-                          data-confirm-title="Xác nhận đặt trước sách"
-                          data-confirm-subject-label="Sách đặt trước"
+                          th:data-confirm-title="#{reservation.confirmPage.confirmTitle}"
+                          th:data-confirm-subject-label="#{reservation.book}"
                           th:data-confirm-subject="${book.title}"
-                          data-confirm-message="Hệ thống sẽ tạm giữ tiền đặt cọc từ ví thành viên để giữ chỗ. Bạn có đồng ý tiếp tục?"
-                          data-confirm-action="Xác nhận &amp; Trừ tiền">
+                          th:data-confirm-message="#{reservation.deposit.confirmMessage}"
+                          th:data-confirm-action="#{payment.confirm}">
                         <button type="submit" class="book-detail-button book-detail-button--secondary"
                                 th:disabled="${isInactiveMember != null and isInactiveMember}">
                             <i class="bi bi-bookmark" aria-hidden="true"></i><span th:text="#{guest.bookDetail.reserve}">Reserve</span>

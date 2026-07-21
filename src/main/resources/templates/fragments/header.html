@@ -183,19 +183,20 @@
 
               >
                 <div
+                  id="memberHeaderAvatarFallback"
                   class="rounded-circle d-flex align-items-center justify-content-center mr-2 font-weight-bold text-white header-div-width-height-background-13"
-
-                  th:if="${#authentication.principal.user?.avatar == null}"
+                  th:classappend="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)} ? ' d-none'"
                   th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                 >
                   U
                 </div>
                 <img
-                  th:if="${#authentication.principal.user?.avatar != null}"
+                  th:if="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)}"
                   th:src="${#authentication.principal.user.avatar}"
                   class="rounded-circle mr-2 shadow-sm border border-white header-img-width-height-fit-14"
                   th:alt="#{common.profile}"
-
+                  data-avatar-image
+                  data-avatar-fallback="memberHeaderAvatarFallback"
                 >
                 <span
                   class="d-none d-md-block font-weight-bold u-color-4a3b32-1ba01220"
@@ -214,19 +215,20 @@
 
                 >
                   <div
+                    id="memberMenuAvatarFallback"
                     class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold member-account-avatar"
-
-                    th:if="${#authentication.principal.user?.avatar == null}"
+                    th:classappend="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)} ? ' d-none'"
                     th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                   >
                     U
                   </div>
                   <img
-                    th:if="${#authentication.principal.user?.avatar != null}"
+                    th:if="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)}"
                     th:src="${#authentication.principal.user.avatar}"
                     class="rounded-circle member-account-avatar member-account-avatar-image"
                     th:alt="#{common.profile}"
-
+                    data-avatar-image
+                    data-avatar-fallback="memberMenuAvatarFallback"
                   >
                   <div class="member-account-identity">
                     <h6

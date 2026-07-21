@@ -33,19 +33,22 @@ import static org.mockito.Mockito.when;
 class AccountRoleCreationServiceTest {
 
     @Test
-    void coreRegistrationAssignsCanonicalMemberRole() {
+    void coreOAuthAccountGeneratesPasswordHashAndAssignsCanonicalMemberRole() {
         UserRepository userRepository = mock(UserRepository.class);
         MemberAccountRepository accountRepository = mock(MemberAccountRepository.class);
         MemberRepository memberRepository = mock(MemberRepository.class);
         WalletRepository walletRepository = mock(WalletRepository.class);
         RoleRepository roleRepository = mock(RoleRepository.class);
         MembershipTierRepository tierRepository = mock(MembershipTierRepository.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         Role memberRole = new Role(3, "ROLE_MEMBER");
+        String generatedPasswordHash = "$2a$10$0ZPpDwDviBhxvqCU0rl46uMDpgIrZ93eBGJXDmJMXqlYmUTBuoTlW";
 
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(memberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(accountRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(roleRepository.findByNameIgnoreCase("ROLE_MEMBER")).thenReturn(Optional.of(memberRole));
+        when(passwordEncoder.encode(any())).thenReturn(generatedPasswordHash);
 
         AuthServiceImpl service = new AuthServiceImpl(
                 userRepository,
@@ -55,16 +58,18 @@ class AccountRoleCreationServiceTest {
                 walletRepository,
                 roleRepository,
                 tierRepository,
-                mock(PasswordEncoder.class),
+                passwordEncoder,
                 mock(PasswordResetTokenRepository.class),
                 mock(EmailService.class),
                 mock(SystemLogRepository.class),
                 "http://localhost:8080");
 
         MemberAccount account = service.createCoreAccount(
-                "new_member", "New Member", "encoded-password", "new.member@test.local", "0900000000");
+                "new_member", "New Member", "", "new.member@test.local", "0900000000");
 
         assertThat(account.getRoles()).containsExactly(memberRole);
+        assertThat(account.getPasswordHash()).isEqualTo(generatedPasswordHash);
+        verify(passwordEncoder).encode(any());
         verify(walletRepository).save(any());
     }
 

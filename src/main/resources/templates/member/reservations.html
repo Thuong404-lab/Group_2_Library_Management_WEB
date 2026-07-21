@@ -24,9 +24,10 @@
     <div class="finance-alert finance-alert--success" role="status" th:if="${successMessage}" th:text="${successMessage}"></div>
     <div class="finance-alert finance-alert--danger" role="alert" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-    <section class="reservation-summary-grid" th:aria-label="#{member.reservations.records}">
-        <article class="reservation-summary-card member-reference-list__item">
-            <span class="reservation-summary-icon" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+    <section class="reservation-summary-grid membership-overview" th:aria-label="#{member.reservations.records}">
+        <div class="membership-overview-header"><span>Financial Overview</span></div>
+        <div class="membership-overview-grid">
+        <article class="reservation-summary-card membership-overview-item member-reference-list__item">
             <div>
                 <span class="reservation-summary-label" th:text="#{member.wallet.balance}">Wallet Balance</span>
                 <strong class="reservation-summary-value">
@@ -35,8 +36,7 @@
                 </strong>
             </div>
         </article>
-        <article class="reservation-summary-card member-reference-list__item">
-            <span class="reservation-summary-icon" aria-hidden="true"><i class="bi bi-bookmark-check"></i></span>
+        <article class="reservation-summary-card membership-overview-item member-reference-list__item">
             <div>
                 <span class="reservation-summary-label" th:text="#{member.reservations.depositPerReservation}">Deposit per Reservation</span>
                 <strong class="reservation-summary-value">
@@ -45,6 +45,7 @@
                 </strong>
             </div>
         </article>
+        </div>
     </section>
 
     <div class="reservation-note">
@@ -103,7 +104,6 @@
                           th:data-confirm-message="#{reservation.deposit.confirmMessage}"
                           th:data-confirm-action="#{payment.confirm}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn app-primary-action reservation-action" th:disabled="${isInactiveMember}">
                         <button type="submit" class="btn app-primary-action reservation-action member-ui-button member-ui-button--primary">
                             <span th:text="#{reservation.deposit.pay}">Pay Deposit</span>
                         </button>
@@ -119,7 +119,6 @@
                           th:data-confirm-action="#{reservation.cancel.confirm}"
                           data-confirm-tone="danger">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn app-secondary-action reservation-action is-danger" th:disabled="${isInactiveMember}">
                         <button type="submit" class="btn app-secondary-action reservation-action is-danger member-ui-button member-ui-button--danger-outline">
                             <span th:text="#{common.cancel}">Cancel</span>
                         </button>
@@ -134,7 +133,6 @@
                           th:data-confirm-message="#{reservation.refund.confirmMessage}"
                           th:data-confirm-action="#{reservation.refund.request}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn app-primary-action reservation-action" th:disabled="${isInactiveMember}">
                         <button type="submit" class="btn app-primary-action reservation-action member-ui-button member-ui-button--primary">
                             <span th:text="#{reservation.refund.request}">Request Refund</span>
                         </button>
