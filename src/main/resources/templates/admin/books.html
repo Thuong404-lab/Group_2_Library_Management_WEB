@@ -525,8 +525,8 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.copyQuantity}">Quantity</span> <span class="text-danger">*</span></label>
-                                            <input type="number" name="quantity" class="form-control" style="background-color: white; border-radius: 8px;" min="1" max="999"
-                                                placeholder="1-999" required oninput="validateQuantity(this)">
+                                            <input type="number" name="quantity" class="form-control" style="background-color: white; border-radius: 8px;" min="0" max="999"
+                                                placeholder="0-999" required oninput="validateQuantity(this)">
                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.quantityRequired}">Please enter quantity.</div>
                                         </div>
                                         <div class="col-md-6">
@@ -1171,7 +1171,8 @@
                 return false;
             }
             const val = Number(input.value);
-            const valid = Number.isInteger(val) && val >= 1 && val <= 999;
+            const min = Number(input.min || 0);
+            const valid = Number.isInteger(val) && val >= min && val <= 999;
             setFieldValidity(input, valid, adminBookMessages.invalidQuantity);
             return valid;
         }
