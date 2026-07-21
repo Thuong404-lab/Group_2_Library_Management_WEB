@@ -8,6 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/staff-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
+    <script defer th:src="@{/js/admin-account-create.js}"></script>
 </head>
 
 <body>
@@ -26,7 +27,7 @@
             </div>
         </header>
 
-        <div class="modal fade text-start" id="createStaffAccountModal" tabindex="-1"
+        <div class="modal fade text-start account-standard-modal" id="createStaffAccountModal" tabindex="-1"
             aria-labelledby="createStaffAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow">
@@ -37,13 +38,12 @@
                         </h5>
                     </div>
                     <div class="modal-body member-modal-body">
-                        <th:block th:replace="~{admin/create-account :: createAccountForm('staff', true)}"></th:block>
+                        <th:block th:replace="~{admin/create-staff-account :: createStaffAccountForm}"></th:block>
                     </div>
                 </div>
             </div>
         </div>
 
-        <th:block th:replace="~{admin/create-account :: createAccountValidation}"></th:block>
         <script th:if="${openCreateAccountModal}">
             document.addEventListener("DOMContentLoaded", function () {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById("createStaffAccountModal")).show();
@@ -243,12 +243,12 @@
                                                                 <div class="col-md-6 order-md-1">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase"><span
-                                                                            th:text="#{member.profile.fullName}">Full
+                                                                            th:text="#{admin.staff.fullName}">Staff Full
                                                                             Name</span> <span
                                                                             class="text-danger">*</span></label>
                                                                     <input class="form-control" name="fullName"
-                                                                        th:data-label="#{member.profile.fullName}"
-                                                                        maxlength="50"
+                                                                        th:data-label="#{admin.staff.fullName}"
+                                                                        minlength="2" maxlength="50"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (staff.user != null ? staff.user.fullName : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                         required>
@@ -264,10 +264,12 @@
                                                                 <div class="col-md-6 order-md-4">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">
-                                                                        Email <span class="text-danger">*</span>
+                                                                        <span th:text="#{common.email}">Email</span>
+                                                                        <span class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="email"
-                                                                        type="email" data-label="Email"
+                                                                        type="email" th:data-label="#{common.email}"
+                                                                        maxlength="255"
                                                                         pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (staff.user != null ? staff.user.email : '')}"
                                                                         onkeydown="if(event.key === ' ') event.preventDefault();"
@@ -283,14 +285,14 @@
                                                                 <div class="col-md-6 order-md-3">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase"><span
-                                                                            th:text="#{member.profile.phone}">Phone
+                                                                            th:text="#{admin.staff.phone}">Staff Phone
                                                                             Number</span> <span
                                                                             class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="phone"
-                                                                        th:data-label="#{member.profile.phone}" required
-                                                                        pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
-                                                                        inputmode="numeric"
+                                                                        th:data-label="#{admin.staff.phone}" required
+                                                                        pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
+                                                                        maxlength="12" inputmode="tel"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (staff.user != null ? staff.user.phone : '')}"
                                                                         onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
@@ -304,11 +306,12 @@
                                                                 <div class="col-md-6 order-md-2">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">
-                                                                        Username <span class="text-danger">*</span>
+                                                                        <span th:text="#{member.profile.username}">Username</span>
+                                                                        <span class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="username"
-                                                                        data-label="Username"
-                                                                        pattern="[a-zA-Z0-9_]{3,20}"
+                                                                        th:data-label="#{member.profile.username}"
+                                                                        pattern="[a-zA-Z0-9_]{3,20}" minlength="3" maxlength="20"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                         onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -462,7 +465,7 @@
 
                                                                     <div class="col-md-6">
                                                                         <div class="small text-muted"
-                                                                            th:text="#{member.profile.fullName}">Full
+                                                                            th:text="#{admin.staff.fullName}">Staff Full
                                                                             Name:</div>
                                                                         <div class="fw-bold"
                                                                             th:text="${staff.user != null ? staff.user.fullName : #messages.msg('librarian.members.noName')}">
@@ -485,7 +488,7 @@
 
                                                                     <div class="col-md-6">
                                                                         <div class="small text-muted"
-                                                                            th:text="#{member.profile.phone}">Phone
+                                                                            th:text="#{admin.staff.phone}">Staff Phone
                                                                             Number:</div>
                                                                         <div>
                                                                             <i
@@ -710,8 +713,8 @@
                         if (fullName === "") {
                             errors.fullName = /*[[#{validation.fullNameRequired}]]*/ "Full name is required.";
                         }
-                        if (fullName.length > 50) {
-                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name cannot exceed 50 characters.";
+                        if (fullName !== "" && (fullName.length < 2 || fullName.length > 50)) {
+                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name must be between 2 and 50 characters.";
                         } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
                             errors.fullName = /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
                         } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
@@ -728,13 +731,15 @@
                         }
                         if (email === "") {
                             errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
+                        } else if (email.length > 255) {
+                            errors.email = /*[[#{validation.emailMax}]]*/ "Email cannot exceed 255 characters.";
                         } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
                             errors.email = /*[[#{validation.email}]]*/ "Invalid email format.";
                         }
                         if (phone === "") {
                             errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
-                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
-                            errors.phone = /*[[#{validation.phone}]]*/ "Phone number must contain exactly 10 digits, start with 0, and cannot be all zeros.";
+                        } else if (!/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$/.test(phone)) {
+                            errors.phone = /*[[#{backend.profile.phoneFormat}]]*/ "Invalid Vietnamese phone number.";
                         }
                         if (form.elements.staffType.value === "") {
                             errors.staffType = /*[[#{admin.staff.invalidType}]]*/ "Invalid staff type.";
