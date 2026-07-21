@@ -103,8 +103,26 @@
         window.requestAnimationFrame(function () { elements.toast.classList.add("is-visible"); });
         if (settings.persistent !== true) hideTimer = window.setTimeout(hide, settings.duration || 4000);
       }
-      document.addEventListener("DOMContentLoaded", function () {
-        var closeButton = document.querySelector(".app-feedback-toast__close");
+    document.addEventListener("DOMContentLoaded", function () {
+      function showAvatarFallback(image) {
+        var fallbackId = image.dataset.avatarFallback;
+        var fallback = fallbackId ? document.getElementById(fallbackId) : null;
+        image.hidden = true;
+        image.classList.add("d-none");
+        if (fallback) {
+          fallback.hidden = false;
+          fallback.classList.remove("d-none");
+        }
+      }
+
+      document.querySelectorAll("img[data-avatar-image]").forEach(function (image) {
+        image.addEventListener("error", function () { showAvatarFallback(image); });
+        if (image.complete && image.naturalWidth === 0) {
+          showAvatarFallback(image);
+        }
+      });
+
+      var closeButton = document.querySelector(".app-feedback-toast__close");
         if (closeButton) closeButton.addEventListener("click", hide);
 
         /*

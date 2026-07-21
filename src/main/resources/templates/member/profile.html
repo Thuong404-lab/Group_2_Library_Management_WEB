@@ -35,7 +35,7 @@
     <!-- Membership Overview -->
     <section class="membership-overview mb-4" aria-labelledby="membershipOverviewTitle">
         <div class="membership-overview-header">
-            <span id="membershipOverviewTitle" th:text="#{member.profile.membershipOverview}">Membership Overview</span>
+            <h2 id="membershipOverviewTitle" class="profile-section-title" th:text="#{member.profile.membershipOverview}">Membership Overview</h2>
         </div>
         <div class="membership-overview-grid">
             <div class="membership-overview-item">
@@ -64,10 +64,17 @@
             <div class="profile-card mb-4">
                 <div class="card-body text-center p-4">
                     <div class="avatar-container-classic mb-3">
-                        <div th:if="${member?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100 profile-avatar-placeholder"
+                        <div id="avatarPlaceholder"
+                             class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100 profile-avatar-placeholder"
+                             th:classappend="${member?.avatar != null and !#strings.isEmpty(member?.avatar)} ? ' d-none'"
                              th:text="${member != null and member.fullName != null and !#strings.isEmpty(#strings.trim(member.fullName)) ? #strings.substring(#strings.trim(member.fullName), 0, 1).toUpperCase() : 'M'}">M</div>
-                        <img th:if="${member?.avatar != null}" id="avatarPreview" th:src="${member.avatar}" th:alt="#{member.profile.avatarAlt}" class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2">
-                        <img th:if="${member?.avatar == null}" id="avatarPreview" src="" th:alt="#{member.profile.avatarAlt}" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100 u-object-fit-cover-fd3ff4b2">
+                        <img id="avatarPreview"
+                             th:src="${member?.avatar != null and !#strings.isEmpty(member?.avatar) ? member.avatar : ''}"
+                             th:alt="#{member.profile.avatarAlt}"
+                             class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2"
+                             th:classappend="${member?.avatar == null or #strings.isEmpty(member?.avatar)} ? ' d-none'"
+                             data-avatar-image
+                             data-avatar-fallback="avatarPlaceholder">
 
                         <label for="avatarUpload" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" th:title="#{member.profile.changeAvatar}">
                             <i class="bi bi-camera-fill"></i>
@@ -211,9 +218,13 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        if(avatarPlaceholder) avatarPlaceholder.classList.add('d-none');
+                        if(avatarPlaceholder) {
+                            avatarPlaceholder.hidden = true;
+                            avatarPlaceholder.classList.add('d-none');
+                        }
                         if(avatarPreview) {
                             avatarPreview.src = e.target.result;
+                            avatarPreview.hidden = false;
                             avatarPreview.classList.remove('d-none');
                         }
                     }
