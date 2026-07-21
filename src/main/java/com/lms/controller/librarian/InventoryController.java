@@ -65,7 +65,6 @@ public class InventoryController extends LocalizedControllerSupport {
             @RequestParam String title,
             @RequestParam String isbn,
             @RequestParam Integer genreId,
-            @RequestParam String status,
             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(required = false) Integer shelfId,
             @RequestParam(required = false) String description,
@@ -76,7 +75,7 @@ public class InventoryController extends LocalizedControllerSupport {
             if (coverImage != null && !coverImage.isEmpty()) {
                 coverImageUrl = fileUploadService.storeFile(coverImage);
             }
-            inventoryService.updateBook(id, title, isbn, genreId, status, coverImageUrl, shelfId,
+            inventoryService.updateBook(id, title, isbn, genreId, null, coverImageUrl, shelfId,
                     description, author);
             redirectAttributes.addFlashAttribute("success", message("backend.inventory.bookUpdated"));
         } catch (ApplicationException ex) {

@@ -80,14 +80,14 @@ public class AdminBookController extends LocalizedControllerSupport {
 
     @PostMapping(value = "/inventory/edit/{id}", consumes = "multipart/form-data")
     public String editBook(@PathVariable Integer id, @RequestParam String title,
-            @RequestParam String isbn, @RequestParam Integer genreId, @RequestParam String status,
+            @RequestParam String isbn, @RequestParam Integer genreId,
             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(required = false) Integer shelfId,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String author,
             RedirectAttributes redirectAttributes) {
         try {
-            inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId,
+            inventoryService.updateBook(id, title, isbn, genreId, null, storeCover(coverImage), shelfId,
                     description, author);
             success(redirectAttributes, message("backend.inventory.bookUpdated"));
         } catch (ApplicationException ex) {
