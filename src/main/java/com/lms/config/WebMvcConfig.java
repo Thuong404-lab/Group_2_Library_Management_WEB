@@ -2,7 +2,6 @@ package com.lms.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -14,23 +13,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import com.lms.config.InactiveMemberInterceptor;
-
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Autowired
-    private InactiveMemberInterceptor inactiveMemberInterceptor;
-
+    private final InactiveMemberInterceptor inactiveMemberInterceptor;
     private final MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor;
 
-    public WebMvcConfig() {
-        this.memberLocalePreferenceInterceptor = null;
-    }
-
-    @Autowired
-    public WebMvcConfig(MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor) {
+    public WebMvcConfig(InactiveMemberInterceptor inactiveMemberInterceptor,
+                        MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor) {
+        this.inactiveMemberInterceptor = inactiveMemberInterceptor;
         this.memberLocalePreferenceInterceptor = memberLocalePreferenceInterceptor;
     }
 
@@ -51,7 +42,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(localeChangeInterceptor());
-        registry.addInterceptor(inactiveMemberInterceptor).addPathPatterns("/member/**", "/api/**");
+        registry.addInterceptor(inactiveMemberInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico",
+                        "/login", "/logout", "/error", "/403",
+                        "/oauth2/**", "/login/oauth2/**");
         if (memberLocalePreferenceInterceptor != null) {
             registry.addInterceptor(memberLocalePreferenceInterceptor);
         }
