@@ -39,6 +39,12 @@ import java.util.Map;
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
     private static final int DASHBOARD_PAGE_SIZE = 10;
+    private static final int OVERVIEW_LIST_SIZE = 5;
+    private static final int DUE_SOON_DAYS = 7;
+    private static final List<String> CURRENT_LOAN_DETAIL_STATUSES =
+            List.of("BORROWED", "RETURN_PENDING", "RENEW_PENDING");
+    private static final List<String> RECENT_CIRCULATION_STATUSES =
+            List.of("BORROWED", "OVERDUE", "RETURN_PENDING", "RENEW_PENDING", "RETURNED");
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -115,6 +121,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     public Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage,
             String keyword) {
         LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
@@ -126,8 +133,10 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 reservationRepository.countByStatusIgnoreCase("READY"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("dueTodayDetails",
-                borrowDetailRepository.countByDueDateGreaterThanEqualAndDueDateLessThan(
-                        LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay()));
+                borrowDetailRepository.countCurrentLoansDueInRange(
+                        today.atStartOfDay(),
+                        today.plusDays(1).atStartOfDay(),
+                        CURRENT_LOAN_DETAIL_STATUSES));
         data.put("pendingReturns", borrowDetailRepository.countByStatusIgnoreCase("Return_Pending"));
         data.put("pendingRenewals", borrowDetailRepository.countByStatusIgnoreCase("Renew_Pending"));
         data.put("pendingAcquisitionRequests",
@@ -136,11 +145,16 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
         data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
-        data.put("currentDate", LocalDate.now());
-        data.put("recentBorrows", borrowDetailRepository.findRecentActivities(PageRequest.of(0, 5)));
+        data.put("currentDate", today);
+        data.put("dashboardGeneratedAt", now);
+        data.put("recentBorrows", borrowDetailRepository.findRecentCirculationActivities(
+                RECENT_CIRCULATION_STATUSES, PageRequest.of(0, OVERVIEW_LIST_SIZE)));
         data.put("dueSoonDetails",
-                borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
-                        "Borrowed", now, now.plusDays(7)));
+                borrowDetailRepository.findCurrentLoansDueSoon(
+                        now,
+                        now.plusDays(DUE_SOON_DAYS),
+                        CURRENT_LOAN_DETAIL_STATUSES,
+                        PageRequest.of(0, OVERVIEW_LIST_SIZE)));
         data.put("reviews", interactionService.getReviewsForModeration(
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
@@ -156,9 +170,10 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Page<Book> booksPage;
         if (keyword != null && !keyword.trim().isEmpty()) {
             booksPage = bookRepository.searchBooks(keyword.trim(), null, null,
-                    PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+                    PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
         } else {
-            booksPage = bookRepository.findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
+            booksPage = bookRepository.findAll(
+                    PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
         }
         booksPage.forEach(book -> {
             if (book.getAuthors() != null) {
