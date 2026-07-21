@@ -18,11 +18,19 @@
         const title = document.getElementById("title");
         const content = document.getElementById("content");
         const type = document.getElementById("notificationType");
+        const confirmDialog = document.getElementById("notificationConfirmDialog");
+        const confirmRecipients = document.getElementById("notificationConfirmRecipients");
+        const confirmTitle = document.getElementById("notificationConfirmMessageTitle");
+        const confirmType = document.getElementById("notificationConfirmType");
+        const confirmContent = document.getElementById("notificationConfirmContent");
+        const confirmCancel = document.getElementById("notificationConfirmCancel");
+        const confirmSubmit = document.getElementById("notificationConfirmSubmit");
         const minSearch = Number(search.dataset.minLength);
         const maximum = Number(search.dataset.maximum);
         let searchTimer;
         let searchController;
         let submitting = false;
+        let confirmationAccepted = false;
 
         function checkboxes() {
             return Array.from(selectedBox.querySelectorAll("input[name='memberIds']"));
@@ -149,6 +157,26 @@
             counter.classList.toggle("is-limit-reached", length >= maximum);
         }
 
+        function openConfirmation() {
+            const count = selected.checked ? selectedIds().length : Number(form.dataset.activeCount);
+            const recipientTemplate = selected.checked ? form.dataset.confirmSelected : form.dataset.confirmAll;
+            confirmRecipients.textContent = recipientTemplate.replace("{0}", String(count));
+            confirmTitle.textContent = title.value;
+            confirmType.textContent = type.options[type.selectedIndex] ? type.options[type.selectedIndex].text : "";
+            confirmContent.textContent = content.value;
+            confirmDialog.showModal();
+            confirmSubmit.focus();
+        }
+
+        confirmCancel.addEventListener("click", function () {
+            confirmDialog.close();
+        });
+        confirmSubmit.addEventListener("click", function () {
+            confirmationAccepted = true;
+            confirmDialog.close();
+            form.requestSubmit();
+        });
+
         [all, selected].forEach(function (radio) {
             radio.addEventListener("change", toggleRecipients);
         });
@@ -182,16 +210,12 @@
                 form.reportValidity();
                 return;
             }
-            const count = selected.checked ? selectedIds().length : Number(form.dataset.activeCount);
-            const template = selected.checked ? form.dataset.confirmSelected : form.dataset.confirmAll;
-            const typeLabel = type.options[type.selectedIndex] ? type.options[type.selectedIndex].text : "";
-            const contentPreview = content.value.length > 160 ? content.value.slice(0, 157) + "..." : content.value;
-            const confirmation = template.replace("{0}", String(count))
-                .replace("{1}", title.value).replace("{2}", typeLabel).replace("{3}", contentPreview);
-            if (!window.confirm(confirmation)) {
+            if (!confirmationAccepted) {
                 event.preventDefault();
+                openConfirmation();
                 return;
             }
+            confirmationAccepted = false;
             submitting = true;
             submit.disabled = true;
             const label = submit.querySelector(".submit-label");

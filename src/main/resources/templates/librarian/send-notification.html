@@ -36,8 +36,8 @@
                   th:data-title-max="${notificationTitleMax}"
                   th:data-content-min="${notificationContentMin}"
                   th:data-content-max="${notificationContentMax}"
-                  th:data-confirm-all="#{librarian.notification.confirmAll}"
-                  th:data-confirm-selected="#{librarian.notification.confirmSelected}"
+                  th:data-confirm-all="#{librarian.notification.confirmAllRecipients}"
+                  th:data-confirm-selected="#{librarian.notification.confirmSelectedRecipients}"
                   th:data-processing="#{common.processing}"
                   th:data-searching="#{librarian.notification.searching}"
                   th:data-search-empty="#{librarian.notification.searchEmpty}"
@@ -229,6 +229,41 @@
             </form>
         </div>
     </section>
+
+    <dialog id="notificationConfirmDialog" class="notification-confirm-dialog"
+            aria-labelledby="notificationConfirmTitle">
+        <div class="notification-confirm-header">
+            <div class="app-page-eyebrow" th:text="#{librarian.notification.confirmEyebrow}">SEND CONFIRMATION</div>
+            <h2 id="notificationConfirmTitle" th:text="#{librarian.notification.confirmTitle}">
+                Confirm notification
+            </h2>
+            <p id="notificationConfirmRecipients"></p>
+        </div>
+        <dl class="notification-confirm-preview">
+            <div>
+                <dt th:text="#{common.title}">Title</dt>
+                <dd id="notificationConfirmMessageTitle"></dd>
+            </div>
+            <div>
+                <dt th:text="#{librarian.notification.type}">Type</dt>
+                <dd id="notificationConfirmType"></dd>
+            </div>
+            <div>
+                <dt th:text="#{common.content}">Content</dt>
+                <dd id="notificationConfirmContent"></dd>
+            </div>
+        </dl>
+        <div class="notification-confirm-actions">
+            <button type="button" id="notificationConfirmCancel"
+                    class="btn notification-confirm-cancel"
+                    th:text="#{common.cancel}">Cancel</button>
+            <button type="button" id="notificationConfirmSubmit"
+                    class="btn btn-classic notification-confirm-submit">
+                <i class="bi bi-send" aria-hidden="true"></i>
+                <span th:text="#{librarian.notification.confirmSend}">Send now</span>
+            </button>
+        </div>
+    </dialog>
 
     <section class="app-card notification-history-card">
         <div class="notification-compose-body">
