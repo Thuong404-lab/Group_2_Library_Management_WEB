@@ -51,6 +51,30 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     long countBorrowedItemsByBorrowDateRange(@Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
+    @Query("""
+            select year(bd.borrow.borrowDate), month(bd.borrow.borrowDate), count(bd)
+            from BorrowDetail bd
+            where bd.borrow.borrowDate >= :startDate
+              and bd.borrow.borrowDate < :endDate
+              and upper(bd.status) in ('BORROWED', 'OVERDUE', 'RETURN_PENDING', 'RENEW_PENDING', 'RETURNED')
+            group by year(bd.borrow.borrowDate), month(bd.borrow.borrowDate)
+            order by year(bd.borrow.borrowDate), month(bd.borrow.borrowDate)
+            """)
+    List<Object[]> countBorrowedItemsByMonth(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("""
+            select year(bd.returnDate), month(bd.returnDate), count(bd)
+            from BorrowDetail bd
+            where bd.returnDate is not null
+              and bd.returnDate >= :startDate
+              and bd.returnDate < :endDate
+            group by year(bd.returnDate), month(bd.returnDate)
+            order by year(bd.returnDate), month(bd.returnDate)
+            """)
+    List<Object[]> countReturnedItemsByMonth(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
     @Query("select count(bd) " +
             "from BorrowDetail bd " +
             "where bd.returnDate is not null " +
