@@ -29,6 +29,8 @@ import java.util.Set;
 @RequestMapping("/librarian/loan")
 public class LoanController extends LocalizedControllerSupport {
 
+    private static final BigDecimal MAX_DAMAGE_FINE = new BigDecimal("500000000");
+
     private final LoanService loanService;
     private final FinancialService financialService;
     private final com.lms.repository.MemberRepository memberRepository;
@@ -193,6 +195,11 @@ public class LoanController extends LocalizedControllerSupport {
                     && (conditionNoteAdditional == null || conditionNoteAdditional.trim().isEmpty())) {
                 throw new ValidationException(message("backend.return.damageDescriptionRequired"));
             }
+            if (damageFine != null && (damageFine.signum() < 0
+                    || damageFine.stripTrailingZeros().scale() > 0
+                    || damageFine.compareTo(MAX_DAMAGE_FINE) > 0)) {
+                throw new ValidationException(message("librarian.returnDesk.fineInvalid"));
+            }
 
             // Minor damage uses the manually entered repair fine. Severe damage and
             // lost books are charged by issueDamageCompensation() using the amount
@@ -218,7 +225,9 @@ public class LoanController extends LocalizedControllerSupport {
             LocalDateTime actualReturnDateTime = LocalDateTime.now();
 
             // Thực thi nghiệp vụ lõi trong LoanService
-            BigDecimal fine = (damageFine != null) ? damageFine : BigDecimal.ZERO;
+            BigDecimal fine = isMinorDamage(conditionNote) && damageFine != null
+                    ? damageFine
+                    : BigDecimal.ZERO;
             Transaction transaction = loanService.confirmBatchReturnWithDetails(barcodes, actualReturnDateTime, conditionNote, conditionNoteAdditional, fine, paymentMethod, staffUsername);
 
             if (transaction != null && "bank".equalsIgnoreCase(paymentMethod)) {

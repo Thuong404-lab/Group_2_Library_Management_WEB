@@ -42,7 +42,13 @@
                     <div class="small text-muted mt-1">Khi độc giả đến quầy và nhận sách, hãy bấm nút xác nhận để bắt đầu tính thời gian mượn.</div>
                 </div>
                 <form th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}" method="post"
-                      onsubmit="return confirm('Xác nhận độc giả đã nhận sách vật lý? Thời gian mượn sẽ bắt đầu tính từ bây giờ.')">
+                      class="app-confirm-form"
+                      th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
+                      th:data-confirm-subject-label="#{loan.code}"
+                      th:data-confirm-subject="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}"
+                      th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
+                      th:data-confirm-action="#{librarian.borrowList.pickupAction}">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit" class="btn btn-sm fw-semibold" style="background:#1565c0;color:#fff;border:none;white-space:nowrap;">
                         <i class="bi bi-box-arrow-in-down me-1"></i>Xác nhận nhận sách vật lý
                     </button>
