@@ -87,24 +87,11 @@
 
                             <td class="favorite-action-column">
                                 <div class="favorite-actions d-flex flex-column flex-md-row justify-content-md-end">
-                                    <button type="button"
-                                            class="btn btn-sm btn-favorite-classic u-width-110px-d76d1bd5"
-                                            th:disabled="${isInactiveMember}"
-                                            th:data-toast-message="#{book.borrow.comingSoon}"
-                                            onclick="showToast(this.dataset.toastMessage)">
-                                        <span th:text="#{book.borrow}">Borrow</span>
-                                    </button>
-
-                                    <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
-                                          method="post">
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-danger u-width-110px-d76d1bd5"
-                                                th:disabled="${isInactiveMember}">
                                     <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
                                           method="post">
                                         <button type="submit"
                                                 class="btn btn-sm btn-outline-danger favorite-remove-action member-ui-button member-ui-button--danger-outline"
-                                               >
+                                                th:disabled="${isInactiveMember}">
                                             <span th:text="#{member.favorites.remove}">Remove</span>
                                         </button>
                                     </form>

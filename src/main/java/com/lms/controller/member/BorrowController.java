@@ -15,6 +15,7 @@ import com.lms.repository.WalletRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BookItemRepository;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import com.lms.service.BookService;
 import com.lms.service.BorrowService;
 import com.lms.service.LoanService;
@@ -32,6 +33,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/member/borrow")
@@ -319,7 +321,8 @@ public class BorrowController extends LocalizedControllerSupport {
             Model model,
             Principal principal,
             RedirectAttributes redirectAttributes,
-            HttpServletResponse response) {
+            HttpServletResponse response,
+            HttpSession session) {
         if (principal == null)
             return "redirect:/login";
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -334,19 +337,12 @@ public class BorrowController extends LocalizedControllerSupport {
         Member member = null;
         try {
             member = memberRepository.findByAccountUsername(principal.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
-            long activeOrPendingCount = borrowDetailRepository
-                    .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
-            if (activeOrPendingCount > 0) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Bạn không thể tạo thêm yêu cầu: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
-                return "redirect:/member/borrow/management?tab=borrowing";
-            }
+                    .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
             // Kiểm tra số lượng bản vật lý khả dụng trong kho
-            long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            long availableCount = getAvailableCopyCount(bookId);
             if (availableCount == 0) {
                 redirectAttributes.addFlashAttribute("errorMessage",
-                        "Sách này hiện không còn bản vật lý nào trong kho!");
+                        message("backend.borrow.stockUnavailable"));
                 return "redirect:/books/" + bookId;
             }
         } catch (ResourceNotFoundException e) {
@@ -386,6 +382,16 @@ public class BorrowController extends LocalizedControllerSupport {
 
         // Truyền dữ liệu số ngày tối đa cho phép xuống giao diện
         model.addAttribute("maxBorrowDays", getMaxBorrowDays());
+        long currentBorrowed = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
+        int remainingBorrowLimit = Math.max(0, getEffectiveBorrowLimit(member) - Math.toIntExact(currentBorrowed));
+        if (remainingBorrowLimit == 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.tierLimitExceeded"));
+            return "redirect:/member/borrow/management?tab=borrowing";
+        }
+        model.addAttribute("remainingBorrowLimit", remainingBorrowLimit);
+        String submissionToken = UUID.randomUUID().toString();
+        session.setAttribute("memberBorrowSubmissionToken", submissionToken);
+        model.addAttribute("borrowSubmissionToken", submissionToken);
 
         try {
             Book book = bookService.findBookById(bookId);
@@ -393,9 +399,14 @@ public class BorrowController extends LocalizedControllerSupport {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.bookUnavailable"));
                 return "redirect:/";
             }
-            long availableCount = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            // Keep physical inventory and the member's selectable quantity separate.
+            // `availableCount` must mean the same thing as it does on book details
+            // and librarian inventory: physical BookItems whose status is Available.
+            long availableCount = getAvailableCopyCount(bookId);
+            long maxRequestQuantity = Math.min(availableCount, remainingBorrowLimit);
             model.addAttribute("selectedBook", book);
             model.addAttribute("availableCount", availableCount);
+            model.addAttribute("maxRequestQuantity", maxRequestQuantity);
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBook"));
             return "redirect:/";
@@ -405,13 +416,22 @@ public class BorrowController extends LocalizedControllerSupport {
 
     @PostMapping("/request/submit")
     public String submitBorrowRequest(@RequestParam(value = "bookId", required = false) Integer bookId,
+            @RequestParam(value = "submissionToken", required = false) String submissionToken,
             @RequestParam(value = "numberOfDays", defaultValue = "14") Integer numberOfDays,
             @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
             @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
             Principal principal,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
         if (principal == null)
             return "redirect:/login";
+        synchronized (session) {
+            Object expectedToken = session.getAttribute("memberBorrowSubmissionToken");
+            if (submissionToken == null || !submissionToken.equals(expectedToken)) {
+                return "redirect:/member/borrow/management?tab=borrowing";
+            }
+            session.removeAttribute("memberBorrowSubmissionToken");
+        }
         if (bookId == null) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.selectBookFirst"));
             return "redirect:/";
@@ -431,17 +451,10 @@ public class BorrowController extends LocalizedControllerSupport {
 
         try {
             Member member = memberRepository.findByAccountUsername(principal.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin độc giả!"));
+                    .orElseThrow(() -> new ResourceNotFoundException(message("backend.member.currentNotFound")));
                     
-            long activeOrPendingCount = borrowDetailRepository
-                    .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
-            if (activeOrPendingCount > 0) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Bạn không thể tạo thêm yêu cầu: Bạn đang mượn hoặc đã gửi yêu cầu mượn cuốn sách này rồi.");
-                return "redirect:/member/borrow/management?tab=borrowing";
-            }
             // 3. Kiểm tra số lượng bản vật lý thực tế trong kho trước khi thực hiện
-            long availableStock = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+            long availableStock = getAvailableCopyCount(bookId);
             if (availableStock == 0) {
                 redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.stockUnavailable"));
                 return "redirect:/books/" + bookId;
@@ -662,6 +675,20 @@ public class BorrowController extends LocalizedControllerSupport {
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
+    }
+
+    private int getEffectiveBorrowLimit(Member member) {
+        int configuredLimit = getPositiveIntSetting("Max_Books_Per_Member",
+                getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10));
+        Integer tierLimit = member != null && member.getMemberId() != null
+                ? memberRepository.findCurrentBorrowLimitByMemberId(member.getMemberId())
+                        .orElse(member.getTier() != null ? member.getTier().getBorrowLimit() : null)
+                : null;
+        return Math.max(1, tierLimit != null ? tierLimit : configuredLimit);
+    }
+
+    private long getAvailableCopyCount(Integer bookId) {
+        return bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
     }
 
     private Integer getMaxBorrowDays() {
