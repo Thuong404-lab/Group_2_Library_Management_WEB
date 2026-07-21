@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/librarian_base}">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/librarian_base}">
 
 <head>
     <title th:text="#{librarian.members.title}">Member List</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
+    <style>
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -13,7 +19,8 @@
         <header class="member-page-header">
             <div>
                 <h1 class="member-page-title" th:text="#{librarian.members.heading}">Member List</h1>
-                <p class="member-page-description" th:text="#{librarian.members.description}">Track member profiles, tiers, and account status.</p>
+                <p class="member-page-description" th:text="#{librarian.members.description}">Track member profiles,
+                    tiers, and account status.</p>
             </div>
 
             <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
@@ -29,7 +36,8 @@
                             <div class="modal-header member-modal-header">
                                 <div>
                                     <h5 class="modal-title member-modal-title-accent" id="createMemberModalLabel">
-                                        <i class="bi bi-person-plus-fill me-2" aria-hidden="true"></i><span th:text="#{librarian.members.createTitle}">Create Member Account</span>
+                                        <i class="bi bi-person-plus-fill me-2" aria-hidden="true"></i><span
+                                            th:text="#{librarian.members.createTitle}">Create Member Account</span>
                                     </h5>
                                 </div>
                             </div>
@@ -44,11 +52,11 @@
                                     <div class="row g-4">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                <span th:text="#{member.profile.fullName}">Full Name</span> <span class="required-marker">*</span>
+                                                <span th:text="#{member.profile.fullName}">Full Name</span> <span
+                                                    class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="fullName" required
-                                                maxlength="50"
-                                                th:placeholder="#{librarian.members.fullNamePlaceholder}"
+                                                maxlength="50" th:placeholder="#{librarian.members.fullNamePlaceholder}"
                                                 th:value="${formValues != null ? formValues['fullName'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
@@ -65,6 +73,7 @@
                                                 required
                                                 pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                 placeholder="email@example.com" autocomplete="off"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['email'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['email'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
@@ -75,11 +84,13 @@
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                <span th:text="#{member.profile.phone}">Phone Number</span> <span class="required-marker">*</span>
+                                                <span th:text="#{member.profile.phone}">Phone Number</span> <span
+                                                    class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="phone" required
                                                 pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10" inputmode="numeric"
                                                 placeholder="0912345678"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['phone'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
@@ -93,26 +104,49 @@
                                                 Username <span class="required-marker">*</span>
                                             </label>
                                             <input class="form-control validate-field" name="username" required
-                                                pattern="[a-zA-Z0-9_]{3,20}" th:placeholder="#{librarian.members.usernamePlaceholder}"
+                                                pattern="[a-zA-Z0-9_]{3,20}"
+                                                th:placeholder="#{librarian.members.usernamePlaceholder}"
                                                 autocomplete="new-password"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['username'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
-                                                th:text="${fieldErrors != null ? fieldErrors['username'] : ''}">
+                                                th:text="${fieldErrors != null and fieldErrors['username'] != null ? fieldErrors['username'] : #messages.msg('validation.username')}">
                                                 Username is required.
                                             </div>
                                         </div>
 
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold small text-muted text-uppercase">
-                                                <span th:text="#{reset.newPassword}">Password</span> <span class="required-marker">*</span>
+                                                <span th:text="#{reset.newPassword}">Password</span> <span
+                                                    class="required-marker">*</span>
                                             </label>
+                                            <div class="position-relative">
+                                                <input class="form-control validate-field pe-5 pr-5" name="password"
+                                                    type="password" id="createMemberPassword" required minlength="6"
+                                                    pattern="^[!-~]+$" th:placeholder="#{reset.newPassword.placeholder}"
+                                                    autocomplete="new-password"
+                                                    style="padding-right: 2.5rem !important;"
+                                                    th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'"
+                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
+                                                    oninput="this.value = this.value.replace(/[^ -~]/g, '').replace(/ /g, '');">
+                                                <button type="button"
+                                                    class="btn border-0 bg-transparent position-absolute h-100 px-3 z-3"
+                                                    style="top: 0; right: 0; display: flex; align-items: center;"
+                                                    onclick="const p = document.getElementById('createMemberPassword'); const i = this.querySelector('i'); if (p.type === 'password') { p.type = 'text'; i.classList.remove('bi-eye-slash'); i.classList.add('bi-eye'); } else { p.type = 'password'; i.classList.remove('bi-eye'); i.classList.add('bi-eye-slash'); }"
+                                                    tabindex="-1" aria-label="Toggle password visibility">
+                                                    <i class="bi bi-eye-slash text-muted"></i>
+                                                </button>
+                                            </div>
                                             <input class="form-control validate-field" name="password" type="password"
-                                                required minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" th:placeholder="#{reset.newPassword.placeholder}"
+                                                required minlength="6" maxlength="50" pattern="^\S+$"
+                                                th:title="#{validation.passwordNoSpaces}"
+                                                th:placeholder="#{reset.newPassword.placeholder}"
                                                 autocomplete="new-password"
                                                 th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
-                                                th:text="${fieldErrors != null ? fieldErrors['password'] : ''}">
+                                                th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'd-block'"
+                                                th:text="${fieldErrors != null and fieldErrors['password'] != null ? fieldErrors['password'] : #messages.msg('validation.passwordMin')}">
                                                 Password is required.
                                             </div>
                                         </div>
@@ -126,6 +160,7 @@
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true">
                                                 <span th:text="#{tier.regular}">Regular</span>
                                             </div>
+                                            <input type="hidden" name="tierId" value="1">
                                         </div>
 
                                         <div class="col-md-6">
@@ -135,6 +170,7 @@
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true">
                                                 <span th:text="#{account.status.active}">Active</span>
                                             </div>
+                                            <input type="hidden" name="status" value="Active">
                                         </div>
                                     </div>
 
@@ -148,7 +184,75 @@
                                             <span th:text="#{librarian.members.createAccount}">Create Account</span>
                                         </button>
                                     </div>
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function () {
+                                            const createForm = document.getElementById('createMemberForm');
+                                            if (createForm) {
+                                                createForm.addEventListener('submit', function (e) {
+                                                    let valid = true;
+                                                    const fields = [
+                                                        { name: 'fullName', msg: 'Họ và tên độc giả không được để trống' },
+                                                        { name: 'phone', msg: 'Số điện thoại liên hệ không được để trống' },
+                                                        { name: 'email', msg: 'Email không được để trống' },
+                                                        { name: 'username', msg: 'Username không được để trống' },
+                                                        { name: 'password', msg: 'Mật khẩu mới không được để trống' }
+                                                    ];
+                                                    fields.forEach(f => {
+                                                        const input = this.elements[f.name];
+                                                        if (input) {
+                                                            let errorMsg = null;
+                                                            if (!input.value.trim()) {
+                                                                errorMsg = f.msg;
+                                                            } else if (f.name === 'password' && input.value.length > 50) {
+                                                                errorMsg = 'Mật khẩu không được vượt quá 50 ký tự';
+                                                            }
 
+                                                            if (errorMsg) {
+                                                                input.classList.add('is-invalid');
+                                                                let feedback = input.parentElement.classList.contains('position-relative') ? input.parentElement.nextElementSibling : input.nextElementSibling;
+                                                                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                                                    feedback.textContent = errorMsg;
+                                                                    feedback.classList.add('d-block');
+                                                                }
+                                                                valid = false;
+                                                            }
+                                                        }
+                                                    });
+                                                    if (!valid) {
+                                                        e.preventDefault();
+                                                    }
+                                                });
+                                                // Xóa lỗi khi gõ
+                                                createForm.querySelectorAll('input').forEach(inp => {
+                                                    inp.addEventListener('input', function () {
+                                                        this.classList.remove('is-invalid');
+                                                        let feedback = this.parentElement.classList.contains('position-relative') ? this.parentElement.nextElementSibling : this.nextElementSibling;
+                                                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                                            feedback.classList.remove('d-block');
+                                                        }
+                                                    });
+                                                });
+                                            }
+
+                                            // Reset form when modal is closed
+                                            const createModal = document.getElementById('createMemberModal');
+                                            if (createModal) {
+                                                createModal.addEventListener('hidden.bs.modal', function () {
+                                                    if (createForm) {
+                                                        createForm.reset();
+                                                        // Xóa text để tránh dính cache cũ
+                                                        createForm.querySelectorAll('input:not([type="hidden"])').forEach(inp => {
+                                                            inp.value = '';
+                                                            inp.classList.remove('is-invalid');
+                                                        });
+                                                        createForm.querySelectorAll('.invalid-feedback').forEach(f => {
+                                                            f.classList.remove('d-block');
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    </script>
                                 </form>
                             </div>
                         </div>
@@ -161,7 +265,8 @@
 
         <!-- Alerts -->
         <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
-            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{librarian.members.notFound}">Account not found.</span>
+            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{librarian.members.notFound}">Account not
+                found.</span>
         </div>
         <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
             <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Error</span>
@@ -173,10 +278,17 @@
         <section class="member-data-card">
             <div class="member-data-card-body">
                 <div class="member-summary-chips" th:aria-label="#{librarian.members.summary}">
-                    <span th:text="#{librarian.members.total(${memberSummary != null ? memberSummary['total'] : 0})}">0 members</span>
-                    <span th:text="#{librarian.members.active(${memberSummary != null ? memberSummary['active'] : 0})}">0 active</span>
-                    <span th:text="#{librarian.members.inactive(${memberSummary != null ? memberSummary['inactive'] : 0})}">0 inactive</span>
-                    <span th:text="#{librarian.members.blocked(${memberSummary != null ? memberSummary['blocked'] : 0})}">0 blocked</span>
+                    <span th:text="#{librarian.members.total(${memberSummary != null ? memberSummary['total'] : 0})}">0
+                        members</span>
+                    <span
+                        th:text="#{librarian.members.active(${memberSummary != null ? memberSummary['active'] : 0})}">0
+                        active</span>
+                    <span
+                        th:text="#{librarian.members.inactive(${memberSummary != null ? memberSummary['inactive'] : 0})}">0
+                        inactive</span>
+                    <span
+                        th:text="#{librarian.members.blocked(${memberSummary != null ? memberSummary['blocked'] : 0})}">0
+                        blocked</span>
                 </div>
 
                 <!-- Search & Filter + Back Button -->
@@ -190,29 +302,38 @@
                                 <i class="bi bi-search"></i>
                             </span>
                             <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
-                                th:value="${keyword}"
-                                th:placeholder="#{librarian.members.searchPlaceholder}">
+                                th:value="${keyword}" th:placeholder="#{librarian.members.searchPlaceholder}">
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 th:aria-label="#{librarian.members.filterTier}">
-                                <option value="" th:selected="${#strings.isEmpty(selectedTier)}" th:text="#{librarian.members.allTiers}">All Tiers</option>
-                                <option value="Regular" th:selected="${selectedTier == 'Regular'}" th:text="#{tier.regular}">Regular</option>
-                                <option value="Silver" th:selected="${selectedTier == 'Silver'}" th:text="#{tier.silver}">Silver</option>
-                                <option value="Gold" th:selected="${selectedTier == 'Gold'}" th:text="#{tier.gold}">Gold</option>
-                                <option value="Diamond" th:selected="${selectedTier == 'Diamond'}" th:text="#{tier.diamond}">Diamond</option>
+                                <option value="" th:selected="${#strings.isEmpty(selectedTier)}"
+                                    th:text="#{librarian.members.allTiers}">All Tiers</option>
+                                <option value="Regular" th:selected="${selectedTier == 'Regular'}"
+                                    th:text="#{tier.regular}">Regular</option>
+                                <option value="Silver" th:selected="${selectedTier == 'Silver'}"
+                                    th:text="#{tier.silver}">Silver</option>
+                                <option value="Gold" th:selected="${selectedTier == 'Gold'}" th:text="#{tier.gold}">Gold
+                                </option>
+                                <option value="Diamond" th:selected="${selectedTier == 'Diamond'}"
+                                    th:text="#{tier.diamond}">Diamond</option>
                             </select>
 
                             <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{member.notifications.filterType}">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{common.allStatuses}">All Statuses</option>
-                                <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{account.status.active}">Active</option>
-                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{account.status.inactive}">Inactive</option>
-                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{account.status.blocked}">Blocked</option>
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}"
+                                    th:text="#{common.allStatuses}">All Statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}"
+                                    th:text="#{account.status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}"
+                                    th:text="#{account.status.inactive}">Inactive</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}"
+                                    th:text="#{account.status.blocked}">Blocked</option>
                             </select>
 
-                            <button class="btn member-search-button text-nowrap" type="submit">
-                                <span th:text="#{common.search}">Search</span>
-                            </button>
+                            <a class="btn member-search-button text-nowrap" th:href="@{/librarian/members}">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -259,13 +380,14 @@
                                         </div>
                                     </div>
                                     <div th:unless="${account.member.user != null}" class="fst-italic text-muted small">
-                                        <span th:text="#{librarian.members.infoNotUpdated}">Information not updated</span>
+                                        <span th:text="#{librarian.members.infoNotUpdated}">Information not
+                                            updated</span>
                                     </div>
                                 </td>
 
                                 <td
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
-                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                    <span class="membership-tier-badge"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
                                         th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
@@ -294,16 +416,16 @@
                                     <!-- View detail and this member's transaction history -->
                                     <a th:if="${account.member != null}"
                                         th:href="@{/librarian/members/{memberId}/details(memberId=${account.member.memberId})}"
-                                        class="member-icon-action account-action-tooltip" th:data-bs-title="#{common.viewDetails}"
-                                        th:aria-label="#{common.viewDetails}">
+                                        class="member-icon-action account-action-tooltip"
+                                        th:data-bs-title="#{common.viewDetails}" th:aria-label="#{common.viewDetails}">
                                         <i class="bi bi-eye"></i>
                                     </a>
 
                                     <!-- Update -->
                                     <button type="button" class="member-icon-action account-action-tooltip"
                                         data-bs-toggle="modal" th:data-bs-target="${'#updateMemberModal' + account.id}"
-                                        th:data-bs-title="#{librarian.members.updateAccount}" data-bs-custom-class="update-account-tooltip"
-                                        th:aria-label="#{common.update}">
+                                        th:data-bs-title="#{librarian.members.updateAccount}"
+                                        data-bs-custom-class="update-account-tooltip" th:aria-label="#{common.update}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <!-- Update Modal -->
@@ -323,7 +445,10 @@
                                                     <div class="modal-header member-modal-header">
                                                         <div>
                                                             <h5 class="modal-title member-modal-title-accent"><i
-                                                                    class="bi bi-person-lines-fill me-2" aria-hidden="true"></i><span th:text="#{librarian.members.editTitle}">Edit Member</span></h5>
+                                                                    class="bi bi-person-lines-fill me-2"
+                                                                    aria-hidden="true"></i><span
+                                                                    th:text="#{librarian.members.editTitle}">Edit
+                                                                    Member</span></h5>
                                                         </div>
                                                     </div>
 
@@ -334,7 +459,9 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    <span th:text="#{member.profile.fullName}">Full Name</span> <span class="required-marker">*</span>
+                                                                    <span th:text="#{member.profile.fullName}">Full
+                                                                        Name</span> <span
+                                                                        class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
                                                                     th:data-label="#{member.profile.fullName}"
@@ -353,24 +480,31 @@
                                                                 </label>
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:value="${account.username}" required>
-                                                                <div class="invalid-feedback" data-error-for="username">
-                                                                    Username must contain 3-20 letters, numbers, or underscores.
+                                                                <div class="invalid-feedback" data-error-for="username"
+                                                                    th:text="#{validation.username}">
+                                                                    Username must contain 3-20 letters, numbers,
+                                                                    underscores, and no spaces.
                                                                 </div>
                                                             </div>
 
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    <span th:text="#{member.profile.phone}">Phone Number</span> <span class="required-marker">*</span>
+                                                                    <span th:text="#{member.profile.phone}">Phone
+                                                                        Number</span> <span
+                                                                        class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
                                                                     th:data-label="#{member.profile.phone}"
                                                                     th:value="${account.user != null ? account.user.phone : ''}"
                                                                     required pattern="^(?!0{10}$)0[0-9]{9}$"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     minlength="10" inputmode="numeric">
                                                                 <div class="invalid-feedback" data-error-for="phone">
-                                                                    Phone number must contain exactly 10 digits and start with 0.
+                                                                    Phone number must contain exactly 10 digits and
+                                                                    start with 0.
                                                                 </div>
                                                             </div>
 
@@ -382,6 +516,7 @@
                                                                 <input class="form-control" name="email" type="email"
                                                                     data-label="Email"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:value="${account.user != null ? account.user.email : ''}"
                                                                     required>
                                                                 <div class="invalid-feedback" data-error-for="email">
@@ -392,7 +527,8 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    <span th:text="#{member.profile.tier}">Membership Tier</span>
+                                                                    <span th:text="#{member.profile.tier}">Membership
+                                                                        Tier</span>
                                                                 </label>
                                                                 <div class="member-readonly-field" role="textbox"
                                                                     aria-readonly="true"
@@ -409,17 +545,29 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    <span th:text="#{common.status}">Status</span>
+                                                                    <span th:text="#{common.status}">Status</span> <span
+                                                                        class="text-danger">*</span>
                                                                 </label>
-                                                                <div class="member-readonly-field" role="textbox"
-                                                                    aria-readonly="true"
-                                                                    th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('account.status.inactive') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
-                                                                    Active
-                                                                </div>
-                                                                <input type="hidden" name="status"
-                                                                    th:value="${account.status}">
-                                                                <div class="invalid-feedback" data-error-for="status">
-                                                                    Invalid account status.
+                                                                <select class="form-select form-control" name="status"
+                                                                    th:data-label="#{common.status}" required
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
+                                                                    <option value="Active"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}"
+                                                                        th:text="#{account.status.active}">Active
+                                                                    </option>
+                                                                    <option value="Inactive"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
+                                                                        th:text="#{account.status.inactive}">Inactive
+                                                                    </option>
+                                                                    <option value="Blocked"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
+                                                                        th:text="#{account.status.blocked}">Blocked
+                                                                    </option>
+                                                                </select>
+                                                                <div class="invalid-feedback" data-error-for="status"
+                                                                    th:data-default-message="#{validation.status}">
+                                                                    <span th:text="#{validation.status}">Invalid account
+                                                                        status.</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -427,7 +575,8 @@
 
                                                     <div class="modal-footer member-modal-footer">
                                                         <button type="button" class="btn member-modal-secondary"
-                                                            data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
                                                         <button type="submit" class="btn member-modal-primary">
                                                             <span th:text="#{member.profile.save}">Save Changes</span>
                                                         </button>
@@ -441,8 +590,8 @@
                                     <button type="button"
                                         class="member-icon-action member-icon-action-danger account-action-tooltip"
                                         data-bs-toggle="modal" th:data-bs-target="${'#deleteMemberModal' + account.id}"
-                                        th:data-bs-title="#{librarian.members.deleteAccount}" data-bs-custom-class="delete-account-tooltip"
-                                        th:aria-label="#{common.delete}">
+                                        th:data-bs-title="#{librarian.members.deleteAccount}"
+                                        data-bs-custom-class="delete-account-tooltip" th:aria-label="#{common.delete}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                     <!-- Delete Modal -->
@@ -459,17 +608,25 @@
                                                     <div class="modal-header member-modal-header member-delete-header">
                                                         <div class="member-delete-title-wrap">
                                                             <h5 class="modal-title member-modal-title-accent"><i
-                                                                    class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i><span th:text="#{librarian.members.deleteTitle}">Delete Member Account</span></h5>
+                                                                    class="bi bi-exclamation-triangle-fill me-2"
+                                                                    aria-hidden="true"></i><span
+                                                                    th:text="#{librarian.members.deleteTitle}">Delete
+                                                                    Member Account</span></h5>
                                                         </div>
                                                     </div>
 
                                                     <div class="modal-body member-modal-body">
                                                         <p class="mb-3">
-                                                            <span th:text="#{librarian.members.deleteWarning}">Are you sure you want to delete this account? This action cannot be undone.</span></p>
+                                                            <span th:text="#{librarian.members.deleteWarning}">Are you
+                                                                sure you want to delete this account? This action cannot
+                                                                be undone.</span>
+                                                        </p>
                                                         <div class="member-delete-summary">
                                                             <div class="row g-3">
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Username: </div>
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.username}">Username
+                                                                    </div>
                                                                     <div class="fw-bold mb-1"
                                                                         th:text="${account.username}">
                                                                         username
@@ -477,14 +634,17 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Account ID: </div>
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{common.accountId}">Account ID</div>
                                                                     <div class="fw-bold" th:text="${account.id}">
                                                                         id
                                                                     </div>
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted"><span th:text="#{member.profile.fullName}">Full Name</span>: </div>
+                                                                    <div class="small text-muted"><span
+                                                                            th:text="#{member.profile.fullName}">Full
+                                                                            Name</span>: </div>
                                                                     <div class="fw-bold"
                                                                         th:text="${account.member.user != null ? account.member.user.fullName : #messages.msg('librarian.members.noName')}">
                                                                         full name
@@ -492,7 +652,8 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted">Email: </div>
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{common.email}">Email</div>
                                                                     <div>
                                                                         <i class="bi bi-envelope me-1 text-classic"></i>
                                                                         <span
@@ -503,7 +664,9 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted"><span th:text="#{member.profile.phone}">Phone Number</span>: </div>
+                                                                    <div class="small text-muted"><span
+                                                                            th:text="#{member.profile.phone}">Phone
+                                                                            Number</span>: </div>
                                                                     <div>
                                                                         <i
                                                                             class="bi bi-telephone me-1 text-classic"></i>
@@ -515,7 +678,9 @@
                                                                 </div>
 
                                                                 <div class="col-md-6">
-                                                                    <div class="small text-muted" th:text="#{member.profile.tier}">Membership Tier</div>
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.tier}">Membership Tier
+                                                                    </div>
                                                                     <span
                                                                         class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
@@ -525,7 +690,7 @@
                                                                     </span>
 
                                                                     <span
-                                                                class="membership-tier-badge membership-tier-badge--empty"
+                                                                        class="membership-tier-badge membership-tier-badge--empty"
                                                                         th:if="${member == null || member.tier == null}">
                                                                         N/A
                                                                     </span>
@@ -537,8 +702,11 @@
 
                                                     <div class="modal-footer member-modal-footer">
                                                         <button type="button" class="btn member-modal-secondary"
-                                                            data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                                                        <button type="submit" class="btn member-modal-danger" th:text="#{librarian.members.deleteAccount}">Delete Account</button>
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn member-modal-danger"
+                                                            th:text="#{librarian.members.deleteAccount}">Delete
+                                                            Account</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -566,7 +734,8 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/members(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}" th:text="#{pagination.first}">First</a>
+                                    th:href="@{/librarian/members(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:text="#{pagination.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
@@ -602,7 +771,8 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
                                 <a class="page-link"
-                                    th:href="@{/librarian/members(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}" th:text="#{pagination.last}">Last</a>
+                                    th:href="@{/librarian/members(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:text="#{pagination.last}">Last</a>
                             </li>
                         </ul>
                     </nav>

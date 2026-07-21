@@ -11,7 +11,11 @@
       class="sticky-top shadow-sm w-100 header-header-z-index-border-bottom-01 public-site-header"
 
     >
-      <nav class="navbar navbar-expand-md navbar-light public-site-navbar">
+      <div th:if="${isInactiveMember != null and isInactiveMember}" class="alert alert-warning mb-0 text-center rounded-0 fw-bold border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="#{member.inactiveBanner}">Tài khoản bạn đang bị dừng hoạt động. Vui lòng liên hệ thủ thư/quản trị viên để được hỗ trợ thêm.</span>
+      </div>
+      <nav class="navbar navbar-expand-lg navbar-light bg-classic py-3 px-4">
         <button
           class="navbar-toggler border-0 mr-2 d-md-none"
           type="button"
@@ -179,19 +183,20 @@
 
               >
                 <div
+                  id="memberHeaderAvatarFallback"
                   class="rounded-circle d-flex align-items-center justify-content-center mr-2 font-weight-bold text-white header-div-width-height-background-13"
-
-                  th:if="${#authentication.principal.user?.avatar == null}"
+                  th:classappend="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)} ? ' d-none'"
                   th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                 >
                   U
                 </div>
                 <img
-                  th:if="${#authentication.principal.user?.avatar != null}"
+                  th:if="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)}"
                   th:src="${#authentication.principal.user.avatar}"
                   class="rounded-circle mr-2 shadow-sm border border-white header-img-width-height-fit-14"
                   th:alt="#{common.profile}"
-
+                  data-avatar-image
+                  data-avatar-fallback="memberHeaderAvatarFallback"
                 >
                 <span
                   class="d-none d-md-block font-weight-bold u-color-4a3b32-1ba01220"
@@ -210,19 +215,20 @@
 
                 >
                   <div
+                    id="memberMenuAvatarFallback"
                     class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold member-account-avatar"
-
-                    th:if="${#authentication.principal.user?.avatar == null}"
+                    th:classappend="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)} ? ' d-none'"
                     th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                   >
                     U
                   </div>
                   <img
-                    th:if="${#authentication.principal.user?.avatar != null}"
+                    th:if="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)}"
                     th:src="${#authentication.principal.user.avatar}"
                     class="rounded-circle member-account-avatar member-account-avatar-image"
                     th:alt="#{common.profile}"
-
+                    data-avatar-image
+                    data-avatar-fallback="memberMenuAvatarFallback"
                   >
                   <div class="member-account-identity">
                     <h6

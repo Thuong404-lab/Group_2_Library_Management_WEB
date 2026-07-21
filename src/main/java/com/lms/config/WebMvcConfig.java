@@ -7,18 +7,22 @@ import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.Locale;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import com.lms.config.InactiveMemberInterceptor;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    public static final String LOCALE_COOKIE_NAME = "LMS_LOCALE";
+    @Autowired
+    private InactiveMemberInterceptor inactiveMemberInterceptor;
+
     private final MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor;
 
     public WebMvcConfig() {
@@ -32,9 +36,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Bean
     public LocaleResolver localeResolver() {
-        CookieLocaleResolver resolver = new CookieLocaleResolver(LOCALE_COOKIE_NAME);
+        SessionLocaleResolver resolver = new SessionLocaleResolver();
         resolver.setDefaultLocale(Locale.ENGLISH);
-        resolver.setCookieMaxAge(Duration.ofDays(365));
         return resolver;
     }
 
@@ -48,6 +51,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(localeChangeInterceptor());
+        registry.addInterceptor(inactiveMemberInterceptor).addPathPatterns("/member/**", "/api/**");
         if (memberLocalePreferenceInterceptor != null) {
             registry.addInterceptor(memberLocalePreferenceInterceptor);
         }
@@ -57,7 +61,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         Path uploadDir = Paths.get("uploads");
         String uploadPath = uploadDir.toFile().getAbsolutePath();
-        
+
         // Map đường dẫn /uploads/** tới thư mục vật lý trên máy
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:/" + uploadPath + "/");

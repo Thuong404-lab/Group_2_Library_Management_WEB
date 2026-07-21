@@ -10,7 +10,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
@@ -25,7 +24,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest); 
+        OAuth2User oAuth2User = super.loadUser(userRequest);
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
@@ -34,25 +33,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             String baseUsername = email.substring(0, email.indexOf("@"));
             String generatedUsername = baseUsername;
             int suffix = 1;
-            
+
             while (memberAccountRepository.existsByUsername(generatedUsername)) {
                 generatedUsername = baseUsername + suffix;
                 suffix++;
             }
-            
+
             account = authService.createCoreAccount(generatedUsername, name, "", email, "");
         }
-        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>(oAuth2User.getAuthorities());
-        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_MEMBER"));
-        
+        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>(
+                oAuth2User.getAuthorities());
+        account.getRoles().stream()
+                .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName()))
+                .forEach(authorities::add);
+
         return new CustomUserDetails(
                 account.getMember().getUser(),
                 account.getUsername(),
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
-                authorities, 
-                oAuth2User.getAttributes()
-        );
+                authorities,
+                oAuth2User.getAttributes());
     }
 }

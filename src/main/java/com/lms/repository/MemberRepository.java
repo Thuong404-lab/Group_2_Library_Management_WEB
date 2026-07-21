@@ -5,11 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Integer> {
@@ -46,6 +48,13 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
             SELECT a.member FROM MemberAccount a WHERE a.username = :username
             """)
     Optional<Member> findByAccountUsername(@Param("username") String username);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a.member FROM MemberAccount a WHERE a.username = :username")
+    Optional<Member> findByAccountUsernameForUpdate(@Param("username") String username);
+
+    @Query("SELECT tier.borrowLimit FROM Member member JOIN member.tier tier WHERE member.memberId = :memberId")
+    Optional<Integer> findCurrentBorrowLimitByMemberId(@Param("memberId") Integer memberId);
 
     @Query("""
             SELECT account.member

@@ -9,13 +9,13 @@ import jakarta.validation.constraints.Size;
 public class CreateMemberAccountRequest {
 
     @NotBlank(message = "{validation.fullNameRequired}")
-    @Pattern(regexp = "^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
+    @Pattern(regexp = "^$|^[\\p{L}]+(?:\\s+[\\p{L}]+)*$",
             message = "{validation.fullNameLetters}")
-    @Pattern(regexp = "^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$",
+    @Pattern(regexp = "^$|^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$",
             message = "{validation.fullNameWords}")
-    @Pattern(regexp = "^(?!.*([\\p{L}])\\1\\1).*$",
+    @Pattern(regexp = "^$|^(?!.*([\\p{L}])\\1\\1).*$",
             message = "{validation.fullNameTriple}")
-    @Pattern(regexp = "^(?!([\\p{L}])\\1+$).+$",
+    @Pattern(regexp = "^$|^(?!([\\p{L}])\\1+$).+$",
             message = "{validation.fullNameRepeated}")
     @Size(max = 50, message = "{validation.fullNameMax}")
     private String fullName;
@@ -23,13 +23,13 @@ public class CreateMemberAccountRequest {
     @NotBlank(message = "{validation.emailRequired}")
     @Email(message = "{validation.email}")
     @Pattern(
-            regexp = "^[A-Za-z0-9]+(?:[._%+\\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
+            regexp = "^$|^[A-Za-z0-9]+(?:[._%+\\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
             message = "{validation.email}")
     private String email;
 
     @NotBlank(message = "{validation.phoneRequired}")
     @Pattern(
-            regexp = "^(?!0{10}$)0\\d{9}$",
+            regexp = "^$|^(?!0{10}$)0\\d{9}$",
             message = "{validation.phone}")
     private String phone;
 
@@ -38,7 +38,7 @@ public class CreateMemberAccountRequest {
     private String username;
 
     @NotBlank(message = "{backend.account.passwordRequired}")
-    @Pattern(regexp = "^(?:|.{6,})$", message = "{validation.passwordMin}")
+    @Pattern(regexp = "^(?:|[\\x21-\\x7E]{6,50})$", message = "{validation.passwordMin}")
     private String password;
 
     @NotNull(message = "{validation.tier}")

@@ -110,16 +110,17 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(messages.get("validation.email"));
         }
 
-        if (phone == null || !phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+        if (request.getPhone() == null
+                || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new AuthException(messages.get("backend.profile.phoneFormat"));
         }
 
-
-        if (userRepository.existsByPhone(phone)) {
+        if (userRepository.existsByPhone(request.getPhone())) {
             throw new AuthException(messages.get("backend.account.phoneUsed"));
         }
 
-        if (memberAccountRepository.findByUsername(username).isPresent() || staffAccountRepository.findByUsername(username).isPresent()) {
+        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent()
+                || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AuthException(messages.get("backend.account.usernameExists"));
         }
 
@@ -179,6 +180,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public void logGoogleLoginAction(Integer userId, String ipAddress, String userAgent) {
+        createAndSaveLog(userId, ActionType.GOOGLE.name(), ipAddress, userAgent,
+                messages.get("backend.auth.audit.google_login"));
+    }
+
+    @Override
     public void logLogoutAction(Integer userId, String ipAddress, String userAgent) {
         createAndSaveLog(userId, ActionType.LOGOUT.name(), ipAddress, userAgent,
                 messages.get("backend.auth.audit.logout"));
@@ -189,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setFullName(fullName);
         user.setEmail(email);
-        user.setPhone(phone);
+        user.setPhone(phone != null && phone.isBlank() ? null : phone);
         user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
@@ -203,9 +210,17 @@ public class AuthServiceImpl implements AuthService {
 
         MemberAccount account = new MemberAccount();
         account.setUsername(userName);
-        account.setPasswordHash(pass);
+        String passwordHash = pass;
+        if (passwordHash == null || passwordHash.isBlank()) {
+            passwordHash = passwordEncoder.encode(UUID.randomUUID().toString());
+        }
+        account.setPasswordHash(passwordHash);
         account.setMember(member);
         account.setStatus("Active");
+        Role memberRole = roleRepository.findByNameIgnoreCase("ROLE_MEMBER")
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", "ROLE_MEMBER")));
+        account.getRoles().add(memberRole);
 
         account = memberAccountRepository.save(account);
 
@@ -252,7 +267,8 @@ public class AuthServiceImpl implements AuthService {
 
     private String buildPasswordResetEmail(String fullName, String resetLink) {
         String safeName = HtmlUtils.htmlEscape(fullName == null || fullName.isBlank()
-                ? messages.get("backend.auth.resetEmail.defaultName") : fullName);
+                ? messages.get("backend.auth.resetEmail.defaultName")
+                : fullName);
         String safeResetLink = HtmlUtils.htmlEscape(resetLink);
         return """
                 <!doctype html>
@@ -272,14 +288,15 @@ public class AuthServiceImpl implements AuthService {
                     <tr><td style="padding:18px 32px;background:#f2e9df;color:#765b42;text-align:center;font-size:12px;">%s</td></tr>
                   </table>
                 </td></tr></table></body></html>
-                """.formatted(
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.brand")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.greeting")), safeName,
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.instruction")), safeResetLink,
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.button")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.expiry")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.ignore")),
-                HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.signature")));
+                """
+                .formatted(
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.brand")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.greeting")), safeName,
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.instruction")), safeResetLink,
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.button")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.expiry")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.ignore")),
+                        HtmlUtils.htmlEscape(messages.get("backend.auth.resetEmail.signature")));
     }
 
     @Override

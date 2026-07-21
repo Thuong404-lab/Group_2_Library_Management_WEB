@@ -2,7 +2,6 @@ package com.lms.service;
 
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
-import com.lms.entity.MembershipTier;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
@@ -15,8 +14,6 @@ import java.util.Map;
  */
 public interface SystemService {
 
-    void restoreData(String backupFilePath);
-
     Page<SystemLog> getSystemLogs(int page, String action, String keyword, String actionType);
 
     List<SystemSetting> getAllSettings();
@@ -25,19 +22,15 @@ public interface SystemService {
 
     int getIntSetting(String settingKey, int defaultValue);
 
-    List<MembershipTier> getMembershipTiers();
-
     void updateBorrowingPolicies(Integer maxBorrowDays,
-                                 Integer maxRenewalDays,
-                                 Integer maxRenewalRequests,
-                                 Integer renewalRejectionCooldownHours,
-                                 Map<Integer, Integer> tierBorrowLimits,
-                                 Map<Integer, BigDecimal> tierSpendingConditions,
-                                 BigDecimal borrowFeePerBook,
-                                 BigDecimal finePerDay,
-                                 BigDecimal damageCompensationAmount,
-                                 Integer damageCompensationThreshold,
-                                 Integer overdueViolationLockLimit,
-                                 Integer bookDisposalConditionThreshold,
-                                 BigDecimal depositAmount);
+            Integer maxRenewalDays,
+            Integer maxRenewalRequests,
+            Integer renewalRejectionCooldownHours,
+            BigDecimal borrowFeePerBook,
+            BigDecimal finePerDay,
+            BigDecimal damageCompensationAmount,
+            Integer damageCompensationThreshold,
+            Integer overdueViolationLockLimit,
+            Integer bookDisposalConditionThreshold,
+            BigDecimal depositAmount);
 }
