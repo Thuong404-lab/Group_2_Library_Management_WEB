@@ -11,6 +11,7 @@ import com.lms.entity.Role;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.User;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.MemberAccountDeletionRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.PasswordResetTokenRepository;
@@ -86,12 +87,12 @@ class AccountRoleCreationServiceTest {
         UserRepository userRepository = mock(UserRepository.class);
         RoleRepository roleRepository = mock(RoleRepository.class);
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        WalletRepository walletRepository = mock(WalletRepository.class);
         MembershipTier tier = new MembershipTier();
         Role memberRole = new Role(3, "ROLE_MEMBER");
         CreateMemberAccountRequest request = memberRequest();
 
-        when(tierRepository.existsById(1)).thenReturn(true);
-        when(tierRepository.findById(1)).thenReturn(Optional.of(tier));
+        when(tierRepository.findFirstByOrderByConditionAscTierIdAsc()).thenReturn(Optional.of(tier));
         when(roleRepository.findByNameIgnoreCase("ROLE_MEMBER")).thenReturn(Optional.of(memberRole));
         when(passwordEncoder.encode("Demo@123")).thenReturn("encoded-password");
 
@@ -102,13 +103,16 @@ class AccountRoleCreationServiceTest {
                 userRepository,
                 roleRepository,
                 passwordEncoder,
-                mock(AuditLogService.class));
+                mock(AuditLogService.class),
+                walletRepository,
+                mock(MemberAccountDeletionRepository.class));
 
         service.createMember(request);
 
         ArgumentCaptor<MemberAccount> account = ArgumentCaptor.forClass(MemberAccount.class);
-        verify(accountRepository).save(account.capture());
+        verify(accountRepository).saveAndFlush(account.capture());
         assertThat(account.getValue().getRoles()).containsExactly(memberRole);
+        verify(walletRepository).save(any());
     }
 
     @Test
@@ -306,8 +310,7 @@ class AccountRoleCreationServiceTest {
         request.setPhone("0900000002");
         request.setUsername("member_created");
         request.setPassword("Demo@123");
-        request.setTierId(1);
-        request.setStatus("Active");
+        request.setConfirmPassword("Demo@123");
         return request;
     }
 }

@@ -80,6 +80,16 @@
     padding: 0 !important;
 }
 
+.book-inventory-page .member-page-header > .member-primary-action {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    max-width: none;
+    padding-inline: 18px;
+    overflow: visible;
+    white-space: nowrap;
+}
+
 #addBookModal .modal-content {
     max-height: calc(100vh - 2rem);
 }
@@ -100,3 +110,55 @@
     flex: 0 0 auto;
     background: var(--app-color-canvas, #faf9f5);
 }
+
+/* Keep book form actions visible when an image preview increases the form height. */
+.book-form-modal .modal-content {
+    display: flex;
+    max-height: calc(100vh - 2rem);
+    flex-direction: column;
+}
+
+.book-form-modal .modal-content > form {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.book-form-modal .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.book-form-modal .modal-footer {
+    flex: 0 0 auto;
+}
+
+/* Edit-book fields: title/genre/shelf on the left; author/ISBN/cover on the right. */
+.book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(1) { order: 1; }
+.book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(3) { order: 2; }
+.book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(4) { order: 3; }
+.book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(2) { order: 4; }
+.book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(5) { order: 5; }
+.book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(6) { order: 6; }
+.book-form-modal form[action*="/inventory/edit"] .row > .col-12:nth-child(7) { order: 7; }
+
+/* Display the existing cover beneath the file input, matching the add-book preview. */
+.book-form-modal .edit-book-cover-control {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px !important;
+}
+
+.book-form-modal .edit-book-cover-control > .flex-grow-1 { order: 1; }
+.book-form-modal .edit-book-cover-control > .flex-shrink-0 { order: 2; margin-top: 0; }
+.book-form-modal .edit-book-cover-control > .flex-shrink-0 .text-muted { display: none; }
+
+.book-cover-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.book-form-modal form .form-control:not(textarea),
+.book-form-modal form .form-select,
+.book-cover-file-control { height: 64px !important; min-height: 64px !important; box-sizing: border-box; }
+.book-cover-file-control { display: flex; align-items: center; width: 100%; padding: 5px 10px; gap: 8px; border: 1px solid var(--app-color-hairline); border-radius: var(--app-radius-md); background: var(--app-color-canvas); }
+.book-inventory-page .add-book-form .book-cover-file-control { grid-column: 1 / -1; grid-row: 2; }
+.book-cover-file-button { display: inline-flex; align-items: center; justify-content: center; height: 30px !important; min-height: 30px !important; padding: 0 9px !important; margin: 0 !important; border: 1px solid var(--app-color-hairline); border-radius: 6px; background: var(--app-color-surface-soft); color: var(--app-color-ink); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.book-cover-file-name { display: inline-block; color: var(--app-color-muted); font-size: 14px; overflow-wrap: anywhere; }

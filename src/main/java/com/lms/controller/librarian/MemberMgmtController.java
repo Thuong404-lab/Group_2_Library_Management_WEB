@@ -89,6 +89,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         model.addAttribute("accounts", data.accounts());
         model.addAttribute("memberByUserId", data.memberByUserId());
         model.addAttribute("tiers", data.tiers());
+        model.addAttribute("defaultTier", data.tiers().isEmpty() ? null : data.tiers().get(0));
         model.addAttribute("memberSummary", data.summaryCounts());
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedStatus", status);
@@ -101,9 +102,11 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     public String createMemberAccount(
             @Valid @ModelAttribute CreateMemberAccountRequest request,
             BindingResult bindingResult,
-            Model model,
             RedirectAttributes redirectAttributes,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String filterStatus,
+            @RequestParam(required = false, defaultValue = "") String filterTier) {
 
         Map<String, String> errors = bindingErrors(bindingResult);
         mergeErrors(errors, memberService.validateCreate(request));
@@ -111,13 +114,18 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("fieldErrors", errors);
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
             redirectAttributes.addFlashAttribute("openCreateModal", true);
-            return "redirect:/librarian/members";
+            return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
         }
 
-        memberService.createMember(request);
-        redirectAttributes.addFlashAttribute(
-                "success", message("backend.member.created"));
-        return "redirect:/librarian/members";
+        try {
+            memberService.createMember(request);
+            redirectAttributes.addFlashAttribute("success", message("backend.member.created"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+            redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
+            redirectAttributes.addFlashAttribute("openCreateModal", true);
+        }
+        return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
     }
 
     @PostMapping("/members/edit/{id}")
@@ -125,45 +133,43 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @PathVariable Integer id,
             @Valid @ModelAttribute UpdateMemberAccountRequest request,
             BindingResult bindingResult,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String filterStatus,
+            @RequestParam(required = false, defaultValue = "") String filterTier) {
 
         Map<String, String> errors = bindingErrors(bindingResult);
         mergeErrors(errors, memberService.validateUpdate(id, request));
         if (!errors.isEmpty()) {
-            redirectAttributes.addFlashAttribute(
-                    "error", errors.values().iterator().next());
-            return "redirect:/librarian/members";
+            preserveEditForm(redirectAttributes, id, request, errors);
+            return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
         }
 
-        memberService.updateMember(id, request);
-        redirectAttributes.addFlashAttribute(
-                "success", message("backend.member.updated"));
-        return "redirect:/librarian/members";
-    }
-
-    @GetMapping("/members/edit/{id}/validate")
-    @ResponseBody
-    public Map<String, String> validateMemberUpdateFields(
-            @PathVariable Integer id,
-            @Valid @ModelAttribute UpdateMemberAccountRequest request,
-            BindingResult bindingResult) {
-
-        Map<String, String> errors = bindingErrors(bindingResult);
-        mergeErrors(errors, memberService.validateUpdate(id, request));
-        return errors;
+        try {
+            memberService.updateMember(id, request);
+            redirectAttributes.addFlashAttribute("success", message("backend.member.updated"));
+        } catch (ApplicationException exception) {
+            preserveEditForm(redirectAttributes, id, request, Map.of("_global", exception.getMessage()));
+        }
+        return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
     }
 
     @PostMapping("/members/delete/{id}")
     public String deleteMemberAccount(
             @PathVariable Integer id,
-            RedirectAttributes redirectAttributes) {
-        if (!memberService.deactivateMember(id)) {
-            redirectAttributes.addFlashAttribute("error", message("backend.account.notFound"));
-        } else {
-            redirectAttributes.addFlashAttribute(
-                    "success", message("backend.member.deleted"));
+            RedirectAttributes redirectAttributes,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String filterStatus,
+            @RequestParam(required = false, defaultValue = "") String filterTier) {
+        try {
+            memberService.deleteMember(id);
+            redirectAttributes.addFlashAttribute("success", message("backend.member.deleted"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
-        return "redirect:/librarian/members";
+        return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
     }
 
     @PostMapping("/members/status/{id}")
@@ -172,6 +178,8 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @RequestParam String status,
             @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "") String filterStatus,
+            @RequestParam(required = false, defaultValue = "") String filterTier,
             RedirectAttributes redirectAttributes) {
         try {
             memberService.changeMemberStatus(id, status);
@@ -179,9 +187,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        redirectAttributes.addAttribute("page", Math.max(page, 0));
-        redirectAttributes.addAttribute("keyword", keyword);
-        return "redirect:/librarian/members";
+        return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
     }
 
     @GetMapping("/members/fines")
@@ -378,9 +384,37 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         values.put("email", trim(request.getEmail()));
         values.put("phone", trim(request.getPhone()));
         values.put("username", trim(request.getUsername()));
-        values.put("tierId", request.getTierId());
-        values.put("status", request.getStatus());
         return values;
+    }
+
+    private void preserveEditForm(RedirectAttributes redirectAttributes,
+            Integer accountId,
+            UpdateMemberAccountRequest request,
+            Map<String, String> errors) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("fullName", trim(request.getFullName()));
+        values.put("username", trim(request.getUsername()));
+        values.put("email", trim(request.getEmail()));
+        values.put("phone", trim(request.getPhone()));
+        values.put("status", request.getStatus());
+        values.put("accountVersion", request.getAccountVersion());
+        values.put("userVersion", request.getUserVersion());
+        redirectAttributes.addFlashAttribute("editAccountId", accountId);
+        redirectAttributes.addFlashAttribute("editFormValues", values);
+        redirectAttributes.addFlashAttribute("editFieldErrors", errors);
+        redirectAttributes.addFlashAttribute("error", errors.values().iterator().next());
+    }
+
+    private String redirectToMembers(RedirectAttributes redirectAttributes,
+            int page,
+            String keyword,
+            String status,
+            String tier) {
+        redirectAttributes.addAttribute("page", Math.max(page, 0));
+        redirectAttributes.addAttribute("keyword", trim(keyword));
+        redirectAttributes.addAttribute("status", trim(status));
+        redirectAttributes.addAttribute("tier", trim(tier));
+        return "redirect:/librarian/members";
     }
 
     private String trim(String value) {

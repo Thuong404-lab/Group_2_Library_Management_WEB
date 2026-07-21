@@ -153,9 +153,12 @@
                                 </a>
                                 <form th:if="${borrow.status == 'Waiting_Pickup'}"
                                       th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}"
-                                      method="post" class="d-inline"
+                                      method="post" class="d-inline app-confirm-form"
+                                      th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
+                                      th:data-confirm-subject-label="#{loan.code}"
+                                      th:data-confirm-subject="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}"
                                       th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
-                                      onsubmit="return confirm(this.dataset.confirmMessage)">
+                                      th:data-confirm-action="#{librarian.borrowList.pickupAction}">
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="borrow-list-icon-action account-action-tooltip"
                                             th:data-bs-title="#{librarian.borrowList.pickupTitle}"
