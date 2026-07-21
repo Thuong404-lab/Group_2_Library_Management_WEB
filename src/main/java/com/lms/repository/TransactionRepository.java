@@ -26,15 +26,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDescTransactionIdDesc(
             Integer borrowDetailId, String transactionType, String status);
 
-    @Query("select coalesce(sum(t.amount), 0) " +
-            "from Transaction t " +
-            "where lower(t.status) = lower(:status) " +
-            "and t.transactionDate >= :fromDate " +
-            "and t.transactionDate < :toDate")
-    BigDecimal sumAmountByStatusAndDateRange(@Param("status") String status,
-            @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate);
-
     @Query("""
             select coalesce(sum(abs(t.amount)), 0)
             from Transaction t
@@ -48,25 +39,31 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
-    @Query("select t.transactionType, count(t), coalesce(sum(t.amount), 0) " +
-            "from Transaction t " +
-            "where lower(t.status) = lower(:status) " +
-            "and t.transactionDate >= :fromDate " +
-            "and t.transactionDate < :toDate " +
-            "group by t.transactionType " +
-            "order by coalesce(sum(t.amount), 0) desc")
-    List<Object[]> summarizeByTypeAndStatusAndDateRange(@Param("status") String status,
+    @Query("select t.transactionType, count(t), coalesce(sum(abs(t.amount)), 0) " +
+            "from Transaction t where lower(t.status) = lower(:status) " +
+            "and upper(t.transactionType) in :types and t.transactionDate >= :fromDate " +
+            "and t.transactionDate < :toDate group by t.transactionType " +
+            "order by coalesce(sum(abs(t.amount)), 0) desc")
+    List<Object[]> summarizeRevenueByTypeAndDateRange(@Param("status") String status,
+            @Param("types") List<String> types,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
-    @Query("select month(t.transactionDate), year(t.transactionDate), count(t), coalesce(sum(t.amount), 0) " +
-            "from Transaction t " +
-            "where lower(t.status) = lower(:status) " +
-            "and t.transactionDate >= :fromDate " +
-            "and t.transactionDate < :toDate " +
-            "group by year(t.transactionDate), month(t.transactionDate) " +
+    @Query("select month(t.transactionDate), year(t.transactionDate), count(t), coalesce(sum(abs(t.amount)), 0) " +
+            "from Transaction t where lower(t.status) = lower(:status) " +
+            "and upper(t.transactionType) in :types and t.transactionDate >= :fromDate " +
+            "and t.transactionDate < :toDate group by year(t.transactionDate), month(t.transactionDate) " +
             "order by year(t.transactionDate), month(t.transactionDate)")
-    List<Object[]> summarizeMonthlyRevenueByStatusAndDateRange(@Param("status") String status,
+    List<Object[]> summarizeMonthlyRevenueByTypesAndDateRange(@Param("status") String status,
+            @Param("types") List<String> types,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
+
+    @Query("select coalesce(sum(abs(t.amount)), 0) from Transaction t " +
+            "where lower(t.status) = lower(:status) and upper(t.transactionType) = upper(:type) " +
+            "and t.transactionDate >= :fromDate and t.transactionDate < :toDate")
+    BigDecimal sumAbsoluteAmountByTypeAndStatusAndDateRange(@Param("type") String type,
+            @Param("status") String status,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
@@ -208,4 +205,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("memberId") Integer memberId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    @Query("""
+            select coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where t.wallet.member.memberId = :memberId
+              and upper(t.transactionType) = 'TOP_UP'
+              and lower(t.status) in ('completed', 'paid')
+            """)
+    BigDecimal sumCompletedTopUpByMemberId(@Param("memberId") Integer memberId);
+
+    @Query("""
+            select t.wallet.member.memberId, coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where upper(t.transactionType) = 'TOP_UP'
+              and lower(t.status) in ('completed', 'paid')
+            group by t.wallet.member.memberId
+            order by sum(abs(t.amount)) desc, t.wallet.member.memberId asc
+            """)
+    List<Object[]> findTopMembersByCompletedTopUp(Pageable pageable);
 }

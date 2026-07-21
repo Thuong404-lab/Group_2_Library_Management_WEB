@@ -118,8 +118,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        data.put("pendingReservations",
-                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
+        data.put("pendingReservationRequests",
+                reservationRepository.countByStatusIgnoreCase("PENDING"));
+        data.put("depositPaidReservations",
+                reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"));
+        data.put("readyReservations",
+                reservationRepository.countByStatusIgnoreCase("READY"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("dueTodayDetails",
                 borrowDetailRepository.countByDueDateGreaterThanEqualAndDueDateLessThan(
@@ -140,7 +144,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("reviews", interactionService.getReviewsForModeration(
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
-        data.put("requests", interactionService.getBookAcquisitionRequests(
+        data.put("requests", interactionService.getBookAcquisitionRequests(null, null,
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
         data.put("shelves", storageService.getAllStorageLocations());

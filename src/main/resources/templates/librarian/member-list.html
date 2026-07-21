@@ -48,6 +48,15 @@
 
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                         th:value="${_csrf.token}">
+                                    <input type="hidden" name="page" th:value="${accounts.number}">
+                                    <input type="hidden" name="keyword" th:value="${keyword}">
+                                    <input type="hidden" name="filterStatus" th:value="${selectedStatus}">
+                                    <input type="hidden" name="filterTier" th:value="${selectedTier}">
+
+                                    <div class="alert alert-danger" role="alert"
+                                        th:if="${error != null}" th:text="${error}">
+                                        Unable to create the account.
+                                    </div>
 
                                     <div class="row g-4">
                                         <div class="col-md-6">
@@ -124,7 +133,7 @@
                                             <div class="position-relative">
                                                 <input class="form-control validate-field pe-5 pr-5" name="password"
                                                     type="password" id="createMemberPassword" required minlength="6"
-                                                    pattern="^[!-~]+$" th:placeholder="#{reset.newPassword.placeholder}"
+                                                    maxlength="50" pattern="^[!-~]+$" th:placeholder="#{reset.newPassword.placeholder}"
                                                     autocomplete="new-password"
                                                     style="padding-right: 2.5rem !important;"
                                                     th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'"
@@ -134,20 +143,33 @@
                                                     class="btn border-0 bg-transparent position-absolute h-100 px-3 z-3"
                                                     style="top: 0; right: 0; display: flex; align-items: center;"
                                                     onclick="const p = document.getElementById('createMemberPassword'); const i = this.querySelector('i'); if (p.type === 'password') { p.type = 'text'; i.classList.remove('bi-eye-slash'); i.classList.add('bi-eye'); } else { p.type = 'password'; i.classList.remove('bi-eye'); i.classList.add('bi-eye-slash'); }"
-                                                    tabindex="-1" aria-label="Toggle password visibility">
+                                                    tabindex="-1" th:aria-label="#{validation.togglePasswordVisibility}">
                                                     <i class="bi bi-eye-slash text-muted"></i>
                                                 </button>
                                             </div>
-                                            <input class="form-control validate-field" name="password" type="password"
-                                                required minlength="6" maxlength="50" pattern="^\S+$"
-                                                th:title="#{validation.passwordNoSpaces}"
-                                                th:placeholder="#{reset.newPassword.placeholder}"
-                                                autocomplete="new-password"
-                                                th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'is-invalid'">
                                             <div class="invalid-feedback"
                                                 th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'd-block'"
                                                 th:text="${fieldErrors != null and fieldErrors['password'] != null ? fieldErrors['password'] : #messages.msg('validation.passwordMin')}">
                                                 Password is required.
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted text-uppercase">
+                                                <span th:text="#{validation.confirmPassword}">Confirm password</span>
+                                                <span class="required-marker">*</span>
+                                            </label>
+                                            <input class="form-control validate-field" name="confirmPassword"
+                                                type="password" required minlength="6" maxlength="50"
+                                                pattern="^[!-~]+$" autocomplete="new-password"
+                                                th:placeholder="#{validation.confirmPassword}"
+                                                onkeydown="if(event.key === ' ') event.preventDefault();"
+                                                oninput="this.value = this.value.replace(/[^ -~]/g, '').replace(/ /g, '');"
+                                                th:classappend="${fieldErrors != null and fieldErrors['confirmPassword'] != null} ? 'is-invalid'">
+                                            <div class="invalid-feedback"
+                                                th:classappend="${fieldErrors != null and fieldErrors['confirmPassword'] != null} ? 'd-block'"
+                                                th:text="${fieldErrors != null and fieldErrors['confirmPassword'] != null ? fieldErrors['confirmPassword'] : #messages.msg('validation.passwordMismatch')}">
+                                                Password confirmation does not match.
                                             </div>
                                         </div>
                                     </div>
@@ -158,9 +180,11 @@
                                                 <span th:text="#{member.profile.tier}">Membership Tier</span>
                                             </label>
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true">
-                                                <span th:text="#{tier.regular}">Regular</span>
+                                                <span th:if="${defaultTier != null}"
+                                                    th:text="${defaultTier.tierName == 'Member' or defaultTier.tierName == 'Regular' ? #messages.msg('tier.regular') : defaultTier.tierName}">Member</span>
+                                                <span th:if="${defaultTier == null}"
+                                                    th:text="#{librarian.members.unranked}">Unranked</span>
                                             </div>
-                                            <input type="hidden" name="tierId" value="1">
                                         </div>
 
                                         <div class="col-md-6">
@@ -170,7 +194,6 @@
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true">
                                                 <span th:text="#{account.status.active}">Active</span>
                                             </div>
-                                            <input type="hidden" name="status" value="Active">
                                         </div>
                                     </div>
 
@@ -184,75 +207,6 @@
                                             <span th:text="#{librarian.members.createAccount}">Create Account</span>
                                         </button>
                                     </div>
-                                    <script>
-                                        document.addEventListener('DOMContentLoaded', function () {
-                                            const createForm = document.getElementById('createMemberForm');
-                                            if (createForm) {
-                                                createForm.addEventListener('submit', function (e) {
-                                                    let valid = true;
-                                                    const fields = [
-                                                        { name: 'fullName', msg: 'Họ và tên độc giả không được để trống' },
-                                                        { name: 'phone', msg: 'Số điện thoại liên hệ không được để trống' },
-                                                        { name: 'email', msg: 'Email không được để trống' },
-                                                        { name: 'username', msg: 'Username không được để trống' },
-                                                        { name: 'password', msg: 'Mật khẩu mới không được để trống' }
-                                                    ];
-                                                    fields.forEach(f => {
-                                                        const input = this.elements[f.name];
-                                                        if (input) {
-                                                            let errorMsg = null;
-                                                            if (!input.value.trim()) {
-                                                                errorMsg = f.msg;
-                                                            } else if (f.name === 'password' && input.value.length > 50) {
-                                                                errorMsg = 'Mật khẩu không được vượt quá 50 ký tự';
-                                                            }
-
-                                                            if (errorMsg) {
-                                                                input.classList.add('is-invalid');
-                                                                let feedback = input.parentElement.classList.contains('position-relative') ? input.parentElement.nextElementSibling : input.nextElementSibling;
-                                                                if (feedback && feedback.classList.contains('invalid-feedback')) {
-                                                                    feedback.textContent = errorMsg;
-                                                                    feedback.classList.add('d-block');
-                                                                }
-                                                                valid = false;
-                                                            }
-                                                        }
-                                                    });
-                                                    if (!valid) {
-                                                        e.preventDefault();
-                                                    }
-                                                });
-                                                // Xóa lỗi khi gõ
-                                                createForm.querySelectorAll('input').forEach(inp => {
-                                                    inp.addEventListener('input', function () {
-                                                        this.classList.remove('is-invalid');
-                                                        let feedback = this.parentElement.classList.contains('position-relative') ? this.parentElement.nextElementSibling : this.nextElementSibling;
-                                                        if (feedback && feedback.classList.contains('invalid-feedback')) {
-                                                            feedback.classList.remove('d-block');
-                                                        }
-                                                    });
-                                                });
-                                            }
-
-                                            // Reset form when modal is closed
-                                            const createModal = document.getElementById('createMemberModal');
-                                            if (createModal) {
-                                                createModal.addEventListener('hidden.bs.modal', function () {
-                                                    if (createForm) {
-                                                        createForm.reset();
-                                                        // Xóa text để tránh dính cache cũ
-                                                        createForm.querySelectorAll('input:not([type="hidden"])').forEach(inp => {
-                                                            inp.value = '';
-                                                            inp.classList.remove('is-invalid');
-                                                        });
-                                                        createForm.querySelectorAll('.invalid-feedback').forEach(f => {
-                                                            f.classList.remove('d-block');
-                                                        });
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    </script>
                                 </form>
                             </div>
                         </div>
@@ -308,14 +262,10 @@
                                 th:aria-label="#{librarian.members.filterTier}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedTier)}"
                                     th:text="#{librarian.members.allTiers}">All Tiers</option>
-                                <option value="Regular" th:selected="${selectedTier == 'Regular'}"
-                                    th:text="#{tier.regular}">Regular</option>
-                                <option value="Silver" th:selected="${selectedTier == 'Silver'}"
-                                    th:text="#{tier.silver}">Silver</option>
-                                <option value="Gold" th:selected="${selectedTier == 'Gold'}" th:text="#{tier.gold}">Gold
-                                </option>
-                                <option value="Diamond" th:selected="${selectedTier == 'Diamond'}"
-                                    th:text="#{tier.diamond}">Diamond</option>
+                                <option th:each="membershipTier : ${tiers}"
+                                    th:value="${membershipTier.tierName}"
+                                    th:selected="${selectedTier == membershipTier.tierName}"
+                                    th:text="${membershipTier.tierName == 'Member' or membershipTier.tierName == 'Regular' ? #messages.msg('tier.regular') : membershipTier.tierName}">Member</option>
                             </select>
 
                             <select class="form-select member-filter-select" name="status" data-auto-submit
@@ -389,8 +339,8 @@
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="membership-tier-badge"
                                         th:if="${member != null && member.tier != null}"
-                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
-                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
+                                        th:text="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : member.tier.tierName}"
+                                        th:classappend="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
@@ -435,12 +385,19 @@
                                         <div
                                             class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                             <div class="modal-content">
-                                                <form method="post" class="member-update-form" novalidate
-                                                    th:action="@{/librarian/members/edit/{id}(id=${account.id})}"
-                                                    th:attr="data-validation-url=@{/librarian/members/edit/{id}/validate(id=${account.id})}">
+                                                <form method="post" class="member-update-form"
+                                                    th:action="@{/librarian/members/edit/{id}(id=${account.id})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
+                                                    <input type="hidden" name="page" th:value="${accounts.number}">
+                                                    <input type="hidden" name="keyword" th:value="${keyword}">
+                                                    <input type="hidden" name="filterStatus" th:value="${selectedStatus}">
+                                                    <input type="hidden" name="filterTier" th:value="${selectedTier}">
+                                                    <input type="hidden" name="accountVersion"
+                                                        th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['accountVersion'] : account.version}">
+                                                    <input type="hidden" name="userVersion"
+                                                        th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['userVersion'] : account.user.version}">
 
                                                     <div class="modal-header member-modal-header">
                                                         <div>
@@ -453,7 +410,9 @@
                                                     </div>
 
                                                     <div class="modal-body member-modal-body">
-                                                        <div class="alert alert-danger d-none member-update-global-error"
+                                                        <div class="alert alert-danger member-update-global-error"
+                                                            th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['_global'] != null} ? '' : 'd-none'"
+                                                            th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null ? editFieldErrors['_global'] : ''}"
                                                             role="alert"></div>
                                                         <div class="row g-3">
                                                             <div class="col-md-6">
@@ -466,9 +425,11 @@
                                                                 <input class="form-control" name="fullName"
                                                                     th:data-label="#{member.profile.fullName}"
                                                                     maxlength="50"
-                                                                    th:value="${account.user != null ? account.user.fullName : ''}"
+                                                                    th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['fullName'] : (account.user != null ? account.user.fullName : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                     required>
-                                                                <div class="invalid-feedback" data-error-for="fullName">
+                                                                <div class="invalid-feedback" data-error-for="fullName"
+                                                                    th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['fullName'] != null ? editFieldErrors['fullName'] : #messages.msg('validation.fullNameRequired')}">
                                                                     Full name is required.
                                                                 </div>
                                                             </div>
@@ -481,9 +442,11 @@
                                                                 <input class="form-control" name="username"
                                                                     data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
-                                                                    th:value="${account.username}" required>
+                                                                    th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
+                                                                    required>
                                                                 <div class="invalid-feedback" data-error-for="username"
-                                                                    th:text="#{validation.username}">
+                                                                    th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['username'] != null ? editFieldErrors['username'] : #messages.msg('validation.username')}">
                                                                     Username must contain 3-20 letters, numbers,
                                                                     underscores, and no spaces.
                                                                 </div>
@@ -498,11 +461,13 @@
                                                                 </label>
                                                                 <input class="form-control" name="phone"
                                                                     th:data-label="#{member.profile.phone}"
-                                                                    th:value="${account.user != null ? account.user.phone : ''}"
+                                                                    th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'"
                                                                     required pattern="^(?!0{10}$)0[0-9]{9}$"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     minlength="10" inputmode="numeric">
-                                                                <div class="invalid-feedback" data-error-for="phone">
+                                                                <div class="invalid-feedback" data-error-for="phone"
+                                                                    th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['phone'] != null ? editFieldErrors['phone'] : #messages.msg('validation.phone')}">
                                                                     Phone number must contain exactly 10 digits and
                                                                     start with 0.
                                                                 </div>
@@ -517,9 +482,11 @@
                                                                     data-label="Email"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
-                                                                    th:value="${account.user != null ? account.user.email : ''}"
+                                                                    th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                     required>
-                                                                <div class="invalid-feedback" data-error-for="email">
+                                                                <div class="invalid-feedback" data-error-for="email"
+                                                                    th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['email'] != null ? editFieldErrors['email'] : #messages.msg('validation.email')}">
                                                                     Invalid email format.
                                                                 </div>
                                                             </div>
@@ -532,13 +499,8 @@
                                                                 </label>
                                                                 <div class="member-readonly-field" role="textbox"
                                                                     aria-readonly="true"
-                                                                    th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
+                                                                    th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : member.tier.tierName)}">
                                                                     Regular
-                                                                </div>
-                                                                <input type="hidden" name="tierId"
-                                                                    th:value="${member != null && member.tier != null ? member.tier.tierId : ''}">
-                                                                <div class="invalid-feedback" data-error-for="tierId">
-                                                                    Please select a membership tier.
                                                                 </div>
                                                             </div>
 
@@ -604,6 +566,10 @@
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
+                                                    <input type="hidden" name="page" th:value="${accounts.number}">
+                                                    <input type="hidden" name="keyword" th:value="${keyword}">
+                                                    <input type="hidden" name="filterStatus" th:value="${selectedStatus}">
+                                                    <input type="hidden" name="filterTier" th:value="${selectedTier}">
 
                                                     <div class="modal-header member-modal-header member-delete-header">
                                                         <div class="member-delete-title-wrap">
@@ -684,8 +650,8 @@
                                                                     <span
                                                                         class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
-                                                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
-                                                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
+                                                                        th:text="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : member.tier.tierName}"
+                                                                        th:classappend="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                                                         Standard
                                                                     </span>
 
@@ -784,6 +750,8 @@
                 fullName: /*[[#{member.profile.fullName}]]*/ "Full Name",
                 phone: /*[[#{member.profile.phone}]]*/ "Phone Number",
                 password: /*[[#{reset.newPassword}]]*/ "Password",
+                confirmPassword: /*[[#{validation.confirmPassword}]]*/ "Confirm password",
+                passwordMismatch: /*[[#{validation.passwordMismatch}]]*/ "Password confirmation does not match.",
                 tier: /*[[#{member.profile.tier}]]*/ "Membership Tier",
                 status: /*[[#{common.status}]]*/ "Status",
                 select: /*[[#{validation.selectField}]]*/ "Please select {0}.",
@@ -795,13 +763,9 @@
                 passwordMin: /*[[#{validation.passwordMin}]]*/ "Password must contain at least 6 characters.",
                 emailInvalid: /*[[#{validation.email}]]*/ "Invalid email format.",
                 invalid: /*[[#{validation.invalid}]]*/ "Invalid value.",
-                fullNameWords: /*[[#{validation.fullNameWords}]]*/ "Full name may contain at most 8 words and 15 characters per word.",
-                fullNameTriple: /*[[#{validation.fullNameTriple}]]*/ "Full name cannot repeat a character three times in a row.",
-                fullNameRepeated: /*[[#{validation.fullNameRepeated}]]*/ "Full name cannot consist of one repeated character.",
                 emailRequired: /*[[#{validation.emailRequired}]]*/ "Email is required.",
                 tierInvalid: /*[[#{validation.tier}]]*/ "Invalid membership tier.",
-                statusInvalid: /*[[#{validation.status}]]*/ "Invalid account status.",
-                unavailable: /*[[#{validation.unavailable}]]*/ "Unable to validate data right now. Please try again."
+                statusInvalid: /*[[#{validation.status}]]*/ "Invalid account status."
             };
             function memberMessage(template, value) { return template.replace("{0}", value); }
         </script>
@@ -825,6 +789,14 @@
                 }
             });
         </script>
+        <script th:if="${editAccountId != null}" th:inline="javascript">
+            document.addEventListener("DOMContentLoaded", function () {
+                const modalElement = document.getElementById("updateMemberModal" + /*[[${editAccountId}]]*/ "");
+                if (modalElement != null && window.bootstrap != null) {
+                    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                }
+            });
+        </script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("createMemberForm");
@@ -835,7 +807,8 @@
                 const fields = form.querySelectorAll(".validate-field");
 
                 function getFeedback(field) {
-                    return field.parentElement.querySelector(".invalid-feedback");
+                    const container = field.closest(".col-md-6");
+                    return container == null ? null : container.querySelector(".invalid-feedback");
                 }
 
                 function getErrorMessage(field) {
@@ -845,6 +818,7 @@
                         phone: memberValidationI18n.phone,
                         username: "Username",
                         password: memberValidationI18n.password,
+                        confirmPassword: memberValidationI18n.confirmPassword,
                         tierId: memberValidationI18n.tier,
                         status: memberValidationI18n.status
                     };
@@ -867,7 +841,7 @@
                     if (field.name === "username") {
                         return memberValidationI18n.usernameInvalid;
                     }
-                    if (field.name === "password") {
+                    if (field.name === "password" || field.name === "confirmPassword") {
                         return memberValidationI18n.passwordMin;
                     }
                     if (field.name === "email") {
@@ -877,7 +851,9 @@
                 }
 
                 function validateField(field) {
-                    const value = field.value.trim();
+                    const value = field.name === "password" || field.name === "confirmPassword"
+                        ? field.value
+                        : field.value.trim();
                     const feedback = getFeedback(field);
 
                     if (field.hasAttribute("required") && value === "") {
@@ -892,7 +868,7 @@
                         feedback.textContent = getErrorMessage(field);
                         return false;
                     }
-                    if (field.name === "fullName" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(value)) {
+                    if (field.name === "fullName" && !/^[\p{L}]+(?:['’\-][\p{L}]+)*(?:\s+[\p{L}]+(?:['’\-][\p{L}]+)*)*$/u.test(value)) {
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
                         feedback.textContent = getErrorMessage(field);
@@ -904,35 +880,27 @@
                         feedback.textContent = memberValidationI18n.fullNameMax;
                         return false;
                     }
-                    if (field.name === "fullName"
-                        && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(value)) {
-                        field.classList.remove("is-valid");
-                        field.classList.add("is-invalid");
-                        feedback.textContent = memberValidationI18n.fullNameWords;
-                        return false;
-                    }
-                    if (field.name === "fullName" && /([\p{L}])\1\1/u.test(value)) {
-                        field.classList.remove("is-valid");
-                        field.classList.add("is-invalid");
-                        feedback.textContent = memberValidationI18n.fullNameTriple;
-                        return false;
-                    }
-                    if (field.name === "fullName" && /^([\p{L}])\1+$/u.test(value)) {
-                        field.classList.remove("is-valid");
-                        field.classList.add("is-invalid");
-                        feedback.textContent = memberValidationI18n.fullNameRepeated;
-                        return false;
-                    }
                     if (!field.checkValidity()) {
                         field.classList.remove("is-valid");
                         field.classList.add("is-invalid");
                         feedback.textContent = getErrorMessage(field);
                         return false;
                     }
+                    if (field.name === "confirmPassword"
+                        && field.value !== form.elements.password.value) {
+                        field.classList.remove("is-valid");
+                        field.classList.add("is-invalid");
+                        if (feedback != null) {
+                            feedback.textContent = memberValidationI18n.passwordMismatch;
+                        }
+                        return false;
+                    }
 
                     field.classList.remove("is-invalid");
                     field.classList.add("is-valid");
-                    feedback.textContent = "";
+                        if (feedback != null) {
+                            feedback.textContent = "";
+                        }
                     return true;
                 }
 
@@ -959,179 +927,6 @@
                     if (!isFormValid) {
                         event.preventDefault();
                     }
-                });
-            });
-        </script>
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                document.querySelectorAll(".member-update-form").forEach(function (form) {
-                    const modal = form.closest(".modal");
-                    const submitButton = form.querySelector("button[type='submit']");
-                    const globalError = form.querySelector(".member-update-global-error");
-                    let lastFocusedField = null;
-
-                    form.querySelectorAll("input, select, textarea").forEach(function (field) {
-                        field.addEventListener("focus", function () {
-                            lastFocusedField = field;
-                        });
-                        field.addEventListener("input", function () {
-                            clearFieldError(field);
-                        });
-                        field.addEventListener("change", function () {
-                            clearFieldError(field);
-                        });
-                    });
-
-                    function clearErrors() {
-                        form.querySelectorAll(".is-invalid, .is-valid").forEach(function (field) {
-                            field.classList.remove("is-invalid", "is-valid");
-                        });
-                        form.querySelectorAll("[data-error-for]").forEach(function (feedback) {
-                            feedback.textContent = "";
-                        });
-                        globalError.textContent = "";
-                        globalError.classList.add("d-none");
-                    }
-
-                    function clearFieldError(field) {
-                        field.classList.remove("is-invalid", "is-valid");
-                        const feedback = form.querySelector(
-                            "[data-error-for='" + field.name + "']");
-                        if (feedback != null) {
-                            feedback.textContent = "";
-                        }
-                    }
-
-                    function showErrors(errors) {
-                        form.querySelectorAll("input:not([type='hidden']), select, textarea")
-                            .forEach(function (field) {
-                                field.classList.remove("is-invalid", "is-valid");
-                                field.classList.add(
-                                    Object.prototype.hasOwnProperty.call(errors, field.name)
-                                        ? "is-invalid"
-                                        : "is-valid");
-                            });
-
-                        Object.entries(errors).forEach(function (entry) {
-                            const fieldName = entry[0];
-                            const message = entry[1];
-
-                            if (fieldName === "_global") {
-                                globalError.textContent = message;
-                                globalError.classList.remove("d-none");
-                                return;
-                            }
-
-                            const field = form.elements.namedItem(fieldName);
-                            const feedback = form.querySelector("[data-error-for='" + fieldName + "']");
-                            if (field != null) {
-                                field.classList.add("is-invalid");
-                            }
-                            if (feedback != null) {
-                                feedback.textContent = message;
-                            }
-                        });
-
-                        if (lastFocusedField != null
-                            && Object.prototype.hasOwnProperty.call(errors, lastFocusedField.name)) {
-                            lastFocusedField.focus();
-                        }
-                    }
-
-                    function validateLocally() {
-                        const errors = {};
-                        const fullName = form.elements.fullName.value.trim();
-                        const username = form.elements.username.value.trim();
-                        const email = form.elements.email.value.trim();
-                        const phone = form.elements.phone.value.trim();
-
-                        if (fullName === "") {
-                            errors.fullName = memberMessage(memberValidationI18n.required, memberValidationI18n.fullName);
-                        }
-                        if (fullName.length > 50) {
-                            errors.fullName = memberValidationI18n.fullNameMax;
-                        } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
-                            errors.fullName = memberValidationI18n.fullNameLetters;
-                        } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
-                            errors.fullName = memberValidationI18n.fullNameWords;
-                        } else if (/([\p{L}])\1\1/u.test(fullName)) {
-                            errors.fullName = memberValidationI18n.fullNameTriple;
-                        } else if (/^([\p{L}])\1+$/u.test(fullName)) {
-                            errors.fullName = memberValidationI18n.fullNameRepeated;
-                        }
-                        if (username === "") {
-                            errors.username = memberMessage(memberValidationI18n.required, "Username");
-                        } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-                            errors.username = memberValidationI18n.usernameInvalid;
-                        }
-                        if (email === "") {
-                            errors.email = memberValidationI18n.emailRequired;
-                        } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
-                            errors.email = memberValidationI18n.emailInvalid;
-                        }
-                        if (phone === "") {
-                            errors.phone = memberMessage(memberValidationI18n.required, memberValidationI18n.phone);
-                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
-                            errors.phone = memberValidationI18n.phoneInvalid;
-                        }
-                        if (form.elements.tierId.value === "") {
-                            errors.tierId = memberValidationI18n.tierInvalid;
-                        }
-                        if (form.elements.status.value === "") {
-                            errors.status = memberValidationI18n.statusInvalid;
-                        }
-                        return errors;
-                    }
-
-                    form.addEventListener("submit", async function (event) {
-                        event.preventDefault();
-                        clearErrors();
-
-                        const localErrors = validateLocally();
-                        if (Object.keys(localErrors).length > 0) {
-                            showErrors(localErrors);
-                            return;
-                        }
-
-                        submitButton.disabled = true;
-                        try {
-                            const params = new URLSearchParams();
-                            new FormData(form).forEach(function (value, key) {
-                                if (key !== "source" && !key.startsWith("_csrf")) {
-                                    params.append(key, value);
-                                }
-                            });
-                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
-                            params.forEach(function (value, key) {
-                                validationUrl.searchParams.append(key, value);
-                            });
-                            const response = await fetch(validationUrl.toString(), {
-                                headers: { "Accept": "application/json" }
-                            });
-                            if (!response.ok) {
-                                throw new Error("Validation request failed");
-                            }
-
-                            const serverErrors = await response.json();
-                            if (Object.keys(serverErrors).length > 0) {
-                                showErrors(serverErrors);
-                                return;
-                            }
-
-                            form.submit();
-                        } catch (error) {
-                            showErrors({
-                                _global: memberValidationI18n.unavailable
-                            });
-                        } finally {
-                            submitButton.disabled = false;
-                        }
-                    });
-
-                    modal.addEventListener("hidden.bs.modal", function () {
-                        form.reset();
-                        clearErrors();
-                    });
                 });
             });
         </script>

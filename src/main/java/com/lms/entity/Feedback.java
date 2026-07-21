@@ -1,4 +1,5 @@
 package com.lms.entity;
+import com.lms.enums.FeedbackStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 @Entity
@@ -23,8 +24,9 @@ public class Feedback {
     @Column(name = "created_date")
     private LocalDateTime createdDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status = "PENDING";
+    private FeedbackStatus status = FeedbackStatus.PENDING;
 
     @Column(name = "librarian_response", columnDefinition = "NVARCHAR(MAX)")
     private String librarianResponse;
@@ -32,10 +34,20 @@ public class Feedback {
     @Column(name = "response_date")
     private LocalDateTime responseDate;
 
+    @Column(name = "moderation_reason", length = 500)
+    private String moderationReason;
+
+    @Column(name = "moderated_date")
+    private LocalDateTime moderatedDate;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     public Feedback() {
     }
 
-    public Feedback(Integer feedbackId, Member member, Book book, Integer rating, String comment, LocalDateTime createdDate, String status) {
+    public Feedback(Integer feedbackId, Member member, Book book, Integer rating, String comment, LocalDateTime createdDate, FeedbackStatus status) {
         this.feedbackId = feedbackId;
         this.member = member;
         this.book = book;
@@ -57,10 +69,16 @@ public class Feedback {
     public void setComment(String comment) { this.comment = comment; }
     public LocalDateTime getCreatedDate() { return createdDate; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
-    public String getStatus() {return status;}
-    public void setStatus(String status) {this.status = status;}
+    public FeedbackStatus getStatus() {return status;}
+    public void setStatus(FeedbackStatus status) {this.status = status;}
     public String getLibrarianResponse() {return librarianResponse;}
     public void setLibrarianResponse(String librarianResponse) {this.librarianResponse = librarianResponse;}
     public LocalDateTime getResponseDate() {return responseDate;}
     public void setResponseDate(LocalDateTime responseDate) {this.responseDate = responseDate;}
+    public String getModerationReason() { return moderationReason; }
+    public void setModerationReason(String moderationReason) { this.moderationReason = moderationReason; }
+    public LocalDateTime getModeratedDate() { return moderatedDate; }
+    public void setModeratedDate(LocalDateTime moderatedDate) { this.moderatedDate = moderatedDate; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

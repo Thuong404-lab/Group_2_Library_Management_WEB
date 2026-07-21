@@ -11,6 +11,10 @@ public class User {
     @Column(name = "user_id")
     private Integer id;
 
+    @Version
+    @Column(name = "row_version", nullable = false)
+    private Long version;
+
     @Column(name = "full_name", nullable = false, length = 255)
     private String fullName;
 
@@ -45,6 +49,14 @@ public class User {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public String getFullName() {

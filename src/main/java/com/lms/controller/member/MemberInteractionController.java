@@ -22,6 +22,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.lms.dto.request.MemberBookAcquisitionRequest;
 import com.lms.service.MemberBookAcquisitionService;
+import com.lms.domain.AcquisitionRequestPolicy;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
 
@@ -232,7 +233,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
         model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
+                principal.getName(), PageRequest.of(Math.max(0, page), AcquisitionRequestPolicy.PAGE_SIZE)));
 
         return "member/book-acquisition-request";
     }
@@ -246,8 +247,9 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("reopenAcquisitionModal", true);
             model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
+                    principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
 
@@ -258,10 +260,56 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
         } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
+            model.addAttribute("reopenAcquisitionModal", true);
             model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
+                    principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
+    }
+
+    @PostMapping("/acquisition-requests/{id}/edit")
+    public String updateBookAcquisitionRequest(
+            @PathVariable("id") Integer requestId,
+            @Valid @ModelAttribute("acquisitionRequest") MemberBookAcquisitionRequest request,
+            BindingResult bindingResult,
+            @RequestParam(defaultValue = "0") int page,
+            Principal principal,
+            RedirectAttributes flash) {
+        if (bindingResult.hasErrors()) {
+            flash.addFlashAttribute("acquisitionRequest", request);
+            flash.addFlashAttribute("editAcquisitionRequestId", requestId);
+            flash.addFlashAttribute("reopenAcquisitionModal", true);
+            flash.addFlashAttribute("error", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return acquisitionRequestRedirect(page);
+        }
+        try {
+            memberBookAcquisitionService.updatePendingRequest(principal.getName(), requestId, request);
+            flash.addFlashAttribute("success", message("backend.acquisition.updated"));
+        } catch (ApplicationException exception) {
+            flash.addFlashAttribute("acquisitionRequest", request);
+            flash.addFlashAttribute("editAcquisitionRequestId", requestId);
+            flash.addFlashAttribute("reopenAcquisitionModal", true);
+            flash.addFlashAttribute("error", exception.getMessage());
+        }
+        return acquisitionRequestRedirect(page);
+    }
+
+    @PostMapping("/acquisition-requests/{id}/cancel")
+    public String cancelBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               Principal principal,
+                                               RedirectAttributes flash) {
+        try {
+            memberBookAcquisitionService.cancelPendingRequest(principal.getName(), requestId);
+            flash.addFlashAttribute("success", message("backend.acquisition.cancelled"));
+        } catch (ApplicationException exception) {
+            flash.addFlashAttribute("error", exception.getMessage());
+        }
+        return acquisitionRequestRedirect(page);
+    }
+
+    private String acquisitionRequestRedirect(int page) {
+        return "redirect:/member/interaction/acquisition-requests/new?page=" + Math.max(0, page);
     }
 
     @GetMapping("/favorites")
