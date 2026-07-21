@@ -1,6 +1,6 @@
 package com.lms.config;
 
-import com.lms.config.CustomUserDetails;
+import com.lms.service.LocalizedMessageService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
@@ -11,6 +11,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 public class InactiveMemberInterceptor implements HandlerInterceptor {
+
+    private final LocalizedMessageService messages;
+
+    public InactiveMemberInterceptor(LocalizedMessageService messages) {
+        this.messages = messages;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -36,7 +42,7 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
                 if (isMember) {
                     boolean isInactive = "Inactive".equalsIgnoreCase(userDetails.getUser().getStatus().name());
                     if (isInactive) {
-                        throw new AccessDeniedException("Tài khoản bạn đang bị dừng hoạt động.");
+                        throw new AccessDeniedException(messages.get("member.inactiveBanner"));
                     }
                 }
             }

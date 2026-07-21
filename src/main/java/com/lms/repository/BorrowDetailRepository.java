@@ -23,6 +23,8 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
 
     long countByBorrow_Member_MemberIdAndStatusIgnoreCase(Integer memberId, String status);
 
+    long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
+
     long countByDueDateGreaterThanEqualAndDueDateLessThan(
             LocalDateTime startDate, LocalDateTime endDate);
 

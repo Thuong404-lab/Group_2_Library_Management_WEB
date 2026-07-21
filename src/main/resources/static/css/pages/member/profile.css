@@ -49,7 +49,34 @@
     line-height: 1.5;
 }
 
-/* Stat Cards */
+/* Membership overview */
+.membership-overview {
+    overflow: hidden;
+    border: 1px solid rgba(105, 79, 57, .18);
+    border-radius: 12px;
+    background: #fffdf9;
+    box-shadow: 0 8px 22px rgba(74, 59, 50, .08);
+}
+
+.membership-overview-header {
+    padding: 16px 24px 12px;
+    border-bottom: 1px solid rgba(105, 79, 57, .14);
+    color: var(--member-color-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.membership-overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.membership-overview-item { min-width: 0; padding: 20px 24px 22px; }
+.membership-overview-item + .membership-overview-item { border-left: 1px solid rgba(105, 79, 57, .14); }
+.membership-overview-item .profile-stat-label { display: block; margin-bottom: 8px; }
+.membership-overview-item .profile-stat-value { display: block; margin: 0; color: var(--member-color-ink); font-family: var(--member-font-display); font-size: 28px; font-weight: 500; line-height: 1.15; }
+.membership-overview-item .profile-stat-value--tier { font-size: 23px; }
+.membership-overview-item small { display: block; margin-top: 7px; color: var(--member-color-muted); font-size: 12px; line-height: 1.4; }
+
+/* Legacy stat selectors retained for compatibility. */
 .profile-stat-card {
     border: 1px solid var(--member-color-hairline);
     border-left: 4px solid var(--member-palette-500);
@@ -138,6 +165,29 @@
     color: var(--member-palette-700);
 }
 
+.profile-status-badges {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.profile-field-error {
+    color: var(--member-color-danger-ink);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.profile-page .modal-content-classic {
+    border: 1px solid var(--member-color-hairline);
+    border-radius: 16px;
+    background: var(--member-color-surface-soft);
+    overflow: hidden;
+}
+
+.profile-page .modal-footer {
+    gap: 10px;
+}
+
 /* Form Controls */
 .profile-card .form-control {
     min-height: 40px;
@@ -165,6 +215,9 @@
 }
 
 @media (max-width: 767.98px) {
+    .membership-overview-grid { grid-template-columns: 1fr; }
+    .membership-overview-item + .membership-overview-item { border-top: 1px solid rgba(105, 79, 57, .14); border-left: 0; }
+    .membership-overview-item { padding: 16px 20px; }
     .profile-page {
         width: calc(100% - 32px);
         padding: 32px 0 48px;

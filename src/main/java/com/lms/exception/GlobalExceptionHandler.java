@@ -218,7 +218,7 @@ public class GlobalExceptionHandler {
 
     private String message(String key, Object... arguments) {
         MessageSource source = messageSource == null ? FALLBACK_MESSAGES : messageSource;
-        Locale locale = messageSource == null ? Locale.forLanguageTag("vi") : LocaleContextHolder.getLocale();
+        Locale locale = messageSource == null ? Locale.ENGLISH : LocaleContextHolder.getLocale();
         return source.getMessage(key, arguments, locale);
     }
 
