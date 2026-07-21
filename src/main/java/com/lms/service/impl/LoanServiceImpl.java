@@ -37,6 +37,7 @@ public class LoanServiceImpl implements LoanService {
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_DAMAGED = "Damaged";
+    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
     private static final String STATUS_LOST = "Lost";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
@@ -855,6 +856,9 @@ public class LoanServiceImpl implements LoanService {
         }
         if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
             return STATUS_DAMAGED;
+        }
+        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage")) {
+            return STATUS_MINOR_DAMAGED;
         }
         return STATUS_AVAILABLE;
     }

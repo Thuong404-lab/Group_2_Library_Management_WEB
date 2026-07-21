@@ -178,7 +178,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             success(redirectAttributes, message("backend.inventory.auditCompleted",
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
-                    summary.getOrDefault("Disposed", 0L)));
+                    summary.getOrDefault("MinorDamaged", 0L)));
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
