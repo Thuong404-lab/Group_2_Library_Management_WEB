@@ -60,10 +60,10 @@
                         <h2 th:text="${book.title}">Book Title</h2>
                         <span class="member-cart-genre" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('member.cart.defaultGenre')}">Uncategorized</span>
 
-                        <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                        <div class="member-cart-item-tags">
                             <span th:if="${availableStocks.get(book.bookId) >= quantities.get(book.bookId)}" class="member-reference-pill member-cart-availability" th:text="#{member.cart.available}">Available</span>
                             <span th:if="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" class="member-reference-pill is-unavailable" th:text="#{member.cart.outOfStock}">Out of stock</span>
-                            <span class="member-reference-pill" th:text="#{member.cart.qtyPrefix} + ${quantities.get(book.bookId)}">Qty: 1</span>
+                            <span class="member-reference-pill member-cart-quantity" th:text="#{member.cart.quantity(${quantities.get(book.bookId)})}">Quantity: 1</span>
                         </div>
 
                         <div th:if="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" class="member-field-error small mt-1" th:text="#{member.cart.outOfStockNotice}">Out of stock notice</div>
