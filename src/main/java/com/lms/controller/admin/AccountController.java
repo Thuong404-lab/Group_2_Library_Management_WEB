@@ -4,7 +4,7 @@ import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.controller.LocalizedControllerSupport;
-import com.lms.dto.request.AdminAccountCreateRequest;
+import com.lms.dto.request.AdminMemberAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.exception.AccountFormValidationException;
@@ -64,44 +64,36 @@ public class AccountController extends LocalizedControllerSupport {
 
     @GetMapping("/create/validate")
     @ResponseBody
-    public Map<String, String> validateAccountCreate(
+    public Map<String, String> validateMemberAccountCreate(
             @RequestParam(required = false, defaultValue = "") String fullName,
             @RequestParam(required = false, defaultValue = "") String email,
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam(required = false, defaultValue = "") String username,
-            @RequestParam(required = false, defaultValue = "") String password,
-            @RequestParam(required = false, defaultValue = "") String accountType,
-            @RequestParam(required = false) Integer tierId,
-            @RequestParam(required = false, defaultValue = "Active") String status) {
-        AdminAccountCreateRequest request = new AdminAccountCreateRequest(
-                fullName, email, phone, username, password, accountType, tierId, status);
-        return accountService.validateAccountCreate(request);
+            @RequestParam(required = false, defaultValue = "") String password) {
+        AdminMemberAccountCreateRequest request = new AdminMemberAccountCreateRequest(
+                fullName, email, phone, username, password);
+        return accountService.validateMemberAccountCreate(request);
     }
 
     @PostMapping("/create")
-    public String createAccount(@RequestParam String fullName,
+    public String createMemberAccount(@RequestParam String fullName,
             @RequestParam String email,
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam String username,
             @RequestParam String password,
-            @RequestParam String accountType,
-            @RequestParam(required = false) Integer tierId,
-            @RequestParam(defaultValue = "Active") String status,
-            @RequestParam(required = false, defaultValue = "members") String source,
-            Model model,
             RedirectAttributes redirectAttributes) {
 
-        AdminAccountCreateRequest request = new AdminAccountCreateRequest(
-                fullName, email, phone, username, password, accountType, tierId, status);
+        AdminMemberAccountCreateRequest request = new AdminMemberAccountCreateRequest(
+                fullName, email, phone, username, password);
         try {
-            accountService.createAccount(request);
+            accountService.createMemberAccount(request);
             redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
-            return redirectBySource(source);
+            return "redirect:/admin/accounts";
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
             redirectAttributes.addFlashAttribute("fieldErrors", e.getFieldErrors());
             redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
-            return redirectBySource(source);
+            return "redirect:/admin/accounts";
         }
     }
 
@@ -185,15 +177,12 @@ public class AccountController extends LocalizedControllerSupport {
         return "redirect:/admin/accounts";
     }
 
-    private Map<String, Object> createFormValues(AdminAccountCreateRequest request) {
+    private Map<String, Object> createFormValues(AdminMemberAccountCreateRequest request) {
         Map<String, Object> formValues = new HashMap<>();
         formValues.put("fullName", trim(request.getFullName()));
         formValues.put("email", trim(request.getEmail()));
         formValues.put("phone", trim(request.getPhone()));
         formValues.put("username", trim(request.getUsername()));
-        formValues.put("accountType", trim(request.getAccountType()).toUpperCase());
-        formValues.put("tierId", request.getTierId());
-        formValues.put("status", request.getStatus());
         return formValues;
     }
 
