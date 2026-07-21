@@ -3,7 +3,9 @@ package com.lms.service;
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
 import com.lms.dto.response.LibrarianReviewResponse;
-import com.lms.entity.Member;
+import com.lms.dto.response.LibrarianNotificationHistoryResponse;
+import com.lms.dto.response.NotificationRecipientSearchResponse;
+import com.lms.dto.response.NotificationSendResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.lms.entity.BookAcquisitionRequest;
@@ -18,9 +20,15 @@ public interface LibrarianInteractionService {
 
     void deleteReview(Integer feedbackId);
 
-    void sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
+    NotificationSendResult sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
 
-    List<Member> getAllMembers();
+    long countActiveMembers();
+
+    Page<NotificationRecipientSearchResponse> searchNotificationRecipients(String query, Pageable pageable);
+
+    List<NotificationRecipientSearchResponse> getNotificationRecipients(List<Integer> memberIds);
+
+    List<LibrarianNotificationHistoryResponse> getRecentManualNotifications();
 
     Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
 
