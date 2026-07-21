@@ -14,12 +14,11 @@
         </div>
         <button type="button" class="member-primary-action acquisition-hero-action acquisition-modal-trigger member-ui-button member-ui-button--inverse" 
                 data-toggle="modal" data-target="#acquisitionRequestModal" th:disabled="${isInactiveMember}">
-            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+            <span class="acquisition-hero-action-mark" aria-hidden="true">+</span>
             <span th:text="#{member.acquisition.submit}">Submit Request</span>
         </button>
     </header>
 
-    <div th:if="${success}" class="member-alert is-success" th:text="${success}"></div>
     <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
 
     <!-- My Requests History Section -->
@@ -67,12 +66,9 @@
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="heading-icon-badge"><i class="bi bi-journal-plus"></i></span>
-                        <div>
-                            <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
-                            <p class="mb-0 text-muted small" th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p>
-                        </div>
+                    <div class="acquisition-modal-header-copy">
+                        <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
+                        <p th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p>
                     </div>
                 </div>
                 <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
@@ -135,9 +131,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                        <button type="submit" class="member-ui-button member-ui-button--primary">
-                            <i class="bi bi-send me-1"></i><span th:text="#{member.acquisition.submit}">Submit Request</span>
-                        </button>
+                        <button type="submit" class="member-ui-button member-ui-button--primary" th:text="#{member.acquisition.submit}">Submit Request</button>
                     </div>
                 </form>
             </div>
