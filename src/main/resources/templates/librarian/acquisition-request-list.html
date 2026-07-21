@@ -5,6 +5,7 @@
 <head>
     <title th:text="#{librarian.acquisition.title}">Book Acquisition Requests</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/acquisition-request-list.css}" />
 </head>
 <body>
 <main layout:fragment="content" th:with="activeMenu='suggestions'" class="canonical-management-page acquisition-requests-page">
@@ -29,22 +30,36 @@
                   th:text="#{librarian.acquisition.count(${requests.totalElements})}">0 requests</span>
         </div>
 
-        <form method="get" th:action="@{/librarian/interaction/acquisition-requests}" class="d-flex gap-2 align-items-end mb-3">
-            <div class="flex-grow-1">
-                <label for="acquisitionKeyword" class="form-label" th:text="#{librarian.acquisition.search}">Search</label>
-                <input id="acquisitionKeyword" name="keyword" class="form-control" maxlength="100"
-                       th:value="${acquisitionKeyword}" th:placeholder="#{librarian.acquisition.searchPlaceholder}">
+        <form method="get" th:action="@{/librarian/interaction/acquisition-requests}"
+              class="acquisition-filter-toolbar" role="search">
+            <div class="acquisition-filter-field acquisition-filter-field--search">
+                <label for="acquisitionKeyword" th:text="#{librarian.acquisition.search}">Search</label>
+                <div class="acquisition-search-control">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="acquisitionKeyword" name="keyword" type="search" maxlength="100"
+                           autocomplete="off" th:value="${acquisitionKeyword}"
+                           th:placeholder="#{librarian.acquisition.searchPlaceholder}">
+                </div>
             </div>
-            <div>
-                <label for="acquisitionStatus" class="form-label" th:text="#{common.status}">Status</label>
-                <select id="acquisitionStatus" name="status" class="form-select">
+            <div class="acquisition-filter-field acquisition-filter-field--status">
+                <label for="acquisitionStatus" th:text="#{common.status}">Status</label>
+                <select id="acquisitionStatus" name="status">
                     <option value="" th:selected="${currentAcquisitionStatus == ''}" th:text="#{librarian.acquisition.allStatuses}">All</option>
                     <option th:each="itemStatus : ${acquisitionStatuses}" th:value="${itemStatus.name()}"
                             th:selected="${currentAcquisitionStatus == itemStatus.name()}"
                             th:text="${#messages.msg('request.status.' + #strings.toLowerCase(itemStatus.name()))}"></option>
                 </select>
             </div>
-            <button type="submit" class="app-form-primary" th:text="#{common.filter}">Filter</button>
+            <button type="submit" class="acquisition-filter-submit">
+                <i class="bi bi-funnel" aria-hidden="true"></i>
+                <span th:text="#{common.filter}">Filter</span>
+            </button>
+            <a th:if="${!#strings.isEmpty(acquisitionKeyword) || !#strings.isEmpty(currentAcquisitionStatus)}"
+               class="acquisition-filter-reset"
+               th:href="@{/librarian/interaction/acquisition-requests}">
+                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                <span th:text="#{common.clearFilter}">Clear filter</span>
+            </a>
         </form>
 
         <div class="app-table-wrap">
