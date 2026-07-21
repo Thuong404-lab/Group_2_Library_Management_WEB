@@ -40,10 +40,10 @@ public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
     private static final String STATUS_ACTIVE = "Active";
     private static final Set<String> ALLOWED_BOOK_CONDITIONS = Set.of(
-            "Good / Intact and clean",
-            "Minor damage (Bent corners, worn cover, or small tears)",
-            "Severely damaged (Compensation required)",
-            "Lost book (Compensation required)");
+            "New",
+            "Minor damage",
+            "Severely damaged",
+            "Lost book");
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
