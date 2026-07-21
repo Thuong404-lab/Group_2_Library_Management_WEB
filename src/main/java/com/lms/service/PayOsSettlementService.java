@@ -74,11 +74,22 @@ public class PayOsSettlementService {
         BigDecimal amount = requirePositiveWholeVnd(payment.getAmount());
         Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWallet(member));
-        BigDecimal newBalance = balance(wallet).add(amount);
+        BigDecimal oldBalance = balance(wallet);
+        BigDecimal newBalance = oldBalance.add(amount);
+        if (newBalance.compareTo(TopUpPolicy.MAX_WALLET_BALANCE) > 0) {
+            throw new ConflictException(localizedMessageService.get(
+                    "backend.financial.walletLimit", TopUpPolicy.MAX_WALLET_BALANCE));
+        }
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
         Transaction transaction = saveTransaction(wallet, null, "TOP_UP", amount);
+        transaction.setChannel("PAYOS");
+        transaction.setReferenceCode("KQPAY-TOPUP-" + payment.getOrderCode());
+        transaction.setPerformedByStaff(payment.getInitiatedByStaff());
+        transaction.setBalanceBefore(oldBalance);
+        transaction.setBalanceAfter(newBalance);
+        transaction = transactionRepository.save(transaction);
         createNotification(member,
                 NotificationType.FINANCE, NotificationEventType.TOP_UP_SUCCESS, NotificationSource.SYSTEM,
                 "systemNotification.kqpay.topup.title",
