@@ -214,6 +214,18 @@ public class AdminBookController extends LocalizedControllerSupport {
         return AUDIT_REDIRECT;
     }
 
+    @PostMapping("/inventory/copies/update/{bookId}/{itemId}")
+    public String updateBookCopy(@PathVariable Integer bookId, @PathVariable Integer itemId,
+            @RequestParam String bookCondition, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateBookCopyCondition(bookId, itemId, bookCondition);
+            success(redirectAttributes, message("backend.inventory.copyUpdated"));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return AUDIT_REDIRECT;
+    }
+
     @PostMapping("/storage/add")
     public String addShelf(@RequestParam String shelfName,
             @RequestParam(required = false) String location, RedirectAttributes redirectAttributes) {
