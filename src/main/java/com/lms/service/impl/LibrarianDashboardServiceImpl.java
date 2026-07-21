@@ -1,12 +1,10 @@
 package com.lms.service.impl;
 
-import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.response.LibrarianListViewData;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.Staff;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
-import com.lms.enums.NotificationType;
 import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.enums.UserStatus;
 import com.lms.repository.StaffAccountRepository;
@@ -142,9 +140,6 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("reviews", interactionService.getReviewsForModeration(
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
-        data.put("notificationRequest", new LibrarianNotificationSendRequest());
-        data.put("notificationTypes", NotificationType.manualSelectableValues());
-        data.put("members", interactionService.getAllMembers());
         data.put("requests", interactionService.getBookAcquisitionRequests(null, null,
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));

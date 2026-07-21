@@ -161,7 +161,7 @@ public class AccountController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             accountService.deleteAccount(id, source, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", message("backend.account.deleted"));
+            redirectAttributes.addFlashAttribute("success", message("backend.account.deactivated"));
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }

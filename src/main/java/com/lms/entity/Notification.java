@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "Notifications")
 public class Notification {
+    public static final String STATUS_ACTIVE = "Active";
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer notificationId;
     @ManyToOne
@@ -35,7 +36,9 @@ public class Notification {
     private NotificationEventType eventType = NotificationEventType.GENERAL;
     private LocalDateTime createdDate;
     @Column(length = 50)
-    private String status = "Active";
+    private String status = STATUS_ACTIVE;
+    @Column(name = "request_key", length = 36, unique = true)
+    private String requestKey;
 
     public Notification() {
     }
@@ -73,4 +76,6 @@ public class Notification {
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getRequestKey() { return requestKey; }
+    public void setRequestKey(String requestKey) { this.requestKey = requestKey; }
 }
