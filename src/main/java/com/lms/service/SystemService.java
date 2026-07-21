@@ -26,6 +26,7 @@ public interface SystemService {
             Integer maxRenewalDays,
             Integer maxRenewalRequests,
             Integer renewalRejectionCooldownHours,
+            Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
             BigDecimal finePerDay,
             BigDecimal damageCompensationAmount,

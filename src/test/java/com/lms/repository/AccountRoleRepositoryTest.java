@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.PageRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +79,31 @@ class AccountRoleRepositoryTest {
 
         StaffAccount reloaded = staffAccountRepository.findByUsername("librarian_role_test").orElseThrow();
         assertThat(reloaded.getRoles()).extracting(Role::getName).containsExactly("ROLE_LIBRARIAN");
+    }
+
+    @Test
+    void memberAccountSearchTreatsNumericInputAsPhoneAndMemberId() {
+        User user = persistUser("Numeric Search Member", "numeric-search@test.local");
+        user.setPhone("0910000001");
+        Member member = new Member();
+        member.setUser(user);
+        entityManager.persist(member);
+
+        MemberAccount account = new MemberAccount();
+        account.setMember(member);
+        account.setUsername("numeric_search_member");
+        account.setPasswordHash("encoded-password");
+        account.setStatus("Blocked");
+        entityManager.persistAndFlush(account);
+        entityManager.clear();
+
+        assertThat(memberAccountRepository.searchMemberAccounts("0910000001", PageRequest.of(0, 20)))
+                .extracting(MemberAccount::getUsername)
+                .containsExactly("numeric_search_member");
+        assertThat(memberAccountRepository.searchMemberAccounts(
+                member.getMemberId().toString(), PageRequest.of(0, 20)))
+                .extracting(MemberAccount::getUsername)
+                .contains("numeric_search_member");
     }
 
     private Role persistRole(String name) {

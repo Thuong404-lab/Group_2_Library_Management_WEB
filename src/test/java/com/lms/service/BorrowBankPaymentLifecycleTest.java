@@ -10,6 +10,8 @@ import com.lms.entity.Notification;
 import com.lms.entity.User;
 import com.lms.enums.UserStatus;
 import com.lms.entity.Wallet;
+import com.lms.entity.Staff;
+import com.lms.entity.StaffAccount;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -22,6 +24,8 @@ import com.lms.repository.ReservationRepository;
 import com.lms.repository.SystemSettingRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
+import com.lms.repository.StaffAccountRepository;
+import org.junit.jupiter.api.BeforeEach;
 import com.lms.service.impl.BorrowServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,8 +62,18 @@ class BorrowBankPaymentLifecycleTest {
     @Mock WalletRepository walletRepository;
     @Mock TransactionRepository transactionRepository;
     @Mock FinancialService financialService;
+    @Mock LoanService loanService;
+    @Mock StaffAccountRepository staffAccountRepository;
 
     @InjectMocks BorrowServiceImpl service;
+
+    @BeforeEach
+    void staffLookup() {
+        Staff staff = new Staff();
+        StaffAccount account = new StaffAccount();
+        account.setStaff(staff);
+        org.mockito.Mockito.lenient().when(staffAccountRepository.findByUsername(any())).thenReturn(Optional.of(account));
+    }
 
     @Test
     void approvedOnlineRequestWaitsForPickupBeforeBecomingBorrowed() {

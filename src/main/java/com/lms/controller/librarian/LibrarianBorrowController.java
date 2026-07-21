@@ -82,6 +82,14 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             @RequestParam(value = "keyword", required = false) String keyword,
             Model model) {
 
+        page = Math.max(0, page);
+        size = Math.max(1, Math.min(size, 100));
+        java.util.Set<String> allowedStatuses = java.util.Set.of("Active", "Waiting_Pickup", "Returned",
+                "Overdue", "Pending", "Rejected", "Return_Pending", "Canceled", "Cancelled",
+                "Payment_Pending", "Payment_Expired");
+        if (status != null && !status.isBlank() && !allowedStatuses.contains(status.trim())) {
+            status = null;
+        }
         Pageable pageable = PageRequest.of(page, size, Sort.by("borrowDate").descending());
         Page<Borrow> borrowPage;
 
@@ -101,6 +109,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         // Đổ toàn bộ tham số đồng bộ ra view borrow-list.html
         model.addAttribute("borrows", borrowPage.getContent());
         model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", size);
         model.addAttribute("totalPages", borrowPage.getTotalPages());
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
@@ -632,8 +641,9 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     public String viewMemberBorrowHistory(@PathVariable Integer memberId,
             @RequestParam(value = "startDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "borrowPage", defaultValue = "0") int borrowPageNumber,
-            @RequestParam(value = "txPage", defaultValue = "0") int transactionPageNumber,
             Model model) {
         com.lms.entity.Member member = memberRepository.findById(memberId)
                 .orElseThrow(
@@ -691,10 +701,21 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         List<Borrow> allBorrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
         java.time.LocalDateTime rangeStart = filterStart.atStartOfDay();
         java.time.LocalDateTime rangeEndExclusive = filterEnd.plusDays(1).atStartOfDay();
-        Page<Borrow> borrowPage = borrowRepository
-                .findByMember_MemberIdAndBorrowDateGreaterThanEqualAndBorrowDateLessThanOrderByBorrowDateDesc(
-                        memberId, rangeStart, rangeEndExclusive,
-                        PageRequest.of(Math.max(0, borrowPageNumber), 10));
+        String historyKeyword = keyword == null ? "" : keyword.trim();
+        if (historyKeyword.regionMatches(true, 0, "BOR-", 0, 4)) {
+            historyKeyword = historyKeyword.substring(4).trim();
+        }
+        Set<String> allowedHistoryStatuses = Set.of("PENDING", "PAYMENT_PENDING", "PAYMENT_CANCELLED", "PAYMENT_EXPIRED",
+                "WAITING_PICKUP", "APPROVED", "BORROWED", "ACTIVE", "OVERDUE", "RETURN_PENDING",
+                "RENEW_PENDING", "RETURNED", "REJECTED", "CANCELED", "CANCELLED");
+        String historyStatus = status == null ? "" : normalizeStatus(status);
+        if (!historyStatus.isBlank() && !allowedHistoryStatuses.contains(historyStatus)) {
+            historyStatus = "";
+        }
+
+        Page<Borrow> borrowPage = borrowRepository.searchMemberBorrowHistory(
+                memberId, rangeStart, rangeEndExclusive, historyKeyword, historyStatus,
+                PageRequest.of(Math.max(0, borrowPageNumber), 10));
         List<Borrow> filteredBorrows = borrowPage.getContent();
 
         List<Integer> borrowIds = filteredBorrows.stream().map(Borrow::getBorrowId).toList();
@@ -713,11 +734,51 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         int completedBorrows = (int) allBorrows.stream()
                 .filter(borrow -> "RETURNED".equals(normalizeStatus(borrow.getStatus())))
                 .count();
-        Set<String> activeStatuses = Set.of("ACTIVE", "BORROWED", "OVERDUE", "RETURN_PENDING", "APPROVED",
-                "WAITING_PICKUP", "RENEW_PENDING");
+        Set<String> activeStatuses = Set.of("ACTIVE", "BORROWED", "OVERDUE", "RETURN_PENDING", "RENEW_PENDING");
         int activeBorrows = (int) allBorrows.stream()
                 .filter(borrow -> activeStatuses.contains(normalizeStatus(borrow.getStatus())))
                 .count();
+        int pendingBorrows = (int) allBorrows.stream()
+                .filter(borrow -> Set.of("PENDING", "PAYMENT_PENDING", "WAITING_PICKUP", "APPROVED")
+                        .contains(normalizeStatus(borrow.getStatus())))
+                .count();
+
+        List<Integer> allBorrowIds = allBorrows.stream().map(Borrow::getBorrowId).toList();
+        List<BorrowDetail> allDetails = allBorrowIds.isEmpty()
+                ? List.of()
+                : borrowDetailRepository.findByBorrow_BorrowIdIn(allBorrowIds);
+        java.util.Map<Integer, List<BorrowDetail>> allDetailsByBorrowId = allDetails.stream()
+                .collect(Collectors.groupingBy(detail -> detail.getBorrow().getBorrowId()));
+        completedBorrows = (int) allBorrows.stream()
+                .filter(borrow -> {
+                    List<BorrowDetail> details = allDetailsByBorrowId.getOrDefault(borrow.getBorrowId(), List.of());
+                    return !details.isEmpty() && details.stream()
+                            .allMatch(detail -> "RETURNED".equals(normalizeStatus(detail.getStatus())));
+                })
+                .count();
+        long totalBooks = allDetails.size();
+        long overdueBooks = allDetails.stream()
+                .filter(detail -> "OVERDUE".equals(normalizeStatus(detail.getStatus()))
+                        || (detail.getReturnDate() == null && detail.getDueDate() != null
+                            && detail.getDueDate().isBefore(java.time.LocalDateTime.now())
+                            && Set.of("BORROWED", "RETURN_PENDING", "RENEW_PENDING")
+                                .contains(normalizeStatus(detail.getStatus()))))
+                .count();
+        java.time.LocalDateTime nearestDueDate = allDetails.stream()
+                .filter(detail -> detail.getReturnDate() == null && detail.getDueDate() != null
+                        && !detail.getDueDate().isBefore(java.time.LocalDateTime.now())
+                        && Set.of("BORROWED", "RETURN_PENDING", "RENEW_PENDING")
+                            .contains(normalizeStatus(detail.getStatus())))
+                .map(BorrowDetail::getDueDate)
+                .min(java.time.LocalDateTime::compareTo)
+                .orElse(null);
+        List<Transaction> unpaidFines = transactionRepository.findUnpaidFineTransactions(
+                memberId, List.of("FINE", "DAMAGE_FEE"));
+        BigDecimal unpaidFineAmount = unpaidFines.stream()
+                .map(Transaction::getAmount)
+                .filter(java.util.Objects::nonNull)
+                .map(BigDecimal::abs)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         com.lms.entity.MemberAccount account = memberAccountRepository.findByMemberMemberId(memberId).orElse(null);
         com.lms.entity.Wallet wallet = walletRepository.findByMemberMemberId(memberId).orElse(null);
@@ -739,14 +800,25 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("totalBorrows", totalBorrows);
         model.addAttribute("completedBorrows", completedBorrows);
         model.addAttribute("activeBorrows", activeBorrows);
+        model.addAttribute("pendingBorrows", pendingBorrows);
+        model.addAttribute("totalBooks", totalBooks);
+        model.addAttribute("overdueBooks", overdueBooks);
+        model.addAttribute("nearestDueDate", nearestDueDate);
+        model.addAttribute("unpaidFineCount", unpaidFines.size());
+        model.addAttribute("unpaidFineAmount", unpaidFineAmount);
 
         model.addAttribute("startDate", filterStart.toString());
         model.addAttribute("endDate", filterEnd.toString());
         model.addAttribute("minDate", creationDate.toString());
         model.addAttribute("maxDate", today.toString());
+        model.addAttribute("historyKeyword", keyword == null ? "" : keyword.trim());
+        model.addAttribute("historyStatus", historyStatus);
 
         model.addAttribute("borrows", filteredBorrows);
         model.addAttribute("borrowPage", borrowPage);
+        model.addAttribute("historyResultCount", borrowPage.getTotalElements());
+        model.addAttribute("historyFiltersActive", !historyKeyword.isBlank() || !historyStatus.isBlank()
+                || startDate != null || endDate != null);
         model.addAttribute("detailsByBorrowId", detailsByBorrowId);
         model.addAttribute("transactionsByBorrowId", transactionsByBorrowId);
         model.addAttribute("dateFilterError",

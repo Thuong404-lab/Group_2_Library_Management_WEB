@@ -29,23 +29,23 @@
     <!-- Page Header -->
     <header class="borrow-page-header">
         <div>
-            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336" th:text="#{librarian.schedule.title}">Detailed Loan Schedule</h2>
-            <div class="text-muted" th:text="#{librarian.schedule.description}">Track circulation progress and return history for each book.</div>
+            <h1 class="borrow-page-title" th:text="#{librarian.schedule.title}">Detailed Loan Schedule</h1>
+            <p class="borrow-page-description" th:text="#{librarian.schedule.description}">Look up each member's loan and return history.</p>
         </div>
     </header>
 
     <!-- Filter Bar -->
-    <div class="classic-card mb-4 p-4">
-        <form class="row g-2 align-items-center" method="get" th:action="@{/librarian/loan/borrow-schedule}">
-            <div class="col-md-9">
-                <div class="input-group">
+    <div class="classic-card borrow-filter-card">
+        <form class="borrow-search-form" method="get" th:action="@{/librarian/loan/borrow-schedule}">
+            <div class="borrow-search-field">
+                <div class="input-group borrow-search-group">
                     <span class="input-group-text classic-addon"><i class="bi bi-search"></i></span>
                     <input type="text" class="form-control filter-input addon-right" name="keyword"
                            th:value="${keyword}"
                            th:placeholder="#{librarian.schedule.memberSearchPlaceholder}" placeholder="Search by member ID, name, email, or phone number...">
                 </div>
             </div>
-            <div class="col-auto d-flex gap-2">
+            <div class="borrow-filter-actions">
                 <button type="submit" class="btn btn-classic-primary px-4" th:text="#{common.search}">Search</button>
                 <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-classic-outline px-4 text-decoration-none d-inline-flex align-items-center justify-content-center" th:text="#{common.clearFilter}">Clear Filter</a>
             </div>
@@ -58,17 +58,17 @@
             <table class="table table-hover align-middle mb-0 borrow-table">
                 <thead>
                 <tr>
-                    <th class="ps-4" style="width: 80px;" th:text="#{common.number}">No.</th>
+                    <th class="borrow-col-index" th:text="#{common.number}">No.</th>
                     <th th:text="#{librarian.memberDetail.memberId}">Member ID</th>
                     <th th:text="#{librarian.borrowDesk.memberInfo}">Member Information</th>
                     <th th:text="#{member.profile.tier}">Membership Tier</th>
                     <th th:text="#{librarian.memberDetail.accountStatus}">Account Status</th>
-                    <th class="text-center pe-4" style="width: 150px;" th:text="#{admin.logs.action}">Action</th>
+                    <th class="text-center borrow-col-action" th:text="#{admin.logs.action}">Action</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="member, iter : ${members}">
-                    <td class="ps-4 fw-bold" th:text="${iter.index + 1}">1</td>
+                <tr th:each="account, iter : ${accounts}" th:with="member=${account.member}">
+                    <td class="borrow-col-index" th:text="${accountPage.number * accountPage.size + iter.index + 1}">1</td>
                     <td>
                                 <span class="fw-bold text-classic"
                                       th:text="${'MEM-' + member.memberId}">MEM-1</span>
@@ -87,23 +87,24 @@
                     <td>
                                 <span class="membership-tier-badge"
                                       th:if="${member.tier != null}"
-                                      th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
-                                      th:style="${member.tier.tierName == 'Regular' ? 'background-color:#6c757d;' : member.tier.tierName == 'Silver' ? 'background-color:#6c8ea4;' : member.tier.tierName == 'Gold' ? 'background-color:#c8942d;' : member.tier.tierName == 'Diamond' ? 'background-color:#6f42c1;' : 'background-color:#8b5a2b;'}">Regular</span>
-                        <span class="badge rounded-pill px-3 py-1 bg-secondary text-white" th:if="${member.tier == null}" th:text="#{librarian.members.unranked}">Unranked</span>
+                                      th:text="${member.tier.tierName}"
+                                      th:classappend="${'membership-tier-badge--' + #strings.toLowerCase(#strings.replace(member.tier.tierName, ' ', '-'))}">Regular</span>
+                        <span class="membership-tier-badge membership-tier-badge--empty" th:if="${member.tier == null}" th:text="#{librarian.members.unranked}">Unranked</span>
                     </td>
                     <td>
                                 <span class="status-badge"
-                                      th:classappend="${member.user?.status?.name() == 'Active'} ? 'status-completed' : 'status-rejected'"
-                                      th:text="${member.user?.status?.name() == 'Active' ? #messages.msg('account.status.active') : #messages.msg('account.status.inactive')}">Active</span>
+                                      th:with="accountStatus=${account.status != null ? #strings.toUpperCase(#strings.trim(account.status)) : 'INACTIVE'}"
+                                      th:classappend="${accountStatus == 'ACTIVE' ? 'status-active' : (accountStatus == 'BLOCKED' ? 'status-blocked' : 'status-inactive')}"
+                                      th:text="${accountStatus == 'ACTIVE' ? #messages.msg('account.status.active') : (accountStatus == 'BLOCKED' ? #messages.msg('account.status.blocked') : #messages.msg('account.status.inactive'))}">Active</span>
                     </td>
-                    <td class="text-center pe-4">
+                    <td class="text-center borrow-col-action">
                         <a th:href="@{/librarian/borrow/member/{id}(id=${member.memberId})}"
-                           class="btn btn-classic-outline btn-sm px-3 py-1">
-                            <i class="bi bi-eye me-1"></i><span th:text="#{common.details}">Details</span>
+                           class="borrow-icon-action" th:title="#{common.details}" th:aria-label="#{common.details}">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
                         </a>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(members)}">
+                <tr th:if="${#lists.isEmpty(accounts)}">
                     <td colspan="6" class="text-center py-5">
                         <i class="bi bi-people fs-1 d-block mb-3 opacity-50 text-classic"></i>
                         <div class="text-muted fst-italic small" th:text="#{librarian.schedule.noMembers}">No matching members were found.</div>
@@ -113,6 +114,20 @@
             </table>
         </div>
     </div>
+
+    <nav th:if="${accountPage.totalPages > 1}" th:aria-label="#{transaction.pagination}">
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item" th:classappend="${accountPage.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/librarian/loan/borrow-schedule(keyword=${keyword},page=${accountPage.number - 1})}" th:text="#{common.previous}">Previous</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" th:text="#{common.pageOf(${accountPage.number + 1},${accountPage.totalPages})}">Page</span>
+            </li>
+            <li class="page-item" th:classappend="${accountPage.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/librarian/loan/borrow-schedule(keyword=${keyword},page=${accountPage.number + 1})}" th:text="#{common.next}">Next</a>
+            </li>
+        </ul>
+    </nav>
 
 </div>
 </body>

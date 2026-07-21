@@ -279,14 +279,14 @@ public class FinancialServiceImpl implements FinancialService {
         Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
         Transaction transaction = transactionRepository
-                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
-                        borrow.getBorrowId(), FINE_TYPE, PENDING_STATUS)
+                .findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                        detail.getBorrowDetailId(), FINE_TYPE, PENDING_STATUS)
                 .map(existing -> {
-                    existing.setAmount(amountOrZero(existing.getAmount()).subtract(fineAmount));
+                    existing.setAmount(fineAmount.negate());
                     return transactionRepository.save(existing);
                 })
-                .orElseGet(() -> saveWalletTransaction(
-                        wallet, borrow, FINE_TYPE, fineAmount.negate(), PENDING_STATUS));
+                .orElseGet(() -> saveBorrowDetailTransaction(
+                        wallet, borrow, detail, FINE_TYPE, fineAmount.negate(), PENDING_STATUS));
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
                 ? localizedMessageService.get("backend.book.unknownTitle")
@@ -319,14 +319,14 @@ public class FinancialServiceImpl implements FinancialService {
         Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
         Transaction transaction = transactionRepository
-                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
-                        borrow.getBorrowId(), DAMAGE_FEE_TYPE, PENDING_STATUS)
+                .findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                        detail.getBorrowDetailId(), DAMAGE_FEE_TYPE, PENDING_STATUS)
                 .map(existing -> {
-                    existing.setAmount(amountOrZero(existing.getAmount()).subtract(compensationAmount));
+                    existing.setAmount(compensationAmount.negate());
                     return transactionRepository.save(existing);
                 })
-                .orElseGet(() -> saveWalletTransaction(
-                        wallet, borrow, DAMAGE_FEE_TYPE, compensationAmount.negate(), PENDING_STATUS));
+                .orElseGet(() -> saveBorrowDetailTransaction(
+                        wallet, borrow, detail, DAMAGE_FEE_TYPE, compensationAmount.negate(), PENDING_STATUS));
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
                 ? localizedMessageService.get("backend.book.unknownTitle")
@@ -594,6 +594,24 @@ public class FinancialServiceImpl implements FinancialService {
         transaction.setAmount(amount);
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setStatus(status);
+        return transactionRepository.save(transaction);
+    }
+
+    private Transaction saveBorrowDetailTransaction(Wallet wallet,
+                                                    Borrow borrow,
+                                                    BorrowDetail detail,
+                                                    String transactionType,
+                                                    BigDecimal amount,
+                                                    String status) {
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setBorrow(borrow);
+        transaction.setBorrowDetail(detail);
+        transaction.setTransactionType(transactionType);
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setStatus(status);
+        transaction.setChannel("SYSTEM");
         return transactionRepository.save(transaction);
     }
 
