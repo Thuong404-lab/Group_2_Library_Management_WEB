@@ -10,7 +10,8 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page">
+    <div layout:fragment="content" th:with="activeMenu='accounts'"
+        class="member-management-page accounts-page">
         <header class="member-page-header">
             <div>
                 <h1 class="member-page-title" th:text="#{admin.accounts.heading}">User Accounts</h1>
@@ -25,7 +26,7 @@
             </div>
         </header>
 
-        <div class="modal fade text-start" id="createMemberAccountModal" tabindex="-1"
+        <div class="modal fade text-start account-standard-modal" id="createMemberAccountModal" tabindex="-1"
             aria-labelledby="createMemberAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow">
@@ -91,14 +92,11 @@
                                 th:aria-label="#{admin.accounts.filterTier}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedTier)}"
                                     th:text="#{admin.accounts.allTiers}">All Tiers</option>
-                                <option value="Regular" th:selected="${selectedTier == 'Regular'}"
-                                    th:text="#{tier.regular}">Regular</option>
-                                <option value="Silver" th:selected="${selectedTier == 'Silver'}"
-                                    th:text="#{tier.silver}">Silver</option>
-                                <option value="Gold" th:selected="${selectedTier == 'Gold'}" th:text="#{tier.gold}">Gold
+                                <option th:each="tierOption : ${tiers}" th:value="${tierOption.tierName}"
+                                    th:selected="${selectedTier == tierOption.tierName}"
+                                    th:text="${tierOption.tierName == 'Regular' ? #messages.msg('tier.regular') : (tierOption.tierName == 'Silver' ? #messages.msg('tier.silver') : (tierOption.tierName == 'Gold' ? #messages.msg('tier.gold') : (tierOption.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tierOption.tierName)))}">
+                                    Membership tier
                                 </option>
-                                <option value="Diamond" th:selected="${selectedTier == 'Diamond'}"
-                                    th:text="#{tier.diamond}">Diamond</option>
                             </select>
 
                             <select class="form-select member-filter-select" name="status" data-auto-submit
@@ -192,6 +190,7 @@
                                 </td>
 
                                 <td class="text-end pe-3 member-actions"
+                                    th:classappend="${account.status != 'Active'} ? ' member-actions--reserved-deactivate' : ''"
                                     th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
                                     <button type="button" class="member-icon-action account-action-tooltip"
                                         data-bs-toggle="modal"
@@ -201,8 +200,9 @@
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <!-- Update Modal -->
-                                    <div class="modal fade text-start member-form-modal"
+                                    <div class="modal fade text-start member-form-modal account-standard-modal"
                                         th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                        th:aria-labelledby="${'updateMemberModalLabel' + account.accountId}"
                                         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
                                         th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
                                         <div
@@ -216,7 +216,8 @@
                                                     <input type="hidden" name="source" value="members">
 
                                                     <div class="modal-header member-modal-header">
-                                                        <h5 class="modal-title member-modal-title-accent">
+                                                        <h5 class="modal-title member-modal-title-accent"
+                                                            th:id="${'updateMemberModalLabel' + account.accountId}">
                                                             <i class="bi bi-person-lines-fill me-2 text-classic"></i>
                                                             <span th:text="#{admin.accounts.update}">Update
                                                                 Account</span>
@@ -251,10 +252,12 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Username <span class="required-marker">*</span>
+                                                                    <span th:text="#{member.profile.username}">Username</span>
+                                                                    <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
-                                                                    data-label="Username" pattern="[a-zA-Z0-9_]{3,20}"
+                                                                    th:data-label="#{member.profile.username}"
+                                                                    pattern="[a-zA-Z0-9_]{3,20}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -276,14 +279,14 @@
                                                                 </label>
                                                                 <input class="form-control" name="phone"
                                                                     th:data-label="#{member.profile.phone}" required
-                                                                    pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
-                                                                    inputmode="numeric"
+                                                                    pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
+                                                                    inputmode="tel"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                 <div class="invalid-feedback" data-error-for="phone"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
-                                                                    <span th:text="#{validation.phone}">Invalid phone
+                                                                    <span th:text="#{backend.profile.phoneFormat}">Invalid phone
                                                                         number.</span>
                                                                 </div>
                                                             </div>
@@ -291,10 +294,11 @@
                                                             <div class="col-md-6">
                                                                 <label
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    Email <span class="required-marker">*</span>
+                                                                    <span th:text="#{common.email}">Email</span>
+                                                                    <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="email" type="email"
-                                                                    data-label="Email"
+                                                                    th:data-label="#{common.email}"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
@@ -384,9 +388,10 @@
                                         <i class="bi bi-key"></i>
                                     </button>
 
-                                    <div class="modal fade text-start"
+                                    <div class="modal fade text-start account-standard-modal"
                                         th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
                                         th:id="${'resetPasswordMemberModal' + account.accountId}" tabindex="-1"
+                                        th:aria-labelledby="${'resetPasswordMemberModalLabel' + account.accountId}"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content">
@@ -396,7 +401,8 @@
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                                                     <div class="modal-header member-modal-header">
-                                                        <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118">
+                                                        <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118"
+                                                            th:id="${'resetPasswordMemberModalLabel' + account.accountId}">
                                                             <i class="bi bi-key-fill me-2"></i>
                                                             <span th:text="#{admin.accounts.resetConfirmTitle}">Confirm
                                                                 Password Reset Link</span>
@@ -447,10 +453,10 @@
                                                     </div>
 
                                                     <div class="modal-footer member-modal-footer">
-                                                        <button type="button" class="btn btn-light"
+                                                        <button type="button" class="btn member-modal-secondary"
                                                             data-bs-dismiss="modal"
                                                             th:text="#{common.cancel}">Cancel</button>
-                                                        <button type="submit" class="btn btn-classic">
+                                                        <button type="submit" class="btn member-modal-primary">
                                                             <i class="bi bi-send me-1"></i><span
                                                                 th:text="#{admin.accounts.confirmSend}">Send Link</span>
                                                         </button>
@@ -461,16 +467,20 @@
                                     </div>
 
                                     <button type="button"
+                                        th:if="${account.status == 'Active'}"
                                         class="member-icon-action member-icon-action-danger account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
-                                        th:data-bs-title="#{admin.accounts.delete}"
-                                        data-bs-custom-class="delete-account-tooltip" th:aria-label="#{common.delete}">
-                                        <i class="bi bi-trash"></i>
+                                        th:data-bs-title="#{admin.accounts.deactivate}"
+                                        data-bs-custom-class="delete-account-tooltip"
+                                        th:aria-label="#{admin.accounts.deactivate}">
+                                        <i class="bi bi-person-dash"></i>
                                     </button>
                                     <!-- Delete Modal -->
-                                    <div class="modal fade text-start"
+                                    <div class="modal fade text-start account-standard-modal"
+                                        th:if="${account.status == 'Active'}"
                                         th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
+                                        th:aria-labelledby="${'deactivateMemberModalLabel' + account.accountId}"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content">
@@ -481,18 +491,18 @@
                                                     <input type="hidden" name="source" value="members">
 
                                                     <div class="modal-header member-modal-header">
-                                                        <h5 class="modal-title member-modal-title-accent">
+                                                        <h5 class="modal-title member-modal-title-accent destructive-title"
+                                                            th:id="${'deactivateMemberModalLabel' + account.accountId}">
                                                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                                             <span th:text="#{admin.accounts.deleteConfirmTitle}">Confirm
-                                                                Account Deletion</span>
+                                                                Account Deactivation</span>
                                                         </h5>
                                                     </div>
 
                                                     <div class="modal-body member-modal-body">
                                                         <p class="mb-3">
-                                                            <span th:text="#{admin.accounts.deleteConfirmMessage}">Are
-                                                                you sure you want to delete this account? This action
-                                                                cannot be undone.</span>
+                                                            <span th:text="#{admin.accounts.deleteConfirmMessage}">The
+                                                                member will keep read-only access after deactivation.</span>
                                                         </p>
                                                         <div class="account-info-panel">
                                                             <div class="row g-3">
@@ -574,11 +584,11 @@
                                                     </div>
 
                                                     <div class="modal-footer member-modal-footer">
-                                                        <button type="button" class="btn btn-light"
+                                                        <button type="button" class="btn member-modal-secondary"
                                                             data-bs-dismiss="modal"
                                                             th:text="#{common.cancel}">Cancel</button>
                                                         <button type="submit" class="btn app-danger-action"
-                                                            th:text="#{admin.accounts.confirmDelete}">Delete
+                                                            th:text="#{admin.accounts.confirmDeactivate}">Deactivate
                                                             Account</button>
                                                     </div>
                                                 </form>
@@ -591,7 +601,10 @@
                             <tr th:if="${#lists.isEmpty(accounts.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox empty-state-icon d-block mb-2"></i>
-                                    <span th:text="#{admin.accounts.empty}">No accounts found.</span>
+                                    <p class="mb-3" th:text="#{admin.accounts.empty}">No accounts found.</p>
+                                    <a th:if="${!#strings.isEmpty(keyword) or !#strings.isEmpty(selectedTier) or !#strings.isEmpty(selectedStatus)}"
+                                        class="btn member-modal-secondary" th:href="@{/admin/accounts}"
+                                        th:text="#{common.clearFilter}">Clear filter</a>
                                 </td>
                             </tr>
                         </tbody>
@@ -790,8 +803,8 @@
                         }
                         if (phone === "") {
                             errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
-                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
-                            errors.phone = /*[[#{validation.phone}]]*/ "Phone number must contain exactly 10 digits and start with 0.";
+                        } else if (!/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$/.test(phone)) {
+                            errors.phone = /*[[#{backend.profile.phoneFormat}]]*/ "Invalid Vietnamese phone number.";
                         }
                         if (form.elements.tierId.value === "") {
                             errors.tierId = /*[[#{validation.tier}]]*/ "Invalid membership tier.";
