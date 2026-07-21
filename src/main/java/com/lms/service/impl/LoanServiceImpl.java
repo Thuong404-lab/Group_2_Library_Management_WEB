@@ -139,7 +139,7 @@ public class LoanServiceImpl implements LoanService {
         List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
         
         for (BorrowDetail detail : details) {
-            if ("Return_Pending".equalsIgnoreCase(detail.getStatus()) || STATUS_BORROWED.equalsIgnoreCase(detail.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(detail.getStatus())) {
+            if ("Return_Pending".equalsIgnoreCase(detail.getStatus())) {
                 // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½ vá» Available
                 if (detail.getBookItem() != null) {
                     BookItem item = detail.getBookItem();
@@ -341,10 +341,18 @@ public class LoanServiceImpl implements LoanService {
         if (barcode == null || barcode.trim().isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcode"));
         }
-        if (returnDate == null || returnDate.isAfter(LocalDateTime.now())) {
+        if (returnDate == null || !returnDate.toLocalDate().equals(java.time.LocalDate.now())) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidReturnDate"));
         }
-        List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcode(barcode.trim());
+        String resolvedPaymentMethod = paymentMethod == null ? "cash" : paymentMethod.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!List.of("cash", "wallet", "bank").contains(resolvedPaymentMethod)) {
+            throw new ValidationException(localizedMessageService.get("backend.return.invalidPaymentMethod"));
+        }
+        if (!isGoodCondition(bookCondition)
+                && (damageNote == null || damageNote.trim().isEmpty())) {
+            throw new ValidationException(localizedMessageService.get("backend.return.damageDescriptionRequired"));
+        }
+        List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcodeForUpdate(barcode.trim());
         if (activeLoans.isEmpty()) {
             throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
         }
@@ -355,7 +363,7 @@ public class LoanServiceImpl implements LoanService {
             throw new ValidationException(localizedMessageService.get("backend.return.beforeBorrowDate"));
         }
         if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0
-                && "wallet".equalsIgnoreCase(paymentMethod)) {
+                && "wallet".equals(resolvedPaymentMethod)) {
             Member member = detail.getBorrow() == null ? null : detail.getBorrow().getMember();
             BigDecimal balance = member == null || member.getMemberId() == null
                     ? BigDecimal.ZERO
@@ -398,7 +406,7 @@ public class LoanServiceImpl implements LoanService {
 
         Transaction damageFineTx = null;
         if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0) {
-            damageFineTx = processDamageFine(detail, damageFine, paymentMethod);
+            damageFineTx = processDamageFine(detail, damageFine, resolvedPaymentMethod, staffUsername);
         }
 
         updateParentBorrowStatus(detail.getBorrow());
@@ -455,6 +463,9 @@ public class LoanServiceImpl implements LoanService {
         if (barcodes == null || barcodes.isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcodes"));
         }
+        if (barcodes.size() > 1 && !isGoodCondition(bookCondition)) {
+            throw new ValidationException(localizedMessageService.get("backend.return.minorDamageSingleOnly"));
+        }
         LinkedHashMap<String, String> uniqueBarcodes = new LinkedHashMap<>();
         for (String barcode : barcodes) {
             String normalized = barcode == null ? "" : barcode.trim();
@@ -479,7 +490,7 @@ public class LoanServiceImpl implements LoanService {
         return firstTx;
     }
 
-    private Transaction processDamageFine(BorrowDetail detail, BigDecimal damageFine, String paymentMethod) {
+    private Transaction processDamageFine(BorrowDetail detail, BigDecimal damageFine, String paymentMethod, String staffUsername) {
         Member member = detail.getBorrow().getMember();
         if (member == null) {
             return null;
@@ -495,10 +506,16 @@ public class LoanServiceImpl implements LoanService {
         Transaction transaction = new Transaction();
         transaction.setWallet(wallet);
         transaction.setBorrow(detail.getBorrow());
+        transaction.setBorrowDetail(detail);
         transaction.setTransactionType("DAMAGE_FEE");
         transaction.setTransactionDate(LocalDateTime.now());
 
         String resolvedMethod = (paymentMethod != null) ? paymentMethod.trim().toLowerCase() : "cash";
+        transaction.setChannel("wallet".equals(resolvedMethod) ? "WALLET"
+                : "cash".equals(resolvedMethod) ? "CASH" : "PAYOS");
+        staffAccountRepository.findByUsername(staffUsername)
+                .map(StaffAccount::getStaff)
+                .ifPresent(transaction::setPerformedByStaff);
 
         if ("wallet".equals(resolvedMethod)) {
             // Trừ tiền trực tiếp vào ví
@@ -715,6 +732,9 @@ public class LoanServiceImpl implements LoanService {
         detail.setRenewCount((detail.getRenewCount() == null ? 0 : detail.getRenewCount()) + 1);
         detail.setStatus(STATUS_BORROWED);
         hold.setStatus("Completed");
+        staffAccountRepository.findByUsername(staffUsername)
+                .map(StaffAccount::getStaff)
+                .ifPresent(hold::setPerformedByStaff);
         borrowDetailRepository.save(detail);
         transactionRepository.save(hold);
         if (detail.getBorrow().getMember() != null) sendInternalNotification(detail.getBorrow().getMember(),
@@ -735,7 +755,8 @@ public class LoanServiceImpl implements LoanService {
         Wallet wallet = walletRepository.findByMemberIdForUpdate(detail.getBorrow().getMember().getMemberId())
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal refund = hold.getAmount() == null ? BigDecimal.ZERO : hold.getAmount().abs();
-        wallet.setBalance((wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance()).add(refund));
+        BigDecimal balanceBeforeRefund = wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance();
+        wallet.setBalance(balanceBeforeRefund.add(refund));
         hold.setStatus("Refunded");
         Transaction refundTransaction = new Transaction();
         refundTransaction.setWallet(wallet);
@@ -746,6 +767,14 @@ public class LoanServiceImpl implements LoanService {
         refundTransaction.setAmount(refund);
         refundTransaction.setTransactionDate(LocalDateTime.now());
         refundTransaction.setStatus("Completed");
+        refundTransaction.setChannel("WALLET");
+        refundTransaction.setBalanceBefore(balanceBeforeRefund);
+        refundTransaction.setBalanceAfter(wallet.getBalance());
+        if (!"SYSTEM".equalsIgnoreCase(staffUsername)) {
+            staffAccountRepository.findByUsername(staffUsername)
+                    .map(StaffAccount::getStaff)
+                    .ifPresent(refundTransaction::setPerformedByStaff);
+        }
         detail.setStatus(detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now()) ? STATUS_OVERDUE : STATUS_BORROWED);
         detail.setRejectionCode(rejection.code());
         detail.setRejectionReason(rejection.detail());
@@ -787,9 +816,7 @@ public class LoanServiceImpl implements LoanService {
     @Override
     @Transactional(readOnly = true)
     public List<BorrowDetail> getAllPendingRenewals() {
-        return borrowDetailRepository.findAll().stream()
-                .filter(d -> "Renew_Pending".equalsIgnoreCase(d.getStatus()))
-                .toList();
+        return borrowDetailRepository.findByStatusOrderByDueDateAsc("Renew_Pending");
     }
 
     @Override
@@ -814,6 +841,11 @@ public class LoanServiceImpl implements LoanService {
                 || normalized.contains("mất sách")
                 || normalized.contains("severe damage")
                 || normalized.contains("lost");
+    }
+
+    private boolean isGoodCondition(String bookCondition) {
+        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.startsWith("tốt") || normalized.startsWith("good");
     }
 
     private String resolveReturnedItemStatus(String bookCondition) {

@@ -103,7 +103,7 @@ public class BorrowController extends LocalizedControllerSupport {
         model.addAttribute("maxRenewalDays", getPositiveIntSetting("Max_Renewal_Days", 7));
         model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
         model.addAttribute("maxRenewalRequests", getPositiveIntSetting("MAX_RENEWAL_REQUESTS_PER_LOAN", 3));
-        model.addAttribute("renewalApprovalTimeoutHours", 12);
+        model.addAttribute("renewalApprovalTimeoutHours", getPositiveIntSetting("RENEWAL_APPROVAL_TIMEOUT_HOURS", 12));
         model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
 
         java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);
@@ -608,6 +608,19 @@ public class BorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     messageWithDetail("backend.borrow.renewalSubmitFailed", e));
+        }
+        return "redirect:/member/borrow/management?tab=borrowing";
+    }
+
+    @PostMapping("/renew/{borrowDetailId}/cancel")
+    public String cancelRenewRequest(@PathVariable("borrowDetailId") Integer borrowDetailId,
+                                     Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            borrowService.memberCancelRenewRequest(principal.getName(), borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.cancelled"));
+        } catch (ApplicationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.cancelFailed", e));
         }
         return "redirect:/member/borrow/management?tab=borrowing";
     }

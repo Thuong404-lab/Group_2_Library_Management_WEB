@@ -156,6 +156,12 @@
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
                                     <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm"><i class="bi bi-hourglass-split me-1"></i><span th:text="#{common.pendingApproval}">Awaiting approval...</span></span>
+                                    <form th:if="${item.status == 'Renew_Pending'}" th:action="@{/member/borrow/renew/{id}/cancel(id=${item.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Hủy yêu cầu gia hạn và hoàn lại phí đang giữ?')">
+                                        <button type="submit" class="member-ui-button member-ui-button--secondary member-ui-button--compact">
+                                            <i class="bi bi-x-circle me-1"></i><span th:text="#{loan.renew.cancel}">Hủy yêu cầu</span>
+                                        </button>
+                                    </form>
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
                                         <input type="hidden" name="renewalDays" class="renewal-days-value">

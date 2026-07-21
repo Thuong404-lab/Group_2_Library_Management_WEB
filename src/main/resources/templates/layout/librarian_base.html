@@ -49,7 +49,7 @@
             </li>
 
             <li class="menu-item">
-                <a href="#borrowMenu" data-bs-toggle="collapse"
+                <a href="#borrowMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'"
                     aria-expanded="false" aria-controls="borrowMenu">
@@ -59,7 +59,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled" id="borrowMenu">
+                <ul class="collapse sub-menu-list list-unstyled" id="borrowMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/borrow/list}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -119,7 +119,7 @@
             </li>
 
             <li class="menu-item">
-                <a href="#bookManagementMenu" data-bs-toggle="collapse"
+                <a href="#bookManagementMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'books'} ? 'active'" aria-expanded="false"
                     aria-controls="bookManagementMenu">
@@ -129,7 +129,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled ps-4" id="bookManagementMenu">
+                <ul class="collapse sub-menu-list list-unstyled ps-4" id="bookManagementMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -166,7 +166,7 @@
             </li>
 
             <li class="menu-item">
-                <a href="#userManagementMenu" data-bs-toggle="collapse"
+                <a href="#userManagementMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
                     aria-expanded="false" aria-controls="userManagementMenu">
@@ -176,7 +176,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled" id="userManagementMenu">
+                <ul class="collapse sub-menu-list list-unstyled" id="userManagementMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/members}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -204,7 +204,7 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="#financeMenu" data-bs-toggle="collapse"
+                <a href="#financeMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'active'"
                     aria-expanded="false" aria-controls="financeMenu">
@@ -214,7 +214,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled" id="financeMenu">
+                <ul class="collapse sub-menu-list list-unstyled" id="financeMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/members/topup}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -312,9 +312,56 @@
         (function () {
             var sidebarToggle = document.getElementById('sidebarToggle');
             if (!sidebarToggle) return;
+            var submenuIds = ['financeMenu', 'userManagementMenu', 'bookManagementMenu', 'borrowMenu'];
+            var duration = 300;
+            var textRevealDelay = 90;
+
+            function setTriggerState(submenu, expanded) {
+                var trigger = document.querySelector('[data-sidebar-submenu][href="#' + submenu.id + '"]');
+                if (trigger) trigger.setAttribute('aria-expanded', String(expanded));
+            }
+            function slideUp(submenu) {
+                if (!submenu || !submenu.classList.contains('show')) return;
+                submenu.style.display = 'block';
+                submenu.style.height = submenu.offsetHeight + 'px'; submenu.offsetHeight;
+                submenu.style.overflow = 'hidden';
+                submenu.style.transition = 'height ' + duration + 'ms ease, margin ' + duration + 'ms ease, padding ' + duration + 'ms ease';
+                submenu.style.height = '0'; submenu.style.paddingTop = '0'; submenu.style.paddingBottom = '0';
+                submenu.style.marginTop = '0'; submenu.style.marginBottom = '0';
+                submenu.classList.remove('show'); setTriggerState(submenu, false);
+                window.setTimeout(function () {
+                    ['height','overflow','transition','padding-top','padding-bottom','margin-top','margin-bottom'].forEach(function (name) { submenu.style.removeProperty(name); });
+                    submenu.style.display = 'none';
+                }, duration);
+            }
+            function slideDown(submenu) {
+                if (!submenu || submenu.classList.contains('show')) return;
+                submenu.style.display = 'block'; var height = submenu.scrollHeight;
+                submenu.style.height = '0'; submenu.style.overflow = 'hidden';
+                submenu.style.transition = 'height ' + duration + 'ms ease, margin ' + duration + 'ms ease, padding ' + duration + 'ms ease';
+                submenu.classList.add('show'); submenu.offsetHeight; submenu.style.height = height + 'px'; setTriggerState(submenu, true);
+                window.setTimeout(function () { ['height','overflow','transition'].forEach(function (name) { submenu.style.removeProperty(name); }); }, duration);
+            }
+            document.querySelectorAll('[data-sidebar-submenu]').forEach(function (trigger) {
+                var target = document.getElementById(trigger.getAttribute('href').substring(1));
+                if (!target) return;
+                target.classList.add('sub-menu-list'); setTriggerState(target, target.classList.contains('show'));
+                trigger.addEventListener('click', function (event) {
+                    event.preventDefault(); if (document.body.classList.contains('sidebar-collapsed')) return;
+                    submenuIds.forEach(function (id) { var other = document.getElementById(id); if (other && other !== target) slideUp(other); });
+                    if (target.classList.contains('show')) slideUp(target); else slideDown(target);
+                });
+            });
             sidebarToggle.addEventListener('click', function () {
-                var collapsed = document.body.classList.toggle('sidebar-collapsed');
-                sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+                if (sidebarToggle.dataset.busy === 'true') return;
+                var collapsed = !document.body.classList.contains('sidebar-collapsed'); sidebarToggle.dataset.busy = 'true';
+                if (collapsed) submenuIds.forEach(function (id) { slideUp(document.getElementById(id)); });
+                document.body.classList.toggle('sidebar-collapsed', collapsed); sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+                if (!collapsed) {
+                    document.body.classList.add('sidebar-opening');
+                    window.setTimeout(function () { document.body.classList.remove('sidebar-opening'); }, textRevealDelay);
+                }
+                window.setTimeout(function () { sidebarToggle.dataset.busy = 'false'; }, duration);
             });
         })();
 
