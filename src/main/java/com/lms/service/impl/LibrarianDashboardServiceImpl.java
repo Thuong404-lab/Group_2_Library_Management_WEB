@@ -277,7 +277,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
         counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
         counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
-        counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));
+        counts.put("MinorDamaged", bookItemRepository.countByStatusIgnoreCase("MinorDamaged"));
         return counts;
     }
 }

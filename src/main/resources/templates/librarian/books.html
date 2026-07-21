@@ -682,8 +682,8 @@
                                                 <span th:text="${inventoryStatusCounts['Damaged']} ?: 0">0</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-semibold" th:text="#{librarian.inventory.status.disposed}">Disposed</span>
-                                                <span th:text="${inventoryStatusCounts['Disposed']} ?: 0">0</span>
+                                                <span class="fw-semibold" th:text="#{librarian.inventory.status.minorDamaged}">Minor damaged</span>
+                                                <span th:text="${inventoryStatusCounts['MinorDamaged']} ?: 0">0</span>
                                             </div>
                                         </div>
                                     </div>
@@ -720,8 +720,8 @@
                                                     <td class="fw-bold font-monospace" th:text="${item.barcode}">BC001-001</td>
                                                     <td>
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Lost'} ? ' status-lost' : (${item.status == 'Damaged'} ? ' status-damaged' : ' status-inactive')))"
-                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Lost' ? #messages.msg('loan.status.lost') : (item.status == 'Damaged' ? #messages.msg('librarian.inventory.status.damaged') : (item.status == 'Disposed' ? #messages.msg('librarian.inventory.status.disposed') : item.status))))}">Available</span>
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Lost'} ? ' status-lost' : (${item.status == 'Damaged'} ? ' status-damaged' : (${item.status == 'MinorDamaged'} ? ' status-minor-damaged' : ' status-inactive'))))"
+                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Lost' ? #messages.msg('loan.status.lost') : (item.status == 'Damaged' ? #messages.msg('librarian.inventory.status.damaged') : (item.status == 'MinorDamaged' ? #messages.msg('librarian.inventory.status.minorDamaged') : item.status))))}">Available</span>
                                                     </td>
                                                 </tr>
                                                 <tr th:if="${bookItemsByBookId == null or bookItemsByBookId[book.bookId] == null or #lists.isEmpty(bookItemsByBookId[book.bookId])}">
