@@ -46,6 +46,7 @@
 
         <form th:action="@{/member/borrow/request/submit}" method="post" id="borrowForm" class="member-borrow-create-form">
             <input type="hidden" name="bookId" th:value="${selectedBookId}" />
+            <input type="hidden" name="submissionToken" th:value="${borrowSubmissionToken}" />
 
             <!-- SỐ NGÀY MƯỢN MONG MUỐN -->
             <div class="member-borrow-create-field">
@@ -372,6 +373,11 @@
             const borrowForm = document.getElementById("borrowForm");
             if (borrowForm) {
                 borrowForm.addEventListener("submit", function(e) {
+                    if (borrowForm.dataset.submitting === "true") {
+                        e.preventDefault();
+                        return;
+                    }
+
                     const errorDiv = document.getElementById("borrowDaysError");
                     const maxDays = parseInt(borrowDaysInput.getAttribute("max")) || 14;
                     const val = parseInt(borrowDaysInput.value) || 0;
@@ -388,7 +394,11 @@
                             errorDiv.classList.remove("d-none");
                         }
                         borrowDaysInput.focus();
+                        return;
                     }
+
+                    borrowForm.dataset.submitting = "true";
+                    if (submitBtn) submitBtn.disabled = true;
                 });
             }
 

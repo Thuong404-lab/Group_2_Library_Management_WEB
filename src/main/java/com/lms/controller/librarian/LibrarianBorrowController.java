@@ -346,7 +346,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             }
 
             long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
-            int configuredLimit = getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10);
+            int configuredLimit = getPositiveSetting("Max_Books_Per_Member",
+                    getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10));
             int maxLimit = member.getTier() != null && member.getTier().getBorrowLimit() != null
                     ? member.getTier().getBorrowLimit()
                     : configuredLimit;
@@ -550,7 +551,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             response.put("eligible", eligible);
             response.put("reasons", eligibilityReasons);
 
-            int maxBorrowLimit = getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10);
+            int maxBorrowLimit = getPositiveSetting("Max_Books_Per_Member",
+                    getPositiveSetting("MAX_BOOKS_PER_MEMBER", 10));
             if (member.getTier() != null) {
                 response.put("memberLevel", member.getTier().getTierName());
                 maxBorrowLimit = member.getTier().getBorrowLimit() != null ? member.getTier().getBorrowLimit()
