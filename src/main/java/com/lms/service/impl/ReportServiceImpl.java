@@ -19,9 +19,11 @@ import com.lms.repository.MemberRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.ReportService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.util.FinancialTransactionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -30,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -45,7 +48,7 @@ import java.util.Map;
 public class ReportServiceImpl implements ReportService {
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
-    private static final String COMPLETED_STATUS = "Completed";
+    private static final long MAX_REPORT_RANGE_DAYS = 1_826;
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -78,7 +81,11 @@ public class ReportServiceImpl implements ReportService {
 
         LocalDateTime startDate = normalizedFromDate.atStartOfDay();
         LocalDateTime endDate = normalizedToDate.plusDays(1).atStartOfDay();
-        BigDecimal totalRevenue = transactionRepository.sumAmountByStatusAndDateRange(COMPLETED_STATUS, startDate, endDate);
+        BigDecimal totalRevenue = transactionRepository.sumRevenueByStatusAndTypesAndDateRange(
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                FinancialTransactionPolicy.REVENUE_TYPES,
+                startDate,
+                endDate);
 
         return new ReportViewData(
                 normalizedFromDate,
@@ -93,7 +100,7 @@ public class ReportServiceImpl implements ReportService {
                 bookRepository.countByStatusIgnoreCase("Active"),
                 bookItemRepository.countByStatusIgnoreCase("Available"),
                 totalRevenue,
-                toTransactionBreakdown(startDate, endDate),
+                toRevenueTransactionBreakdown(startDate, endDate),
                 toTopBooks(startDate, endDate),
                 toTopMembers(startDate, endDate),
                 toMonthlyBorrowStats(normalizedFromDate, normalizedToDate));
@@ -113,6 +120,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public LibrarianRevenueReportData getLibrarianRevenueReport(LocalDate fromDate, LocalDate toDate) {
         LocalDate[] range = normalizeDateRange(fromDate, toDate);
         LocalDate normalizedFromDate = range[0];
@@ -120,11 +128,20 @@ public class ReportServiceImpl implements ReportService {
         LocalDateTime startDate = normalizedFromDate.atStartOfDay();
         LocalDateTime endDate = normalizedToDate.plusDays(1).atStartOfDay();
 
-        List<ReportMetric> transactionBreakdown = toTransactionBreakdown(startDate, endDate);
+        List<ReportMetric> transactionBreakdown = toRevenueTransactionBreakdown(startDate, endDate);
         long totalTransactions = transactionBreakdown.stream()
                 .mapToLong(ReportMetric::getCount)
                 .sum();
-        BigDecimal totalRevenue = transactionRepository.sumAmountByStatusAndDateRange(COMPLETED_STATUS, startDate, endDate);
+        BigDecimal totalRevenue = transactionRepository.sumRevenueByStatusAndTypesAndDateRange(
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                FinancialTransactionPolicy.REVENUE_TYPES,
+                startDate,
+                endDate);
+        BigDecimal totalRefunds = transactionRepository.sumAbsoluteAmountByTypeAndStatusAndDateRange(
+                FinancialTransactionPolicy.REFUND_TYPE,
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                startDate,
+                endDate);
         BigDecimal averageTransaction = totalTransactions == 0
                 ? BigDecimal.ZERO
                 : totalRevenue.divide(BigDecimal.valueOf(totalTransactions), 2, RoundingMode.HALF_UP);
@@ -134,6 +151,7 @@ public class ReportServiceImpl implements ReportService {
                 normalizedToDate,
                 LocalDateTime.now(),
                 totalRevenue,
+                totalRefunds,
                 totalTransactions,
                 averageTransaction,
                 transactionBreakdown,
@@ -141,9 +159,10 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReportExport exportLibrarianRevenueReport(LocalDate fromDate, LocalDate toDate, String format) {
+        String normalizedFormat = normalizeExportFormat(format);
         LibrarianRevenueReportData report = getLibrarianRevenueReport(fromDate, toDate);
-        String normalizedFormat = format == null ? "csv" : format.toLowerCase(Locale.ROOT);
         String baseName = "librarian-revenue-report-" + report.getFromDate() + "-to-" + report.getToDate();
 
         if ("pdf".equals(normalizedFormat)) {
@@ -153,27 +172,15 @@ public class ReportServiceImpl implements ReportService {
         return new ReportExport(baseName + ".csv", "text/csv; charset=UTF-8", buildLibrarianRevenueCsv(report));
     }
 
-    @Override
-    public void generateReport() {
-        // TODO: Implement
-    }
-
-    // UC-22.1: Bao cao doanh thu
-    @Override
-    public void generateRevenueReport(String fromDate, String toDate) {
-        // TODO: Implement - Tong hop tu Transactions
-    }
-
-    // UC-22.2: Xuat bao cao
-    @Override
-    public void exportReport(String type, String format) {
-        // TODO: Implement - PDF (iText) hoac Excel (Apache POI)
-    }
-    private List<ReportMetric> toTransactionBreakdown(LocalDateTime startDate, LocalDateTime endDate) {
+    private List<ReportMetric> toRevenueTransactionBreakdown(LocalDateTime startDate, LocalDateTime endDate) {
         List<ReportMetric> metrics = new ArrayList<>();
-        for (Object[] row : transactionRepository
-                .summarizeByTypeAndStatusAndDateRange(COMPLETED_STATUS, startDate, endDate)) {
-            metrics.add(new ReportMetric(displayTransactionType(String.valueOf(row[0])), toLong(row[1]), (BigDecimal) row[2]));
+        for (Object[] row : transactionRepository.summarizeRevenueByTypeAndDateRange(
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                FinancialTransactionPolicy.REVENUE_TYPES,
+                startDate,
+                endDate)) {
+            metrics.add(new ReportMetric(displayTransactionType(String.valueOf(row[0])),
+                    toLong(row[1]), (BigDecimal) row[2]));
         }
         return metrics;
     }
@@ -228,8 +235,10 @@ public class ReportServiceImpl implements ReportService {
             cursor = cursor.plusMonths(1);
         }
 
-        for (Object[] row : transactionRepository.summarizeMonthlyRevenueByStatusAndDateRange(
-                COMPLETED_STATUS, fromDate.atStartOfDay(), toDate.plusDays(1).atStartOfDay())) {
+        for (Object[] row : transactionRepository.summarizeMonthlyRevenueByTypesAndDateRange(
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                FinancialTransactionPolicy.REVENUE_TYPES,
+                fromDate.atStartOfDay(), toDate.plusDays(1).atStartOfDay())) {
             YearMonth month = YearMonth.of(((Number) row[1]).intValue(), ((Number) row[0]).intValue());
             metricsByMonth.put(month, new ReportMetric(month.format(formatter), toLong(row[2]), (BigDecimal) row[3]));
         }
@@ -294,15 +303,22 @@ public class ReportServiceImpl implements ReportService {
 
     private byte[] buildLibrarianRevenueCsv(LibrarianRevenueReportData report) {
         StringBuilder csv = new StringBuilder("\uFEFF");
-        csv.append("Librarian Revenue Report\n");
-        csv.append("From,").append(report.getFromDate()).append("\n");
-        csv.append("To,").append(report.getToDate()).append("\n\n");
-        csv.append("Metric,Value\n");
-        appendCsvRow(csv, "Total revenue", report.getTotalRevenue());
-        appendCsvRow(csv, "Completed transactions", report.getTotalTransactions());
-        appendCsvRow(csv, "Average transaction", report.getAverageTransaction());
-        appendMetricSection(csv, "Transaction type", "Transactions", "Amount", report.getTransactionBreakdown());
-        appendMetricSection(csv, "Month", "Transactions", "Amount", report.getMonthlyRevenueStats());
+        csv.append(escapeCsv(messages.get("librarian.report.exportTitle"))).append("\n");
+        appendCsvRow(csv, messages.get("librarian.report.exportFrom"), report.getFromDate());
+        appendCsvRow(csv, messages.get("librarian.report.exportTo"), report.getToDate());
+        appendCsvRow(csv, messages.get("librarian.report.generatedAt"), report.getGeneratedAt());
+        csv.append("\n").append(escapeCsv(messages.get("librarian.report.exportMetric")))
+                .append(",").append(escapeCsv(messages.get("librarian.report.exportValue"))).append("\n");
+        appendCsvRow(csv, messages.get("librarian.report.totalRevenue"), report.getTotalRevenue());
+        appendCsvRow(csv, messages.get("librarian.report.totalRefunds"), report.getTotalRefunds());
+        appendCsvRow(csv, messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions());
+        appendCsvRow(csv, messages.get("librarian.report.averageTransaction"), report.getAverageTransaction());
+        appendMetricSection(csv, messages.get("librarian.report.exportTransactionType"),
+                messages.get("librarian.report.transactionCount"),
+                messages.get("librarian.report.exportAmount"), report.getTransactionBreakdown());
+        appendMetricSection(csv, messages.get("librarian.report.month"),
+                messages.get("librarian.report.transactionCount"),
+                messages.get("librarian.report.exportAmount"), report.getMonthlyRevenueStats());
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
@@ -312,22 +328,27 @@ public class ReportServiceImpl implements ReportService {
         PdfDocument pdfDocument = new PdfDocument(writer);
 
         try (Document document = new Document(pdfDocument)) {
-            document.add(new Paragraph("Librarian Revenue Report").setBold().setFontSize(18));
-            document.add(new Paragraph("Period: " + report.getFromDate() + " to " + report.getToDate()));
-            document.add(new Paragraph("Generated at: " + report.getGeneratedAt()));
+            document.add(new Paragraph(messages.get("librarian.report.exportTitle")).setBold().setFontSize(18));
+            document.add(new Paragraph(messages.get("librarian.report.exportPeriod") + ": "
+                    + report.getFromDate() + " - " + report.getToDate()));
+            document.add(new Paragraph(messages.get("librarian.report.generatedAt") + ": "
+                    + report.getGeneratedAt()));
 
             Table overview = new Table(UnitValue.createPercentArray(new float[] { 2, 1 }))
                     .useAllAvailableWidth();
-            overview.addHeaderCell("Metric");
-            overview.addHeaderCell("Value");
-            addPdfRow(overview, "Total revenue", report.getTotalRevenue());
-            addPdfRow(overview, "Completed transactions", report.getTotalTransactions());
-            addPdfRow(overview, "Average transaction", report.getAverageTransaction());
+            overview.addHeaderCell(messages.get("librarian.report.exportMetric"));
+            overview.addHeaderCell(messages.get("librarian.report.exportValue"));
+            addPdfRow(overview, messages.get("librarian.report.totalRevenue"), report.getTotalRevenue());
+            addPdfRow(overview, messages.get("librarian.report.totalRefunds"), report.getTotalRefunds());
+            addPdfRow(overview, messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions());
+            addPdfRow(overview, messages.get("librarian.report.averageTransaction"), report.getAverageTransaction());
             document.add(overview);
 
-            addMetricPdfSection(document, "Revenue by transaction type", "Transactions",
+            addMetricPdfSection(document, messages.get("librarian.report.byType"),
+                    messages.get("librarian.report.transactionCount"),
                     report.getTransactionBreakdown(), true);
-            addMetricPdfSection(document, "Monthly revenue", "Transactions",
+            addMetricPdfSection(document, messages.get("librarian.report.monthly"),
+                    messages.get("librarian.report.transactionCount"),
                     report.getMonthlyRevenueStats(), true);
         }
 
@@ -376,10 +397,10 @@ public class ReportServiceImpl implements ReportService {
         Table table = includeAmount
                 ? new Table(UnitValue.createPercentArray(new float[] { 3, 1, 1 })).useAllAvailableWidth()
                 : new Table(UnitValue.createPercentArray(new float[] { 3, 1 })).useAllAvailableWidth();
-        table.addHeaderCell("Name");
+        table.addHeaderCell(messages.get("librarian.report.exportName"));
         table.addHeaderCell(valueHeader);
         if (includeAmount) {
-            table.addHeaderCell("Amount");
+            table.addHeaderCell(messages.get("librarian.report.exportAmount"));
         }
         for (ReportMetric metric : metrics) {
             table.addCell(metric.getLabel());
@@ -404,11 +425,20 @@ public class ReportServiceImpl implements ReportService {
         LocalDate normalizedToDate = toDate == null ? LocalDate.now() : toDate;
         LocalDate normalizedFromDate = fromDate == null ? normalizedToDate.minusDays(29) : fromDate;
         if (normalizedFromDate.isAfter(normalizedToDate)) {
-            LocalDate swap = normalizedFromDate;
-            normalizedFromDate = normalizedToDate;
-            normalizedToDate = swap;
+            throw new ValidationException(messages.get("backend.report.invalidRange"));
+        }
+        if (ChronoUnit.DAYS.between(normalizedFromDate, normalizedToDate) > MAX_REPORT_RANGE_DAYS) {
+            throw new ValidationException(messages.get("backend.report.rangeTooLarge", MAX_REPORT_RANGE_DAYS));
         }
         return new LocalDate[] { normalizedFromDate, normalizedToDate };
+    }
+
+    private String normalizeExportFormat(String format) {
+        String normalized = format == null ? "csv" : format.trim().toLowerCase(Locale.ROOT);
+        if (!"csv".equals(normalized) && !"pdf".equals(normalized)) {
+            throw new ValidationException(messages.get("backend.report.invalidExportFormat"));
+        }
+        return normalized;
     }
 
     private String displayTransactionType(String transactionType) {
@@ -420,6 +450,8 @@ public class ReportServiceImpl implements ReportService {
                 return messages.get("transaction.type.topUp");
             case "BORROW_FEE":
                 return messages.get("transaction.type.borrowFee");
+            case "RENEWAL_FEE":
+                return messages.get("transaction.type.renewalFee");
             case "DEPOSIT":
                 return messages.get("transaction.type.deposit");
             case "FINE":
@@ -428,6 +460,12 @@ public class ReportServiceImpl implements ReportService {
                 return messages.get("transaction.type.damageFee");
             case "REFUND":
                 return messages.get("transaction.type.refund");
+            case "PAYMENT":
+                return messages.get("transaction.type.payment");
+            case "OVERDUE_FINE":
+                return messages.get("transaction.type.overdueFine");
+            case "FEE":
+                return messages.get("transaction.type.fee");
             default:
                 return transactionType;
         }

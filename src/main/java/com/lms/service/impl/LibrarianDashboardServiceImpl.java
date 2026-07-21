@@ -118,8 +118,12 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        data.put("pendingReservations",
-                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
+        data.put("pendingReservationRequests",
+                reservationRepository.countByStatusIgnoreCase("PENDING"));
+        data.put("depositPaidReservations",
+                reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"));
+        data.put("readyReservations",
+                reservationRepository.countByStatusIgnoreCase("READY"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("dueTodayDetails",
                 borrowDetailRepository.countByDueDateGreaterThanEqualAndDueDateLessThan(

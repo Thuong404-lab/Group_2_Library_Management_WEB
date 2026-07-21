@@ -35,8 +35,6 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Model model) {
-        // TODO: Implement - Hiển thị trang báo cáo tổng hợp
-        // TODO: Thống kê số lượng sách, số lần mượn, doanh thu
         LibrarianRevenueReportData report = reportService.getLibrarianRevenueReport(fromDate, toDate);
         model.addAttribute("report", report);
         model.addAttribute("fromDate", report.getFromDate());
@@ -52,16 +50,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Model model) {
-        // TODO: Implement - Tổng hợp doanh thu từ Transactions
-        // TODO: Lọc theo khoảng thời gian
-        // TODO: Nhóm theo loại giao dịch (BORROW_FEE, FINE, TOP_UP)
-        LibrarianRevenueReportData report = reportService.getLibrarianRevenueReport(fromDate, toDate);
-        model.addAttribute("report", report);
-        model.addAttribute("fromDate", report.getFromDate());
-        model.addAttribute("toDate", report.getToDate());
-        model.addAttribute("maxDate", LocalDate.now());
-        model.addAllAttributes(dashboardService.getStatisticsData());
-        return "librarian/revenue-report";
+        return showReportDashboard(fromDate, toDate, model);
     }
 
     // UC-17.2: Export librarian revenue report.
@@ -70,8 +59,6 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "csv") String format) {
-        // TODO: Implement - Xuất báo cáo ra PDF hoặc Excel
-        // TODO: Sử dụng iText cho PDF, Apache POI cho Excel
         ReportExport export = reportService.exportLibrarianRevenueReport(fromDate, toDate, format);
 
         return ResponseEntity.ok()

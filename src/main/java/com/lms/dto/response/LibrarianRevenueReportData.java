@@ -10,6 +10,7 @@ public class LibrarianRevenueReportData {
     private final LocalDate toDate;
     private final LocalDateTime generatedAt;
     private final BigDecimal totalRevenue;
+    private final BigDecimal totalRefunds;
     private final long totalTransactions;
     private final BigDecimal averageTransaction;
     private final List<ReportMetric> transactionBreakdown;
@@ -19,6 +20,7 @@ public class LibrarianRevenueReportData {
             LocalDate toDate,
             LocalDateTime generatedAt,
             BigDecimal totalRevenue,
+            BigDecimal totalRefunds,
             long totalTransactions,
             BigDecimal averageTransaction,
             List<ReportMetric> transactionBreakdown,
@@ -27,6 +29,7 @@ public class LibrarianRevenueReportData {
         this.toDate = toDate;
         this.generatedAt = generatedAt;
         this.totalRevenue = totalRevenue == null ? BigDecimal.ZERO : totalRevenue;
+        this.totalRefunds = totalRefunds == null ? BigDecimal.ZERO : totalRefunds;
         this.totalTransactions = totalTransactions;
         this.averageTransaction = averageTransaction == null ? BigDecimal.ZERO : averageTransaction;
         this.transactionBreakdown = transactionBreakdown;
@@ -47,6 +50,10 @@ public class LibrarianRevenueReportData {
 
     public BigDecimal getTotalRevenue() {
         return totalRevenue;
+    }
+
+    public BigDecimal getTotalRefunds() {
+        return totalRefunds;
     }
 
     public long getTotalTransactions() {
