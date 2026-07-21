@@ -34,6 +34,7 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
                         LEFT JOIN m.member member
                         LEFT JOIN member.user user
                         WHERE LOWER(m.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                           OR CAST(member.memberId AS string) = :keyword
                            OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
                            OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
                            OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))

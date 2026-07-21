@@ -184,6 +184,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     Page<Transaction> findByWalletMemberMemberIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(
             Integer memberId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<Transaction> findByBorrow_BorrowId(Integer borrowId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"performedByStaff.user"})
     List<Transaction> findByBorrow_BorrowIdInOrderByTransactionDateDesc(List<Integer> borrowIds);
 
     // =========================================================================

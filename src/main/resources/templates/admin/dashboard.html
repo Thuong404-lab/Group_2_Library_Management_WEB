@@ -47,6 +47,7 @@
                 </a>
                 <a th:href="@{/admin/staff}">
                     <i class="bi bi-person-badge"></i><span th:text="#{admin.dashboard.manageStaff}">Staff</span>
+                    <small th:text="${activeStaff + ' / ' + totalStaff}">0 / 0</small>
                 </a>
                 <a th:href="@{/admin/books}">
                     <i class="bi bi-book"></i><span th:text="#{admin.dashboard.manageCollection}">Collection</span>
@@ -100,6 +101,39 @@
                             copies across 0 titles</small>
                     </div>
                 </article>
+            </div>
+        </section>
+
+        <section class="admin-attention" aria-labelledby="attentionTitle">
+            <header class="admin-section-heading">
+                <div>
+                    <span th:text="#{admin.dashboard.requiresAttention}">REQUIRES ATTENTION</span>
+                    <h2 id="attentionTitle" th:text="#{admin.dashboard.riskOverview}">Risk overview</h2>
+                </div>
+                <p th:text="#{admin.dashboard.riskDescription}">Items that may require an administrator or librarian to act.</p>
+            </header>
+            <div class="admin-attention-grid">
+                <a th:href="@{/admin/reports}" class="admin-attention-item"
+                    th:classappend="${overdueItems > 0} ? ' has-warning'">
+                    <i class="bi bi-alarm"></i>
+                    <div><strong th:text="${overdueItems}">0</strong><span
+                            th:text="#{admin.dashboard.overdueItems}">Overdue copies</span></div>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a th:href="@{/admin/books}" class="admin-attention-item"
+                    th:classappend="${attentionItems > 0} ? ' has-danger'">
+                    <i class="bi bi-exclamation-diamond"></i>
+                    <div><strong th:text="${attentionItems}">0</strong><span
+                            th:text="#{admin.dashboard.inventoryIssues}">Lost or damaged copies</span></div>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a th:href="@{/admin/accounts}" class="admin-attention-item"
+                    th:classappend="${blockedAccounts > 0} ? ' has-warning'">
+                    <i class="bi bi-person-lock"></i>
+                    <div><strong th:text="${blockedAccounts}">0</strong><span
+                            th:text="#{admin.dashboard.blockedAccounts}">Blocked accounts</span></div>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
         </section>
 

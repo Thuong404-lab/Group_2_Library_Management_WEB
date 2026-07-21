@@ -7,103 +7,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/return-desk.css}" />
 
-    <!-- CSS tùy chỉnh giúp nút checkbox đồng bộ tông màu nâu cổ điển -->
-    <style>
-        /* Tăng nhẹ kích thước và đổi màu viền mặc định cho tinh tế */
-        .borrow-table .form-check-input {
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid var(--app-color-hairline) !important;
-            cursor: pointer;
-            transition: all 150ms ease;
-            /* Xóa bỏ tất cả margin mặc định */
-            margin: 0 !important;
-        }
-
-        /* Hiệu ứng khi rê chuột qua (hover) */
-        .borrow-table .form-check-input:hover {
-            border-color: var(--app-color-primary) !important;
-            box-shadow: 0 0 0 3px rgba(204, 120, 92, 0.22) !important;
-        }
-
-        /* Trạng thái khi được chọn (Checked) - Đổi sang màu nâu chủ đạo */
-        .borrow-table .form-check-input:checked {
-            background-color: var(--app-color-application-primary) !important;
-            border-color: var(--app-color-application-primary) !important;
-        }
-
-        /* Hiệu ứng viền focus khi click chọn */
-        .borrow-table .form-check-input:focus {
-            border-color: var(--app-color-primary) !important;
-            box-shadow: 0 0 0 3px rgba(204, 120, 92, 0.22) !important;
-        }
-
-        /* Đảm bảo toàn bộ ô trong dòng được căn giữa hoàn hảo theo chiều dọc */
-        .borrow-table th, .borrow-table td {
-            vertical-align: middle;
-        }
-
-        /* CĂN GIỮA TUYỆT ĐỐI CHO NÚT CHỌN TẤT CẢ */
-        .borrow-table .checkbox-center-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%; /* Ép wrapper chiếm hết chiều cao ô */
-            width: 100%; /* Ép wrapper chiếm hết chiều rộng ô */
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        /* Cập nhật thẻ th để chứa wrapper */
-        .borrow-table th.checkbox-th {
-            position: relative;
-            padding: 0 !important; /* Xóa padding ô để không cản wrapper */
-            height: 3rem; /* Hoặc giá trị phù hợp với thiết kế của bạn */
-        }
-
-        /* CSS cho Payment Methods card selection */
-        .payment-method-item {
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            border: 1px solid var(--app-color-hairline) !important;
-            background-color: #ffffff;
-        }
-        .payment-method-item:hover {
-            background-color: #fcfbf9;
-            border-color: var(--app-color-primary) !important;
-        }
-        .payment-method-item input:checked + label {
-            font-weight: bold;
-        }
-        .payment-method-item input:checked {
-            background-color: var(--app-color-application-primary) !important;
-            border-color: var(--app-color-application-primary) !important;
-        }
-
-        /* CSS cho nút xoá sách trong danh sách quét */
-        .btn-delete-item {
-            width: 32px;
-            height: 32px;
-            border: 1px solid #dc3545;
-            border-radius: 50%;
-            color: #dc3545;
-            background-color: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-        .btn-delete-item:hover {
-            background-color: #dc3545;
-            color: #ffffff;
-        }
-    </style>
 </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-return'" class="borrow-management-page">
+<div layout:fragment="content" th:with="activeMenu='borrow-return'" class="borrow-management-page return-desk-page">
 
     <div th:if="${successMessage}"
          class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379"
@@ -123,13 +30,13 @@
     <!-- Page Header -->
     <header class="borrow-page-header">
         <div>
-            <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336" th:text="#{librarian.returnDesk.title}">Book Return Desk</h2>
-            <div class="text-muted" th:text="#{librarian.returnDesk.description}">Receive returned books and assess their condition at the library desk.</div>
+            <h1 class="return-desk-title" th:text="#{librarian.returnDesk.title}">Book Return Desk</h1>
+            <p class="return-desk-description" th:text="#{librarian.returnDesk.description}">Receive returned books and assess their condition at the library desk.</p>
         </div>
     </header>
 
     <!-- Barcode Scan Card -->
-    <div class="card borrow-card mb-4">
+    <section class="card borrow-card return-scan-card mb-4">
         <div class="card-header">
             <h5 class="card-title-custom mb-0"><i class="bi bi-upc-scan me-2 u-color-8b5a2b-93ece783" aria-hidden="true"></i><span th:text="#{librarian.returnDesk.scanTitle}">Scan or enter the returned book barcode</span></h5>
         </div>
@@ -139,19 +46,19 @@
                     <span th:text="#{librarian.returnDesk.scanLabel}">Quét mã vạch sách</span> <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0" style="border-color: var(--app-color-hairline);">
+                    <span class="input-group-text return-scan-icon">
                         <i class="bi bi-upc-scan text-muted" aria-hidden="true"></i>
                     </span>
                     <input type="text" id="barcodeScanInput" class="form-control border-start-0 scan-input"
-                           th:placeholder="#{librarian.returnDesk.scanPlaceholder}" placeholder="Quét hoặc nhập mã vạch rồi nhấn Enter..." autofocus autocomplete="off" style="border-color: var(--app-color-hairline);" />
+                           th:placeholder="#{librarian.returnDesk.scanPlaceholder}" placeholder="Quét hoặc nhập mã vạch rồi nhấn Enter..." autofocus autocomplete="off" />
                     <button type="button" id="addBarcodeBtn" class="btn btn-classic-primary px-4 fw-bold">
                         <span th:text="#{librarian.returnDesk.add}">Thêm</span>
                     </button>
                 </div>
-                <div id="scanFeedback" class="text-danger small mt-2" style="display: none;"></div>
+                <div id="scanFeedback" class="return-scan-feedback text-danger small mt-2"></div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Search Results Card -->
     <div class="card borrow-card mb-4 d-none" id="searchResultsCard">
@@ -329,7 +236,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.additionalNotes}">Additional Notes (Optional)</label>
-                        <textarea class="form-control scan-input" name="conditionNoteAdditional" rows="3"
+                        <textarea class="form-control scan-input" name="conditionNoteAdditional" id="conditionNoteAdditional" rows="3"
                                   th:placeholder="#{librarian.returnDesk.notesPlaceholder}" placeholder="Add a detailed description of any damage..."></textarea>
                     </div>
                     <div class="mb-2" id="fineInputContainer" style="display: none;">
@@ -388,6 +295,7 @@
             const conditionNoteSelect = document.getElementById('returnCondition');
             const fineInputContainer = document.getElementById('fineInputContainer');
             const damageFineInput = document.getElementById('damageFineInput');
+            const conditionNoteAdditional = document.getElementById('conditionNoteAdditional');
 
             const selectedReturnsLabel = /*[[#{librarian.returnDesk.selectedReturns}]]*/ 'Receive Selected Returns';
             const selectedReturnsCountLabel = /*[[#{librarian.returnDesk.selectedReturnsCount}]]*/ 'Receive Selected Returns ({0})';
@@ -670,6 +578,8 @@
                             fineError.style.display = 'none';
                         }
                     }
+                    const isGood = value.startsWith('tốt') || value.startsWith('good');
+                    if (conditionNoteAdditional) conditionNoteAdditional.required = !isGood;
                 }
             }
 
@@ -710,6 +620,7 @@
 
             if (conditionNoteSelect) {
                 conditionNoteSelect.addEventListener('change', toggleFineInput);
+                toggleFineInput();
             }
 
             window.addEventListener("pageshow", function (event) {

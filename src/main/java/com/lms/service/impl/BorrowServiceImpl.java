@@ -16,6 +16,8 @@ import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
 import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
+import com.lms.entity.Staff;
+import com.lms.entity.StaffAccount;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
 import com.lms.enums.ActionType;
@@ -83,6 +85,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final TransactionRepository transactionRepository;
     private final FinancialService financialService;
     private final com.lms.service.LoanService loanService;
+    private final com.lms.repository.StaffAccountRepository staffAccountRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
             BookItemRepository bookItemRepository,
@@ -98,7 +101,8 @@ public class BorrowServiceImpl implements BorrowService {
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
             FinancialService financialService,
-            com.lms.service.LoanService loanService) {
+            com.lms.service.LoanService loanService,
+            com.lms.repository.StaffAccountRepository staffAccountRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -114,6 +118,7 @@ public class BorrowServiceImpl implements BorrowService {
         this.transactionRepository = transactionRepository;
         this.financialService = financialService;
         this.loanService = loanService;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @Override
@@ -206,6 +211,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         Borrow borrow = new Borrow();
         borrow.setMember(member);
+        borrow.setStaff(resolveStaff(librarianUsername));
         borrow.setBorrowDate(LocalDateTime.now());
         borrow.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Active");
         borrow = borrowRepository.save(borrow);
@@ -402,7 +408,6 @@ public class BorrowServiceImpl implements BorrowService {
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.notPendingApproval"));
         }
-
         Member member = borrow.getMember();
 
         // Cáº­p nháº­t tráº¡ng thÃ¡i Borrow thÃ nh Rejected
@@ -451,6 +456,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.notPendingApproval"));
         }
+        borrow.setStaff(resolveStaff(staffUsername));
 
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
         if (details.isEmpty()) {
@@ -612,6 +618,9 @@ public class BorrowServiceImpl implements BorrowService {
         if (!"Waiting_Pickup".equalsIgnoreCase(borrow.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.notWaitingPickup"));
         }
+        if (borrow.getStaff() == null) {
+            borrow.setStaff(resolveStaff(staffUsername));
+        }
 
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
         if (details.isEmpty()) {
@@ -747,11 +756,35 @@ public class BorrowServiceImpl implements BorrowService {
         hold.setAmount(fee.negate());
         hold.setTransactionDate(LocalDateTime.now());
         hold.setStatus("Pending");
+        hold.setChannel("WALLET");
+        hold.setBalanceBefore(balance);
+        hold.setBalanceAfter(balance.subtract(fee));
         transactionRepository.save(hold);
         detail.setRejectionCode(null);
         detail.setRejectionReason(null);
         detail.setStatus("Renew_Pending");
         borrowDetailRepository.save(detail);
+        auditLogService.log(com.lms.enums.ActionType.REQUEST_RENEWAL,
+                "Member " + username + " requested " + renewalDays + " renewal days for detail #" + borrowDetailId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void memberCancelRenewRequest(String username, Integer borrowDetailId) {
+        Member member = memberRepository.findByAccountUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.member.currentNotFound")));
+        BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+        if (detail.getBorrow() == null || detail.getBorrow().getMember() == null
+                || !member.getMemberId().equals(detail.getBorrow().getMember().getMemberId())) {
+            throw new ConflictException(localizedMessageService.get("backend.renewal.forbidden"));
+        }
+        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
+        }
+        loanService.rejectRenewal(borrowDetailId, "SYSTEM", "OTHER", "Cancelled by member");
+        auditLogService.log(com.lms.enums.ActionType.CANCEL_RENEWAL,
+                "Member " + username + " cancelled renewal request for detail #" + borrowDetailId);
     }
 
     @Override
@@ -1189,6 +1222,12 @@ public class BorrowServiceImpl implements BorrowService {
                     });
         }
         if (!dto.isRenewalRequestBlocked()
+                && detail.getDueDate() != null
+                && !detail.getDueDate().isAfter(LocalDateTime.now().plusHours(24))) {
+            dto.setRenewalRequestBlocked(true);
+            dto.setRenewalBlockedReason(localizedMessageService.get("backend.renewal.tooCloseToDue", 24));
+        }
+        if (!dto.isRenewalRequestBlocked()
                 && detail.getBook() != null
                 && detail.getBorrow() != null
                 && detail.getBorrow().getMember() != null) {
@@ -1296,7 +1335,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     public List<BorrowDetail> getPendingRenewalRequests() {
-        return borrowDetailRepository.findByStatus("Renew_Pending");
+        return borrowDetailRepository.findByStatusOrderByDueDateAsc("Renew_Pending");
     }
 
     @Override
@@ -1323,6 +1362,16 @@ public class BorrowServiceImpl implements BorrowService {
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
+    }
+
+    private Staff resolveStaff(String username) {
+        if (username == null || username.isBlank()) {
+            throw new ResourceNotFoundException(localizedMessageService.get("backend.account.staffNotFound"));
+        }
+        return staffAccountRepository.findByUsername(username)
+                .map(StaffAccount::getStaff)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.account.staffUsernameNotFound", username)));
     }
 
     @Override
