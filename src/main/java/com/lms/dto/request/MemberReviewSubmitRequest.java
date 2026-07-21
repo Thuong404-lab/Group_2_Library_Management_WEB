@@ -1,4 +1,5 @@
 package com.lms.dto.request;
+import com.lms.domain.ReviewPolicy;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +17,8 @@ public class MemberReviewSubmitRequest {
     private Integer rating;
 
     @NotBlank(message = "{backend.review.contentRequired}")
-    @Size(min = 5, max = 1000, message = "{backend.review.contentRange}")
+    @Size(min = ReviewPolicy.CONTENT_MIN_LENGTH, max = ReviewPolicy.CONTENT_MAX_LENGTH,
+            message = "{backend.review.contentRange}")
     @Pattern(regexp = "(?s).*\\p{L}.*", message = "{backend.review.contentLetters}")
     private String comment;
 

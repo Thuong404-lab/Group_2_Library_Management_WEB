@@ -172,8 +172,8 @@
                                 </thead>
                                 <tbody>
                                     <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
-                                        th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}"
-                                        th:data-book-availability="${availableCopies > 0 ? 'Available' : 'Unavailable'}">
+                                        th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}, bookAvailable=${availableCopies > 0}"
+                                        th:data-book-availability="${bookAvailable ? 'Available' : 'Unavailable'}">
                                         <td class="ps-3 fw-bold"
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
                                         <td>
@@ -197,8 +197,8 @@
                                             th:title="${book.description}">Description</td>
                                         <td>
                                             <span class="status-badge"
-                                                th:classappend="${availableCopies > 0} ? ' status-active' : ' status-zero'"
-                                                th:text="${availableCopies > 0} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
+                                                th:classappend="${bookAvailable} ? ' status-active' : ' status-zero'"
+                                                th:text="${bookAvailable} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
                                         </td>
                                         <td class="text-end member-actions">
                                             <button type="button" class="member-icon-action"
@@ -483,7 +483,7 @@
 
                 <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel"
                     aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-dialog modal-dialog-centered modal-lg book-form-modal">
                         <div class="modal-content border-0 shadow" style="background-color: var(--app-color-canvas, #faf9f5); border-radius: 12px; overflow: hidden;">
                             <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
                                 <h5 class="modal-title fw-bold" style="color: var(--app-color-coral-active, #cc785c) !important;" id="addBookModalLabel">
@@ -545,9 +545,13 @@
                                             <div class="invalid-feedback" th:text="#{common.validation.required}">Please fill out this field.</div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label fw-bold small"><span th:text="#{librarian.inventory.coverImage}">Cover Image</span> <span class="text-danger">*</span></label>
-                                            <input type="file" name="coverImage" class="form-control" style="background-color: white; border-radius: 8px;" accept="image/*"
-                                                id="addBookCoverInput" onchange="previewAddBookCover(event)" required>
+                                            <label class="form-label fw-bold small d-block"><span th:text="#{librarian.inventory.coverImage}">Cover Image</span> <span class="text-danger">*</span></label>
+                                            <input type="file" name="coverImage" class="visually-hidden book-cover-file-input" style="background-color: white; border-radius: 8px;" accept="image/*"
+                                                id="addBookCoverInput" onchange="previewAddBookCover(event); updateBookCoverFileName(this)" required>
+                                            <div class="book-cover-file-control">
+                                                <label for="addBookCoverInput" class="book-cover-file-button" th:text="#{librarian.inventory.chooseImage}">Choose Image</label>
+                                                <span id="addBookCoverInputFileName" class="book-cover-file-name" th:data-empty="#{librarian.inventory.noImageSelected}" th:text="#{librarian.inventory.noImageSelected}">No image selected</span>
+                                            </div>
                                             <div class="invalid-feedback" th:text="#{librarian.inventory.validation.imageRequired}">Please select an image.</div>
                                             <div class="mt-2 add-book-cover-preview u-display-none-d0466aa3" id="addBookCoverPreview">
                                                 <img id="addBookCoverImg" src="#" th:alt="#{librarian.inventory.coverPreview}"
@@ -764,7 +768,7 @@
                     <!-- Edit Book Modal -->
                     <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1"
                         th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-dialog modal-dialog-centered modal-lg book-form-modal">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" th:id="${'editBookModalLabel' + book.bookId}" th:text="#{librarian.inventory.editBook}">Edit Book</h5>
@@ -806,13 +810,6 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label" th:text="#{common.status}">Status</label>
-                                                <select name="status" class="form-select" required>
-                                                    <option th:selected="${book.status == 'Active'}" value="Active" th:text="#{status.active}">Active</option>
-                                                    <option th:selected="${book.status == 'Disposed'}" value="Disposed" th:text="#{librarian.inventory.status.disposed}">Disposed</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
                                                 <label class="form-label" th:text="#{librarian.inventory.shelf}">Shelf</label>
                                                 <select name="shelfId" class="form-select" required>
                                                     <option value="" disabled th:text="#{librarian.inventory.selectShelf}">Select Shelf</option>
@@ -823,14 +820,9 @@
                                                 </select>
                                                 <div class="invalid-feedback" th:text="#{librarian.inventory.validation.shelfRequired}">Please select a shelf.</div>
                                             </div>
-                                            <div class="col-12">
-                                                <label class="form-label" th:text="#{librarian.inventory.bookDescription}">Description</label>
-                                                <textarea name="description" class="form-control" rows="3"
-                                                    th:text="${book.description}"></textarea>
-                                            </div>
-                                            <div class="col-12">
+                                            <div class="col-md-6">
                                                 <label class="form-label" th:text="#{librarian.inventory.coverImage}">Cover Image</label>
-                                                <div class="d-flex align-items-start gap-3 flex-wrap">
+                                                <div class="d-flex align-items-start gap-3 flex-wrap edit-book-cover-control">
                                                     <div th:if="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl)}"
                                                         class="flex-shrink-0">
                                                         <div class="text-muted small mb-1" th:text="#{librarian.inventory.currentImage}">Current Image:</div>
@@ -840,13 +832,14 @@
                                                             class="u-height-100px-width-75px-object-fit-cover-border-radius-6px-border-1px-so-eeb48d2c">
                                                     </div>
                                                     <div class="flex-grow-1">
-                                                        <div class="text-muted small mb-1"
-                                                            th:text="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? #messages.msg('librarian.inventory.chooseReplacementImage') : #messages.msg('librarian.inventory.chooseCover')}">
-                                                            Choose Cover:</div>
-                                                        <input type="file" name="coverImage" class="form-control"
+                                                        <input type="file" name="coverImage" class="visually-hidden book-cover-file-input"
                                                             accept="image/*"
                                                             th:id="'editBookCoverInput' + ${book.bookId}"
-                                                            th:onchange="'previewEditBookCover(event, \'' + ${book.bookId} + '\')'">
+                                                            th:onchange="'previewEditBookCover(event, \'' + ${book.bookId} + '\'); updateBookCoverFileName(this)'">
+                                                        <div class="book-cover-file-control">
+                                                            <label th:for="'editBookCoverInput' + ${book.bookId}" class="book-cover-file-button" th:text="#{librarian.inventory.chooseImage}">Choose Image</label>
+                                                            <span th:id="'editBookCoverInput' + ${book.bookId} + 'FileName'" class="book-cover-file-name" th:data-empty="#{librarian.inventory.noImageSelected}" th:text="#{librarian.inventory.noImageSelected}">No image selected</span>
+                                                        </div>
                                                         <div class="mt-2 u-display-none-d0466aa3"
                                                             th:id="'editBookCoverPreview' + ${book.bookId}"
                                                            >
@@ -857,6 +850,11 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label" th:text="#{librarian.inventory.bookDescription}">Description</label>
+                                                <textarea name="description" class="form-control" rows="3"
+                                                    th:text="${book.description}"></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -1110,6 +1108,11 @@
                 preview.style.display = 'block';
             };
             reader.readAsDataURL(file);
+        }
+
+        function updateBookCoverFileName(input) {
+            const fileName = document.getElementById(input.id + 'FileName');
+            if (fileName) fileName.textContent = input.files && input.files[0] ? input.files[0].name : fileName.dataset.empty;
         }
         function validateTextLength(input, maxLen) {
             if (!input.value) {

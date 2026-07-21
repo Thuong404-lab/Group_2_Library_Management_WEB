@@ -8,16 +8,19 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
+import com.lms.repository.TransactionRepository;
 import com.lms.service.LocalizedMessageService;
 import com.lms.service.MembershipService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.function.Function;
 
 @Service
 public class MembershipServiceImpl implements MembershipService {
@@ -26,15 +29,18 @@ public class MembershipServiceImpl implements MembershipService {
     private final MemberRepository memberRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final MemberAccountRepository memberAccountRepository;
+    private final TransactionRepository transactionRepository;
 
     public MembershipServiceImpl(LocalizedMessageService messages,
-                                 MemberRepository memberRepository,
-                                 MembershipTierRepository membershipTierRepository,
-                                 MemberAccountRepository memberAccountRepository) {
+                                  MemberRepository memberRepository,
+                                  MembershipTierRepository membershipTierRepository,
+                                  MemberAccountRepository memberAccountRepository,
+                                  TransactionRepository transactionRepository) {
         this.messages = messages;
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
         this.memberAccountRepository = memberAccountRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     // ── Public read methods ────────────────────────────────────────────────────
@@ -71,9 +77,14 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public double getAccumulatedSpending(Member member) {
-        // TODO: tính từ tổng giao dịch TOP_UP đã xác nhận trong bảng Transactions
-        return 150000.0;
+        // Only completed top-ups contribute to the configured membership threshold.
+        if (member == null || member.getMemberId() == null) {
+            return 0.0;
+        }
+        BigDecimal total = transactionRepository.sumCompletedTopUpByMemberId(member.getMemberId());
+        return total == null ? 0.0 : total.doubleValue();
     }
 
     @Override
@@ -91,8 +102,14 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     @Transactional(readOnly = true)
     public List<Member> getTopMembersBySpending() {
-        // TODO: sort thực sự theo tổng chi tiêu khi implement getAccumulatedSpending()
-        return memberRepository.findAll().stream().limit(5).toList();
+        // Rank in the database so the result is deterministic and does not load every member.
+        List<Integer> memberIds = transactionRepository.findTopMembersByCompletedTopUp(PageRequest.of(0, 5))
+                .stream()
+                .map(row -> (Integer) row[0])
+                .toList();
+        Map<Integer, Member> membersById = memberRepository.findAllById(memberIds).stream()
+                .collect(Collectors.toMap(Member::getMemberId, Function.identity()));
+        return memberIds.stream().map(membersById::get).filter(java.util.Objects::nonNull).toList();
     }
 
     // ── UC-22.3: Membership Tier Management (Admin) ────────────────────────────
