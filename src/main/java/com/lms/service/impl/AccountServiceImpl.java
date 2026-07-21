@@ -296,6 +296,10 @@ public class AccountServiceImpl implements AccountService {
             errors.put("password", messages.get("backend.account.passwordRequired"));
         } else if (password.length() < 6) {
             errors.put("password", messages.get("validation.passwordMin"));
+        } else if (password.length() > 50) {
+            errors.put("password", messages.get("validation.passwordMax"));
+        } else if (password.chars().anyMatch(Character::isWhitespace)) {
+            errors.put("password", messages.get("validation.passwordNoSpaces"));
         }
 
         if (!"MEMBER".equals(roleName) && !"ADMIN".equals(roleName) && !"LIBRARIAN".equals(roleName)) {
