@@ -82,12 +82,14 @@
 
                         <td class="text-end pe-4">
                             <div class="d-flex justify-content-end gap-2">
-                                <form th:action="@{/librarian/loan/renewals/approve/{id}(id=${detail.borrowDetailId})}" method="post">
+                                <form th:action="@{/librarian/loan/renew/approve/{id}(id=${detail.borrowDetailId})}" method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-success" title="Duyệt gia hạn">
                                         <i class="bi bi-check-lg"></i> Duyệt
                                     </button>
                                 </form>
-                                <form th:action="@{/librarian/loan/renewals/reject/{id}(id=${detail.borrowDetailId})}" method="post">
+                                <form th:action="@{/librarian/loan/renew/reject/{id}(id=${detail.borrowDetailId})}" method="post">
+                                    <input type="hidden" name="reasonCode" value="OTHER">
+                                    <input type="hidden" name="reason" value="Rejected from renewal management list">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối">
                                         <i class="bi bi-x-lg"></i> Từ chối
                                     </button>

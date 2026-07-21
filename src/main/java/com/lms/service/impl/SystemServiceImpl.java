@@ -127,6 +127,7 @@ public class SystemServiceImpl implements SystemService {
             Integer maxRenewalDays,
             Integer maxRenewalRequests,
             Integer renewalRejectionCooldownHours,
+            Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
             BigDecimal finePerDay,
             BigDecimal damageCompensationAmount,
@@ -139,6 +140,7 @@ public class SystemServiceImpl implements SystemService {
         validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
         validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
+        validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
@@ -162,6 +164,10 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
                 String.valueOf(renewalRejectionCooldownHours),
                 messages.get("backend.settings.description.renewalCooldown"));
+
+        saveOrUpdateSetting("RENEWAL_APPROVAL_TIMEOUT_HOURS",
+                String.valueOf(renewalApprovalTimeoutHours),
+                "Maximum hours to process a renewal request");
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),

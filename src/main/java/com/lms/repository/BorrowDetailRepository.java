@@ -114,11 +114,16 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
             "AND bd.borrow.borrowDate >= :oneMonthAgo ORDER BY bd.borrow.borrowDate DESC")
     List<BorrowDetail> findBorrowHistoryInOneMonth(@Param("memberId") Integer memberId, @Param("oneMonthAgo") LocalDateTime oneMonthAgo);
     List<BorrowDetail> findByStatus(String status);
+    List<BorrowDetail> findByStatusOrderByDueDateAsc(String status);
     List<BorrowDetail> findByStatusIgnoreCaseAndDueDateLessThanEqual(String status, LocalDateTime dueDate);
 
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.bookItem.barcode = :barcode " +
-            "AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending')")
+            "AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending')")
     List<BorrowDetail> findActiveLoansByBarcode(@Param("barcode") String barcode);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT bd FROM BorrowDetail bd WHERE bd.bookItem.barcode = :barcode AND bd.status IN ('Borrowed', 'Overdue', 'Return_Pending', 'Renew_Pending')")
+    List<BorrowDetail> findActiveLoansByBarcodeForUpdate(@Param("barcode") String barcode);
 
     // THÃŠM QUERY 2: Láº¥y danh sÃ¡ch sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c tráº£ thÃ nh cÃ´ng trong ngÃ y hÃ´m nay
     @Query("SELECT bd FROM BorrowDetail bd WHERE bd.status = 'Returned' " +
