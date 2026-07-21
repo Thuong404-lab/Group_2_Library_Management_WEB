@@ -153,40 +153,6 @@
                         No active loan was found for this barcode.
                     </td>
                 </tr>
-                <tr th:if="${false}">
-                    <td style="width: 60px; text-align: center;">
-                        <div class="d-flex justify-content-center align-items-center">
-                            <input type="checkbox" class="form-check-input" disabled />
-                        </div>
-                    </td>
-                    <td>
-                        <span class="font-monospace fw-bold u-color-8b5a2b-93ece783">BOR-1002</span>
-                    </td>
-                    <td>
-                        <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d">Nguyễn Văn A</div>
-                        <small class="text-muted">nva@gmail.com</small>
-                    </td>
-                    <td>
-                        <span class="font-monospace text-dark fw-semibold">BC001-002</span>
-                    </td>
-                    <td>
-                        <div class="fw-semibold text-dark">Nhà Giả Kim (Bản Đặc Biệt)</div>
-                        <small class="text-muted">Gia hạn: 0 lần</small>
-                    </td>
-                    <td>
-                        <span class="fw-bold text-dark">17/07/2026</span>
-                    </td>
-                    <td>
-                        <span class="fw-bold text-dark">20/07/2026</span>
-                    </td>
-                    <td class="text-end pe-4">
-                        <button type="button"
-                                class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
-                                data-bs-toggle="modal" data-bs-target="#confirmReturnModal" th:text="#{librarian.returnDesk.receive}">
-                            Receive Returned Book
-                        </button>
-                    </td>
-                </tr>
                 <!-- Rows dynamically populated by JavaScript -->
                 </tbody>
             </table>
@@ -225,11 +191,11 @@
                         </select>
                     </div>
                     <div id="damageCompensationPreview" class="return-compensation-preview mb-4" hidden
-                         th:attr="data-unit-amount=${damageCompensationAmount != null ? damageCompensationAmount : 120000}">
+                         th:attr="data-unit-amount=${damageCompensationAmount}">
                         <span class="return-compensation-label" th:text="#{librarian.returnDesk.compensationWillCreate}">A compensation charge will be created automatically</span>
                         <strong>
                             <span data-compensation-total
-                                  th:text="${#numbers.formatDecimal(damageCompensationAmount != null ? damageCompensationAmount : 120000, 0, 'COMMA', 0, 'POINT')}">120,000</span>
+                                  th:text="${#numbers.formatDecimal(damageCompensationAmount, 0, 'COMMA', 0, 'POINT')}">0</span>
                             <span th:text="#{currency.vnd}">VND</span>
                         </strong>
                         <small><span th:text="#{librarian.returnDesk.compensationBookCount}">Selected books:</span> <strong data-compensation-count>1</strong></small>
@@ -312,7 +278,7 @@
                 if (!requiresCompensation) return;
 
                 const selectedCount = Math.max(1, barcodeContainer.querySelectorAll('input[name="barcodes"]').length);
-                const unitAmount = Number(compensationPreview.dataset.unitAmount || 120000);
+                const unitAmount = Number(compensationPreview.dataset.unitAmount);
                 const totalTarget = compensationPreview.querySelector('[data-compensation-total]');
                 const countTarget = compensationPreview.querySelector('[data-compensation-count]');
                 if (totalTarget) totalTarget.textContent = new Intl.NumberFormat('vi-VN').format(unitAmount * selectedCount);
