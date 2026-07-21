@@ -29,24 +29,37 @@ public class LibrarianDashboardController {
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
             @RequestParam(required = false, defaultValue = "") String section,
+            @RequestParam(required = false, defaultValue = "") String subsection,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if ("notifications".equalsIgnoreCase(section)) {
+        String normalizedSection = section == null ? "" : section.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("notifications".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/notifications/new";
         }
-        if ("reviews".equalsIgnoreCase(section)) {
+        if ("reviews".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/reviews";
         }
-        if ("acquisition".equalsIgnoreCase(section)) {
+        if ("acquisition".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/acquisition-requests";
         }
-        if ("reports".equalsIgnoreCase(section) || "statistics".equalsIgnoreCase(section)) {
+        if ("reports".equals(normalizedSection) || "statistics".equals(normalizedSection)) {
             return "redirect:/librarian/reports";
         }
-        if ("users".equalsIgnoreCase(section)) {
+        if ("users".equals(normalizedSection)) {
             return "redirect:/librarian/members";
+        }
+        if (!"books".equals(normalizedSection)) {
+            normalizedSection = "overview";
+        }
+        String normalizedSubsection = subsection == null
+                ? ""
+                : subsection.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!"inventory".equals(normalizedSubsection) && !"storage".equals(normalizedSubsection)) {
+            normalizedSubsection = "";
         }
         model.mergeAttributes(dashboardService.getDashboardData(bookPage, shelfPage, reviewPage, requestPage, keyword));
         model.addAttribute("keyword", keyword);
+        model.addAttribute("dashboardSection", normalizedSection);
+        model.addAttribute("dashboardSubsection", normalizedSubsection);
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
     }

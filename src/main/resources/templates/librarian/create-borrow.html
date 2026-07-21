@@ -74,6 +74,17 @@
                                 </li>
 
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" th:classappend="${activeTab == 'returns' ? 'active' : ''}"
+                                        id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button"
+                                        role="tab" aria-controls="returns" th:aria-selected="${activeTab == 'returns'}">
+                                        <i class="bi bi-box-arrow-in-left"></i> <span
+                                            th:text="#{librarian.borrowDesk.returnRequests}">Return Requests</span>
+                                        <span class="borrow-tab-badge"
+                                            th:text="${#lists.size(pendingReturnRequests)}">0</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link"
                                         th:classappend="${activeTab == 'reservations' ? 'active' : ''}"
                                         id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations"
@@ -178,6 +189,58 @@
                                     </div>
                                 </div>
 
+                                <!-- TAB: YÊU CẦU TRẢ SÁCH -->
+                                <div class="tab-pane fade"
+                                    th:classappend="${activeTab == 'returns' ? 'show active' : ''}" id="returns"
+                                    role="tabpanel" aria-labelledby="returns-tab">
+                                    <div class="list-group list-group-flush">
+                                        <a th:each="returnRequest : ${pendingReturnRequests}"
+                                            th:if="${returnRequest.barcode != null && !#strings.isEmpty(returnRequest.barcode)}"
+                                            th:href="@{/librarian/loan/returns/search(barcode=${returnRequest.barcode})}"
+                                            class="list-group-item list-group-item-action borrow-request-item"
+                                            th:data-fullname="${returnRequest.memberName}"
+                                            th:data-email="${returnRequest.memberEmail}">
+                                            <div class="borrow-request-heading">
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${returnRequest.memberName != null ? returnRequest.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member</h3>
+                                                <time class="borrow-request-date"
+                                                    th:text="${returnRequest.borrowDate != null ? #temporals.format(returnRequest.borrowDate, 'dd/MM/yyyy') : #messages.msg('common.unknownDate')}">Loan date</time>
+                                            </div>
+                                            <div class="borrow-request-meta text-truncate"
+                                                th:text="${returnRequest.bookTitle != null ? returnRequest.bookTitle : #messages.msg('book.unknown')}">Book title</div>
+                                            <div class="borrow-request-footer">
+                                                <span class="status-badge status-return-pending"
+                                                    th:text="${returnRequest.barcode}">Barcode</span>
+                                                <span class="borrow-request-link"><span
+                                                        th:text="#{librarian.borrowDesk.processReturn}">Process return</span>
+                                                    <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                                            </div>
+                                        </a>
+                                        <div th:each="returnRequest : ${pendingReturnRequests}"
+                                            th:unless="${returnRequest.barcode != null && !#strings.isEmpty(returnRequest.barcode)}"
+                                            class="list-group-item borrow-request-item">
+                                            <div class="borrow-request-heading">
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${returnRequest.memberName != null ? returnRequest.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member</h3>
+                                            </div>
+                                            <div class="borrow-request-meta text-truncate"
+                                                th:text="${returnRequest.bookTitle != null ? returnRequest.bookTitle : #messages.msg('book.unknown')}">Book title</div>
+                                            <div class="borrow-request-footer">
+                                                <span class="status-badge status-pending"
+                                                    th:text="#{librarian.borrowDesk.returnBarcodeMissing}">Physical copy not assigned</span>
+                                                <a class="borrow-request-link" th:href="@{/librarian/loan/returns}">
+                                                    <span th:text="#{librarian.borrowDesk.processReturn}">Process return</span>
+                                                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div th:if="${#lists.isEmpty(pendingReturnRequests)}"
+                                            class="app-empty-state borrow-empty-state">
+                                            <span th:text="#{librarian.borrowDesk.noReturnRequests}">No return requests.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
 
                                 <!-- TAB: HÀNG ĐỢI ĐẶT TRƯỚC -->
                                 <div class="tab-pane fade"
@@ -193,13 +256,14 @@
                                             th:data-phone="${reserve.memberPhone}"
                                             th:data-username="${reserve.memberUsername}">
                                             <div class="borrow-request-heading">
-                                                <h3 class="borrow-request-name" th:text="${reserve.memberName}">Member
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${reserve.memberName != null ? reserve.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member
                                                     Name</h3>
                                                 <time class="borrow-request-date"
                                                     th:text="${#temporals.format(reserve.bookingDate, 'dd/MM/yyyy')}">01/07/2026</time>
                                             </div>
                                             <div class="borrow-request-meta text-truncate"
-                                                th:text="${reserve.bookTitle}">Book title</div>
+                                                th:text="${reserve.bookTitle != null ? reserve.bookTitle : #messages.msg('book.unknown')}">Book title</div>
                                             <div class="borrow-request-footer">
                                                 <span class="status-badge status-reservation-queue"
                                                     th:text="#{librarian.borrowDesk.queuePosition(${reserve.queuePosition})}">Queue
