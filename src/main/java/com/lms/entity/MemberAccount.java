@@ -9,6 +9,10 @@ public class MemberAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Version
+    @Column(name = "row_version", nullable = false)
+    private Long version;
+
     @OneToOne
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
@@ -58,6 +62,14 @@ public class MemberAccount {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public Member getMember() {
