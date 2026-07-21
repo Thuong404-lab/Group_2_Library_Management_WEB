@@ -21,5 +21,4 @@ public interface MembershipTierRepository extends JpaRepository<MembershipTier, 
     /** Kiểm tra tên tier đã tồn tại, bỏ qua tier hiện tại (khi chỉnh sửa) */
     boolean existsByTierNameIgnoreCaseAndTierIdNot(String tierName, Integer tierId);
 
-    Optional<MembershipTier> findFirstByOrderByConditionAscTierIdAsc();
 }
