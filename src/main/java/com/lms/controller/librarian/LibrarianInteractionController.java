@@ -6,9 +6,12 @@ import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
-import com.lms.enums.NotificationRecipientType;
 import com.lms.enums.NotificationType;
 import com.lms.service.LibrarianInteractionService;
+import com.lms.service.NotificationComposePolicy;
+import com.lms.dto.response.NotificationRecipientSearchResponse;
+import com.lms.dto.response.NotificationSendResult;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,11 +23,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/librarian/interaction")
@@ -113,15 +118,37 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (!model.containsAttribute("notificationRequest")) {
-            model.addAttribute("notificationRequest", new LibrarianNotificationSendRequest());
+            LibrarianNotificationSendRequest request = new LibrarianNotificationSendRequest();
+            request.setRequestToken(UUID.randomUUID().toString());
+            model.addAttribute("notificationRequest", request);
         }
         model.addAttribute("notificationTypes", NotificationType.manualSelectableValues());
-        model.addAttribute("members", librarianInteractionService.getAllMembers());
+        LibrarianNotificationSendRequest request =
+                (LibrarianNotificationSendRequest) model.getAttribute("notificationRequest");
+        if (request.getRequestToken() == null) request.setRequestToken(UUID.randomUUID().toString());
+        model.addAttribute("selectedMembers", librarianInteractionService.getNotificationRecipients(request.getMemberIds()));
+        model.addAttribute("activeMemberCount", librarianInteractionService.countActiveMembers());
+        model.addAttribute("recentNotifications", librarianInteractionService.getRecentManualNotifications());
+        model.addAttribute("notificationTitleMin", NotificationComposePolicy.TITLE_MIN_LENGTH);
+        model.addAttribute("notificationTitleMax", NotificationComposePolicy.TITLE_MAX_LENGTH);
+        model.addAttribute("notificationContentMin", NotificationComposePolicy.CONTENT_MIN_LENGTH);
+        model.addAttribute("notificationContentMax", NotificationComposePolicy.CONTENT_MAX_LENGTH);
+        model.addAttribute("notificationSearchMin", NotificationComposePolicy.MEMBER_SEARCH_MIN_LENGTH);
+        model.addAttribute("notificationMaxRecipients", NotificationComposePolicy.MAX_SELECTED_RECIPIENTS);
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
         }
 
         return "librarian/send-notification";
+    }
+
+    @GetMapping("/notifications/recipients")
+    @ResponseBody
+    public Page<NotificationRecipientSearchResponse> searchNotificationRecipients(
+            @RequestParam(defaultValue = "") String query,
+            @RequestParam(defaultValue = "0") int page) {
+        return librarianInteractionService.searchNotificationRecipients(query,
+                PageRequest.of(Math.max(0, page), NotificationComposePolicy.MEMBER_SEARCH_PAGE_SIZE));
     }
 
     @PostMapping("/notifications")
@@ -139,8 +166,17 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         }
 
         try {
-            librarianInteractionService.sendNotificationToMembers(request, principal.getName());
-            flash.addFlashAttribute("success", message("backend.librarian.notification.sent"));
+            if (principal == null) {
+                throw new com.lms.exception.ValidationException(
+                        message("backend.librarian.notification.senderNotFound"));
+            }
+            NotificationSendResult result =
+                    librarianInteractionService.sendNotificationToMembers(request, principal.getName());
+            flash.addFlashAttribute("success", message(
+                    result.duplicateRequest()
+                            ? "backend.librarian.notification.duplicate"
+                            : "backend.librarian.notification.sent",
+                    result.notificationId(), result.recipientCount()));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
@@ -188,54 +224,10 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
     private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {
         Map<String, String> fieldErrors = new HashMap<>();
-
-        if (request.getRecipientType() == null) {
-            fieldErrors.put("recipientType", message("backend.librarian.notification.recipientRequired"));
-        }
-
-        if (request.getNotificationType() == null) {
-            fieldErrors.put("notificationType", message("backend.librarian.notification.typeRequired"));
-        } else if (!request.getNotificationType().isManualSelectable()) {
-            fieldErrors.put("notificationType", message("backend.librarian.notification.typeInvalidForManual"));
-        }
-
-        String normalizedTitle = normalizeNotificationTitle(request.getTitle());
-        String normalizedContent = normalizeNotificationContent(request.getContent());
-        request.setTitle(normalizedTitle);
-        request.setContent(normalizedContent);
-
-        if (normalizedTitle.isEmpty()) {
-            fieldErrors.put("title", message("backend.librarian.notification.titleRequired"));
-        } else if (normalizedTitle.length() < 5) {
-            fieldErrors.put("title", message("backend.librarian.notification.titleMinimum"));
-        } else if (normalizedTitle.length() > 150) {
-            fieldErrors.put("title", message("backend.librarian.notification.titleMaximum"));
-        }
-
-        if (normalizedContent.isEmpty()) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentRequired"));
-        } else if (normalizedContent.length() < 10) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentMinimum"));
-        } else if (normalizedContent.length() > 2000) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentMaximum"));
-        } else if (!normalizedTitle.isEmpty() && normalizedContent.equalsIgnoreCase(normalizedTitle)) {
-            fieldErrors.put("content", message("backend.librarian.notification.contentDifferent"));
-        }
-
-        if (request.getRecipientType() == NotificationRecipientType.SELECTED
-                && (request.getMemberIds() == null || request.getMemberIds().isEmpty())) {
-            fieldErrors.put("memberIds", message("backend.librarian.notification.memberRequired"));
-        }
-
+        NotificationComposePolicy.normalizeAndValidate(request)
+                .forEach((field, key) -> fieldErrors.put(field, message(key,
+                        NotificationComposePolicy.MAX_SELECTED_RECIPIENTS)));
         return fieldErrors;
-    }
-
-    private String normalizeNotificationTitle(String value) {
-        return value == null ? "" : value.trim().replaceAll("\\s+", " ");
-    }
-
-    private String normalizeNotificationContent(String value) {
-        return value == null ? "" : value.strip().replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
     }
 
     private String reviewRedirect(int page) {
