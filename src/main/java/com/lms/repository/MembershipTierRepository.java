@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MembershipTierRepository extends JpaRepository<MembershipTier, Integer> {
@@ -17,4 +18,6 @@ public interface MembershipTierRepository extends JpaRepository<MembershipTier, 
 
     /** Kiểm tra tên tier đã tồn tại, bỏ qua tier hiện tại (khi chỉnh sửa) */
     boolean existsByTierNameIgnoreCaseAndTierIdNot(String tierName, Integer tierId);
+
+    Optional<MembershipTier> findFirstByOrderByConditionAscTierIdAsc();
 }
