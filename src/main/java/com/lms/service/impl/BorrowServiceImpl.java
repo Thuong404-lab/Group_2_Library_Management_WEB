@@ -216,7 +216,7 @@ public class BorrowServiceImpl implements BorrowService {
             Transaction transaction = new Transaction();
             transaction.setWallet(wallet);
             transaction.setBorrow(borrow);
-            transaction.setTransactionType("PAYMENT");
+            transaction.setTransactionType("BORROW_FEE");
             transaction.setAmount(finalFee.negate());
             transaction.setTransactionDate(LocalDateTime.now());
             transaction.setStatus("Completed");
@@ -572,7 +572,7 @@ public class BorrowServiceImpl implements BorrowService {
         Transaction transaction = new Transaction();
         transaction.setWallet(wallet);
         transaction.setBorrow(borrow);
-        transaction.setTransactionType("PAYMENT");
+        transaction.setTransactionType("BORROW_FEE");
         transaction.setAmount(finalFee.negate());
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setStatus("Completed");
