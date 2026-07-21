@@ -29,6 +29,7 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.service.TopUpPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Financial transaction rules maintained by Pham Kien Quoc for member fees,
@@ -68,8 +70,6 @@ public class FinancialServiceImpl implements FinancialService {
     private static final BigDecimal DEFAULT_DAMAGE_COMPENSATION_AMOUNT = BigDecimal.valueOf(120000);
     private static final int DEFAULT_BORROW_FEE_DAYS = 10;
     private static final BigDecimal DEFAULT_BORROW_FEE_PER_BOOK = BigDecimal.valueOf(5000);
-    private static final BigDecimal MIN_TOP_UP = BigDecimal.valueOf(10_000);
-    private static final BigDecimal MAX_WALLET_BALANCE = BigDecimal.valueOf(500_000_000);
     private static final int MEMBER_TRANSACTION_PAGE_SIZE = 10;
     private static final int LIBRARIAN_TRANSACTION_PAGE_SIZE = 12;
 
@@ -409,8 +409,11 @@ public class FinancialServiceImpl implements FinancialService {
         if (memberLookup == null || memberLookup.trim().isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.financial.memberLookupRequired"));
         }
-        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+        if (!isValidRequestId(requestId)) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidRequest"));
+        }
+        if (performedBy == null || performedBy.getStaffId() == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.staffRequired"));
         }
         String referenceCode = "CASH-TOPUP-" + requestId.trim();
         if (transactionRepository.existsByReferenceCode(referenceCode)) return;
@@ -424,8 +427,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         BigDecimal oldBalance = balanceOf(wallet.getBalance());
         BigDecimal newBalance = oldBalance.add(topUpAmount);
-        if (newBalance.compareTo(MAX_WALLET_BALANCE) > 0) {
-            throw new ValidationException(localizedMessageService.get("backend.financial.walletLimit", MAX_WALLET_BALANCE));
+        if (newBalance.compareTo(TopUpPolicy.MAX_WALLET_BALANCE) > 0) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.walletLimit", TopUpPolicy.MAX_WALLET_BALANCE));
         }
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
@@ -576,10 +579,23 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ValidationException(localizedMessageService.get("backend.financial.topupPositive"));
         }
         BigDecimal value = amount.stripTrailingZeros();
-        if (value.scale() > 0 || value.compareTo(MIN_TOP_UP) < 0 || value.compareTo(MAX_WALLET_BALANCE) > 0) {
+        if (value.scale() > 0 || value.compareTo(TopUpPolicy.MIN_AMOUNT) < 0
+                || value.compareTo(TopUpPolicy.MAX_AMOUNT) > 0) {
             throw new ValidationException(localizedMessageService.get("backend.payment.amountRange"));
         }
         return value;
+    }
+
+    private boolean isValidRequestId(String requestId) {
+        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+            return false;
+        }
+        try {
+            UUID.fromString(requestId.trim());
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     private Transaction saveWalletTransaction(Wallet wallet,
