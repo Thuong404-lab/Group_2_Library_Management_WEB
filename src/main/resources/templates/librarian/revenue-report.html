@@ -85,38 +85,38 @@
     <section class="report-stat-grid" th:aria-label="#{librarian.report.activityMetrics}">
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-journal-arrow-up" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{admin.dashboard.activeLoans}">Active Loans</p><strong class="report-stat-value" th:text="${activeBorrows}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{admin.dashboard.activeLoans}">Active Loans</p><strong class="report-stat-value" th:text="${activeBorrows ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{librarian.report.pendingReservations}">Pending approval</p><strong class="report-stat-value" th:text="${pendingReservationRequests}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{librarian.report.pendingReservations}">Pending approval</p><strong class="report-stat-value" th:text="${pendingReservationRequests ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{librarian.report.depositPaidReservations}">Deposit paid</p><strong class="report-stat-value" th:text="${depositPaidReservations}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{librarian.report.depositPaidReservations}">Deposit paid</p><strong class="report-stat-value" th:text="${depositPaidReservations ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-bag-check" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{librarian.report.readyReservations}">Ready for pickup</p><strong class="report-stat-value" th:text="${readyReservations}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{librarian.report.readyReservations}">Ready for pickup</p><strong class="report-stat-value" th:text="${readyReservations ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card report-stat-card-danger">
             <span class="report-stat-icon"><i class="bi bi-exclamation-circle" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{loan.status.overdue}">Overdue</p><strong class="report-stat-value" th:text="${overdueDetails}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{loan.status.overdue}">Overdue</p><strong class="report-stat-value" th:text="${overdueDetails ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{librarian.report.registeredMembers}">Registered members</p><strong class="report-stat-value" th:text="${totalMembers}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{librarian.report.registeredMembers}">Registered members</p><strong class="report-stat-value" th:text="${totalMembers ?: 0}">0</strong></div>
         </article>
     </section>
 
     <section class="report-finance-grid" th:aria-label="#{librarian.report.revenueMetrics}">
         <article class="report-finance-card app-card">
             <p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Collected fee revenue</p>
-            <strong class="report-finance-value"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+            <strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
         </article>
         <article class="report-finance-card app-card">
             <p class="report-stat-label" th:text="#{librarian.report.totalRefunds}">Refunded cash flow</p>
-            <strong class="report-finance-value report-refund-value"><span th:text="${#numbers.formatDecimal(report.totalRefunds, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+            <strong class="report-finance-value report-finance-value--money report-refund-value"><span th:text="${#numbers.formatDecimal(report.totalRefunds, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
             <small class="report-metric-hint" th:text="#{librarian.report.refundHint}">Shown separately and not deducted from fee revenue.</small>
         </article>
         <article class="report-finance-card app-card">
@@ -125,7 +125,7 @@
         </article>
         <article class="report-finance-card app-card">
             <p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average / Transaction</p>
-            <strong class="report-finance-value"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+            <strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
         </article>
     </section>
 
