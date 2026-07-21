@@ -16,6 +16,9 @@ public interface LibrarianDashboardService {
 
     Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage, String keyword);
 
+    Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage,
+                                         String keyword, String bookCondition);
+
     Map<String, Object> getStatisticsData();
 
     LibrarianListViewData getLibrarianList(int page, String keyword, String status);
