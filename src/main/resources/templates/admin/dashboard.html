@@ -1,125 +1,213 @@
 <!DOCTYPE html>
 <html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/admin_base}">
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+
 <head>
     <title th:text="#{admin.dashboard.pageTitle}">Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/dashboard.css}" />
 </head>
+
 <body>
-<main layout:fragment="content" th:with="activeMenu='dashboard'" class="admin-dashboard-page">
-    <header class="admin-hero">
-        <div class="admin-hero-copy">
-            <span class="admin-dashboard-eyebrow" th:text="#{admin.dashboard.controlCenter}">ADMIN CONTROL CENTER</span>
-            <h1 th:text="${#messages.msg('admin.dashboard.greeting', currentUser?.fullName != null ? currentUser.fullName : 'Admin')}">Hello, Admin!</h1>
-            <p th:text="${#messages.msg('admin.dashboard.executiveSummary', #temporals.format(currentDate, 'dd/MM/yyyy'))}">System performance and risks for today.</p>
-        </div>
-        <nav class="admin-hero-actions" th:aria-label="#{admin.dashboard.quickActions}">
-            <a th:href="@{/admin/reports}" class="admin-action admin-action--primary"><i class="bi bi-graph-up-arrow"></i><span th:text="#{admin.dashboard.openReports}">Open reports</span></a>
-            <a th:href="@{/admin/system/logs}" class="admin-action"><i class="bi bi-shield-check"></i><span th:text="#{admin.dashboard.auditLogs}">Audit logs</span></a>
-        </nav>
-    </header>
-
-    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-
-    <section class="admin-kpi-grid" aria-labelledby="adminKpiTitle">
-        <h2 id="adminKpiTitle" class="admin-kpi-section-title" th:text="#{admin.dashboard.managementKpis}">Management KPIs</h2>
-        <article class="admin-kpi-card admin-kpi-card--revenue">
-            <div class="admin-kpi-icon"><i class="bi bi-wallet2"></i></div>
-            <div><span th:text="#{admin.dashboard.monthlyRevenue}">Revenue this month</span>
-                <strong th:text="${#numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</strong>
-                <small th:classappend="${revenueChangePercent < 0} ? ' is-negative'" th:text="${#messages.msg('admin.dashboard.revenueComparison', revenueChangePercent)}">0% vs previous month</small>
+    <main layout:fragment="content" th:with="activeMenu='dashboard'" class="admin-dashboard-page">
+        <header class="admin-hero">
+            <div class="admin-hero-copy">
+                <span class="admin-dashboard-eyebrow" th:text="#{admin.dashboard.controlCenter}">ADMIN CONTROL
+                    CENTER</span>
+                <h1
+                    th:text="${#messages.msg('admin.dashboard.greeting', currentUser?.fullName != null ? currentUser.fullName : 'Admin')}">
+                    Hello, Admin!</h1>
+                <p
+                    th:text="${#messages.msg('admin.dashboard.executiveSummary', #temporals.format(currentDate, 'dd/MM/yyyy'))}">
+                    System performance and risks for today.</p>
             </div>
-        </article>
-        <article class="admin-kpi-card admin-kpi-card--members">
-            <div class="admin-kpi-icon"><i class="bi bi-people"></i></div>
-            <div><span th:text="#{admin.dashboard.activeMembers}">Active members</span>
-                <strong th:text="${activeMembers}">0</strong>
-                <small th:text="${#messages.msg('admin.dashboard.outOfTotal', totalMembers)}">out of 0 total</small>
-            </div>
-        </article>
-        <article class="admin-kpi-card admin-kpi-card--circulation">
-            <div class="admin-kpi-icon"><i class="bi bi-journal-arrow-up"></i></div>
-            <div><span th:text="#{admin.dashboard.activeLoans}">Active loans</span>
-                <strong th:text="${activeBorrows}">0</strong>
-                <small th:text="${#messages.msg('admin.dashboard.overdueSummary', overdueItems)}">0 overdue copies</small>
-            </div>
-        </article>
-        <article class="admin-kpi-card admin-kpi-card--inventory">
-            <div class="admin-kpi-icon"><i class="bi bi-bookshelf"></i></div>
-            <div><span th:text="#{admin.dashboard.availableInventory}">Available inventory</span>
-                <strong th:text="${availableItems}">0</strong>
-                <small th:text="${#messages.msg('admin.dashboard.copySummary', totalBookItems, totalBooks)}">0 copies across 0 titles</small>
-            </div>
-        </article>
-    </section>
-
-    <section class="admin-attention" aria-labelledby="attentionTitle">
-        <header class="admin-section-heading">
-            <div><span th:text="#{admin.dashboard.requiresAttention}">REQUIRES ATTENTION</span><h2 id="attentionTitle" th:text="#{admin.dashboard.riskOverview}">Risk overview</h2></div>
-            <p th:text="#{admin.dashboard.riskDescription}">Items that may require an administrator or librarian to act.</p>
+            <nav class="admin-hero-actions" th:aria-label="#{admin.dashboard.quickActions}">
+                <a th:href="@{/admin/reports}" class="admin-action admin-action--primary">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span th:text="#{admin.dashboard.openReports}">Open reports</span>
+                </a>
+                <a th:href="@{/admin/system/logs}" class="admin-action">
+                    <i class="bi bi-shield-check"></i>
+                    <span th:text="#{admin.dashboard.systemLog}">System logs</span>
+                </a>
+            </nav>
         </header>
-        <div class="admin-attention-grid">
-            <a th:href="@{/admin/reports}" class="admin-attention-item" th:classappend="${overdueItems > 0} ? ' has-warning'">
-                <i class="bi bi-alarm"></i><div><strong th:text="${overdueItems}">0</strong><span th:text="#{admin.dashboard.overdueItems}">Overdue copies</span></div><i class="bi bi-arrow-right"></i>
-            </a>
-            <a th:href="@{/admin/books}" class="admin-attention-item" th:classappend="${attentionItems > 0} ? ' has-danger'">
-                <i class="bi bi-exclamation-diamond"></i><div><strong th:text="${attentionItems}">0</strong><span th:text="#{admin.dashboard.inventoryIssues}">Lost or damaged copies</span></div><i class="bi bi-arrow-right"></i>
-            </a>
-            <a th:href="@{/admin/accounts}" class="admin-attention-item" th:classappend="${blockedAccounts > 0} ? ' has-warning'">
-                <i class="bi bi-person-lock"></i><div><strong th:text="${blockedAccounts}">0</strong><span th:text="#{admin.dashboard.blockedAccounts}">Blocked accounts</span></div><i class="bi bi-arrow-right"></i>
-            </a>
-        </div>
-    </section>
 
-    <div class="admin-dashboard-grid">
-        <section class="admin-panel admin-chart-panel" aria-labelledby="circulationTitle">
-            <header class="admin-panel-header"><div><span th:text="#{admin.dashboard.sixMonthTrend}">LAST 6 MONTHS</span><h2 id="circulationTitle" th:text="#{admin.dashboard.loanChart}">Loans and returns</h2></div><a th:href="@{/admin/reports}" th:text="#{admin.dashboard.details}">Details</a></header>
-            <div class="admin-chart-wrap"><canvas id="circulationChart"></canvas></div>
-        </section>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-        <aside class="admin-panel admin-log-panel" aria-labelledby="logTitle">
-            <header class="admin-panel-header"><div><span th:text="#{admin.dashboard.latestEvents}">LATEST EVENTS</span><h2 id="logTitle" th:text="#{admin.dashboard.systemLog}">System log</h2></div><a th:href="@{/admin/system/logs}" th:text="#{admin.dashboard.viewAll}">View all</a></header>
-            <div th:if="${#lists.isEmpty(recentLogs)}" class="admin-empty"><i class="bi bi-inbox"></i><span th:text="#{admin.dashboard.noActivity}">No recent activity.</span></div>
-            <div class="admin-log-list" th:unless="${#lists.isEmpty(recentLogs)}">
-                <article class="admin-log-item" th:each="log : ${recentLogs}">
-                    <div class="admin-log-avatar" th:text="${log.user?.fullName != null ? #strings.substring(log.user.fullName, 0, 1) : 'S'}">S</div>
-                    <div><strong th:text="${log.user?.fullName != null ? log.user.fullName : #messages.msg('admin.dashboard.system')}">System</strong><p th:text="${log.description}">Action</p><time th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Time</time></div>
+        <section class="admin-shortcuts" aria-labelledby="shortcutTitle">
+            <header class="admin-section-heading">
+                <div><span th:text="#{admin.dashboard.management}">MANAGEMENT</span>
+                    <h2 id="shortcutTitle" th:text="#{admin.dashboard.shortcutTitle}">Common destinations</h2>
+                </div>
+            </header>
+            <nav class="admin-shortcut-grid">
+                <a th:href="@{/admin/accounts}">
+                    <i class="bi bi-person-vcard"> </i><span th:text="#{admin.dashboard.manageAccounts}">Accounts</span>
+                </a>
+                <a th:href="@{/admin/staff}">
+                    <i class="bi bi-person-badge"></i><span th:text="#{admin.dashboard.manageStaff}">Staff</span>
+                    <small th:text="${activeStaff + ' / ' + totalStaff}">0 / 0</small>
+                </a>
+                <a th:href="@{/admin/books}">
+                    <i class="bi bi-book"></i><span th:text="#{admin.dashboard.manageCollection}">Collection</span>
+                </a>
+                <a th:href="@{/admin/payments}">
+                    <i class="bi bi-credit-card"></i><span th:text="#{admin.dashboard.managePayments}">Payments</span>
+                </a>
+            </nav>
+
+            <h2 id="adminKpiTitle" class="admin-kpi-section-title" th:text="#{admin.dashboard.managementKpis}">
+                Management KPIs</h2>
+            <div class="admin-shortcut-grid" aria-labelledby="adminKpiTitle">
+                <article class="admin-kpi-card admin-kpi-card--revenue">
+                    <div class="admin-kpi-icon"><i class="bi bi-wallet2"></i></div>
+                    <div><span th:text="#{admin.dashboard.monthlyRevenue}">Revenue this month</span>
+                        <strong class="admin-revenue-value"
+                            th:title="${#numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT') + ' VND'}"
+                            th:text="${monthlyRevenueDisplayScale == 'billion'
+                                ? #messages.msg('admin.dashboard.revenueBillions', monthlyRevenueDisplayValue)
+                                : (monthlyRevenueDisplayScale == 'million'
+                                    ? #messages.msg('admin.dashboard.revenueMillions', monthlyRevenueDisplayValue)
+                                    : #numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT') + ' VND')}">0 VND</strong>
+                        <small th:if="${revenueComparisonAvailable}"
+                            th:classappend="${revenueChangeDirection < 0} ? ' is-negative' : (${revenueChangeDirection > 0} ? ' is-positive' : '')"
+                            th:text="${#messages.msg('admin.dashboard.revenueComparison', revenueChangeDisplay)}">0% vs previous month</small>
+                        <small th:unless="${revenueComparisonAvailable}"
+                            th:text="#{admin.dashboard.revenueNoComparison}">No previous-month comparison</small>
+                    </div>
+                </article>
+                <article class="admin-kpi-card admin-kpi-card--members">
+                    <div class="admin-kpi-icon"><i class="bi bi-people"></i></div>
+                    <div><span th:text="#{admin.dashboard.activeMembers}">Active members</span>
+                        <strong th:text="${activeMembers}">0</strong>
+                        <small th:text="${#messages.msg('admin.dashboard.outOfTotal', totalMembers)}">out of 0
+                            total</small>
+                    </div>
+                </article>
+                <article class="admin-kpi-card admin-kpi-card--circulation">
+                    <div class="admin-kpi-icon"><i class="bi bi-journal-arrow-up"></i></div>
+                    <div><span th:text="#{admin.dashboard.activeLoans}">Active loans</span>
+                        <strong th:text="${activeBorrows}">0</strong>
+                        <small th:text="${#messages.msg('admin.dashboard.overdueSummary', overdueItems)}">0 overdue
+                            copies</small>
+                    </div>
+                </article>
+                <article class="admin-kpi-card admin-kpi-card--inventory">
+                    <div class="admin-kpi-icon"><i class="bi bi-bookshelf"></i></div>
+                    <div><span th:text="#{admin.dashboard.availableInventory}">Available inventory</span>
+                        <strong th:text="${availableItems}">0</strong>
+                        <small th:text="${#messages.msg('admin.dashboard.copySummary', totalBookItems, totalBooks)}">0
+                            copies across 0 titles</small>
+                    </div>
                 </article>
             </div>
-        </aside>
-    </div>
+        </section>
 
-    <section class="admin-shortcuts" aria-labelledby="shortcutTitle">
-        <header class="admin-section-heading"><div><span th:text="#{admin.dashboard.management}">MANAGEMENT</span><h2 id="shortcutTitle" th:text="#{admin.dashboard.shortcutTitle}">Common destinations</h2></div></header>
-        <nav class="admin-shortcut-grid">
-            <a th:href="@{/admin/accounts}"><i class="bi bi-person-vcard"></i><span th:text="#{admin.dashboard.manageAccounts}">Accounts</span></a>
-            <a th:href="@{/admin/staff}"><i class="bi bi-person-badge"></i><span th:text="#{admin.dashboard.manageStaff}">Staff</span><small th:text="${activeStaff + ' / ' + totalStaff}">0 / 0</small></a>
-            <a th:href="@{/admin/books}"><i class="bi bi-book"></i><span th:text="#{admin.dashboard.manageCollection}">Collection</span></a>
-            <a th:href="@{/admin/payments}"><i class="bi bi-credit-card"></i><span th:text="#{admin.dashboard.managePayments}">Payments</span></a>
-        </nav>
-    </section>
+        <section class="admin-attention" aria-labelledby="attentionTitle">
+            <header class="admin-section-heading">
+                <div>
+                    <span th:text="#{admin.dashboard.requiresAttention}">REQUIRES ATTENTION</span>
+                    <h2 id="attentionTitle" th:text="#{admin.dashboard.riskOverview}">Risk overview</h2>
+                </div>
+                <p th:text="#{admin.dashboard.riskDescription}">Items that may require an administrator or librarian to act.</p>
+            </header>
+            <div class="admin-attention-grid">
+                <a th:href="@{/admin/reports}" class="admin-attention-item"
+                    th:classappend="${overdueItems > 0} ? ' has-warning'">
+                    <i class="bi bi-alarm"></i>
+                    <div><strong th:text="${overdueItems}">0</strong><span
+                            th:text="#{admin.dashboard.overdueItems}">Overdue copies</span></div>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a th:href="@{/admin/books}" class="admin-attention-item"
+                    th:classappend="${attentionItems > 0} ? ' has-danger'">
+                    <i class="bi bi-exclamation-diamond"></i>
+                    <div><strong th:text="${attentionItems}">0</strong><span
+                            th:text="#{admin.dashboard.inventoryIssues}">Lost or damaged copies</span></div>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a th:href="@{/admin/accounts}" class="admin-attention-item"
+                    th:classappend="${blockedAccounts > 0} ? ' has-warning'">
+                    <i class="bi bi-person-lock"></i>
+                    <div><strong th:text="${blockedAccounts}">0</strong><span
+                            th:text="#{admin.dashboard.blockedAccounts}">Blocked accounts</span></div>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script th:inline="javascript">
-        document.addEventListener("DOMContentLoaded", function () {
-            const stats = /*[[${monthStats}]]*/ [];
-            const canvas = document.getElementById("circulationChart");
-            if (!canvas || !window.Chart || !stats || stats.length === 0) return;
-            new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: stats.map(item => item.label),
-                    datasets: [
-                        {label: /*[[#{admin.dashboard.borrowedSeries}]]*/ "Loans", data: stats.map(item => item.count), backgroundColor: "rgba(139,90,43,.78)", borderRadius: 7},
-                        {label: /*[[#{admin.dashboard.returnedSeries}]]*/ "Returns", data: stats.map(item => item.returnCount), backgroundColor: "rgba(85,117,93,.72)", borderRadius: 7}
-                    ]
-                },
-                options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {position: "bottom", labels: {usePointStyle: true, boxWidth: 8}}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}, x: {grid: {display: false}}}}
+        <div class="admin-dashboard-grid">
+            <section class="admin-panel admin-chart-panel" aria-labelledby="circulationTitle">
+                <header class="admin-panel-header">
+                    <div><span th:text="#{admin.dashboard.sixMonthTrend}">LAST 6 MONTHS</span>
+                        <h2 id="circulationTitle" th:text="#{admin.dashboard.loanChart}">Loans and returns</h2>
+                    </div><a th:href="@{/admin/reports}" th:text="#{admin.dashboard.details}">Details</a>
+                </header>
+                <div class="admin-chart-wrap" th:if="${hasCirculationData}">
+                    <canvas id="circulationChart" role="img" th:aria-label="#{admin.dashboard.chartAriaLabel}">
+                        <span th:text="#{admin.dashboard.chartAriaLabel}">Monthly borrowed and returned copies chart</span>
+                    </canvas>
+                </div>
+                <div id="circulationChartUnavailable" class="admin-empty" hidden>
+                    <i class="bi bi-bar-chart"></i>
+                    <span th:text="#{admin.dashboard.chartUnavailable}">The chart could not be loaded.</span>
+                </div>
+                <div class="admin-empty" th:unless="${hasCirculationData}">
+                    <i class="bi bi-bar-chart"></i>
+                    <span th:text="#{admin.dashboard.chartNoData}">There is no circulation data for this period.</span>
+                </div>
+            </section>
+
+            <aside class="admin-panel admin-log-panel" aria-labelledby="logTitle">
+                <header class="admin-panel-header">
+                    <div><span th:text="#{admin.dashboard.latestEvents}">LATEST EVENTS</span>
+                        <h2 id="logTitle" th:text="#{admin.dashboard.systemLog}">System log</h2>
+                    </div><a th:href="@{/admin/system/logs}" th:text="#{admin.dashboard.viewAll}">View all</a>
+                </header>
+                <div th:if="${#lists.isEmpty(recentLogs)}" class="admin-empty"><i class="bi bi-inbox"></i><span
+                        th:text="#{admin.dashboard.noActivity}">No recent activity.</span></div>
+                <div class="admin-log-list" th:unless="${#lists.isEmpty(recentLogs)}">
+                    <article class="admin-log-item" th:each="log : ${recentLogs}">
+                        <div class="admin-log-avatar"
+                            th:text="${log.user != null and !#strings.isEmpty(log.user.fullName) ? #strings.substring(log.user.fullName, 0, 1) : 'S'}">
+                            S</div>
+                        <div><strong
+                                th:text="${log.user != null and !#strings.isEmpty(log.user.fullName) ? log.user.fullName : #messages.msg('admin.dashboard.system')}">System</strong>
+                            <p th:text="${log.description}">Action</p><time
+                                th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy - HH:mm') : #messages.msg('admin.dashboard.notAvailable')}">Time</time>
+                        </div>
+                    </article>
+                </div>
+            </aside>
+        </div>
+
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:inline="javascript">
+            document.addEventListener("DOMContentLoaded", function () {
+                const stats = /*[[${monthStats}]]*/[];
+                const canvas = document.getElementById("circulationChart");
+                if (!canvas || !stats || stats.length === 0) return;
+                if (!window.Chart) {
+                    canvas.closest(".admin-chart-wrap").hidden = true;
+                    document.getElementById("circulationChartUnavailable").hidden = false;
+                    return;
+                }
+                new Chart(canvas, {
+                    type: "bar",
+                    data: {
+                        labels: stats.map(item => item.label),
+                        datasets: [
+                            { label: /*[[#{admin.dashboard.borrowedSeries}]]*/ "Loans", data: stats.map(item => item.count), backgroundColor: "rgba(139,90,43,.78)", borderRadius: 7 },
+                            { label: /*[[#{admin.dashboard.returnedSeries}]]*/ "Returns", data: stats.map(item => item.returnCount), backgroundColor: "rgba(85,117,93,.72)", borderRadius: 7 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+                });
             });
-        });
-    </script>
-</main>
+        </script>
+    </main>
 </body>
+
 </html>
