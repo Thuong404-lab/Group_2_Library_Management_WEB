@@ -1,8 +1,8 @@
 package com.lms.enums;
 
-public enum AcquisitionRequestStatus {
+public enum FeedbackStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    CANCELLED
+    DELETED_BY_MEMBER
 }

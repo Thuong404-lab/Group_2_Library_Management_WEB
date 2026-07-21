@@ -140,7 +140,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("reviews", interactionService.getReviewsForModeration(
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
-        data.put("requests", interactionService.getBookAcquisitionRequests(
+        data.put("requests", interactionService.getBookAcquisitionRequests(null, null,
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
         data.put("shelves", storageService.getAllStorageLocations());

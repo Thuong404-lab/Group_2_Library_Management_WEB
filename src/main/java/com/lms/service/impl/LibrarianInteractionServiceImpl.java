@@ -14,6 +14,9 @@ import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
+import com.lms.enums.FeedbackStatus;
+import com.lms.domain.ReviewPolicy;
+import com.lms.domain.AcquisitionRequestPolicy;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import com.lms.service.LocalizedMessageService;
@@ -26,6 +29,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +39,6 @@ import java.util.Map;
 @Service
 public class LibrarianInteractionServiceImpl implements LibrarianInteractionService {
 
-    private static final String DELETED_BY_MEMBER_STATUS = "DELETED_BY_MEMBER";
     private static final String MEMBER_CODE_PREFIX = "MEM-";
     private static final MessageSource TEST_FALLBACK_MESSAGES = createFallbackMessages();
 
@@ -68,7 +71,10 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Override
     @Transactional(readOnly = true)
     public Page<LibrarianReviewResponse> getReviewsForModeration(String status, Pageable pageable) {
-        Page<Feedback> feedbacks = feedbackRepository.findAll(pageable);
+        FeedbackStatus requestedStatus = parseFeedbackStatus(status);
+        Page<Feedback> feedbacks = requestedStatus == null
+                ? feedbackRepository.findAll(pageable)
+                : feedbackRepository.findByStatus(requestedStatus, pageable);
 
         return feedbacks.map(fb -> {
             LibrarianReviewResponse res = new LibrarianReviewResponse();
@@ -77,10 +83,11 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             res.setMemberName(fb.getMember().getUser().getFullName());
             res.setRating(fb.getRating());
             res.setComment(fb.getComment());
-            res.setStatus(fb.getStatus());
+            res.setStatus(fb.getStatus().name());
             res.setCreatedDate(fb.getCreatedDate());
             res.setLibrarianResponse(fb.getLibrarianResponse());
             res.setResponseDate(fb.getResponseDate());
+            res.setModerationReason(fb.getModerationReason());
             return res;
         });
     }
@@ -91,8 +98,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
 
-        if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
             throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
+        }
+
+        if (FeedbackStatus.APPROVED != feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.reviewReply.approvedOnly"));
         }
 
         String normalizedResponse = request.getResponse() == null ? "" : request.getResponse().strip()
@@ -102,7 +113,8 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             throw new ValidationException(msg("backend.librarian.reviewReply.required"));
         }
 
-        if (normalizedResponse.length() < 5 || normalizedResponse.length() > 1000) {
+        if (normalizedResponse.length() < ReviewPolicy.CONTENT_MIN_LENGTH
+                || normalizedResponse.length() > ReviewPolicy.CONTENT_MAX_LENGTH) {
             throw new ValidationException(msg("backend.librarian.reviewReply.range"));
         }
 
@@ -131,11 +143,85 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional
-    public void deleteReview(Integer feedbackId) {
+    public void approveReview(Integer feedbackId) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
 
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
+        }
+        if (FeedbackStatus.APPROVED == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.alreadyApproved"));
+        }
+
+        feedback.setStatus(FeedbackStatus.APPROVED);
+        feedback.setModerationReason(null);
+        feedback.setModeratedDate(LocalDateTime.now());
+        feedbackRepository.save(feedback);
+
+        sendPersonalNotification(feedback.getMember(), NotificationType.REVIEW,
+                NotificationEventType.REVIEW_APPROVED,
+                "notification.reviewApproved.title", "notification.reviewApproved.content",
+                feedback.getBook().getTitle());
+    }
+
+    @Override
+    @Transactional
+    public void rejectReview(Integer feedbackId, String reason) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.review.notFound", feedbackId)));
+
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.deletedByMember"));
+        }
+        if (FeedbackStatus.REJECTED == feedback.getStatus()) {
+            throw new ConflictException(msg("backend.librarian.review.alreadyRejected"));
+        }
+
+        String normalizedReason = normalizeSingleLine(reason);
+        if (normalizedReason.length() < ReviewPolicy.CONTENT_MIN_LENGTH
+                || normalizedReason.length() > ReviewPolicy.MODERATION_REASON_MAX_LENGTH) {
+            throw new ValidationException(msg("backend.librarian.reviewReject.reasonRange"));
+        }
+        if (normalizedReason.codePoints().noneMatch(Character::isLetter)) {
+            throw new ValidationException(msg("backend.librarian.reviewReject.reasonLetters"));
+        }
+
+        feedback.setStatus(FeedbackStatus.REJECTED);
+        feedback.setModerationReason(normalizedReason);
+        feedback.setModeratedDate(LocalDateTime.now());
+        feedback.setLibrarianResponse(null);
+        feedback.setResponseDate(null);
+        feedbackRepository.save(feedback);
+
+        sendPersonalNotification(feedback.getMember(), NotificationType.REVIEW,
+                NotificationEventType.REVIEW_REJECTED,
+                "notification.reviewRejected.title", "notification.reviewRejected.content",
+                feedback.getBook().getTitle(), normalizedReason);
+    }
+
+    @Override
+    @Transactional
+    public void deleteReview(Integer feedbackId) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        msg("backend.librarian.review.notFound", feedbackId)));
         feedbackRepository.delete(feedback);
+    }
+
+    private FeedbackStatus parseFeedbackStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return FeedbackStatus.valueOf(status.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ValidationException(msg("backend.librarian.review.statusInvalid"));
+        }
+    }
+
+    private String normalizeSingleLine(String value) {
+        return value == null ? "" : value.strip().replaceAll("\\s+", " ");
     }
 
     private void sendPersonalNotification(Member member,
@@ -207,6 +293,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                         memberNotificationRepository.countByNotification_NotificationId(notification.getNotificationId()),
                         memberNotificationRepository.countByNotification_NotificationIdAndIsReadTrue(notification.getNotificationId())
                 )).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Member> getAllMembers() {
+        return memberRepository.findAllWithActiveAccount();
     }
 
     @Override
@@ -292,49 +384,50 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     @Override
     @Transactional(readOnly = true)
     public Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable) {
-        return bookAcquisitionRequestRepository.findAll(pageable);
+        return getBookAcquisitionRequests(null, null, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookAcquisitionRequest> getBookAcquisitionRequests(String status, String keyword, Pageable pageable) {
+        AcquisitionRequestStatus requestedStatus = parseAcquisitionStatus(status);
+        String normalizedKeyword = keyword == null ? "" : keyword.strip().replaceAll("\\s+", " ");
+        if (normalizedKeyword.length() > AcquisitionRequestPolicy.SEARCH_KEYWORD_MAX_LENGTH) {
+            throw new ValidationException(msg("backend.librarian.acquisition.keywordMaximum"));
+        }
+        return bookAcquisitionRequestRepository.searchForModeration(
+                requestedStatus, normalizedKeyword, pageable);
     }
 
     @Override
     @Transactional
-    public void approveBookAcquisitionRequest(Integer requestId) {
+    public void approveBookAcquisitionRequest(Integer requestId, String note, String staffUsername) {
         BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
+        String normalizedNote = validateDecisionNote(note);
         request.setStatus(AcquisitionRequestStatus.APPROVED);
-        request.setDecisionNote(null);
+        request.setDecisionNote(normalizedNote);
         request.setProcessedDate(LocalDateTime.now());
-        bookAcquisitionRequestRepository.save(request);
+        request.setProcessedBy(getStaff(staffUsername));
+        saveAcquisitionDecision(request);
         sendPersonalNotification(
                 request.getMember(),
                 NotificationType.ACQUISITION, NotificationEventType.ACQUISITION_APPROVED,
                 "notification.acquisitionApproved.title",
                 "notification.acquisitionApproved.content",
-                request.getTitle()
+                request.getTitle(), normalizedNote
         );
     }
 
     @Override
     @Transactional
-    public void rejectBookAcquisitionRequest(Integer requestId, String reason) {
-        String normalizedReason = reason == null ? "" : reason.strip()
-                .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
-        if (normalizedReason.isEmpty()) {
-            throw new ValidationException(msg("librarian.acquisition.validationRequired"));
-        }
-        if (normalizedReason.length() < 5) {
-            throw new ValidationException(msg("librarian.acquisition.validationMinimum"));
-        }
-        if (normalizedReason.length() > 500) {
-            throw new ValidationException(msg("librarian.acquisition.validationMaximum"));
-        }
-        if (normalizedReason.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException(msg("librarian.acquisition.validationLetters"));
-        }
-
+    public void rejectBookAcquisitionRequest(Integer requestId, String reason, String staffUsername) {
+        String normalizedReason = validateDecisionNote(reason);
         BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
         request.setStatus(AcquisitionRequestStatus.REJECTED);
         request.setDecisionNote(normalizedReason);
         request.setProcessedDate(LocalDateTime.now());
-        bookAcquisitionRequestRepository.save(request);
+        request.setProcessedBy(getStaff(staffUsername));
+        saveAcquisitionDecision(request);
         sendPersonalNotification(
                 request.getMember(),
                 NotificationType.ACQUISITION, NotificationEventType.ACQUISITION_REJECTED,
@@ -351,6 +444,48 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
             throw new ConflictException(msg("backend.librarian.acquisition.alreadyProcessed"));
         }
         return request;
+    }
+
+    private AcquisitionRequestStatus parseAcquisitionStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        try {
+            return AcquisitionRequestStatus.valueOf(status.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ValidationException(msg("backend.librarian.acquisition.statusInvalid"));
+        }
+    }
+
+    private String validateDecisionNote(String value) {
+        String normalized = value == null ? "" : value.strip()
+                .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
+        if (normalized.isEmpty()) {
+            throw new ValidationException(msg("librarian.acquisition.validationRequired"));
+        }
+        if (normalized.length() < AcquisitionRequestPolicy.DECISION_NOTE_MIN_LENGTH) {
+            throw new ValidationException(msg("librarian.acquisition.validationMinimum"));
+        }
+        if (normalized.length() > AcquisitionRequestPolicy.DECISION_NOTE_MAX_LENGTH) {
+            throw new ValidationException(msg("librarian.acquisition.validationMaximum"));
+        }
+        if (normalized.codePoints().noneMatch(Character::isLetter)) {
+            throw new ValidationException(msg("librarian.acquisition.validationLetters"));
+        }
+        return normalized;
+    }
+
+    private Staff getStaff(String username) {
+        return staffAccountRepository.findByUsername(username)
+                .map(StaffAccount::getStaff)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        msg("backend.librarian.acquisition.staffNotFound")));
+    }
+
+    private void saveAcquisitionDecision(BookAcquisitionRequest request) {
+        try {
+            bookAcquisitionRequestRepository.saveAndFlush(request);
+        } catch (OptimisticLockingFailureException exception) {
+            throw new ConflictException(msg("backend.acquisition.dataChanged"), exception);
+        }
     }
 
     private NotificationRecipientSearchResponse toRecipientResponse(Member member) {
