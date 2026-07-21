@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/accounts.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
+    <script defer th:src="@{/js/admin-account-create.js}"></script>
 </head>
 
 <body>
@@ -37,13 +38,12 @@
                         </h5>
                     </div>
                     <div class="modal-body member-modal-body">
-                        <th:block th:replace="~{admin/create-account :: createAccountForm('members', true)}"></th:block>
+                        <th:block th:replace="~{admin/create-member-account :: createMemberAccountForm}"></th:block>
                     </div>
                 </div>
             </div>
         </div>
 
-        <th:block th:replace="~{admin/create-account :: createAccountValidation}"></th:block>
         <script th:if="${openCreateAccountModal}">
             document.addEventListener("DOMContentLoaded", function () {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById("createMemberAccountModal")).show();
@@ -228,16 +228,17 @@
                                                     <div class="modal-body member-modal-body">
                                                         <div class="alert alert-danger d-none member-update-global-error"
                                                             role="alert"></div>
-                                                        <div class="row g-3">
+                                                        <div class="account-form-grid">
                                                             <div class="col-md-6">
-                                                                <label
+                                                                <label th:for="${'updateFullName' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     <span th:text="#{member.profile.fullName}">Full
                                                                         Name</span> <span
                                                                         class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="fullName"
-                                                                    maxlength="50"
+                                                                    th:id="${'updateFullName' + account.accountId}"
+                                                                    minlength="2" maxlength="50"
                                                                     th:data-label="#{member.profile.fullName}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (account.user != null ? account.user.fullName : '')}"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
@@ -250,14 +251,15 @@
                                                             </div>
 
                                                             <div class="col-md-6">
-                                                                <label
+                                                                <label th:for="${'updateUsername' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     <span th:text="#{member.profile.username}">Username</span>
                                                                     <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
+                                                                    th:id="${'updateUsername' + account.accountId}"
                                                                     th:data-label="#{member.profile.username}"
-                                                                    pattern="[a-zA-Z0-9_]{3,20}"
+                                                                    pattern="[a-zA-Z0-9_]{3,20}" minlength="3" maxlength="20"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -271,16 +273,17 @@
                                                             </div>
 
                                                             <div class="col-md-6">
-                                                                <label
+                                                                <label th:for="${'updatePhone' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     <span th:text="#{member.profile.phone}">Phone
                                                                         Number</span> <span
                                                                         class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="phone"
+                                                                    th:id="${'updatePhone' + account.accountId}"
                                                                     th:data-label="#{member.profile.phone}" required
                                                                     pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
-                                                                    inputmode="tel"
+                                                                    maxlength="12" inputmode="tel"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
@@ -292,13 +295,15 @@
                                                             </div>
 
                                                             <div class="col-md-6">
-                                                                <label
+                                                                <label th:for="${'updateEmail' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     <span th:text="#{common.email}">Email</span>
                                                                     <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="email" type="email"
+                                                                    th:id="${'updateEmail' + account.accountId}"
                                                                     th:data-label="#{common.email}"
+                                                                    maxlength="255"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
@@ -312,33 +317,28 @@
                                                             </div>
 
                                                             <div class="col-md-6">
-                                                                <label
+                                                                <label th:id="${'updateTierLabel' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     <span th:text="#{member.profile.tier}">Membership
                                                                         Tier</span>
                                                                 </label>
                                                                 <div class="member-readonly-field" role="textbox"
                                                                     aria-readonly="true"
+                                                                    th:aria-labelledby="${'updateTierLabel' + account.accountId}"
                                                                     th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
                                                                     Regular
-                                                                </div>
-                                                                <input type="hidden" name="tierId"
-                                                                    th:value="${member != null and member.tier != null ? member.tier.tierId : ''}">
-                                                                <div class="invalid-feedback" data-error-for="tierId"
-                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['tierId'] : ''}">
-                                                                    <span th:text="#{validation.tier}">Invalid
-                                                                        membership tier.</span>
                                                                 </div>
                                                             </div>
 
 
                                                             <div class="col-md-6">
-                                                                <label
+                                                                <label th:for="${'updateStatus' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
                                                                     <span th:text="#{common.status}">Status</span> <span
                                                                         class="text-danger">*</span>
                                                                 </label>
                                                                 <select class="form-select form-control" name="status"
+                                                                    th:id="${'updateStatus' + account.accountId}"
                                                                     th:data-label="#{common.status}" required
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                     <option value="Active"
@@ -786,8 +786,8 @@
                         if (fullName === "") {
                             errors.fullName = /*[[#{validation.fullNameRequired}]]*/ "Full name is required.";
                         }
-                        if (fullName.length > 50) {
-                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name cannot exceed 50 characters.";
+                        if (fullName !== "" && (fullName.length < 2 || fullName.length > 50)) {
+                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name must be between 2 and 50 characters.";
                         } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
                             errors.fullName = /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
                         } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
@@ -804,6 +804,8 @@
                         }
                         if (email === "") {
                             errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
+                        } else if (email.length > 255) {
+                            errors.email = /*[[#{validation.emailMax}]]*/ "Email cannot exceed 255 characters.";
                         } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
                             errors.email = /*[[#{validation.email}]]*/ "Invalid email format.";
                         }
@@ -811,9 +813,6 @@
                             errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
                         } else if (!/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$/.test(phone)) {
                             errors.phone = /*[[#{backend.profile.phoneFormat}]]*/ "Invalid Vietnamese phone number.";
-                        }
-                        if (form.elements.tierId.value === "") {
-                            errors.tierId = /*[[#{validation.tier}]]*/ "Invalid membership tier.";
                         }
                         if (form.elements.status.value === "") {
                             errors.status = /*[[#{validation.status}]]*/ "Invalid account status.";
