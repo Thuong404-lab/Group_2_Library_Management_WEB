@@ -11,8 +11,7 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='accounts'"
-        class="member-management-page accounts-page">
+    <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page accounts-page">
         <header class="member-page-header">
             <div>
                 <h1 class="member-page-title" th:text="#{admin.accounts.heading}">User Accounts</h1>
@@ -65,21 +64,22 @@
         <section class="member-data-card">
             <div class="member-data-card-body">
                 <div class="member-summary-chips" th:aria-label="#{admin.accounts.summary}">
-                    <span th:text="#{librarian.members.total(${memberSummary != null ? memberSummary['total'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{librarian.members.total(${@displayNumber.count(memberSummary != null ? memberSummary['total'] : 0)})}">0
                         members</span>
-                    <span
-                        th:text="#{librarian.members.active(${memberSummary != null ? memberSummary['active'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{librarian.members.active(${@displayNumber.count(memberSummary != null ? memberSummary['active'] : 0)})}">0
                         active</span>
-                    <span
-                        th:text="#{librarian.members.inactive(${memberSummary != null ? memberSummary['inactive'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{librarian.members.inactive(${@displayNumber.count(memberSummary != null ? memberSummary['inactive'] : 0)})}">0
                         inactive</span>
-                    <span
-                        th:text="#{librarian.members.blocked(${memberSummary != null ? memberSummary['blocked'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{librarian.members.blocked(${@displayNumber.count(memberSummary != null ? memberSummary['blocked'] : 0)})}">0
                         blocked</span>
                 </div>
                 <!-- Search & Filter -->
                 <div class="member-toolbar">
-                    <form class="member-search-form" method="get" th:action="@{/admin/accounts}" data-auto-filter-form
+                    <form class="member-search-form" method="get" th:action="@{/admin/member-list}" data-auto-filter-form
                         data-focus-key="adminAccountFilterFocus">
                         <div class="input-group member-search-group">
                             <span class="input-group-text">
@@ -111,7 +111,7 @@
                                     th:text="#{account.status.blocked}">Blocked</option>
                             </select>
 
-                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/accounts}">
+                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/member-list}">
                                 <i class="bi bi-arrow-clockwise"></i>
                                 <span th:text="#{common.clearFilter}">Clear filter</span>
                             </a>
@@ -142,11 +142,14 @@
 
                         <tbody>
                             <tr th:each="account, iterStat : ${accounts.content}">
-                                <td class="ps-3 fw-bold"
-                                    th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
+                                <td class="ps-3 fw-bold app-number"
+                                    th:text="${@displayNumber.count(accounts.number * accounts.size + iterStat.index + 1)}">
+                                    1</td>
                                 <td>
                                     <span class="fw-bold text-classic" th:text="${account.username}">username</span>
-                                    <div class="small text-muted" th:text="'ID: ' + ${account.accountId}">ID: 1</div>
+                                    <div class="small text-muted app-code-number"
+                                        th:text="${account.accountId != null ? #messages.msg('common.accountIdValue', account.accountId) : #messages.msg('common.accountIdMissing')}">
+                                        Account ID: 1</div>
                                 </td>
                                 <td>
                                     <div th:if="${account.user != null}">
@@ -157,7 +160,7 @@
                                         </div>
                                         <div class="small text-muted" th:if="${account.user.phone}">
                                             <i class="bi bi-telephone me-1"> </i>
-                                            <span th:text="${account.user.phone}">phone</span>
+                                            <span class="app-phone-number" th:text="${account.user.phone}">phone</span>
                                         </div>
                                     </div>
                                     <div th:unless="${account.user != null}" class="fst-italic text-muted small">
@@ -175,7 +178,7 @@
 
                                     <span class="membership-tier-badge membership-tier-badge--empty"
                                         th:if="${member == null || member.tier == null}">
-                                        N/A
+                                        —
                                     </span>
                                 </td>
 
@@ -209,8 +212,8 @@
                                             class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                             <div class="modal-content">
                                                 <form method="post" class="member-update-form" novalidate
-                                                    th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
-                                                    th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='members')}">
+                                                    th:action="@{/admin/member-list/edit/{id}(id=${account.accountId})}"
+                                                    th:attr="data-validation-url=@{/admin/member-list/edit/{id}/validate(id=${account.accountId},source='members')}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
@@ -253,13 +256,15 @@
                                                             <div class="col-md-6">
                                                                 <label th:for="${'updateUsername' + account.accountId}"
                                                                     class="form-label fw-bold small text-muted text-uppercase">
-                                                                    <span th:text="#{member.profile.username}">Username</span>
+                                                                    <span
+                                                                        th:text="#{member.profile.username}">Username</span>
                                                                     <span class="required-marker">*</span>
                                                                 </label>
                                                                 <input class="form-control" name="username"
                                                                     th:id="${'updateUsername' + account.accountId}"
                                                                     th:data-label="#{member.profile.username}"
-                                                                    pattern="[a-zA-Z0-9_]{3,20}" minlength="3" maxlength="20"
+                                                                    pattern="[a-zA-Z0-9_]{3,20}" minlength="3"
+                                                                    maxlength="20"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -289,7 +294,9 @@
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                 <div class="invalid-feedback" data-error-for="phone"
                                                                     th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
-                                                                    <span th:text="#{backend.profile.phoneFormat}">Invalid phone
+                                                                    <span
+                                                                        th:text="#{backend.profile.phoneFormat}">Invalid
+                                                                        phone
                                                                         number.</span>
                                                                 </div>
                                                             </div>
@@ -302,8 +309,7 @@
                                                                 </label>
                                                                 <input class="form-control" name="email" type="email"
                                                                     th:id="${'updateEmail' + account.accountId}"
-                                                                    th:data-label="#{common.email}"
-                                                                    maxlength="255"
+                                                                    th:data-label="#{common.email}" maxlength="255"
                                                                     pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
@@ -402,7 +408,7 @@
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content">
                                                 <form method="post"
-                                                    th:action="@{/admin/accounts/{id}/send-password-reset(id=${account.accountId})}">
+                                                    th:action="@{/admin/member-list/{id}/send-password-reset(id=${account.accountId})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
@@ -433,7 +439,8 @@
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted"
                                                                         th:text="#{common.accountId}">Account ID</div>
-                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                    <div class="fw-bold app-code-number"
+                                                                        th:text="${account.accountId != null ? account.accountId : '—'}">
                                                                         id</div>
                                                                 </div>
                                                                 <div class="col-md-6">
@@ -473,25 +480,23 @@
                                     </div>
 
                                     <button type="button"
-                                        th:if="${account.status == 'Active'}"
                                         class="member-icon-action member-icon-action-danger account-action-tooltip"
                                         data-bs-toggle="modal"
                                         th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
-                                        th:data-bs-title="#{admin.accounts.deactivate}"
+                                        th:data-bs-title="#{admin.accounts.delete}"
                                         data-bs-custom-class="delete-account-tooltip"
-                                        th:aria-label="#{admin.accounts.deactivate}">
-                                        <i class="bi bi-person-dash"></i>
+                                        th:aria-label="#{admin.accounts.delete}">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                     <!-- Delete Modal -->
                                     <div class="modal fade text-start account-standard-modal"
-                                        th:if="${account.status == 'Active'}"
                                         th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
                                         th:aria-labelledby="${'deactivateMemberModalLabel' + account.accountId}"
                                         aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content">
                                                 <form method="post"
-                                                    th:action="@{/admin/accounts/delete/{id}(id=${account.accountId})}">
+                                                    th:action="@{/admin/member-list/delete/{id}(id=${account.accountId})}">
                                                     <input type="hidden" th:if="${_csrf != null}"
                                                         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                     <input type="hidden" name="source" value="members">
@@ -508,7 +513,8 @@
                                                     <div class="modal-body member-modal-body">
                                                         <p class="mb-3">
                                                             <span th:text="#{admin.accounts.deleteConfirmMessage}">The
-                                                                member will keep read-only access after deactivation.</span>
+                                                                member will keep read-only access after
+                                                                deactivation.</span>
                                                         </p>
                                                         <div class="account-info-panel">
                                                             <div class="row g-3">
@@ -525,7 +531,8 @@
                                                                 <div class="col-md-6">
                                                                     <div class="small text-muted"
                                                                         th:text="#{common.accountId}">Account ID</div>
-                                                                    <div class="fw-bold" th:text="${account.accountId}">
+                                                                    <div class="fw-bold app-code-number"
+                                                                        th:text="${account.accountId != null ? account.accountId : '—'}">
                                                                         id
                                                                     </div>
                                                                 </div>
@@ -559,7 +566,7 @@
                                                                     <div>
                                                                         <i
                                                                             class="bi bi-telephone me-1 text-classic"></i>
-                                                                        <span
+                                                                        <span class="app-phone-number"
                                                                             th:text="${account.user != null && account.user.phone != null ? account.user.phone : #messages.msg('common.noPhone')}">
                                                                             phone
                                                                         </span>
@@ -581,7 +588,7 @@
                                                                     <span
                                                                         class="membership-tier-badge membership-tier-badge--empty"
                                                                         th:if="${member == null || member.tier == null}">
-                                                                        N/A
+                                                                        —
                                                                     </span>
                                                                 </div>
 
@@ -609,7 +616,7 @@
                                     <i class="bi bi-inbox empty-state-icon d-block mb-2"></i>
                                     <p class="mb-3" th:text="#{admin.accounts.empty}">No accounts found.</p>
                                     <a th:if="${!#strings.isEmpty(keyword) or !#strings.isEmpty(selectedTier) or !#strings.isEmpty(selectedStatus)}"
-                                        class="btn member-modal-secondary" th:href="@{/admin/accounts}"
+                                        class="btn member-modal-secondary" th:href="@{/admin/member-list}"
                                         th:text="#{common.clearFilter}">Clear filter</a>
                                 </td>
                             </tr>
@@ -627,14 +634,14 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/accounts(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:href="@{/admin/member-list(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
                                     th:text="#{common.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
                             <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/accounts(page=${accounts.number - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">
+                                    th:href="@{/admin/member-list(page=${accounts.number - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
@@ -647,7 +654,7 @@
                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                 th:classappend="${i == accounts.number ? 'active' : ''}">
                                 <a class="page-link page-link-classic"
-                                    th:href="@{/admin/accounts(page=${i}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:href="@{/admin/member-list(page=${i}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
                                     th:text="${i + 1}">
                                     1
                                 </a>
@@ -660,7 +667,7 @@
                             <!-- Next page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/accounts(page=${accounts.number + 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">
+                                    th:href="@{/admin/member-list(page=${accounts.number + 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
@@ -668,7 +675,7 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/accounts(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:href="@{/admin/member-list(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
                                     th:text="#{common.last}">Last</a>
                             </li>
                         </ul>

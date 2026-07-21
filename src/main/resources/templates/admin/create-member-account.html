@@ -2,9 +2,9 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <body>
-    <form th:fragment="createMemberAccountForm" method="post" th:action="@{/admin/accounts/create}"
+    <form th:fragment="createMemberAccountForm" method="post" th:action="@{/admin/member-list/create}"
         id="createMemberAccountForm" class="admin-create-account-form" autocomplete="off" novalidate
-        th:attr="data-validation-url=@{/admin/accounts/create/validate},data-validation-unavailable-message=#{validation.unavailable}">
+        th:attr="data-validation-url=@{/admin/member-list/create/validate},data-validation-unavailable-message=#{validation.unavailable}">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
         <div class="alert alert-danger create-account-global-error" role="alert" aria-live="polite"
@@ -16,8 +16,8 @@
                 <label for="createMemberFullName" class="form-label fw-bold small text-muted text-uppercase">
                     <span th:text="#{member.profile.fullName}">Full Name</span> <span class="text-danger">*</span>
                 </label>
-                <input class="form-control validate-field" name="fullName" id="createMemberFullName"
-                    minlength="2" maxlength="50" required th:placeholder="#{admin.createAccount.fullNamePlaceholder}"
+                <input class="form-control validate-field" name="fullName" id="createMemberFullName" minlength="2"
+                    maxlength="50" required th:placeholder="#{admin.createAccount.fullNamePlaceholder}"
                     th:value="${formValues != null ? formValues['fullName'] : ''}"
                     th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
                 <div class="invalid-feedback" data-error-for="fullName"
@@ -43,9 +43,8 @@
                     <span th:text="#{member.profile.phone}">Phone Number</span> <span class="text-danger">*</span>
                 </label>
                 <input class="form-control validate-field" name="phone" id="createMemberPhone" required
-                    pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
-                    maxlength="12" inputmode="tel" placeholder="0912345678"
-                    th:value="${formValues != null ? formValues['phone'] : ''}"
+                    pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" maxlength="12" inputmode="tel"
+                    placeholder="0912345678" th:value="${formValues != null ? formValues['phone'] : ''}"
                     th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
                 <div class="invalid-feedback" data-error-for="phone"
                     th:text="${fieldErrors != null ? fieldErrors['phone'] : ''}"></div>
