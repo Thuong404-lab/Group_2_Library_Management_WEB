@@ -7,6 +7,7 @@ import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
 import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.entity.Member;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.StaffRepository;
@@ -14,11 +15,14 @@ import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.FineBatchPaymentService;
 import com.lms.dto.response.MemberListViewData;
+import com.lms.dto.response.TopUpMemberOption;
 import com.lms.service.LibrarianMemberService;
 import com.lms.service.OverdueReminderService;
 import com.lms.service.OverdueViolationQueryService;
+import com.lms.service.TopUpPolicy;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -318,15 +322,37 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @GetMapping("/members/topup")
     public String showTopupDesk(Model model,
-            @RequestParam(required = false, defaultValue = "") String memberKeyword,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         addTopupDeskStats(model);
         model.addAttribute("recentTopups",
-                transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
-        model.addAttribute("topupMembers", memberRepository.findAll());
+                transactionRepository.findRecentCompletedTopUps(
+                        TOP_UP_TYPE, TopUpPolicy.COMPLETED_STATUSES,
+                        PageRequest.of(0, TopUpPolicy.RECENT_TRANSACTION_LIMIT)));
+        model.addAttribute("topupMinAmount", TopUpPolicy.MIN_AMOUNT);
+        model.addAttribute("topupMaxAmount", TopUpPolicy.MAX_AMOUNT);
+        model.addAttribute("topupQuickAmounts", TopUpPolicy.QUICK_AMOUNTS);
         model.addAttribute("topupRequestId", UUID.randomUUID().toString());
+        Object selectedMemberId = model.getAttribute("memberPhone");
+        if (selectedMemberId != null) {
+            parseMemberId(selectedMemberId.toString()).flatMap(memberId -> memberRepository
+                    .searchTopUpMembers("", memberId, PageRequest.of(0, 1)).stream().findFirst())
+                    .ifPresent(member -> model.addAttribute("selectedTopupMember", member));
+        }
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
+    }
+
+    @GetMapping("/members/topup/search")
+    @ResponseBody
+    public List<TopUpMemberOption> searchTopupMembers(
+            @RequestParam(name = "q", defaultValue = "") String query) {
+        String keyword = query == null ? "" : query.trim();
+        Integer memberId = parseMemberId(keyword).orElse(null);
+        if (keyword.length() < 2 && memberId == null) {
+            return List.of();
+        }
+        return memberRepository.searchTopUpMembers(
+                keyword, memberId, PageRequest.of(0, TopUpPolicy.MEMBER_SEARCH_LIMIT)).getContent();
     }
 
     @PostMapping("/members/topup")
@@ -337,9 +363,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            var staff = userDetails != null && userDetails.getUser() != null
-                    ? staffRepository.findByUserId(userDetails.getUser().getId()).orElse(null)
-                    : null;
+            var staff = requireStaff(userDetails);
             financialService.topUpMemberAccount(memberPhone, amount, requestId, staff);
             redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
         } catch (ApplicationException e) {
@@ -352,19 +376,45 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     }
 
     private void addTopupDeskStats(Model model) {
-        LocalDate today = LocalDate.now();
-        List<Transaction> todayTopups = transactionRepository.findByTransactionTypeAndDateRange(
+        LocalDate today = LocalDate.now(TopUpPolicy.LIBRARY_ZONE);
+        Page<Transaction> todayTopupPage = transactionRepository.findCompletedTopUpsByDateRange(
                 TOP_UP_TYPE,
+                TopUpPolicy.COMPLETED_STATUSES,
                 today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay());
-        BigDecimal todayTotal = transactionRepository.sumAmountByTransactionTypeAndDateRange(
-                TOP_UP_TYPE,
-                today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay());
+                today.plusDays(1).atStartOfDay(),
+                PageRequest.of(0, TopUpPolicy.RECENT_TRANSACTION_LIMIT));
+        BigDecimal todayTotal = transactionRepository.sumCompletedTopUpsByDateRange(
+                TOP_UP_TYPE, TopUpPolicy.COMPLETED_STATUSES,
+                today.atStartOfDay(), today.plusDays(1).atStartOfDay());
 
-        model.addAttribute("todayTopups", todayTopups);
-        model.addAttribute("todayTopupCount", todayTopups.size());
+        model.addAttribute("todayTopups", todayTopupPage.getContent());
+        model.addAttribute("todayTopupCount", todayTopupPage.getTotalElements());
         model.addAttribute("todayTopupTotal", todayTotal == null ? BigDecimal.ZERO : todayTotal);
+    }
+
+    private Staff requireStaff(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUser() == null || userDetails.getUser().getId() == null) {
+            throw new com.lms.exception.ValidationException(message("backend.financial.staffRequired"));
+        }
+        return staffRepository.findByUserId(userDetails.getUser().getId())
+                .orElseThrow(() -> new com.lms.exception.ValidationException(
+                        message("backend.financial.staffRequired")));
+    }
+
+    private java.util.Optional<Integer> parseMemberId(String value) {
+        if (value == null) {
+            return java.util.Optional.empty();
+        }
+        String normalized = value.trim().toUpperCase(java.util.Locale.ROOT)
+                .replaceFirst("^(TV-|MEM-)", "");
+        if (!normalized.matches("\\d+")) {
+            return java.util.Optional.empty();
+        }
+        try {
+            return java.util.Optional.of(Integer.valueOf(normalized));
+        } catch (NumberFormatException ignored) {
+            return java.util.Optional.empty();
+        }
     }
 
     private Map<String, String> bindingErrors(BindingResult bindingResult) {

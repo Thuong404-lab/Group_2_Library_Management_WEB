@@ -47,10 +47,13 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String viewBooks(@RequestParam(defaultValue = "0") int bookPage,
             @RequestParam(defaultValue = "0") int shelfPage,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String tab,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         model.addAllAttributes(dashboardService.getDashboardData(
-                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword));
+                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword,
+                "audit".equalsIgnoreCase(tab) ? bookCondition : ""));
         model.addAttribute("keyword", keyword);
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
@@ -178,7 +181,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             success(redirectAttributes, message("backend.inventory.auditCompleted",
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
-                    summary.getOrDefault("Disposed", 0L)));
+                    summary.getOrDefault("MinorDamaged", 0L)));
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }

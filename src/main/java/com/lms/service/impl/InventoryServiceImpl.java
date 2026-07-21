@@ -37,13 +37,13 @@ public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_LOST = "Lost";
     private static final String STATUS_DAMAGED = "Damaged";
-    private static final String STATUS_DISPOSED = "Disposed";
+    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
     private static final String STATUS_ACTIVE = "Active";
     private static final Set<String> ALLOWED_BOOK_CONDITIONS = Set.of(
-            "Good / Intact and clean",
-            "Minor damage (Bent corners, worn cover, or small tears)",
-            "Severely damaged (Compensation required)",
-            "Lost book (Compensation required)");
+            "New",
+            "Minor damage",
+            "Severely damaged",
+            "Lost book");
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
@@ -109,7 +109,7 @@ public class InventoryServiceImpl implements InventoryService {
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
         counts.put(STATUS_LOST, bookItemRepository.countByStatusIgnoreCase(STATUS_LOST));
         counts.put(STATUS_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_DAMAGED));
-        counts.put(STATUS_DISPOSED, bookItemRepository.countByStatusIgnoreCase(STATUS_DISPOSED));
+        counts.put(STATUS_MINOR_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_MINOR_DAMAGED));
         return counts;
     }
 
@@ -334,7 +334,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (!item.getBook().getBookId().equals(bookId)) {
             throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
         }
-        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus()) || STATUS_DISPOSED.equalsIgnoreCase(item.getStatus())) {
+        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
             throw new ConflictException(messages.get("backend.inventory.copyConditionLocked"));
         }
         if (conditionRank(normalizedCondition) < conditionRank(item.getBookCondition())) {
@@ -343,7 +343,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         item.setBookCondition(normalizedCondition);
         int rank = conditionRank(normalizedCondition);
-        item.setStatus(rank >= 3 ? STATUS_LOST : (rank >= 2 ? STATUS_DAMAGED : STATUS_AVAILABLE));
+        item.setStatus(rank >= 3 ? STATUS_LOST : (rank >= 2 ? STATUS_DAMAGED : (rank == 1 ? STATUS_MINOR_DAMAGED : STATUS_AVAILABLE)));
         bookItemRepository.save(item);
     }
 
