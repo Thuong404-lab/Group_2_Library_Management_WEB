@@ -720,7 +720,7 @@
                                                     <td class="fw-bold font-monospace" th:text="${item.barcode}">BC001-001</td>
                                                     <td>
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : ' status-inactive')"
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Lost'} ? ' status-lost' : (${item.status == 'Damaged'} ? ' status-damaged' : ' status-inactive')))"
                                                             th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Lost' ? #messages.msg('loan.status.lost') : (item.status == 'Damaged' ? #messages.msg('librarian.inventory.status.damaged') : (item.status == 'Disposed' ? #messages.msg('librarian.inventory.status.disposed') : item.status))))}">Available</span>
                                                     </td>
                                                 </tr>

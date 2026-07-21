@@ -137,6 +137,18 @@ public class InventoryController extends LocalizedControllerSupport {
         return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
     }
 
+    @PostMapping("/copies/update/{bookId}/{itemId}")
+    public String updateBookCopy(@PathVariable Integer bookId, @PathVariable Integer itemId,
+            @RequestParam String bookCondition, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateBookCopyCondition(bookId, itemId, bookCondition);
+            redirectAttributes.addFlashAttribute("success", message("backend.inventory.copyUpdated"));
+        } catch (ApplicationException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
+    }
+
     @GetMapping("/categories")
     public String manageCategories() {
         return "redirect:/librarian/dashboard?section=books&subsection=inventory";
