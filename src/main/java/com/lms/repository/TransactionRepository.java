@@ -35,6 +35,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
 
+    @Query("""
+            select coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where lower(t.status) = lower(:status)
+              and upper(t.transactionType) in :revenueTypes
+              and t.transactionDate >= :fromDate
+              and t.transactionDate < :toDate
+            """)
+    BigDecimal sumRevenueByStatusAndTypesAndDateRange(@Param("status") String status,
+            @Param("revenueTypes") List<String> revenueTypes,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
+
     @Query("select t.transactionType, count(t), coalesce(sum(t.amount), 0) " +
             "from Transaction t " +
             "where lower(t.status) = lower(:status) " +
