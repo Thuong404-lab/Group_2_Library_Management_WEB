@@ -1281,10 +1281,11 @@ public class BorrowServiceImpl implements BorrowService {
     private int getEffectiveBorrowLimit(Member member) {
         int configuredLimit = getPositiveIntSetting("Max_Books_Per_Member",
                 getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10));
-        int tierLimit = member != null && member.getTier() != null && member.getTier().getBorrowLimit() != null
-                ? member.getTier().getBorrowLimit()
-                : configuredLimit;
-        return Math.max(1, tierLimit);
+        Integer tierLimit = member != null && member.getMemberId() != null
+                ? memberRepository.findCurrentBorrowLimitByMemberId(member.getMemberId())
+                        .orElse(member.getTier() != null ? member.getTier().getBorrowLimit() : null)
+                : null;
+        return Math.max(1, tierLimit != null ? tierLimit : configuredLimit);
     }
 
     private int normalizeBorrowDays(Integer requestedDays) {
@@ -1457,12 +1458,9 @@ public class BorrowServiceImpl implements BorrowService {
             }
             long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(entry.getKey(),
                     "Available");
-            long pendingCopies = borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(entry.getKey(),
-                    "Pending");
-            long requestableCopies = Math.max(0, availableCopies - pendingCopies);
-            if (entry.getValue() > requestableCopies) {
+            if (entry.getValue() > availableCopies) {
                 throw new ConflictException(
-                        localizedMessageService.get("backend.borrow.stockExceeded", requestableCopies));
+                        localizedMessageService.get("backend.borrow.stockExceeded", availableCopies));
             }
         }
 
@@ -1538,12 +1536,9 @@ public class BorrowServiceImpl implements BorrowService {
             if (validatedBookIds.add(bookId)) {
                 long requestedCopies = java.util.Collections.frequency(bookIds, bookId);
                 List<BookItem> availableItems = bookItemRepository.findAvailableByBookIdForUpdate(bookId);
-                long pendingCopies = borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(bookId,
-                        "Pending");
-                long requestableCopies = Math.max(0, availableItems.size() - pendingCopies);
-                if (requestedCopies > requestableCopies) {
+                if (requestedCopies > availableItems.size()) {
                     throw new ConflictException(
-                            localizedMessageService.get("backend.borrow.stockExceeded", requestableCopies));
+                            localizedMessageService.get("backend.borrow.stockExceeded", availableItems.size()));
                 }
                 availableItemsByBook.put(bookId, new java.util.ArrayDeque<>(availableItems));
             }

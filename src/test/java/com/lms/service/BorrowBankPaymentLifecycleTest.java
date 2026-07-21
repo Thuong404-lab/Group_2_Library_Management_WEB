@@ -182,7 +182,6 @@ class BorrowBankPaymentLifecycleTest {
         when(bookRepository.findByIdForUpdate(11)).thenReturn(Optional.of(book));
         when(bookItemRepository.findAvailableByBookIdForUpdate(11))
                 .thenReturn(List.of(firstCopy, secondCopy));
-        when(borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Pending")).thenReturn(0L);
         when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> {
             Borrow saved = invocation.getArgument(0);
             saved.setBorrowId(42);
@@ -217,7 +216,6 @@ class BorrowBankPaymentLifecycleTest {
         when(borrowDetailRepository.countActiveBorrowedBooks(7)).thenReturn(0L);
         when(bookRepository.findByIdForUpdate(11)).thenReturn(Optional.of(book));
         when(bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Available")).thenReturn(2L);
-        when(borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Pending")).thenReturn(0L);
         when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Borrow result = service.memberSubmitMultiBookBorrowRequest("member01", List.of(11, 11), 14);
@@ -245,7 +243,6 @@ class BorrowBankPaymentLifecycleTest {
         when(borrowDetailRepository.countActiveBorrowedBooks(7)).thenReturn(1L);
         when(bookRepository.findByIdForUpdate(11)).thenReturn(Optional.of(book));
         when(bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Available")).thenReturn(1L);
-        when(borrowDetailRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Pending")).thenReturn(0L);
         when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Borrow result = service.memberSubmitMultiBookBorrowRequest("member01", List.of(11), 14);

@@ -53,6 +53,9 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
     @Query("SELECT a.member FROM MemberAccount a WHERE a.username = :username")
     Optional<Member> findByAccountUsernameForUpdate(@Param("username") String username);
 
+    @Query("SELECT tier.borrowLimit FROM Member member JOIN member.tier tier WHERE member.memberId = :memberId")
+    Optional<Integer> findCurrentBorrowLimitByMemberId(@Param("memberId") Integer memberId);
+
     @Query("""
             SELECT account.member
             FROM MemberAccount account
