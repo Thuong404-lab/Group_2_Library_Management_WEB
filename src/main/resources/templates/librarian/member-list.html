@@ -275,7 +275,7 @@
                                 <option value="Active" th:selected="${selectedStatus == 'Active'}"
                                     th:text="#{account.status.active}">Active</option>
                                 <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}"
-                                    th:text="#{account.status.inactive}">Inactive</option>
+                                    th:text="#{member.account.status.restricted}">Restricted</option>
                                 <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}"
                                     th:text="#{account.status.blocked}">Blocked</option>
                             </select>
@@ -355,7 +355,7 @@
               account.status == 'Active' ? 'status-active' :
               account.status == 'Blocked' ? 'status-blocked' :
               'status-inactive'
-          }" th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('account.status.inactive') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
+          }" th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('member.account.status.restricted') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
                                         Active
                                     </span>
                                 </td>
@@ -519,7 +519,7 @@
                                                                     </option>
                                                                     <option value="Inactive"
                                                                         th:selected="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
-                                                                        th:text="#{account.status.inactive}">Inactive
+                                                                        th:text="#{member.account.status.restricted}">Restricted
                                                                     </option>
                                                                     <option value="Blocked"
                                                                         th:selected="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
@@ -530,6 +530,12 @@
                                                                     th:data-default-message="#{validation.status}">
                                                                     <span th:text="#{validation.status}">Invalid account
                                                                         status.</span>
+                                                                </div>
+                                                                <div class="member-status-help"
+                                                                    th:text="#{librarian.members.statusHelp}">
+                                                                    Active members have full access; restricted members
+                                                                    can only view and settle obligations; blocked members
+                                                                    cannot sign in.
                                                                 </div>
                                                             </div>
                                                         </div>

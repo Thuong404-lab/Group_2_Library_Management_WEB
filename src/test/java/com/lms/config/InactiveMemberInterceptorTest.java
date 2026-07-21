@@ -58,6 +58,46 @@ class InactiveMemberInterceptorTest {
     }
 
     @Test
+    void inactiveMemberMayPayFineFromWallet() throws Exception {
+        authenticateMember(7);
+        when(accountRepository.findById(7)).thenReturn(Optional.of(account("Inactive")));
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST", "/member/financial/fines/pay/42");
+
+        boolean allowed = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void inactiveMemberMayCreateFinePaymentAndTopUp() throws Exception {
+        authenticateMember(7);
+        when(accountRepository.findById(7)).thenReturn(Optional.of(account("Inactive")));
+
+        MockHttpServletRequest finePayment = new MockHttpServletRequest(
+                "POST", "/member/payments/payos/fine/all");
+        MockHttpServletRequest topUp = new MockHttpServletRequest(
+                "POST", "/member/payments/payos/top-up");
+
+        assertThat(interceptor.preHandle(finePayment, new MockHttpServletResponse(), new Object())).isTrue();
+        assertThat(interceptor.preHandle(topUp, new MockHttpServletResponse(), new Object())).isTrue();
+    }
+
+    @Test
+    void inactiveMemberCannotUseSimilarButUnapprovedPaymentPath() {
+        authenticateMember(7);
+        when(accountRepository.findById(7)).thenReturn(Optional.of(account("Inactive")));
+        when(messages.get("member.inactiveActionDenied")).thenReturn("Restricted account");
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST", "/member/payments/payos/fine/not-a-valid-id");
+
+        assertThatThrownBy(() -> interceptor.preHandle(
+                request, new MockHttpServletResponse(), new Object()))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("Restricted account");
+    }
+
+    @Test
     void blockedMemberSessionIsTerminatedAndRedirected() throws Exception {
         authenticateMember(7);
         when(accountRepository.findById(7)).thenReturn(Optional.of(account("Blocked")));

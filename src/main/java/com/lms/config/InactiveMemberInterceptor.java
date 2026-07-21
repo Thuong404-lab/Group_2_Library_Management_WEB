@@ -12,10 +12,30 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 @Component
 public class InactiveMemberInterceptor implements HandlerInterceptor {
 
     public static final String INACTIVE_MEMBER_ATTRIBUTE = "isInactiveMember";
+
+    /**
+     * Restricted members may only write data when resolving an outstanding
+     * financial obligation. Keep this allow-list narrow so a newly added member
+     * mutation remains denied by default.
+     */
+    private static final Set<String> RESTRICTED_MEMBER_ALLOWED_POST_PATHS = Set.of(
+            "/member/payments/fines/pay-all",
+            "/member/payments/payos/top-up",
+            "/member/payments/payos/fine/all");
+
+    private static final List<Pattern> RESTRICTED_MEMBER_ALLOWED_POST_PATTERNS = List.of(
+            Pattern.compile("^/member/financial/fines/pay/\\d+$"),
+            Pattern.compile("^/member/financial/fees/pay/\\d+$"),
+            Pattern.compile("^/member/payments/payos/fine/\\d+$"),
+            Pattern.compile("^/member/payments/payos/borrow-fee/\\d+$"));
 
     private final LocalizedMessageService messages;
     private final MemberAccountRepository memberAccountRepository;
@@ -59,7 +79,7 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (isInactive && !isSafeMethod(request.getMethod())) {
+        if (isInactive && !isSafeMethod(request.getMethod()) && !isObligationResolutionRequest(request)) {
             if (expectsJson(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN,
                         messages.get("member.inactiveActionDenied"));
@@ -75,6 +95,24 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
         return "GET".equalsIgnoreCase(method)
                 || "HEAD".equalsIgnoreCase(method)
                 || "OPTIONS".equalsIgnoreCase(method);
+    }
+
+    private boolean isObligationResolutionRequest(HttpServletRequest request) {
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            return false;
+        }
+
+        String rawRequestPath = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        String requestPath = contextPath != null
+                && !contextPath.isEmpty()
+                && rawRequestPath.startsWith(contextPath)
+                ? rawRequestPath.substring(contextPath.length())
+                : rawRequestPath;
+
+        return RESTRICTED_MEMBER_ALLOWED_POST_PATHS.contains(requestPath)
+                || RESTRICTED_MEMBER_ALLOWED_POST_PATTERNS.stream()
+                .anyMatch(pattern -> pattern.matcher(requestPath).matches());
     }
 
     private boolean expectsJson(HttpServletRequest request) {
