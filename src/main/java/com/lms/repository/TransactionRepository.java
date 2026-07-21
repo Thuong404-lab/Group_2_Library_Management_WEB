@@ -205,4 +205,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             @Param("memberId") Integer memberId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    @Query("""
+            select coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where t.wallet.member.memberId = :memberId
+              and upper(t.transactionType) = 'TOP_UP'
+              and lower(t.status) in ('completed', 'paid')
+            """)
+    BigDecimal sumCompletedTopUpByMemberId(@Param("memberId") Integer memberId);
+
+    @Query("""
+            select t.wallet.member.memberId, coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where upper(t.transactionType) = 'TOP_UP'
+              and lower(t.status) in ('completed', 'paid')
+            group by t.wallet.member.memberId
+            order by sum(abs(t.amount)) desc, t.wallet.member.memberId asc
+            """)
+    List<Object[]> findTopMembersByCompletedTopUp(Pageable pageable);
 }

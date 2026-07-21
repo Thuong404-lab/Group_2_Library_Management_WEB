@@ -9,10 +9,8 @@ import jakarta.validation.constraints.Size;
 public class UpdateMemberAccountRequest {
 
         @NotBlank(message = "{validation.fullNameRequired}")
-        @Pattern(regexp = "^$|^[\\p{L}]+(?:\\s+[\\p{L}]+)*$", message = "{validation.fullNameLetters}")
-        @Pattern(regexp = "^$|^[\\p{L}]{1,15}(?:\\s+[\\p{L}]{1,15}){0,7}$", message = "{validation.fullNameWords}")
-        @Pattern(regexp = "^$|^(?!.*([\\p{L}])\\1\\1).*$", message = "{validation.fullNameTriple}")
-        @Pattern(regexp = "^$|^(?!([\\p{L}])\\1+$).+$", message = "{validation.fullNameRepeated}")
+        @Pattern(regexp = "^$|^[\\p{L}]+(?:['’\\-][\\p{L}]+)*(?:\\s+[\\p{L}]+(?:['’\\-][\\p{L}]+)*)*$",
+                message = "{validation.fullNameLetters}")
         @Size(max = 50, message = "{validation.fullNameMax}")
         private String fullName;
 
@@ -22,17 +20,23 @@ public class UpdateMemberAccountRequest {
 
         @NotBlank(message = "{validation.emailRequired}")
         @Email(message = "{validation.email}")
+        @Pattern(
+                regexp = "^$|^[A-Za-z0-9]+(?:[._%+\\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
+                message = "{validation.email}")
         private String email;
 
         @NotBlank(message = "{validation.phoneRequired}")
         @Pattern(regexp = "^$|^(?!0{10}$)0\\d{9}$", message = "{validation.phone}")
         private String phone;
 
-        @NotNull(message = "{validation.tier}")
-        private Integer tierId;
-
         @NotBlank(message = "{validation.status}")
         private String status;
+
+        @NotNull(message = "{validation.concurrentUpdate}")
+        private Long accountVersion;
+
+        @NotNull(message = "{validation.concurrentUpdate}")
+        private Long userVersion;
 
         public String getFullName() {
                 return fullName;
@@ -55,7 +59,7 @@ public class UpdateMemberAccountRequest {
         }
 
         public void setEmail(String email) {
-                this.email = email;
+                this.email = email == null ? null : email.trim();
         }
 
         public String getPhone() {
@@ -63,15 +67,7 @@ public class UpdateMemberAccountRequest {
         }
 
         public void setPhone(String phone) {
-                this.phone = phone;
-        }
-
-        public Integer getTierId() {
-                return tierId;
-        }
-
-        public void setTierId(Integer tierId) {
-                this.tierId = tierId;
+                this.phone = phone == null ? null : phone.trim();
         }
 
         public String getStatus() {
@@ -80,5 +76,21 @@ public class UpdateMemberAccountRequest {
 
         public void setStatus(String status) {
                 this.status = status;
+        }
+
+        public Long getAccountVersion() {
+                return accountVersion;
+        }
+
+        public void setAccountVersion(Long accountVersion) {
+                this.accountVersion = accountVersion;
+        }
+
+        public Long getUserVersion() {
+                return userVersion;
+        }
+
+        public void setUserVersion(Long userVersion) {
+                this.userVersion = userVersion;
         }
 }

@@ -22,7 +22,7 @@ public interface LibrarianMemberService {
 
     void updateMember(Integer accountId, UpdateMemberAccountRequest request);
 
-    boolean deactivateMember(Integer accountId);
+    void deleteMember(Integer accountId);
 
     void changeMemberStatus(Integer accountId, String status);
 }

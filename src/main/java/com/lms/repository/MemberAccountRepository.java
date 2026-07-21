@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -24,10 +25,15 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
 
         boolean existsByUsername(String username);
 
+        boolean existsByUsernameIgnoreCase(String username);
+
         boolean existsByUsernameAndIdNot(String username, Integer id);
+
+        boolean existsByUsernameIgnoreCaseAndIdNot(String username, Integer id);
 
         long countByStatusIgnoreCase(String status);
 
+        @EntityGraph(attributePaths = {"member", "member.user", "member.tier"})
         @Query("""
                         SELECT m
                         FROM MemberAccount m
@@ -41,6 +47,7 @@ public interface MemberAccountRepository extends JpaRepository<MemberAccount, In
                         """)
         Page<MemberAccount> searchMemberAccounts(@Param("keyword") String keyword, Pageable pageable);
 
+        @EntityGraph(attributePaths = {"member", "member.user", "member.tier"})
         @Query("""
                         SELECT m
                         FROM MemberAccount m
