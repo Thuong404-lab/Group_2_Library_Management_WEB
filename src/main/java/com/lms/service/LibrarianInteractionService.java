@@ -9,6 +9,7 @@ import com.lms.dto.response.NotificationSendResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.lms.entity.BookAcquisitionRequest;
+import com.lms.entity.Member;
 
 import java.util.List;
 
@@ -22,6 +23,8 @@ public interface LibrarianInteractionService {
 
     void rejectReview(Integer feedbackId, String reason);
 
+    void deleteReview(Integer feedbackId);
+
     NotificationSendResult sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername);
 
     long countActiveMembers();
@@ -31,6 +34,10 @@ public interface LibrarianInteractionService {
     List<NotificationRecipientSearchResponse> getNotificationRecipients(List<Integer> memberIds);
 
     List<LibrarianNotificationHistoryResponse> getRecentManualNotifications();
+
+    List<Member> getAllMembers();
+
+    Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
 
     Page<BookAcquisitionRequest> getBookAcquisitionRequests(String status, String keyword, Pageable pageable);
 

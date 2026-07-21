@@ -118,6 +118,16 @@ class LibrarianInteractionReviewServiceTest {
     }
 
     @Test
+    void deletingReviewRetainsDevCleanupCapability() {
+        Feedback review = review(FeedbackStatus.REJECTED);
+        when(feedbackRepository.findById(1)).thenReturn(Optional.of(review));
+
+        service.deleteReview(1);
+
+        verify(feedbackRepository).delete(review);
+    }
+
+    @Test
     void approvingAcquisitionRecordsDecisionAndResponsibleStaff() {
         BookAcquisitionRequest pending = acquisition(AcquisitionRequestStatus.PENDING);
         Staff staff = new Staff();

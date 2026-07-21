@@ -144,6 +144,21 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         return reviewRedirect(page, status);
     }
 
+    @PostMapping("/reviews/{id}/delete")
+    public String deleteReview(
+            @PathVariable("id") Integer feedbackId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String status,
+            RedirectAttributes flash) {
+        try {
+            librarianInteractionService.deleteReview(feedbackId);
+            flash.addFlashAttribute("success", message("backend.librarian.review.deleted"));
+        } catch (ApplicationException e) {
+            flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
+        }
+        return reviewRedirect(page, status);
+    }
+
     @GetMapping("/notifications/new")
     public String notificationForm(
             Model model,

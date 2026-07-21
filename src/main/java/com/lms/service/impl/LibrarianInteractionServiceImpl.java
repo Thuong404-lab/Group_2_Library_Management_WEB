@@ -200,6 +200,15 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                 feedback.getBook().getTitle(), normalizedReason);
     }
 
+    @Override
+    @Transactional
+    public void deleteReview(Integer feedbackId) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        msg("backend.librarian.review.notFound", feedbackId)));
+        feedbackRepository.delete(feedback);
+    }
+
     private FeedbackStatus parseFeedbackStatus(String status) {
         if (status == null || status.isBlank()) {
             return null;
@@ -287,6 +296,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Member> getAllMembers() {
+        return memberRepository.findAllWithActiveAccount();
+    }
+
+    @Override
     @Transactional
     public NotificationSendResult sendNotificationToMembers(LibrarianNotificationSendRequest request, String senderUsername) {
         Map<String, String> validationErrors = NotificationComposePolicy.normalizeAndValidate(request);
@@ -364,6 +379,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         memberNotificationRepository.saveAll(memberNotifications);
         return new NotificationSendResult(saved.getNotificationId(), memberNotifications.size(),
                 saved.getCreatedDate(), false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable) {
+        return getBookAcquisitionRequests(null, null, pageable);
     }
 
     @Override

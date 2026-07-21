@@ -197,6 +197,21 @@
                              th:text="#{librarian.reviews.cannotRespond}">
                             The member deleted this review, so it cannot be answered.
                         </div>
+                        <form class="app-form-actions app-form-actions--end mt-2"
+                              th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
+                              method="post"
+                              onsubmit="return confirm(this.dataset.confirmMessage);"
+                              th:data-confirm-message="#{librarian.reviews.deleteConfirm}">
+                            <input type="hidden" name="page" th:value="${reviews.number}">
+                            <input type="hidden" name="status" th:value="${currentStatus}">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit"
+                                    class="app-icon-action app-icon-action--delete"
+                                    th:title="#{librarian.reviews.deleteAction}"
+                                    th:aria-label="#{librarian.reviews.deleteAction}">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 </tbody>
