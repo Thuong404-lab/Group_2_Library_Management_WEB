@@ -982,14 +982,14 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowDetailRepository.findByStatus("Return_Pending").stream()
                 .map(bd -> {
                     Member member = bd.getBorrow().getMember();
-                    String name = member != null && member.getUser() != null ? member.getUser().getFullName() : "N/A";
-                    String email = member != null && member.getUser() != null ? member.getUser().getEmail() : "N/A";
+                    String name = member != null && member.getUser() != null ? member.getUser().getFullName() : null;
+                    String email = member != null && member.getUser() != null ? member.getUser().getEmail() : null;
                     return new ReturnRequestDTO(
                             bd.getBorrowDetailId(),
                             name,
                             email,
-                            bd.getBook().getTitle(),
-                            bd.getBookItem() != null ? bd.getBookItem().getBarcode() : "N/A",
+                            bd.getBook() != null ? bd.getBook().getTitle() : null,
+                            bd.getBookItem() != null ? bd.getBookItem().getBarcode() : null,
                             bd.getBorrow().getBorrowDate());
                 })
                 .toList();
@@ -998,10 +998,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Reservation> getAllPendingReservations() {
-        return reservationRepository.findAll().stream()
-                .filter(r -> "Pending".equalsIgnoreCase(r.getStatus())
-                        || "Deposit_Paid".equalsIgnoreCase(r.getStatus()))
-                .toList();
+        return reservationRepository.findByStatusInOrderByReservationDateAsc(
+                List.of("Pending", "Deposit_Paid"));
     }
 
     @Override
@@ -1013,7 +1011,12 @@ public class BorrowServiceImpl implements BorrowService {
                         ma -> ma.getMember().getMemberId(),
                         ma -> ma.getUsername(),
                         (ex, rep) -> ex));
-        return getAllPendingReservations().stream()
+        java.util.Set<Integer> pendingReservationIds = getAllPendingReservations().stream()
+                .map(Reservation::getReservationId)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.Map<Integer, Integer> queuePositionByBook = new java.util.HashMap<>();
+        return reservationRepository.findByStatusInOrderByReservationDateAsc(
+                        List.of("Pending", "Deposit_Paid", "Ready", "Active")).stream()
                 .map(r -> {
                     String email = r.getMember() != null && r.getMember().getUser() != null
                             ? r.getMember().getUser().getEmail()
@@ -1023,18 +1026,23 @@ public class BorrowServiceImpl implements BorrowService {
                             : "";
                     String username = r.getMember() != null ? usernameMap.getOrDefault(r.getMember().getMemberId(), "")
                             : "";
+                    Integer bookId = r.getBook() == null ? null : r.getBook().getBookId();
+                    int queuePosition = bookId == null
+                            ? 0
+                            : queuePositionByBook.merge(bookId, 1, Integer::sum);
                     return new ReservationRequestDTO(
                             r.getReservationId(),
                             r.getMember() != null && r.getMember().getUser() != null
                                     ? r.getMember().getUser().getFullName()
-                                    : "N/A",
-                            r.getBook().getTitle(),
+                                    : null,
+                            r.getBook() != null ? r.getBook().getTitle() : null,
                             r.getReservationDate(),
-                            1,
+                            queuePosition,
                             email,
                             phone,
                             username);
                 })
+                .filter(dto -> pendingReservationIds.contains(dto.getId()))
                 .toList();
     }
 
