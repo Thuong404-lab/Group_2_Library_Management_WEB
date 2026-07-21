@@ -71,4 +71,21 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
               AND account.member.memberId IN :memberIds
             """)
     List<Member> findAllWithActiveAccountByMemberIdIn(@Param("memberIds") List<Integer> memberIds);
+
+    @Query("SELECT COUNT(a) FROM MemberAccount a WHERE LOWER(a.status) = 'active'")
+    long countActiveAccounts();
+
+    @Query("""
+            SELECT a.member FROM MemberAccount a
+            JOIN a.member m JOIN m.user u
+            WHERE LOWER(a.status) = 'active'
+              AND (:memberId IS NOT NULL AND m.memberId = :memberId
+                   OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(COALESCE(u.phone, '')) LIKE LOWER(CONCAT('%', :query, '%')))
+            ORDER BY m.memberId
+            """)
+    Page<Member> searchActiveNotificationRecipients(@Param("query") String query,
+                                                     @Param("memberId") Integer memberId,
+                                                     Pageable pageable);
 }

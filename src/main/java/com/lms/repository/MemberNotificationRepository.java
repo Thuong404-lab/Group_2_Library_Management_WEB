@@ -53,6 +53,10 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
 
     long countByMember_MemberId(Integer memberId);
 
+    long countByNotification_NotificationId(Integer notificationId);
+
+    long countByNotification_NotificationIdAndIsReadTrue(Integer notificationId);
+
     long countByMember_MemberIdAndNotification_NotificationSource(
             Integer memberId, com.lms.enums.NotificationSource source);
 
