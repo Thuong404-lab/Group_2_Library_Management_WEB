@@ -5,6 +5,7 @@ import com.lms.entity.Member;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
+import com.lms.entity.Staff;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
@@ -52,7 +53,10 @@ public class OverdueReminderService {
     }
 
     @Transactional
-    public void sendReturnReminder(Integer borrowDetailId) {
+    public void sendReturnReminder(Integer borrowDetailId, Staff performedBy) {
+        if (performedBy == null || performedBy.getStaffId() == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.staffRequired"));
+        }
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.overdue.loanNotFound")));
 
@@ -98,6 +102,7 @@ public class OverdueReminderService {
         notification.setNotificationType(NotificationType.REMINDER);
         notification.setEventType(NotificationEventType.OVERDUE_REMINDER);
         notification.setNotificationSource(NotificationSource.LIBRARIAN);
+        notification.setStaff(performedBy);
         notification.setCreatedDate(LocalDateTime.now());
         notification.setStatus("Active");
         notification = notificationRepository.save(notification);

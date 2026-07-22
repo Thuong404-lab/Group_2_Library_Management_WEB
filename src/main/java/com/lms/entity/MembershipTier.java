@@ -16,6 +16,10 @@ public class MembershipTier {
     private BigDecimal condition;
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;
+    @Transient
+    private String displayName;
+    @Transient
+    private String displayBenefits;
 
     public MembershipTier() {
     }
@@ -41,4 +45,8 @@ public class MembershipTier {
     public void setCondition(BigDecimal condition) { this.condition = condition; }
     public String getBenefits() { return benefits; }
     public void setBenefits(String benefits) { this.benefits = benefits; }
+    public String getDisplayName() { return displayName == null ? tierName : displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public String getDisplayBenefits() { return displayBenefits == null ? benefits : displayBenefits; }
+    public void setDisplayBenefits(String displayBenefits) { this.displayBenefits = displayBenefits; }
 }
