@@ -8,7 +8,7 @@
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='statistics'" class="report-page">
-    <header class="report-page-header">
+    <header class="report-page-header report-page-hero">
         <div class="report-page-heading">
             <span class="app-page-eyebrow" th:text="#{librarian.report.eyebrow}">OPERATIONS OVERVIEW</span>
             <h1 class="app-page-title" th:text="#{librarian.report.heading}">Reports and Statistics</h1>
@@ -110,21 +110,33 @@
     </section>
 
     <section class="report-finance-grid" th:aria-label="#{librarian.report.revenueMetrics}">
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Collected fee revenue</p>
+        <article class="report-finance-card report-finance-card--revenue app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Collected fee revenue</p>
+            </div>
             <strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
         </article>
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.totalRefunds}">Refunded cash flow</p>
+        <article class="report-finance-card report-finance-card--refund app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.totalRefunds}">Refunded cash flow</p>
+            </div>
             <strong class="report-finance-value report-finance-value--money report-refund-value"><span th:text="${#numbers.formatDecimal(report.totalRefunds, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
             <small class="report-metric-hint" th:text="#{librarian.report.refundHint}">Shown separately and not deducted from fee revenue.</small>
         </article>
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.transactionCount}">Transactions</p>
+        <article class="report-finance-card report-finance-card--transactions app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.transactionCount}">Transactions</p>
+            </div>
             <strong class="report-finance-value" th:text="${report.totalTransactions}">0</strong>
         </article>
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average / Transaction</p>
+        <article class="report-finance-card report-finance-card--average app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-calculator" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average / Transaction</p>
+            </div>
             <strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
         </article>
     </section>
@@ -143,14 +155,14 @@
                 </div>
                 <i class="bi bi-cash-coin report-card-icon" aria-hidden="true"></i>
             </header>
-            <div class="app-table-wrap">
+            <div class="app-table-wrap report-responsive-table-wrap">
                 <table class="app-table report-table">
                     <thead><tr><th th:text="#{transaction.type}">Transaction Type</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{transaction.amount}">Amount</th></tr></thead>
                     <tbody>
                     <tr th:each="item : ${report.transactionBreakdown}">
-                        <td class="report-primary-cell" th:text="${item.label}">Borrowing Fee</td>
-                        <td class="report-number-column" th:text="${item.count}">0</td>
-                        <td class="report-number-column"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
+                        <td class="report-primary-cell" th:data-label="#{transaction.type}" th:text="${item.label}">Borrowing Fee</td>
+                        <td class="report-number-column" th:data-label="#{librarian.report.transactionCount}" th:text="${item.count}">0</td>
+                        <td class="report-number-column" th:data-label="#{transaction.amount}"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.report.empty}">No revenue data.</span></div></td></tr>
                     </tbody>
@@ -166,14 +178,14 @@
                 </div>
                 <i class="bi bi-calendar3 report-card-icon" aria-hidden="true"></i>
             </header>
-            <div class="app-table-wrap">
+            <div class="app-table-wrap report-responsive-table-wrap">
                 <table class="app-table report-table">
                     <thead><tr><th th:text="#{librarian.report.month}">Month</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{admin.dashboard.revenue}">Revenue</th></tr></thead>
                     <tbody>
                     <tr th:each="item : ${report.monthlyRevenueStats}">
-                        <td class="report-primary-cell" th:text="${item.label}">07/2026</td>
-                        <td class="report-number-column" th:text="${item.count}">0</td>
-                        <td class="report-number-column"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
+                        <td class="report-primary-cell" th:data-label="#{librarian.report.month}" th:text="${item.label}">07/2026</td>
+                        <td class="report-number-column" th:data-label="#{librarian.report.transactionCount}" th:text="${item.count}">0</td>
+                        <td class="report-number-column" th:data-label="#{admin.dashboard.revenue}"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(report.monthlyRevenueStats)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.report.empty}">No revenue data.</span></div></td></tr>
                     </tbody>

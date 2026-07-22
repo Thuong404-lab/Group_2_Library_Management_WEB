@@ -6,13 +6,15 @@
     <title th:text="#{librarian.inventory.booksManagement}">Book Management</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/books.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/books.css}" />
   </head>
 <body>
 <div layout:fragment="content"
      th:with="activeMenu='dashboard', currentSection='books', currentSubSection=${param.subsection != null ? param.subsection[0] : 'inventory'}"
      class="member-management-page book-inventory-page">
-    <header class="member-page-header">
-        <div>
+    <header class="member-page-header book-inventory-hero">
+        <div class="book-inventory-hero-copy">
+            <div class="member-page-eyebrow" th:text="#{librarian.inventory.booksManagement}">BOOK INVENTORY</div>
             <h1 class="member-page-title" th:text="#{librarian.inventory.heading}">Book Title Management</h1>
             <p class="member-page-description" th:text="#{librarian.inventory.description}">Add, update, and manage titles and copies in the library inventory.</p>
         </div>
@@ -185,8 +187,9 @@
                                         th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}, bookAvailable=${availableCopies > 0}"
                                         th:data-book-availability="${bookAvailable ? 'Available' : 'Unavailable'}">
                                         <td class="ps-3 fw-bold"
+                                            th:data-label="#{common.number}"
                                             th:text="${iterStat.index + 1 + (books.number * books.size)}">1</td>
-                                        <td>
+                                        <td th:data-label="#{librarian.inventory.cover}">
                                             <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
                                                 th:src="${book.coverImageUrl}" th:alt="#{book.coverAlt}" class="inventory-cover-frame"
                                                >
@@ -196,36 +199,38 @@
                                                 <i class="bi bi-book"></i>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td th:data-label="#{common.book}">
                                             <div class="fw-bold text-classic" th:text="${book.title}">Book title</div>
                                             <div class="small text-muted"
                                                 th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
                                                 Genre</div>
                                         </td>
-                                        <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
-                                        <td class="small text-muted text-truncate" th:text="${!#strings.isEmpty(book.description) ? book.description : #messages.msg('librarian.inventory.noDescription')}"
+                                        <td class="small text-muted" data-label="ISBN" th:text="${book.isbn}">ISBN</td>
+                                        <td class="small text-muted text-truncate" th:data-label="#{librarian.inventory.bookDescription}" th:text="${!#strings.isEmpty(book.description) ? book.description : #messages.msg('librarian.inventory.noDescription')}"
                                             th:title="${book.description}">Description</td>
-                                        <td>
+                                        <td th:data-label="#{common.status}">
                                             <span class="status-badge"
                                                 th:classappend="${bookAvailable} ? ' status-active' : ' status-zero'"
                                                 th:text="${bookAvailable} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
                                         </td>
-                                        <td class="text-end member-actions">
-                                            <button type="button" class="member-icon-action"
-                                                data-bs-toggle="modal" th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
-                                                th:title="#{librarian.inventory.viewCopies}" th:aria-label="#{librarian.inventory.viewCopies}"><i class="bi bi-eye"></i></button>
-                                            <button type="button" class="member-icon-action"
-                                                data-bs-toggle="modal"
-                                                th:data-bs-target="${'#editBookModal' + book.bookId}"
-                                                th:title="#{common.update}" th:aria-label="#{common.update}">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <button type="button" class="member-icon-action member-icon-action-danger"
-                                                data-bs-toggle="modal"
-                                                th:data-bs-target="${'#deleteBookModal' + book.bookId}"
-                                                th:title="#{common.delete}" th:aria-label="#{common.delete}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                        <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                            <div class="book-row-actions">
+                                                <button type="button" class="member-icon-action"
+                                                    data-bs-toggle="modal" th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
+                                                    th:title="#{librarian.inventory.viewCopies}" th:aria-label="#{librarian.inventory.viewCopies}"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="member-icon-action"
+                                                    data-bs-toggle="modal"
+                                                    th:data-bs-target="${'#editBookModal' + book.bookId}"
+                                                    th:title="#{common.update}" th:aria-label="#{common.update}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button type="button" class="member-icon-action member-icon-action-danger"
+                                                    data-bs-toggle="modal"
+                                                    th:data-bs-target="${'#deleteBookModal' + book.bookId}"
+                                                    th:title="#{common.delete}" th:aria-label="#{common.delete}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr th:if="${books == null || books.totalElements == 0}">
