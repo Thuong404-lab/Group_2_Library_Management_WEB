@@ -29,9 +29,12 @@
 
     <!-- Page Header -->
     <header class="borrow-page-header">
-        <div>
+        <div class="return-desk-hero-copy">
             <h1 class="return-desk-title" th:text="#{librarian.returnDesk.title}">Book Return Desk</h1>
             <p class="return-desk-description" th:text="#{librarian.returnDesk.description}">Receive returned books and assess their condition at the library desk.</p>
+        </div>
+        <div class="return-desk-hero-decoration" aria-hidden="true">
+            <i class="bi bi-box-arrow-in-left"></i>
         </div>
     </header>
 
@@ -72,7 +75,7 @@
             </button>
         </div>
         <div class="table-responsive borrow-table-wrap">
-            <table class="table table-hover align-middle mb-0 borrow-table">
+            <table class="table table-hover align-middle mb-0 borrow-table return-results-table">
                 <colgroup>
                     <col style="width: 60px;">
                     <col style="width: 140px;">
@@ -101,40 +104,40 @@
                 </thead>
                 <tbody>
                 <tr th:each="detail : ${searchResults}">
-                    <td style="width: 60px; text-align: center;">
+                    <td th:data-label="#{common.actions}" style="width: 60px; text-align: center;">
                         <div class="d-flex justify-content-center align-items-center">
                             <input type="checkbox" class="form-check-input select-item" th:value="${detail.bookItem.barcode}" />
                         </div>
                     </td>
-                    <td>
+                    <td th:data-label="#{loan.id}">
                                 <span class="font-monospace fw-bold u-color-8b5a2b-93ece783"
                                       th:text="${T(com.lms.util.BorrowCodeFormatter).format(detail.borrow.borrowId)}">BOR-1</span>
                     </td>
-                    <td>
+                    <td th:data-label="#{librarian.borrowDesk.memberInfo}">
                         <div class="fw-bold u-color-2c1e16-font-family-playfair-display-serif-4530c24d"
                              th:text="${detail.borrow.member?.user?.fullName}">Nguyễn Văn An</div>
                         <small class="text-muted"
                                th:text="${detail.borrow.member?.user?.email}">an@gmail.com</small>
                     </td>
-                    <td>
+                    <td th:data-label="#{book.id}">
                                 <span class="font-monospace text-dark fw-semibold"
                                       th:text="${detail.bookItem?.barcode}">BC001-001</span>
                     </td>
-                    <td>
+                    <td th:data-label="#{librarian.returnDesk.bookTitle}">
                         <div class="fw-semibold text-dark" th:text="${detail.book.title}">Book title</div>
                         <small class="text-muted" th:text="#{librarian.returnDesk.renewals(${detail.renewCount})}">Renewals: 0</small>
                     </td>
-                    <td>
+                    <td th:data-label="#{loan.borrowDate}">
                                 <span class="fw-semibold text-dark"
                                       th:text="${detail.borrow.borrowDate != null ? #temporals.format(detail.borrow.borrowDate, 'dd/MM/yyyy') : '-'}">10/07/2026</span>
                     </td>
-                    <td>
+                    <td th:data-label="#{librarian.returnDesk.dueDate}">
                                 <span class="fw-bold text-dark"
                                       th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">15/07/2026</span>
                         <span th:if="${detail.dueDate.isBefore(T(java.time.LocalDateTime).now())}"
                               class="status-badge status-overdue ms-1" th:text="#{librarian.fines.overdueReasonPrefix}">Overdue</span>
                     </td>
-                    <td class="text-end pe-4">
+                    <td th:data-label="#{librarian.returnDesk.action}" class="text-end pe-4">
                         <button type="button"
                                 class="btn btn-classic-outline px-3 py-1 u-font-size-0-85rem-4908cb0a"
                                 data-bs-toggle="modal" data-bs-target="#confirmReturnModal"
@@ -143,12 +146,12 @@
                         </button>
                     </td>
                 </tr>
-                <tr th:if="${searchResults == null}">
+                <tr class="return-empty-row" th:if="${searchResults == null}">
                     <td colspan="8" class="py-4 text-center text-muted" th:text="#{librarian.returnDesk.searchHint}">
                         Scan or enter a barcode to find the loan to return.
                     </td>
                 </tr>
-                <tr th:if="${searchResults != null and #lists.isEmpty(searchResults)}">
+                <tr class="return-empty-row" th:if="${searchResults != null and #lists.isEmpty(searchResults)}">
                     <td colspan="8" class="py-4 text-center text-muted" th:text="#{librarian.returnDesk.noActiveLoan}">
                         No active loan was found for this barcode.
                     </td>
@@ -320,6 +323,8 @@
                 }
                 resultsCard?.classList.remove('d-none');
                 if (selectAllCheckbox) selectAllCheckbox.disabled = false;
+                const columnLabels = Array.from(document.querySelectorAll('.return-results-table thead th'))
+                    .map(header => header.textContent.trim());
 
                 scannedBooks.forEach(book => {
                     const row = document.createElement('tr');
@@ -341,6 +346,9 @@
                         <td class="text-center"><span class="fw-semibold text-dark">${escapeHtml(book.borrowDate)}</span></td>
                         <td class="text-center"><span class="fw-bold text-dark">${escapeHtml(book.dueDate)}</span>${overdueBadge}</td>
                         <td class="text-center">${actionCell}</td>`;
+                    row.querySelectorAll('td').forEach((cell, index) => {
+                        cell.dataset.label = columnLabels[index] || '';
+                    });
                     row.querySelector('.select-item')?.addEventListener('change', function() {
                         const boxes = document.querySelectorAll('.select-item:not(:disabled)');
                         if (selectAllCheckbox) selectAllCheckbox.checked = Array.from(boxes).every(c => c.checked);

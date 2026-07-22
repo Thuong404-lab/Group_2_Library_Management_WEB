@@ -9,6 +9,9 @@ import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.entity.Member;
 import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
+import com.lms.enums.TransactionChannel;
+import com.lms.enums.TransactionStatus;
+import com.lms.enums.TransactionType;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.StaffRepository;
 import com.lms.repository.TransactionRepository;
@@ -23,6 +26,7 @@ import com.lms.service.TopUpPolicy;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,6 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Arrays;
 
 /**
  * Librarian member-management UC flows maintained by Pham Kien Quoc:
@@ -298,17 +303,68 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     @GetMapping("/members/transactions")
     public String viewAllTransactions(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(name = "q", required = false, defaultValue = "") String query,
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String channel,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Page<Transaction> transactionPage = financialService.getAllTransactions(page, type);
+        Page<Transaction> transactionPage = financialService.getAllTransactions(
+                page, query, type, status, channel, fromDate, toDate);
+        if (transactionPage.getTotalPages() > 0 && page >= transactionPage.getTotalPages()) {
+            page = transactionPage.getTotalPages() - 1;
+            transactionPage = financialService.getAllTransactions(
+                    page, query, type, status, channel, fromDate, toDate);
+        }
 
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("transactions", transactionPage.getContent());
-        model.addAttribute("currentPage", page);
+        model.addAttribute("query", query == null ? "" : query.trim());
         model.addAttribute("selectedType", type);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedChannel", channel);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+        addTransactionOptions(model);
         addCurrentUser(model, userDetails);
         return "librarian/transactions";
+    }
+
+    private void addTransactionOptions(Model model) {
+        Map<String, String> typeLabels = new LinkedHashMap<>();
+        Map<String, String> typeClasses = new LinkedHashMap<>();
+        for (TransactionType type : TransactionType.values()) {
+            typeLabels.put(type.name(), message(type.getMessageKey()));
+            typeClasses.put(type.name(), type.getCssClass());
+        }
+
+        Map<String, String> statusOptions = new LinkedHashMap<>();
+        Map<String, String> statusLabels = new LinkedHashMap<>();
+        Map<String, String> statusClasses = new LinkedHashMap<>();
+        Arrays.stream(TransactionStatus.values()).forEach(status -> {
+            String label = message(status.getMessageKey());
+            statusLabels.put(status.getDatabaseValue(), label);
+            statusClasses.put(status.getDatabaseValue(), status.getCssClass());
+            if (status != TransactionStatus.PAID) {
+                statusOptions.put(status.getDatabaseValue(), label);
+            }
+        });
+
+        Map<String, String> channelLabels = new LinkedHashMap<>();
+        for (TransactionChannel channel : TransactionChannel.values()) {
+            channelLabels.put(channel.name(), message(channel.getMessageKey()));
+        }
+
+        model.addAttribute("transactionTypeOptions", typeLabels);
+        model.addAttribute("transactionTypeLabels", typeLabels);
+        model.addAttribute("transactionTypeClasses", typeClasses);
+        model.addAttribute("transactionStatusOptions", statusOptions);
+        model.addAttribute("transactionStatusLabels", statusLabels);
+        model.addAttribute("transactionStatusClasses", statusClasses);
+        model.addAttribute("transactionChannelOptions", channelLabels);
+        model.addAttribute("transactionChannelLabels", channelLabels);
     }
 
     @GetMapping("/members/refunds")
