@@ -18,6 +18,7 @@ import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.MemberAccountDeletionRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
@@ -34,6 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataAccessException;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,6 +74,7 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final StaffRepository staffRepository;
     private final AuditLogService auditLogService;
+    private final MemberAccountDeletionRepository memberAccountDeletionRepository;
 
     public AccountServiceImpl(MemberAccountRepository memberAccountRepository,
             StaffAccountRepository staffAccountRepository,
@@ -81,7 +84,8 @@ public class AccountServiceImpl implements AccountService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             StaffRepository staffRepository,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            MemberAccountDeletionRepository memberAccountDeletionRepository) {
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
@@ -91,6 +95,7 @@ public class AccountServiceImpl implements AccountService {
         this.roleRepository = roleRepository;
         this.staffRepository = staffRepository;
         this.auditLogService = auditLogService;
+        this.memberAccountDeletionRepository = memberAccountDeletionRepository;
     }
 
     @Override
@@ -254,14 +259,27 @@ public class AccountServiceImpl implements AccountService {
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountFormValidationException(
                         Map.of("_global", messages.get("backend.account.notFound"))));
-        account.setStatus("Inactive");
-        if (account.getMember() != null && account.getMember().getUser() != null) {
-            account.getMember().getUser().setStatus(UserStatus.Inactive);
+        Member member = account.getMember();
+        User user = member == null ? null : member.getUser();
+        if (member == null || user == null) {
+            throw new AccountFormValidationException(
+                    Map.of("_global", messages.get("backend.account.incompleteMemberData")));
         }
-        memberAccountRepository.save(account);
-        auditLogService.log(
-                ActionType.DEACTIVATE_ACCOUNT,
-                messages.get("backend.account.audit.deactivatedMember", account.getUsername()));
+        if (memberAccountDeletionRepository.hasBusinessHistory(member.getMemberId())) {
+            throw new AccountFormValidationException(
+                    Map.of("_global", messages.get("backend.member.deleteHasHistory")));
+        }
+
+        String username = account.getUsername();
+        try {
+            memberAccountDeletionRepository.deleteAggregate(
+                    account.getId(), member.getMemberId(), user.getId());
+        } catch (DataAccessException exception) {
+            throw new AccountFormValidationException(
+                    Map.of("_global", messages.get("backend.member.deleteConflict")));
+        }
+        auditLogService.log(ActionType.DELETE_ACCOUNT,
+                messages.get("backend.account.audit.deletedMember", username));
     }
 
     @Override
