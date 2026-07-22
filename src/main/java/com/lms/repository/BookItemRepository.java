@@ -29,11 +29,16 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
     @Query("select item.shelf.shelfId, count(item) from BookItem item where item.shelf is not null group by item.shelf.shelfId")
     List<Object[]> countBookItemsByShelf();
 
+    @Query("select item.book.bookId, count(item) from BookItem item group by item.book.bookId")
+    List<Object[]> countBookItemsByBook();
+
     long countByBook_BookId(Integer bookId);
 
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
 
     List<BookItem> findByBook_BookId(Integer bookId);
+
+    List<BookItem> findByBook_BookIdOrderByBarcodeAsc(Integer bookId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
