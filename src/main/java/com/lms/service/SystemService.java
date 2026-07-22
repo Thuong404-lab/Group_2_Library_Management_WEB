@@ -32,6 +32,5 @@ public interface SystemService {
             BigDecimal damageCompensationAmount,
             Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
-            Integer bookDisposalConditionThreshold,
             BigDecimal depositAmount);
 }

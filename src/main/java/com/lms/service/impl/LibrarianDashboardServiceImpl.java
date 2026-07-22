@@ -228,6 +228,11 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("bookItemsByBookId", bookItemsByBookId);
         data.put("categories", categoryRepository.findAll());
         data.put("genres", genreRepository.findAll());
+        Map<Integer, Long> genreTitleCounts = new HashMap<>();
+        for (Object[] row : bookRepository.countTitlesByGenre()) {
+            genreTitleCounts.put((Integer) row[0], (Long) row[1]);
+        }
+        data.put("genreTitleCounts", genreTitleCounts);
         data.put("totalBookCount", bookRepository.count());
         data.put("totalCategories", categoryRepository.count());
         data.put("totalGenres", genreRepository.count());
