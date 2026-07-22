@@ -24,6 +24,10 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
     
     boolean existsByGenre_GenreId(Integer genreId);
 
+    @Query("SELECT b.genre.genreId, COUNT(b) FROM Book b " +
+           "WHERE b.genre IS NOT NULL GROUP BY b.genre.genreId")
+    List<Object[]> countTitlesByGenre();
+
     @Query("select (count(b) > 0) from Book b " +
             "where upper(replace(replace(b.isbn, '-', ''), ' ', '')) = :isbn")
     boolean existsByNormalizedIsbn(@Param("isbn") String isbn);

@@ -49,6 +49,14 @@ public class LibrarianDashboardController {
         if ("users".equals(normalizedSection)) {
             return "redirect:/librarian/members";
         }
+        if ("books".equals(normalizedSection)) {
+            String normalizedSubsection = "storage".equalsIgnoreCase(subsection) ? "storage" : "inventory";
+            String normalizedTab = "categories".equalsIgnoreCase(tab) || "audit".equalsIgnoreCase(tab)
+                    ? tab.toLowerCase(java.util.Locale.ROOT)
+                    : "";
+            return "redirect:/librarian/books?subsection=" + normalizedSubsection
+                    + (normalizedTab.isEmpty() ? "" : "&tab=" + normalizedTab);
+        }
         if (!"books".equals(normalizedSection)) {
             normalizedSection = "overview";
         }
@@ -66,6 +74,23 @@ public class LibrarianDashboardController {
         model.addAttribute("dashboardSubsection", normalizedSubsection);
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
+    }
+
+    @GetMapping("/books")
+    public String viewBooks(
+            @RequestParam(defaultValue = "0") int bookPage,
+            @RequestParam(defaultValue = "0") int shelfPage,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String tab,
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String effectiveBookCondition = "audit".equalsIgnoreCase(tab) ? bookCondition : "";
+        model.addAllAttributes(dashboardService.getDashboardData(
+                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword, effectiveBookCondition));
+        model.addAttribute("keyword", keyword);
+        addCurrentUser(model, userDetails);
+        return "librarian/books";
     }
 
     @GetMapping("/users")
