@@ -1,0 +1,2 @@
+DELETE FROM dbo.SystemSettings
+WHERE UPPER(setting_key) = 'BOOK_DISPOSAL_CONDITION_THRESHOLD';

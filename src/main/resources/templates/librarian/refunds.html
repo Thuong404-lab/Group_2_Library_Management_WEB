@@ -9,14 +9,18 @@
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='refunds'" class="finance-page refund-page">
-    <div class="finance-header">
+    <header class="finance-header refund-page-hero">
         <div>
+            <span class="refund-page-eyebrow" th:text="#{staff.nav.finance}">FINANCE</span>
             <h2 class="finance-title" th:text="#{librarian.refunds.heading}">Refund Approval</h2>
             <div class="finance-description" th:text="#{librarian.refunds.description}">Review and approve deposit refunds to member wallets.</div>
         </div>
-        <span class="refund-total"
-              th:text="#{librarian.refunds.pendingCount(${#lists.size(pendingRefundRequests)})}">0 pending requests</span>
-    </div>
+        <div class="refund-hero-summary">
+            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+            <strong th:text="${pendingRefundRequests != null ? #lists.size(pendingRefundRequests) : 0}">0</strong>
+            <span th:text="#{librarian.refunds.pendingCount(${pendingRefundRequests != null ? #lists.size(pendingRefundRequests) : 0})}">0 pending requests</span>
+        </div>
+    </header>
 
     <div th:if="${success != null}" class="finance-alert finance-alert--success" role="alert" th:text="${success}"></div>
     <div th:if="${error != null}" class="finance-alert finance-alert--danger" role="alert" th:text="${error}"></div>
@@ -24,6 +28,7 @@
     <div th:if="${pendingRefundRequests == null or #lists.isEmpty(pendingRefundRequests)}"
          class="card-classic finance-card refund-empty">
         <div>
+                <span class="refund-empty-icon" aria-hidden="true"><i class="bi bi-check2-circle"></i></span>
                 <h5 th:text="#{librarian.refunds.empty}">No Pending Requests</h5>
                 <p th:text="#{librarian.refunds.emptyDescription}">Member refund requests will appear here.</p>
         </div>
@@ -32,6 +37,7 @@
     <div th:unless="${pendingRefundRequests == null or #lists.isEmpty(pendingRefundRequests)}"
          class="card-classic finance-card refund-list">
         <article class="refund-row" th:each="reservation : ${pendingRefundRequests}">
+            <span class="refund-row-icon" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
             <div class="refund-member">
                                 <small th:text="#{common.member}">Member</small>
                                 <strong th:text="${reservation.member != null and reservation.member.user != null ? reservation.member.user.fullName : #messages.msg('common.member')}">Member</strong>
@@ -56,15 +62,17 @@
             </div>
 
             <div class="refund-actions">
-                <button type="button" class="btn app-secondary-action"
+                <button type="button" class="btn app-icon-action refund-action-icon"
                         data-bs-toggle="modal"
-                        th:data-bs-target="${'#refundDepositModal' + reservation.reservationId}">
-                            <span th:text="#{common.viewDetails}">View Details</span>
+                        th:data-bs-target="${'#refundDepositModal' + reservation.reservationId}"
+                        th:aria-label="#{common.viewDetails}">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="btn btn-classic"
+                <button type="button" class="btn app-icon-action refund-action-icon refund-action-icon--approve"
                         data-bs-toggle="modal"
-                        th:data-bs-target="${'#confirmRefundModal' + reservation.reservationId}">
-                            <span th:text="#{librarian.refunds.approve}">Approve Refund</span>
+                        th:data-bs-target="${'#confirmRefundModal' + reservation.reservationId}"
+                        th:aria-label="#{librarian.refunds.approve}">
+                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
                 </button>
             </div>
 
@@ -78,8 +86,9 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <div>
+                                <span class="refund-modal-icon" aria-hidden="true"><i class="bi bi-receipt"></i></span>
                                 <h5 class="modal-title"
-                            th:id="${'refundDepositModalTitle' + reservation.reservationId}" th:text="#{librarian.refunds.depositRecord}">Book Reservation Deposit</h5>
+                                    th:id="${'refundDepositModalTitle' + reservation.reservationId}" th:text="#{librarian.refunds.depositRecord}">Book Reservation Deposit</h5>
                         <div class="modal-subtitle" th:text="#{librarian.refunds.reviewHint}">Review the record before approval</div>
                             </div>
                         </div>
@@ -145,8 +154,9 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <div>
+                                <span class="refund-modal-icon refund-modal-icon--warning" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
                                 <h5 class="modal-title"
-                            th:id="${'confirmRefundModalTitle' + reservation.reservationId}" th:text="#{librarian.refunds.confirmTitle}">Confirm Refund Approval</h5>
+                                    th:id="${'confirmRefundModalTitle' + reservation.reservationId}" th:text="#{librarian.refunds.confirmTitle}">Confirm Refund Approval</h5>
                         <div class="modal-subtitle" th:text="#{common.reviewBeforeConfirm}">Review before confirming.</div>
                             </div>
                         </div>
