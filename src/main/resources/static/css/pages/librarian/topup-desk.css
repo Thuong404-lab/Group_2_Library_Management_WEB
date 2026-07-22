@@ -19,6 +19,8 @@
 .topup-desk-page .topup-member-info { display: block; min-width: 0; }
 .topup-desk-page .topup-member-name { display: block; color: var(--app-color-ink); font-size: 14px; font-weight: 600; line-height: 1.35; }
 .topup-desk-page .topup-member-contact { display: block; margin-top: 3px; color: var(--app-color-muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.topup-desk-page .topup-member-meta { display: block; margin-top: 4px; color: var(--app-color-primary); font-size: 12px; font-weight: 600; }
+.topup-desk-page .topup-transaction-audit { margin-top: 3px; color: var(--app-color-muted); font-size: 11px; overflow-wrap: anywhere; }
 .topup-desk-page .topup-member-empty { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 112px; padding: 20px; color: var(--app-color-muted); text-align: center; }
 .topup-desk-page .topup-member-empty i { color: var(--app-color-primary); }
 .topup-desk-page .quick-amount-options .btn { min-height: 36px; padding-inline: 14px; font-size: 13px; }
@@ -436,4 +438,28 @@
     .topup-desk-page .summary-panel > div {
         width: 100%;
     }
+}
+
+body.topup-modal-open { overflow: hidden; }
+.topup-confirm-modal { position: fixed; inset: 0; z-index: 1080; display: grid; place-items: center; padding: 20px; }
+.topup-confirm-modal[hidden] { display: none; }
+.topup-confirm-backdrop { position: absolute; inset: 0; background: rgba(31, 24, 18, .58); backdrop-filter: blur(3px); }
+.topup-confirm-dialog { position: relative; width: min(620px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; border: 1px solid var(--app-color-hairline); border-radius: 22px; background: var(--app-color-surface-card); box-shadow: 0 24px 70px rgba(35, 24, 14, .24); }
+.topup-confirm-header { padding: 26px 28px 20px; border-bottom: 1px solid var(--app-color-hairline); background: var(--app-color-surface-subtle); }
+.topup-confirm-kicker { margin-bottom: 7px; color: var(--app-color-primary); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.topup-confirm-header h3 { margin: 0; color: var(--app-color-ink); font-family: var(--app-font-display); font-size: 30px; }
+.topup-confirm-header p { margin: 7px 0 0; color: var(--app-color-muted); }
+.topup-confirm-body { padding: 24px 28px; }
+.topup-confirm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin: 0; }
+.topup-confirm-grid div { min-width: 0; }
+.topup-confirm-grid dt { margin-bottom: 5px; color: var(--app-color-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.topup-confirm-grid dd { margin: 0; color: var(--app-color-ink); font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.topup-confirm-grid .topup-confirm-result { grid-column: 1 / -1; padding: 15px 17px; border-radius: 12px; background: var(--app-color-success-soft); }
+.topup-confirm-grid .topup-confirm-result dd { color: var(--app-color-success-ink); font-family: var(--app-font-display); font-size: 25px; }
+.topup-confirm-warning { margin-top: 20px; padding: 13px 15px; border: 1px solid var(--app-color-warning-border); border-radius: 10px; color: var(--app-color-warning-ink); background: var(--app-color-warning-soft); font-size: 13px; }
+.topup-confirm-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 28px 24px; border-top: 1px solid var(--app-color-hairline); }
+@media (max-width: 575.98px) {
+    .topup-confirm-grid { grid-template-columns: 1fr; }
+    .topup-confirm-actions { flex-direction: column-reverse; }
+    .topup-confirm-actions .btn { width: 100%; }
 }

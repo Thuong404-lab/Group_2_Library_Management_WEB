@@ -1,6 +1,7 @@
 package com.lms.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.lms.entity.Reservation;
@@ -44,7 +45,8 @@ public interface FinancialService {
 
     void payFineByWalletAtDesk(Integer fineId);
 
-    Page<Transaction> getAllTransactions(int page, String type);
+    Page<Transaction> getAllTransactions(int page, String query, String type,
+            String status, String channel, LocalDate fromDate, LocalDate toDate);
 
     void topUpMemberAccount(String memberLookup, BigDecimal amount, String requestId, Staff performedBy);
 }

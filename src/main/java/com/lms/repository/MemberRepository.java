@@ -1,5 +1,6 @@
 package com.lms.repository;
 
+import com.lms.dto.response.TopUpMemberOption;
 import com.lms.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -74,6 +75,29 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
 
     @Query("SELECT COUNT(a) FROM MemberAccount a WHERE LOWER(a.status) = 'active'")
     long countActiveAccounts();
+
+    @Query("""
+            SELECT new com.lms.dto.response.TopUpMemberOption(
+                m.memberId, u.fullName, u.email, u.phone, u.status,
+                a.status, tier.tierName, COALESCE(wallet.balance, 0))
+            FROM MemberAccount a
+            JOIN a.member m
+            JOIN m.user u
+            LEFT JOIN m.tier tier
+            LEFT JOIN Wallet wallet ON wallet.member = m
+            WHERE (:memberId IS NOT NULL AND m.memberId = :memberId)
+               OR (:keyword <> '' AND (
+                    LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(COALESCE(u.phone, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(COALESCE(a.username, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(COALESCE(a.status, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(COALESCE(tier.tierName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))))
+            ORDER BY m.memberId
+            """)
+    Page<TopUpMemberOption> searchTopUpMembers(@Param("keyword") String keyword,
+                                                @Param("memberId") Integer memberId,
+                                                Pageable pageable);
 
     @Query("""
             SELECT a.member FROM MemberAccount a

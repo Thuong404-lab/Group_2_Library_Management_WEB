@@ -237,7 +237,7 @@ public class InventoryController extends LocalizedControllerSupport {
                             summary.getOrDefault("Borrowed", 0L),
                             summary.getOrDefault("Lost", 0L),
                             summary.getOrDefault("Damaged", 0L),
-                            summary.getOrDefault("Disposed", 0L)));
+                            summary.getOrDefault("MinorDamaged", 0L)));
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }

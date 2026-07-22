@@ -52,6 +52,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             List.of("BORROWED", "RETURN_PENDING", "RENEW_PENDING");
     private static final List<String> RECENT_CIRCULATION_STATUSES =
             List.of("BORROWED", "OVERDUE", "RETURN_PENDING", "RENEW_PENDING", "RETURNED");
+    private static final List<String> BOOK_CONDITIONS =
+            List.of("New", "Minor damage", "Severely damaged", "Lost book");
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -130,6 +132,13 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage,
             String keyword) {
+        return getDashboardData(bookPage, shelfPage, reviewPage, requestPage, keyword, "");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage,
+            String keyword, String bookCondition) {
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         Map<String, Object> data = new LinkedHashMap<>();
@@ -177,20 +186,17 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<Integer, Long> shelfBookCounts = new HashMap<>();
         bookItemRepository.countBookItemsByShelf().forEach(row -> shelfBookCounts.put((Integer) row[0], (Long) row[1]));
         data.put("shelfBookCounts", shelfBookCounts);
-        Page<Book> booksPage;
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            booksPage = bookRepository.searchBooks(keyword.trim(), null, null,
-                    PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
-        } else {
-            booksPage = bookRepository.findAll(
-                    PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
-        }
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        String normalizedBookCondition = BOOK_CONDITIONS.contains(bookCondition) ? bookCondition : "";
+        Page<Book> booksPage = bookRepository.searchBookItems(normalizedKeyword, normalizedBookCondition,
+                PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
         booksPage.forEach(book -> {
             if (book.getAuthors() != null) {
                 book.getAuthors().size();
             }
         });
         data.put("books", booksPage);
+        data.put("bookCondition", normalizedBookCondition);
 
         Map<Integer, Integer> bookShelves = new HashMap<>();
         Map<Integer, Integer> bookTotalQuantities = new HashMap<>();
@@ -327,7 +333,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
         counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
         counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
-        counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));
+        counts.put("MinorDamaged", bookItemRepository.countByStatusIgnoreCase("MinorDamaged"));
         return counts;
     }
 }

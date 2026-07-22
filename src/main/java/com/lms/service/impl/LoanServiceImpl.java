@@ -37,6 +37,7 @@ public class LoanServiceImpl implements LoanService {
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_DAMAGED = "Damaged";
+    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
     private static final String STATUS_LOST = "Lost";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
@@ -56,21 +57,20 @@ public class LoanServiceImpl implements LoanService {
     private final MemberNotificationRepository memberNotificationRepository;
     private final FinancialService financialService;
 
-
     public LoanServiceImpl(BorrowRepository borrowRepository,
-                           BorrowDetailRepository borrowDetailRepository,
-                           MemberRepository memberRepository,
-                           StaffAccountRepository staffAccountRepository,
-                           BookItemRepository bookItemRepository,
-                           BookRepository bookRepository,
-                           MemberAccountRepository memberAccountRepository,
-                           WalletRepository walletRepository,
-                           TransactionRepository transactionRepository,
-                           ReservationRepository reservationRepository,
-                           SystemSettingRepository systemSettingRepository,
-                           NotificationRepository notificationRepository,
-                           MemberNotificationRepository memberNotificationRepository,
-                           FinancialService financialService) {
+            BorrowDetailRepository borrowDetailRepository,
+            MemberRepository memberRepository,
+            StaffAccountRepository staffAccountRepository,
+            BookItemRepository bookItemRepository,
+            BookRepository bookRepository,
+            MemberAccountRepository memberAccountRepository,
+            WalletRepository walletRepository,
+            TransactionRepository transactionRepository,
+            ReservationRepository reservationRepository,
+            SystemSettingRepository systemSettingRepository,
+            NotificationRepository notificationRepository,
+            MemberNotificationRepository memberNotificationRepository,
+            FinancialService financialService) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.memberRepository = memberRepository;
@@ -92,22 +92,28 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(readOnly = true)
     public Borrow getLoanDetails(Integer borrowId) {
         return borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.notFoundById", borrowId)));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.notFoundById", borrowId)));
     }
 
-    // UC-13.2: XÃ¡c nháº­n tráº£ sÃ¡ch trá»±c tiáº¿p báº±ng quÃ©t mÃ£ váº¡ch (Barcode) táº¡i quáº§y
+    // UC-13.2: XÃ¡c nháº­n tráº£ sÃ¡ch trá»±c tiáº¿p báº±ng quÃ©t mÃ£ váº¡ch
+    // (Barcode) táº¡i quáº§y
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void confirmReturn(String barcode) {
         BookItem item = bookItemRepository.findByBarcode(barcode)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", barcode)));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.barcodeNotFound", barcode)));
 
         BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
                 .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
-                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus()) || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())
-                        || "Return_Pending".equalsIgnoreCase(d.getStatus()) || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
+                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus())
+                                || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())
+                                || "Return_Pending".equalsIgnoreCase(d.getStatus())
+                                || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.activeHistoryNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.activeHistoryNotFound")));
 
         if ("Renew_Pending".equalsIgnoreCase(activeDetail.getStatus())) {
             rejectRenewal(activeDetail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
@@ -134,10 +140,11 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void approveOnlineReturn(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.returnRequestNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.returnRequestNotFound")));
 
         List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
-        
+
         for (BorrowDetail detail : details) {
             if ("Return_Pending".equalsIgnoreCase(detail.getStatus())) {
                 // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½ vá» Available
@@ -175,10 +182,12 @@ public class LoanServiceImpl implements LoanService {
         try {
             if (memberIdentifier != null && memberIdentifier.contains("@")) {
                 member = memberRepository.findByUserEmail(memberIdentifier)
-                        .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.memberEmailNotFound")));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                localizedMessageService.get("backend.loan.memberEmailNotFound")));
             } else {
                 member = memberRepository.findByUserPhone(memberIdentifier)
-                        .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.memberPhoneNotFound")));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                localizedMessageService.get("backend.loan.memberPhoneNotFound")));
             }
         } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
             throw new DataProcessingException(localizedMessageService.get("backend.loan.duplicateMemberData"), e);
@@ -186,23 +195,28 @@ public class LoanServiceImpl implements LoanService {
 
         Staff staff = staffAccountRepository.findByUsername(staffUsername)
                 .map(StaffAccount::getStaff)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.librarianNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.librarianNotFound")));
 
         List<BookItem> bookItemsToBorrow = new ArrayList<>();
         for (String barcode : barcodes) {
             String trimmedBarcode = barcode.trim();
-            if (trimmedBarcode.isEmpty()) continue;
+            if (trimmedBarcode.isEmpty())
+                continue;
 
             BookItem item;
             try {
                 item = bookItemRepository.findByBarcode(trimmedBarcode)
-                        .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", trimmedBarcode)));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                localizedMessageService.get("backend.loan.barcodeNotFound", trimmedBarcode)));
             } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
-                throw new DataProcessingException(localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
+                throw new DataProcessingException(
+                        localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
             }
 
             if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
-                throw new ConflictException(localizedMessageService.get("backend.loan.barcodeUnavailable", trimmedBarcode));
+                throw new ConflictException(
+                        localizedMessageService.get("backend.loan.barcodeUnavailable", trimmedBarcode));
             }
             bookItemsToBorrow.add(item);
         }
@@ -216,7 +230,8 @@ public class LoanServiceImpl implements LoanService {
         int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
 
         if (totalRequestedBooks > maxLimit) {
-            throw new ConflictException(localizedMessageService.get("backend.loan.limitExceeded", maxLimit, currentBorrowCount));
+            throw new ConflictException(
+                    localizedMessageService.get("backend.loan.limitExceeded", maxLimit, currentBorrowCount));
         }
 
         Borrow borrow = new Borrow();
@@ -245,8 +260,9 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void processBorrowRequest(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.requestNotFound")));
-        
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.requestNotFound")));
+
         borrow.setStatus(STATUS_ACTIVE);
         borrowRepository.save(borrow);
 
@@ -254,7 +270,7 @@ public class LoanServiceImpl implements LoanService {
         for (BorrowDetail detail : details) {
             detail.setStatus(STATUS_BORROWED);
             borrowDetailRepository.save(detail);
-            
+
             if (detail.getBookItem() != null) {
                 BookItem item = detail.getBookItem();
                 item.setStatus(STATUS_BORROWED);
@@ -269,7 +285,8 @@ public class LoanServiceImpl implements LoanService {
     public void processRenewal(Integer borrowDetailId) {
         // ... kept for compatibility if needed, but not used by member anymore ...
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.detailNotFound")));
 
         if (!STATUS_BORROWED.equalsIgnoreCase(detail.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.loan.renewBorrowedOnly"));
@@ -281,20 +298,23 @@ public class LoanServiceImpl implements LoanService {
         if (setting.isPresent()) {
             try {
                 maxRenewals = Integer.parseInt(setting.get().getSettingValue());
-            } catch (NumberFormatException ignored) { /* Use the documented default. */ }
+            } catch (NumberFormatException ignored) {
+                /* Use the documented default. */ }
         }
 
         if (detail.getRenewCount() >= maxRenewals) {
             throw new ConflictException(localizedMessageService.get("backend.loan.maxRenewals", maxRenewals));
         }
 
-        // Äá»c cáº¥u hÃ¬nh sá»‘ ngÃ y gia háº¡n thÃªm má»—i láº§n (máº·c Ä‘á»‹nh lÃ  7 ngÃ y)
+        // Äá»c cáº¥u hÃ¬nh sá»‘ ngÃ y gia háº¡n thÃªm má»—i láº§n (máº·c Ä‘á»‹nh lÃ 
+        // 7 ngÃ y)
         int renewDays = 7;
         Optional<SystemSetting> renewDaysSetting = systemSettingRepository.findBySettingKey("RENEW_DAYS");
         if (renewDaysSetting.isPresent()) {
             try {
                 renewDays = Integer.parseInt(renewDaysSetting.get().getSettingValue());
-            } catch (NumberFormatException ignored) { /* Use the documented default. */ }
+            } catch (NumberFormatException ignored) {
+                /* Use the documented default. */ }
         }
 
         detail.setDueDate(detail.getDueDate().plusDays(renewDays));
@@ -325,26 +345,31 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, String staffUsername) {
-        confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, BigDecimal.ZERO, "cash", staffUsername);
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition,
+            String damageNote, String staffUsername) {
+        confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, BigDecimal.ZERO, "cash",
+                staffUsername);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String staffUsername) {
+    public void confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition,
+            String damageNote, BigDecimal damageFine, String staffUsername) {
         confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, damageFine, "cash", staffUsername);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Transaction confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
+    public Transaction confirmReturnWithDetails(String barcode, LocalDateTime returnDate, String bookCondition,
+            String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
         if (barcode == null || barcode.trim().isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcode"));
         }
         if (returnDate == null || !returnDate.toLocalDate().equals(java.time.LocalDate.now())) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidReturnDate"));
         }
-        String resolvedPaymentMethod = paymentMethod == null ? "cash" : paymentMethod.trim().toLowerCase(java.util.Locale.ROOT);
+        String resolvedPaymentMethod = paymentMethod == null ? "cash"
+                : paymentMethod.trim().toLowerCase(java.util.Locale.ROOT);
         if (!List.of("cash", "wallet", "bank").contains(resolvedPaymentMethod)) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidPaymentMethod"));
         }
@@ -354,7 +379,8 @@ public class LoanServiceImpl implements LoanService {
         }
         List<BorrowDetail> activeLoans = borrowDetailRepository.findActiveLoansByBarcodeForUpdate(barcode.trim());
         if (activeLoans.isEmpty()) {
-            throw new ResourceNotFoundException(localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
+            throw new ResourceNotFoundException(
+                    localizedMessageService.get("backend.loan.unreturnedBarcodeNotFound", barcode));
         }
 
         BorrowDetail detail = activeLoans.get(0);
@@ -382,7 +408,8 @@ public class LoanServiceImpl implements LoanService {
 
         if (item != null) {
             item.setStatus(resolveReturnedItemStatus(bookCondition));
-            item.setBookCondition(bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
+            item.setBookCondition(
+                    bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
             item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
             bookItemRepository.save(item);
         }
@@ -418,7 +445,6 @@ public class LoanServiceImpl implements LoanService {
         return damageFineTx;
     }
 
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BorrowDetail recoverMissingBookItem(Integer borrowDetailId, String barcode) {
@@ -426,7 +452,8 @@ public class LoanServiceImpl implements LoanService {
             throw new ValidationException(localizedMessageService.get("backend.barcode.required"));
         }
         BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.detailNotFound")));
         if (!List.of(STATUS_BORROWED, STATUS_OVERDUE, "Return_Pending", "Renew_Pending").stream()
                 .anyMatch(status -> status.equalsIgnoreCase(detail.getStatus()))) {
             throw new ConflictException(localizedMessageService.get("backend.return.recoveryInactiveLoan"));
@@ -437,7 +464,8 @@ public class LoanServiceImpl implements LoanService {
         }
 
         BookItem item = bookItemRepository.findByBarcodeForUpdate(barcode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.barcodeNotFound", barcode.trim())));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.barcodeNotFound", barcode.trim())));
         if (detail.getBook() == null || item.getBook() == null
                 || !detail.getBook().getBookId().equals(item.getBook().getBookId())) {
             throw new ConflictException(localizedMessageService.get("backend.return.recoveryWrongBook", barcode.trim(),
@@ -445,9 +473,11 @@ public class LoanServiceImpl implements LoanService {
         }
         if (borrowDetailRepository.findActiveLoansByBarcode(item.getBarcode()).stream()
                 .anyMatch(active -> !active.getBorrowDetailId().equals(detail.getBorrowDetailId()))) {
-            throw new ConflictException(localizedMessageService.get("backend.return.recoveryBarcodeInUse", item.getBarcode()));
+            throw new ConflictException(
+                    localizedMessageService.get("backend.return.recoveryBarcodeInUse", item.getBarcode()));
         }
-        if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus()) && !STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
+        if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())
+                && !STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.return.recoveryInvalidItemStatus",
                     item.getBarcode(), item.getStatus()));
         }
@@ -457,9 +487,12 @@ public class LoanServiceImpl implements LoanService {
         bookItemRepository.save(item);
         return borrowDetailRepository.save(detail);
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Transaction confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate, String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod, String staffUsername) {
+    public Transaction confirmBatchReturnWithDetails(List<String> barcodes, LocalDateTime returnDate,
+            String bookCondition, String damageNote, BigDecimal damageFine, String paymentMethod,
+            String staffUsername) {
         if (barcodes == null || barcodes.isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidBarcodes"));
         }
@@ -481,7 +514,8 @@ public class LoanServiceImpl implements LoanService {
         boolean isFirst = true;
         for (String barcode : uniqueBarcodes.values()) {
             BigDecimal fineForThis = isFirst ? damageFine : BigDecimal.ZERO;
-            Transaction tx = confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, fineForThis, paymentMethod, staffUsername);
+            Transaction tx = confirmReturnWithDetails(barcode, returnDate, bookCondition, damageNote, fineForThis,
+                    paymentMethod, staffUsername);
             if (isFirst) {
                 firstTx = tx;
             }
@@ -490,7 +524,8 @@ public class LoanServiceImpl implements LoanService {
         return firstTx;
     }
 
-    private Transaction processDamageFine(BorrowDetail detail, BigDecimal damageFine, String paymentMethod, String staffUsername) {
+    private Transaction processDamageFine(BorrowDetail detail, BigDecimal damageFine, String paymentMethod,
+            String staffUsername) {
         Member member = detail.getBorrow().getMember();
         if (member == null) {
             return null;
@@ -589,7 +624,8 @@ public class LoanServiceImpl implements LoanService {
         if (memberOpt.isPresent()) {
             Member member = memberOpt.get();
             // Get all current borrow details of this member
-            List<BorrowDetail> allMemberDetails = borrowDetailRepository.findCurrentBorrowsByMemberId(member.getMemberId());
+            List<BorrowDetail> allMemberDetails = borrowDetailRepository
+                    .findCurrentBorrowsByMemberId(member.getMemberId());
             for (BorrowDetail d : allMemberDetails) {
                 if ("Borrowed".equalsIgnoreCase(d.getStatus())
                         || "Overdue".equalsIgnoreCase(d.getStatus())
@@ -646,7 +682,8 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void confirmCollection(Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
-                .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.loan.notFoundById", borrowId)));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        localizedMessageService.get("backend.loan.notFoundById", borrowId)));
 
         if (!"Approved".equalsIgnoreCase(borrow.getStatus())) {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.notWaitingPickup"));
@@ -694,18 +731,22 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class, noRollbackFor = ConflictException.class)
     public void approveRenewal(Integer borrowDetailId, String staffUsername) {
         BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.detailNotFound")));
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus()))
             throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
         Transaction hold = findPendingRenewalHold(borrowDetailId);
         // Renewal limits were validated when the immutable wallet hold was created.
-        // Pending requests keep that policy snapshot even if an administrator changes settings later.
+        // Pending requests keep that policy snapshot even if an administrator changes
+        // settings later.
         if (detail.getDueDate() == null || !detail.getDueDate().isAfter(LocalDateTime.now())) {
             rejectRenewal(borrowDetailId, "SYSTEM", "APPROVAL_EXPIRED", null);
             throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedExpired"));
         }
-        MemberAccount account = memberAccountRepository.findByMemberMemberId(detail.getBorrow().getMember().getMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.account.memberNotFound")));
+        MemberAccount account = memberAccountRepository
+                .findByMemberMemberId(detail.getBorrow().getMember().getMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.account.memberNotFound")));
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
             rejectRenewal(borrowDetailId, "SYSTEM", "ACCOUNT_RESTRICTED", null);
             throw new ConflictException(localizedMessageService.get("backend.renewal.autoRejectedAccountInactive"));
@@ -713,7 +754,8 @@ public class LoanServiceImpl implements LoanService {
         if (detail.getBook() != null && detail.getBorrow() != null && detail.getBorrow().getMember() != null) {
             Integer bookId = detail.getBook().getBookId();
             bookRepository.findByIdForUpdate(bookId)
-                    .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.book.notFound")));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException(localizedMessageService.get("backend.book.notFound")));
             long waitingReservations = reservationRepository.countActiveReservationsByOtherMemberForBook(
                     bookId, detail.getBorrow().getMember().getMemberId(),
                     List.of("PENDING", "DEPOSIT_PAID", "READY", "ACTIVE"));
@@ -737,10 +779,12 @@ public class LoanServiceImpl implements LoanService {
                 .ifPresent(hold::setPerformedByStaff);
         borrowDetailRepository.save(detail);
         transactionRepository.save(hold);
-        if (detail.getBorrow().getMember() != null) sendInternalNotification(detail.getBorrow().getMember(),
-                NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
-                "systemNotification.renewal.approved.title", "systemNotification.renewal.approved.content",
-                detail.getBook().getTitle(), detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        if (detail.getBorrow().getMember() != null)
+            sendInternalNotification(detail.getBorrow().getMember(),
+                    NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
+                    "systemNotification.renewal.approved.title", "systemNotification.renewal.approved.content",
+                    detail.getBook().getTitle(),
+                    detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @Override
@@ -748,12 +792,14 @@ public class LoanServiceImpl implements LoanService {
     public void rejectRenewal(Integer borrowDetailId, String staffUsername, String reasonCode, String reason) {
         var rejection = com.lms.util.RejectionReasonValidator.validate("RENEWAL", reasonCode, reason);
         BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.detailNotFound")));
         if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus()))
             throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
         Transaction hold = findPendingRenewalHold(borrowDetailId);
         Wallet wallet = walletRepository.findByMemberIdForUpdate(detail.getBorrow().getMember().getMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal refund = hold.getAmount() == null ? BigDecimal.ZERO : hold.getAmount().abs();
         BigDecimal balanceBeforeRefund = wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance();
         wallet.setBalance(balanceBeforeRefund.add(refund));
@@ -775,7 +821,9 @@ public class LoanServiceImpl implements LoanService {
                     .map(StaffAccount::getStaff)
                     .ifPresent(refundTransaction::setPerformedByStaff);
         }
-        detail.setStatus(detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now()) ? STATUS_OVERDUE : STATUS_BORROWED);
+        detail.setStatus(
+                detail.getDueDate() != null && detail.getDueDate().isBefore(LocalDateTime.now()) ? STATUS_OVERDUE
+                        : STATUS_BORROWED);
         detail.setRejectionCode(rejection.code());
         detail.setRejectionReason(rejection.detail());
         walletRepository.save(wallet);
@@ -788,27 +836,33 @@ public class LoanServiceImpl implements LoanService {
             boolean autoExpired = "APPROVAL_EXPIRED".equalsIgnoreCase(rejection.code());
             boolean hasDetail = rejection.detail() != null;
             String contentKey = autoExpired
-                    ? (hasDetail ? "systemNotification.renewal.expired.contentWithReason" : "systemNotification.renewal.expired.contentWithoutDetail")
-                    : (hasDetail ? "systemNotification.renewal.refunded.contentWithReason" : "systemNotification.renewal.refunded.contentWithoutDetail");
+                    ? (hasDetail ? "systemNotification.renewal.expired.contentWithReason"
+                            : "systemNotification.renewal.expired.contentWithoutDetail")
+                    : (hasDetail ? "systemNotification.renewal.refunded.contentWithReason"
+                            : "systemNotification.renewal.refunded.contentWithoutDetail");
             Object translatedReason = localizedMessageService.messageArgument("rejection.code." + rejection.code());
             if (hasDetail) {
                 sendInternalNotification(detail.getBorrow().getMember(),
                         NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
                         systemDecision ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
-                        autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
-                        contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason, rejection.detail());
+                        autoExpired ? "systemNotification.renewal.expired.title"
+                                : "systemNotification.renewal.refunded.title",
+                        contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason,
+                        rejection.detail());
             } else {
                 sendInternalNotification(detail.getBorrow().getMember(),
                         NotificationType.FINANCE, NotificationEventType.RENEWAL_REJECTED,
                         systemDecision ? NotificationSource.SYSTEM : NotificationSource.LIBRARIAN,
-                        autoExpired ? "systemNotification.renewal.expired.title" : "systemNotification.renewal.refunded.title",
+                        autoExpired ? "systemNotification.renewal.expired.title"
+                                : "systemNotification.renewal.refunded.title",
                         contentKey, detail.getBook().getTitle(), refund, wallet.getBalance(), translatedReason);
             }
         }
     }
 
     private Transaction findPendingRenewalHold(Integer borrowDetailId) {
-        return transactionRepository.findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+        return transactionRepository
+                .findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
                         borrowDetailId, "RENEWAL_FEE", "Pending")
                 .orElseThrow(() -> new ConflictException(localizedMessageService.get("backend.renewal.holdNotFound")));
     }
@@ -827,7 +881,8 @@ public class LoanServiceImpl implements LoanService {
 
     /**
      * Chuyá»ƒn viá»‡c phÃ¡t sinh khoáº£n pháº¡t quÃ¡ háº¡n sang module tÃ i chÃ­nh.
-     * Khoáº£n pháº¡t chá»‰ Ä‘Æ°á»£c ghi nháº­n lÃ  cÃ´ng ná»£; vÃ­ chá»‰ thay Ä‘á»•i khi thÃ nh viÃªn thanh toÃ¡n.
+     * Khoáº£n pháº¡t chá»‰ Ä‘Æ°á»£c ghi nháº­n lÃ  cÃ´ng ná»£; vÃ­ chá»‰ thay
+     * Ä‘á»•i khi thÃ nh viÃªn thanh toÃ¡n.
      */
     private void processOverdueFine(BorrowDetail detail) {
         if (detail != null && detail.getBorrowDetailId() != null) {
@@ -845,7 +900,8 @@ public class LoanServiceImpl implements LoanService {
 
     private boolean isGoodCondition(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        return normalized.startsWith("tốt") || normalized.startsWith("good");
+        return normalized.startsWith("tốt") || normalized.startsWith("good") || normalized.startsWith("new")
+                || normalized.startsWith("mới");
     }
 
     private String resolveReturnedItemStatus(String bookCondition) {
@@ -856,21 +912,27 @@ public class LoanServiceImpl implements LoanService {
         if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
             return STATUS_DAMAGED;
         }
+        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage")) {
+            return STATUS_MINOR_DAMAGED;
+        }
         return STATUS_AVAILABLE;
     }
 
     private String resolveConditionCode(String bookCondition) {
         String itemStatus = resolveReturnedItemStatus(bookCondition);
-        if (STATUS_LOST.equals(itemStatus)) return "LOST";
+        if (STATUS_LOST.equals(itemStatus))
+            return "LOST";
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
         if (STATUS_DAMAGED.equals(itemStatus)
                 || normalized.contains("minor damage")
-                || normalized.contains("h\u01b0 h\u1ecfng")) return "DAMAGED";
+                || normalized.contains("h\u01b0 h\u1ecfng"))
+            return "DAMAGED";
         return "GOOD";
     }
 
     /**
-     * Cáº­p nháº­t tráº¡ng thÃ¡i cá»§a phiáº¿u mÆ°á»£n cha dá»±a trÃªn cÃ¡c chi tiáº¿t sÃ¡ch Ä‘Ã£ tráº£
+     * Cáº­p nháº­t tráº¡ng thÃ¡i cá»§a phiáº¿u mÆ°á»£n cha dá»±a trÃªn cÃ¡c chi
+     * tiáº¿t sÃ¡ch Ä‘Ã£ tráº£
      */
     private void updateParentBorrowStatus(Borrow borrow) {
         List<BorrowDetail> allDetails = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
@@ -893,7 +955,7 @@ public class LoanServiceImpl implements LoanService {
         } else {
             borrow.setStatus(STATUS_ACTIVE);
         }
-        
+
         borrowRepository.save(borrow);
     }
 
@@ -901,12 +963,12 @@ public class LoanServiceImpl implements LoanService {
      * Táº¡o thÃ´ng bÃ¡o há»‡ thá»‘ng vÃ  gá»­i cho Ä‘á»™c giáº£
      */
     private void sendInternalNotification(Member member,
-                                          NotificationType type,
-                                          NotificationEventType eventType,
-                                          NotificationSource source,
-                                          String titleKey,
-                                          String contentKey,
-                                          Object... arguments) {
+            NotificationType type,
+            NotificationEventType eventType,
+            NotificationSource source,
+            String titleKey,
+            String contentKey,
+            Object... arguments) {
         if (member == null || member.getMemberId() == null) {
             throw new DataProcessingException(localizedMessageService.get("backend.notification.memberMissing"));
         }
@@ -943,13 +1005,15 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BorrowDetail> getMemberBorrowDetailsByDateRange(Integer memberId, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+    public List<BorrowDetail> getMemberBorrowDetailsByDateRange(Integer memberId, java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate) {
         return borrowDetailRepository.findBorrowHistoryByDateRange(memberId, startDate, endDate);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> getMemberTransactionsByDateRange(Integer memberId, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+    public List<Transaction> getMemberTransactionsByDateRange(Integer memberId, java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate) {
         return transactionRepository.findTransactionsByMemberIdAndDateRange(memberId, startDate, endDate);
     }
 
@@ -971,7 +1035,8 @@ public class LoanServiceImpl implements LoanService {
     @Transactional(rollbackFor = Exception.class)
     public void confirmBookReturn(Integer borrowDetailId, String conditionNote) {
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(() -> new IllegalArgumentException(localizedMessageService.get("backend.loan.detailNotFound")));
+                .orElseThrow(
+                        () -> new IllegalArgumentException(localizedMessageService.get("backend.loan.detailNotFound")));
 
         BookItem item = detail.getBookItem();
         if (item == null) {

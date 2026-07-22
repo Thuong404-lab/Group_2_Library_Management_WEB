@@ -42,54 +42,43 @@
                         <div class="topup-search-control mb-2">
                             <i class="bi bi-search" aria-hidden="true"></i>
                             <input type="text" id="topupMemberSearch" class="form-control"
+                                       th:value="${selectedTopupMember != null ? selectedTopupMember.fullName + ' - TV-' + selectedTopupMember.memberId : ''}"
                                        th:placeholder="#{librarian.topupDesk.searchPlaceholder}"
                                 autocomplete="off">
                         </div>
                                 <div class="topup-member-search-hint" th:text="#{librarian.topupDesk.searchHint}">Enter member information to search.</div>
                                 <div class="topup-member-selection-hint" th:text="#{librarian.topupDesk.selectionHint}">Select a member before topping up.</div>
 
-                        <div class="topup-member-list p-3 d-none" id="topupMemberList">
-                            <label th:each="member : ${topupMembers}" class="form-check topup-member-item mb-2"
-                                             th:data-selected-label="${(member.user != null and member.user.fullName != null ? member.user.fullName : #messages.msg('role.member')) + ' - TV-' + member.memberId}"
-                                th:attr="data-search=${#strings.toLowerCase(
-                                    (member.user != null ? member.user.fullName : '') + ' ' +
-                                    (member.user != null ? member.user.email : '') + ' ' +
-                                    (member.user != null ? member.user.phone : '') + ' ' +
-                                    (member.user != null ? member.user.id : '') + ' ' +
-                                    (member.user != null and member.user.status != null ? member.user.status : '') + ' ' +
-                                    member.memberId + ' tv-' + member.memberId + ' ' +
-                                    (member.tier != null ? member.tier.tierId : '') + ' ' +
-                                    (member.tier != null ? member.tier.tierName : '') + ' ' +
-                                    (member.tier != null ? member.tier.discountPercent : '') + ' ' +
-                                    (member.tier != null ? member.tier.borrowLimit : '') + ' ' +
-                                    (member.tier != null ? member.tier.condition : '') + ' ' +
-                                    (member.tier != null ? member.tier.benefits : '')
-                                )}">
-                                <input class="form-check-input topup-member-checkbox" type="checkbox" name="memberPhone"
-                                    th:value="${member.memberId}"
-                                    th:checked="${memberPhone != null and #strings.equals(memberPhone, #strings.toString(member.memberId))}"
-                                    autocomplete="off">
+                        <div class="topup-member-list p-3 d-none" id="topupMemberList"
+                             th:data-search-url="@{/librarian/members/topup/search}"
+                             th:data-no-email="#{common.noEmail}" th:data-no-phone="#{common.noPhone}"
+                             th:data-no-matches="#{librarian.topupDesk.noMatches}"
+                             th:data-member-label="#{role.member}" th:data-currency="#{currency.vnd}">
+                            <label th:if="${selectedTopupMember != null}" class="form-check topup-member-item mb-2"
+                                   th:data-selected-label="${selectedTopupMember.fullName + ' - TV-' + selectedTopupMember.memberId}">
+                                <input class="form-check-input topup-member-checkbox" type="radio" name="memberPhone"
+                                       th:value="${selectedTopupMember.memberId}" checked autocomplete="off"
+                                       th:data-member-name="${selectedTopupMember.fullName}"
+                                       th:data-member-code="${'TV-' + selectedTopupMember.memberId}"
+                                       th:data-member-status="${selectedTopupMember.accountStatus}"
+                                       th:data-member-tier="${selectedTopupMember.tierName}"
+                                       th:data-member-balance="${selectedTopupMember.walletBalance}">
                                 <span class="form-check-label topup-member-info">
-                                    <strong class="topup-member-name"
-                                                        th:text="${member.user != null and member.user.fullName != null ? member.user.fullName : #messages.msg('role.member')}">Member name</strong>
+                                    <strong class="topup-member-name" th:text="${selectedTopupMember.fullName}">Member name</strong>
                                     <span class="topup-member-contact">
-                                                    <span th:text="${member.user != null and member.user.email != null ? member.user.email : #messages.msg('common.noEmail')}">email@example.com</span>
-                                        <span aria-hidden="true"> · </span>
-                                                    <span th:text="${member.user != null and member.user.phone != null and !#strings.isEmpty(member.user.phone) ? member.user.phone : #messages.msg('common.noPhone')}">0900000000</span>
-                                        <span aria-hidden="true"> · </span>
-                                        <span th:text="${'TV-' + member.memberId}">TV-1</span>
+                                        <span th:text="${selectedTopupMember.email}">email@example.com</span>
+                                        <span aria-hidden="true"> • </span>
+                                        <span th:text="${selectedTopupMember.phone != null and !#strings.isEmpty(selectedTopupMember.phone) ? selectedTopupMember.phone : #messages.msg('common.noPhone')}">0900000000</span>
+                                        <span aria-hidden="true"> • </span>
+                                        <span th:text="${'TV-' + selectedTopupMember.memberId}">TV-1</span>
                                     </span>
+                                    <span class="topup-member-meta"
+                                          th:text="${selectedTopupMember.accountStatus + (selectedTopupMember.tierName != null and !#strings.isEmpty(selectedTopupMember.tierName) ? ' • ' + selectedTopupMember.tierName : '')}">Active • Gold</span>
                                 </span>
                             </label>
-
-                            <div th:if="${topupMembers == null or #lists.isEmpty(topupMembers)}"
-                                class="topup-member-empty">
-                                <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                            <span th:text="#{librarian.topupDesk.noMembers}">No members in the system.</span>
-                            </div>
                             <div id="topupMemberEmpty" class="topup-member-empty d-none">
                                 <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                            <span th:text="#{librarian.topupDesk.noMatches}">No matching members found.</span>
+                                <span th:text="#{librarian.topupDesk.noMatches}">No matching members found.</span>
                             </div>
                         </div>
                         <div id="topupMemberRequired" class="invalid-feedback">
@@ -102,21 +91,17 @@
                         <div class="input-group finance-amount-group">
                             <input type="text" inputmode="numeric" class="form-control" name="amount" id="topupAmount"
                                        th:value="${amount != null ? amount : ''}" th:placeholder="#{librarian.topupDesk.amountPlaceholder}"
-                                data-vnd-input data-min-amount="10000" data-max-amount="500000000" th:data-min-message="#{validation.money.minimum('{0}')}" th:data-max-message="#{validation.money.maximum('{0}')}" autocomplete="off">
+                                data-vnd-input th:data-min-amount="${topupMinAmount}" th:data-max-amount="${topupMaxAmount}" th:data-min-message="#{validation.money.minimum('{0}')}" th:data-max-message="#{validation.money.maximum('{0}')}" autocomplete="off">
                             <span class="input-group-text finance-currency-unit librarian-topup-desk-span-background-02" th:text="#{currency.vnd}">VND</span>
                         </div>
                         <div id="topupAmountRequired" class="invalid-feedback">
                                     <span th:text="#{librarian.topupDesk.amountRequired}">Top-up amount is required.</span>
                         </div>
                         <div class="quick-amount-options mt-2 d-flex flex-wrap">
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-amount="50000">50.000</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-amount="100000">100.000</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-amount="200000">200.000</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-amount="500000">500.000</button>
+                            <button th:each="quickAmount : ${topupQuickAmounts}" type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    th:data-amount="${quickAmount}"
+                                    th:text="${#numbers.formatDecimal(quickAmount, 0, 'POINT', 0, 'COMMA')}">50.000</button>
                         </div>
                     </div>
 
@@ -188,10 +173,16 @@
                                     th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'HH:mm dd/MM') : '-'}">
                                     -
                                 </div>
+                                <div class="topup-transaction-audit">
+                                    <span th:text="${transaction.channel != null ? transaction.channel : '-'}">CASH</span>
+                                    <span aria-hidden="true"> • </span>
+                                    <span th:text="${transaction.referenceCode != null ? transaction.referenceCode : '-'}">REF</span>
+                                </div>
                             </div>
                             <span class="topup-transaction-amount amount-positive">
                                 +<span
                                     th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                                <span th:text="#{currency.vnd}">VND</span>
                             </span>
                         </div>
                     </div>
@@ -218,13 +209,51 @@
                                     th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">
                                     -
                                 </div>
+                                <div class="topup-transaction-audit">
+                                    <span th:text="${transaction.channel != null ? transaction.channel : '-'}">CASH</span>
+                                    <span aria-hidden="true"> • </span>
+                                    <span th:text="${transaction.performedByStaff != null and transaction.performedByStaff.user != null ? transaction.performedByStaff.user.fullName : #messages.msg('common.system')}">Staff</span>
+                                </div>
                             </div>
                             <span class="topup-transaction-amount amount-positive">
                                 +<span
                                     th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                                <span th:text="#{currency.vnd}">VND</span>
                             </span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="topupConfirmModal" class="topup-confirm-modal" hidden
+             role="dialog" aria-modal="true" aria-labelledby="topupConfirmTitle">
+            <div class="topup-confirm-backdrop" data-topup-modal-close></div>
+            <div class="topup-confirm-dialog">
+                <div class="topup-confirm-header">
+                    <div class="topup-confirm-kicker" th:text="#{librarian.topupDesk.confirmKicker}">Financial confirmation</div>
+                    <h3 id="topupConfirmTitle" th:text="#{librarian.topupDesk.confirmTitle}">Confirm wallet top-up</h3>
+                    <p th:text="#{librarian.topupDesk.confirmDescription}">Review the member and amount before continuing.</p>
+                </div>
+                <div class="topup-confirm-body">
+                    <dl class="topup-confirm-grid">
+                        <div><dt th:text="#{librarian.topupDesk.confirmMember}">Member</dt><dd id="confirmMember">-</dd></div>
+                        <div><dt th:text="#{librarian.topupDesk.confirmStatus}">Status</dt><dd id="confirmStatus">-</dd></div>
+                        <div><dt th:text="#{librarian.topupDesk.confirmTier}">Tier</dt><dd id="confirmTier">-</dd></div>
+                        <div><dt th:text="#{librarian.topupDesk.confirmMethod}">Method</dt><dd id="confirmMethod">-</dd></div>
+                        <div><dt th:text="#{librarian.topupDesk.confirmCurrentBalance}">Current balance</dt><dd id="confirmCurrentBalance">-</dd></div>
+                        <div><dt th:text="#{librarian.topupDesk.confirmAmount}">Top-up amount</dt><dd id="confirmAmount">-</dd></div>
+                        <div class="topup-confirm-result"><dt th:text="#{librarian.topupDesk.confirmResultBalance}">Resulting balance</dt><dd id="confirmResultBalance">-</dd></div>
+                    </dl>
+                    <div class="topup-confirm-warning" th:text="#{librarian.topupDesk.confirmWarning}">
+                        Cash top-ups are recorded immediately and require a separate correction transaction to reverse.
+                    </div>
+                </div>
+                <div class="topup-confirm-actions">
+                    <button type="button" class="btn app-secondary-action" data-topup-modal-close
+                            th:text="#{common.cancel}">Cancel</button>
+                    <button type="button" class="btn btn-confirm-topup" id="topupModalConfirm"
+                            th:text="#{librarian.topupDesk.confirmFinal}">Confirm top-up</button>
                 </div>
             </div>
         </div>
@@ -244,56 +273,119 @@
             });
 
             const memberSearch = document.getElementById("topupMemberSearch");
-            if (memberSearch != null) {
-                memberSearch.addEventListener("input", function () {
-                    const normalizeSearchText = function (value) {
-                        return (value || "")
-                            .toLocaleLowerCase("vi")
-                            .normalize("NFD")
-                            .replace(/[\u0300-\u036f]/g, "")
-                            .replace(/đ/g, "d");
-                    };
-                    const keyword = normalizeSearchText(memberSearch.value.trim());
-                    const memberList = document.getElementById("topupMemberList");
-                    const memberItems = document.querySelectorAll(".topup-member-item");
+            const memberList = document.getElementById("topupMemberList");
+            let memberSearchTimer = null;
+            let memberSearchController = null;
 
-                    if (keyword === "") {
-                        memberList?.classList.add("d-none");
-                        document.getElementById("topupMemberEmpty")?.classList.add("d-none");
+            function createMemberOption(member) {
+                const label = document.createElement("label");
+                label.className = "form-check topup-member-item mb-2";
+                label.dataset.selectedLabel = (member.fullName || memberList.dataset.memberLabel)
+                    + " - TV-" + member.memberId;
+
+                const radio = document.createElement("input");
+                radio.className = "form-check-input topup-member-checkbox";
+                radio.type = "radio";
+                radio.name = "memberPhone";
+                radio.value = member.memberId;
+                radio.autocomplete = "off";
+                radio.dataset.memberName = member.fullName || memberList.dataset.memberLabel;
+                radio.dataset.memberCode = "TV-" + member.memberId;
+                radio.dataset.memberStatus = member.accountStatus || member.userStatus || "-";
+                radio.dataset.memberTier = member.tierName || "-";
+                radio.dataset.memberBalance = member.walletBalance || 0;
+
+                const info = document.createElement("span");
+                info.className = "form-check-label topup-member-info";
+                const name = document.createElement("strong");
+                name.className = "topup-member-name";
+                name.textContent = radio.dataset.memberName;
+                const contact = document.createElement("span");
+                contact.className = "topup-member-contact";
+                contact.textContent = (member.email || memberList.dataset.noEmail) + " • "
+                    + (member.phone || memberList.dataset.noPhone) + " • " + radio.dataset.memberCode;
+                const meta = document.createElement("span");
+                meta.className = "topup-member-meta";
+                meta.textContent = radio.dataset.memberStatus
+                    + (member.tierName ? " • " + member.tierName : "");
+                info.append(name, contact, meta);
+                label.append(radio, info);
+                return label;
+            }
+
+            function renderMemberResults(members) {
+                if (memberList == null) return;
+                memberList.replaceChildren();
+                (members || []).forEach(function (member) {
+                    memberList.appendChild(createMemberOption(member));
+                });
+                if (!members || members.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "topup-member-empty";
+                    empty.textContent = memberList.dataset.noMatches || "No matching members found.";
+                    memberList.appendChild(empty);
+                }
+                memberList.classList.remove("d-none");
+            }
+
+            if (memberSearch != null && memberList != null) {
+                memberSearch.addEventListener("input", function () {
+                    window.clearTimeout(memberSearchTimer);
+                    const keyword = memberSearch.value.trim();
+                    const selected = memberList.querySelector(".topup-member-checkbox:checked");
+                    if (selected && memberSearch.value !== selected.closest("label")?.dataset.selectedLabel) {
+                        selected.checked = false;
+                    }
+                    if (keyword.length < 2) {
+                        memberList.classList.add("d-none");
                         return;
                     }
+                    memberSearchTimer = window.setTimeout(async function () {
+                        memberSearchController?.abort();
+                        memberSearchController = new AbortController();
+                        try {
+                            const response = await fetch(memberList.dataset.searchUrl + "?q="
+                                + encodeURIComponent(keyword), {
+                                headers: {"Accept": "application/json"},
+                                signal: memberSearchController.signal
+                            });
+                            if (!response.ok) throw new Error("Search failed");
+                            renderMemberResults(await response.json());
+                        } catch (error) {
+                            if (error.name !== "AbortError") renderMemberResults([]);
+                        }
+                    }, 250);
+                });
 
-                    memberList?.classList.remove("d-none");
-                    let visibleCount = 0;
-                    memberItems.forEach(function (item) {
-                        const isVisible = normalizeSearchText(item.getAttribute("data-search")).includes(keyword);
-                        item.classList.toggle("d-none", !isVisible);
-                        if (isVisible) visibleCount++;
-                    });
-                    const emptyState = document.getElementById("topupMemberEmpty");
-                    if (emptyState != null) {
-                        emptyState.classList.toggle("d-none", visibleCount !== 0 || memberItems.length === 0);
-                    }
+                memberList.addEventListener("change", function (event) {
+                    const radio = event.target.closest(".topup-member-checkbox");
+                    if (radio == null || !radio.checked) return;
+                    memberSearch.value = radio.closest(".topup-member-item")?.dataset.selectedLabel || "";
+                    memberList.classList.add("d-none");
+                    memberList.classList.remove("is-invalid");
+                    document.getElementById("topupMemberRequired")?.classList.remove("d-block");
                 });
             }
 
-            const memberCheckboxes = document.querySelectorAll(".topup-member-checkbox");
-            memberCheckboxes.forEach(function (checkbox) {
-                checkbox.addEventListener("change", function () {
-                    if (checkbox.checked) {
-                        memberCheckboxes.forEach(function (otherCheckbox) {
-                            if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
-                        });
-                        const selectedLabel = checkbox.closest(".topup-member-item")?.dataset.selectedLabel;
-                        if (memberSearch != null && selectedLabel) memberSearch.value = selectedLabel;
-                        document.getElementById("topupMemberList")?.classList.add("d-none");
-                    }
-                    document.getElementById("topupMemberList")?.classList.remove("is-invalid");
-                    document.getElementById("topupMemberRequired")?.classList.remove("d-block");
-                });
+            const topupForm = document.getElementById("topupForm");
+            const confirmModal = document.getElementById("topupConfirmModal");
+            let confirmedSubmission = false;
+
+            function formatVnd(value) {
+                return new Intl.NumberFormat("vi-VN", {maximumFractionDigits: 0}).format(Number(value || 0))
+                    + " " + (memberList?.dataset.currency || "VND");
+            }
+
+            function closeConfirmModal() {
+                if (confirmModal == null) return;
+                confirmModal.hidden = true;
+                document.body.classList.remove("topup-modal-open");
+            }
+
+            document.querySelectorAll("[data-topup-modal-close]").forEach(function (button) {
+                button.addEventListener("click", closeConfirmModal);
             });
 
-            const topupForm = document.getElementById("topupForm");
             if (topupForm != null) {
                 const cashAction = topupForm.getAttribute("action");
                 topupForm.addEventListener("reset", function () {
@@ -327,6 +419,10 @@
                         amountInput.classList.add("is-invalid");
                         document.getElementById("topupAmountRequired")?.classList.add("d-block");
                         isValid = false;
+                    } else if (amountInput != null && !amountInput.checkValidity()) {
+                        amountInput.classList.add("is-invalid");
+                        amountInput.reportValidity();
+                        isValid = false;
                     }
 
                     if (!isValid) {
@@ -335,12 +431,43 @@
                         return;
                     }
 
+                    if (!confirmedSubmission) {
+                        event.preventDefault();
+                        const selectedMember = document.querySelector(".topup-member-checkbox:checked");
+                        const rawAmount = (amountInput?.value || "").replace(/\D/g, "");
+                        const currentBalance = Number(selectedMember?.dataset.memberBalance || 0);
+                        const amount = Number(rawAmount || 0);
+                        document.getElementById("confirmMember").textContent =
+                            (selectedMember?.dataset.memberName || "-") + " ("
+                            + (selectedMember?.dataset.memberCode || "-") + ")";
+                        document.getElementById("confirmStatus").textContent = selectedMember?.dataset.memberStatus || "-";
+                        document.getElementById("confirmTier").textContent = selectedMember?.dataset.memberTier || "-";
+                        document.getElementById("confirmMethod").textContent =
+                            document.querySelector("input[name='payMethod']:checked")?.closest(".topup-method-option")
+                                ?.querySelector("label")?.textContent?.trim() || "-";
+                        document.getElementById("confirmCurrentBalance").textContent = formatVnd(currentBalance);
+                        document.getElementById("confirmAmount").textContent = formatVnd(amount);
+                        document.getElementById("confirmResultBalance").textContent = formatVnd(currentBalance + amount);
+                        confirmModal.hidden = false;
+                        document.body.classList.add("topup-modal-open");
+                        document.getElementById("topupModalConfirm")?.focus();
+                        return;
+                    }
+
                     const selectedMethod = document.querySelector("input[name='payMethod']:checked")?.value;
                     topupForm.setAttribute("action", selectedMethod === "transfer"
                         ? topupForm.dataset.payosAction
                         : cashAction);
+                    document.getElementById("topupSubmitButton")?.setAttribute("disabled", "disabled");
                 });
             }
+
+            document.getElementById("topupModalConfirm")?.addEventListener("click", function () {
+                confirmedSubmission = true;
+                closeConfirmModal();
+                this.setAttribute("disabled", "disabled");
+                topupForm?.requestSubmit();
+            });
 
             const topupAmount = document.getElementById("topupAmount");
             topupAmount?.addEventListener("input", function () {
