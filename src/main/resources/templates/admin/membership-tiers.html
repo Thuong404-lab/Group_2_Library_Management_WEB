@@ -33,14 +33,13 @@
             <span class="chip-count" th:text="${tiers.size()}">4</span>
             <span th:text="#{admin.tiers.chipTotal}">hạng thành viên</span>
         </span>
-        <span class="summary-chip" th:each="tier : ${tiers}"
-              th:if="${memberCounts.containsKey(tier.tierId)}">
+        <span class="summary-chip" th:each="tier, tierStat : ${tiers}">
             <!-- badge nhỏ cho từng hạng -->
-            <span th:class="${'tier-badge tier-badge--' + (tier.tierName == 'Regular' ? 'regular' : (tier.tierName == 'Silver' ? 'silver' : (tier.tierName == 'Gold' ? 'gold' : (tier.tierName == 'Diamond' ? 'diamond' : 'regular'))))}"
+            <span th:class="${'tier-badge tier-badge--level-' + tierStat.index}"
                   style="font-size:11px; padding:3px 10px; min-width:auto;"
-                  th:text="${tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tier.tierName)))}">
+                  th:text="${tier.displayName}">
             </span>
-            <span class="chip-count" th:text="${memberCounts[tier.tierId]}">0</span>
+            <span class="chip-count" th:text="${memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0}">0</span>
             <span th:text="#{admin.tiers.memberCount}">thành viên</span>
         </span>
     </div>
@@ -84,8 +83,8 @@
 
                         <!-- Hạng badge -->
                         <td>
-                            <span th:class="${'tier-badge tier-badge--' + (tier.tierName == 'Regular' ? 'regular' : (tier.tierName == 'Silver' ? 'silver' : (tier.tierName == 'Gold' ? 'gold' : (tier.tierName == 'Diamond' ? 'diamond' : 'regular'))))}"
-                                  th:text="${tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tier.tierName)))}">
+                            <span th:class="${'tier-badge tier-badge--level-' + iStat.index}"
+                                  th:text="${tier.displayName}">
                                 Thường
                             </span>
                         </td>
@@ -117,13 +116,9 @@
 
                         <!-- Quyền lợi tóm tắt -->
                         <td>
-                            <div class="info-sub" th:if="${tier.discountPercent != null && tier.discountPercent > 0}"
-                                 th:text="#{public.tiers.benefits.dynamic(${#numbers.formatDecimal(tier.discountPercent, 0, 'COMMA', 0, 'POINT')}, ${tier.borrowLimit})}"></div>
-                            <div class="info-sub" th:if="${tier.discountPercent == null || tier.discountPercent == 0}"
-                                 th:text="#{public.tiers.benefits.dynamicNoDiscount(${tier.borrowLimit})}"></div>
-                            <div class="info-sub text-muted mt-1"
-                                 th:if="${tier.benefits != null && !tier.benefits.isBlank()}"
-                                 th:text="${#strings.abbreviate(tier.benefits, 60)}"></div>
+                            <div class="info-sub"
+                                 th:if="${tier.displayBenefits != null && !tier.displayBenefits.isBlank()}"
+                                 th:text="${#strings.abbreviate(tier.displayBenefits, 100)}"></div>
                         </td>
 
                         <!-- Thao tác: chỉ Edit -->
@@ -134,7 +129,6 @@
                                     th:title="#{common.edit}">
                                 <i class="bi bi-pencil-square" style="font-size:14px"></i>
                             </button>
-                        </td>
 
                         <!-- ── Edit Modal ─────────────────────────────────── -->
                         <div class="modal fade" th:id="${'editTierModal-' + tier.tierId}" tabindex="-1" aria-hidden="true">
@@ -145,9 +139,9 @@
                                             <i class="bi bi-pencil-square me-2" style="color:var(--app-color-primary)"></i>
                                             <span th:text="#{admin.tiers.editTitle}">Chỉnh sửa hạng</span>
                                             &nbsp;—&nbsp;
-                                            <span th:class="${'tier-badge tier-badge--' + (tier.tierName == 'Regular' ? 'regular' : (tier.tierName == 'Silver' ? 'silver' : (tier.tierName == 'Gold' ? 'gold' : (tier.tierName == 'Diamond' ? 'diamond' : 'regular'))))}"
+                                            <span th:class="${'tier-badge tier-badge--level-' + iStat.index}"
                                                   style="font-size:12px;padding:4px 12px;vertical-align:middle"
-                                                  th:text="${tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tier.tierName)))}">
+                                                  th:text="${tier.displayName}">
                                             </span>
                                         </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -156,16 +150,19 @@
                                     <form th:action="@{/admin/tiers/save}" method="post">
                                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                         <input type="hidden" name="tierId"   th:value="${tier.tierId}">
-                                        <input type="hidden" name="tierName" th:value="${tier.tierName}">
 
                                         <div class="modal-body">
+                                            <div class="alert alert-warning py-2 px-3 mb-3" role="note">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                <span th:text="#{admin.tiers.syncWarning}"></span>
+                                            </div>
                                             <!-- Tier name (hiển thị, không edit) -->
                                             <div class="mb-4">
                                                 <label class="form-label" th:text="#{admin.tiers.name}">Tên hạng</label>
                                                 <div class="tier-name-display">
-                                                    <span th:class="${'tier-badge tier-badge--' + (tier.tierName == 'Regular' ? 'regular' : (tier.tierName == 'Silver' ? 'silver' : (tier.tierName == 'Gold' ? 'gold' : (tier.tierName == 'Diamond' ? 'diamond' : 'regular'))))}"
+                                                    <span th:class="${'tier-badge tier-badge--level-' + iStat.index}"
                                                           style="font-size:12px;padding:4px 12px"
-                                                          th:text="${tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tier.tierName)))}">
+                                                          th:text="${tier.displayName}">
                                                     </span>
                                                     <span class="info-sub" th:text="#{admin.tiers.nameFixed}">Tên hạng không thể thay đổi</span>
                                                 </div>
@@ -175,7 +172,7 @@
                                                 <!-- Điều kiện chi tiêu -->
                                                 <div class="col-6">
                                                     <label class="form-label" th:text="#{admin.tiers.spending}">Điều kiện (VND)</label>
-                                                    <input type="number" id="condition-input" name="condition" step="1000" min="0"
+                                                    <input type="number" th:id="${'condition-input-' + tier.tierId}" name="condition" step="1000" min="0"
                                                            class="form-control"
                                                            th:value="${tier.condition}" required>
                                                     <div class="form-text" th:text="#{admin.tiers.conditionHint}">Tổng chi tiêu tích lũy tối thiểu</div>
@@ -186,7 +183,7 @@
                                                         <span th:text="#{admin.tiers.discount}">Giảm giá (%)</span>
                                                         <span class="text-danger ms-1">*</span>
                                                     </label>
-                                                    <input type="number" id="discount-input" name="discountPercent" step="0.01" min="0" max="100"
+                                                    <input type="number" th:id="${'discount-input-' + tier.tierId}" name="discountPercent" step="0.01" min="0" max="100"
                                                            class="form-control"
                                                            th:value="${tier.discountPercent}" required>
                                                 </div>
@@ -198,7 +195,7 @@
                                                     <span th:text="#{admin.tiers.borrowLimitBooks}">Giới hạn mượn (cuốn)</span>
                                                     <span class="text-danger ms-1">*</span>
                                                 </label>
-                                                <input type="number" id="borrow-limit-input" name="borrowLimit" min="1"
+                                                <input type="number" th:id="${'borrow-limit-input-' + tier.tierId}" name="borrowLimit" min="1" max="100"
                                                        class="form-control"
                                                        th:value="${tier.borrowLimit}" required>
                                                 <div class="form-text" th:text="#{admin.tiers.borrowLimitHint}">Tối thiểu 1 cuốn</div>
@@ -207,9 +204,10 @@
                                             <!-- Quyền lợi bổ sung -->
                                             <div class="mb-1">
                                                 <label class="form-label" th:text="#{admin.tiers.additionalBenefits}">Quyền lợi bổ sung</label>
-                                                <textarea id="benefits-input" name="benefits" class="form-control" rows="3"
+                                                <textarea th:id="${'benefits-input-' + tier.tierId}" name="benefits" class="form-control" rows="3" maxlength="1000"
                                                           style="resize:vertical"
-                                                          th:text="${tier.benefits}"></textarea>
+                                                          th:text="${tier.displayBenefits}"></textarea>
+                                                <div class="form-text" th:text="#{admin.tiers.languageHint}"></div>
                                             </div>
                                         </div>
 
@@ -225,6 +223,7 @@
                         </div>
                         <!-- ── /Edit Modal ────────────────────────────────── -->
 
+                        </td>
                     </tr>
                 </tbody>
             </table>

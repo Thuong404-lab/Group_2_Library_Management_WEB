@@ -30,7 +30,7 @@
                         <span th:text="#{librarian.fines.dailyRate}">Daily overdue rate configured by Admin:</span>
                         <strong class="amount-negative">
                             <span
-                                th:text="${finePerDay != null ? #numbers.formatDecimal(finePerDay, 0, 'COMMA', 0, 'POINT') : '5,000'}">5,000</span>
+                                th:text="${finePerDay != null ? #numbers.formatDecimal(finePerDay, 0, 'COMMA', 0, 'POINT') : '-'}">-</span>
                             <span th:text="#{librarian.fines.currencyPerDay}">VND/day</span>
                         </strong>
                     </div>
@@ -107,12 +107,12 @@
                                 <td>
                                     <strong class="amount-negative">
                                         <span
-                                            th:text="${#numbers.formatDecimal(violation.suggestedFineAmount, 0, 'COMMA', 0, 'POINT')}">15,000</span>
+                                            th:text="${#numbers.formatDecimal(violation.suggestedFineAmount, 0, 'COMMA', 0, 'POINT')}">—</span>
                                         <span th:text="#{currency.vnd}">VND</span>
                                     </strong>
                                     <div class="small text-muted">
                                         <span
-                                            th:text="${#numbers.formatDecimal(violation.finePerDay, 0, 'COMMA', 0, 'POINT')}">5,000</span>
+                                            th:text="${#numbers.formatDecimal(violation.finePerDay, 0, 'COMMA', 0, 'POINT')}">—</span>
                                         × <span th:text="${violation.overdueDays}">3</span> <span th:text="#{librarian.fines.dayUnit}">days</span>
                                     </div>
                                 </td>
@@ -162,6 +162,10 @@
             </div>
 
             <div th:if="${pendingFines != null and !#lists.isEmpty(pendingFines)}" class="app-table-wrap">
+                <div class="mb-3">
+                    <input type="search" id="pendingFineSearch" class="form-control"
+                           th:placeholder="#{librarian.fines.pendingSearchPlaceholder}" autocomplete="off">
+                </div>
                 <table class="table pending-fines-table align-middle mb-0">
                     <thead>
                         <tr>
@@ -174,24 +178,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="fine : ${pendingFines}">
+                        <tr th:each="fine : ${pendingFines}" class="pending-fine-row"
+                            th:attr="data-search=${#strings.toLowerCase((fine.wallet != null and fine.wallet.member != null and fine.wallet.member.user != null ? fine.wallet.member.user.fullName : '') + ' ' + fine.transactionId + ' ' + fine.transactionType + ' ' + (fine.borrow != null ? fine.borrow.borrowId : '') + ' ' + (fine.borrowDetail != null and fine.borrowDetail.book != null ? fine.borrowDetail.book.title : '') + ' ' + (fine.borrowDetail != null and fine.borrowDetail.bookItem != null ? fine.borrowDetail.bookItem.barcode : ''))}">
                             <td class="pending-fine-code" th:text="${'#TXN-' + fine.transactionId}">#TXN-1</td>
                             <td>
                                 <div class="pending-fine-member"
                                      th:text="${fine.wallet != null and fine.wallet.member != null and fine.wallet.member.user != null ? fine.wallet.member.user.fullName : #messages.msg('common.member')}">Member</div>
                                 <div class="small text-muted"
                                      th:if="${fine.wallet != null and fine.wallet.member != null}"
-                                     th:text="${'TV-' + fine.wallet.member.memberId}">TV-1</div>
+                                     th:text="${'MEM-' + fine.wallet.member.memberId}">MEM-1</div>
                             </td>
                             <td>
                                 <span class="fine-type-badge"
                                       th:classappend="${fine.transactionType == 'DAMAGE_FEE'} ? ' is-damage' : ' is-overdue'"
                                       th:text="${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">Fine</span>
+                                <div class="small text-muted mt-1" th:if="${fine.borrow != null}">
+                                    <span th:text="#{librarian.fines.loanCode}">Loan</span>:
+                                    <span th:text="${'BOR-' + fine.borrow.borrowId}">BOR-1</span>
+                                </div>
+                                <div class="small text-muted" th:if="${fine.borrowDetail != null and fine.borrowDetail.book != null}"
+                                     th:text="${fine.borrowDetail.book.title}">Book title</div>
+                                <div class="small text-muted" th:if="${fine.borrowDetail != null and fine.borrowDetail.bookItem != null and fine.borrowDetail.bookItem.barcode != null}"
+                                     th:text="${#messages.msg('librarian.fines.barcode') + ': ' + fine.borrowDetail.bookItem.barcode}">Barcode</div>
                             </td>
                             <td class="amount-negative">
                                 <strong th:text="${#numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') + ' ' + #messages.msg('currency.vnd')}">10,000 VND</strong>
                             </td>
-                            <td th:text="${fine.transactionDate != null ? #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm') : #messages.msg('common.unknownDate')}">18/07/2026 10:00</td>
+                            <td th:text="${fine.createdAt != null ? #temporals.format(fine.createdAt, 'dd/MM/yyyy HH:mm') : (fine.transactionDate != null ? #temporals.format(fine.transactionDate, 'dd/MM/yyyy HH:mm') : #messages.msg('common.unknownDate'))}">18/07/2026 10:00</td>
                             <td class="pending-fine-action">
                                 <button type="button" class="btn btn-sm btn-classic pending-fine-pay-button"
                                         data-bs-toggle="modal" data-bs-target="#fineDeskPaymentModal"
@@ -200,11 +213,16 @@
                                                  data-fine-type=${fine.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')},
                                                  data-amount=${#numbers.formatDecimal(fine.amount.abs(), 0, 'COMMA', 0, 'POINT') + ' ' + #messages.msg('currency.vnd')},
                                                  data-wallet-balance=${fine.wallet != null and fine.wallet.balance != null ? #numbers.formatDecimal(fine.wallet.balance, 0, 'COMMA', 0, 'POINT') + ' ' + #messages.msg('currency.vnd') : '0 ' + #messages.msg('currency.vnd')},
+                                                 data-wallet-balance-raw=${fine.wallet != null and fine.wallet.balance != null ? fine.wallet.balance : 0},
+                                                 data-amount-raw=${fine.amount.abs()},
                                                  data-cash-action=@{/librarian/members/fines/{fineId}/cash-payment(fineId=${fine.transactionId})},
                                                  data-wallet-action=@{/librarian/members/fines/{fineId}/wallet-payment(fineId=${fine.transactionId})},
                                                  data-kqpay-action=@{/librarian/payments/payos/fine/{fineId}(fineId=${fine.transactionId})}"
                                         th:text="#{librarian.fines.pay}">Pay</button>
                             </td>
+                        </tr>
+                        <tr id="pendingFineEmpty" class="d-none">
+                            <td colspan="6" class="text-center text-muted py-4" th:text="#{librarian.fines.noMatchingPending}">No matching fines found.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -245,6 +263,8 @@
                                         <input type="radio" name="deskFinePaymentMethod" value="wallet">
                                         <span><strong th:text="#{payment.method.wallet}">Member Wallet</strong><small th:text="#{librarian.fines.walletMethodHint}">Deduct the fine from the member's current wallet balance.</small></span>
                                     </label>
+                                    <div class="finance-alert finance-alert--danger d-none" data-wallet-insufficient
+                                         th:text="#{librarian.fines.walletInsufficient}">The wallet balance is insufficient for this fine.</div>
                                     <label class="fine-payment-method-option">
                                         <input type="radio" name="deskFinePaymentMethod" value="kqpay">
                                         <span><strong th:text="#{payment.method.kqpay}">KQPay Transfer</strong><small th:text="#{librarian.fines.kqpayMethodHint}">Generate a bank transfer QR code for this exact charge.</small></span>
@@ -283,6 +303,18 @@
                 document.getElementById("overdueViolationEmpty")?.classList.toggle("d-none", visibleCount !== 0);
             });
 
+            const pendingFineSearch = document.getElementById("pendingFineSearch");
+            pendingFineSearch?.addEventListener("input", function () {
+                const keyword = pendingFineSearch.value.trim().toLocaleLowerCase("vi");
+                let visibleCount = 0;
+                document.querySelectorAll(".pending-fine-row").forEach(function (row) {
+                    const isVisible = (row.getAttribute("data-search") || "").includes(keyword);
+                    row.classList.toggle("d-none", !isVisible);
+                    if (isVisible) visibleCount++;
+                });
+                document.getElementById("pendingFineEmpty")?.classList.toggle("d-none", visibleCount !== 0);
+            });
+
             const fineDeskPaymentForm = document.getElementById("fineDeskPaymentForm");
             document.querySelectorAll(".pending-fine-pay-button").forEach(function (button) {
                 button.addEventListener("click", function () {
@@ -291,6 +323,13 @@
                     document.querySelector("[data-fine-payment-type]").textContent = button.dataset.fineType || "";
                     document.querySelector("[data-fine-payment-amount]").textContent = button.dataset.amount || "";
                     document.querySelector("[data-fine-payment-balance]").textContent = button.dataset.walletBalance || "";
+                    const walletOption = fineDeskPaymentForm.querySelector('[name="deskFinePaymentMethod"][value="wallet"]');
+                    const insufficientWarning = fineDeskPaymentForm.querySelector("[data-wallet-insufficient]");
+                    const walletBalance = Number(button.dataset.walletBalanceRaw || 0);
+                    const amount = Number(button.dataset.amountRaw || 0);
+                    const walletInsufficient = walletBalance < amount;
+                    if (walletOption != null) walletOption.disabled = walletInsufficient;
+                    insufficientWarning?.classList.toggle("d-none", !walletInsufficient);
                     fineDeskPaymentForm.dataset.cashAction = button.dataset.cashAction || "";
                     fineDeskPaymentForm.dataset.walletAction = button.dataset.walletAction || "";
                     fineDeskPaymentForm.dataset.kqpayAction = button.dataset.kqpayAction || "";

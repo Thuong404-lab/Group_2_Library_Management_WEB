@@ -13,6 +13,7 @@ import com.lms.service.LoanService;
 import com.lms.service.LocalizedMessageService;
 import com.lms.util.BorrowCodeFormatter;
 import com.lms.service.FinancialService;
+import com.lms.service.MembershipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +57,7 @@ public class LoanServiceImpl implements LoanService {
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final FinancialService financialService;
+    private final MembershipService membershipService;
 
 
     public LoanServiceImpl(BorrowRepository borrowRepository,
@@ -71,7 +73,8 @@ public class LoanServiceImpl implements LoanService {
                            SystemSettingRepository systemSettingRepository,
                            NotificationRepository notificationRepository,
                            MemberNotificationRepository memberNotificationRepository,
-                           FinancialService financialService) {
+                           FinancialService financialService,
+                           MembershipService membershipService) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.memberRepository = memberRepository;
@@ -86,6 +89,7 @@ public class LoanServiceImpl implements LoanService {
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.financialService = financialService;
+        this.membershipService = membershipService;
     }
 
     // UC-13.1: Xem chi tiáº¿t phiáº¿u mÆ°á»£n
@@ -213,7 +217,10 @@ public class LoanServiceImpl implements LoanService {
         }
 
         long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
-        int maxLimit = member.getTier() != null ? member.getTier().getBorrowLimit() : 3;
+        if (member.getTier() == null || member.getTier().getBorrowLimit() == null) {
+            throw new DataProcessingException(localizedMessageService.get("backend.tier.memberTierMissing"));
+        }
+        int maxLimit = member.getTier().getBorrowLimit();
         int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
 
         if (totalRequestedBooks > maxLimit) {
@@ -738,6 +745,7 @@ public class LoanServiceImpl implements LoanService {
                 .ifPresent(hold::setPerformedByStaff);
         borrowDetailRepository.save(detail);
         transactionRepository.save(hold);
+        membershipService.synchronizeMemberTier(detail.getBorrow().getMember().getMemberId());
         if (detail.getBorrow().getMember() != null) sendInternalNotification(detail.getBorrow().getMember(),
                 NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
                 "systemNotification.renewal.approved.title", "systemNotification.renewal.approved.content",

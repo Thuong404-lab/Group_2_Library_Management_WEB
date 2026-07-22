@@ -84,6 +84,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final FinancialService financialService;
+    private final com.lms.service.MembershipService membershipService;
     private final com.lms.service.LoanService loanService;
     private final com.lms.repository.StaffAccountRepository staffAccountRepository;
 
@@ -101,6 +102,7 @@ public class BorrowServiceImpl implements BorrowService {
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
             FinancialService financialService,
+            com.lms.service.MembershipService membershipService,
             com.lms.service.LoanService loanService,
             com.lms.repository.StaffAccountRepository staffAccountRepository) {
         this.memberRepository = memberRepository;
@@ -117,6 +119,7 @@ public class BorrowServiceImpl implements BorrowService {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.financialService = financialService;
+        this.membershipService = membershipService;
         this.loanService = loanService;
         this.staffAccountRepository = staffAccountRepository;
     }
@@ -181,21 +184,23 @@ public class BorrowServiceImpl implements BorrowService {
 
         // Tính toán số tiền
 
-        double feePerBookPerDay = 5000.0;
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(5000);
         SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
         if (feeSetting != null) {
             try {
-                feePerBookPerDay = Double.parseDouble(feeSetting.getSettingValue());
+                feePerBookPerDay = new BigDecimal(feeSetting.getSettingValue());
             } catch (NumberFormatException ignored) {
                 // Keep the documented default when the optional setting is malformed.
             }
         }
-        double baseFee = bookItemsToBorrow.size() * borrowDays * feePerBookPerDay;
-        double discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
-                ? member.getTier().getDiscountPercent().doubleValue()
-                : 0.0;
-        double finalFeeDouble = baseFee - (baseFee * discount / 100);
-        BigDecimal finalFee = BigDecimal.valueOf(finalFeeDouble);
+        BigDecimal baseFee = feePerBookPerDay
+                .multiply(BigDecimal.valueOf(bookItemsToBorrow.size()))
+                .multiply(BigDecimal.valueOf(borrowDays));
+        BigDecimal discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
+                ? member.getTier().getDiscountPercent() : BigDecimal.ZERO;
+        BigDecimal finalFee = baseFee.multiply(BigDecimal.ONE.subtract(
+                discount.divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP)))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
 
         // Xá»­ lÃ½ thanh toÃ¡n vÃ­ náº¿u user chá»n WALLET
         if ("WALLET".equalsIgnoreCase(request.getPaymentMethod())) {
@@ -227,6 +232,7 @@ public class BorrowServiceImpl implements BorrowService {
             transaction.setTransactionDate(LocalDateTime.now());
             transaction.setStatus("Completed");
             transactionRepository.save(transaction);
+            membershipService.synchronizeMemberTier(member.getMemberId());
         }
 
         for (BookItem item : bookItemsToBorrow) {
@@ -543,11 +549,11 @@ public class BorrowServiceImpl implements BorrowService {
 
         // â”€â”€ 2. TÃ­nh phÃ­ mÆ°á»£n
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        double feePerBookPerDay = 5000.0;
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(5000);
         SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
         if (feeSetting != null) {
             try {
-                feePerBookPerDay = Double.parseDouble(feeSetting.getSettingValue());
+                feePerBookPerDay = new BigDecimal(feeSetting.getSettingValue());
             } catch (NumberFormatException ignored) {
             }
         }
@@ -559,11 +565,13 @@ public class BorrowServiceImpl implements BorrowService {
                 borrowDays = (int) computed;
         }
 
-        double discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
-                ? member.getTier().getDiscountPercent().doubleValue()
-                : 0.0;
-        double baseFee = details.size() * borrowDays * feePerBookPerDay;
-        BigDecimal finalFee = BigDecimal.valueOf(baseFee - (baseFee * discount / 100));
+        BigDecimal discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
+                ? member.getTier().getDiscountPercent() : BigDecimal.ZERO;
+        BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf(details.size()))
+                .multiply(BigDecimal.valueOf(borrowDays));
+        BigDecimal finalFee = baseFee.multiply(BigDecimal.ONE.subtract(
+                discount.divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP)))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
 
         // â”€â”€ 3. Trá»« tiá»n vÃ­
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -587,6 +595,7 @@ public class BorrowServiceImpl implements BorrowService {
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setStatus("Completed");
         transactionRepository.save(transaction);
+        membershipService.synchronizeMemberTier(member.getMemberId());
 
         // â”€â”€ 5. Cáº­p nháº­t tráº¡ng thÃ¡i sang Chá» nháº­n báº£n váº­t lÃ½
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1456,15 +1465,16 @@ public class BorrowServiceImpl implements BorrowService {
         int borrowDays = normalizeBorrowDays(numberOfDays);
         java.math.BigDecimal feePerBookPerDay = java.math.BigDecimal
                 .valueOf(getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000));
-        double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
-                ? member.getTier().getDiscountPercent().doubleValue()
-                : 0.0;
-        java.math.BigDecimal discountFactor = java.math.BigDecimal.valueOf(1.0 - (discountPercent / 100.0));
+        java.math.BigDecimal discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                ? member.getTier().getDiscountPercent() : java.math.BigDecimal.ZERO;
+        java.math.BigDecimal discountFactor = java.math.BigDecimal.ONE.subtract(
+                discountPercent.divide(java.math.BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP));
 
         return feePerBookPerDay
                 .multiply(java.math.BigDecimal.valueOf(normalizedBookIds.size()))
                 .multiply(java.math.BigDecimal.valueOf(borrowDays))
-                .multiply(discountFactor);
+                .multiply(discountFactor)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     @Override

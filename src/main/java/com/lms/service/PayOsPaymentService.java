@@ -151,13 +151,15 @@ public class PayOsPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PayOsPayment createFinePaymentForLibrarian(Integer fineId) {
+    public PayOsPayment createFinePaymentForLibrarian(Integer fineId, Staff initiatedBy) {
         Transaction fine = transactionRepository.findById(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.fineNotFound")));
         if (fine.getWallet() == null || fine.getWallet().getMember() == null) {
             throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
         }
-        return createFinePayment(fine.getWallet().getMember(), fineId, "/librarian/payments/payos/return");
+        PayOsPayment payment = createFinePayment(fine.getWallet().getMember(), fineId, "/librarian/payments/payos/return");
+        payment.setInitiatedByStaff(initiatedBy);
+        return paymentRepository.save(payment);
     }
 
     private PayOsPayment createFinePayment(Member member, Integer fineId, String returnPath) {
@@ -171,8 +173,8 @@ public class PayOsPaymentService {
         if (!FINE.equals(type) && !"DAMAGE_FEE".equals(type)) {
             throw new ValidationException(messages.get("backend.financial.notFineTransaction"));
         }
-        if (isCompleted(fine.getStatus())) {
-            throw new ConflictException(messages.get("backend.financial.fineAlreadyPaid"));
+        if (!PENDING.equals(normalize(fine.getStatus()))) {
+            throw new ConflictException(messages.get("backend.financial.fineNotPending"));
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), FINE, fineId);
         if (activePayment != null) {
@@ -195,16 +197,18 @@ public class PayOsPaymentService {
         if (!FINE.equals(type) && !"DAMAGE_FEE".equals(type)) {
             throw new ValidationException(messages.get("backend.financial.notFineTransaction"));
         }
-        if (isCompleted(fine.getStatus())) {
-            throw new ConflictException(messages.get("backend.financial.fineAlreadyPaid"));
+        if (!PENDING.equals(normalize(fine.getStatus()))) {
+            throw new ConflictException(messages.get("backend.financial.fineNotPending"));
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), FINE, fineId);
         if (activePayment != null) {
             return activePayment;
         }
-        return createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()),
+        PayOsPayment payment = createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()),
                 descriptionWithId("LMW NOP PHAT ID", "LMW PHAT ID", fineId),
                 "/librarian/payments/payos/return");
+        payment.setInitiatedByStaff(fine.getPerformedByStaff());
+        return paymentRepository.save(payment);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -215,7 +219,7 @@ public class PayOsPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PayOsPayment createFineBatchPaymentForLibrarian(Integer borrowId) {
+    public PayOsPayment createFineBatchPaymentForLibrarian(Integer borrowId, Staff initiatedBy) {
         List<Transaction> fines = transactionRepository.findPendingFineTransactionsByBorrowId(
                 borrowId, List.of(FINE, "DAMAGE_FEE"));
         if (fines.isEmpty()) {
@@ -225,8 +229,10 @@ public class PayOsPaymentService {
         if (first.getWallet() == null || first.getWallet().getMember() == null) {
             throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
         }
-        return createFineBatchPayment(first.getWallet().getMember(), fines,
+        PayOsPayment payment = createFineBatchPayment(first.getWallet().getMember(), fines,
                 "/librarian/payments/payos/return");
+        payment.setInitiatedByStaff(initiatedBy);
+        return paymentRepository.save(payment);
     }
 
     private PayOsPayment createFineBatchPayment(Member member, List<Transaction> fines, String returnPath) {

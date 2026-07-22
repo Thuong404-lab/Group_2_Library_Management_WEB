@@ -32,6 +32,12 @@ public class Transaction {
 
     private LocalDateTime transactionDate;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @Column(length = 50)
     private String status = "Completed";
 
@@ -52,6 +58,13 @@ public class Transaction {
     private BigDecimal balanceAfter;
 
     public Transaction() {
+    }
+
+    @PrePersist
+    void initializeTimestamps() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) createdAt = transactionDate == null ? now : transactionDate;
+        if (transactionDate == null) transactionDate = createdAt;
     }
 
     public Transaction(Integer transactionId, Wallet wallet, Borrow borrow, String transactionType, BigDecimal amount, LocalDateTime transactionDate, String status) {
@@ -80,6 +93,10 @@ public class Transaction {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public LocalDateTime getTransactionDate() { return transactionDate; }
     public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getReferenceCode() { return referenceCode; }

@@ -427,7 +427,6 @@ BEGIN TRY
       (1,1,NULL,'TOP_UP',100000,DATEADD(day,-15,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0001',2,'CASH',200000,300000),
       (2,1,1,'BORROW_FEE',-5000,DATEADD(day,-9,@Now),'Completed',1,NULL,'DEMO-BORROW-0001',2,'WALLET',300000,295000),
       (3,2,2,'BORROW_FEE',-5000,DATEADD(day,-20,@Now),'Completed',2,NULL,'DEMO-BORROW-0002',2,'WALLET',185000,180000),
-      (4,2,2,'FINE',-30000,DATEADD(day,-1,@Now),'Pending',2,NULL,'DEMO-FINE-0001',NULL,'SYSTEM',NULL,NULL),
       (5,3,3,'BORROW_FEE',-5000,DATEADD(day,-11,@Now),'Completed',3,NULL,'DEMO-BORROW-0003',3,'WALLET',95000,90000),
       (6,4,4,'BORROW_FEE',-5000,DATEADD(day,-10,@Now),'Completed',4,NULL,'DEMO-BORROW-0004',2,'WALLET',155000,150000),
       (7,4,4,'RENEWAL_FEE',-10000,DATEADD(hour,-5,@Now),'Pending',4,10,'DEMO-RENEW-0001',NULL,'WALLET',150000,140000),
@@ -441,9 +440,7 @@ BEGIN TRY
       (15,11,11,'BORROW_FEE',-5000,DATEADD(day,-2,@Now),'Expired',12,NULL,'DEMO-BORROW-0011',NULL,'PAYOS',NULL,NULL),
       (16,12,NULL,'DEPOSIT',-50000,DATEADD(day,-5,@Now),'Completed',NULL,NULL,'DEMO-DEPOSIT-0012',NULL,'WALLET',175000,125000),
       (17,14,NULL,'TOP_UP',200000,DATEADD(day,-8,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0014',NULL,'PAYOS',220000,420000),
-      (18,15,NULL,'DAMAGE_FEE',-40000,DATEADD(day,-6,@Now),'Completed',NULL,NULL,'DEMO-DAMAGE-0015',3,'CASH',NULL,NULL),
-      (19,18,NULL,'TOP_UP',75000,DATEADD(day,-4,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0018',NULL,'PAYOS',150000,225000),
-      (20,2,2,'FINE',-25000,DATEADD(hour,-3,@Now),'Pending',2,NULL,'DEMO-FINE-0002',NULL,'SYSTEM',NULL,NULL);
+      (19,18,NULL,'TOP_UP',75000,DATEADD(day,-4,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0018',NULL,'PAYOS',150000,225000);
     SET IDENTITY_INSERT dbo.Transactions OFF;
 
     SET IDENTITY_INSERT dbo.PayOSPayments ON;
@@ -451,13 +448,9 @@ BEGIN TRY
       (1,6,13,'TOP_UP',NULL,50000,900000000000001,'demo-link-0001',NULL,NULL,'PAID','DEMO-BANK-0001',DATEADD(day,-3,@Now),DATEADD(day,-3,DATEADD(minute,2,@Now))),
       (2,14,17,'TOP_UP',NULL,200000,900000000000002,'demo-link-0002',NULL,NULL,'PAID','DEMO-BANK-0002',DATEADD(day,-8,@Now),DATEADD(day,-8,DATEADD(minute,3,@Now))),
       (3,11,NULL,'BORROW_FEE',11,5000,900000000000003,'demo-link-0003',NULL,NULL,'EXPIRED',NULL,DATEADD(day,-2,@Now),NULL),
-      (4,2,NULL,'FINE_BATCH',NULL,55000,900000000000004,'demo-link-0004',NULL,NULL,'CANCELLED',NULL,DATEADD(day,-1,@Now),NULL),
       (5,8,NULL,'TOP_UP',NULL,100000,900000000000005,'demo-link-0005',NULL,NULL,'EXPIRED',NULL,DATEADD(day,-4,@Now),NULL),
       (6,9,NULL,'DEPOSIT',9,50000,900000000000006,'demo-link-0006',NULL,NULL,'CANCELLED',NULL,DATEADD(day,-2,@Now),NULL);
     SET IDENTITY_INSERT dbo.PayOSPayments OFF;
-
-    INSERT dbo.PayOSPaymentFineItems(payment_id,fine_transaction_id,amount_snapshot) VALUES
-      (4,4,30000),(4,20,25000);
 
     INSERT dbo.PayOSPaymentAuditLogs(payment_id,actor_user_id,event_type,source,old_status,new_status,successful,message,created_at) VALUES
       (1,9,'PAYMENT_CREATED','APPLICATION',NULL,'PENDING',1,N'Tạo yêu cầu nạp ví demo.',DATEADD(day,-3,@Now)),
@@ -465,7 +458,6 @@ BEGIN TRY
       (2,17,'PAYMENT_CREATED','APPLICATION',NULL,'PENDING',1,N'Tạo yêu cầu nạp ví demo.',DATEADD(day,-8,@Now)),
       (2,NULL,'WEBHOOK_RECEIVED','PAYOS','PENDING','PAID',1,N'Webhook demo được xác minh thành công.',DATEADD(day,-8,DATEADD(minute,3,@Now))),
       (3,14,'PAYMENT_EXPIRED','SYSTEM','PENDING','EXPIRED',1,N'Thanh toán phí mượn demo đã hết hạn.',DATEADD(day,-1,@Now)),
-      (4,5,'PAYMENT_CANCELLED','MEMBER','PENDING','CANCELLED',1,N'Thanh toán nhóm tiền phạt demo đã được hủy.',DATEADD(hour,-20,@Now)),
       (5,11,'PAYMENT_EXPIRED','SYSTEM','PENDING','EXPIRED',1,N'Liên kết demo đã hết hạn.',DATEADD(day,-3,@Now)),
       (6,12,'PAYMENT_CANCELLED','MEMBER','PENDING','CANCELLED',1,N'Thành viên hủy thanh toán demo.',DATEADD(day,-2,DATEADD(minute,4,@Now)));
 

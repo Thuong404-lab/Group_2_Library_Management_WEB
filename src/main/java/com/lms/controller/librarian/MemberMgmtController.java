@@ -238,9 +238,10 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/payment/{borrowId}/cash")
     public String payBorrowFinesByCash(@PathVariable Integer borrowId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            fineBatchPaymentService.payBorrowFinesByCash(borrowId);
+            fineBatchPaymentService.payBorrowFinesByCash(borrowId, requireStaff(userDetails));
             redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
@@ -251,9 +252,10 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/payment/{borrowId}/wallet")
     public String payBorrowFinesByWallet(@PathVariable Integer borrowId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            fineBatchPaymentService.payBorrowFinesFromWallet(borrowId);
+            fineBatchPaymentService.payBorrowFinesFromWallet(borrowId, requireStaff(userDetails));
             redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
@@ -264,9 +266,10 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/{fineId}/cash-payment")
     public String payFineByCash(@PathVariable Integer fineId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            financialService.payFineByCash(fineId);
+            financialService.payFineByCash(fineId, requireStaff(userDetails));
             redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
@@ -276,9 +279,10 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @PostMapping("/members/fines/{fineId}/wallet-payment")
     public String payFineByWallet(@PathVariable Integer fineId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            financialService.payFineByWalletAtDesk(fineId);
+            financialService.payFineByWalletAtDesk(fineId, requireStaff(userDetails));
             redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
@@ -289,9 +293,10 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     @PostMapping("/members/fines/remind/{borrowDetailId}")
     public String remindOverdueMember(
             @PathVariable Integer borrowDetailId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            overdueReminderService.sendReturnReminder(borrowDetailId);
+            overdueReminderService.sendReturnReminder(borrowDetailId, requireStaff(userDetails));
             redirectAttributes.addFlashAttribute(
                     "success", message("backend.overdue.reminderSent"));
         } catch (ApplicationException exception) {
