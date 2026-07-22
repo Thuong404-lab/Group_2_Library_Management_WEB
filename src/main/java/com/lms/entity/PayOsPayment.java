@@ -33,6 +33,13 @@ public class PayOsPayment {
     @Column(nullable = false)
     private Long orderCode;
 
+    @Column(length = 48, unique = true)
+    private String requestKey;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "initiated_by_staff_id")
+    private Staff initiatedByStaff;
+
     @Column(length = 100)
     private String paymentLinkId;
 
@@ -68,6 +75,10 @@ public class PayOsPayment {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public Long getOrderCode() { return orderCode; }
     public void setOrderCode(Long orderCode) { this.orderCode = orderCode; }
+    public String getRequestKey() { return requestKey; }
+    public void setRequestKey(String requestKey) { this.requestKey = requestKey; }
+    public Staff getInitiatedByStaff() { return initiatedByStaff; }
+    public void setInitiatedByStaff(Staff initiatedByStaff) { this.initiatedByStaff = initiatedByStaff; }
     public String getPaymentLinkId() { return paymentLinkId; }
     public void setPaymentLinkId(String paymentLinkId) { this.paymentLinkId = paymentLinkId; }
     public String getCheckoutUrl() { return checkoutUrl; }

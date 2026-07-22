@@ -127,24 +127,24 @@ public class SystemServiceImpl implements SystemService {
             Integer maxRenewalDays,
             Integer maxRenewalRequests,
             Integer renewalRejectionCooldownHours,
+            Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
             BigDecimal finePerDay,
             BigDecimal damageCompensationAmount,
             Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
-            Integer bookDisposalConditionThreshold,
             BigDecimal depositAmount) {
 
         validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
         validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
         validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
+        validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
         validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
-        validatePercentage(bookDisposalConditionThreshold, messages.get("backend.settings.disposalThresholdRange"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
         saveOrUpdateSetting("Max_Borrow_Days",
@@ -162,6 +162,10 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
                 String.valueOf(renewalRejectionCooldownHours),
                 messages.get("backend.settings.description.renewalCooldown"));
+
+        saveOrUpdateSetting("RENEWAL_APPROVAL_TIMEOUT_HOURS",
+                String.valueOf(renewalApprovalTimeoutHours),
+                "Maximum hours to process a renewal request");
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
@@ -182,10 +186,6 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Overdue_Violation_Lock_Limit",
                 String.valueOf(overdueViolationLockLimit),
                 messages.get("backend.settings.description.overdueLockLimit"));
-
-        saveOrUpdateSetting("Book_Disposal_Condition_Threshold",
-                String.valueOf(bookDisposalConditionThreshold),
-                messages.get("backend.settings.description.disposalThreshold"));
 
         saveOrUpdateSetting("Deposit_Amount",
                 depositAmount.toPlainString(),

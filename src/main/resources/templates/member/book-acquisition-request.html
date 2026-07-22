@@ -14,12 +14,11 @@
         </div>
         <button type="button" class="member-primary-action acquisition-hero-action acquisition-modal-trigger member-ui-button member-ui-button--inverse" 
                 data-toggle="modal" data-target="#acquisitionRequestModal" th:disabled="${isInactiveMember}">
-            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+            <span class="acquisition-hero-action-mark" aria-hidden="true">+</span>
             <span th:text="#{member.acquisition.submit}">Submit Request</span>
         </button>
     </header>
 
-    <div th:if="${success}" class="member-alert is-success" th:text="${success}"></div>
     <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
 
     <!-- My Requests History Section -->
@@ -39,13 +38,35 @@
                     </p>
                 </div>
                 <div class="member-request-meta">
-                    <span class="request-status member-reference-pill" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? #messages.msg('request.status.pending') : (request.status.name() == 'APPROVED' ? #messages.msg('request.status.approved') : #messages.msg('request.status.rejected'))}">Pending</span>
+                    <span class="request-status member-reference-pill"
+                          th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}"
+                          th:text="${#messages.msg('request.status.' + #strings.toLowerCase(request.status.name()))}">Pending</span>
                     <time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time>
                 </div>
-                <p class="member-request-decision" th:if="${request.status.name() == 'REJECTED'}">
-                    <strong th:text="#{member.acquisition.rejectionReason}">Rejection reason:</strong>
+                <p class="member-request-decision"
+                   th:if="${request.decisionNote != null and (request.status.name() == 'REJECTED' or request.status.name() == 'APPROVED')}">
+                    <strong th:text="${request.status.name() == 'REJECTED' ? #messages.msg('member.acquisition.rejectionReason') : #messages.msg('member.acquisition.approvalNote')}">Decision:</strong>
                     <span th:text="${request.decisionNote}"></span>
                 </p>
+                <div class="member-request-actions" th:if="${request.status.name() == 'PENDING'}">
+                    <button type="button" class="member-ui-button member-ui-button--secondary acquisition-modal-trigger acquisition-edit-trigger"
+                            data-toggle="modal" data-target="#acquisitionRequestModal"
+                            th:data-request-id="${request.requestId}"
+                            th:data-title="${request.title}" th:data-author="${request.author}"
+                            th:data-isbn="${request.isbn}" th:data-publisher="${request.publisher}"
+                            th:data-publication-year="${request.publicationYear}"
+                            th:data-request-reason="${request.requestReason}"
+                            th:data-reference-url="${request.referenceUrl}"
+                            th:text="#{common.edit}">Edit</button>
+                    <form th:action="@{/member/interaction/acquisition-requests/{id}/cancel(id=${request.requestId})}" method="post"
+                          onsubmit="return confirm(this.dataset.confirmMessage);"
+                          th:data-confirm-message="#{member.acquisition.cancelConfirm}">
+                        <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="member-ui-button member-ui-button--danger-outline"
+                                th:text="#{member.acquisition.cancel}">Cancel request</button>
+                    </form>
+                </div>
             </article>
         </div>
         <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}" th:text="#{member.acquisition.empty}">You have not submitted any requests.</div>
@@ -63,19 +84,20 @@
          role="dialog"
          aria-labelledby="acquisitionRequestModalLabel"
          aria-hidden="true"
-         th:attr="data-reopen=${error != null}">
+         th:attr="data-reopen=${reopenAcquisitionModal == true}">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="heading-icon-badge"><i class="bi bi-journal-plus"></i></span>
-                        <div>
-                            <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
-                            <p class="mb-0 text-muted small" th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p>
-                        </div>
+                    <div class="acquisition-modal-header-copy">
+                        <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
+                        <p th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p>
                     </div>
                 </div>
-                <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
+                <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}"
+                      th:data-create-url="@{/member/interaction/acquisition-requests}"
+                      th:data-edit-request-id="${editAcquisitionRequestId}"
+                      th:object="${acquisitionRequest}" method="post" novalidate>
+                    <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
                     <div class="modal-body">
                         <div th:if="${error}" class="member-alert acquisition-inline-alert is-error" role="alert" th:text="${error}"></div>
                         
@@ -135,9 +157,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                        <button type="submit" class="member-ui-button member-ui-button--primary">
-                            <i class="bi bi-send me-1"></i><span th:text="#{member.acquisition.submit}">Submit Request</span>
-                        </button>
+                        <button type="submit" class="member-ui-button member-ui-button--primary" th:text="#{member.acquisition.submit}">Submit Request</button>
                     </div>
                 </form>
             </div>
@@ -149,6 +169,7 @@
             const acquisitionPageSuccess = /*[[${success}]]*/ null;
             const acquisitionForm = document.getElementById('acquisitionRequestForm');
             const acquisitionModal = document.getElementById('acquisitionRequestModal');
+            const acquisitionModalTitle = document.getElementById('acquisitionRequestModalLabel');
             const currentYear = new Date().getFullYear();
             const acquisitionI18n = {
                 required: /*[[#{validation.fieldRequired}]]*/'{0} is required.',
@@ -159,7 +180,8 @@
                 title: /*[[#{book.title}]]*/'Book Title',
                 author: /*[[#{book.author}]]*/'Author',
                 publisher: /*[[#{book.publisher}]]*/'Publisher',
-                reason: /*[[#{member.acquisition.reason}]]*/'Request Reason'
+                reason: /*[[#{member.acquisition.reason}]]*/'Request Reason',
+                isbn: /*[[#{validation.acquisition.isbnInvalid}]]*/'ISBN is invalid.'
             };
 
             function setFieldError(input, id, message) {
@@ -180,6 +202,22 @@
 
             function formatMessage(template, ...values) {
                 return values.reduce((text, value, index) => text.replace('{' + index + '}', value), template);
+            }
+
+            function isValidIsbn(rawValue) {
+                const isbn = rawValue.replace(/[-\s]/g, '').toUpperCase();
+                if (isbn === '') return true;
+                if (/^\d{9}[\dX]$/.test(isbn)) {
+                    let sum = 0;
+                    for (let i = 0; i < 10; i++) sum += (10 - i) * (isbn[i] === 'X' ? 10 : Number(isbn[i]));
+                    return sum % 11 === 0;
+                }
+                if (/^\d{13}$/.test(isbn)) {
+                    let sum = 0;
+                    for (let i = 0; i < 12; i++) sum += Number(isbn[i]) * (i % 2 === 0 ? 1 : 3);
+                    return (10 - sum % 10) % 10 === Number(isbn[12]);
+                }
+                return false;
             }
 
             function validateText(input, id, label, min, max, optional) {
@@ -211,7 +249,7 @@
                 count.classList.toggle('is-limit-reached', reason.value.length >= 1000);
             }
 
-            ['title', 'author', 'publisher', 'publicationYear', 'requestReason', 'referenceUrl'].forEach(function(id) {
+            ['title', 'author', 'isbn', 'publisher', 'publicationYear', 'requestReason', 'referenceUrl'].forEach(function(id) {
                 const input = document.getElementById(id);
                 if (input) {
                     input.addEventListener('input', function() {
@@ -230,6 +268,7 @@
                     const title = document.getElementById('title');
                     const author = document.getElementById('author');
                     const publisher = document.getElementById('publisher');
+                    const isbn = document.getElementById('isbn');
                     const year = document.getElementById('publicationYear');
                     const reason = document.getElementById('requestReason');
                     const url = document.getElementById('referenceUrl');
@@ -238,6 +277,11 @@
                     check(validateText(author, 'authorFeedback', acquisitionI18n.author, 2, 255, false), author);
                     check(validateText(publisher, 'publisherFeedback', acquisitionI18n.publisher, 1, 255, true), publisher);
                     check(validateText(reason, 'requestReasonFeedback', acquisitionI18n.reason, 10, 1000, false), reason);
+
+                    if (isbn && !isValidIsbn(isbn.value)) {
+                        setFieldError(isbn, 'isbnFeedback', acquisitionI18n.isbn);
+                        firstInvalid = firstInvalid || isbn;
+                    }
 
                     if (year && year.value !== '' && (Number(year.value) < 1000 || Number(year.value) > currentYear)) {
                         setFieldError(year, 'publicationYearFeedback', formatMessage(acquisitionI18n.year, currentYear));
@@ -273,6 +317,23 @@
                 document.querySelectorAll('.acquisition-modal-trigger').forEach(function(btn) {
                     btn.addEventListener('click', function(e) {
                         e.preventDefault();
+                        if (btn.classList.contains('acquisition-edit-trigger')) {
+                            acquisitionForm.action = acquisitionForm.dataset.createUrl + '/' + btn.dataset.requestId + '/edit';
+                            document.getElementById('title').value = btn.dataset.title || '';
+                            document.getElementById('author').value = btn.dataset.author || '';
+                            document.getElementById('isbn').value = btn.dataset.isbn || '';
+                            document.getElementById('publisher').value = btn.dataset.publisher || '';
+                            document.getElementById('publicationYear').value = btn.dataset.publicationYear || '';
+                            document.getElementById('requestReason').value = btn.dataset.requestReason || '';
+                            document.getElementById('referenceUrl').value = btn.dataset.referenceUrl || '';
+                            if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.editRequest}]]*/ 'Edit request';
+                            updateReasonCount();
+                        } else {
+                            acquisitionForm.reset();
+                            acquisitionForm.action = acquisitionForm.dataset.createUrl;
+                            if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.newRequest}]]*/ 'Submit a new request';
+                            updateReasonCount();
+                        }
                         if (window.jQuery && acquisitionModal) {
                             window.jQuery(acquisitionModal).modal('show');
                         }
@@ -280,6 +341,10 @@
                 });
 
                 if (acquisitionModal && acquisitionModal.dataset.reopen === 'true') {
+                    if (acquisitionForm.dataset.editRequestId) {
+                        acquisitionForm.action = acquisitionForm.dataset.createUrl + '/' + acquisitionForm.dataset.editRequestId + '/edit';
+                        if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.editRequest}]]*/ 'Edit request';
+                    }
                     if (window.jQuery) {
                         window.jQuery(acquisitionModal).modal('show');
                     }

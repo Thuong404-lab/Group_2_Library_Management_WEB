@@ -37,13 +37,13 @@ public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_LOST = "Lost";
     private static final String STATUS_DAMAGED = "Damaged";
-    private static final String STATUS_DISPOSED = "Disposed";
+    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
     private static final String STATUS_ACTIVE = "Active";
     private static final Set<String> ALLOWED_BOOK_CONDITIONS = Set.of(
-            "Good / Intact and clean",
-            "Minor damage (Bent corners, worn cover, or small tears)",
-            "Severely damaged (Compensation required)",
-            "Lost book (Compensation required)");
+            "New",
+            "Minor damage",
+            "Severely damaged",
+            "Lost book");
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
@@ -109,7 +109,7 @@ public class InventoryServiceImpl implements InventoryService {
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
         counts.put(STATUS_LOST, bookItemRepository.countByStatusIgnoreCase(STATUS_LOST));
         counts.put(STATUS_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_DAMAGED));
-        counts.put(STATUS_DISPOSED, bookItemRepository.countByStatusIgnoreCase(STATUS_DISPOSED));
+        counts.put(STATUS_MINOR_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_MINOR_DAMAGED));
         return counts;
     }
 
@@ -135,6 +135,9 @@ public class InventoryServiceImpl implements InventoryService {
         }
         if (authorName == null || authorName.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.authorRequired"));
+        }
+        if (quantity == null || quantity < 0 || quantity > 100) {
+            throw new ValidationException(messages.get("librarian.inventory.validation.quantity"));
         }
         if (shelfId == null) {
             throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
@@ -176,7 +179,7 @@ public class InventoryServiceImpl implements InventoryService {
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
 
-        int copies = quantity != null && quantity > 0 ? quantity : 1;
+        int copies = quantity;
 
         for (int i = 1; i <= copies; i++) {
             BookItem item = new BookItem();
@@ -218,7 +221,12 @@ public class InventoryServiceImpl implements InventoryService {
             book.setGenre(genre);
         }
         if (status != null && !status.trim().isEmpty()) {
-            book.setStatus(status.trim());
+            String normalizedStatus = status.trim();
+            if (!STATUS_ACTIVE.equalsIgnoreCase(normalizedStatus)
+                    && !"Inactive".equalsIgnoreCase(normalizedStatus)) {
+                throw new ValidationException(messages.get("backend.inventory.statusRequired"));
+            }
+            book.setStatus(normalizedStatus);
         }
         // Chỉ cập nhật ảnh nếu có ảnh mới được upload
         if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
@@ -256,7 +264,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void addBookCopies(Integer bookId, Integer quantity, Integer shelfId, String bookCondition) {
-        if (quantity == null || quantity < 1 || quantity > 999) {
+        if (quantity == null || quantity < 1 || quantity > 100) {
             throw new ValidationException(messages.get("backend.inventory.copyQuantityInvalid"));
         }
         if (shelfId == null) {
@@ -267,7 +275,12 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
         }
 
-        Book book = findBookById(bookId);
+        Book book = bookRepository.findByIdForUpdate(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
+        long currentQuantity = bookItemRepository.countByBook_BookId(bookId);
+        if (currentQuantity + quantity > 100) {
+            throw new ValidationException(messages.get("backend.inventory.copyQuantityLimit", currentQuantity));
+        }
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
         Set<String> existingBarcodes = bookItemRepository.findByBook_BookId(bookId).stream()
@@ -317,12 +330,51 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void updateBookCopyCondition(Integer bookId, Integer bookItemId, String bookCondition) {
+        String normalizedCondition = bookCondition == null ? "" : bookCondition.trim();
+        if (!ALLOWED_BOOK_CONDITIONS.contains(normalizedCondition)) {
+            throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
+        }
+
+        BookItem item = bookItemRepository.findById(bookItemId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.copyNotFound")));
+        if (!item.getBook().getBookId().equals(bookId)) {
+            throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
+        }
+        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
+            throw new ConflictException(messages.get("backend.inventory.copyConditionLocked"));
+        }
+        if (conditionRank(normalizedCondition) < conditionRank(item.getBookCondition())) {
+            throw new ConflictException(messages.get("backend.inventory.copyConditionCannotImprove"));
+        }
+
+        item.setBookCondition(normalizedCondition);
+        int rank = conditionRank(normalizedCondition);
+        item.setStatus(rank >= 3 ? STATUS_LOST : (rank >= 2 ? STATUS_DAMAGED : (rank == 1 ? STATUS_MINOR_DAMAGED : STATUS_AVAILABLE)));
+        bookItemRepository.save(item);
+    }
+
+    private int conditionRank(String condition) {
+        String value = condition == null ? "" : condition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (value.contains("lost") || value.contains("mất sách")) return 3;
+        if (value.contains("severely") || value.contains("hư hỏng nặng")) return 2;
+        if (value.contains("minor") || value.contains("hư hỏng nhẹ")) return 1;
+        return 0;
+    }
+
+    @Override
     public void updateBookStatus(Integer bookId, String status) {
         if (status == null || status.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.statusRequired"));
         }
+        String normalizedStatus = status.trim();
+        if (!STATUS_ACTIVE.equalsIgnoreCase(normalizedStatus)
+                && !"Inactive".equalsIgnoreCase(normalizedStatus)) {
+            throw new ValidationException(messages.get("backend.inventory.statusRequired"));
+        }
         Book book = findBookById(bookId);
-        book.setStatus(status.trim());
+        book.setStatus(normalizedStatus);
         bookRepository.save(book);
     }
 

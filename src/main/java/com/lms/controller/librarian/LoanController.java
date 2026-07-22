@@ -1,12 +1,9 @@
 package com.lms.controller.librarian;
+import com.lms.entity.*;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ValidationException;
 import com.lms.controller.LocalizedControllerSupport;
 
-import com.lms.entity.BorrowDetail;
-import com.lms.entity.Member;
-import com.lms.entity.PayOsPayment;
-import com.lms.entity.Transaction;
 import com.lms.service.LoanService;
 import com.lms.service.FinancialService;
 import com.lms.service.PayOsPaymentService;
@@ -17,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 
 import java.security.Principal;
 import java.math.BigDecimal;
@@ -29,6 +28,8 @@ import java.util.Set;
 @Controller
 @RequestMapping("/librarian/loan")
 public class LoanController extends LocalizedControllerSupport {
+
+    private static final BigDecimal MAX_DAMAGE_FINE = new BigDecimal("500000000");
 
     private final LoanService loanService;
     private final FinancialService financialService;
@@ -60,6 +61,18 @@ public class LoanController extends LocalizedControllerSupport {
         this.paymentService = paymentService;
     }
 
+    @GetMapping("/{id}")
+    public String showLoanDetail(@PathVariable("id") Integer borrowId, Model model,
+                                 HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        Borrow borrow = loanService.getLoanDetails(borrowId);
+        model.addAttribute("borrow", borrow);
+        model.addAttribute("details", borrowDetailRepository.findByBorrowId(borrowId));
+        model.addAttribute("transactions", transactionRepository.findByBorrow_BorrowId(borrowId));
+        model.addAttribute("activeMenu", "borrow-list");
+        return "librarian/loan-detail";
+    }
+
     /**
      * GET: /librarian/loan/returns
      * Màn hình mặc định của Bàn Trả Sách - Tự động nạp danh sách sách đã được trả thành công hôm nay.
@@ -87,7 +100,7 @@ public class LoanController extends LocalizedControllerSupport {
         String trimmedQuery = (barcode != null) ? barcode.trim() : "";
 
         // CHỈNH SỬA TẠI ĐÂY: Thay thế searchActiveLoansByQuery bằng findActiveLoansByBarcode để chặn tìm kiếm bằng email, sđt, mã đơn mượn
-        List<BorrowDetail> searchResults = loanService.searchActiveLoansByQuery(trimmedQuery);
+        List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedQuery);
 
         model.addAttribute("searchResults", searchResults);
         model.addAttribute("searchedBarcode", trimmedQuery);
@@ -115,7 +128,7 @@ public class LoanController extends LocalizedControllerSupport {
         if (trimmedQuery.isEmpty()) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "Barcode cannot be empty"));
         }
-        List<BorrowDetail> searchResults = loanService.searchActiveLoansByQuery(trimmedQuery);
+        List<BorrowDetail> searchResults = loanService.findActiveLoansByBarcode(trimmedQuery);
         if (searchResults.isEmpty()) {
             return org.springframework.http.ResponseEntity.status(404).body(java.util.Map.of("message", message("librarian.returnDesk.noActiveLoan")));
         }
@@ -172,11 +185,20 @@ public class LoanController extends LocalizedControllerSupport {
             if (barcodes == null || barcodes.isEmpty()) {
                 throw new ValidationException(message("backend.return.invalidBarcodes"));
             }
-            if (returnDate == null || returnDate.isAfter(LocalDate.now())) {
+            if (returnDate == null || !returnDate.equals(LocalDate.now())) {
                 throw new ValidationException(message("backend.return.invalidReturnDate"));
             }
-            if (barcodes.size() > 1 && isMinorDamage(conditionNote)) {
+            if (barcodes.size() > 1 && !isGoodCondition(conditionNote)) {
                 throw new ValidationException(message("backend.return.minorDamageSingleOnly"));
+            }
+            if (!isGoodCondition(conditionNote)
+                    && (conditionNoteAdditional == null || conditionNoteAdditional.trim().isEmpty())) {
+                throw new ValidationException(message("backend.return.damageDescriptionRequired"));
+            }
+            if (damageFine != null && (damageFine.signum() < 0
+                    || damageFine.stripTrailingZeros().scale() > 0
+                    || damageFine.compareTo(MAX_DAMAGE_FINE) > 0)) {
+                throw new ValidationException(message("librarian.returnDesk.fineInvalid"));
             }
 
             // Minor damage uses the manually entered repair fine. Severe damage and
@@ -200,10 +222,12 @@ public class LoanController extends LocalizedControllerSupport {
             }
 
             // Chuyển LocalDate sang LocalDateTime (giữ nguyên giờ, phút, giây hiện hành của ngày làm việc)
-            LocalDateTime actualReturnDateTime = returnDate.atTime(LocalDateTime.now().toLocalTime());
+            LocalDateTime actualReturnDateTime = LocalDateTime.now();
 
             // Thực thi nghiệp vụ lõi trong LoanService
-            BigDecimal fine = (damageFine != null) ? damageFine : BigDecimal.ZERO;
+            BigDecimal fine = isMinorDamage(conditionNote) && damageFine != null
+                    ? damageFine
+                    : BigDecimal.ZERO;
             Transaction transaction = loanService.confirmBatchReturnWithDetails(barcodes, actualReturnDateTime, conditionNote, conditionNoteAdditional, fine, paymentMethod, staffUsername);
 
             if (transaction != null && "bank".equalsIgnoreCase(paymentMethod)) {
@@ -247,69 +271,36 @@ public class LoanController extends LocalizedControllerSupport {
         return normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage");
     }
 
+    private boolean isGoodCondition(String conditionNote) {
+        String normalized = conditionNote == null ? "" : conditionNote.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.startsWith("tốt") || normalized.startsWith("good");
+    }
+
     /**
      * GET: /librarian/loan/borrow-schedule
      * Tích hợp điều hướng tab xem danh sách lịch mượn trả chi tiết.
      */
     @GetMapping("/borrow-schedule")
-    public String showBorrowSchedule(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
-        List<Member> members;
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String kw = keyword.trim();
-            Integer searchId = null;
-            if (kw.toUpperCase().startsWith("MEM-")) {
-                try {
-                    searchId = Integer.parseInt(kw.substring(4));
-                } catch (NumberFormatException ignored) {}
-            } else {
-                try {
-                    searchId = Integer.parseInt(kw);
-                } catch (NumberFormatException ignored) {}
-            }
-
-            if (searchId != null) {
-                java.util.Optional<Member> mOpt = memberRepository.findById(searchId);
-                if (mOpt.isPresent()) {
-                    members = List.of(mOpt.get());
-                } else {
-                    members = List.of();
-                }
-            } else {
-                members = memberRepository.findByUserFullNameContainingIgnoreCaseOrUserEmailContainingIgnoreCaseOrUserPhoneContainingIgnoreCase(
-                        kw, kw, kw, PageRequest.of(0, 100)
-                ).getContent();
-            }
-        } else {
-            members = memberRepository.findAll();
+    public String showBorrowSchedule(@RequestParam(value = "keyword", required = false) String keyword,
+                                     @RequestParam(value = "page", defaultValue = "0") int page,
+                                     Model model) {
+        int safePage = Math.max(0, page);
+        String displayKeyword = keyword == null ? "" : keyword.trim();
+        String searchKeyword = displayKeyword;
+        if (searchKeyword.regionMatches(true, 0, "MEM-", 0, 4)) {
+            searchKeyword = searchKeyword.substring(4).trim();
         }
-        model.addAttribute("members", members);
-        model.addAttribute("keyword", keyword);
+
+        Page<com.lms.entity.MemberAccount> accountPage = searchKeyword.isBlank()
+                ? memberAccountRepository.findAll(PageRequest.of(safePage, 20, Sort.by("member.memberId").ascending()))
+                : memberAccountRepository.searchMemberAccounts(
+                        searchKeyword, PageRequest.of(safePage, 20, Sort.by("member.memberId").ascending()));
+
+        model.addAttribute("accounts", accountPage.getContent());
+        model.addAttribute("accountPage", accountPage);
+        model.addAttribute("keyword", displayKeyword);
         model.addAttribute("activeMenu", "borrow-schedule");
         return "librarian/borrow-schedule";
-    }
-
-    /**
-     * GET: /librarian/loan/borrow-schedule/detail-preview
-     * Giao diện UI cứng xem trước chi tiết (Preview).
-     */
-    @GetMapping("/borrow-schedule/detail-preview")
-    public String showBorrowScheduleDetailPreview() {
-        return "librarian/borrow-schedule-detail";
-    }
-
-    /**
-     * POST: /librarian/loan/renew/{id}
-     * Gia hạn thủ công bởi thủ thư.
-     */
-    @PostMapping("/renew/{id}")
-    public String manualRenew(@PathVariable("id") Integer borrowDetailId, RedirectAttributes redirectAttributes) {
-        try {
-            loanService.processRenewal(borrowDetailId);
-            redirectAttributes.addFlashAttribute("successMessage", message("backend.renewal.success"));
-        } catch (ApplicationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.renewal.failed", e));
-        }
-        return "redirect:/librarian/loan/borrow-schedule";
     }
 
     /**

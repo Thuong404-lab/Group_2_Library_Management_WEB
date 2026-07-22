@@ -1,5 +1,7 @@
 package com.lms.controller.admin;
 import com.lms.exception.ApplicationException;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ValidationException;
 import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
@@ -32,11 +34,12 @@ public class AdminProfileController extends LocalizedControllerSupport {
 
     @GetMapping
     public String viewAdminProfile(Principal principal, Model model) {
-        if (principal == null)
-            return "redirect:/login";
+        if (principal == null) {
+            return "redirect:/staff-login";
+        }
         String username = principal.getName();
         if (!model.containsAttribute("admin")) {
-            User admin = profileService.getProfile(username);
+            User admin = profileService.getStaffProfile(username);
             model.addAttribute("admin", admin);
         }
         return "admin/profile";
@@ -44,25 +47,25 @@ public class AdminProfileController extends LocalizedControllerSupport {
 
     @PostMapping("/update")
     public String updateProfile(@RequestParam String fullName,
-                                @RequestParam String email,
                                 @RequestParam String phone,
                                 @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
         if (principal == null) {
-            return "redirect:/login";
+            return "redirect:/staff-login";
         }
 
+        User currentUser = null;
         try {
             String currentUsername = principal.getName();
-            String currentEmail = profileService.getProfile(currentUsername).getEmail();
-            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
+            currentUser = profileService.getStaffProfile(currentUsername);
+            profileService.updateStaffProfile(currentUsername, fullName, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
                 User sessionUser = customUserDetails.getUser();
-                User updatedUser = profileService.getProfile(currentUsername);
+                User updatedUser = profileService.getStaffProfile(currentUsername);
                 
                 sessionUser.setFullName(updatedUser.getFullName());
                 sessionUser.setAvatar(updatedUser.getAvatar());
@@ -72,21 +75,20 @@ public class AdminProfileController extends LocalizedControllerSupport {
 
             redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
         } catch (ApplicationException e) {
-            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
-                String field = ((com.lms.exception.ValidationException) e).getField();
+            String field = fieldOf(e);
+            if (field != null) {
                 redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
             } else {
                 redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
             }
             User tempUser = new User();
             tempUser.setFullName(fullName);
-            tempUser.setEmail(email);
+            tempUser.setEmail(currentUser == null ? null : currentUser.getEmail());
             tempUser.setPhone(phone);
-            try {
-                User current = profileService.getProfile(principal.getName());
-                tempUser.setAvatar(current.getAvatar());
-                tempUser.setStatus(current.getStatus());
-            } catch (Exception ignored) {}
+            if (currentUser != null) {
+                tempUser.setAvatar(currentUser.getAvatar());
+                tempUser.setStatus(currentUser.getStatus());
+            }
             redirectAttributes.addFlashAttribute("admin", tempUser);
         }
         return "redirect:/admin/profile";
@@ -98,18 +100,29 @@ public class AdminProfileController extends LocalizedControllerSupport {
             @org.springframework.web.bind.annotation.RequestParam String confirmPassword,
             Principal principal,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        if (principal == null)
-            return "redirect:/login";
+        if (principal == null) {
+            return "redirect:/staff-login";
+        }
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
             return "redirect:/admin/profile";
         }
         try {
-            profileService.changePassword(principal.getName(), oldPassword, newPassword);
+            profileService.changeStaffPassword(principal.getName(), oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         }
         return "redirect:/admin/profile";
+    }
+
+    private String fieldOf(ApplicationException exception) {
+        if (exception instanceof ValidationException validationException) {
+            return validationException.getField();
+        }
+        if (exception instanceof ConflictException conflictException) {
+            return conflictException.getField();
+        }
+        return null;
     }
 }

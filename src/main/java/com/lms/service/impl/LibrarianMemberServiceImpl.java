@@ -8,16 +8,20 @@ import com.lms.entity.Member;
 import com.lms.entity.MembershipTier;
 import com.lms.entity.Role;
 import com.lms.entity.User;
+import com.lms.entity.Wallet;
 import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
+import com.lms.exception.ConflictException;
 import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.MemberAccountDeletionRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
 import com.lms.repository.UserRepository;
+import com.lms.repository.WalletRepository;
 import com.lms.service.AuditLogService;
 import com.lms.service.LibrarianMemberService;
 import com.lms.service.LocalizedMessageService;
@@ -25,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +39,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * Member account list, update, deactivate, and status changes maintained by
@@ -40,6 +48,9 @@ import java.util.Map;
  */
 @Service
 public class LibrarianMemberServiceImpl implements LibrarianMemberService {
+
+    private static final int PAGE_SIZE = 10;
+    private static final String MEMBER_ROLE = "ROLE_MEMBER";
 
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
@@ -51,6 +62,8 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    private final WalletRepository walletRepository;
+    private final MemberAccountDeletionRepository memberAccountDeletionRepository;
 
     public LibrarianMemberServiceImpl(
             MemberAccountRepository memberAccountRepository,
@@ -59,7 +72,9 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            WalletRepository walletRepository,
+            MemberAccountDeletionRepository memberAccountDeletionRepository) {
         this.memberAccountRepository = memberAccountRepository;
         this.memberRepository = memberRepository;
         this.membershipTierRepository = membershipTierRepository;
@@ -67,12 +82,14 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
+        this.walletRepository = walletRepository;
+        this.memberAccountDeletionRepository = memberAccountDeletionRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public MemberListViewData getMemberList(int page, String keyword, String status, String tier) {
-        PageRequest pageable = PageRequest.of(page, 10, Sort.by("id").ascending());
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by("id").ascending());
         String normalizedKeyword = trim(keyword);
         String normalizedStatus = trim(status);
         String normalizedTier = trim(tier);
@@ -81,9 +98,9 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
 
         Map<Integer, Member> memberByUserId = new HashMap<>();
         for (MemberAccount account : accounts.getContent()) {
-            if (account.getMember().getUser() != null && account.getMember().getUser().getId() != null) {
-                memberRepository.findByUserId(account.getMember().getUser().getId())
-                        .ifPresent(member -> memberByUserId.put(account.getMember().getUser().getId(), member));
+            Member member = account.getMember();
+            if (member != null && member.getUser() != null && member.getUser().getId() != null) {
+                memberByUserId.put(member.getUser().getId(), member);
             }
         }
         return new MemberListViewData(accounts, memberByUserId, getMembershipTiers(), getMemberSummaryCounts());
@@ -92,16 +109,16 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
     private Map<String, Long> getMemberSummaryCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
         counts.put("total", memberAccountRepository.count());
-        counts.put("active", memberAccountRepository.countByStatusIgnoreCase("Active"));
-        counts.put("inactive", memberAccountRepository.countByStatusIgnoreCase("Inactive"));
-        counts.put("blocked", memberAccountRepository.countByStatusIgnoreCase("Blocked"));
+        counts.put("active", memberAccountRepository.countByStatusIgnoreCase(UserStatus.Active.name()));
+        counts.put("inactive", memberAccountRepository.countByStatusIgnoreCase(UserStatus.Inactive.name()));
+        counts.put("blocked", memberAccountRepository.countByStatusIgnoreCase(UserStatus.Blocked.name()));
         return counts;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MembershipTier> getMembershipTiers() {
-        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
+        return membershipTierRepository.findAll(Sort.by("condition").ascending().and(Sort.by("tierId").ascending()));
     }
 
     @Override
@@ -112,22 +129,19 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         String phone = trim(request.getPhone());
         String username = trim(request.getUsername());
 
-        if (!email.isEmpty() && userRepository.existsByEmail(email)) {
+        if (!email.isEmpty() && userRepository.existsByEmailIgnoreCase(email)) {
             errors.put("email", messages.get("backend.account.emailUsed"));
         }
         if (!phone.isEmpty() && userRepository.existsByPhone(phone)) {
             errors.put("phone", messages.get("backend.account.phoneUsed"));
         }
-        if (!username.isEmpty() && memberAccountRepository.existsByUsername(username)) {
+        if (!username.isEmpty() && memberAccountRepository.existsByUsernameIgnoreCase(username)) {
             errors.put("username", messages.get("backend.account.usernameExists"));
         }
-        if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
-            errors.put("tierId", messages.get("validation.tier"));
-        }
-        if (request.getStatus() != null
-                && !"Active".equals(request.getStatus())
-                && !"Inactive".equals(request.getStatus())) {
-            errors.put("status", messages.get("validation.status"));
+        if (request.getPassword() != null
+                && request.getConfirmPassword() != null
+                && !request.getPassword().equals(request.getConfirmPassword())) {
+            errors.put("confirmPassword", messages.get("validation.passwordMismatch"));
         }
         return errors;
     }
@@ -140,30 +154,43 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             throw new ValidationException(errors.values().iterator().next());
         }
 
-        MembershipTier tier = membershipTierRepository.findById(request.getTierId())
-                .orElseThrow(() -> new ValidationException(messages.get("validation.tier")));
-        Role memberRole = roleRepository.findByNameIgnoreCase("MEMBER")
-                .orElseThrow(() -> new DataProcessingException(messages.get("backend.account.roleNotFound", "MEMBER")));
+        MembershipTier tier = membershipTierRepository.findFirstByOrderByConditionAscTierIdAsc()
+                .orElseThrow(() -> new DataProcessingException(messages.get("backend.account.defaultTierNotFound")));
+        Role memberRole = roleRepository.findByNameIgnoreCase(MEMBER_ROLE)
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", MEMBER_ROLE)));
 
-        User user = new User();
-        user.setFullName(trim(request.getFullName()));
-        user.setEmail(trim(request.getEmail()));
-        user.setPhone(trim(request.getPhone()));
-        user.setStatus(toUserStatus(request.getStatus()));
-        userRepository.save(user);
+        String status = UserStatus.Active.name();
 
-        Member member = new Member();
-        member.setUser(user);
-        member.setTier(tier);
-        memberRepository.save(member);
+        MemberAccount account;
+        try {
+            User user = new User();
+            user.setFullName(trim(request.getFullName()));
+            user.setEmail(trim(request.getEmail()));
+            user.setPhone(trim(request.getPhone()));
+            user.setStatus(UserStatus.Active);
+            userRepository.saveAndFlush(user);
 
-        MemberAccount account = new MemberAccount();
-        account.setMember(member);
-        account.setUsername(trim(request.getUsername()));
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        account.setStatus(request.getStatus());
-        account.getRoles().add(memberRole);
-        memberAccountRepository.save(account);
+            Member member = new Member();
+            member.setUser(user);
+            member.setTier(tier);
+            memberRepository.save(member);
+
+            Wallet wallet = new Wallet();
+            wallet.setMember(member);
+            wallet.setBalance(BigDecimal.ZERO);
+            walletRepository.save(wallet);
+
+            account = new MemberAccount();
+            account.setMember(member);
+            account.setUsername(trim(request.getUsername()));
+            account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            account.setStatus(status);
+            account.getRoles().add(memberRole);
+            memberAccountRepository.saveAndFlush(account);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ConflictException(messages.get("backend.account.concurrentDuplicate"), exception);
+        }
 
         auditLogService.log(
                 ActionType.CREATE_ACCOUNT,
@@ -185,23 +212,22 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         String phone = trim(request.getPhone());
 
         if (!username.isEmpty()
-                && memberAccountRepository.existsByUsernameAndIdNot(username, account.getId())) {
+                && memberAccountRepository.existsByUsernameIgnoreCaseAndIdNot(username, account.getId())) {
             errors.put("username", messages.get("backend.account.usernameExists"));
         }
-        if (!email.isEmpty() && userRepository.existsByEmailAndIdNot(email, account.getMember().getUser().getId())) {
+        if (!email.isEmpty() && userRepository.existsByEmailIgnoreCaseAndIdNot(email, account.getMember().getUser().getId())) {
             errors.put("email", messages.get("backend.account.emailUsed"));
         }
         if (!phone.isEmpty() && userRepository.existsByPhoneAndIdNot(phone, account.getMember().getUser().getId())) {
             errors.put("phone", messages.get("backend.account.phoneUsed"));
         }
-        if (request.getTierId() != null && !membershipTierRepository.existsById(request.getTierId())) {
-            errors.put("tierId", messages.get("validation.tier"));
-        }
-        if (request.getStatus() != null
-                && !"Active".equals(request.getStatus())
-                && !"Inactive".equals(request.getStatus())
-                && !"Blocked".equals(request.getStatus())) {
+        if (!isValidStatus(request.getStatus())) {
             errors.put("status", messages.get("validation.status"));
+        }
+        User user = account.getMember().getUser();
+        if (!Objects.equals(account.getVersion(), request.getAccountVersion())
+                || !Objects.equals(user.getVersion(), request.getUserVersion())) {
+            errors.put("_global", messages.get("validation.concurrentUpdate"));
         }
         return errors;
     }
@@ -217,12 +243,13 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.notFound")));
         User user = account.getMember().getUser();
+        String previousStatus = account.getStatus();
 
         user.setFullName(trim(request.getFullName()));
         user.setEmail(trim(request.getEmail()));
         user.setPhone(trim(request.getPhone()));
         account.setUsername(trim(request.getUsername()));
-        applyStatus(account, request.getStatus());
+        applyStatus(account, requireStatus(request.getStatus()));
 
         userRepository.save(user);
         memberAccountRepository.save(account);
@@ -230,40 +257,56 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         auditLogService.log(
                 ActionType.UPDATE_ACCOUNT,
                 messages.get("backend.account.audit.updatedMember", account.getUsername()));
+        if (!Objects.equals(previousStatus, account.getStatus())) {
+            auditLogService.log(ActionType.UPDATE_ACCOUNT,
+                    messages.get("backend.account.audit.statusChanged", account.getUsername(), previousStatus,
+                            account.getStatus()));
+        }
     }
 
     @Override
     @Transactional
-    public boolean deactivateMember(Integer accountId) {
-        MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
-        if (account == null) {
-            return false;
+    public void deleteMember(Integer accountId) {
+        MemberAccount account = memberAccountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.notFound")));
+        Member member = account.getMember();
+        User user = member == null ? null : member.getUser();
+        if (member == null || user == null) {
+            throw new DataProcessingException(messages.get("backend.account.incompleteMemberData"));
         }
-        applyStatus(account, "Inactive");
-        memberAccountRepository.save(account);
+        if (memberAccountDeletionRepository.hasBusinessHistory(member.getMemberId())) {
+            throw new ConflictException(messages.get("backend.member.deleteHasHistory"));
+        }
 
-        auditLogService.log(
-                ActionType.DEACTIVATE_ACCOUNT,
-                messages.get("backend.account.audit.deactivatedMember", account.getUsername()));
-        return true;
+        String username = account.getUsername();
+        try {
+            memberAccountDeletionRepository.deleteAggregate(
+                    account.getId(), member.getMemberId(), user.getId());
+        } catch (DataAccessException exception) {
+            throw new ConflictException(messages.get("backend.member.deleteConflict"), exception);
+        }
+        auditLogService.log(ActionType.DELETE_ACCOUNT,
+                messages.get("backend.account.audit.deletedMember", username));
     }
 
     @Override
     @Transactional
     public void changeMemberStatus(Integer accountId, String status) {
-        if (!"Active".equals(status) && !"Inactive".equals(status) && !"Blocked".equals(status)) {
-            throw new ValidationException(messages.get("validation.status"));
-        }
+        UserStatus requestedStatus = requireStatus(status);
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.notFound")));
-        applyStatus(account, status);
+        String previousStatus = account.getStatus();
+        applyStatus(account, requestedStatus);
         memberAccountRepository.save(account);
+        auditLogService.log(ActionType.UPDATE_ACCOUNT,
+                messages.get("backend.account.audit.statusChanged", account.getUsername(), previousStatus,
+                        requestedStatus.name()));
     }
 
-    private void applyStatus(MemberAccount account, String status) {
-        account.setStatus(status);
+    private void applyStatus(MemberAccount account, UserStatus status) {
+        account.setStatus(status.name());
         if (account.getMember() != null && account.getMember().getUser() != null) {
-            account.getMember().getUser().setStatus(toUserStatus(status));
+            account.getMember().getUser().setStatus(status);
         }
     }
 
@@ -271,11 +314,19 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         return value == null ? "" : value.trim();
     }
 
-    private UserStatus toUserStatus(String status) {
+    private boolean isValidStatus(String status) {
         try {
-            return UserStatus.valueOf(status);
-        } catch (IllegalArgumentException ignored) {
-            return UserStatus.Active;
+            UserStatus.valueOf(status);
+            return true;
+        } catch (IllegalArgumentException | NullPointerException ignored) {
+            return false;
         }
+    }
+
+    private UserStatus requireStatus(String status) {
+        if (!isValidStatus(status)) {
+            throw new ValidationException(messages.get("validation.status"));
+        }
+        return UserStatus.valueOf(status);
     }
 }

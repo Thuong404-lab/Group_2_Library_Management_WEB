@@ -37,12 +37,12 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam Integer maxRenewalDays,
             @RequestParam Integer maxRenewalRequests,
             @RequestParam Integer renewalRejectionCooldownHours,
+            @RequestParam Integer renewalApprovalTimeoutHours,
             @RequestParam BigDecimal borrowFeePerBook,
             @RequestParam BigDecimal finePerDay,
             @RequestParam BigDecimal damageCompensationAmount,
             @RequestParam Integer damageCompensationThreshold,
             @RequestParam Integer overdueViolationLockLimit,
-            @RequestParam Integer bookDisposalConditionThreshold,
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
@@ -51,12 +51,12 @@ public class SettingsController extends LocalizedControllerSupport {
                     maxRenewalDays,
                     maxRenewalRequests,
                     renewalRejectionCooldownHours,
+                    renewalApprovalTimeoutHours,
                     borrowFeePerBook,
                     finePerDay,
                     damageCompensationAmount,
                     damageCompensationThreshold,
                     overdueViolationLockLimit,
-                    bookDisposalConditionThreshold,
                     depositAmount);
 
             redirectAttributes.addFlashAttribute("success", message("backend.settings.updated"));

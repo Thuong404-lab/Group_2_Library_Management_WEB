@@ -4,6 +4,7 @@ import com.lms.entity.Borrow;
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
 import com.lms.entity.PayOsPaymentFineItem;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ExternalServiceException;
@@ -14,6 +15,7 @@ import com.lms.repository.BorrowRepository;
 import com.lms.repository.PayOsPaymentRepository;
 import com.lms.repository.PayOsPaymentFineItemRepository;
 import com.lms.repository.TransactionRepository;
+import com.lms.repository.WalletRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.UUID;
 
 @Service
 public class PayOsPaymentService {
@@ -49,8 +52,7 @@ public class PayOsPaymentService {
     public static final String PAID = "PAID";
 
     private static final AtomicLong ORDER_CODES = new AtomicLong(System.currentTimeMillis() * 1000L);
-    private static final BigDecimal MIN_TOP_UP = BigDecimal.valueOf(10_000);
-    private static final BigDecimal MAX_PAYMENT = BigDecimal.valueOf(500_000_000);
+    private static final BigDecimal MAX_PAYMENT = TopUpPolicy.MAX_AMOUNT;
     private static final int MAX_DESCRIPTION_LENGTH = 25;
     public static final int PAYMENT_EXPIRY_MINUTES = 5;
 
@@ -61,6 +63,7 @@ public class PayOsPaymentService {
     private final FinancialService financialService;
     private final PayOsSettlementService settlementService;
     private final PayOsPaymentAuditService auditService;
+    private final WalletRepository walletRepository;
     private final String clientId;
     private final String apiKey;
     private final String checksumKey;
@@ -74,6 +77,7 @@ public class PayOsPaymentService {
                                FinancialService financialService,
                                PayOsSettlementService settlementService,
                                PayOsPaymentAuditService auditService,
+                               WalletRepository walletRepository,
                                @Value("${PAYOS_CLIENT_ID:${payos.client-id:}}") String clientId,
                                @Value("${PAYOS_API_KEY:${payos.api-key:}}") String apiKey,
                                @Value("${PAYOS_CHECKSUM_KEY:${payos.checksum-key:}}") String checksumKey,
@@ -86,6 +90,7 @@ public class PayOsPaymentService {
         this.financialService = financialService;
         this.settlementService = settlementService;
         this.auditService = auditService;
+        this.walletRepository = walletRepository;
         this.clientId = clientId;
         this.apiKey = apiKey;
         this.checksumKey = checksumKey;
@@ -98,23 +103,46 @@ public class PayOsPaymentService {
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment createTopUp(Member member, BigDecimal amount) {
         BigDecimal validAmount = requireWholeVnd(amount);
-        if (validAmount.compareTo(MIN_TOP_UP) < 0) {
+        if (validAmount.compareTo(TopUpPolicy.MIN_AMOUNT) < 0) {
             throw new ValidationException(messages.get("backend.payment.minimumTopup"));
         }
+        PayOsPayment activePayment = paymentRepository
+                .findFirstByMemberMemberIdAndPurposeAndAmountAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
+                        member.getMemberId(), TOP_UP, validAmount, PENDING,
+                        LocalDateTime.now().minusMinutes(PAYMENT_EXPIRY_MINUTES))
+                .orElse(null);
+        if (activePayment != null) {
+            return activePayment;
+        }
+        validateWalletCapacity(member, validAmount);
         return createPayment(member, TOP_UP, null, validAmount,
                 descriptionWithId("LMW NAP VI ID", "LMW NAP ID", member.getMemberId()),
                 "/member/payments/payos/return");
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PayOsPayment createTopUpForLibrarian(Member member, BigDecimal amount) {
+    public PayOsPayment createTopUpForLibrarian(Member member, BigDecimal amount,
+                                                String requestId, Staff initiatedBy) {
         BigDecimal validAmount = requireWholeVnd(amount);
-        if (validAmount.compareTo(MIN_TOP_UP) < 0) {
+        if (validAmount.compareTo(TopUpPolicy.MIN_AMOUNT) < 0) {
             throw new ValidationException(messages.get("backend.payment.minimumTopup"));
         }
+        if (!isValidRequestId(requestId)) {
+            throw new ValidationException(messages.get("backend.financial.invalidRequest"));
+        }
+        if (initiatedBy == null || initiatedBy.getStaffId() == null) {
+            throw new ValidationException(messages.get("backend.financial.staffRequired"));
+        }
+        String normalizedRequestId = requestId.trim();
+        PayOsPayment requestPayment = paymentRepository.findByRequestKey(normalizedRequestId).orElse(null);
+        if (requestPayment != null) {
+            validateExistingTopUpRequest(requestPayment, member, validAmount);
+            return requestPayment;
+        }
+        validateWalletCapacity(member, validAmount);
         return createPayment(member, TOP_UP, null, validAmount,
                 descriptionWithId("LMW NOP TAI QUAY ID", "LMW NOP QUAY ID", member.getMemberId()),
-                "/librarian/payments/payos/return");
+                "/librarian/payments/payos/return", normalizedRequestId, initiatedBy);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -123,13 +151,15 @@ public class PayOsPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PayOsPayment createFinePaymentForLibrarian(Integer fineId) {
+    public PayOsPayment createFinePaymentForLibrarian(Integer fineId, Staff initiatedBy) {
         Transaction fine = transactionRepository.findById(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.fineNotFound")));
         if (fine.getWallet() == null || fine.getWallet().getMember() == null) {
             throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
         }
-        return createFinePayment(fine.getWallet().getMember(), fineId, "/librarian/payments/payos/return");
+        PayOsPayment payment = createFinePayment(fine.getWallet().getMember(), fineId, "/librarian/payments/payos/return");
+        payment.setInitiatedByStaff(initiatedBy);
+        return paymentRepository.save(payment);
     }
 
     private PayOsPayment createFinePayment(Member member, Integer fineId, String returnPath) {
@@ -143,8 +173,8 @@ public class PayOsPaymentService {
         if (!FINE.equals(type) && !"DAMAGE_FEE".equals(type)) {
             throw new ValidationException(messages.get("backend.financial.notFineTransaction"));
         }
-        if (isCompleted(fine.getStatus())) {
-            throw new ConflictException(messages.get("backend.financial.fineAlreadyPaid"));
+        if (!PENDING.equals(normalize(fine.getStatus()))) {
+            throw new ConflictException(messages.get("backend.financial.fineNotPending"));
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), FINE, fineId);
         if (activePayment != null) {
@@ -167,16 +197,18 @@ public class PayOsPaymentService {
         if (!FINE.equals(type) && !"DAMAGE_FEE".equals(type)) {
             throw new ValidationException(messages.get("backend.financial.notFineTransaction"));
         }
-        if (isCompleted(fine.getStatus())) {
-            throw new ConflictException(messages.get("backend.financial.fineAlreadyPaid"));
+        if (!PENDING.equals(normalize(fine.getStatus()))) {
+            throw new ConflictException(messages.get("backend.financial.fineNotPending"));
         }
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), FINE, fineId);
         if (activePayment != null) {
             return activePayment;
         }
-        return createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()),
+        PayOsPayment payment = createPayment(member, FINE, fineId, requireWholeVnd(fine.getAmount().abs()),
                 descriptionWithId("LMW NOP PHAT ID", "LMW PHAT ID", fineId),
                 "/librarian/payments/payos/return");
+        payment.setInitiatedByStaff(fine.getPerformedByStaff());
+        return paymentRepository.save(payment);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -187,7 +219,7 @@ public class PayOsPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PayOsPayment createFineBatchPaymentForLibrarian(Integer borrowId) {
+    public PayOsPayment createFineBatchPaymentForLibrarian(Integer borrowId, Staff initiatedBy) {
         List<Transaction> fines = transactionRepository.findPendingFineTransactionsByBorrowId(
                 borrowId, List.of(FINE, "DAMAGE_FEE"));
         if (fines.isEmpty()) {
@@ -197,8 +229,10 @@ public class PayOsPaymentService {
         if (first.getWallet() == null || first.getWallet().getMember() == null) {
             throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
         }
-        return createFineBatchPayment(first.getWallet().getMember(), fines,
+        PayOsPayment payment = createFineBatchPayment(first.getWallet().getMember(), fines,
                 "/librarian/payments/payos/return");
+        payment.setInitiatedByStaff(initiatedBy);
+        return paymentRepository.save(payment);
     }
 
     private PayOsPayment createFineBatchPayment(Member member, List<Transaction> fines, String returnPath) {
@@ -468,6 +502,12 @@ public class PayOsPaymentService {
 
     private PayOsPayment createPayment(Member member, String purpose, Integer referenceId,
                                        BigDecimal amount, String description, String returnPath) {
+        return createPayment(member, purpose, referenceId, amount, description, returnPath, null, null);
+    }
+
+    private PayOsPayment createPayment(Member member, String purpose, Integer referenceId,
+                                       BigDecimal amount, String description, String returnPath,
+                                       String requestKey, Staff initiatedBy) {
         requireConfigured();
         if (member == null || member.getMemberId() == null) {
             throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
@@ -480,6 +520,8 @@ public class PayOsPaymentService {
         payment.setReferenceId(referenceId);
         payment.setAmount(amount);
         payment.setOrderCode(orderCode);
+        payment.setRequestKey(requestKey);
+        payment.setInitiatedByStaff(initiatedBy);
         payment.setStatus(PENDING);
         payment.setCreatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
@@ -575,6 +617,45 @@ public class PayOsPaymentService {
             throw new ValidationException(messages.get("backend.payment.amountRange"));
         }
         return value;
+    }
+
+    private void validateWalletCapacity(Member member, BigDecimal amount) {
+        if (member == null || member.getMemberId() == null) {
+            throw new ResourceNotFoundException(messages.get("backend.member.currentNotFound"));
+        }
+        BigDecimal balance = walletRepository.findByMemberMemberId(member.getMemberId())
+                .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
+                .orElse(BigDecimal.ZERO);
+        if (balance.add(amount).compareTo(TopUpPolicy.MAX_WALLET_BALANCE) > 0) {
+            throw new ValidationException(messages.get("backend.financial.walletLimit", TopUpPolicy.MAX_WALLET_BALANCE));
+        }
+    }
+
+    private void validateExistingTopUpRequest(PayOsPayment payment, Member member, BigDecimal amount) {
+        boolean sameRequest = payment.getMember() != null
+                && member.getMemberId().equals(payment.getMember().getMemberId())
+                && TOP_UP.equalsIgnoreCase(payment.getPurpose())
+                && payment.getAmount() != null
+                && payment.getAmount().compareTo(amount) == 0;
+        if (!sameRequest) {
+            throw new ConflictException(messages.get("backend.payment.requestKeyConflict"));
+        }
+        String status = normalize(payment.getStatus());
+        if (!PENDING.equals(status) && !PAID.equals(status)) {
+            throw new ConflictException(messages.get("backend.financial.invalidRequest"));
+        }
+    }
+
+    private boolean isValidRequestId(String requestId) {
+        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+            return false;
+        }
+        try {
+            UUID.fromString(requestId.trim());
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     private boolean isCompleted(String status) {

@@ -4,28 +4,22 @@
 
 <head>
     <title th:text="#{librarian.borrowDesk.title}">Borrow Desk</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/create-borrow.css}" />
-    <style>
-        .app-form-primary:disabled {
-            opacity: 0.6 !important;
-            background-color: var(--app-color-muted) !important;
-            border-color: var(--app-color-muted) !important;
-            cursor: not-allowed !important;
-        }
-    </style>
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='borrow-manage'">
-        <div class="canonical-management-page librarian-create-borrow-page">
+    <div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+        <div class="member-palette-page canonical-management-page librarian-create-borrow-page">
 
-            <header class="dashboard-page-header">
+            <header class="dashboard-page-header borrow-desk-hero">
                 <div class="page-title-group">
                     <h1 class="app-page-title" th:text="#{librarian.borrowDesk.heading}">Borrow Desk</h1>
                     <p class="app-page-description" th:text="#{librarian.borrowDesk.description}">Create loans and
                         process requests.</p>
+                </div>
+                <div class="borrow-desk-hero-decoration" aria-hidden="true">
+                    <i class="bi bi-journal-plus"></i>
                 </div>
             </header>
 
@@ -39,7 +33,8 @@
             <div class="borrow-workspace">
 
                 <!-- BẢNG 1: DANH SÁCH TỔNG HỢP HÀNG ĐỢI XỬ LÝ (TABS) -->
-                <div class="borrow-queue-column">
+                <div class="borrow-queue-column"
+                    th:with="activeTab=${selectedRenewal != null ? 'renewals' : (selectedReservation != null ? 'reservations' : (param.tab != null ? param.tab[0] : 'borrows'))}">
                     <section class="borrow-panel borrow-queue-panel" aria-labelledby="borrowQueueTitle">
                         <div class="borrow-panel-header">
                             <div class="borrow-panel-heading">
@@ -51,9 +46,9 @@
                             </div>
                             <ul class="borrow-pill-tabs" id="requestTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="borrows-tab" data-bs-toggle="tab"
-                                        data-bs-target="#borrows" type="button" role="tab" aria-controls="borrows"
-                                        aria-selected="true">
+                                    <button class="nav-link" th:classappend="${activeTab == 'borrows' ? 'active' : ''}"
+                                        id="borrows-tab" data-bs-toggle="tab" data-bs-target="#borrows" type="button"
+                                        role="tab" aria-controls="borrows" th:aria-selected="${activeTab == 'borrows'}">
                                         <i class="bi bi-cloud-arrow-up"></i> <span
                                             th:text="#{librarian.borrowDesk.loanRequests}">Loan Requests</span>
                                         <span class="borrow-tab-badge"
@@ -61,9 +56,10 @@
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="renewals-tab" data-bs-toggle="tab"
-                                        data-bs-target="#renewals" type="button" role="tab" aria-controls="renewals"
-                                        aria-selected="false">
+                                    <button class="nav-link" th:classappend="${activeTab == 'renewals' ? 'active' : ''}"
+                                        id="renewals-tab" data-bs-toggle="tab" data-bs-target="#renewals" type="button"
+                                        role="tab" aria-controls="renewals"
+                                        th:aria-selected="${activeTab == 'renewals'}">
                                         <i class="bi bi-arrow-repeat"></i> <span
                                             th:text="#{librarian.borrowDesk.renewals}">Renewals</span>
                                         <span class="borrow-tab-badge"
@@ -72,9 +68,22 @@
                                 </li>
 
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="reservations-tab" data-bs-toggle="tab"
-                                        data-bs-target="#reservations" type="button" role="tab"
-                                        aria-controls="reservations" aria-selected="false">
+                                    <button class="nav-link" th:classappend="${activeTab == 'returns' ? 'active' : ''}"
+                                        id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button"
+                                        role="tab" aria-controls="returns" th:aria-selected="${activeTab == 'returns'}">
+                                        <i class="bi bi-box-arrow-in-left"></i> <span
+                                            th:text="#{librarian.borrowDesk.returnRequests}">Return Requests</span>
+                                        <span class="borrow-tab-badge"
+                                            th:text="${#lists.size(pendingReturnRequests)}">0</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link"
+                                        th:classappend="${activeTab == 'reservations' ? 'active' : ''}"
+                                        id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations"
+                                        type="button" role="tab" aria-controls="reservations"
+                                        th:aria-selected="${activeTab == 'reservations'}">
                                         <i class="bi bi-bookmark-star"></i> <span
                                             th:text="#{librarian.borrowDesk.reservations}">Reservations</span>
                                         <span class="borrow-tab-badge"
@@ -98,8 +107,9 @@
                             <div class="tab-content borrow-scrollable-list" id="requestTabsContent">
 
                                 <!-- TAB: ĐƠN MƯỢN ONLINE -->
-                                <div class="tab-pane fade show active" id="borrows" role="tabpanel"
-                                    aria-labelledby="borrows-tab">
+                                <div class="tab-pane fade"
+                                    th:classappend="${activeTab == 'borrows' ? 'show active' : ''}" id="borrows"
+                                    role="tabpanel" aria-labelledby="borrows-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="req : ${pendingRequests}"
                                             th:href="@{/librarian/borrow/create(requestId=${req.borrowId})}"
@@ -135,7 +145,9 @@
                                 </div>
 
                                 <!-- TAB: YÊU CẦU GIA HẠN -->
-                                <div class="tab-pane fade" id="renewals" role="tabpanel" aria-labelledby="renewals-tab">
+                                <div class="tab-pane fade"
+                                    th:classappend="${activeTab == 'renewals' ? 'show active' : ''}" id="renewals"
+                                    role="tabpanel" aria-labelledby="renewals-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="ren : ${pendingRenewals}"
                                             th:href="@{/librarian/borrow/create(renewId=${ren.borrowDetailId})}"
@@ -171,10 +183,63 @@
                                     </div>
                                 </div>
 
+                                <!-- TAB: YÊU CẦU TRẢ SÁCH -->
+                                <div class="tab-pane fade"
+                                    th:classappend="${activeTab == 'returns' ? 'show active' : ''}" id="returns"
+                                    role="tabpanel" aria-labelledby="returns-tab">
+                                    <div class="list-group list-group-flush">
+                                        <a th:each="returnRequest : ${pendingReturnRequests}"
+                                            th:if="${returnRequest.barcode != null && !#strings.isEmpty(returnRequest.barcode)}"
+                                            th:href="@{/librarian/loan/returns/search(barcode=${returnRequest.barcode})}"
+                                            class="list-group-item list-group-item-action borrow-request-item"
+                                            th:data-fullname="${returnRequest.memberName}"
+                                            th:data-email="${returnRequest.memberEmail}">
+                                            <div class="borrow-request-heading">
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${returnRequest.memberName != null ? returnRequest.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member</h3>
+                                                <time class="borrow-request-date"
+                                                    th:text="${returnRequest.borrowDate != null ? #temporals.format(returnRequest.borrowDate, 'dd/MM/yyyy') : #messages.msg('common.unknownDate')}">Loan date</time>
+                                            </div>
+                                            <div class="borrow-request-meta text-truncate"
+                                                th:text="${returnRequest.bookTitle != null ? returnRequest.bookTitle : #messages.msg('book.unknown')}">Book title</div>
+                                            <div class="borrow-request-footer">
+                                                <span class="status-badge status-return-pending"
+                                                    th:text="${returnRequest.barcode}">Barcode</span>
+                                                <span class="borrow-request-link"><span
+                                                        th:text="#{librarian.borrowDesk.processReturn}">Process return</span>
+                                                    <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                                            </div>
+                                        </a>
+                                        <div th:each="returnRequest : ${pendingReturnRequests}"
+                                            th:unless="${returnRequest.barcode != null && !#strings.isEmpty(returnRequest.barcode)}"
+                                            class="list-group-item borrow-request-item">
+                                            <div class="borrow-request-heading">
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${returnRequest.memberName != null ? returnRequest.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member</h3>
+                                            </div>
+                                            <div class="borrow-request-meta text-truncate"
+                                                th:text="${returnRequest.bookTitle != null ? returnRequest.bookTitle : #messages.msg('book.unknown')}">Book title</div>
+                                            <div class="borrow-request-footer">
+                                                <span class="status-badge status-pending"
+                                                    th:text="#{librarian.borrowDesk.returnBarcodeMissing}">Physical copy not assigned</span>
+                                                <a class="borrow-request-link" th:href="@{/librarian/loan/returns}">
+                                                    <span th:text="#{librarian.borrowDesk.processReturn}">Process return</span>
+                                                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div th:if="${#lists.isEmpty(pendingReturnRequests)}"
+                                            class="app-empty-state borrow-empty-state">
+                                            <span th:text="#{librarian.borrowDesk.noReturnRequests}">No return requests.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
 
                                 <!-- TAB: HÀNG ĐỢI ĐẶT TRƯỚC -->
-                                <div class="tab-pane fade" id="reservations" role="tabpanel"
-                                    aria-labelledby="reservations-tab">
+                                <div class="tab-pane fade"
+                                    th:classappend="${activeTab == 'reservations' ? 'show active' : ''}"
+                                    id="reservations" role="tabpanel" aria-labelledby="reservations-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="reserve : ${activeReservations}"
                                             th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
@@ -185,13 +250,14 @@
                                             th:data-phone="${reserve.memberPhone}"
                                             th:data-username="${reserve.memberUsername}">
                                             <div class="borrow-request-heading">
-                                                <h3 class="borrow-request-name" th:text="${reserve.memberName}">Member
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${reserve.memberName != null ? reserve.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member
                                                     Name</h3>
                                                 <time class="borrow-request-date"
                                                     th:text="${#temporals.format(reserve.bookingDate, 'dd/MM/yyyy')}">01/07/2026</time>
                                             </div>
                                             <div class="borrow-request-meta text-truncate"
-                                                th:text="${reserve.bookTitle}">Book title</div>
+                                                th:text="${reserve.bookTitle != null ? reserve.bookTitle : #messages.msg('book.unknown')}">Book title</div>
                                             <div class="borrow-request-footer">
                                                 <span class="status-badge status-reservation-queue"
                                                     th:text="#{librarian.borrowDesk.queuePosition(${reserve.queuePosition})}">Queue
@@ -214,7 +280,7 @@
                     </section>
                 </div>
                 <!-- BẢNG 2: BẢNG THÔNG TIN CHI TIẾT (Phê duyệt) -->
-                <div class="borrow-detail-column">
+                <div class="borrow-detail-column" th:fragment="borrowDetailColumn">
                     <section
                         th:if="${selectedRequest == null && selectedRenewal == null && selectedReservation == null}"
                         class="borrow-panel borrow-create-panel" aria-labelledby="borrowCreateTitle">
@@ -347,16 +413,30 @@
                                 </div>
                             </div>
 
+                            <div class="borrow-member-stats borrow-member-stats-panel mt-3 mb-3 p-3 rounded">
+                                <i class="bi bi-info-circle text-muted me-1"></i>
+                                <span class="fw-bold text-muted me-2"
+                                    th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
+                                <span class="me-4">
+                                    <span
+                                        th:classappend="${activeBorrowCount >= maxBorrowLimit} ? 'text-danger fw-bold' : 'text-dark fw-bold'"
+                                        th:text="#{librarian.borrowDesk.activeBorrows(${activeBorrowCount}, ${maxBorrowLimit})}"></span>
+                                </span>
+                                <span>
+                                    <span
+                                        th:classappend="${unpaidFines > 0} ? 'text-danger fw-bold' : 'text-success fw-bold'"
+                                        th:text="#{librarian.borrowDesk.unpaidFines(${#numbers.formatDecimal(unpaidFines, 0, 'COMMA', 0, 'POINT')})}"></span>
+                                </span>
+                            </div>
+
                             <!-- Thanh quét mã vạch cho đơn hàng đợi trực tuyến (online request) -->
                             <h3 class="borrow-subsection-title mt-4"><i
                                     class="bi bi-qr-code-scan me-2 text-classic"></i><span
                                     th:text="#{librarian.returnDesk.scanLabel}">Quét mã vạch sách</span></h3>
                             <form id="onlineRequestScannerForm" onsubmit="event.preventDefault();">
-                                <div class="mb-4 p-3 rounded"
-                                    style="background-color: #fff9f0; border: 1px dashed rgba(139, 90, 43, 0.3);">
+                                <div class="borrow-scanner-panel mb-4 p-3 rounded">
                                     <label for="requestScannerInput"
-                                        class="form-label borrow-form-label small fw-bold text-uppercase mb-2"
-                                        style="color: #8b5a2b; letter-spacing: 0.5px;">
+                                        class="form-label borrow-form-label borrow-scanner-label small fw-bold text-uppercase mb-2">
                                         <span th:text="#{librarian.borrowDesk.scanBarcode}">Scan Book Barcode</span>
                                         <span class="borrow-required" aria-hidden="true">*</span>
                                     </label>
@@ -486,6 +566,22 @@
                                 </div>
                             </div>
 
+                            <div class="borrow-member-stats borrow-member-stats-panel mt-3 mb-3 p-3 rounded">
+                                <i class="bi bi-info-circle text-muted me-1"></i>
+                                <span class="fw-bold text-muted me-2"
+                                    th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
+                                <span class="me-4">
+                                    <span
+                                        th:classappend="${activeBorrowCount >= maxBorrowLimit} ? 'text-danger fw-bold' : 'text-dark fw-bold'"
+                                        th:text="#{librarian.borrowDesk.activeBorrows(${activeBorrowCount}, ${maxBorrowLimit})}"></span>
+                                </span>
+                                <span>
+                                    <span
+                                        th:classappend="${unpaidFines > 0} ? 'text-danger fw-bold' : 'text-success fw-bold'"
+                                        th:text="#{librarian.borrowDesk.unpaidFines(${#numbers.formatDecimal(unpaidFines, 0, 'COMMA', 0, 'POINT')})}"></span>
+                                </span>
+                            </div>
+
                             <div class="borrow-decision-actions">
                                 <form
                                     th:action="@{/librarian/loan/renew/reject/{id}(id=${selectedRenewal.borrowDetailId})}"
@@ -501,7 +597,7 @@
                                     th:action="@{/librarian/loan/renew/approve/{id}(id=${selectedRenewal.borrowDetailId})}"
                                     method="post" class="borrow-action-form">
                                     <button type="button" class="app-form-primary"
-                                        th:data-confirm-message="#{librarian.borrowDesk.approveRenewalConfirm}"
+                                        th:data-confirm-message="#{librarian.borrowDesk.approveRenewalConfirm(${selectedRenewal.book.title}, ${selectedRenewal.borrow.member.user.fullName}, ${selectedRenewalNewDueDate != null ? #temporals.format(selectedRenewalNewDueDate, 'dd/MM/yyyy') : '-'})}"
                                         onclick="showConfirmModal(this.dataset.confirmMessage, this)">
                                         <span th:text="#{librarian.borrowDesk.approveRenewal}">Approve Renewal</span>
                                     </button>
@@ -544,6 +640,22 @@
                                 </div>
                             </div>
 
+                            <div class="borrow-member-stats borrow-member-stats-panel mt-3 mb-3 p-3 rounded">
+                                <i class="bi bi-info-circle text-muted me-1"></i>
+                                <span class="fw-bold text-muted me-2"
+                                    th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
+                                <span class="me-4">
+                                    <span
+                                        th:classappend="${activeBorrowCount >= maxBorrowLimit} ? 'text-danger fw-bold' : 'text-dark fw-bold'"
+                                        th:text="#{librarian.borrowDesk.activeBorrows(${activeBorrowCount}, ${maxBorrowLimit})}"></span>
+                                </span>
+                                <span>
+                                    <span
+                                        th:classappend="${unpaidFines > 0} ? 'text-danger fw-bold' : 'text-success fw-bold'"
+                                        th:text="#{librarian.borrowDesk.unpaidFines(${#numbers.formatDecimal(unpaidFines, 0, 'COMMA', 0, 'POINT')})}"></span>
+                                </span>
+                            </div>
+
                             <h3 class="borrow-subsection-title" th:text="#{librarian.borrowDesk.reservedBook}">Reserved
                                 Book</h3>
                             <div class="app-table-wrap borrow-detail-table-wrap">
@@ -584,7 +696,7 @@
                                     th:action="@{/librarian/reservations/approve/{id}(id=${selectedReservation.reservationId})}"
                                     method="post" class="borrow-action-form">
                                     <button type="button" class="app-form-primary"
-                                        th:data-confirm-message="#{librarian.borrowDesk.approveReservationConfirm}"
+                                        th:data-confirm-message="#{librarian.borrowDesk.approveReservationConfirm(${selectedReservation.book.title}, ${selectedReservation.member.user.fullName})}"
                                         onclick="showConfirmModal(this.dataset.confirmMessage, this)">
                                         <span th:text="#{common.approve}">Approve</span>
                                     </button>
@@ -632,8 +744,7 @@
                             <div>
                                 <h2 class="modal-title" id="rejectReasonModalLabel"
                                     th:text="#{librarian.borrowDesk.rejectTitle}">Reject Request</h2>
-                                <p id="rejectReasonBookTitle"
-                                    style="margin: 4px 0 0; color: var(--app-color-muted); font-size: 13px;"></p>
+                                <p id="rejectReasonBookTitle" class="borrow-reject-book-title"></p>
                             </div>
                             <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal"
                                 th:aria-label="#{common.close}">
@@ -767,7 +878,7 @@
                         const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
                         reason.value = value;
                         updateCounter();
-                        
+
                         let message = "";
                         if (!reasonCode.value) {
                             message = /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type.";
@@ -782,7 +893,7 @@
                                 message = messages.letters;
                             }
                         }
-                        
+
                         if (message) {
                             event.preventDefault();
                             reason.classList.add("is-invalid");
@@ -796,7 +907,7 @@
                         error.textContent = "";
                         updateCounter();
                     });
-                    
+
                     reasonCode.addEventListener("change", function () {
                         if (reasonCode.value === "OTHER") {
                             reason.setAttribute("required", "required");
@@ -928,7 +1039,53 @@
 
             <script th:inline="javascript">
                 document.addEventListener("DOMContentLoaded", function () {
-                    const memberInput = document.getElementById("inlineMemberId");
+                    // Global PJAX Event Listener for `.borrow-request-item` links
+                    document.addEventListener('click', function(e) {
+                        const link = e.target.closest('a.borrow-request-item');
+                        if (link) {
+                            e.preventDefault();
+                            const url = link.getAttribute('href');
+                            
+                            // Visual feedback
+                            document.querySelectorAll('.borrow-request-item').forEach(el => el.classList.remove('borrow-active-request-item'));
+                            link.classList.add('borrow-active-request-item');
+                            
+                            const detailColumn = document.querySelector('.borrow-detail-column');
+                            if (detailColumn) {
+                                detailColumn.style.opacity = '0.5';
+                            }
+                            
+                            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                                .then(res => {
+                                    if (res.redirected) {
+                                        window.location.href = res.url;
+                                        throw new Error('Redirected');
+                                    }
+                                    return res.text();
+                                })
+                                .then(html => {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const newDetailColumn = doc.querySelector('.borrow-detail-column');
+                                    if (detailColumn && newDetailColumn) {
+                                        detailColumn.replaceWith(newDetailColumn);
+                                        window.history.pushState(null, '', url);
+                                        initBorrowDetailJS();
+                                    } else {
+                                        window.location.href = url; // fallback
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    if (err.message !== 'Redirected') {
+                                        window.location.href = url; // fallback
+                                    }
+                                });
+                        }
+                    });
+
+                    function initBorrowDetailJS() {
+                        const memberInput = document.getElementById("inlineMemberId");
                     const memberInfoBox = document.getElementById("memberInfoBox");
                     const memberErrorBox = document.getElementById("memberErrorBox");
                     const scannerInput = document.getElementById("scannerInput");
@@ -1533,9 +1690,13 @@
                             processRequestBarcode();
                         });
                     }
+                } // End of initBorrowDetailJS
 
-                    // Queue Search Input Logic
-                    const queueSearchInput = document.getElementById('queueSearchInput');
+                // Call it once on initial load
+                initBorrowDetailJS();
+
+                // Queue Search Input Logic
+                const queueSearchInput = document.getElementById('queueSearchInput');
                     if (queueSearchInput) {
                         queueSearchInput.addEventListener('input', function () {
                             const query = this.value.trim().toLowerCase();

@@ -36,7 +36,7 @@ public class CustomStaffDetailsService implements UserDetailsService {
         // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
         List<GrantedAuthority> authorities = account.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()))
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
 
         return new CustomUserDetails(
@@ -45,6 +45,7 @@ public class CustomStaffDetailsService implements UserDetailsService {
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
+                false,
                 authorities);
     }
 }

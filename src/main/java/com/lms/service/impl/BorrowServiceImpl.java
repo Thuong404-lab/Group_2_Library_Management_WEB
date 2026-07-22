@@ -16,6 +16,8 @@ import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
 import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
+import com.lms.entity.Staff;
+import com.lms.entity.StaffAccount;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
 import com.lms.enums.ActionType;
@@ -82,7 +84,9 @@ public class BorrowServiceImpl implements BorrowService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final FinancialService financialService;
+    private final com.lms.service.MembershipService membershipService;
     private final com.lms.service.LoanService loanService;
+    private final com.lms.repository.StaffAccountRepository staffAccountRepository;
 
     public BorrowServiceImpl(MemberRepository memberRepository,
             BookItemRepository bookItemRepository,
@@ -98,7 +102,9 @@ public class BorrowServiceImpl implements BorrowService {
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
             FinancialService financialService,
-            com.lms.service.LoanService loanService) {
+            com.lms.service.MembershipService membershipService,
+            com.lms.service.LoanService loanService,
+            com.lms.repository.StaffAccountRepository staffAccountRepository) {
         this.memberRepository = memberRepository;
         this.bookItemRepository = bookItemRepository;
         this.borrowRepository = borrowRepository;
@@ -113,7 +119,9 @@ public class BorrowServiceImpl implements BorrowService {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.financialService = financialService;
+        this.membershipService = membershipService;
         this.loanService = loanService;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @Override
@@ -176,21 +184,23 @@ public class BorrowServiceImpl implements BorrowService {
 
         // Tính toán số tiền
 
-        double feePerBookPerDay = 5000.0;
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(5000);
         SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
         if (feeSetting != null) {
             try {
-                feePerBookPerDay = Double.parseDouble(feeSetting.getSettingValue());
+                feePerBookPerDay = new BigDecimal(feeSetting.getSettingValue());
             } catch (NumberFormatException ignored) {
                 // Keep the documented default when the optional setting is malformed.
             }
         }
-        double baseFee = bookItemsToBorrow.size() * borrowDays * feePerBookPerDay;
-        double discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
-                ? member.getTier().getDiscountPercent().doubleValue()
-                : 0.0;
-        double finalFeeDouble = baseFee - (baseFee * discount / 100);
-        BigDecimal finalFee = BigDecimal.valueOf(finalFeeDouble);
+        BigDecimal baseFee = feePerBookPerDay
+                .multiply(BigDecimal.valueOf(bookItemsToBorrow.size()))
+                .multiply(BigDecimal.valueOf(borrowDays));
+        BigDecimal discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
+                ? member.getTier().getDiscountPercent() : BigDecimal.ZERO;
+        BigDecimal finalFee = baseFee.multiply(BigDecimal.ONE.subtract(
+                discount.divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP)))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
 
         // Xá»­ lÃ½ thanh toÃ¡n vÃ­ náº¿u user chá»n WALLET
         if ("WALLET".equalsIgnoreCase(request.getPaymentMethod())) {
@@ -206,6 +216,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         Borrow borrow = new Borrow();
         borrow.setMember(member);
+        borrow.setStaff(resolveStaff(librarianUsername));
         borrow.setBorrowDate(LocalDateTime.now());
         borrow.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Active");
         borrow = borrowRepository.save(borrow);
@@ -216,11 +227,12 @@ public class BorrowServiceImpl implements BorrowService {
             Transaction transaction = new Transaction();
             transaction.setWallet(wallet);
             transaction.setBorrow(borrow);
-            transaction.setTransactionType("PAYMENT");
+            transaction.setTransactionType("BORROW_FEE");
             transaction.setAmount(finalFee.negate());
             transaction.setTransactionDate(LocalDateTime.now());
             transaction.setStatus("Completed");
             transactionRepository.save(transaction);
+            membershipService.synchronizeMemberTier(member.getMemberId());
         }
 
         for (BookItem item : bookItemsToBorrow) {
@@ -346,7 +358,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays) {
-        Member member = memberRepository.findByAccountUsername(username)
+        Member member = memberRepository.findByAccountUsernameForUpdate(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.member.currentNotFound")));
         Book book = bookRepository.findById(bookId)
@@ -402,7 +414,6 @@ public class BorrowServiceImpl implements BorrowService {
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.notPendingApproval"));
         }
-
         Member member = borrow.getMember();
 
         // Cáº­p nháº­t tráº¡ng thÃ¡i Borrow thÃ nh Rejected
@@ -451,10 +462,17 @@ public class BorrowServiceImpl implements BorrowService {
         if (!"Pending".equalsIgnoreCase(borrow.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.notPendingApproval"));
         }
+        borrow.setStaff(resolveStaff(staffUsername));
 
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
         if (details.isEmpty()) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
+        }
+
+        Member member = borrow.getMember();
+        validateMemberBorrowEligibility(member);
+        if (borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId()) > getEffectiveBorrowLimit(member)) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.tierLimitExceeded"));
         }
 
         if (barcodes == null || barcodes.size() != details.size()) {
@@ -474,8 +492,6 @@ public class BorrowServiceImpl implements BorrowService {
             }
         }
 
-        Member member = borrow.getMember();
-
         // Đếm số lượng yêu cầu cho mỗi bookId trong đơn hiện tại
         java.util.Map<Integer, Long> requestCounts = details.stream()
                 .collect(java.util.stream.Collectors.groupingBy(d -> d.getBook().getBookId(),
@@ -488,7 +504,7 @@ public class BorrowServiceImpl implements BorrowService {
             BorrowDetail detail = details.get(i);
             String barcode = barcodes.get(i).trim();
 
-            BookItem item = bookItemRepository.findByBarcode(barcode)
+            BookItem item = bookItemRepository.findByBarcodeForUpdate(barcode)
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mã vạch sách: " + barcode));
 
             // Đảm bảo sách này khớp với sách được yêu cầu trong phiếu mượn
@@ -533,11 +549,11 @@ public class BorrowServiceImpl implements BorrowService {
 
         // â”€â”€ 2. TÃ­nh phÃ­ mÆ°á»£n
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        double feePerBookPerDay = 5000.0;
+        BigDecimal feePerBookPerDay = BigDecimal.valueOf(5000);
         SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
         if (feeSetting != null) {
             try {
-                feePerBookPerDay = Double.parseDouble(feeSetting.getSettingValue());
+                feePerBookPerDay = new BigDecimal(feeSetting.getSettingValue());
             } catch (NumberFormatException ignored) {
             }
         }
@@ -549,11 +565,13 @@ public class BorrowServiceImpl implements BorrowService {
                 borrowDays = (int) computed;
         }
 
-        double discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
-                ? member.getTier().getDiscountPercent().doubleValue()
-                : 0.0;
-        double baseFee = details.size() * borrowDays * feePerBookPerDay;
-        BigDecimal finalFee = BigDecimal.valueOf(baseFee - (baseFee * discount / 100));
+        BigDecimal discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
+                ? member.getTier().getDiscountPercent() : BigDecimal.ZERO;
+        BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf(details.size()))
+                .multiply(BigDecimal.valueOf(borrowDays));
+        BigDecimal finalFee = baseFee.multiply(BigDecimal.ONE.subtract(
+                discount.divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP)))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
 
         // â”€â”€ 3. Trá»« tiá»n vÃ­
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -572,11 +590,12 @@ public class BorrowServiceImpl implements BorrowService {
         Transaction transaction = new Transaction();
         transaction.setWallet(wallet);
         transaction.setBorrow(borrow);
-        transaction.setTransactionType("PAYMENT");
+        transaction.setTransactionType("BORROW_FEE");
         transaction.setAmount(finalFee.negate());
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setStatus("Completed");
         transactionRepository.save(transaction);
+        membershipService.synchronizeMemberTier(member.getMemberId());
 
         // â”€â”€ 5. Cáº­p nháº­t tráº¡ng thÃ¡i sang Chá» nháº­n báº£n váº­t lÃ½
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -607,6 +626,9 @@ public class BorrowServiceImpl implements BorrowService {
                         localizedMessageService.get("backend.loan.notFoundById", borrowId)));
         if (!"Waiting_Pickup".equalsIgnoreCase(borrow.getStatus())) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.notWaitingPickup"));
+        }
+        if (borrow.getStaff() == null) {
+            borrow.setStaff(resolveStaff(staffUsername));
         }
 
         List<BorrowDetail> details = getBorrowDetailsByBorrowId(borrowId);
@@ -743,11 +765,35 @@ public class BorrowServiceImpl implements BorrowService {
         hold.setAmount(fee.negate());
         hold.setTransactionDate(LocalDateTime.now());
         hold.setStatus("Pending");
+        hold.setChannel("WALLET");
+        hold.setBalanceBefore(balance);
+        hold.setBalanceAfter(balance.subtract(fee));
         transactionRepository.save(hold);
         detail.setRejectionCode(null);
         detail.setRejectionReason(null);
         detail.setStatus("Renew_Pending");
         borrowDetailRepository.save(detail);
+        auditLogService.log(com.lms.enums.ActionType.REQUEST_RENEWAL,
+                "Member " + username + " requested " + renewalDays + " renewal days for detail #" + borrowDetailId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void memberCancelRenewRequest(String username, Integer borrowDetailId) {
+        Member member = memberRepository.findByAccountUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.member.currentNotFound")));
+        BorrowDetail detail = borrowDetailRepository.findByIdForUpdate(borrowDetailId)
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.detailNotFound")));
+        if (detail.getBorrow() == null || detail.getBorrow().getMember() == null
+                || !member.getMemberId().equals(detail.getBorrow().getMember().getMemberId())) {
+            throw new ConflictException(localizedMessageService.get("backend.renewal.forbidden"));
+        }
+        if (!"Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.loan.renewalNotPending"));
+        }
+        loanService.rejectRenewal(borrowDetailId, "SYSTEM", "OTHER", "Cancelled by member");
+        auditLogService.log(com.lms.enums.ActionType.CANCEL_RENEWAL,
+                "Member " + username + " cancelled renewal request for detail #" + borrowDetailId);
     }
 
     @Override
@@ -945,14 +991,14 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowDetailRepository.findByStatus("Return_Pending").stream()
                 .map(bd -> {
                     Member member = bd.getBorrow().getMember();
-                    String name = member != null && member.getUser() != null ? member.getUser().getFullName() : "N/A";
-                    String email = member != null && member.getUser() != null ? member.getUser().getEmail() : "N/A";
+                    String name = member != null && member.getUser() != null ? member.getUser().getFullName() : null;
+                    String email = member != null && member.getUser() != null ? member.getUser().getEmail() : null;
                     return new ReturnRequestDTO(
                             bd.getBorrowDetailId(),
                             name,
                             email,
-                            bd.getBook().getTitle(),
-                            bd.getBookItem() != null ? bd.getBookItem().getBarcode() : "N/A",
+                            bd.getBook() != null ? bd.getBook().getTitle() : null,
+                            bd.getBookItem() != null ? bd.getBookItem().getBarcode() : null,
                             bd.getBorrow().getBorrowDate());
                 })
                 .toList();
@@ -961,10 +1007,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Reservation> getAllPendingReservations() {
-        return reservationRepository.findAll().stream()
-                .filter(r -> "Pending".equalsIgnoreCase(r.getStatus())
-                        || "Deposit_Paid".equalsIgnoreCase(r.getStatus()))
-                .toList();
+        return reservationRepository.findByStatusInOrderByReservationDateAsc(
+                List.of("Pending", "Deposit_Paid"));
     }
 
     @Override
@@ -976,7 +1020,12 @@ public class BorrowServiceImpl implements BorrowService {
                         ma -> ma.getMember().getMemberId(),
                         ma -> ma.getUsername(),
                         (ex, rep) -> ex));
-        return getAllPendingReservations().stream()
+        java.util.Set<Integer> pendingReservationIds = getAllPendingReservations().stream()
+                .map(Reservation::getReservationId)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.Map<Integer, Integer> queuePositionByBook = new java.util.HashMap<>();
+        return reservationRepository.findByStatusInOrderByReservationDateAsc(
+                        List.of("Pending", "Deposit_Paid", "Ready", "Active")).stream()
                 .map(r -> {
                     String email = r.getMember() != null && r.getMember().getUser() != null
                             ? r.getMember().getUser().getEmail()
@@ -986,18 +1035,23 @@ public class BorrowServiceImpl implements BorrowService {
                             : "";
                     String username = r.getMember() != null ? usernameMap.getOrDefault(r.getMember().getMemberId(), "")
                             : "";
+                    Integer bookId = r.getBook() == null ? null : r.getBook().getBookId();
+                    int queuePosition = bookId == null
+                            ? 0
+                            : queuePositionByBook.merge(bookId, 1, Integer::sum);
                     return new ReservationRequestDTO(
                             r.getReservationId(),
                             r.getMember() != null && r.getMember().getUser() != null
                                     ? r.getMember().getUser().getFullName()
-                                    : "N/A",
-                            r.getBook().getTitle(),
+                                    : null,
+                            r.getBook() != null ? r.getBook().getTitle() : null,
                             r.getReservationDate(),
-                            1,
+                            queuePosition,
                             email,
                             phone,
                             username);
                 })
+                .filter(dto -> pendingReservationIds.contains(dto.getId()))
                 .toList();
     }
 
@@ -1185,6 +1239,12 @@ public class BorrowServiceImpl implements BorrowService {
                     });
         }
         if (!dto.isRenewalRequestBlocked()
+                && detail.getDueDate() != null
+                && !detail.getDueDate().isAfter(LocalDateTime.now().plusHours(24))) {
+            dto.setRenewalRequestBlocked(true);
+            dto.setRenewalBlockedReason(localizedMessageService.get("backend.renewal.tooCloseToDue", 24));
+        }
+        if (!dto.isRenewalRequestBlocked()
                 && detail.getBook() != null
                 && detail.getBorrow() != null
                 && detail.getBorrow().getMember() != null) {
@@ -1275,11 +1335,13 @@ public class BorrowServiceImpl implements BorrowService {
     }
 
     private int getEffectiveBorrowLimit(Member member) {
-        int configuredLimit = getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10);
-        int tierLimit = member != null && member.getTier() != null && member.getTier().getBorrowLimit() != null
-                ? member.getTier().getBorrowLimit()
-                : configuredLimit;
-        return Math.max(1, tierLimit);
+        int configuredLimit = getPositiveIntSetting("Max_Books_Per_Member",
+                getPositiveIntSetting("MAX_BOOKS_PER_MEMBER", 10));
+        Integer tierLimit = member != null && member.getMemberId() != null
+                ? memberRepository.findCurrentBorrowLimitByMemberId(member.getMemberId())
+                        .orElse(member.getTier() != null ? member.getTier().getBorrowLimit() : null)
+                : null;
+        return Math.max(1, tierLimit != null ? tierLimit : configuredLimit);
     }
 
     private int normalizeBorrowDays(Integer requestedDays) {
@@ -1290,7 +1352,7 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     public List<BorrowDetail> getPendingRenewalRequests() {
-        return borrowDetailRepository.findByStatus("Renew_Pending");
+        return borrowDetailRepository.findByStatusOrderByDueDateAsc("Renew_Pending");
     }
 
     @Override
@@ -1317,6 +1379,16 @@ public class BorrowServiceImpl implements BorrowService {
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
+    }
+
+    private Staff resolveStaff(String username) {
+        if (username == null || username.isBlank()) {
+            throw new ResourceNotFoundException(localizedMessageService.get("backend.account.staffNotFound"));
+        }
+        return staffAccountRepository.findByUsername(username)
+                .map(StaffAccount::getStaff)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.account.staffUsernameNotFound", username)));
     }
 
     @Override
@@ -1393,15 +1465,16 @@ public class BorrowServiceImpl implements BorrowService {
         int borrowDays = normalizeBorrowDays(numberOfDays);
         java.math.BigDecimal feePerBookPerDay = java.math.BigDecimal
                 .valueOf(getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000));
-        double discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
-                ? member.getTier().getDiscountPercent().doubleValue()
-                : 0.0;
-        java.math.BigDecimal discountFactor = java.math.BigDecimal.valueOf(1.0 - (discountPercent / 100.0));
+        java.math.BigDecimal discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
+                ? member.getTier().getDiscountPercent() : java.math.BigDecimal.ZERO;
+        java.math.BigDecimal discountFactor = java.math.BigDecimal.ONE.subtract(
+                discountPercent.divide(java.math.BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP));
 
         return feePerBookPerDay
                 .multiply(java.math.BigDecimal.valueOf(normalizedBookIds.size()))
                 .multiply(java.math.BigDecimal.valueOf(borrowDays))
-                .multiply(discountFactor);
+                .multiply(discountFactor)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     @Override
@@ -1418,7 +1491,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
         }
 
-        Member member = memberRepository.findByAccountUsername(username)
+        Member member = memberRepository.findByAccountUsernameForUpdate(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         localizedMessageService.get("backend.member.currentNotFound")));
 
@@ -1444,24 +1517,23 @@ public class BorrowServiceImpl implements BorrowService {
         java.util.Map<Integer, Long> requestedCopiesByBook = normalizedBookIds.stream()
                 .collect(Collectors.groupingBy(java.util.function.Function.identity(), Collectors.counting()));
         for (java.util.Map.Entry<Integer, Long> entry : requestedCopiesByBook.entrySet()) {
+            Book lockedBook = bookRepository.findByIdForUpdate(entry.getKey())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            localizedMessageService.get("backend.inventory.bookNotFound", entry.getKey())));
+            if ("Inactive".equalsIgnoreCase(lockedBook.getStatus())) {
+                throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.bookUnavailable"));
+            }
             long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(entry.getKey(),
                     "Available");
             if (entry.getValue() > availableCopies) {
                 throw new ConflictException(
                         localizedMessageService.get("backend.borrow.stockExceeded", availableCopies));
             }
-            if (borrowDetailRepository.countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(),
-                    entry.getKey()) > 0) {
-                Book duplicateBook = bookRepository.findById(entry.getKey()).orElse(null);
-                String title = duplicateBook == null ? String.valueOf(entry.getKey()) : duplicateBook.getTitle();
-                throw new ConflictException(
-                        localizedMessageService.get("backend.borrow.duplicateActiveRequest", title));
-            }
         }
 
         List<String> titles = new ArrayList<>();
         for (Integer bookId : normalizedBookIds) {
-            Book book = bookRepository.findById(bookId)
+            Book book = bookRepository.findByIdForUpdate(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
 
@@ -1493,7 +1565,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new IllegalArgumentException(localizedMessageService.get("backend.borrow.emptyCart"));
         }
 
-        Member member = memberRepository.findByAccountUsername(username)
+        Member member = memberRepository.findByAccountUsernameForUpdate(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         localizedMessageService.get("backend.member.currentNotFound")));
 
@@ -1520,7 +1592,7 @@ public class BorrowServiceImpl implements BorrowService {
         java.util.Set<Integer> validatedBookIds = new java.util.HashSet<>();
         java.util.Map<Integer, java.util.ArrayDeque<BookItem>> availableItemsByBook = new java.util.HashMap<>();
         for (Integer bookId : bookIds) {
-            Book book = bookRepository.findById(bookId)
+            Book book = bookRepository.findByIdForUpdate(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             localizedMessageService.get("backend.inventory.bookNotFound", bookId)));
 
@@ -1536,12 +1608,6 @@ public class BorrowServiceImpl implements BorrowService {
                             localizedMessageService.get("backend.borrow.stockExceeded", availableItems.size()));
                 }
                 availableItemsByBook.put(bookId, new java.util.ArrayDeque<>(availableItems));
-                long activeOrPending = borrowDetailRepository
-                        .countActiveOrPendingRequestsByMemberAndBook(member.getMemberId(), bookId);
-                if (activeOrPending > 0) {
-                    throw new ConflictException(
-                            localizedMessageService.get("backend.borrow.duplicateActiveRequest", book.getTitle()));
-                }
             }
 
             BookItem reservedItem = availableItemsByBook.get(bookId).pollFirst();

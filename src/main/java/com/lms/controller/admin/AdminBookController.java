@@ -47,10 +47,14 @@ public class AdminBookController extends LocalizedControllerSupport {
     public String viewBooks(@RequestParam(defaultValue = "0") int bookPage,
             @RequestParam(defaultValue = "0") int shelfPage,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String tab,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         model.addAllAttributes(dashboardService.getDashboardData(
-                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword));
+                Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword,
+                "audit".equalsIgnoreCase(tab) ? bookCondition : ""));
+        model.addAttribute("staffPrefix", "/admin");
         model.addAttribute("keyword", keyword);
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());
@@ -80,14 +84,14 @@ public class AdminBookController extends LocalizedControllerSupport {
 
     @PostMapping(value = "/inventory/edit/{id}", consumes = "multipart/form-data")
     public String editBook(@PathVariable Integer id, @RequestParam String title,
-            @RequestParam String isbn, @RequestParam Integer genreId, @RequestParam String status,
+            @RequestParam String isbn, @RequestParam Integer genreId,
             @RequestParam(name = "coverImage", required = false) MultipartFile coverImage,
             @RequestParam(required = false) Integer shelfId,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String author,
             RedirectAttributes redirectAttributes) {
         try {
-            inventoryService.updateBook(id, title, isbn, genreId, status, storeCover(coverImage), shelfId,
+            inventoryService.updateBook(id, title, isbn, genreId, null, storeCover(coverImage), shelfId,
                     description, author);
             success(redirectAttributes, message("backend.inventory.bookUpdated"));
         } catch (ApplicationException ex) {
@@ -178,7 +182,7 @@ public class AdminBookController extends LocalizedControllerSupport {
             success(redirectAttributes, message("backend.inventory.auditCompleted",
                     summary.getOrDefault("Available", 0L), summary.getOrDefault("Borrowed", 0L),
                     summary.getOrDefault("Lost", 0L), summary.getOrDefault("Damaged", 0L),
-                    summary.getOrDefault("Disposed", 0L)));
+                    summary.getOrDefault("MinorDamaged", 0L)));
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }
@@ -208,6 +212,18 @@ public class AdminBookController extends LocalizedControllerSupport {
             int deletedCount = itemIds == null ? 0 : new java.util.HashSet<>(itemIds).size();
             inventoryService.deleteBookCopies(id, itemIds);
             success(redirectAttributes, message("backend.inventory.copiesDeleted", deletedCount));
+        } catch (ApplicationException ex) {
+            error(redirectAttributes, ex);
+        }
+        return AUDIT_REDIRECT;
+    }
+
+    @PostMapping("/inventory/copies/update/{bookId}/{itemId}")
+    public String updateBookCopy(@PathVariable Integer bookId, @PathVariable Integer itemId,
+            @RequestParam String bookCondition, RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.updateBookCopyCondition(bookId, itemId, bookCondition);
+            success(redirectAttributes, message("backend.inventory.copyUpdated"));
         } catch (ApplicationException ex) {
             error(redirectAttributes, ex);
         }

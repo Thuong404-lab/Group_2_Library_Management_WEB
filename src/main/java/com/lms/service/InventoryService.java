@@ -36,6 +36,8 @@ public interface InventoryService {
 
     void deleteBookCopies(Integer bookId, List<Integer> bookItemIds);
 
+    void updateBookCopyCondition(Integer bookId, Integer bookItemId, String bookCondition);
+
     void updateBook(Integer bookId, String title, String isbn, Integer genreId, String status, String coverImageUrl, Integer shelfId, String description, String author);
 
     void updateBookStatus(Integer bookId, String status);

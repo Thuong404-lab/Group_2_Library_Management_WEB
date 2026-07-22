@@ -9,30 +9,24 @@
 </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-list'" class="member-management-page">
+<div layout:fragment="content" th:with="activeMenu='borrow-list'" class="member-palette-page member-management-page borrow-list-page">
 
     <!-- Header đồng bộ -->
-    <header class="member-page-header">
-        <div>
+    <header class="member-page-header borrow-page-hero">
+        <div class="borrow-hero-copy">
             <h1 class="member-page-title" th:text="#{librarian.borrowList.heading}">Loan and Return Management</h1>
             <p class="member-page-description" th:text="#{librarian.borrowList.description}">Manage all member circulation records and system pagination.</p>
         </div>
-
+        <div class="borrow-hero-decoration" aria-hidden="true">
+            <i class="bi bi-arrow-left-right"></i>
+        </div>
     </header>
 
-    <!-- Alerts đồng bộ theo mẫu -->
-    <div class="alert alert-danger shadow-sm border-0" th:if="${errorMessage != null}">
-        <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${errorMessage}">Error notification</span>
-    </div>
-    <div class="alert alert-success shadow-sm border-0" th:if="${successMessage != null}">
-        <i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}">Success notification.</span>
-    </div>
-
-    <section class="member-data-card">
+    <section class="member-data-card borrow-list-content borrow-management-card">
         <div class="member-data-card-body">
 
             <!-- Search & Filter đồng bộ toolbar -->
-            <div class="member-toolbar">
+            <div class="member-toolbar borrow-list-filter-card">
                 <form class="member-search-form w-100" method="get" th:action="@{/librarian/borrow/list}"
                       data-auto-filter-form data-focus-key="librarianBorrowFilterFocus">
                     <div class="input-group member-search-group">
@@ -67,41 +61,42 @@
             </div>
 
             <!-- Bảng hiển thị dữ liệu đồng bộ cấu trúc member-table -->
-            <div class="table-responsive member-table-wrap">
-                <table class="table table-hover align-middle stable-table-layout member-table">
+            <div class="table-responsive member-table-wrap borrow-list-table-wrap">
+                <table class="table table-hover align-middle stable-table-layout member-table borrow-list-table">
                     <colgroup>
-                        <col class="member-col-index" style="width: 8%;">
-                        <col class="member-col-username" style="width: 15%;">
-                        <col class="member-col-user" style="width: 35%;">
-                        <col class="member-col-tier" style="width: 15%;">
-                        <col class="member-col-status" style="width: 15%;">
-                        <col class="member-col-actions" style="width: 12%;">
+                        <col class="borrow-list-col-index">
+                        <col class="borrow-list-col-code">
+                        <col class="borrow-list-col-member">
+                        <col class="borrow-list-col-date">
+                        <col class="borrow-list-col-status">
+                        <col class="borrow-list-col-actions">
                     </colgroup>
                     <thead>
                     <tr>
-                        <th class="ps-3" th:text="#{common.number}">No.</th>
-                        <th th:text="#{reservation.code}">Reservation Code</th>
+                        <th th:text="#{common.number}">No.</th>
+                        <th th:text="#{loan.code}">Loan Code</th>
                         <th th:text="#{librarian.borrowDesk.memberInfo}">Member Information</th>
                         <th th:text="#{loan.borrowDate}">Borrow Date</th>
                         <th th:text="#{librarian.borrowList.status}">Loan Status</th>
-                        <th class="text-end pe-3" th:text="#{admin.logs.action}">Action</th>
+                        <th class="text-center" th:text="#{admin.logs.action}">Action</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     <tr th:each="borrow, iter : ${borrows}">
                         <!-- Số thứ tự -->
-                        <td class="ps-3 fw-bold text-muted" th:text="${currentPage * 10 + iter.index + 1}">1</td>
+                        <td class="borrow-list-index" th:data-label="#{common.number}"
+                            th:text="${currentPage * pageSize + iter.index + 1}">1</td>
 
                         <!-- Mã Phiếu -->
-                        <td>
+                        <td th:data-label="#{loan.code}">
                             <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}"
                                class="fw-bold text-classic text-decoration-none"
                                th:text="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}">BOR-1</a>
                         </td>
 
                         <!-- Thông tin độc giả -->
-                        <td>
+                        <td th:data-label="#{librarian.borrowDesk.memberInfo}">
                             <div th:if="${borrow.member?.user != null}">
                                 <div class="fw-bold" th:text="${borrow.member.user.fullName}">Nguyễn Văn An</div>
                                 <div class="small text-muted">
@@ -119,14 +114,17 @@
                         </td>
 
                         <!-- Ngày mượn -->
-                        <td th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">12/07/2026 10:00</td>
+                        <td th:data-label="#{loan.borrowDate}"
+                            th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">12/07/2026 10:00</td>
 
                         <!-- Trạng thái phiếu (Đồng bộ class badge theo mẫu) -->
-                        <td>
+                        <td th:data-label="#{librarian.borrowList.status}">
                                     <span class="status-badge" th:classappend="${
                                         borrow.status == 'Active' ? 'status-active' :
-                                        borrow.status == 'Returned' ? 'status-active' :
+                                        borrow.status == 'Returned' ? 'status-returned' :
                                         borrow.status == 'Overdue' ? 'status-blocked' :
+                                        borrow.status == 'Rejected' ? 'status-blocked' :
+                                        borrow.status == 'Return_Pending' ? 'status-return-pending' :
                                         'status-inactive'
                                     }" th:text="${
                                         borrow.status == 'Active' ? #messages.msg('loan.status.borrowed') :
@@ -142,17 +140,26 @@
                         </td>
 
                         <!-- Cột hành động (Đồng bộ kiểu nút nhấn và form xác nhận) -->
-                        <td class="text-end pe-3 member-actions">
-                            <div th:if="${borrow.status == 'Waiting_Pickup'}">
-                                <!-- Form hành động đồng bộ dialog xác nhận qua Modal xóa mẫu hoặc confirm native gọn gàng -->
-                                <form th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}"
-                                      method="post" class="d-inline"
+                        <td class="text-center member-actions" th:data-label="#{admin.logs.action}">
+                            <div class="borrow-list-actions">
+                                <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}"
+                                   class="borrow-list-icon-action account-action-tooltip"
+                                   th:data-bs-title="#{common.details}" th:aria-label="#{common.details}">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </a>
+                                <form th:if="${borrow.status == 'Waiting_Pickup'}"
+                                      th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}"
+                                      method="post" class="d-inline app-confirm-form"
+                                      th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
+                                      th:data-confirm-subject-label="#{loan.code}"
+                                      th:data-confirm-subject="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}"
                                       th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
-                                      onsubmit="return confirm(this.dataset.confirmMessage)">
+                                      th:data-confirm-action="#{librarian.borrowList.pickupAction}">
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-
-                                    <button type="submit" class="btn member-modal-primary py-1 px-2 btn-sm account-action-tooltip" th:data-bs-title="#{librarian.borrowList.pickupTitle}">
-                                        <i class="bi bi-box-arrow-in-down me-1"></i><span th:text="#{librarian.borrowList.pickupAction}">Hand Over Books</span>
+                                    <button type="submit" class="borrow-list-icon-action account-action-tooltip"
+                                            th:data-bs-title="#{librarian.borrowList.pickupTitle}"
+                                            th:aria-label="#{librarian.borrowList.pickupAction}">
+                                        <i class="bi bi-box-arrow-in-down" aria-hidden="true"></i>
                                     </button>
                                 </form>
                             </div>
@@ -160,7 +167,7 @@
                     </tr>
 
                     <!-- Dòng trống khi rỗng danh sách -->
-                    <tr th:if="${#lists.isEmpty(borrows)}">
+                    <tr class="borrow-list-empty-row" th:if="${#lists.isEmpty(borrows)}">
                         <td colspan="6" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                             <span th:text="#{librarian.borrowList.empty}">No loan records match the search filters.</span>

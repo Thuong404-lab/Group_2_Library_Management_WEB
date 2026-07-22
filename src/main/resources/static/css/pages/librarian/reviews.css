@@ -1,0 +1,538 @@
+/*
+ * Librarian review moderation, visually aligned with the member "My Reviews" page.
+ * Business behavior remains owned by reviews-response.html and its controller.
+ */
+
+.book-reviews-page {
+    width: 100%;
+    max-width: 1480px;
+    margin: 0 auto;
+}
+
+.book-reviews-page .review-page-hero {
+    position: relative;
+    display: flex;
+    min-height: 208px;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 32px 40px;
+    margin-bottom: 28px;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.book-reviews-page .review-page-hero::before,
+.book-reviews-page .review-page-hero::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.book-reviews-page .review-page-hero::before {
+    top: -145px;
+    right: -72px;
+    width: 340px;
+    height: 340px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+}
+
+.book-reviews-page .review-page-hero::after {
+    right: 214px;
+    bottom: -118px;
+    width: 220px;
+    height: 220px;
+}
+
+.book-reviews-page .review-hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+}
+
+.book-reviews-page .review-page-hero .app-page-eyebrow,
+.book-reviews-page .review-page-hero .app-page-title,
+.book-reviews-page .review-page-hero .app-page-description {
+    color: var(--app-color-on-dark, #fff) !important;
+}
+
+.book-reviews-page .review-page-hero .app-page-eyebrow {
+    opacity: .86;
+}
+
+.book-reviews-page .review-page-hero .app-page-title {
+    font-size: clamp(32px, 3.5vw, 46px);
+}
+
+.book-reviews-page .review-page-hero .app-page-description {
+    max-width: 680px;
+    opacity: .9;
+}
+
+.book-reviews-page .review-hero-decoration {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 92px;
+    height: 92px;
+    flex: 0 0 92px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 46px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .09);
+    color: #fff;
+    font-size: 38px;
+    backdrop-filter: blur(3px);
+}
+
+.book-reviews-page .review-management-card {
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--app-color-surface-soft);
+    box-shadow: 0 8px 26px rgba(74, 59, 50, .08);
+}
+
+.book-reviews-page .review-management-header {
+    min-height: 112px;
+    align-items: center;
+    padding: 24px 28px;
+    background: var(--app-color-canvas);
+}
+
+.book-reviews-page .review-management-header .app-section-title {
+    font-size: 24px;
+}
+
+.book-reviews-page .review-count {
+    min-height: 32px;
+    padding: 7px 14px;
+    border-color: rgba(139, 90, 43, .24);
+    background: #fbf6f1;
+    color: #6f4727;
+}
+
+.book-reviews-page .review-filter-bar {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) max-content max-content;
+    align-items: end;
+    gap: 12px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--app-color-hairline);
+    background: #faf6f1;
+}
+
+.book-reviews-page .review-filter-field {
+    min-width: 0;
+}
+
+.book-reviews-page .review-filter-field .form-label {
+    display: block;
+    margin: 0 0 7px;
+    color: var(--app-color-body-strong);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.book-reviews-page .review-filter-field .form-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 42px 0 14px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 10px;
+    background-color: var(--app-color-canvas);
+    color: var(--app-color-ink);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+}
+
+.book-reviews-page .review-filter-field .form-select:focus {
+    border-color: var(--app-color-application-primary);
+    box-shadow: 0 0 0 3px var(--app-color-focus-application-ring);
+}
+
+.book-reviews-page .review-filter-submit,
+.book-reviews-page .review-filter-reset {
+    display: inline-flex;
+    width: auto;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.book-reviews-page .review-filter-submit {
+    border: 1px solid var(--app-color-application-primary);
+    background: var(--app-color-application-primary);
+    color: var(--app-color-on-dark);
+}
+
+.book-reviews-page .review-filter-reset {
+    border: 1px solid var(--app-color-hairline);
+    background: var(--app-color-canvas);
+    color: var(--app-color-body);
+}
+
+.book-reviews-page .review-filter-submit:hover,
+.book-reviews-page .review-filter-submit:focus {
+    border-color: var(--app-color-application-primary-hover);
+    background: var(--app-color-application-primary-hover);
+    color: var(--app-color-on-dark);
+    transform: translateY(-1px);
+}
+
+.book-reviews-page .review-filter-reset:hover,
+.book-reviews-page .review-filter-reset:focus {
+    border-color: rgba(139, 90, 43, .4);
+    background: var(--app-color-surface-card);
+    color: var(--app-color-primary-active);
+    transform: translateY(-1px);
+}
+
+.book-reviews-page .review-list-surface {
+    padding: 0 20px 8px;
+    overflow-x: hidden;
+    background: var(--app-color-surface-soft);
+}
+
+.book-reviews-page .review-management-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+}
+
+.book-reviews-page .review-management-table thead th {
+    padding: 16px 14px;
+    border: 0;
+    background: transparent;
+}
+
+.book-reviews-page .review-management-table tbody tr {
+    filter: drop-shadow(0 2px 4px rgba(74, 59, 50, .04));
+    transition: filter 180ms ease, transform 180ms ease;
+}
+
+.book-reviews-page .review-management-table tbody tr:hover {
+    filter: drop-shadow(0 8px 20px rgba(74, 59, 50, .09));
+    transform: translateY(-1px);
+}
+
+.book-reviews-page .review-management-table tbody td {
+    padding: 12px 14px;
+    border-top: 1px solid var(--app-color-hairline) !important;
+    border-bottom: 1px solid var(--app-color-hairline) !important;
+    background: var(--app-color-canvas) !important;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.book-reviews-page .review-management-table tbody td:first-child {
+    border-left: 4px solid var(--app-color-application-primary) !important;
+    border-radius: 12px 0 0 12px;
+}
+
+.book-reviews-page .review-management-table tbody td:last-child {
+    border-right: 1px solid var(--app-color-hairline) !important;
+    border-radius: 0 12px 12px 0;
+}
+
+.book-reviews-page .review-management-table tbody tr:hover td {
+    border-color: rgba(139, 90, 43, .34) !important;
+    background: var(--app-color-canvas) !important;
+}
+
+.book-reviews-page .review-book-column { width: 18%; }
+.book-reviews-page .review-member-column { width: 11%; }
+.book-reviews-page .review-rating-column { width: 10%; }
+.book-reviews-page .review-comment-column { width: 17%; }
+.book-reviews-page .review-response-column { width: 18%; }
+.book-reviews-page .review-actions-column { width: 26%; }
+
+.book-reviews-page .review-book-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--app-color-ink);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.book-reviews-page .review-book-icon {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(139, 90, 43, .18);
+    border-radius: 8px;
+    background: #fbf4ec;
+    color: var(--app-color-application-primary);
+    font-size: 14px;
+}
+
+.book-reviews-page .review-status-badge {
+    display: inline-flex;
+    min-height: 26px;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 11px;
+    border: 1px solid;
+    border-radius: var(--app-radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.book-reviews-page .review-status-approved {
+    border-color: var(--app-color-success-border);
+    background: var(--app-color-success-soft);
+    color: var(--app-color-success-ink);
+}
+
+.book-reviews-page .review-status-pending {
+    border-color: #e7c789;
+    background: #fff4d9;
+    color: #845d16;
+}
+
+.book-reviews-page .review-status-rejected {
+    border-color: var(--app-color-danger-border);
+    background: var(--app-color-danger-soft);
+    color: var(--app-color-danger-ink);
+}
+
+.book-reviews-page .review-status-deleted {
+    border-color: var(--app-color-hairline);
+    background: var(--app-color-surface-soft);
+    color: var(--app-color-muted);
+}
+
+.book-reviews-page .review-rating-badge {
+    background: #fffaf4;
+}
+
+.book-reviews-page .review-comment,
+.book-reviews-page .review-response-text {
+    color: var(--app-color-body);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.book-reviews-page .review-response-input {
+    display: block;
+    width: 100%;
+    min-height: 64px;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: #fffdfb;
+}
+
+.book-reviews-page .review-reply-form,
+.book-reviews-page .review-response-support {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.book-reviews-page .review-action-cell {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-right: 20px;
+}
+
+.book-reviews-page .review-action-cell .review-primary-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 38px;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.book-reviews-page .review-action-cell .review-primary-actions > form {
+    min-width: 0;
+    margin: 0;
+}
+
+.book-reviews-page .review-action-cell .review-primary-actions > :only-child {
+    grid-column: 1 / -1;
+}
+
+.book-reviews-page .review-action-cell .app-form-primary {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 38px;
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+
+.book-reviews-page .review-action-cell .app-icon-action {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+}
+
+.book-reviews-page .review-response-support {
+    padding-right: 2px;
+}
+
+.book-reviews-page .review-reject-action {
+    border-color: var(--app-color-danger-border);
+    background: var(--app-color-danger-soft);
+    color: var(--app-color-danger-ink);
+}
+
+.book-reviews-page .review-secondary-actions {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 6px;
+    padding-right: 2px;
+    margin-top: 6px;
+    border-top: 1px dashed var(--app-color-hairline);
+    box-sizing: border-box;
+}
+
+.book-reviews-page .review-secondary-actions .app-icon-action {
+    flex: 0 0 38px;
+}
+
+.book-reviews-page .review-permanent-delete-form {
+    display: flex;
+    margin: 0;
+}
+
+.book-reviews-page .app-pagination-nav {
+    padding: 20px 24px 24px;
+    background: var(--app-color-surface-soft);
+}
+
+.book-reviews-page .librarian-review-delete-modal .modal-content {
+    border-radius: 16px;
+    box-shadow: var(--app-color-overlay-shadow);
+}
+
+@media (max-width: 1199.98px) {
+    .book-reviews-page .review-management-table {
+        min-width: 0;
+        border-spacing: 0 14px;
+    }
+
+    .book-reviews-page .review-management-table tbody {
+        padding: 0;
+    }
+
+    .book-reviews-page .review-management-table tbody tr {
+        overflow: hidden;
+        padding: 12px 16px;
+        border: 1px solid var(--app-color-hairline);
+        border-left: 4px solid var(--app-color-application-primary);
+        border-radius: 12px;
+        background: var(--app-color-canvas);
+    }
+
+    .book-reviews-page .review-management-table tbody td,
+    .book-reviews-page .review-management-table tbody td:first-child,
+    .book-reviews-page .review-management-table tbody td:last-child {
+        border: 0 !important;
+        border-radius: 0;
+        background: transparent !important;
+    }
+
+    .book-reviews-page .review-action-cell {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .book-reviews-page .review-page-hero {
+        min-height: 0;
+        align-items: flex-start;
+        padding: 28px 24px;
+    }
+
+    .book-reviews-page .review-hero-decoration {
+        display: none;
+    }
+
+    .book-reviews-page .review-management-header {
+        min-height: 0;
+        padding: 20px;
+    }
+
+    .book-reviews-page .review-filter-bar {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 16px;
+    }
+
+    .book-reviews-page .review-filter-submit,
+    .book-reviews-page .review-filter-reset {
+        width: 100%;
+    }
+
+    .book-reviews-page .review-list-surface {
+        padding: 0 12px 4px;
+    }
+
+    .book-reviews-page .review-management-table tbody tr {
+        padding: 10px 14px;
+    }
+
+    .book-reviews-page .review-action-cell .review-primary-actions {
+        grid-template-columns: minmax(0, 1fr) 38px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .book-reviews-page .review-page-hero {
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+
+    .book-reviews-page .review-page-hero .app-page-title {
+        font-size: 34px;
+    }
+
+    .book-reviews-page .review-management-table td {
+        grid-template-columns: minmax(82px, 96px) minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .book-reviews-page .review-management-table tbody tr,
+    .book-reviews-page .review-filter-submit,
+    .book-reviews-page .review-filter-reset {
+        transition: none;
+    }
+
+    .book-reviews-page .review-management-table tbody tr:hover,
+    .book-reviews-page .review-filter-submit:hover,
+    .book-reviews-page .review-filter-reset:hover {
+        transform: none;
+    }
+}

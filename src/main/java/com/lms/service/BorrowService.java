@@ -24,6 +24,7 @@ public interface BorrowService {
 
     // Luá»“ng YÃŠU Cáº¦U TRáº¢ SÃCH VÃ€ GIA Háº N
     void memberSubmitRenewRequest(String username, Integer borrowDetailId, Integer renewalDays);
+    void memberCancelRenewRequest(String username, Integer borrowDetailId);
     void processReturnBook(String barcode); // Tráº£ trá»±c tiáº¿p qua quÃ©t mÃ£ váº¡ch
 
     // Luá»“ng Äáº¶T TRÆ¯á»šC SÃCH - RESERVATION (Má»›i nÃ¢ng cáº¥p)

@@ -2,7 +2,8 @@
 <html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}"
   th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}"
   th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}"
-  th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org"
+  th:data-confirm-action="#{common.confirm}" th:data-loading-message="#{common.processing}"
+  xmlns:th="http://www.thymeleaf.org"
   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 
 <head>
@@ -103,8 +104,26 @@
         window.requestAnimationFrame(function () { elements.toast.classList.add("is-visible"); });
         if (settings.persistent !== true) hideTimer = window.setTimeout(hide, settings.duration || 4000);
       }
-      document.addEventListener("DOMContentLoaded", function () {
-        var closeButton = document.querySelector(".app-feedback-toast__close");
+    document.addEventListener("DOMContentLoaded", function () {
+      function showAvatarFallback(image) {
+        var fallbackId = image.dataset.avatarFallback;
+        var fallback = fallbackId ? document.getElementById(fallbackId) : null;
+        image.hidden = true;
+        image.classList.add("d-none");
+        if (fallback) {
+          fallback.hidden = false;
+          fallback.classList.remove("d-none");
+        }
+      }
+
+      document.querySelectorAll("img[data-avatar-image]").forEach(function (image) {
+        image.addEventListener("error", function () { showAvatarFallback(image); });
+        if (image.complete && image.naturalWidth === 0) {
+          showAvatarFallback(image);
+        }
+      });
+
+      var closeButton = document.querySelector(".app-feedback-toast__close");
         if (closeButton) closeButton.addEventListener("click", hide);
 
         /*
@@ -360,6 +379,7 @@
   <th:block layout:fragment="scripts"></th:block>
   <script th:src="@{/js/dynamic-presentation.js}"></script>
   <script th:src="@{/js/confirmation-dialog.js}"></script>
+  <script th:src="@{/js/form-loading.js}"></script>
 </body>
 
 </html>

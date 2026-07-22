@@ -70,10 +70,28 @@
 }
 
 .acquisition-page .acquisition-hero-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     border-color: rgba(255, 255, 255, 0.62);
     background: var(--member-color-canvas);
     color: var(--member-color-ink);
     text-decoration: none !important;
+}
+
+.acquisition-page .acquisition-hero-action-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 14px;
+    width: 14px;
+    height: 18px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+    transform: translateY(-3px);
 }
 
 /* FORM CARD STYLING */
@@ -94,18 +112,6 @@
     padding: 20px 24px;
     background: var(--member-color-surface-soft);
     border-bottom: 1px solid var(--member-color-hairline);
-}
-
-.heading-icon-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: var(--member-palette-50);
-    color: var(--member-palette-800);
-    font-size: 20px;
 }
 
 .member-form-heading h2 {
@@ -308,6 +314,23 @@
     border: 1px solid var(--member-color-danger-border);
 }
 
+.request-status.status-cancelled {
+    background: var(--member-color-surface-soft);
+    color: var(--member-color-muted);
+    border: 1px solid var(--member-color-hairline);
+}
+
+.member-request-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.member-request-actions form {
+    margin: 0;
+}
+
 .member-request-decision {
     grid-column: 1 / -1;
     margin: 8px 0 0;
@@ -352,19 +375,62 @@
     opacity: 0.5;
 }
 
-.acquisition-request-modal .member-modal-close {
-    border: 0;
-    background: transparent;
-    color: var(--member-color-muted);
-    font-size: 16px;
-    cursor: pointer;
-    padding: 6px;
-    line-height: 1;
-    opacity: 0.7;
-    transition: opacity 0.18s ease, color 0.18s ease;
+/* Acquisition form: a quiet editorial dialog with the form as the focal point. */
+.acquisition-request-modal .modal-dialog {
+    max-width: 940px;
 }
 
-.acquisition-request-modal .member-modal-close:hover {
-    opacity: 1;
-    color: var(--member-color-ink);
+.acquisition-request-modal .modal-header {
+    padding: 26px 30px 20px;
+}
+
+.acquisition-request-modal .acquisition-modal-header-copy {
+    max-width: 620px;
+}
+
+.acquisition-request-modal .modal-title {
+    font-size: 25px;
+    line-height: 1.2;
+}
+
+.acquisition-request-modal .acquisition-modal-header-copy p {
+    margin: 6px 0 0;
+    color: var(--member-color-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.acquisition-request-modal .modal-body {
+    padding: 24px 30px 28px;
+    background: var(--member-color-surface-soft);
+}
+
+.acquisition-request-modal .member-form-grid {
+    gap: 18px 24px;
+}
+
+.acquisition-request-modal .member-form-field input,
+.acquisition-request-modal .member-form-field textarea {
+    background: var(--member-color-canvas);
+}
+
+.acquisition-request-modal .modal-footer {
+    padding: 18px 30px;
+}
+
+.acquisition-request-modal .modal-footer .member-ui-button {
+    min-width: 142px;
+}
+
+@media (max-width: 575.98px) {
+    .acquisition-request-modal .modal-header,
+    .acquisition-request-modal .modal-body,
+    .acquisition-request-modal .modal-footer {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    .acquisition-request-modal .modal-title {
+        font-size: 22px;
+    }
 }

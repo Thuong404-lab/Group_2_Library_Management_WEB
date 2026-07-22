@@ -764,7 +764,6 @@
 
         .status-inactive,
         .status-canceled,
-        .status-disposed,
         .status-hidden,
         .status-unknown {
             background-color: #77716c !important;
@@ -903,6 +902,285 @@
     background: rgba(249, 215, 195, 0.2);
 }
 
+.staff-shell--librarian .staff-sidebar {
+    width: 260px;
+    transition: width 260ms ease;
+}
+
+.staff-shell--librarian .main-wrapper {
+    margin-left: 260px;
+    transition: margin-left 260ms ease;
+}
+
+.staff-shell--librarian.sidebar-collapsed .staff-sidebar {
+    width: 76px;
+}
+
+.staff-shell--librarian.sidebar-collapsed .main-wrapper {
+    margin-left: 76px;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link[href^="#"] {
+    justify-content: flex-start !important;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link > .d-flex {
+    flex: 1 1 auto;
+    gap: 11px;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link > .bi-chevron-down {
+    margin-left: auto !important;
+    transform: rotate(-90deg);
+    transition: transform 180ms ease;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link[aria-expanded="true"] > .bi-chevron-down {
+    transform: rotate(0deg);
+}
+
+.staff-shell--librarian .sidebar-menu .collapsing {
+    transition: height 260ms ease;
+}
+
+.staff-shell--librarian.sidebar-collapsed .sidebar-menu > .menu-item > .menu-link {
+    justify-content: flex-start;
+    padding: 10px 20px;
+}
+
+.staff-shell--librarian.sidebar-collapsed .sidebar-menu > .menu-item > .menu-link > .d-flex {
+    width: auto;
+    justify-content: flex-start;
+}
+
+/* Pro Sidebar-style fixed icon column. */
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link {
+    height: 50px;
+    padding: 0 20px;
+    gap: 0;
+}
+
+.staff-shell--librarian .sidebar-menu > .menu-item > .menu-link > .d-flex {
+    gap: 0;
+}
+
+.staff-shell--librarian .sidebar-menu .menu-icon {
+    flex: 0 0 35px;
+    width: 35px;
+    min-width: 35px;
+    height: 35px;
+    margin-right: 10px;
+    line-height: 35px;
+    text-align: center;
+}
+
+/* Keep the brand mark in the same fixed icon column as menu items. */
+.staff-shell--librarian .sidebar-brand {
+    gap: 0;
+}
+
+.staff-shell--librarian .sidebar-brand > i {
+    flex: 0 0 35px;
+    width: 35px;
+    min-width: 35px;
+    height: 35px;
+    margin-right: 10px;
+    line-height: 35px;
+    text-align: center;
+}
+
+.staff-shell--librarian.sidebar-collapsed .sidebar-brand > i {
+    margin-right: 0;
+}
+
+.staff-shell--librarian.sidebar-collapsed .sidebar-header {
+    padding: 0 20px;
+    justify-content: flex-start;
+}
+
+.staff-shell--librarian.sidebar-collapsed .sidebar-brand {
+    justify-content: flex-start;
+}
+
+.staff-shell--librarian .staff-sidebar {
+    overflow-x: hidden;
+}
+
+.staff-shell--librarian .sidebar-brand > span.menu-text,
+.staff-shell--librarian .sidebar-menu span.menu-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: opacity 140ms ease;
+}
+
+.staff-shell--librarian.sidebar-opening .sidebar-brand > span.menu-text,
+.staff-shell--librarian.sidebar-opening .sidebar-menu .menu-text {
+    visibility: hidden;
+    opacity: 0;
+}
+
 .librarian-base-ul-border-10 {
     border: 1px solid var(--border-color) !important;
+}
+/* Canonical action feedback for every librarian page. */
+.staff-shell .app-feedback-region {
+    position: fixed;
+    top: 82px;
+    right: 24px;
+    z-index: 1090;
+    width: min(460px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.staff-shell .app-feedback-toast {
+    --staff-feedback-accent: #8b5a2b;
+    --staff-feedback-icon-bg: #efe9de;
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 36px;
+    align-items: start;
+    gap: 14px;
+    padding: 17px 16px;
+    border: 1px solid #e6dfd8;
+    border-left: 5px solid var(--staff-feedback-accent);
+    border-radius: 16px;
+    background: #fffdfa;
+    color: #3d3d3a;
+    box-shadow: 0 18px 48px rgba(20, 20, 19, .18);
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: opacity .2s ease, transform .2s ease;
+    pointer-events: auto;
+}
+
+.staff-shell .app-feedback-toast[hidden] {
+    display: none;
+}
+
+.staff-shell .app-feedback-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.staff-shell .app-feedback-toast.is-success {
+    --staff-feedback-accent: #2f6f3e;
+    --staff-feedback-icon-bg: #e7f4ea;
+}
+
+.staff-shell .app-feedback-toast.is-error {
+    --staff-feedback-accent: #923b36;
+    --staff-feedback-icon-bg: #f8e5e2;
+}
+
+.staff-shell .app-feedback-toast.is-warning {
+    --staff-feedback-accent: #9a6d17;
+    --staff-feedback-icon-bg: #fbf3d9;
+}
+
+.staff-shell .app-feedback-toast.is-info {
+    --staff-feedback-accent: #486f96;
+    --staff-feedback-icon-bg: #eaf0f7;
+}
+
+.staff-shell .app-feedback-toast__icon {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--staff-feedback-icon-bg);
+    color: var(--staff-feedback-accent);
+    font-size: 22px;
+}
+
+.staff-shell .app-feedback-toast__copy {
+    min-width: 0;
+    padding-top: 1px;
+}
+
+.staff-shell .app-feedback-toast__title {
+    display: block;
+    color: #141413;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.staff-shell .app-feedback-toast__message {
+    display: block;
+    margin-top: 3px;
+    color: #6c6a64;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.staff-shell .app-feedback-toast__close {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #6c6a64;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.staff-shell .app-feedback-toast__close:hover {
+    background: #f5f0e8;
+    color: #141413;
+}
+
+.staff-shell .app-feedback-toast__close:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(139, 90, 43, .22);
+}
+
+@media (max-width: 767.98px) {
+    .staff-shell .app-feedback-region {
+        top: 72px;
+        right: 14px;
+        left: 14px;
+        width: auto;
+    }
+
+    .staff-shell .app-feedback-toast {
+        grid-template-columns: 44px minmax(0, 1fr) 32px;
+        gap: 11px;
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .staff-shell .app-feedback-toast__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
+        font-size: 19px;
+    }
+
+    .staff-shell .app-feedback-toast__title {
+        font-size: 15px;
+    }
+
+    .staff-shell .app-feedback-toast__message {
+        font-size: 13px;
+    }
+
+    .staff-shell .app-feedback-toast__close {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-shell .app-feedback-toast {
+        transition: none;
+    }
 }

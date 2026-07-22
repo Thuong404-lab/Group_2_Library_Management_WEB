@@ -2,7 +2,8 @@
 <html th:lang="${#locale.language}" th:data-confirm-title="#{common.confirmAction}"
     th:data-confirm-subtitle="#{common.confirmSubtitle}" th:data-confirm-information="#{common.information}"
     th:data-confirm-cancel="#{common.back}" th:data-confirm-message="#{common.confirmQuestion}"
-    th:data-confirm-action="#{common.confirm}" xmlns:th="http://www.thymeleaf.org"
+    th:data-confirm-action="#{common.confirm}" th:data-loading-message="#{common.processing}"
+    xmlns:th="http://www.thymeleaf.org"
     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
@@ -49,7 +50,7 @@
             </li>
 
             <li class="menu-item">
-                <a href="#borrowMenu" data-bs-toggle="collapse"
+                <a href="#borrowMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu != null && #strings.startsWith(activeMenu, 'borrow-')} ? 'active'"
                     aria-expanded="false" aria-controls="borrowMenu">
@@ -59,7 +60,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled" id="borrowMenu">
+                <ul class="collapse sub-menu-list list-unstyled" id="borrowMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/borrow/list}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -119,7 +120,7 @@
             </li>
 
             <li class="menu-item">
-                <a href="#bookManagementMenu" data-bs-toggle="collapse"
+                <a href="#bookManagementMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'books'} ? 'active'" aria-expanded="false"
                     aria-controls="bookManagementMenu">
@@ -129,9 +130,9 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled ps-4" id="bookManagementMenu">
+                <ul class="collapse sub-menu-list list-unstyled ps-4" id="bookManagementMenu">
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
+                        <a th:href="@{/librarian/books(subsection='inventory')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab == null} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -139,7 +140,7 @@
                         </a>
                     </li>
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='categories')}"
+                        <a th:href="@{/librarian/books(subsection='inventory', tab='categories')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'categories'} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -147,7 +148,7 @@
                         </a>
                     </li>
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit')}"
+                        <a th:href="@{/librarian/books(subsection='inventory', tab='audit')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'audit'} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -155,7 +156,7 @@
                         </a>
                     </li>
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
+                        <a th:href="@{/librarian/books(subsection='storage')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'storage'} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -166,7 +167,7 @@
             </li>
 
             <li class="menu-item">
-                <a href="#userManagementMenu" data-bs-toggle="collapse"
+                <a href="#userManagementMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'users' || activeMenu == 'members' || activeMenu == 'librarians'} ? 'active'"
                     aria-expanded="false" aria-controls="userManagementMenu">
@@ -176,7 +177,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled" id="userManagementMenu">
+                <ul class="collapse sub-menu-list list-unstyled" id="userManagementMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/members}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -204,7 +205,7 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="#financeMenu" data-bs-toggle="collapse"
+                <a href="#financeMenu" data-sidebar-submenu
                     class="menu-link u-display-flex-justify-content-space-between-align-items-center-3490dbc8"
                     th:classappend="${activeMenu == 'topup' || activeMenu == 'transactions' || activeMenu == 'fines' || activeMenu == 'refunds'} ? 'active'"
                     aria-expanded="false" aria-controls="financeMenu">
@@ -214,7 +215,7 @@
                     </div>
                     <i class="bi bi-chevron-down ms-auto librarian-base-i-font-size-03"></i>
                 </a>
-                <ul class="collapse list-unstyled" id="financeMenu">
+                <ul class="collapse sub-menu-list list-unstyled" id="financeMenu">
                     <li class="menu-item my-1">
                         <a th:href="@{/librarian/members/topup}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
@@ -305,6 +306,33 @@
         </div>
     </div>
 
+    <!-- Canonical staff feedback toast, visually aligned with the member layout. -->
+    <div id="appFeedbackRegion" class="app-feedback-region" aria-live="polite" aria-atomic="true"
+        th:data-success-title="#{feedback.successTitle}" th:data-error-title="#{feedback.errorTitle}"
+        th:data-warning-title="#{feedback.warningTitle}" th:data-info-title="#{feedback.infoTitle}">
+        <div id="customToast" class="app-feedback-toast" role="status" hidden>
+            <span class="app-feedback-toast__icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+            <div class="app-feedback-toast__copy">
+                <strong id="toastTitle" class="app-feedback-toast__title"></strong>
+                <span id="toastMessage" class="app-feedback-toast__message"></span>
+            </div>
+            <button type="button" class="app-feedback-toast__close" th:aria-label="#{common.close}">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="staffFeedbackSources" hidden aria-hidden="true">
+        <span th:if="${error != null}" data-app-feedback="error" th:text="${error}"></span>
+        <span th:if="${errorMessage != null}" data-app-feedback="error" th:text="${errorMessage}"></span>
+        <span th:if="${passwordError != null}" data-app-feedback="error" th:text="${passwordError}"></span>
+        <span th:if="${success != null}" data-app-feedback="success" th:text="${success}"></span>
+        <span th:if="${successMessage != null}" data-app-feedback="success" th:text="${successMessage}"></span>
+        <span th:if="${passwordSuccess != null}" data-app-feedback="success" th:text="${passwordSuccess}"></span>
+        <span th:if="${warning != null}" data-app-feedback="warning" th:text="${warning}"></span>
+        <span th:if="${info != null}" data-app-feedback="info" th:text="${info}"></span>
+    </div>
+
     <!-- Scripts -->
     <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
     <script th:replace="~{fragments/language-switcher :: script}"></script>
@@ -312,9 +340,56 @@
         (function () {
             var sidebarToggle = document.getElementById('sidebarToggle');
             if (!sidebarToggle) return;
+            var submenuIds = ['financeMenu', 'userManagementMenu', 'bookManagementMenu', 'borrowMenu'];
+            var duration = 300;
+            var textRevealDelay = 90;
+
+            function setTriggerState(submenu, expanded) {
+                var trigger = document.querySelector('[data-sidebar-submenu][href="#' + submenu.id + '"]');
+                if (trigger) trigger.setAttribute('aria-expanded', String(expanded));
+            }
+            function slideUp(submenu) {
+                if (!submenu || !submenu.classList.contains('show')) return;
+                submenu.style.display = 'block';
+                submenu.style.height = submenu.offsetHeight + 'px'; submenu.offsetHeight;
+                submenu.style.overflow = 'hidden';
+                submenu.style.transition = 'height ' + duration + 'ms ease, margin ' + duration + 'ms ease, padding ' + duration + 'ms ease';
+                submenu.style.height = '0'; submenu.style.paddingTop = '0'; submenu.style.paddingBottom = '0';
+                submenu.style.marginTop = '0'; submenu.style.marginBottom = '0';
+                submenu.classList.remove('show'); setTriggerState(submenu, false);
+                window.setTimeout(function () {
+                    ['height','overflow','transition','padding-top','padding-bottom','margin-top','margin-bottom'].forEach(function (name) { submenu.style.removeProperty(name); });
+                    submenu.style.display = 'none';
+                }, duration);
+            }
+            function slideDown(submenu) {
+                if (!submenu || submenu.classList.contains('show')) return;
+                submenu.style.display = 'block'; var height = submenu.scrollHeight;
+                submenu.style.height = '0'; submenu.style.overflow = 'hidden';
+                submenu.style.transition = 'height ' + duration + 'ms ease, margin ' + duration + 'ms ease, padding ' + duration + 'ms ease';
+                submenu.classList.add('show'); submenu.offsetHeight; submenu.style.height = height + 'px'; setTriggerState(submenu, true);
+                window.setTimeout(function () { ['height','overflow','transition'].forEach(function (name) { submenu.style.removeProperty(name); }); }, duration);
+            }
+            document.querySelectorAll('[data-sidebar-submenu]').forEach(function (trigger) {
+                var target = document.getElementById(trigger.getAttribute('href').substring(1));
+                if (!target) return;
+                target.classList.add('sub-menu-list'); setTriggerState(target, target.classList.contains('show'));
+                trigger.addEventListener('click', function (event) {
+                    event.preventDefault(); if (document.body.classList.contains('sidebar-collapsed')) return;
+                    submenuIds.forEach(function (id) { var other = document.getElementById(id); if (other && other !== target) slideUp(other); });
+                    if (target.classList.contains('show')) slideUp(target); else slideDown(target);
+                });
+            });
             sidebarToggle.addEventListener('click', function () {
-                var collapsed = document.body.classList.toggle('sidebar-collapsed');
-                sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+                if (sidebarToggle.dataset.busy === 'true') return;
+                var collapsed = !document.body.classList.contains('sidebar-collapsed'); sidebarToggle.dataset.busy = 'true';
+                if (collapsed) submenuIds.forEach(function (id) { slideUp(document.getElementById(id)); });
+                document.body.classList.toggle('sidebar-collapsed', collapsed); sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+                if (!collapsed) {
+                    document.body.classList.add('sidebar-opening');
+                    window.setTimeout(function () { document.body.classList.remove('sidebar-opening'); }, textRevealDelay);
+                }
+                window.setTimeout(function () { sidebarToggle.dataset.busy = 'false'; }, duration);
             });
         })();
 
@@ -322,6 +397,8 @@
     <th:block layout:fragment="scripts"></th:block>
     <script th:src="@{/js/dynamic-presentation.js}"></script>
     <script th:src="@{/js/confirmation-dialog.js}"></script>
+    <script th:src="@{/js/form-loading.js}"></script>
+    <script th:src="@{/js/staff-feedback-toast.js}"></script>
 </body>
 
 </html>

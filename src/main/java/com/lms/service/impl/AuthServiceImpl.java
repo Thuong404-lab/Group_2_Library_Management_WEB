@@ -165,11 +165,8 @@ public class AuthServiceImpl implements AuthService {
             String ipAddress,
             String userAgent,
             String description) {
-        User user = userRepository.findById(userId).orElse(null);
-
-        if (user != null) {
-            SystemLog log = new SystemLog(user, actionType, ipAddress, userAgent, description);
-            systemLogRepository.save(log);
+        if (userId != null && userRepository.existsById(userId)) {
+            systemLogRepository.insertAudit(userId, actionType, ipAddress, userAgent, description);
         }
     }
 
@@ -196,7 +193,7 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setFullName(fullName);
         user.setEmail(email);
-        user.setPhone(phone);
+        user.setPhone(phone != null && phone.isBlank() ? null : phone);
         user.setStatus(com.lms.enums.UserStatus.Active);
         user = userRepository.save(user);
 
@@ -210,9 +207,17 @@ public class AuthServiceImpl implements AuthService {
 
         MemberAccount account = new MemberAccount();
         account.setUsername(userName);
-        account.setPasswordHash(pass);
+        String passwordHash = pass;
+        if (passwordHash == null || passwordHash.isBlank()) {
+            passwordHash = passwordEncoder.encode(UUID.randomUUID().toString());
+        }
+        account.setPasswordHash(passwordHash);
         account.setMember(member);
         account.setStatus("Active");
+        Role memberRole = roleRepository.findByNameIgnoreCase("ROLE_MEMBER")
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", "ROLE_MEMBER")));
+        account.getRoles().add(memberRole);
 
         account = memberAccountRepository.save(account);
 

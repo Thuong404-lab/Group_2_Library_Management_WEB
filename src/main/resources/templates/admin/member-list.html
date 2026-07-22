@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+
+<head>
+    <title th:text="#{admin.accounts.title}">Member Account Management</title>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/admin/member-list.css}" />
+    <script defer th:src="@{/js/auto-filter.js}"></script>
+    <script defer th:src="@{/js/admin-account-create.js}"></script>
+</head>
+
+<body>
+    <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page accounts-page admin-member-list-page">
+        <header class="member-page-header admin-member-list-hero">
+            <div>
+                <span class="member-page-eyebrow" th:text="#{admin.accounts.eyebrow}">MEMBER MANAGEMENT</span>
+                <h1 class="member-page-title" th:text="#{admin.accounts.heading}">User Accounts</h1>
+                <p class="member-page-description" th:text="#{admin.accounts.description}">Library user account
+                    information</p>
+            </div>
+            <div class="member-page-actions">
+                <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
+                    data-bs-target="#createMemberAccountModal">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i>
+                    <span th:text="#{admin.accounts.create}">Create Account</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="modal fade text-start account-standard-modal" id="createMemberAccountModal" tabindex="-1"
+            aria-labelledby="createMemberAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header member-modal-header">
+                        <h5 class="modal-title member-modal-title-accent" id="createMemberAccountModalLabel">
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i><span
+                                th:text="#{admin.accounts.createMember}">Create Member Account</span>
+                        </h5>
+                    </div>
+                    <div class="modal-body member-modal-body">
+                        <th:block th:replace="~{admin/create-member-account :: createMemberAccountForm}"></th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:if="${openCreateAccountModal}">
+            document.addEventListener("DOMContentLoaded", function () {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById("createMemberAccountModal")).show();
+            });
+        </script>
+
+        <!-- Alerts -->
+        <div class="alert alert-warning" th:if="${param.notFound != null}">
+            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{admin.accounts.notFound}">Account not
+                found.</span>
+        </div>
+        <div class="alert alert-danger" th:if="${error != null}">
+            <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Error</span>
+        </div>
+        <div class="alert alert-success" th:if="${success != null}">
+            <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Operation completed successfully.</span>
+        </div>
+
+        <section class="member-data-card">
+            <div class="member-data-card-body">
+                <div class="member-summary-chips" th:aria-label="#{admin.accounts.summary}">
+                    <span class="app-number"
+                        th:text="#{librarian.members.total(${@displayNumber.count(memberSummary != null ? memberSummary['total'] : 0)})}">0
+                        members</span>
+                    <span class="app-number"
+                        th:text="#{librarian.members.active(${@displayNumber.count(memberSummary != null ? memberSummary['active'] : 0)})}">0
+                        active</span>
+                    <span class="app-number"
+                        th:text="#{librarian.members.inactive(${@displayNumber.count(memberSummary != null ? memberSummary['inactive'] : 0)})}">0
+                        inactive</span>
+                    <span class="app-number"
+                        th:text="#{librarian.members.blocked(${@displayNumber.count(memberSummary != null ? memberSummary['blocked'] : 0)})}">0
+                        blocked</span>
+                </div>
+                <!-- Search & Filter -->
+                <div class="member-toolbar">
+                    <form class="member-search-form" method="get" th:action="@{/admin/member-list}" data-auto-filter-form
+                        data-focus-key="adminAccountFilterFocus">
+                        <div class="member-search-group">
+                            <div class="member-keyword-control">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
+                                </span>
+                                <input class="form-control" type="search" name="keyword" data-auto-search
+                                    th:value="${keyword}" th:placeholder="#{admin.accounts.searchPlaceholder}">
+                            </div>
+
+                            <select class="form-select member-filter-select" name="tier" data-auto-submit
+                                th:aria-label="#{admin.accounts.filterTier}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedTier)}"
+                                    th:text="#{admin.accounts.allTiers}">All Tiers</option>
+                                <option th:each="tierOption : ${tiers}" th:value="${tierOption.tierName}"
+                                    th:selected="${selectedTier == tierOption.tierName}"
+                                    th:text="${tierOption.tierName == 'Regular' ? #messages.msg('tier.regular') : (tierOption.tierName == 'Silver' ? #messages.msg('tier.silver') : (tierOption.tierName == 'Gold' ? #messages.msg('tier.gold') : (tierOption.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tierOption.tierName)))}">
+                                    Membership tier
+                                </option>
+                            </select>
+
+                            <select class="form-select member-filter-select" name="status" data-auto-submit
+                                th:aria-label="#{admin.accounts.filterStatus}">
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}"
+                                    th:text="#{common.allStatuses}">All Statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}"
+                                    th:text="#{account.status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}"
+                                    th:text="#{member.account.status.restricted}">Restricted</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}"
+                                    th:text="#{account.status.blocked}">Blocked</option>
+                            </select>
+
+                            <a class="btn member-search-button text-nowrap" th:href="@{/admin/member-list}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                <span th:text="#{common.clearFilter}">Clear filter</span>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-responsive member-table-wrap">
+                    <table class="table table-hover align-middle stable-table-layout member-table">
+                        <colgroup>
+                            <col class="account-col-index">
+                            <col class="account-col-username">
+                            <col class="account-col-user">
+                            <col class="account-col-role">
+                            <col class="account-col-status">
+                            <col class="account-col-actions">
+                        </colgroup>
+                        <thead class="table-light text-uppercase small text-muted">
+                            <tr>
+                                <th class="ps-3" th:text="#{common.number}">No.</th>
+                                <th th:text="#{member.profile.username}">Username</th>
+                                <th th:text="#{admin.accounts.userInfo}">User Information</th>
+                                <th th:text="#{member.profile.tier}">Membership Tier</th>
+                                <th th:text="#{common.status}">Status</th>
+                                <th class="text-end pe-3" th:text="#{common.actions}">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="account, iterStat : ${accounts.content}">
+                                <td class="ps-3 fw-bold app-number" th:data-label="#{common.number}"
+                                    th:text="${@displayNumber.count(accounts.number * accounts.size + iterStat.index + 1)}">
+                                    1</td>
+                                <td th:data-label="#{member.profile.username}">
+                                    <span class="fw-bold text-classic" th:text="${account.username}">username</span>
+                                    <div class="small text-muted app-code-number"
+                                        th:text="${account.accountId != null ? #messages.msg('common.accountIdValue', account.accountId) : #messages.msg('common.accountIdMissing')}">
+                                        Account ID: 1</div>
+                                </td>
+                                <td th:data-label="#{admin.accounts.userInfo}">
+                                    <div th:if="${account.user != null}">
+                                        <div class="fw-bold" th:text="${account.user.fullName}">Full name</div>
+                                        <div class="small text-muted">
+                                            <i class="bi bi-envelope me-1"> </i>
+                                            <span th:text="${account.user.email}">email</span>
+                                        </div>
+                                        <div class="small text-muted" th:if="${account.user.phone}">
+                                            <i class="bi bi-telephone me-1"> </i>
+                                            <span class="app-phone-number" th:text="${account.user.phone}">phone</span>
+                                        </div>
+                                    </div>
+                                    <div th:unless="${account.user != null}" class="fst-italic text-muted small">
+                                        <span th:text="#{common.notUpdated}">Not updated</span>
+                                    </div>
+                                </td>
+
+                                <td th:data-label="#{member.profile.tier}" th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                    <span class="badge rounded-pill px-3 py-2 text-white"
+                                        th:if="${member != null && member.tier != null}"
+                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
+                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
+                                        Standard
+                                    </span>
+
+                                    <span class="membership-tier-badge membership-tier-badge--empty"
+                                        th:if="${member == null || member.tier == null}">
+                                        —
+                                    </span>
+                                </td>
+
+                                <td th:data-label="#{common.status}">
+                                    <span class="status-badge" th:classappend="${
+              account.status == 'Active' ? 'status-active' :
+              account.status == 'Blocked' ? 'status-blocked' :
+              'status-inactive'
+          }" th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('member.account.status.restricted') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
+                                        Active
+                                    </span>
+                                </td>
+
+                                <td class="text-end pe-3 member-actions" th:data-label="#{common.actions}"
+                                    th:classappend="${account.status != 'Active'} ? ' member-actions--reserved-deactivate' : ''"
+                                    th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                    <button type="button" class="member-icon-action account-action-tooltip"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="${'#updateMemberModal' + account.accountId}"
+                                        th:data-bs-title="#{admin.accounts.update}"
+                                        data-bs-custom-class="update-account-tooltip" th:aria-label="#{common.update}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <!-- Update Modal -->
+                                    <div class="modal fade text-start member-form-modal account-standard-modal"
+                                        th:id="${'updateMemberModal' + account.accountId}" tabindex="-1"
+                                        th:aria-labelledby="${'updateMemberModalLabel' + account.accountId}"
+                                        aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
+                                        th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
+                                        <div
+                                            class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                                            <div class="modal-content">
+                                                <form method="post" class="member-update-form" novalidate
+                                                    th:action="@{/admin/member-list/edit/{id}(id=${account.accountId})}"
+                                                    th:attr="data-validation-url=@{/admin/member-list/edit/{id}/validate(id=${account.accountId},source='members')}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <input type="hidden" name="source" value="members">
+
+                                                    <div class="modal-header member-modal-header">
+                                                        <h5 class="modal-title member-modal-title-accent"
+                                                            th:id="${'updateMemberModalLabel' + account.accountId}">
+                                                            <i class="bi bi-person-lines-fill me-2 text-classic"></i>
+                                                            <span th:text="#{admin.accounts.update}">Update
+                                                                Account</span>
+                                                        </h5>
+
+                                                    </div>
+
+                                                    <div class="modal-body member-modal-body">
+                                                        <div class="alert alert-danger d-none member-update-global-error"
+                                                            role="alert"></div>
+                                                        <div class="account-form-grid">
+                                                            <div class="col-md-6">
+                                                                <label th:for="${'updateFullName' + account.accountId}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    <span th:text="#{member.profile.fullName}">Full
+                                                                        Name</span> <span
+                                                                        class="required-marker">*</span>
+                                                                </label>
+                                                                <input class="form-control" name="fullName"
+                                                                    th:id="${'updateFullName' + account.accountId}"
+                                                                    minlength="2" maxlength="50"
+                                                                    th:data-label="#{member.profile.fullName}"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (account.user != null ? account.user.fullName : '')}"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
+                                                                    required>
+                                                                <div class="invalid-feedback" data-error-for="fullName"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
+                                                                    <span th:text="#{validation.fullNameRequired}">Full
+                                                                        name is required.</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label th:for="${'updateUsername' + account.accountId}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    <span
+                                                                        th:text="#{member.profile.username}">Username</span>
+                                                                    <span class="required-marker">*</span>
+                                                                </label>
+                                                                <input class="form-control" name="username"
+                                                                    th:id="${'updateUsername' + account.accountId}"
+                                                                    th:data-label="#{member.profile.username}"
+                                                                    pattern="[a-zA-Z0-9_]{3,20}" minlength="3"
+                                                                    maxlength="20"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
+                                                                    required>
+                                                                <div class="invalid-feedback" data-error-for="username"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
+                                                                    <span
+                                                                        th:text="#{validation.usernameRequired}">Username
+                                                                        is required.</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label th:for="${'updatePhone' + account.accountId}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    <span th:text="#{member.profile.phone}">Phone
+                                                                        Number</span> <span
+                                                                        class="required-marker">*</span>
+                                                                </label>
+                                                                <input class="form-control" name="phone"
+                                                                    th:id="${'updatePhone' + account.accountId}"
+                                                                    th:data-label="#{member.profile.phone}" required
+                                                                    pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
+                                                                    maxlength="12" inputmode="tel"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (account.user != null ? account.user.phone : '')}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
+                                                                <div class="invalid-feedback" data-error-for="phone"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
+                                                                    <span
+                                                                        th:text="#{backend.profile.phoneFormat}">Invalid
+                                                                        phone
+                                                                        number.</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label th:for="${'updateEmail' + account.accountId}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    <span th:text="#{common.email}">Email</span>
+                                                                    <span class="required-marker">*</span>
+                                                                </label>
+                                                                <input class="form-control" name="email" type="email"
+                                                                    th:id="${'updateEmail' + account.accountId}"
+                                                                    th:data-label="#{common.email}" maxlength="255"
+                                                                    pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
+                                                                    th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (account.user != null ? account.user.email : '')}"
+                                                                    onkeydown="if(event.key === ' ') event.preventDefault();"
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
+                                                                    required>
+                                                                <div class="invalid-feedback" data-error-for="email"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
+                                                                    <span th:text="#{validation.email}">Invalid
+                                                                        email.</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label th:id="${'updateTierLabel' + account.accountId}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    <span th:text="#{member.profile.tier}">Membership
+                                                                        Tier</span>
+                                                                </label>
+                                                                <div class="member-readonly-field" role="textbox"
+                                                                    aria-readonly="true"
+                                                                    th:aria-labelledby="${'updateTierLabel' + account.accountId}"
+                                                                    th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
+                                                                    Regular
+                                                                </div>
+                                                            </div>
+
+
+                                                            <div class="col-md-6">
+                                                                <label th:for="${'updateStatus' + account.accountId}"
+                                                                    class="form-label fw-bold small text-muted text-uppercase">
+                                                                    <span th:text="#{common.status}">Status</span> <span
+                                                                        class="text-danger">*</span>
+                                                                </label>
+                                                                <select class="form-select form-control" name="status"
+                                                                    th:id="${'updateStatus' + account.accountId}"
+                                                                    th:data-label="#{common.status}" required
+                                                                    th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
+                                                                    <option value="Active"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}"
+                                                                        th:text="#{account.status.active}">Active
+                                                                    </option>
+                                                                    <option value="Inactive"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
+                                                                        th:text="#{member.account.status.restricted}">Restricted
+                                                                    </option>
+                                                                    <option value="Blocked"
+                                                                        th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
+                                                                        th:text="#{account.status.blocked}">Blocked
+                                                                    </option>
+                                                                </select>
+                                                                <div class="invalid-feedback" data-error-for="status"
+                                                                    th:data-default-message="#{validation.status}"
+                                                                    th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
+                                                                    <span th:text="#{validation.status}">Please select a
+                                                                        status.</span>
+                                                                </div>
+                                                                <div class="member-status-help"
+                                                                    th:text="#{librarian.members.statusHelp}">
+                                                                    Active members have full access; restricted members
+                                                                    can only view and settle obligations; blocked members
+                                                                    cannot sign in.
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer member-modal-footer">
+                                                        <button type="button"
+                                                            class="btn member-modal-secondary member-update-cancel"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn member-modal-primary">
+                                                            <span th:text="#{common.saveChanges}">Save Changes</span>
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="button"
+                                        th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
+                                        class="member-icon-action account-action-tooltip" data-bs-toggle="modal"
+                                        th:data-bs-target="${'#resetPasswordMemberModal' + account.accountId}"
+                                        th:data-bs-title="#{admin.accounts.sendReset}"
+                                        data-bs-custom-class="reset-password-tooltip"
+                                        th:aria-label="#{admin.accounts.sendReset}">
+                                        <i class="bi bi-key"></i>
+                                    </button>
+
+                                    <div class="modal fade text-start account-standard-modal"
+                                        th:if="${account.user != null and account.user.email != null and !#strings.isEmpty(account.user.email)}"
+                                        th:id="${'resetPasswordMemberModal' + account.accountId}" tabindex="-1"
+                                        th:aria-labelledby="${'resetPasswordMemberModalLabel' + account.accountId}"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form method="post"
+                                                    th:action="@{/admin/member-list/{id}/send-password-reset(id=${account.accountId})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                                                    <div class="modal-header member-modal-header">
+                                                        <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118"
+                                                            th:id="${'resetPasswordMemberModalLabel' + account.accountId}">
+                                                            <i class="bi bi-key-fill me-2"></i>
+                                                            <span th:text="#{admin.accounts.resetConfirmTitle}">Confirm
+                                                                Password Reset Link</span>
+                                                        </h5>
+                                                    </div>
+
+                                                    <div class="modal-body member-modal-body">
+                                                        <p class="mb-3">
+                                                            <span th:text="#{admin.accounts.resetConfirmMessage}">The
+                                                                password reset link will be sent to the member's current
+                                                                email and remain valid for 24 hours.</span>
+                                                        </p>
+                                                        <div class="account-info-panel">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.username}">Username
+                                                                    </div>
+                                                                    <div class="fw-bold" th:text="${account.username}">
+                                                                        username</div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{common.accountId}">Account ID</div>
+                                                                    <div class="fw-bold app-code-number"
+                                                                        th:text="${account.accountId != null ? account.accountId : '—'}">
+                                                                        id</div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.fullName}">Full Name:
+                                                                    </div>
+                                                                    <div class="fw-bold"
+                                                                        th:text="${account.user.fullName}">full name
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{admin.accounts.resetEmail}">Reset
+                                                                        Email:</div>
+                                                                    <div>
+                                                                        <i class="bi bi-envelope me-1 text-classic"></i>
+                                                                        <span
+                                                                            th:text="${account.user.email}">email</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer member-modal-footer">
+                                                        <button type="button" class="btn member-modal-secondary"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn member-modal-primary">
+                                                            <i class="bi bi-send me-1"></i><span
+                                                                th:text="#{admin.accounts.confirmSend}">Send Link</span>
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="button"
+                                        class="member-icon-action member-icon-action-danger account-action-tooltip"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
+                                        th:data-bs-title="#{admin.accounts.delete}"
+                                        data-bs-custom-class="delete-account-tooltip"
+                                        th:aria-label="#{admin.accounts.delete}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade text-start account-standard-modal"
+                                        th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
+                                        th:aria-labelledby="${'deactivateMemberModalLabel' + account.accountId}"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form method="post"
+                                                    th:action="@{/admin/member-list/delete/{id}(id=${account.accountId})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <input type="hidden" name="source" value="members">
+
+                                                    <div class="modal-header member-modal-header">
+                                                        <h5 class="modal-title member-modal-title-accent destructive-title"
+                                                            th:id="${'deactivateMemberModalLabel' + account.accountId}">
+                                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                            <span th:text="#{admin.accounts.deleteConfirmTitle}">Confirm
+                                                                Account Deactivation</span>
+                                                        </h5>
+                                                    </div>
+
+                                                    <div class="modal-body member-modal-body">
+                                                        <p class="mb-3">
+                                                            <span th:text="#{admin.accounts.deleteConfirmMessage}">The
+                                                                member will keep read-only access after
+                                                                deactivation.</span>
+                                                        </p>
+                                                        <div class="account-info-panel">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.username}">Username
+                                                                    </div>
+                                                                    <div class="fw-bold mb-1"
+                                                                        th:text="${account.username}">
+                                                                        username
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{common.accountId}">Account ID</div>
+                                                                    <div class="fw-bold app-code-number"
+                                                                        th:text="${account.accountId != null ? account.accountId : '—'}">
+                                                                        id
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.fullName}">Full Name:
+                                                                    </div>
+                                                                    <div class="fw-bold"
+                                                                        th:text="${account.user != null ? account.user.fullName : #messages.msg('librarian.members.noName')}">
+                                                                        full name
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{common.email}">Email</div>
+                                                                    <div>
+                                                                        <i class="bi bi-envelope me-1 text-classic"></i>
+                                                                        <span
+                                                                            th:text="${account.user != null ? account.user.email : #messages.msg('common.noEmail')}">
+                                                                            email
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.phone}">Phone Number:
+                                                                    </div>
+                                                                    <div>
+                                                                        <i
+                                                                            class="bi bi-telephone me-1 text-classic"></i>
+                                                                        <span class="app-phone-number"
+                                                                            th:text="${account.user != null && account.user.phone != null ? account.user.phone : #messages.msg('common.noPhone')}">
+                                                                            phone
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="small text-muted"
+                                                                        th:text="#{member.profile.tier}">Membership Tier
+                                                                    </div>
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 text-white"
+                                                                        th:if="${member != null && member.tier != null}"
+                                                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
+                                                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
+                                                                        Standard
+                                                                    </span>
+
+                                                                    <span
+                                                                        class="membership-tier-badge membership-tier-badge--empty"
+                                                                        th:if="${member == null || member.tier == null}">
+                                                                        —
+                                                                    </span>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer member-modal-footer">
+                                                        <button type="button" class="btn member-modal-secondary"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn app-danger-action"
+                                                            th:text="#{admin.accounts.confirmDeactivate}">Deactivate
+                                                            Account</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(accounts.content)}">
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox empty-state-icon d-block mb-2"></i>
+                                    <p class="mb-3" th:text="#{admin.accounts.empty}">No accounts found.</p>
+                                    <a th:if="${!#strings.isEmpty(keyword) or !#strings.isEmpty(selectedTier) or !#strings.isEmpty(selectedStatus)}"
+                                        class="btn member-modal-secondary" th:href="@{/admin/member-list}"
+                                        th:text="#{common.clearFilter}">Clear filter</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="member-pagination app-pagination-region" th:if="${accounts.totalPages > 1}"
+                    th:with="startPage=${accounts.totalPages <= 10 ? 0 : (accounts.number < 9 ? 0 : (accounts.number - 8 > accounts.totalPages - 10 ? accounts.totalPages - 10 : accounts.number - 8))}">
+                    <nav
+                        th:with="endPage=${startPage + 9 < accounts.totalPages ? startPage + 9 : accounts.totalPages - 1}">
+                        <ul class="pagination mb-0 app-pagination">
+
+                            <!-- First page -->
+                            <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/member-list(page=0, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:text="#{common.first}">First</a>
+                            </li>
+
+                            <!-- Previous page -->
+                            <li class="page-item" th:classappend="${accounts.first ? 'disabled' : ''}">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/member-list(page=${accounts.number - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+
+                            <li class="page-item disabled" th:if="${startPage > 0}">
+                                <span class="page-link page-link-classic">…</span>
+                            </li>
+
+                            <!-- Sliding window: at most 10 page numbers -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                th:classappend="${i == accounts.number ? 'active' : ''}">
+                                <a class="page-link page-link-classic"
+                                    th:href="@{/admin/member-list(page=${i}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:text="${i + 1}">
+                                    1
+                                </a>
+                            </li>
+
+                            <li class="page-item disabled" th:if="${endPage < accounts.totalPages - 1}">
+                                <span class="page-link page-link-classic">…</span>
+                            </li>
+
+                            <!-- Next page -->
+                            <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/member-list(page=${accounts.number + 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+
+                            <!-- Last page -->
+                            <li class="page-item" th:classappend="${accounts.last ? 'disabled' : ''}">
+                                <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
+                                    th:href="@{/admin/member-list(page=${accounts.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, tier=${selectedTier})}"
+                                    th:text="#{common.last}">Last</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </section>
+
+        <script th:inline="javascript">
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".account-action-tooltip").forEach(function (button) {
+                    const tooltip = new bootstrap.Tooltip(button, {
+                        trigger: "hover"
+                    });
+                    button.addEventListener("click", function () {
+                        tooltip.hide();
+                    });
+                });
+
+                document.querySelectorAll(".member-form-modal").forEach(function (modalEl) {
+                    if (modalEl.getAttribute("data-reopen-edit") === "true") {
+                        const bsModal = new bootstrap.Modal(modalEl);
+                        bsModal.show();
+                    }
+                });
+            });
+        </script>
+        <script th:inline="javascript">
+            document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".member-update-form").forEach(function (form) {
+                    const modal = form.closest(".modal");
+                    const submitButton = form.querySelector("button[type='submit']");
+                    const globalError = form.querySelector(".member-update-global-error");
+                    let isSubmitting = false;
+                    let lastFocusedField = null;
+
+                    submitButton.addEventListener("click", function (event) {
+                        if (isSubmitting) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        }
+                    });
+
+                    form.querySelectorAll("input, select, textarea").forEach(function (field) {
+                        field.addEventListener("focus", function () {
+                            lastFocusedField = field;
+                        });
+                        field.addEventListener("input", function () {
+                            clearFieldError(field);
+                        });
+                        field.addEventListener("change", function () {
+                            clearFieldError(field);
+                        });
+                    });
+
+                    function clearErrors() {
+                        form.querySelectorAll(".is-invalid, .is-valid").forEach(function (field) {
+                            field.classList.remove("is-invalid", "is-valid");
+                        });
+                        form.querySelectorAll("[data-error-for]").forEach(function (feedback) {
+                            feedback.textContent = "";
+                        });
+                        globalError.textContent = "";
+                        globalError.classList.add("d-none");
+                    }
+
+                    function clearFieldError(field) {
+                        field.classList.remove("is-invalid", "is-valid");
+                        const feedback = form.querySelector(
+                            "[data-error-for='" + field.name + "']");
+                        if (feedback != null) {
+                            feedback.textContent = "";
+                        }
+                    }
+
+                    function showErrors(errors) {
+                        form.querySelectorAll("input:not([type='hidden']), select, textarea")
+                            .forEach(function (field) {
+                                field.classList.remove("is-invalid", "is-valid");
+                                field.classList.add(
+                                    Object.prototype.hasOwnProperty.call(errors, field.name)
+                                        ? "is-invalid"
+                                        : "is-valid");
+                            });
+
+                        Object.entries(errors).forEach(function (entry) {
+                            const fieldName = entry[0];
+                            const message = entry[1];
+
+                            if (fieldName === "_global") {
+                                globalError.textContent = message;
+                                globalError.classList.remove("d-none");
+                                return;
+                            }
+
+                            const field = form.elements.namedItem(fieldName);
+                            const feedback = form.querySelector("[data-error-for='" + fieldName + "']");
+                            if (field != null) {
+                                field.classList.add("is-invalid");
+                            }
+                            if (feedback != null) {
+                                feedback.textContent = message;
+                            }
+                        });
+
+                    }
+
+                    function validateLocally() {
+                        const errors = {};
+                        const fullName = form.elements.fullName.value.trim();
+                        const username = form.elements.username.value.trim();
+                        const email = form.elements.email.value.trim();
+                        const phone = form.elements.phone.value.trim();
+
+                        if (fullName === "") {
+                            errors.fullName = /*[[#{validation.fullNameRequired}]]*/ "Full name is required.";
+                        }
+                        if (fullName !== "" && (fullName.length < 2 || fullName.length > 50)) {
+                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name must be between 2 and 50 characters.";
+                        } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
+                            errors.fullName = /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
+                        } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
+                            errors.fullName = /*[[#{validation.fullNameWords}]]*/ "Full name may contain at most 8 words and 15 characters per word.";
+                        } else if (/([\p{L}])\1\1/u.test(fullName)) {
+                            errors.fullName = /*[[#{validation.fullNameTriple}]]*/ "Full name cannot repeat a character three times in a row.";
+                        } else if (/^([\p{L}])\1+$/u.test(fullName)) {
+                            errors.fullName = /*[[#{validation.fullNameRepeated}]]*/ "Full name cannot consist of one repeated character.";
+                        }
+                        if (username === "") {
+                            errors.username = /*[[#{validation.usernameRequired}]]*/ "Username is required.";
+                        } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                            errors.username = /*[[#{validation.username}]]*/ "Username must contain 3-20 letters, numbers, or underscores.";
+                        }
+                        if (email === "") {
+                            errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
+                        } else if (email.length > 255) {
+                            errors.email = /*[[#{validation.emailMax}]]*/ "Email cannot exceed 255 characters.";
+                        } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
+                            errors.email = /*[[#{validation.email}]]*/ "Invalid email format.";
+                        }
+                        if (phone === "") {
+                            errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
+                        } else if (!/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$/.test(phone)) {
+                            errors.phone = /*[[#{backend.profile.phoneFormat}]]*/ "Invalid Vietnamese phone number.";
+                        }
+                        if (form.elements.status.value === "") {
+                            errors.status = /*[[#{validation.status}]]*/ "Invalid account status.";
+                        }
+                        return errors;
+                    }
+
+                    form.addEventListener("submit", async function (event) {
+                        event.preventDefault();
+                        if (isSubmitting) return;
+                        isSubmitting = true;
+                        clearErrors();
+
+                        const localErrors = validateLocally();
+                        submitButton.disabled = true;
+                        try {
+                            const params = new URLSearchParams();
+                            new FormData(form).forEach(function (value, key) {
+                                if (key !== "source" && !key.startsWith("_csrf")) {
+                                    params.append(key, value);
+                                }
+                            });
+
+                            const validationUrl = new URL(form.dataset.validationUrl, window.location.origin);
+                            params.forEach(function (value, key) {
+                                validationUrl.searchParams.append(key, value);
+                            });
+                            const response = await fetch(validationUrl.toString(), {
+                                headers: { "Accept": "application/json" }
+                            });
+                            if (!response.ok) {
+                                throw new Error("Validation request failed");
+                            }
+
+                            const serverErrors = await response.json();
+                            const errors = Object.assign({}, serverErrors, localErrors);
+                            if (Object.keys(errors).length > 0) {
+                                showErrors(errors);
+                                return;
+                            }
+
+                            form.submit();
+                        } catch (error) {
+                            showErrors(Object.assign({}, localErrors, {
+                                _global: /*[[#{validation.unavailable}]]*/ "Unable to validate data right now. Please try again."
+                            }));
+                        } finally {
+                            submitButton.disabled = false;
+                            isSubmitting = false;
+                        }
+                    });
+
+                    modal.addEventListener("hidden.bs.modal", function () {
+                        clearErrors();
+                    });
+                    modal.querySelector(".member-update-cancel")?.addEventListener("click", function () {
+                        form.reset();
+                        clearErrors();
+                    });
+                    modal.addEventListener("hide.bs.modal", function (event) {
+                        if (isSubmitting) event.preventDefault();
+                    });
+                });
+            });
+        </script>
+    </div>
+</body>
+
+</html>

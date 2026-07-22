@@ -12,8 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // check db xem tai khoan ton tai khong
 @Service
@@ -37,7 +37,9 @@ public class CustomMemberDetailsService implements UserDetailsService {
 
         // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_MEMBER"));
+        List<GrantedAuthority> authorities = account.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
 
         return new CustomUserDetails(
                 account.getMember().getUser(),

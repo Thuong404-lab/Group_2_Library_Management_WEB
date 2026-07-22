@@ -1,12 +1,10 @@
 package com.lms.service.impl;
 
-import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.response.LibrarianListViewData;
+import com.lms.dto.response.LibrarianListItemResponse;
 import com.lms.entity.StaffAccount;
-import com.lms.entity.Staff;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
-import com.lms.enums.NotificationType;
 import com.lms.enums.AcquisitionRequestStatus;
 import com.lms.enums.UserStatus;
 import com.lms.repository.StaffAccountRepository;
@@ -21,8 +19,11 @@ import com.lms.repository.FeedbackRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.StaffRepository;
+import com.lms.exception.DataProcessingException;
+import com.lms.exception.ValidationException;
 import com.lms.service.LibrarianDashboardService;
 import com.lms.service.LibrarianInteractionService;
+import com.lms.service.LocalizedMessageService;
 import com.lms.service.StorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,18 @@ import java.util.Map;
 public class LibrarianDashboardServiceImpl implements LibrarianDashboardService {
 
     private static final int DASHBOARD_PAGE_SIZE = 10;
+    private static final int DIRECTORY_PAGE_SIZE = 10;
+    private static final int MAX_DIRECTORY_PAGE_INDEX = 10_000;
+    private static final int MAX_DIRECTORY_KEYWORD_LENGTH = 100;
+    private static final int OVERVIEW_LIST_SIZE = 5;
+    private static final int DUE_SOON_DAYS = 7;
+    private static final String LIBRARIAN_STAFF_TYPE = "Librarian";
+    private static final List<String> CURRENT_LOAN_DETAIL_STATUSES =
+            List.of("BORROWED", "RETURN_PENDING", "RENEW_PENDING");
+    private static final List<String> RECENT_CIRCULATION_STATUSES =
+            List.of("BORROWED", "OVERDUE", "RETURN_PENDING", "RENEW_PENDING", "RETURNED");
+    private static final List<String> BOOK_CONDITIONS =
+            List.of("New", "Minor damage", "Severely damaged", "Lost book");
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -56,6 +69,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     private final StorageService storageService;
     private final LibrarianInteractionService interactionService;
     private final StaffAccountRepository staffAccountRepository;
+    private final LocalizedMessageService messages;
 
     public LibrarianDashboardServiceImpl(
             BorrowRepository borrowRepository,
@@ -71,7 +85,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             StaffRepository staffRepository,
             StorageService storageService,
             LibrarianInteractionService interactionService,
-            StaffAccountRepository staffAccountRepository) {
+            StaffAccountRepository staffAccountRepository,
+            LocalizedMessageService messages) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.reservationRepository = reservationRepository;
@@ -86,6 +101,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         this.storageService = storageService;
         this.interactionService = interactionService;
         this.staffAccountRepository = staffAccountRepository;
+        this.messages = messages;
     }
 
     @Override
@@ -116,16 +132,30 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage,
             String keyword) {
+        return getDashboardData(bookPage, shelfPage, reviewPage, requestPage, keyword, "");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardData(int bookPage, int shelfPage, int reviewPage, int requestPage,
+            String keyword, String bookCondition) {
         LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
         Map<String, Object> data = new LinkedHashMap<>();
 
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
-        data.put("pendingReservations",
-                reservationRepository.countByNormalizedStatuses(List.of("PENDING", "DEPOSIT_PAID", "READY")));
+        data.put("pendingReservationRequests",
+                reservationRepository.countByStatusIgnoreCase("PENDING"));
+        data.put("depositPaidReservations",
+                reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"));
+        data.put("readyReservations",
+                reservationRepository.countByStatusIgnoreCase("READY"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("dueTodayDetails",
-                borrowDetailRepository.countByDueDateGreaterThanEqualAndDueDateLessThan(
-                        LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay()));
+                borrowDetailRepository.countCurrentLoansDueInRange(
+                        today.atStartOfDay(),
+                        today.plusDays(1).atStartOfDay(),
+                        CURRENT_LOAN_DETAIL_STATUSES));
         data.put("pendingReturns", borrowDetailRepository.countByStatusIgnoreCase("Return_Pending"));
         data.put("pendingRenewals", borrowDetailRepository.countByStatusIgnoreCase("Renew_Pending"));
         data.put("pendingAcquisitionRequests",
@@ -133,19 +163,21 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("unansweredReviews", feedbackRepository.countAwaitingLibrarianResponse());
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
-        data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
-        data.put("currentDate", LocalDate.now());
-        data.put("recentBorrows", borrowDetailRepository.findRecentActivities(PageRequest.of(0, 5)));
+        data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase(LIBRARIAN_STAFF_TYPE));
+        data.put("currentDate", today);
+        data.put("dashboardGeneratedAt", now);
+        data.put("recentBorrows", borrowDetailRepository.findRecentCirculationActivities(
+                RECENT_CIRCULATION_STATUSES, PageRequest.of(0, OVERVIEW_LIST_SIZE)));
         data.put("dueSoonDetails",
-                borrowDetailRepository.findTop5ByStatusIgnoreCaseAndDueDateBetweenOrderByDueDateAsc(
-                        "Borrowed", now, now.plusDays(7)));
+                borrowDetailRepository.findCurrentLoansDueSoon(
+                        now,
+                        now.plusDays(DUE_SOON_DAYS),
+                        CURRENT_LOAN_DETAIL_STATUSES,
+                        PageRequest.of(0, OVERVIEW_LIST_SIZE)));
         data.put("reviews", interactionService.getReviewsForModeration(
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
-        data.put("notificationRequest", new LibrarianNotificationSendRequest());
-        data.put("notificationTypes", NotificationType.manualSelectableValues());
-        data.put("members", interactionService.getAllMembers());
-        data.put("requests", interactionService.getBookAcquisitionRequests(
+        data.put("requests", interactionService.getBookAcquisitionRequests(null, null,
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
         data.put("shelves", storageService.getAllStorageLocations());
@@ -154,19 +186,17 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<Integer, Long> shelfBookCounts = new HashMap<>();
         bookItemRepository.countBookItemsByShelf().forEach(row -> shelfBookCounts.put((Integer) row[0], (Long) row[1]));
         data.put("shelfBookCounts", shelfBookCounts);
-        Page<Book> booksPage;
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            booksPage = bookRepository.searchBooks(keyword.trim(), null, null,
-                    PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
-        } else {
-            booksPage = bookRepository.findAll(PageRequest.of(bookPage, 10, Sort.by("bookId").ascending()));
-        }
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        String normalizedBookCondition = BOOK_CONDITIONS.contains(bookCondition) ? bookCondition : "";
+        Page<Book> booksPage = bookRepository.searchBookItems(normalizedKeyword, normalizedBookCondition,
+                PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
         booksPage.forEach(book -> {
             if (book.getAuthors() != null) {
                 book.getAuthors().size();
             }
         });
         data.put("books", booksPage);
+        data.put("bookCondition", normalizedBookCondition);
 
         Map<Integer, Integer> bookShelves = new HashMap<>();
         Map<Integer, Integer> bookTotalQuantities = new HashMap<>();
@@ -174,7 +204,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<Integer, Integer> bookAvailableQuantities = new HashMap<>();
         Map<Integer, List<BookItem>> bookItemsByBookId = new HashMap<>();
         for (Book book : booksPage.getContent()) {
-            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+            List<BookItem> items = bookItemRepository.findByBook_BookIdOrderByBarcodeAsc(book.getBookId());
             bookItemsByBookId.put(book.getBookId(), items != null ? items : List.of());
             if (items != null && !items.isEmpty()) {
                 if (items.get(0).getShelf() != null) {
@@ -198,6 +228,25 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("bookItemsByBookId", bookItemsByBookId);
         data.put("categories", categoryRepository.findAll());
         data.put("genres", genreRepository.findAll());
+        Map<Integer, Long> genreTitleCounts = new HashMap<>();
+        for (Object[] row : bookRepository.countTitlesByGenre()) {
+            genreTitleCounts.put((Integer) row[0], (Long) row[1]);
+        }
+        data.put("genreTitleCounts", genreTitleCounts);
+
+        Map<Integer, List<Book>> genreBooks = new HashMap<>();
+        for (Book book : bookRepository.findAll(Sort.by("title").ascending())) {
+            if (book.getGenre() != null) {
+                genreBooks.computeIfAbsent(book.getGenre().getGenreId(), ignored -> new java.util.ArrayList<>())
+                        .add(book);
+            }
+        }
+        Map<Integer, Long> allBookTotalQuantities = new HashMap<>();
+        for (Object[] row : bookItemRepository.countBookItemsByBook()) {
+            allBookTotalQuantities.put((Integer) row[0], (Long) row[1]);
+        }
+        data.put("genreBooks", genreBooks);
+        data.put("allBookTotalQuantities", allBookTotalQuantities);
         data.put("totalBookCount", bookRepository.count());
         data.put("totalCategories", categoryRepository.count());
         data.put("totalGenres", genreRepository.count());
@@ -220,40 +269,80 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public LibrarianListViewData getLibrarianList(int page, String keyword, String status) {
-        PageRequest pageable = PageRequest.of(page, 10, Sort.by("staffId").ascending());
+        validateDirectoryPage(page);
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
-        UserStatus selectedStatus = parseUserStatus(status);
-        Page<Staff> staffPage = staffRepository.searchLibrariansWithStatus(
-                "Librarian", normalizedKeyword, selectedStatus, pageable);
-
-        Map<Integer, StaffAccount> accountByUserId = new HashMap<>();
-        for (Staff staff : staffPage.getContent()) {
-            if (staff.getUser() != null && staff.getUser().getId() != null) {
-                staffAccountRepository.findByStaff_User_Id(staff.getUser().getId())
-                        .ifPresent(account -> accountByUserId.put(staff.getUser().getId(), account));
-            }
+        if (normalizedKeyword.length() > MAX_DIRECTORY_KEYWORD_LENGTH) {
+            throw new ValidationException("keyword",
+                    messages.get("backend.librarian.staff.keywordTooLong", MAX_DIRECTORY_KEYWORD_LENGTH));
         }
-        return new LibrarianListViewData(staffPage, accountByUserId, librarianSummaryCounts());
+        UserStatus selectedStatus = parseUserStatus(status);
+        PageRequest pageable = PageRequest.of(page, DIRECTORY_PAGE_SIZE, Sort.by("id").ascending());
+        Page<LibrarianListItemResponse> staffPage = staffAccountRepository.searchDirectory(
+                        LIBRARIAN_STAFF_TYPE,
+                        normalizedKeyword,
+                        selectedStatus == null ? "" : selectedStatus.name(),
+                        pageable)
+                .map(this::toLibrarianListItem);
+
+        return new LibrarianListViewData(
+                staffPage,
+                librarianSummaryCounts(),
+                normalizedKeyword,
+                selectedStatus == null ? "" : selectedStatus.name());
     }
 
     private UserStatus parseUserStatus(String status) {
         if (status == null || status.isBlank()) {
             return null;
         }
-        try {
-            return UserStatus.valueOf(status.trim());
-        } catch (IllegalArgumentException exception) {
-            return null;
+        for (UserStatus candidate : UserStatus.values()) {
+            if (candidate.name().equalsIgnoreCase(status.trim())) {
+                return candidate;
+            }
         }
+        throw new ValidationException("status", messages.get("backend.librarian.staff.statusInvalid"));
     }
 
     private Map<String, Long> librarianSummaryCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put("total", staffRepository.countByStaffTypeIgnoreCase("Librarian"));
-        counts.put("active", staffRepository.countByStaffTypeAndUserStatus("Librarian", UserStatus.Active));
-        counts.put("inactive", staffRepository.countByStaffTypeAndUserStatus("Librarian", UserStatus.Inactive));
-        counts.put("blocked", staffRepository.countByStaffTypeAndUserStatus("Librarian", UserStatus.Blocked));
+        counts.put("total", 0L);
+        counts.put("active", 0L);
+        counts.put("inactive", 0L);
+        counts.put("blocked", 0L);
+        for (Object[] row : staffAccountRepository.countDirectoryByStatus(LIBRARIAN_STAFF_TYPE)) {
+            UserStatus accountStatus = accountStatus(String.valueOf(row[0]));
+            long amount = ((Number) row[1]).longValue();
+            counts.put(accountStatus.name().toLowerCase(java.util.Locale.ROOT), amount);
+            counts.put("total", counts.get("total") + amount);
+        }
         return counts;
+    }
+
+    private void validateDirectoryPage(int page) {
+        if (page < 0 || page > MAX_DIRECTORY_PAGE_INDEX) {
+            throw new ValidationException("page", messages.get("backend.librarian.staff.pageInvalid"));
+        }
+    }
+
+    private LibrarianListItemResponse toLibrarianListItem(StaffAccount account) {
+        return new LibrarianListItemResponse(
+                account.getStaff().getStaffId(),
+                account.getId(),
+                account.getUsername(),
+                account.getStaff().getUser().getFullName(),
+                account.getStaff().getStaffType(),
+                accountStatus(account.getStatus()));
+    }
+
+    private UserStatus accountStatus(String status) {
+        if (status != null) {
+            for (UserStatus candidate : UserStatus.values()) {
+                if (candidate.name().equalsIgnoreCase(status.trim())) {
+                    return candidate;
+                }
+            }
+        }
+        throw new DataProcessingException(messages.get("backend.librarian.staff.accountStatusInvalid"));
     }
 
     private Map<String, Long> inventoryStatusCounts() {
@@ -263,7 +352,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
         counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
         counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
-        counts.put("Disposed", bookItemRepository.countByStatusIgnoreCase("Disposed"));
+        counts.put("MinorDamaged", bookItemRepository.countByStatusIgnoreCase("MinorDamaged"));
         return counts;
     }
 }

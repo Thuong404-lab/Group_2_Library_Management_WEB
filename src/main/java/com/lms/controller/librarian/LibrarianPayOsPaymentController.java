@@ -7,12 +7,16 @@ import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
+import com.lms.entity.Staff;
+import com.lms.config.CustomUserDetails;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.StaffRepository;
 import com.lms.service.PayOsPaymentService;
 import com.lms.util.PayOsQrImageRenderer;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -26,20 +30,26 @@ import java.util.Map;
 public class LibrarianPayOsPaymentController extends LocalizedControllerSupport {
     private final PayOsPaymentService paymentService;
     private final MemberRepository memberRepository;
+    private final StaffRepository staffRepository;
 
     public LibrarianPayOsPaymentController(PayOsPaymentService paymentService,
-            MemberRepository memberRepository) {
+            MemberRepository memberRepository,
+            StaffRepository staffRepository) {
         this.paymentService = paymentService;
         this.memberRepository = memberRepository;
+        this.staffRepository = staffRepository;
     }
 
     @PostMapping("/top-up")
     public String createTopUp(@RequestParam String memberPhone,
             @RequestParam BigDecimal amount,
+            @RequestParam String requestId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
             Member member = findMember(memberPhone);
-            PayOsPayment payment = paymentService.createTopUpForLibrarian(member, amount);
+            Staff staff = requireStaff(userDetails);
+            PayOsPayment payment = paymentService.createTopUpForLibrarian(member, amount, requestId, staff);
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", readableMessage(e));
@@ -51,9 +61,10 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @PostMapping("/fine/{fineId}")
     public String createFinePayment(@PathVariable Integer fineId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            PayOsPayment payment = paymentService.createFinePaymentForLibrarian(fineId);
+            PayOsPayment payment = paymentService.createFinePaymentForLibrarian(fineId, requireStaff(userDetails));
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", readableMessage(exception));
@@ -63,9 +74,10 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @PostMapping("/fine/borrow/{borrowId}")
     public String createBorrowFinePayment(@PathVariable Integer borrowId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            PayOsPayment payment = paymentService.createFineBatchPaymentForLibrarian(borrowId);
+            PayOsPayment payment = paymentService.createFineBatchPaymentForLibrarian(borrowId, requireStaff(userDetails));
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", readableMessage(exception));
@@ -145,5 +157,13 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
             current = current.getCause();
         }
         return current.getMessage() == null ? message("backend.payment.qrCreateFailed") : current.getMessage();
+    }
+
+    private Staff requireStaff(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUser() == null || userDetails.getUser().getId() == null) {
+            throw new ValidationException(message("backend.financial.staffRequired"));
+        }
+        return staffRepository.findByUserId(userDetails.getUser().getId())
+                .orElseThrow(() -> new ValidationException(message("backend.financial.staffRequired")));
     }
 }

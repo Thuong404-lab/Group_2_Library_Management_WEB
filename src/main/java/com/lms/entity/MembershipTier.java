@@ -7,6 +7,9 @@ public class MembershipTier {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tier_id")
     private Integer tierId;
+    @Version
+    @Column(name = "row_version", nullable = false)
+    private Long version;
     @Column(nullable = false, length = 100)
     private String tierName;
     @Column(precision = 5, scale = 2)
@@ -16,6 +19,10 @@ public class MembershipTier {
     private BigDecimal condition;
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String benefits;
+    @Transient
+    private String displayName;
+    @Transient
+    private String displayBenefits;
 
     public MembershipTier() {
     }
@@ -31,6 +38,8 @@ public class MembershipTier {
 
     public Integer getTierId() { return tierId; }
     public void setTierId(Integer tierId) { this.tierId = tierId; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
     public String getTierName() { return tierName; }
     public void setTierName(String tierName) { this.tierName = tierName; }
     public BigDecimal getDiscountPercent() { return discountPercent; }
@@ -41,4 +50,8 @@ public class MembershipTier {
     public void setCondition(BigDecimal condition) { this.condition = condition; }
     public String getBenefits() { return benefits; }
     public void setBenefits(String benefits) { this.benefits = benefits; }
+    public String getDisplayName() { return displayName == null ? tierName : displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public String getDisplayBenefits() { return displayBenefits == null ? benefits : displayBenefits; }
+    public void setDisplayBenefits(String displayBenefits) { this.displayBenefits = displayBenefits; }
 }
