@@ -12,13 +12,16 @@
       th:with="activeMenu='notifications'"
       class="canonical-management-page notification-compose-page">
 
-    <header class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom dashboard-page-header">
-        <div>
+    <header class="d-flex justify-content-between align-items-center dashboard-page-header notification-page-hero">
+        <div class="notification-hero-copy">
             <div class="app-page-eyebrow" th:text="#{librarian.notification.eyebrow}">READER INTERACTION</div>
             <h1 class="app-page-title" th:text="#{librarian.notification.title}">Send Notifications to Members</h1>
             <p class="app-page-description" th:text="#{librarian.notification.description}">
                 Send a notification to all members or a selected group.
             </p>
+        </div>
+        <div class="notification-hero-decoration" aria-hidden="true">
+            <i class="bi bi-send"></i>
         </div>
     </header>
 
@@ -271,7 +274,7 @@
             <p class="notification-helper-text" th:text="#{librarian.notification.historyHint}">
                 Delivery and read information from real notification records.
             </p>
-            <div class="table-responsive" th:if="${recentNotifications != null and !recentNotifications.isEmpty()}">
+            <div class="table-responsive notification-history-table-wrap" th:if="${recentNotifications != null and !recentNotifications.isEmpty()}">
                 <table class="table notification-history-table">
                     <thead><tr>
                         <th th:text="#{librarian.notification.historyId}">ID</th>
@@ -282,12 +285,12 @@
                         <th th:text="#{librarian.notification.delivery}">Read / recipients</th>
                     </tr></thead>
                     <tbody><tr th:each="item : ${recentNotifications}">
-                        <td th:text="${'#' + item.notificationId}">#1</td>
-                        <td th:text="${item.title}">Title</td>
-                        <td th:text="${#messages.msg(item.notificationType.messageKey)}">Type</td>
-                        <td th:text="${item.senderName}">Sender</td>
-                        <td th:text="${#temporals.format(item.createdDate, 'dd/MM/yyyy HH:mm')}">Date</td>
-                        <td th:text="${item.readCount + ' / ' + item.recipientCount}">0 / 0</td>
+                        <td th:data-label="#{librarian.notification.historyId}" th:text="${'#' + item.notificationId}">#1</td>
+                        <td th:data-label="#{common.title}" th:text="${item.title}">Title</td>
+                        <td th:data-label="#{librarian.notification.type}" th:text="${#messages.msg(item.notificationType.messageKey)}">Type</td>
+                        <td th:data-label="#{librarian.notification.sender}" th:text="${item.senderName}">Sender</td>
+                        <td th:data-label="#{librarian.notification.sentAt}" th:text="${#temporals.format(item.createdDate, 'dd/MM/yyyy HH:mm')}">Date</td>
+                        <td th:data-label="#{librarian.notification.delivery}" th:text="${item.readCount + ' / ' + item.recipientCount}">0 / 0</td>
                     </tr></tbody>
                 </table>
             </div>
