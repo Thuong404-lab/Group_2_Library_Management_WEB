@@ -15,9 +15,10 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='members'" class="member-management-page">
-        <header class="member-page-header">
-            <div>
+    <div layout:fragment="content" th:with="activeMenu='members'" class="member-management-page member-list-page">
+        <header class="member-page-header member-list-hero">
+            <div class="member-list-hero-copy">
+                <div class="member-page-eyebrow" th:text="#{librarian.members.title}">MEMBER MANAGEMENT</div>
                 <h1 class="member-page-title" th:text="#{librarian.members.heading}">Member List</h1>
                 <p class="member-page-description" th:text="#{librarian.members.description}">Track member profiles,
                     tiers, and account status.</p>
@@ -229,9 +230,9 @@
             <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Operation completed successfully.</span>
         </div>
 
-        <section class="member-data-card">
+        <section class="member-data-card member-list-card">
             <div class="member-data-card-body">
-                <div class="member-summary-chips" th:aria-label="#{librarian.members.summary}">
+                <div class="member-summary-chips member-list-summary" th:aria-label="#{librarian.members.summary}">
                     <span th:text="#{librarian.members.total(${memberSummary != null ? memberSummary['total'] : 0})}">0
                         members</span>
                     <span
@@ -251,7 +252,7 @@
                     <!-- Search & Filter -->
                     <form class="member-search-form" method="get" th:action="@{/librarian/members}"
                         data-auto-filter-form data-focus-key="librarianMemberFilterFocus">
-                        <div class="input-group member-search-group">
+                        <div class="input-group member-search-group member-list-filter-group">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
@@ -288,8 +289,8 @@
                     </form>
                 </div>
 
-                <div class="table-responsive member-table-wrap">
-                    <table class="table table-hover align-middle stable-table-layout member-table">
+                <div class="table-responsive member-table-wrap member-list-table-wrap">
+                    <table class="table table-hover align-middle stable-table-layout member-table member-list-table">
                         <colgroup>
                             <col class="member-col-index">
                             <col class="member-col-username">
@@ -310,14 +311,14 @@
                         </thead>
 
                         <tbody>
-                            <tr th:each="account, iterStat : ${accounts.content}">
-                                <td class="ps-3 fw-bold"
+                            <tr class="member-data-row" th:each="account, iterStat : ${accounts.content}">
+                                <td class="ps-3 fw-bold" th:data-label="#{common.number}"
                                     th:text="${accounts.number * accounts.size + iterStat.index + 1}">1</td>
-                                <td>
+                                <td th:data-label="#{member.profile.username}">
                                     <span class="fw-bold text-classic" th:text="${account.username}">username</span>
                                     <div class="small text-muted" th:text="'ID: ' + ${account.id}">ID: 1</div>
                                 </td>
-                                <td>
+                                <td th:data-label="#{librarian.members.userInfo}">
                                     <div th:if="${account.member.user != null}">
                                         <div class="fw-bold" th:text="${account.member.user.fullName}">Full Name</div>
                                         <div class="small text-muted">
@@ -335,7 +336,7 @@
                                     </div>
                                 </td>
 
-                                <td
+                                <td th:data-label="#{member.profile.tier}"
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="membership-tier-badge"
                                         th:if="${member != null && member.tier != null}"
@@ -350,7 +351,7 @@
                                     </span>
                                 </td>
 
-                                <td>
+                                <td th:data-label="#{common.status}">
                                     <span class="status-badge" th:classappend="${
               account.status == 'Active' ? 'status-active' :
               account.status == 'Blocked' ? 'status-blocked' :
@@ -360,8 +361,10 @@
                                     </span>
                                 </td>
 
-                                <td class="text-end pe-3 member-actions"
+                                <td class="text-end pe-3 member-actions" th:data-label="#{common.actions}"
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
+
+                                    <div class="member-row-actions">
 
                                     <!-- View detail and this member's transaction history -->
                                     <a th:if="${account.member != null}"
@@ -683,6 +686,7 @@
                                                 </form>
                                             </div>
                                         </div>
+                                    </div>
                                     </div>
                                 </td>
                             </tr>

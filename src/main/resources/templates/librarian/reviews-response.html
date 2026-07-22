@@ -173,17 +173,6 @@
                                         th:text="${review.librarianResponse != null and !review.librarianResponse.isBlank()} ? #{librarian.reviews.saveEdit} : #{librarian.reviews.respond}">
                                     Respond
                                 </button>
-                                <button type="button"
-                                        class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#librarianDeleteReviewModal"
-                                        th:data-delete-form-id="${'reviewRejectForm-' + review.feedbackId}"
-                                        th:data-book-title="${review.bookTitle}"
-                                        th:data-member-name="${review.memberName}"
-                                        th:title="#{librarian.reviews.rejectAction}"
-                                        th:aria-label="#{librarian.reviews.rejectAction}">
-                                    <i class="bi bi-x-lg" aria-hidden="true"></i>
-                                </button>
                             </div>
                         </form>
 
@@ -213,7 +202,20 @@
                              th:text="#{librarian.reviews.cannotRespond}">
                             The member deleted this review, so it cannot be answered.
                         </div>
-                        <form class="app-form-actions app-form-actions--end mt-2"
+                        <div class="review-secondary-actions">
+                            <button type="button"
+                                    th:if="${review.status == 'APPROVED'}"
+                                    class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#librarianDeleteReviewModal"
+                                    th:data-delete-form-id="${'reviewRejectForm-' + review.feedbackId}"
+                                    th:data-book-title="${review.bookTitle}"
+                                    th:data-member-name="${review.memberName}"
+                                    th:title="#{librarian.reviews.rejectAction}"
+                                    th:aria-label="#{librarian.reviews.rejectAction}">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                            <form class="review-permanent-delete-form"
                               th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                               method="post"
                               onsubmit="return confirm(this.dataset.confirmMessage);"
@@ -227,7 +229,8 @@
                                     th:aria-label="#{librarian.reviews.deleteAction}">
                                 <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
-                        </form>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 </tbody>

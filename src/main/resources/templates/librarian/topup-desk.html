@@ -11,34 +11,40 @@
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='topup'" class="finance-page topup-desk-page">
-        <div class="finance-header">
+        <header class="finance-header topup-page-hero">
             <div>
+                <span class="topup-page-eyebrow" th:text="#{staff.nav.finance}">FINANCE</span>
                 <h2 class="finance-title" th:text="#{librarian.topupDesk.heading}">Top Up at Desk</h2>
                 <div class="finance-description" th:text="#{librarian.topupDesk.description}">Find a member and add funds to the wallet.</div>
             </div>
-        </div>
+            <span class="topup-hero-icon" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+        </header>
 
         <div th:if="${success != null}" class="finance-alert finance-alert--success" role="alert" th:text="${success}"></div>
         <div th:if="${error != null}" class="finance-alert finance-alert--danger" role="alert" th:text="${error}"></div>
 
-        <div class="row g-4">
+        <div class="row g-4 topup-workspace">
             <div class="col-lg-7">
                 <form method="post" th:action="@{/librarian/members/topup}" id="topupForm"
                     th:attr="data-payos-action=@{/librarian/payments/payos/top-up}"
-                    class="card-classic finance-card p-4 mb-4">
+                    class="card-classic finance-card topup-form-card p-4 mb-4">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
                     <input type="hidden" name="requestId" th:value="${topupRequestId}">
 
-                    <h5 class="section-title mb-4">
-                                <span th:text="#{librarian.topupDesk.formTitle}">Top Up Member Wallet</span>
+                    <h5 class="section-title topup-card-title mb-4">
+                        <span class="topup-section-icon" aria-hidden="true"><i class="bi bi-person-plus"></i></span>
+                        <span th:text="#{librarian.topupDesk.formTitle}">Top Up Member Wallet</span>
                     </h5>
 
                     <div class="mb-4">
                                 <label class="form-label" th:text="#{librarian.topupDesk.selectMember}">Select Member</label>
-                        <input type="text" id="topupMemberSearch" class="form-control mb-2"
+                        <div class="topup-search-control mb-2">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="text" id="topupMemberSearch" class="form-control"
                                        th:placeholder="#{librarian.topupDesk.searchPlaceholder}"
-                            autocomplete="off">
+                                autocomplete="off">
+                        </div>
                                 <div class="topup-member-search-hint" th:text="#{librarian.topupDesk.searchHint}">Enter member information to search.</div>
                                 <div class="topup-member-selection-hint" th:text="#{librarian.topupDesk.selectionHint}">Select a member before topping up.</div>
 
@@ -134,7 +140,7 @@
                         </div>
                     </div>
 
-                    <div class="finance-actions d-flex">
+                    <div class="finance-actions topup-form-actions d-flex">
                                 <button type="reset" class="btn app-secondary-action flex-grow-1" th:text="#{common.cancel}">Cancel</button>
                         <button type="submit" class="btn btn-confirm-topup flex-grow-1" id="topupSubmitButton">
                                     <span th:text="#{librarian.topupDesk.confirmPayment}">Confirm Payment</span>
@@ -144,8 +150,11 @@
             </div>
 
             <div class="col-lg-5">
-                <div class="card-classic finance-card p-4 mb-4">
-                            <h5 class="section-title mb-3" th:text="#{librarian.topupDesk.today}">Today's Top-ups</h5>
+                <div class="card-classic finance-card topup-summary-card p-4 mb-4">
+                    <h5 class="section-title topup-card-title mb-3">
+                        <span class="topup-section-icon topup-section-icon--success" aria-hidden="true"><i class="bi bi-calendar-check"></i></span>
+                        <span th:text="#{librarian.topupDesk.today}">Today's Top-ups</span>
+                    </h5>
                     <div class="summary-panel d-flex justify-content-between mb-3 p-3 rounded">
                         <div class="text-center">
                             <div class="topup-stat-value"
@@ -169,7 +178,7 @@
 
                     <div th:if="${todayTopups != null and !#lists.isEmpty(todayTopups)}" class="border-top pt-3">
                         <div th:each="transaction : ${todayTopups}"
-                            class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            class="topup-transaction-row">
                             <div>
                                 <div class="topup-transaction-name"
                                                  th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('role.member')}">
@@ -188,15 +197,18 @@
                     </div>
                 </div>
 
-                <div class="card-classic finance-card p-4">
-                            <h5 class="section-title mb-3" th:text="#{librarian.topupDesk.recent}">10 Most Recent Top-ups</h5>
+                <div class="card-classic finance-card topup-history-card p-4">
+                    <h5 class="section-title topup-card-title mb-3">
+                        <span class="topup-section-icon" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
+                        <span th:text="#{librarian.topupDesk.recent}">10 Most Recent Top-ups</span>
+                    </h5>
                     <div th:if="${recentTopups == null or #lists.isEmpty(recentTopups)}"
                         class="text-muted text-center py-4">
                                 <span th:text="#{librarian.topupDesk.noHistory}">No top-up history.</span>
                     </div>
                     <div th:if="${recentTopups != null and !#lists.isEmpty(recentTopups)}">
                         <div th:each="transaction : ${recentTopups}"
-                            class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            class="topup-transaction-row">
                             <div>
                                 <div class="topup-transaction-name"
                                                  th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('role.member')}">
@@ -220,6 +232,9 @@
         <script>
             document.querySelectorAll("[data-amount]").forEach(function (button) {
                 button.addEventListener("click", function () {
+                    document.querySelectorAll("[data-amount]").forEach(function (otherButton) {
+                        otherButton.classList.toggle("is-selected", otherButton === button);
+                    });
                     const input = document.querySelector("input[name='amount']");
                     if (input != null) {
                         input.value = button.getAttribute("data-amount");
@@ -281,6 +296,24 @@
             const topupForm = document.getElementById("topupForm");
             if (topupForm != null) {
                 const cashAction = topupForm.getAttribute("action");
+                topupForm.addEventListener("reset", function () {
+                    window.requestAnimationFrame(function () {
+                        document.querySelectorAll("[data-amount]").forEach(function (button) {
+                            button.classList.remove("is-selected");
+                        });
+                        document.querySelectorAll(".topup-member-checkbox").forEach(function (checkbox) {
+                            checkbox.checked = false;
+                        });
+                        memberSearch.value = "";
+                        document.getElementById("topupMemberList")?.classList.add("d-none");
+                        document.querySelectorAll("#topupForm .is-invalid").forEach(function (field) {
+                            field.classList.remove("is-invalid");
+                        });
+                        document.querySelectorAll("#topupForm .invalid-feedback").forEach(function (feedback) {
+                            feedback.classList.remove("d-block");
+                        });
+                    });
+                });
                 topupForm.addEventListener("submit", function (event) {
                     let isValid = true;
                     if (!document.querySelector(".topup-member-checkbox:checked")) {
@@ -313,6 +346,10 @@
             topupAmount?.addEventListener("input", function () {
                 topupAmount.classList.remove("is-invalid");
                 document.getElementById("topupAmountRequired")?.classList.remove("d-block");
+                const numericAmount = topupAmount.value.replace(/[^0-9]/g, "");
+                document.querySelectorAll("[data-amount]").forEach(function (button) {
+                    button.classList.toggle("is-selected", button.dataset.amount === numericAmount);
+                });
             });
         </script>
         <script th:src="@{/js/payos-money-input.js}"></script>

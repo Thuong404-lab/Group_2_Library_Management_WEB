@@ -9,8 +9,8 @@
 </head>
 <body>
 <main layout:fragment="content" th:with="activeMenu='suggestions'" class="canonical-management-page acquisition-requests-page">
-    <header class="app-page-header">
-        <div>
+    <header class="app-page-header acquisition-page-hero">
+        <div class="acquisition-hero-copy">
             <div class="app-page-eyebrow" th:text="#{librarian.acquisition.eyebrow}">COLLECTION DEVELOPMENT</div>
             <h1 class="app-page-title" th:text="#{librarian.acquisition.heading}">Book Acquisition Requests</h1>
             <p class="app-page-description" th:text="#{librarian.acquisition.description}">Review reader requests and respond to each suggestion.</p>
@@ -28,6 +28,9 @@
             </div>
             <span class="acquisition-request-count" th:if="${requests != null}"
                   th:text="#{librarian.acquisition.count(${requests.totalElements})}">0 requests</span>
+        </div>
+        <div class="acquisition-hero-decoration" aria-hidden="true">
+            <i class="bi bi-bookmark-plus"></i>
         </div>
 
         <form method="get" th:action="@{/librarian/interaction/acquisition-requests}"
@@ -62,7 +65,7 @@
             </a>
         </form>
 
-        <div class="app-table-wrap">
+        <div class="app-table-wrap acquisition-table-wrap">
             <table class="app-table acquisition-requests-table">
                 <colgroup>
                     <col class="acquisition-book-col"><col class="acquisition-requester-col">
@@ -77,7 +80,7 @@
                 </tr></thead>
                 <tbody th:if="${requests != null && requests.totalElements > 0}">
                 <tr th:each="request : ${requests.content}">
-                    <td class="acquisition-book-info">
+                    <td class="acquisition-book-info" th:data-label="#{librarian.acquisition.bookInformation}">
                         <strong th:text="${request.title}">Book title</strong>
                         <span class="acquisition-book-author" th:text="${request.author != null ? request.author : #messages.msg('book.unknownAuthor')}">Author</span>
                         <span class="acquisition-book-edition" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></span>
@@ -90,19 +93,19 @@
                             <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span th:text="#{librarian.acquisition.referenceLink}">Reference link</span>
                         </a>
                     </td>
-                    <td class="acquisition-requester">
+                    <td class="acquisition-requester" th:data-label="#{librarian.acquisition.requester}">
                         <strong th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : #messages.msg('librarian.acquisition.unknownRequester')}">Requester</strong>
                         <time th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Request date</time>
                     </td>
-                    <td class="acquisition-reason" th:text="${request.requestReason != null ? request.requestReason : #messages.msg('librarian.acquisition.legacyReason')}">Request reason</td>
-                    <td>
+                    <td class="acquisition-reason" th:data-label="#{librarian.acquisition.reason}" th:text="${request.requestReason != null ? request.requestReason : #messages.msg('librarian.acquisition.legacyReason')}">Request reason</td>
+                    <td th:data-label="#{common.status}">
                         <span class="status-badge" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}"
                               th:text="${#messages.msg('request.status.' + #strings.toLowerCase(request.status.name()))}">Pending</span>
                         <small class="acquisition-decision-note" th:if="${request.decisionNote != null}"
                                th:classappend="${' decision-' + #strings.toLowerCase(request.status.name())}"
                                th:text="${request.decisionNote}"></small>
                     </td>
-                    <td class="acquisition-actions">
+                    <td class="acquisition-actions" th:data-label="#{common.actions}">
                         <div th:if="${request.status.name() == 'PENDING'}" class="acquisition-action-group">
                             <button type="button" class="acquisition-approve-action" data-bs-toggle="modal" data-bs-target="#approveAcquisitionModal"
                                     th:data-approve-url="@{/librarian/interaction/acquisition-requests/{id}/approve(id=${request.requestId})}"
@@ -118,7 +121,7 @@
                     </td>
                 </tr>
                 </tbody>
-                <tbody th:if="${requests == null || requests.totalElements == 0}"><tr><td colspan="5" class="acquisition-empty-cell">
+                <tbody th:if="${requests == null || requests.totalElements == 0}"><tr class="acquisition-empty-row"><td colspan="5" class="acquisition-empty-cell">
                     <div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.acquisition.empty}">No requests.</span></div>
                 </td></tr></tbody>
             </table>
