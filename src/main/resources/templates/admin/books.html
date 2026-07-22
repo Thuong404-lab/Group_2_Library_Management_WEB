@@ -404,6 +404,12 @@
                                                             <td class="text-center member-actions">
                                                                 <button type="button" class="member-icon-action"
                                                                     data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#viewGenreTitleCountModal' + ${genre.genreId}"
+                                                                    th:title="#{librarian.inventory.viewGenreTitleCount}"
+                                                                    th:aria-label="#{librarian.inventory.viewGenreTitleCount}"><i
+                                                                        class="bi bi-eye"></i></button>
+                                                                <button type="button" class="member-icon-action"
+                                                                    data-bs-toggle="modal"
                                                                     th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"
                                                                     th:title="#{common.update}"
                                                                     th:aria-label="#{common.update}"><i
@@ -509,6 +515,30 @@
 
                                 <!-- Modals for Edit/Delete Genres -->
                                 <th:block th:each="genre : ${genres}">
+                                    <div class="modal fade" th:id="${'viewGenreTitleCountModal' + genre.genreId}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold text-classic"
+                                                        th:text="#{librarian.inventory.genreTitleCountTitle}">Titles in genre</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        th:aria-label="#{common.close}"></button>
+                                                </div>
+                                                <div class="modal-body text-center px-4 py-4">
+                                                    <div class="text-muted mb-2" th:text="${genre.genreName}">Genre</div>
+                                                    <div class="display-5 fw-bold text-classic"
+                                                        th:text="${genreTitleCounts != null ? (genreTitleCounts[genre.genreId] ?: 0) : 0}">0</div>
+                                                    <div class="text-muted"
+                                                        th:text="#{librarian.inventory.titleCountUnit}">book titles</div>
+                                                </div>
+                                                <div class="modal-footer justify-content-center">
+                                                    <button type="button" class="btn btn-light border shadow-sm px-4"
+                                                        data-bs-dismiss="modal" th:text="#{common.close}">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="modal fade" th:id="${'adminEditGenreModal' + genre.genreId}"
                                         tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">

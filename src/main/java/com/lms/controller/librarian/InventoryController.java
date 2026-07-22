@@ -27,12 +27,12 @@ public class InventoryController extends LocalizedControllerSupport {
 
     @GetMapping
     public String listBooks() {
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory";
     }
 
     @GetMapping("/add")
     public String showAddBookForm() {
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory";
     }
 
     @PostMapping(value = "/add", consumes = "multipart/form-data")
@@ -57,7 +57,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory";
     }
 
     @PostMapping(value = "/edit/{id}", consumes = "multipart/form-data")
@@ -81,7 +81,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory";
     }
 
     @PostMapping("/delete/{id}")
@@ -92,7 +92,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory";
     }
 
     @PostMapping("/status/{id}")
@@ -105,7 +105,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory";
     }
 
     @PostMapping("/copies/add/{id}")
@@ -120,7 +120,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
+        return "redirect:/librarian/books?subsection=inventory&tab=audit";
     }
 
     @PostMapping("/copies/delete/{id}")
@@ -134,7 +134,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
+        return "redirect:/librarian/books?subsection=inventory&tab=audit";
     }
 
     @PostMapping("/copies/update/{bookId}/{itemId}")
@@ -146,12 +146,12 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=audit";
+        return "redirect:/librarian/books?subsection=inventory&tab=audit";
     }
 
     @GetMapping("/categories")
     public String manageCategories() {
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory&tab=categories";
     }
 
     @PostMapping("/categories/add")
@@ -170,7 +170,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+        return "redirect:/librarian/books?subsection=inventory&tab=categories";
     }
 
     @PostMapping("/categories/edit/{id}")
@@ -183,7 +183,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+        return "redirect:/librarian/books?subsection=inventory&tab=categories";
     }
 
     @PostMapping("/genres/edit/{id}")
@@ -197,7 +197,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+        return "redirect:/librarian/books?subsection=inventory&tab=categories";
     }
 
     @PostMapping("/genres/delete/{id}")
@@ -208,7 +208,7 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+        return "redirect:/librarian/books?subsection=inventory&tab=categories";
     }
 
     @PostMapping("/categories/delete/{id}")
@@ -219,12 +219,12 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory&tab=categories";
+        return "redirect:/librarian/books?subsection=inventory&tab=categories";
     }
 
     @GetMapping("/audit")
     public String showInventoryAudit() {
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory&tab=audit";
     }
 
     @PostMapping("/audit")
@@ -241,6 +241,6 @@ public class InventoryController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=inventory";
+        return "redirect:/librarian/books?subsection=inventory&tab=audit";
     }
 }

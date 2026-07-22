@@ -126,7 +126,7 @@
                     </div>
                 </a>
 
-                <a th:href="@{/librarian/dashboard(section='books',subsection='inventory',availability='Available')}"
+                <a th:href="@{/librarian/books(subsection='inventory',availability='Available')}"
                     class="overview-kpi-card overview-kpi-card--neutral">
                     <div class="overview-kpi-icon"><i class="bi bi-book" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
@@ -354,7 +354,7 @@
                         </h5>
                         <p class="text-muted mb-3" th:text="#{librarian.inventory.cardDescription}">Add, edit, remove,
                             and manage book copies in inventory.</p>
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
+                        <a th:href="@{/librarian/books(subsection='inventory')}"
                             class="btn btn-outline-classic btn-sm">
                             <span th:text="#{librarian.inventory.open}">Open</span> <i
                                 class="bi bi-arrow-right ms-1"></i>
@@ -370,7 +370,7 @@
                         </h5>
                         <p class="text-muted mb-3" th:text="#{librarian.storage.description}">Create and manage book
                             storage locations.</p>
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
+                        <a th:href="@{/librarian/books(subsection='storage')}"
                             class="btn btn-outline-classic btn-sm">
                             <span th:text="#{librarian.inventory.open}">Open</span> <i
                                 class="bi bi-arrow-right ms-1"></i>
@@ -562,12 +562,12 @@
                                         <ul class="pagination app-pagination">
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                                     th:text="#{common.first}">First</a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
                                                         class="bi bi-chevron-left"></i></a>
                                             </li>
                                             <li class="page-item disabled" th:if="${startPage > 0}"><span
@@ -575,19 +575,19 @@
                                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                                 th:classappend="${i == books.number ? 'active' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                                     th:text="${i + 1}">1</a>
                                             </li>
                                             <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
                                                 <span class="page-link page-link-classic">…</span></li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
                                                         class="bi bi-chevron-right"></i></a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                                     th:text="#{common.last}">Last</a>
                                             </li>
                                         </ul>
@@ -1038,24 +1038,24 @@
                                         <ul class="pagination justify-content-center mb-0">
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=0, keyword=${keyword}, bookCondition=${bookCondition})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=0, keyword=${keyword}, bookCondition=${bookCondition})}"
                                                     th:text="#{common.first}">First</a></li>
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${books.number - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
                                                         class="bi bi-chevron-left"></i></a></li>
                                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}"
                                                 th:classappend="${i == books.number ? 'active' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${i}, keyword=${keyword}, bookCondition=${bookCondition})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${i}, keyword=${keyword}, bookCondition=${bookCondition})}"
                                                     th:text="${i + 1}">1</a></li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number + 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${books.number + 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
                                                         class="bi bi-chevron-right"></i></a></li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.totalPages - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${books.totalPages - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"
                                                     th:text="#{common.last}">Last</a></li>
                                         </ul>
                                     </nav>
@@ -1832,28 +1832,28 @@
                             <ul class="pagination app-pagination">
                                 <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=0)}"
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=0)}"
                                         th:text="#{common.first}">First</a>
                                 </li>
                                 <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.number - 1})}"><i
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${shelfPage.number - 1})}"><i
                                             class="bi bi-chevron-left"></i></a>
                                 </li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(0, shelfPage.totalPages - 1)}"
                                     th:classappend="${i == shelfPage.number ? 'active' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${i})}"
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${i})}"
                                         th:text="${i + 1}">1</a>
                                 </li>
                                 <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.number + 1})}"><i
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${shelfPage.number + 1})}"><i
                                             class="bi bi-chevron-right"></i></a>
                                 </li>
                                 <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.totalPages - 1})}"
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${shelfPage.totalPages - 1})}"
                                         th:text="#{common.last}">Last</a>
                                 </li>
                             </ul>
