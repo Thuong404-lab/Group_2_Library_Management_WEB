@@ -22,7 +22,7 @@ public interface MembershipService {
 
     // UC-22.3: Membership Tier Management (Admin)
     MembershipTier getTierById(Integer id);
-    int updateTier(MembershipTierUpdateRequest request, String languageCode);
+    int updateTier(MembershipTierUpdateRequest request);
     void deleteTier(Integer id);
     void synchronizeMemberTier(Integer memberId);
     int synchronizeAllMemberTiers();

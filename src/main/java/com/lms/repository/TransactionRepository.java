@@ -304,6 +304,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             where upper(t.transactionType) in ('BORROW_FEE', 'RENEWAL_FEE')
               and lower(t.status) in ('completed', 'paid')
             group by t.wallet.member.memberId
+            """)
+    List<Object[]> sumCompletedMembershipSpendForAllMembers();
+
+    @Query("""
+            select t.wallet.member.memberId, coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where upper(t.transactionType) in ('BORROW_FEE', 'RENEWAL_FEE')
+              and lower(t.status) in ('completed', 'paid')
+            group by t.wallet.member.memberId
             order by sum(abs(t.amount)) desc, t.wallet.member.memberId asc
             """)
     List<Object[]> findTopMembersByCompletedMembershipSpend(Pageable pageable);

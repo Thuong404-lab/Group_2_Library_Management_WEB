@@ -61,10 +61,10 @@ BEGIN TRY
 
     SET IDENTITY_INSERT dbo.MembershipTiers ON;
     INSERT dbo.MembershipTiers(tier_id,tier_name,discount_percent,borrow_limit,[condition],benefits) VALUES
-      (1,N'Member',0,5,0,N'Borrow up to 5 books for the standard 14-day period.'),
-      (2,N'Silver',5,7,500000,N'5% service-fee discount and a 7-book limit.'),
-      (3,N'Gold',10,10,2000000,N'10% service-fee discount and a 10-book limit.'),
-      (4,N'Diamond',15,15,5000000,N'15% service-fee discount, 15-book limit and reservation priority.');
+      (1,N'Member',0,5,0,N'Borrow up to 5 books concurrently.'),
+      (2,N'Silver',5,7,500000,N'5% borrowing-fee discount and a 7-book concurrent limit.'),
+      (3,N'Gold',10,10,2000000,N'10% borrowing-fee discount and a 10-book concurrent limit.'),
+      (4,N'Diamond',15,15,5000000,N'15% borrowing-fee discount and a 15-book concurrent limit.');
     SET IDENTITY_INSERT dbo.MembershipTiers OFF;
 
     SET IDENTITY_INSERT dbo.Users ON;
@@ -229,10 +229,10 @@ BEGIN TRY
     INSERT dbo.MembershipTierTranslations(tier_id,language_code,tier_name,benefits)
     SELECT tier_id,N'en',tier_name,benefits FROM dbo.MembershipTiers;
     INSERT dbo.MembershipTierTranslations(tier_id,language_code,tier_name,benefits) VALUES
-      (1,N'vi',N'Thành viên',N'Mượn tối đa 5 cuốn; thời hạn tiêu chuẩn 14 ngày.'),
-      (2,N'vi',N'Bạc',N'Giảm 5% phí dịch vụ; mượn tối đa 7 cuốn.'),
-      (3,N'vi',N'Vàng',N'Giảm 10% phí dịch vụ; mượn tối đa 10 cuốn.'),
-      (4,N'vi',N'Kim cương',N'Giảm 15% phí dịch vụ; mượn tối đa 15 cuốn và ưu tiên đặt trước.');
+      (1,N'vi',N'Thành viên',N'Được mượn đồng thời tối đa 5 cuốn.'),
+      (2,N'vi',N'Bạc',N'Giảm 5% phí mượn; được mượn đồng thời tối đa 7 cuốn.'),
+      (3,N'vi',N'Vàng',N'Giảm 10% phí mượn; được mượn đồng thời tối đa 10 cuốn.'),
+      (4,N'vi',N'Kim cương',N'Giảm 15% phí mượn; được mượn đồng thời tối đa 15 cuốn.');
 
     INSERT dbo.ShelfTranslations(shelf_id,language_code,shelf_name,location)
     SELECT shelf_id,N'en',shelf_name,location FROM dbo.Shelves;
