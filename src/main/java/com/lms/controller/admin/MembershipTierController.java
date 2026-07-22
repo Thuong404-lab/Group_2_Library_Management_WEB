@@ -2,6 +2,7 @@ package com.lms.controller.admin;
 
 import com.lms.controller.LocalizedControllerSupport;
 import com.lms.entity.MembershipTier;
+import com.lms.dto.request.MembershipTierUpdateRequest;
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ValidationException;
 import com.lms.service.MembershipService;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Locale;
 
 /**
  * MembershipTierController — UC-22.3 Quản lý Hạng thành viên (Admin).
@@ -34,11 +36,14 @@ public class MembershipTierController extends LocalizedControllerSupport {
 
     /** Thêm mới hoặc cập nhật hạng thành viên */
     @PostMapping("/save")
-    public String saveMembershipTier(@ModelAttribute MembershipTier tier,
+    public String saveMembershipTier(@ModelAttribute MembershipTierUpdateRequest tier,
+                                     Locale locale,
                                      RedirectAttributes redirectAttributes) {
         try {
-            membershipService.saveTier(tier);
-            redirectAttributes.addFlashAttribute("success", message("backend.tier.saved"));
+            int synchronizedMembers = membershipService.updateTier(
+                    tier, locale == null ? "en" : locale.getLanguage());
+            redirectAttributes.addFlashAttribute("success",
+                    message("backend.tier.savedWithSync", synchronizedMembers));
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (ApplicationException e) {

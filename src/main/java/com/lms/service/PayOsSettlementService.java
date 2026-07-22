@@ -28,6 +28,7 @@ public class PayOsSettlementService {
 
     private final LocalizedMessageService localizedMessageService;
     private static final String COMPLETED = "Completed";
+    private static final String PENDING = "PENDING";
 
     private final PayOsWalletRepository walletRepository;
     private final PayOsTransactionRepository transactionRepository;
@@ -37,6 +38,7 @@ public class PayOsSettlementService {
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final BorrowService borrowService;
+    private final MembershipService membershipService;
 
     public PayOsSettlementService(PayOsWalletRepository walletRepository,
                                   PayOsTransactionRepository transactionRepository,
@@ -46,6 +48,7 @@ public class PayOsSettlementService {
                                   NotificationRepository notificationRepository,
                                   MemberNotificationRepository memberNotificationRepository,
                                   BorrowService borrowService,
+                                  MembershipService membershipService,
                                   LocalizedMessageService localizedMessageService) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
@@ -55,6 +58,7 @@ public class PayOsSettlementService {
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.borrowService = borrowService;
+        this.membershipService = membershipService;
         this.localizedMessageService = localizedMessageService;
     }
 
@@ -106,16 +110,21 @@ public class PayOsSettlementService {
         if (!"FINE".equals(type) && !"DAMAGE_FEE".equals(type)) {
             throw new ConflictException(localizedMessageService.get("backend.financial.notFineTransaction"));
         }
-        if (isCompleted(fine.getStatus())) {
-            throw new ConflictException(localizedMessageService.get("backend.financial.fineAlreadyPaid"));
+        if (!PENDING.equals(normalize(fine.getStatus()))) {
+            throw new ConflictException(localizedMessageService.get("backend.financial.fineNotPending"));
         }
         BigDecimal amount = requirePositiveWholeVnd(payment.getAmount());
         if (fine.getAmount() == null || fine.getAmount().abs().compareTo(amount) != 0) {
             throw new ConflictException(localizedMessageService.get("backend.payment.fineAmountChanged"));
         }
         fine.setAmount(amount.negate());
+        LocalDateTime paidAt = LocalDateTime.now();
         fine.setStatus(COMPLETED);
-        fine.setTransactionDate(LocalDateTime.now());
+        fine.setTransactionDate(paidAt);
+        fine.setPaidAt(paidAt);
+        fine.setChannel("PAYOS");
+        fine.setReferenceCode("KQPAY-FINE-" + payment.getOrderCode());
+        fine.setPerformedByStaff(payment.getInitiatedByStaff());
         Transaction saved = transactionRepository.save(fine);
         createNotification(
                 payment.getMember(),
@@ -141,7 +150,8 @@ public class PayOsSettlementService {
                     .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.fineNotFound", fineId)));
             validateOwner(fine, payment.getMember().getMemberId());
             String type = normalize(fine.getTransactionType());
-            if ((!"FINE".equals(type) && !"DAMAGE_FEE".equals(type)) || isCompleted(fine.getStatus())) {
+            if ((!"FINE".equals(type) && !"DAMAGE_FEE".equals(type))
+                    || !PENDING.equals(normalize(fine.getStatus()))) {
                 throw new ConflictException(localizedMessageService.get("backend.payment.fineUnavailable", fineId));
             }
             BigDecimal snapshot = requirePositiveWholeVnd(item.getAmountSnapshot());
@@ -150,8 +160,13 @@ public class PayOsSettlementService {
             }
             total = total.add(snapshot);
             fine.setAmount(snapshot.negate());
+            LocalDateTime paidAt = LocalDateTime.now();
             fine.setStatus(COMPLETED);
-            fine.setTransactionDate(LocalDateTime.now());
+            fine.setTransactionDate(paidAt);
+            fine.setPaidAt(paidAt);
+            fine.setChannel("PAYOS");
+            fine.setReferenceCode("KQPAY-FINE-" + fineId + "-" + payment.getOrderCode());
+            fine.setPerformedByStaff(payment.getInitiatedByStaff());
             Transaction saved = transactionRepository.save(fine);
             if (first == null) {
                 first = saved;
@@ -192,6 +207,7 @@ public class PayOsSettlementService {
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate());
+        membershipService.synchronizeMemberTier(memberId);
         borrowService.activatePendingBankBorrow(borrowId);
         return transaction;
     }
