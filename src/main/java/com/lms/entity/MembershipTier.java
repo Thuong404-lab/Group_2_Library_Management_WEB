@@ -7,6 +7,9 @@ public class MembershipTier {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tier_id")
     private Integer tierId;
+    @Version
+    @Column(name = "row_version", nullable = false)
+    private Long version;
     @Column(nullable = false, length = 100)
     private String tierName;
     @Column(precision = 5, scale = 2)
@@ -35,6 +38,8 @@ public class MembershipTier {
 
     public Integer getTierId() { return tierId; }
     public void setTierId(Integer tierId) { this.tierId = tierId; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
     public String getTierName() { return tierName; }
     public void setTierName(String tierName) { this.tierName = tierName; }
     public BigDecimal getDiscountPercent() { return discountPercent; }
