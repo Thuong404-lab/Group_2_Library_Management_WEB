@@ -36,7 +36,7 @@ public class AdminProfileController extends LocalizedControllerSupport {
             return "redirect:/login";
         String username = principal.getName();
         if (!model.containsAttribute("admin")) {
-            User admin = profileService.getProfile(username);
+            User admin = profileService.getStaffProfile(username);
             model.addAttribute("admin", admin);
         }
         return "admin/profile";
@@ -55,14 +55,13 @@ public class AdminProfileController extends LocalizedControllerSupport {
 
         try {
             String currentUsername = principal.getName();
-            String currentEmail = profileService.getProfile(currentUsername).getEmail();
-            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
+            profileService.updateStaffProfile(currentUsername, fullName, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
                 User sessionUser = customUserDetails.getUser();
-                User updatedUser = profileService.getProfile(currentUsername);
+                User updatedUser = profileService.getStaffProfile(currentUsername);
                 
                 sessionUser.setFullName(updatedUser.getFullName());
                 sessionUser.setAvatar(updatedUser.getAvatar());
@@ -83,7 +82,7 @@ public class AdminProfileController extends LocalizedControllerSupport {
             tempUser.setEmail(email);
             tempUser.setPhone(phone);
             try {
-                User current = profileService.getProfile(principal.getName());
+                User current = profileService.getStaffProfile(principal.getName());
                 tempUser.setAvatar(current.getAvatar());
                 tempUser.setStatus(current.getStatus());
             } catch (Exception ignored) {}
@@ -105,7 +104,7 @@ public class AdminProfileController extends LocalizedControllerSupport {
             return "redirect:/admin/profile";
         }
         try {
-            profileService.changePassword(principal.getName(), oldPassword, newPassword);
+            profileService.changeStaffPassword(principal.getName(), oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());

@@ -17,7 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -55,29 +54,33 @@ public class ProfileServiceImpl implements ProfileService {
         this.messages = messages;
     }
 
-    private User getUserByUsername(String username) {
-        Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
-        if (memberAccount.isPresent()) {
-            return memberAccount.get().getMember().getUser();
-        }
-        Optional<StaffAccount> staffAccount = staffAccountRepository.findByUsername(username);
-        if (staffAccount.isPresent()) {
-            return staffAccount.get().getStaff().getUser();
-        }
-        throw new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username));
+    private MemberAccount getMemberAccount(String username) {
+        return memberAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messages.get("backend.profile.accountNotFound", username)));
+    }
+
+    private StaffAccount getStaffAccount(String username) {
+        return staffAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messages.get("backend.profile.accountNotFound", username)));
     }
 
     @Override
     public User getProfile(String username) {
-        return getUserByUsername(username);
+        return getMemberAccount(username).getMember().getUser();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getStaffProfile(String username) {
+        return getStaffAccount(username).getStaff().getUser();
     }
 
     @Override
     @Transactional(readOnly = true)
     public long countActiveBorrows(String username) {
-        MemberAccount account = memberAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        messages.get("backend.profile.accountNotFound", username)));
+        MemberAccount account = getMemberAccount(username);
         return borrowDetailRepository.countActiveBorrowedBooks(account.getMember().getMemberId());
     }
 
@@ -90,7 +93,8 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void updateProfile(String currentUsername, String newUsername, String fullName, String email, String phone, MultipartFile avatarFile) {
-        User user = getUserByUsername(currentUsername);
+        MemberAccount account = getMemberAccount(currentUsername);
+        User user = account.getMember().getUser();
 
         String normalizedUsername = validateUsernameChange(currentUsername, newUsername);
 
@@ -109,20 +113,24 @@ public class ProfileServiceImpl implements ProfileService {
         userRepository.save(user);
 
         if (!normalizedUsername.equals(currentUsername)) {
-            Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(currentUsername);
-            if (memberAccount.isPresent()) {
-                MemberAccount account = memberAccount.get();
-                account.setUsername(normalizedUsername);
-                memberAccountRepository.save(account);
-            } else {
-                Optional<StaffAccount> staffAccount = staffAccountRepository.findByUsername(currentUsername);
-                if (staffAccount.isPresent()) {
-                    StaffAccount account = staffAccount.get();
-                    account.setUsername(normalizedUsername);
-                    staffAccountRepository.save(account);
-                }
-            }
+            account.setUsername(normalizedUsername);
+            memberAccountRepository.save(account);
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateStaffProfile(String username, String fullName, String phone, MultipartFile avatarFile) {
+        User user = getStaffAccount(username).getStaff().getUser();
+        user.setFullName(validateFullName(fullName));
+        validateAndSetPhone(user, phone);
+
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            validateAvatar(avatarFile);
+            user.setAvatar(fileUploadService.storeFile(avatarFile));
+        }
+
+        userRepository.save(user);
     }
 
     private String validateUsernameChange(String currentUsername, String newUsername) {
@@ -211,6 +219,22 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
+        validateNewPassword(newPassword);
+        MemberAccount account = getMemberAccount(username);
+        verifyAndReplacePassword(oldPassword, newPassword, account.getPasswordHash(), account::setPasswordHash);
+        memberAccountRepository.save(account);
+    }
+
+    @Override
+    @Transactional
+    public void changeStaffPassword(String username, String oldPassword, String newPassword) {
+        validateNewPassword(newPassword);
+        StaffAccount account = getStaffAccount(username);
+        verifyAndReplacePassword(oldPassword, newPassword, account.getPasswordHash(), account::setPasswordHash);
+        staffAccountRepository.save(account);
+    }
+
+    private void validateNewPassword(String newPassword) {
         if (newPassword == null || newPassword.length() < 6) {
             throw new ValidationException(messages.get("validation.passwordMin"));
         }
@@ -220,35 +244,18 @@ public class ProfileServiceImpl implements ProfileService {
         if (newPassword.contains(" ")) {
             throw new ValidationException(messages.get("validation.passwordNoSpaces"));
         }
-        
-        Optional<MemberAccount> memberAccount = memberAccountRepository.findByUsername(username);
-        if (memberAccount.isPresent()) {
-            MemberAccount account = memberAccount.get();
-            if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new ValidationException(messages.get("backend.profile.oldPasswordIncorrect"));
-            }
-            if (oldPassword.equals(newPassword)) {
-                throw new ValidationException(messages.get("backend.profile.newPasswordSame"));
-            }
-            account.setPasswordHash(passwordEncoder.encode(newPassword));
-            memberAccountRepository.save(account);
-            return;
-        }
+    }
 
-        Optional<StaffAccount> staffAccount = staffAccountRepository.findByUsername(username);
-        if (staffAccount.isPresent()) {
-            StaffAccount account = staffAccount.get();
-            if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
-                throw new ValidationException(messages.get("backend.profile.oldPasswordIncorrect"));
-            }
-            if (oldPassword.equals(newPassword)) {
-                throw new ValidationException(messages.get("backend.profile.newPasswordSame"));
-            }
-            account.setPasswordHash(passwordEncoder.encode(newPassword));
-            staffAccountRepository.save(account);
-            return;
+    private void verifyAndReplacePassword(String oldPassword,
+                                          String newPassword,
+                                          String currentPasswordHash,
+                                          java.util.function.Consumer<String> passwordSetter) {
+        if (!passwordEncoder.matches(oldPassword, currentPasswordHash)) {
+            throw new ValidationException(messages.get("backend.profile.oldPasswordIncorrect"));
         }
-
-        throw new ResourceNotFoundException(messages.get("backend.account.notFound"));
+        if (oldPassword.equals(newPassword)) {
+            throw new ValidationException(messages.get("backend.profile.newPasswordSame"));
+        }
+        passwordSetter.accept(passwordEncoder.encode(newPassword));
     }
 }

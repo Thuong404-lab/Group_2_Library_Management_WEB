@@ -62,6 +62,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/staff-login").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/librarian/profile/**").hasRole("LIBRARIAN")
                 .requestMatchers("/librarian/**").hasAnyRole("ADMIN", "LIBRARIAN")
                 .anyRequest().authenticated()
             )
@@ -75,6 +76,12 @@ public class SecurityConfig {
                 .logoutUrl("/staff-logout")
                 .logoutSuccessUrl("/staff-login?logout")
                 .permitAll()
+            )
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+                .expiredUrl("/staff-login?expired=true")
+                .sessionRegistry(sessionRegistry())
             )
             .userDetailsService(staffDetailsService)
             .exceptionHandling(exception -> exception.accessDeniedPage("/403"));
