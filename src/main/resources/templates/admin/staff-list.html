@@ -65,17 +65,20 @@
         <section class="member-data-card">
             <div class="member-data-card-body">
                 <div class="member-summary-chips" th:aria-label="#{admin.staff.summary}">
-                    <span
-                        th:text="#{admin.staff.librarianCount(${staffSummary != null ? staffSummary['librarian'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{admin.staff.librarianCount(${@displayNumber.count(staffSummary != null ? staffSummary['librarian'] : 0)})}">0
                         librarians</span>
-                    <span th:text="#{admin.staff.adminCount(${staffSummary != null ? staffSummary['admin'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{admin.staff.adminCount(${@displayNumber.count(staffSummary != null ? staffSummary['admin'] : 0)})}">0
                         admins</span>
-                    <span th:text="#{admin.staff.activeCount(${staffSummary != null ? staffSummary['active'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{admin.staff.activeCount(${@displayNumber.count(staffSummary != null ? staffSummary['active'] : 0)})}">0
                         active</span>
-                    <span
-                        th:text="#{admin.staff.inactiveCount(${staffSummary != null ? staffSummary['inactive'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{admin.staff.inactiveCount(${@displayNumber.count(staffSummary != null ? staffSummary['inactive'] : 0)})}">0
                         inactive</span>
-                    <span th:text="#{admin.staff.blockedCount(${staffSummary != null ? staffSummary['blocked'] : 0})}">0
+                    <span class="app-number"
+                        th:text="#{admin.staff.blockedCount(${@displayNumber.count(staffSummary != null ? staffSummary['blocked'] : 0)})}">0
                         blocked</span>
                 </div>
                 <!-- Search & Filter -->
@@ -139,16 +142,17 @@
                         <tbody>
                             <tr th:each="staff, iterStat : ${staffPage.content}"
                                 th:with="account=${staff.user != null ? accountByUserId[staff.user.id] : null}">
-                                <td class="ps-3 fw-bold"
-                                    th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">1</td>
+                                <td class="ps-3 fw-bold app-number"
+                                    th:text="${@displayNumber.count(staffPage.number * staffPage.size + iterStat.index + 1)}">
+                                    1</td>
                                 <td>
                                     <span class="fw-bold text-classic"
                                         th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
                                         username
                                     </span>
-                                    <div class="small text-muted"
-                                        th:text="${account != null ? 'ID: ' + account.accountId : 'ID: N/A'}">
-                                        ID: 1
+                                    <div class="small text-muted app-code-number"
+                                        th:text="${account != null and account.accountId != null ? #messages.msg('common.accountIdValue', account.accountId) : #messages.msg('common.accountIdMissing')}">
+                                        Account ID: 1
                                     </div>
                                 </td>
 
@@ -161,7 +165,7 @@
                                         </div>
                                         <div class="small text-muted" th:if="${staff.user.phone}">
                                             <i class="bi bi-telephone me-1"></i>
-                                            <span th:text="${staff.user.phone}">phone</span>
+                                            <span class="app-phone-number" th:text="${staff.user.phone}">phone</span>
                                         </div>
                                     </div>
                                     <div th:unless="${staff.user != null}" class="fst-italic text-muted small">
@@ -187,7 +191,7 @@
                                     </span>
                                     <span class="status-badge status-inactive"
                                         th:if="${staff.user == null || staff.user.status == null}">
-                                        N/A
+                                        —
                                     </span>
                                 </td>
 
@@ -221,8 +225,8 @@
                                                 class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post" class="staff-update-form" novalidate
-                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
-                                                        th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='staff')}">
+                                                        th:action="@{/admin/member-list/edit/{id}(id=${account.accountId})}"
+                                                        th:attr="data-validation-url=@{/admin/member-list/edit/{id}/validate(id=${account.accountId},source='staff')}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -306,12 +310,14 @@
                                                                 <div class="col-md-6 order-md-2">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">
-                                                                        <span th:text="#{member.profile.username}">Username</span>
+                                                                        <span
+                                                                            th:text="#{member.profile.username}">Username</span>
                                                                         <span class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="username"
                                                                         th:data-label="#{member.profile.username}"
-                                                                        pattern="[a-zA-Z0-9_]{3,20}" minlength="3" maxlength="20"
+                                                                        pattern="[a-zA-Z0-9_]{3,20}" minlength="3"
+                                                                        maxlength="20"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                         onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -420,7 +426,7 @@
                                             <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post"
-                                                        th:action="@{/admin/accounts/delete/{id}(id=${account.accountId})}">
+                                                        th:action="@{/admin/member-list/delete/{id}(id=${account.accountId})}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -457,8 +463,8 @@
                                                                         <div class="small text-muted"
                                                                             th:text="#{common.accountId}">Account ID
                                                                         </div>
-                                                                        <div class="fw-bold"
-                                                                            th:text="${account.accountId}">
+                                                                        <div class="fw-bold app-code-number"
+                                                                            th:text="${account.accountId != null ? account.accountId : '—'}">
                                                                             id
                                                                         </div>
                                                                     </div>
@@ -493,7 +499,7 @@
                                                                         <div>
                                                                             <i
                                                                                 class="bi bi-telephone me-1 text-classic"></i>
-                                                                            <span
+                                                                            <span class="app-phone-number"
                                                                                 th:text="${staff.user != null and staff.user.phone != null ? staff.user.phone : #messages.msg('common.noPhone')}">
                                                                                 phone
                                                                             </span>
