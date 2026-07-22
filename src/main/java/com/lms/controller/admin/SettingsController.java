@@ -43,7 +43,6 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam BigDecimal damageCompensationAmount,
             @RequestParam Integer damageCompensationThreshold,
             @RequestParam Integer overdueViolationLockLimit,
-            @RequestParam Integer bookDisposalConditionThreshold,
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
         try {
@@ -58,7 +57,6 @@ public class SettingsController extends LocalizedControllerSupport {
                     damageCompensationAmount,
                     damageCompensationThreshold,
                     overdueViolationLockLimit,
-                    bookDisposalConditionThreshold,
                     depositAmount);
 
             redirectAttributes.addFlashAttribute("success", message("backend.settings.updated"));

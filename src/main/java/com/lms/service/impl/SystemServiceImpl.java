@@ -133,7 +133,6 @@ public class SystemServiceImpl implements SystemService {
             BigDecimal damageCompensationAmount,
             Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
-            Integer bookDisposalConditionThreshold,
             BigDecimal depositAmount) {
 
         validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
@@ -146,7 +145,6 @@ public class SystemServiceImpl implements SystemService {
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
         validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
-        validatePercentage(bookDisposalConditionThreshold, messages.get("backend.settings.disposalThresholdRange"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
         saveOrUpdateSetting("Max_Borrow_Days",
@@ -188,10 +186,6 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Overdue_Violation_Lock_Limit",
                 String.valueOf(overdueViolationLockLimit),
                 messages.get("backend.settings.description.overdueLockLimit"));
-
-        saveOrUpdateSetting("Book_Disposal_Condition_Threshold",
-                String.valueOf(bookDisposalConditionThreshold),
-                messages.get("backend.settings.description.disposalThreshold"));
 
         saveOrUpdateSetting("Deposit_Amount",
                 depositAmount.toPlainString(),
