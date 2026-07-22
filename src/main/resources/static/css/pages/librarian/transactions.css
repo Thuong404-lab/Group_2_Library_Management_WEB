@@ -121,17 +121,16 @@
 
 .transaction-page .transaction-filter-form {
     display: grid;
-    grid-template-columns: minmax(260px, 420px) auto 1fr;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: end;
-    gap: 12px;
+    gap: 16px 12px;
 }
 
-.transaction-page .transaction-type-filter {
-    width: 100%;
-    max-width: none;
+.transaction-page .transaction-search-filter {
+    grid-column: span 2;
 }
 
-.transaction-page .transaction-type-filter > label {
+.transaction-page .transaction-filter-field > label {
     display: block;
     margin-bottom: 8px;
     color: var(--app-color-body-strong);
@@ -139,11 +138,11 @@
     font-weight: 600;
 }
 
-.transaction-page .transaction-select-control {
+.transaction-page .transaction-input-control {
     position: relative;
 }
 
-.transaction-page .transaction-select-control > i {
+.transaction-page .transaction-input-control > i {
     position: absolute;
     top: 50%;
     left: 15px;
@@ -154,31 +153,37 @@
     pointer-events: none;
 }
 
-.transaction-page .transaction-select-control .form-select {
+.transaction-page .transaction-input-control .form-control {
     height: 48px;
     padding-left: 44px;
     border-radius: 10px;
     background-color: #fff;
 }
 
-.transaction-page .transaction-filter-submit .btn,
-.transaction-page .transaction-reset-filter .btn {
+.transaction-page .transaction-filter-field > .form-select,
+.transaction-page .transaction-filter-field > .form-control {
+    height: 48px;
+    border-radius: 10px;
+}
+
+.transaction-page .transaction-filter-actions {
+    display: flex;
+    grid-column: span 3;
+    align-items: center;
+    gap: 10px;
+}
+
+.transaction-page .transaction-filter-actions .btn {
     min-height: 48px;
+    min-width: 118px;
     gap: 8px;
     border-radius: 10px;
 }
 
-.transaction-page .transaction-filter-submit .btn {
-    min-width: 112px;
-}
-
-.transaction-page .transaction-reset-filter {
-    justify-self: end;
-    margin-left: 0;
-}
-
-.transaction-page .transaction-reset-filter .btn {
-    min-width: 126px;
+.transaction-page .status-refunded {
+    color: #65518a !important;
+    background: #f0ebf7 !important;
+    border-color: #d9cdea !important;
 }
 
 .transaction-page .transaction-table-card > .app-table-wrap {
@@ -296,7 +301,12 @@
 
 @media (max-width: 991.98px) {
     .transaction-page .transaction-filter-form {
-        grid-template-columns: minmax(240px, 1fr) auto auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .transaction-page .transaction-search-filter,
+    .transaction-page .transaction-filter-actions {
+        grid-column: span 2;
     }
 
     .transaction-page .transaction-table thead th,
@@ -346,17 +356,21 @@
     }
 
     .transaction-page .transaction-filter-form {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
     }
 
-    .transaction-page .transaction-type-filter {
-        grid-column: 1 / -1;
+    .transaction-page .transaction-search-filter,
+    .transaction-page .transaction-filter-actions {
+        grid-column: auto;
     }
 
-    .transaction-page .transaction-filter-submit .btn,
-    .transaction-page .transaction-reset-filter,
-    .transaction-page .transaction-reset-filter .btn {
+    .transaction-page .transaction-filter-actions,
+    .transaction-page .transaction-filter-actions .btn {
         width: 100%;
+    }
+
+    .transaction-page .transaction-filter-actions .btn {
+        flex: 1 1 0;
     }
 
     .transaction-page .transaction-table-card > .app-table-wrap {
@@ -453,12 +467,9 @@
 }
 
 @media (max-width: 479.98px) {
-    .transaction-page .transaction-filter-form {
-        grid-template-columns: 1fr;
-    }
-
-    .transaction-page .transaction-type-filter {
-        grid-column: auto;
+    .transaction-page .transaction-filter-actions {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .transaction-page .transaction-table-card > .app-table-wrap {

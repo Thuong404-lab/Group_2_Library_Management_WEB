@@ -128,17 +128,6 @@
                               th:text="#{librarian.reviews.noResponse}">No response</span>
                     </td>
                     <td class="review-action-cell" th:data-label="#{common.actions}">
-                        <form class="app-detached-form"
-                              th:if="${review.status != 'DELETED_BY_MEMBER'}"
-                              th:id="${'reviewRejectForm-' + review.feedbackId}"
-                              th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reject'}"
-                              method="post">
-                            <input type="hidden" name="page" th:value="${reviews.number}">
-                            <input type="hidden" name="status" th:value="${currentStatus}">
-                            <input type="hidden" name="reason" value="">
-                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        </form>
-
                         <form th:if="${review.status == 'APPROVED'}"
                               th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                               method="post"
@@ -188,7 +177,7 @@
                                     class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
                                     data-bs-toggle="modal"
                                     data-bs-target="#librarianDeleteReviewModal"
-                                    th:data-delete-form-id="${'reviewRejectForm-' + review.feedbackId}"
+                                    th:data-reject-action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reject'}"
                                     th:data-book-title="${review.bookTitle}"
                                     th:data-member-name="${review.memberName}"
                                     th:title="#{librarian.reviews.rejectAction}"
@@ -208,18 +197,22 @@
                                     class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
                                     data-bs-toggle="modal"
                                     data-bs-target="#librarianDeleteReviewModal"
-                                    th:data-delete-form-id="${'reviewRejectForm-' + review.feedbackId}"
+                                    th:data-reject-action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reject'}"
                                     th:data-book-title="${review.bookTitle}"
                                     th:data-member-name="${review.memberName}"
                                     th:title="#{librarian.reviews.rejectAction}"
                                     th:aria-label="#{librarian.reviews.rejectAction}">
                                 <i class="bi bi-x-lg" aria-hidden="true"></i>
                             </button>
-                            <form class="review-permanent-delete-form"
+                            <form class="review-permanent-delete-form app-confirm-form"
                               th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                               method="post"
-                              onsubmit="return confirm(this.dataset.confirmMessage);"
-                              th:data-confirm-message="#{librarian.reviews.deleteConfirm}">
+                              th:data-confirm-title="#{librarian.reviews.deleteTitle}"
+                              th:data-confirm-subject-label="#{librarian.reviews.book}"
+                              th:data-confirm-subject="${review.bookTitle}"
+                              th:data-confirm-message="#{librarian.reviews.deleteConfirm}"
+                              th:data-confirm-action="#{librarian.reviews.deleteAction}"
+                              data-confirm-tone="danger">
                             <input type="hidden" name="page" th:value="${reviews.number}">
                             <input type="hidden" name="status" th:value="${currentStatus}">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -284,9 +277,13 @@
          tabindex="-1"
          aria-labelledby="librarianDeleteReviewModalLabel"
          aria-describedby="librarianDeleteReviewModalDescription"
-         aria-hidden="true">
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <form class="modal-content" id="librarianRejectReviewForm" method="post" novalidate>
+                <input type="hidden" name="page" th:value="${reviews != null ? reviews.number : 0}">
+                <input type="hidden" name="status" th:value="${currentStatus}">
+                <input type="hidden" name="reason" value="">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="modal-header">
                     <h2 class="modal-title" id="librarianDeleteReviewModalLabel" th:text="#{librarian.reviews.rejectTitle}">
                         Reject review?
@@ -316,12 +313,12 @@
                             class="librarian-review-modal-cancel"
                             data-bs-dismiss="modal"
                             th:text="#{common.cancel}">Cancel</button>
-                    <button type="button"
+                    <button type="submit"
                             class="librarian-review-modal-confirm"
                             id="librarianConfirmDeleteReview"
                             th:text="#{librarian.reviews.rejectAction}">Reject Review</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -375,14 +372,13 @@
 
             const memberName = document.getElementById("librarianDeleteReviewMember");
             const bookTitle = document.getElementById("librarianDeleteReviewBook");
-            const confirmButton = document.getElementById("librarianConfirmDeleteReview");
+            const rejectForm = document.getElementById("librarianRejectReviewForm");
             const rejectReason = document.getElementById("librarianRejectReviewReason");
             const rejectReasonError = document.getElementById("librarianRejectReviewReasonError");
-            let deleteForm = null;
 
             document.querySelectorAll(".librarian-review-delete-trigger").forEach(function (trigger) {
                 trigger.addEventListener("click", function () {
-                    deleteForm = document.getElementById(trigger.dataset.deleteFormId);
+                    if (rejectForm) rejectForm.action = trigger.dataset.rejectAction || "";
                     if (rejectReason) {
                         rejectReason.value = "";
                         rejectReason.classList.remove("is-invalid");
@@ -392,8 +388,8 @@
                     if (bookTitle) bookTitle.textContent = trigger.dataset.bookTitle || "";
                 });
             });
-            if (confirmButton) {
-                confirmButton.addEventListener("click", function () {
+            if (rejectForm) {
+                rejectForm.addEventListener("submit", function (event) {
                     const reason = rejectReason ? rejectReason.value.trim().replace(/\s+/g, " ") : "";
                     const message = reason.length < 5 ? /*[[#{backend.librarian.reviewReject.reasonRange}]]*/ "Please enter a reason."
                         : reason.length > 500 ? /*[[#{backend.librarian.reviewReject.reasonRange}]]*/ "The reason is too long."
@@ -401,14 +397,16 @@
                     if (rejectReason) rejectReason.classList.toggle("is-invalid", Boolean(message));
                     if (rejectReasonError) rejectReasonError.textContent = message;
                     if (message) {
+                        event.preventDefault();
                         rejectReason.focus();
                         return;
                     }
-                    if (deleteForm) {
-                        const reasonInput = deleteForm.querySelector("input[name='reason']");
-                        if (reasonInput) reasonInput.value = reason;
-                        deleteForm.submit();
+                    if (!rejectForm.getAttribute("action")) {
+                        event.preventDefault();
+                        return;
                     }
+                    const reasonInput = rejectForm.querySelector("input[name='reason']");
+                    if (reasonInput) reasonInput.value = reason;
                 });
             }
         });
