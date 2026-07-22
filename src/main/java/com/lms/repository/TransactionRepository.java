@@ -78,6 +78,40 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
     Page<Transaction> findAllByOrderByTransactionDateDesc(Pageable pageable);
 
+    @EntityGraph(attributePaths = {
+            "wallet", "wallet.member", "wallet.member.user",
+            "performedByStaff", "performedByStaff.user", "borrow"
+    })
+    @Query("""
+            select t
+            from Transaction t
+            join t.wallet w
+            join w.member m
+            join m.user u
+            where (:type is null or upper(t.transactionType) = :type)
+              and (:status is null or upper(t.status) = :status)
+              and (:channel is null or upper(t.channel) = :channel)
+              and (:fromDate is null or t.transactionDate >= :fromDate)
+              and (:toDate is null or t.transactionDate < :toDate)
+              and (:query = ''
+                   or lower(u.fullName) like lower(concat('%', :query, '%'))
+                   or lower(u.email) like lower(concat('%', :query, '%'))
+                   or lower(coalesce(u.phone, '')) like lower(concat('%', :query, '%'))
+                   or lower(coalesce(t.referenceCode, '')) like lower(concat('%', :query, '%'))
+                   or (:transactionIdQuery is not null and t.transactionId = :transactionIdQuery)
+                   or (:memberIdQuery is not null and m.memberId = :memberIdQuery))
+            order by t.transactionDate desc, t.transactionId desc
+            """)
+    Page<Transaction> searchForLibrarian(@Param("query") String query,
+            @Param("transactionIdQuery") Integer transactionIdQuery,
+            @Param("memberIdQuery") Integer memberIdQuery,
+            @Param("type") String type,
+            @Param("status") String status,
+            @Param("channel") String channel,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
+
     @Query("""
             select t
             from Transaction t
