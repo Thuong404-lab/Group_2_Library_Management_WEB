@@ -23,19 +23,23 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
 
     /**
      * Restricted members may only write data when resolving an outstanding
-     * financial obligation. Keep this allow-list narrow so a newly added member
-     * mutation remains denied by default.
+     * financial obligation or acknowledging a notification. Keep this allow-list
+     * narrow so a newly added member mutation remains denied by default.
      */
     private static final Set<String> RESTRICTED_MEMBER_ALLOWED_POST_PATHS = Set.of(
             "/member/payments/fines/pay-all",
             "/member/payments/payos/top-up",
-            "/member/payments/payos/fine/all");
+            "/member/payments/payos/fine/all",
+            "/member/interaction/notifications/mark-read",
+            "/member/financial/topup-notifications/mark-all-read");
 
     private static final List<Pattern> RESTRICTED_MEMBER_ALLOWED_POST_PATTERNS = List.of(
             Pattern.compile("^/member/financial/fines/pay/\\d+$"),
             Pattern.compile("^/member/financial/fees/pay/\\d+$"),
             Pattern.compile("^/member/payments/payos/fine/\\d+$"),
-            Pattern.compile("^/member/payments/payos/borrow-fee/\\d+$"));
+            Pattern.compile("^/member/payments/payos/borrow-fee/\\d+$"),
+            Pattern.compile("^/member/interaction/notifications/\\d+/mark-read$"),
+            Pattern.compile("^/member/financial/topup-notifications/\\d+/mark-read$"));
 
     private final LocalizedMessageService messages;
     private final MemberAccountRepository memberAccountRepository;
@@ -79,7 +83,7 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (isInactive && !isSafeMethod(request.getMethod()) && !isObligationResolutionRequest(request)) {
+        if (isInactive && !isSafeMethod(request.getMethod()) && !isAllowedRestrictedMemberMutation(request)) {
             if (expectsJson(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN,
                         messages.get("member.inactiveActionDenied"));
@@ -97,7 +101,7 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
                 || "OPTIONS".equalsIgnoreCase(method);
     }
 
-    private boolean isObligationResolutionRequest(HttpServletRequest request) {
+    private boolean isAllowedRestrictedMemberMutation(HttpServletRequest request) {
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             return false;
         }

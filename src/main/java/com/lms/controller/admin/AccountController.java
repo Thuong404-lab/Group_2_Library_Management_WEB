@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/admin/accounts")
+@RequestMapping("/admin/member-list")
 public class AccountController extends LocalizedControllerSupport {
 
     private final AccountService accountService;
@@ -52,7 +52,7 @@ public class AccountController extends LocalizedControllerSupport {
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedTier", tier);
 
-        return "admin/accounts";
+        return "admin/member-list";
     }
 
     @GetMapping("/search")
@@ -88,12 +88,12 @@ public class AccountController extends LocalizedControllerSupport {
         try {
             accountService.createMemberAccount(request);
             redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
-            return "redirect:/admin/accounts";
+            return "redirect:/admin/member-list";
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
             redirectAttributes.addFlashAttribute("fieldErrors", e.getFieldErrors());
             redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
-            return "redirect:/admin/accounts";
+            return "redirect:/admin/member-list";
         }
     }
 
@@ -153,7 +153,10 @@ public class AccountController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             accountService.deleteAccount(id, source, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", message("backend.account.deactivated"));
+            redirectAttributes.addFlashAttribute("success",
+                    message("staff".equalsIgnoreCase(source)
+                            ? "backend.account.deactivated"
+                            : "backend.account.deleted"));
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -174,7 +177,7 @@ public class AccountController extends LocalizedControllerSupport {
                             ? message("backend.account.resetFailed")
                             : e.getMessage());
         }
-        return "redirect:/admin/accounts";
+        return "redirect:/admin/member-list";
     }
 
     private Map<String, Object> createFormValues(AdminMemberAccountCreateRequest request) {
@@ -203,7 +206,7 @@ public class AccountController extends LocalizedControllerSupport {
             return "redirect:/admin/staff";
         }
 
-        return "redirect:/admin/accounts";
+        return "redirect:/admin/member-list";
     }
 
     private String trim(String value) {

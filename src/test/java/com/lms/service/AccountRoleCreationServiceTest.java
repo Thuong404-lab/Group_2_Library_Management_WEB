@@ -143,7 +143,8 @@ class AccountRoleCreationServiceTest {
                 userRepository,
                 roleRepository,
                 mock(StaffRepository.class),
-                mock(AuditLogService.class));
+                mock(AuditLogService.class),
+                mock(MemberAccountDeletionRepository.class));
 
         service.createMemberAccount(request);
 
@@ -182,7 +183,8 @@ class AccountRoleCreationServiceTest {
                 userRepository,
                 roleRepository,
                 staffRepository,
-                mock(AuditLogService.class));
+                mock(AuditLogService.class),
+                mock(MemberAccountDeletionRepository.class));
 
         service.createStaffAccount(request);
 
@@ -300,7 +302,8 @@ class AccountRoleCreationServiceTest {
                 userRepository,
                 mock(RoleRepository.class),
                 mock(StaffRepository.class),
-                mock(AuditLogService.class));
+                mock(AuditLogService.class),
+                mock(MemberAccountDeletionRepository.class));
     }
 
     private CreateMemberAccountRequest memberRequest() {
