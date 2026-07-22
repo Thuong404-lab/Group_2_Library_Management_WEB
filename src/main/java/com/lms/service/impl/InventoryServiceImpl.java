@@ -136,7 +136,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (authorName == null || authorName.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.authorRequired"));
         }
-        if (quantity == null || quantity < 0 || quantity > 999) {
+        if (quantity == null || quantity < 0 || quantity > 100) {
             throw new ValidationException(messages.get("librarian.inventory.validation.quantity"));
         }
         if (shelfId == null) {
@@ -264,7 +264,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void addBookCopies(Integer bookId, Integer quantity, Integer shelfId, String bookCondition) {
-        if (quantity == null || quantity < 1 || quantity > 999) {
+        if (quantity == null || quantity < 1 || quantity > 100) {
             throw new ValidationException(messages.get("backend.inventory.copyQuantityInvalid"));
         }
         if (shelfId == null) {
@@ -275,7 +275,12 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
         }
 
-        Book book = findBookById(bookId);
+        Book book = bookRepository.findByIdForUpdate(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
+        long currentQuantity = bookItemRepository.countByBook_BookId(bookId);
+        if (currentQuantity + quantity > 100) {
+            throw new ValidationException(messages.get("backend.inventory.copyQuantityLimit", currentQuantity));
+        }
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
         Set<String> existingBarcodes = bookItemRepository.findByBook_BookId(bookId).stream()

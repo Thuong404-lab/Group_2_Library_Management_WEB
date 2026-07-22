@@ -504,20 +504,42 @@
                                 <th:block th:each="genre : ${genres}">
                                     <div class="modal fade" th:id="${'viewGenreTitleCountModal' + genre.genreId}"
                                         tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
                                             <div class="modal-content">
                                                 <div class="modal-header">
                                                     <h5 class="modal-title fw-bold text-classic"
                                                         th:text="#{librarian.inventory.genreTitleCountTitle}">Titles in genre</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        th:aria-label="#{common.close}"></button>
                                                 </div>
-                                                <div class="modal-body text-center px-4 py-4">
-                                                    <div class="text-muted mb-2" th:text="${genre.genreName}">Genre</div>
-                                                    <div class="display-5 fw-bold text-classic"
-                                                        th:text="${genreTitleCounts != null ? (genreTitleCounts[genre.genreId] ?: 0) : 0}">0</div>
-                                                    <div class="text-muted"
-                                                        th:text="#{librarian.inventory.titleCountUnit}">book titles</div>
+                                                <div class="modal-body px-4 py-4">
+                                                    <div class="genre-books-modal-name mb-3" th:text="${genre.genreName}">Genre</div>
+                                                    <div class="table-responsive genre-books-table-wrap">
+                                                        <table class="table align-middle mb-0 genre-books-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col" class="text-center" th:text="#{librarian.inventory.genreBooks.no}">No</th>
+                                                                    <th scope="col" class="text-center" th:text="#{librarian.inventory.genreBooks.image}">Image</th>
+                                                                    <th scope="col" class="text-center" th:text="#{librarian.inventory.genreBooks.totalQuantity}">Total quantity</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr th:each="genreBook, iteration : ${genreBooks != null ? genreBooks[genre.genreId] : null}">
+                                                                    <td class="text-center" th:text="${iteration.count}">1</td>
+                                                                    <td class="text-center">
+                                                                        <img class="genre-books-cover"
+                                                                            th:src="${genreBook.coverImageUrl != null and !#strings.isEmpty(genreBook.coverImageUrl) ? genreBook.coverImageUrl : '/images/book-cover-placeholder.svg'}"
+                                                                            th:alt="${genreBook.title}" th:title="${genreBook.title}"
+                                                                            onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
+                                                                    </td>
+                                                                    <td class="text-center fw-semibold"
+                                                                        th:text="${allBookTotalQuantities != null ? (allBookTotalQuantities[genreBook.bookId] ?: 0) : 0}">0</td>
+                                                                </tr>
+                                                                <tr th:if="${genreBooks == null or genreBooks[genre.genreId] == null or #lists.isEmpty(genreBooks[genre.genreId])}">
+                                                                    <td colspan="3" class="text-center text-muted py-4"
+                                                                        th:text="#{librarian.inventory.genreBooks.empty}">No books in this genre.</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
                                                 <div class="modal-footer justify-content-center">
                                                     <button type="button" class="btn btn-light border shadow-sm px-4"
@@ -827,8 +849,8 @@
                                                     th:text="#{librarian.inventory.copyQuantity}">Quantity</span> <span
                                                     class="text-danger">*</span></label>
                                             <input type="number" name="quantity" class="form-control"
-                                                style="background-color: white; border-radius: 8px;" min="0" max="999"
-                                                placeholder="0-999" required oninput="validateQuantity(this)">
+                                                style="background-color: white; border-radius: 8px;" min="0" max="100"
+                                                placeholder="0-100" required oninput="validateQuantity(this)">
                                             <div class="invalid-feedback"
                                                 th:text="#{librarian.inventory.validation.quantityRequired}">Please
                                                 enter quantity.</div>
@@ -1081,11 +1103,12 @@
                                                     th:text="#{librarian.inventory.copyQuantity}">Quantity</span> <span
                                                     class="text-danger">*</span></label>
                                             <input type="number" name="quantity" class="form-control add-copy-control"
-                                                min="1" max="999" step="1" inputmode="numeric" value="1" required
+                                                min="1" th:max="${100 - (bookTotalQuantities[book.bookId] ?: 0)}" step="1" inputmode="numeric" value="1" required
+                                                th:disabled="${(bookTotalQuantities[book.bookId] ?: 0) >= 100}"
                                                 oninput="validateQuantity(this)">
                                             <div class="invalid-feedback"
                                                 th:text="#{librarian.inventory.validation.quantity}">Quantity must be
-                                                between 1 and 999.</div>
+                                                between 1 and 100.</div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold"><span
@@ -1121,7 +1144,9 @@
                                     <div class="modal-footer border-top-0"><button type="button"
                                             class="btn btn-light border" data-bs-dismiss="modal"
                                             th:text="#{common.cancel}">Cancel</button><button type="submit"
-                                            class="btn btn-classic" th:text="#{librarian.inventory.addCopies}">Add
+                                            class="btn btn-classic"
+                                            th:disabled="${(bookTotalQuantities[book.bookId] ?: 0) >= 100}"
+                                            th:text="#{librarian.inventory.addCopies}">Add
                                             Copies</button></div>
                                 </form>
                             </div>
@@ -1149,7 +1174,7 @@
                                 </div>
                                 <div class="modal-body p-4">
                                     <div class="table-responsive">
-                                        <table class="table table-hover align-middle mb-0 copy-detail-table">
+                                        <table class="table table-hover align-middle mb-0 copy-detail-table" data-copy-table th:data-book-id="${book.bookId}">
                                             <thead class="table-light text-uppercase small text-muted">
                                                 <tr>
                                                     <th th:text="#{common.number}">No.</th>
@@ -1215,6 +1240,14 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    <nav class="copy-modal-pagination mt-3" th:if="${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null and #lists.size(bookItemsByBookId[book.bookId]) > 8}"
+                                        th:data-book-id="${book.bookId}" aria-label="Copy list pagination">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-page-prev
+                                            th:text="#{common.previous}">Previous</button>
+                                        <span class="copy-page-summary" data-copy-page-summary>1 / 1</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-page-next
+                                            th:text="#{common.next}">Next</button>
+                                    </nav>
                                 </div>
                             </div>
                         </div>
@@ -1653,7 +1686,7 @@
                 categoryNameRequired: /*[[#{backend.inventory.categoryNameRequired}]]*/ 'Category name is required.',
                 genreNameRequired: /*[[#{backend.inventory.genreNameRequired}]]*/ 'Genre name is required.',
                 categoryRequired: /*[[#{backend.inventory.categoryRequired}]]*/ 'Please select a category.',
-                invalidQuantity: /*[[#{librarian.inventory.validation.quantity}]]*/ 'Quantity must be between 1 and 999.',
+                invalidQuantity: /*[[#{librarian.inventory.validation.quantity}]]*/ 'Quantity must be between 0 and 100.',
                 quantityRequired: /*[[#{librarian.inventory.validation.quantityRequired}]]*/ 'Please enter quantity.',
                 titleRequired: /*[[#{librarian.inventory.validation.titleRequired}]]*/ 'Please enter book title.',
                 authorRequired: /*[[#{librarian.inventory.validation.authorRequired}]]*/ 'Please enter author name.',
@@ -1718,7 +1751,8 @@
                 }
                 const val = Number(input.value);
                 const min = Number(input.min || 0);
-                const valid = Number.isInteger(val) && val >= min && val <= 999;
+                const max = Number(input.max || 100);
+                const valid = Number.isInteger(val) && val >= min && val <= max;
                 setFieldValidity(input, valid, adminBookMessages.invalidQuantity);
                 return valid;
             }
@@ -1872,17 +1906,61 @@
                 if (categorySearch) categorySearch.addEventListener('input', filterCategories);
                 if (categorySearchButton) categorySearchButton.addEventListener('click', filterCategories);
 
+                const copyPageSize = 8;
+                document.querySelectorAll('[data-copy-table]').forEach(function (table) {
+                    const bookId = table.dataset.bookId;
+                    const rows = Array.from(table.querySelectorAll('tbody [data-copy-row]'));
+                    const pagination = document.querySelector('.copy-modal-pagination[data-book-id="' + bookId + '"]');
+                    if (!pagination || rows.length <= copyPageSize) return;
+                    const previous = pagination.querySelector('[data-copy-page-prev]');
+                    const next = pagination.querySelector('[data-copy-page-next]');
+                    const summary = pagination.querySelector('[data-copy-page-summary]');
+                    const pageCount = Math.ceil(rows.length / copyPageSize);
+                    let currentPage = 1;
+
+                    const renderCopyPage = function () {
+                        const start = (currentPage - 1) * copyPageSize;
+                        rows.forEach(function (row, index) {
+                            row.hidden = index < start || index >= start + copyPageSize;
+                        });
+                        previous.disabled = currentPage === 1;
+                        next.disabled = currentPage === pageCount;
+                        summary.textContent = currentPage + ' / ' + pageCount;
+                        const selectAll = document.querySelector('[data-copy-select-all][data-book-id="' + bookId + '"]');
+                        if (selectAll) {
+                            selectAll.checked = false;
+                            selectAll.indeterminate = false;
+                        }
+                    };
+                    previous.addEventListener('click', function () {
+                        if (currentPage > 1) currentPage -= 1;
+                        renderCopyPage();
+                    });
+                    next.addEventListener('click', function () {
+                        if (currentPage < pageCount) currentPage += 1;
+                        renderCopyPage();
+                    });
+                    renderCopyPage();
+                });
+
                 document.querySelectorAll('[data-copy-select-all]').forEach(function (selectAll) {
                     const bookId = selectAll.dataset.bookId;
                     const items = Array.from(document.querySelectorAll('[data-copy-select-item][data-book-id="' + bookId + '"]'));
                     selectAll.addEventListener('change', function () {
-                        items.forEach(function (item) { item.checked = selectAll.checked; });
+                        items.forEach(function (item) {
+                            const row = item.closest('[data-copy-row]');
+                            if (!row || !row.hidden) item.checked = selectAll.checked;
+                        });
                     });
                     items.forEach(function (item) {
                         item.addEventListener('change', function () {
-                            const checked = items.filter(function (candidate) { return candidate.checked; }).length;
-                            selectAll.checked = items.length > 0 && checked === items.length;
-                            selectAll.indeterminate = checked > 0 && checked < items.length;
+                            const visibleItems = items.filter(function (candidate) {
+                                const row = candidate.closest('[data-copy-row]');
+                                return !row || !row.hidden;
+                            });
+                            const checked = visibleItems.filter(function (candidate) { return candidate.checked; }).length;
+                            selectAll.checked = visibleItems.length > 0 && checked === visibleItems.length;
+                            selectAll.indeterminate = checked > 0 && checked < visibleItems.length;
                         });
                     });
                 });

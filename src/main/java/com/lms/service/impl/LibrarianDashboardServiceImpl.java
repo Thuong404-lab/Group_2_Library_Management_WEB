@@ -204,7 +204,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         Map<Integer, Integer> bookAvailableQuantities = new HashMap<>();
         Map<Integer, List<BookItem>> bookItemsByBookId = new HashMap<>();
         for (Book book : booksPage.getContent()) {
-            List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+            List<BookItem> items = bookItemRepository.findByBook_BookIdOrderByBarcodeAsc(book.getBookId());
             bookItemsByBookId.put(book.getBookId(), items != null ? items : List.of());
             if (items != null && !items.isEmpty()) {
                 if (items.get(0).getShelf() != null) {
@@ -233,6 +233,20 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             genreTitleCounts.put((Integer) row[0], (Long) row[1]);
         }
         data.put("genreTitleCounts", genreTitleCounts);
+
+        Map<Integer, List<Book>> genreBooks = new HashMap<>();
+        for (Book book : bookRepository.findAll(Sort.by("title").ascending())) {
+            if (book.getGenre() != null) {
+                genreBooks.computeIfAbsent(book.getGenre().getGenreId(), ignored -> new java.util.ArrayList<>())
+                        .add(book);
+            }
+        }
+        Map<Integer, Long> allBookTotalQuantities = new HashMap<>();
+        for (Object[] row : bookItemRepository.countBookItemsByBook()) {
+            allBookTotalQuantities.put((Integer) row[0], (Long) row[1]);
+        }
+        data.put("genreBooks", genreBooks);
+        data.put("allBookTotalQuantities", allBookTotalQuantities);
         data.put("totalBookCount", bookRepository.count());
         data.put("totalCategories", categoryRepository.count());
         data.put("totalGenres", genreRepository.count());
