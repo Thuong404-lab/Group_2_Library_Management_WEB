@@ -98,6 +98,26 @@ class InactiveMemberInterceptorTest {
     }
 
     @Test
+    void inactiveMemberMayPayExistingFine() throws Exception {
+        authenticateMember(7);
+        when(accountRepository.findById(7)).thenReturn(Optional.of(account("Inactive")));
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST", "/member/payments/payos/fine/15");
+
+        assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), new Object())).isTrue();
+    }
+
+    @Test
+    void inactiveMemberMayMarkNotificationRead() throws Exception {
+        authenticateMember(7);
+        when(accountRepository.findById(7)).thenReturn(Optional.of(account("Inactive")));
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST", "/member/interaction/notifications/25/mark-read");
+
+        assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), new Object())).isTrue();
+    }
+
+    @Test
     void blockedMemberSessionIsTerminatedAndRedirected() throws Exception {
         authenticateMember(7);
         when(accountRepository.findById(7)).thenReturn(Optional.of(account("Blocked")));

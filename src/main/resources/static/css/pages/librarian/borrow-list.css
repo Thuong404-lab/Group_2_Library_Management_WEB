@@ -1,32 +1,96 @@
 /* Presentation owner for templates/librarian/borrow-list.html */
 
 .borrow-list-page {
+    width: 100%;
+    max-width: 1480px;
+    margin: 0 auto;
     min-width: 0;
     color: var(--app-color-body);
     font-family: var(--app-font-ui);
 }
 
 .borrow-list-page .member-page-header {
+    position: relative;
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
     margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--app-color-hairline);
+    padding: 30px 40px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.borrow-list-page .member-page-header::before,
+.borrow-list-page .member-page-header::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.borrow-list-page .member-page-header::before {
+    top: -145px;
+    right: -72px;
+    width: 340px;
+    height: 340px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+}
+
+.borrow-list-page .member-page-header::after {
+    right: 214px;
+    bottom: -118px;
+    width: 220px;
+    height: 220px;
+}
+
+.borrow-list-page .borrow-hero-copy,
+.borrow-list-page .borrow-hero-decoration {
+    position: relative;
+    z-index: 1;
+}
+
+.borrow-list-page .borrow-hero-copy {
+    max-width: 760px;
+}
+
+.borrow-list-page .borrow-hero-decoration {
+    display: flex;
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 46px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .09);
+    color: #fff;
+    font-size: 34px;
+    backdrop-filter: blur(3px);
 }
 
 .borrow-list-page .member-page-title {
     margin: 0 0 5px;
-    color: var(--app-color-ink);
+    color: var(--app-color-on-dark, #fff);
     font-family: var(--app-font-display);
-    font-size: 32px;
+    font-size: clamp(32px, 3.5vw, 46px);
     font-weight: 500;
     line-height: 1.2;
 }
 
 .borrow-list-page .member-page-description {
     margin: 0;
-    color: var(--app-color-muted);
-    font-family: var(--app-font-display);
+    max-width: 680px;
+    color: var(--app-color-on-dark, #fff);
+    font-family: var(--app-font-ui);
     font-size: 15px;
     line-height: 1.5;
+    opacity: .9;
 }
 
 .borrow-list-page .member-data-card,
@@ -37,12 +101,20 @@
     box-shadow: none;
 }
 
+.borrow-list-page .borrow-management-card {
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--app-color-surface-soft);
+    box-shadow: 0 8px 26px rgba(74, 59, 50, .08);
+}
+
 .borrow-list-page .borrow-list-filter-card {
-    margin-bottom: 24px;
-    padding: 24px;
-    border: 1px solid var(--app-color-hairline);
-    border-radius: var(--app-radius-lg);
-    background: var(--app-color-canvas);
+    margin: 0;
+    padding: 18px 24px;
+    border: 0;
+    border-bottom: 1px solid var(--app-color-hairline);
+    border-radius: 0;
+    background: #faf6f1;
 }
 
 .borrow-list-page .member-search-form,
@@ -109,25 +181,32 @@
 }
 
 .borrow-list-page .borrow-list-table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--app-color-hairline);
-    border-radius: 20px;
-    background: var(--app-color-canvas);
+    width: 100%;
+    max-width: 100%;
+    padding: 0 20px 8px;
+    overflow-x: hidden;
+    border: 0;
+    border-radius: 0;
+    background: var(--app-color-surface-soft);
+    box-sizing: border-box;
 }
 
 .borrow-list-page .borrow-list-table {
     width: 100%;
-    min-width: 980px;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 12px;
     margin: 0;
     color: var(--app-color-body);
     font-size: 15px;
 }
 
 .borrow-list-page .borrow-list-table thead th {
-    padding: 16px 20px;
+    padding: 16px 14px;
     color: var(--app-color-muted);
-    background: var(--app-color-surface-soft);
-    border-bottom: 1px solid var(--app-color-hairline);
+    background: transparent;
+    border: 0;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: .09em;
@@ -136,22 +215,27 @@
 }
 
 .borrow-list-page .borrow-list-table tbody td {
-    padding: 28px 20px;
+    padding: 14px;
     background: var(--app-color-canvas);
-    border-bottom: 1px solid var(--app-color-hairline-soft);
+    border-top: 1px solid var(--app-color-hairline);
+    border-bottom: 1px solid var(--app-color-hairline);
     vertical-align: middle;
+    overflow-wrap: anywhere;
 }
 
-.borrow-list-page .borrow-list-table tbody tr:nth-child(odd) td {
-    background: var(--app-color-surface-soft);
+.borrow-list-page .borrow-list-table tbody td:first-child {
+    border-left: 4px solid var(--app-color-application-primary);
+    border-radius: 12px 0 0 12px;
+}
+
+.borrow-list-page .borrow-list-table tbody td:last-child {
+    border-right: 1px solid var(--app-color-hairline);
+    border-radius: 0 12px 12px 0;
 }
 
 .borrow-list-page .borrow-list-table tbody tr:hover td {
-    background: var(--app-color-focus-coral-ring);
-}
-
-.borrow-list-page .borrow-list-table tbody tr:last-child td {
-    border-bottom: 0;
+    border-color: rgba(139, 90, 43, .34);
+    background: #fffdfb;
 }
 
 .borrow-list-page .borrow-list-table .small {
@@ -232,8 +316,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border: 1px solid var(--app-color-hairline);
     border-radius: 50%;
@@ -257,6 +341,85 @@
     display: flex;
     justify-content: center;
     padding: 20px 24px 0;
+}
+
+@media (max-width: 1199.98px) {
+    .borrow-list-page .borrow-list-table-wrap {
+        padding: 12px 20px 8px;
+    }
+
+    .borrow-list-page .borrow-list-table,
+    .borrow-list-page .borrow-list-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .borrow-list-page .borrow-list-table colgroup,
+    .borrow-list-page .borrow-list-table thead {
+        display: none;
+    }
+
+    .borrow-list-page .borrow-list-table tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 24px;
+        margin-bottom: 12px;
+        padding: 10px 14px;
+        border: 1px solid var(--app-color-hairline);
+        border-left: 4px solid var(--app-color-application-primary);
+        border-radius: 12px;
+        background: var(--app-color-canvas);
+    }
+
+    .borrow-list-page .borrow-list-table tbody td,
+    .borrow-list-page .borrow-list-table tbody td:first-child,
+    .borrow-list-page .borrow-list-table tbody td:last-child {
+        display: grid;
+        grid-template-columns: minmax(105px, 132px) minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        padding: 9px 0;
+        border: 0;
+        border-bottom: 1px solid var(--app-color-hairline-soft);
+        border-radius: 0;
+        background: transparent;
+        text-align: left !important;
+    }
+
+    .borrow-list-page .borrow-list-table tbody td::before {
+        color: var(--app-color-muted);
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        line-height: 1.3;
+        text-transform: uppercase;
+    }
+
+    .borrow-list-page .borrow-list-table tbody tr:hover td {
+        border-color: var(--app-color-hairline-soft);
+        background: transparent;
+    }
+
+    .borrow-list-page .member-actions .borrow-list-actions {
+        justify-content: flex-start;
+    }
+
+    .borrow-list-page .borrow-list-table tbody .borrow-list-empty-row {
+        display: block;
+        padding: 0;
+    }
+
+    .borrow-list-page .borrow-list-table tbody .borrow-list-empty-row td {
+        display: block;
+        padding: 32px 16px;
+        text-align: center !important;
+    }
+
+    .borrow-list-page .borrow-list-empty-row td::before {
+        display: none;
+    }
 }
 
 @media (max-width: 900px) {
@@ -286,11 +449,35 @@
 }
 
 @media (max-width: 640px) {
+    .borrow-list-page .member-page-header {
+        min-height: 166px;
+        padding: 24px;
+    }
+
+    .borrow-list-page .borrow-hero-decoration {
+        display: none;
+    }
+
     .borrow-list-page .member-page-title {
-        font-size: 27px;
+        font-size: 32px;
     }
 
     .borrow-list-page .borrow-list-filter-card {
         padding: 16px;
+    }
+
+    .borrow-list-page .borrow-list-table-wrap {
+        padding: 10px 12px 4px;
+    }
+
+    .borrow-list-page .borrow-list-table tbody tr {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 8px 12px;
+    }
+
+    .borrow-list-page .borrow-list-table tbody td,
+    .borrow-list-page .borrow-list-table tbody td:first-child,
+    .borrow-list-page .borrow-list-table tbody td:last-child {
+        grid-template-columns: minmax(88px, 108px) minmax(0, 1fr);
     }
 }

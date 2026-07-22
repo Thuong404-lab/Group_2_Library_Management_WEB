@@ -42,12 +42,11 @@
                 </div>
             </header>
             <nav class="admin-shortcut-grid">
-                <a th:href="@{/admin/accounts}">
+                <a th:href="@{/admin/member-list}">
                     <i class="bi bi-person-vcard"> </i><span th:text="#{admin.dashboard.manageAccounts}">Accounts</span>
                 </a>
                 <a th:href="@{/admin/staff}">
                     <i class="bi bi-person-badge"></i><span th:text="#{admin.dashboard.manageStaff}">Staff</span>
-                    <small th:text="${activeStaff + ' / ' + totalStaff}">0 / 0</small>
                 </a>
                 <a th:href="@{/admin/books}">
                     <i class="bi bi-book"></i><span th:text="#{admin.dashboard.manageCollection}">Collection</span>
@@ -63,16 +62,16 @@
                 <article class="admin-kpi-card admin-kpi-card--revenue">
                     <div class="admin-kpi-icon"><i class="bi bi-wallet2"></i></div>
                     <div><span th:text="#{admin.dashboard.monthlyRevenue}">Revenue this month</span>
-                        <strong class="admin-revenue-value"
-                            th:title="${#numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT') + ' VND'}"
-                            th:text="${monthlyRevenueDisplayScale == 'billion'
-                                ? #messages.msg('admin.dashboard.revenueBillions', monthlyRevenueDisplayValue)
-                                : (monthlyRevenueDisplayScale == 'million'
-                                    ? #messages.msg('admin.dashboard.revenueMillions', monthlyRevenueDisplayValue)
-                                    : #numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT') + ' VND')}">0 VND</strong>
-                        <small th:if="${revenueComparisonAvailable}"
+                        <strong class="admin-revenue-value app-stat-number app-money"
+                            th:title="${@displayNumber.moneyOrZero(monthlyRevenue) + ' ' + #messages.msg('currency.vnd')}">
+                            <span class="app-money-value"
+                                th:text="${@displayNumber.moneyOrZero(monthlyRevenue)}">0</span>
+                            <span class="app-money-currency" th:text="#{currency.vnd}">VND</span>
+                        </strong>
+                        <small class="app-percent" th:if="${revenueComparisonAvailable}"
                             th:classappend="${revenueChangeDirection < 0} ? ' is-negative' : (${revenueChangeDirection > 0} ? ' is-positive' : '')"
-                            th:text="${#messages.msg('admin.dashboard.revenueComparison', revenueChangeDisplay)}">0% vs previous month</small>
+                            th:text="${#messages.msg('admin.dashboard.revenueComparison', revenueChangeDisplay)}">0% vs
+                            previous month</small>
                         <small th:unless="${revenueComparisonAvailable}"
                             th:text="#{admin.dashboard.revenueNoComparison}">No previous-month comparison</small>
                     </div>
@@ -80,24 +79,29 @@
                 <article class="admin-kpi-card admin-kpi-card--members">
                     <div class="admin-kpi-icon"><i class="bi bi-people"></i></div>
                     <div><span th:text="#{admin.dashboard.activeMembers}">Active members</span>
-                        <strong th:text="${activeMembers}">0</strong>
-                        <small th:text="${#messages.msg('admin.dashboard.outOfTotal', totalMembers)}">out of 0
+                        <strong class="app-stat-number" th:text="${@displayNumber.count(activeMembers)}">0</strong>
+                        <small class="app-number"
+                            th:text="${#messages.msg('admin.dashboard.outOfTotal', @displayNumber.count(totalMembers))}">out
+                            of 0
                             total</small>
                     </div>
                 </article>
                 <article class="admin-kpi-card admin-kpi-card--circulation">
                     <div class="admin-kpi-icon"><i class="bi bi-journal-arrow-up"></i></div>
                     <div><span th:text="#{admin.dashboard.activeLoans}">Active loans</span>
-                        <strong th:text="${activeBorrows}">0</strong>
-                        <small th:text="${#messages.msg('admin.dashboard.overdueSummary', overdueItems)}">0 overdue
+                        <strong class="app-stat-number" th:text="${@displayNumber.count(activeBorrows)}">0</strong>
+                        <small class="app-number"
+                            th:text="${#messages.msg('admin.dashboard.overdueSummary', @displayNumber.count(overdueItems))}">0
+                            overdue
                             copies</small>
                     </div>
                 </article>
                 <article class="admin-kpi-card admin-kpi-card--inventory">
                     <div class="admin-kpi-icon"><i class="bi bi-bookshelf"></i></div>
                     <div><span th:text="#{admin.dashboard.availableInventory}">Available inventory</span>
-                        <strong th:text="${availableItems}">0</strong>
-                        <small th:text="${#messages.msg('admin.dashboard.copySummary', totalBookItems, totalBooks)}">0
+                        <strong class="app-stat-number" th:text="${@displayNumber.count(availableItems)}">0</strong>
+                        <small class="app-number"
+                            th:text="${#messages.msg('admin.dashboard.copySummary', @displayNumber.count(totalBookItems), @displayNumber.count(totalBooks))}">0
                             copies across 0 titles</small>
                     </div>
                 </article>
@@ -110,27 +114,30 @@
                     <span th:text="#{admin.dashboard.requiresAttention}">REQUIRES ATTENTION</span>
                     <h2 id="attentionTitle" th:text="#{admin.dashboard.riskOverview}">Risk overview</h2>
                 </div>
-                <p th:text="#{admin.dashboard.riskDescription}">Items that may require an administrator or librarian to act.</p>
+                <p th:text="#{admin.dashboard.riskDescription}">Items that may require an administrator or librarian to
+                    act.</p>
             </header>
             <div class="admin-attention-grid">
                 <a th:href="@{/admin/reports}" class="admin-attention-item"
                     th:classappend="${overdueItems > 0} ? ' has-warning'">
                     <i class="bi bi-alarm"></i>
-                    <div><strong th:text="${overdueItems}">0</strong><span
+                    <div><strong class="app-stat-number" th:text="${@displayNumber.count(overdueItems)}">0</strong><span
                             th:text="#{admin.dashboard.overdueItems}">Overdue copies</span></div>
                     <i class="bi bi-arrow-right"></i>
                 </a>
                 <a th:href="@{/admin/books}" class="admin-attention-item"
                     th:classappend="${attentionItems > 0} ? ' has-danger'">
                     <i class="bi bi-exclamation-diamond"></i>
-                    <div><strong th:text="${attentionItems}">0</strong><span
+                    <div><strong class="app-stat-number"
+                            th:text="${@displayNumber.count(attentionItems)}">0</strong><span
                             th:text="#{admin.dashboard.inventoryIssues}">Lost or damaged copies</span></div>
                     <i class="bi bi-arrow-right"></i>
                 </a>
-                <a th:href="@{/admin/accounts}" class="admin-attention-item"
+                <a th:href="@{/admin/member-list}" class="admin-attention-item"
                     th:classappend="${blockedAccounts > 0} ? ' has-warning'">
                     <i class="bi bi-person-lock"></i>
-                    <div><strong th:text="${blockedAccounts}">0</strong><span
+                    <div><strong class="app-stat-number"
+                            th:text="${@displayNumber.count(blockedAccounts)}">0</strong><span
                             th:text="#{admin.dashboard.blockedAccounts}">Blocked accounts</span></div>
                     <i class="bi bi-arrow-right"></i>
                 </a>
@@ -146,7 +153,8 @@
                 </header>
                 <div class="admin-chart-wrap" th:if="${hasCirculationData}">
                     <canvas id="circulationChart" role="img" th:aria-label="#{admin.dashboard.chartAriaLabel}">
-                        <span th:text="#{admin.dashboard.chartAriaLabel}">Monthly borrowed and returned copies chart</span>
+                        <span th:text="#{admin.dashboard.chartAriaLabel}">Monthly borrowed and returned copies
+                            chart</span>
                     </canvas>
                 </div>
                 <div id="circulationChartUnavailable" class="admin-empty" hidden>
@@ -174,7 +182,7 @@
                             S</div>
                         <div><strong
                                 th:text="${log.user != null and !#strings.isEmpty(log.user.fullName) ? log.user.fullName : #messages.msg('admin.dashboard.system')}">System</strong>
-                            <p th:text="${log.description}">Action</p><time
+                            <p th:text="${log.description}">Action</p><time class="app-date-time"
                                 th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy - HH:mm') : #messages.msg('admin.dashboard.notAvailable')}">Time</time>
                         </div>
                     </article>
@@ -194,16 +202,20 @@
                     document.getElementById("circulationChartUnavailable").hidden = false;
                     return;
                 }
+                const numericFont = getComputedStyle(document.documentElement)
+                    .getPropertyValue("--app-font-ui").trim()
+                    || 'StyreneB, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                const integerFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
                 new Chart(canvas, {
                     type: "bar",
                     data: {
                         labels: stats.map(item => item.label),
                         datasets: [
-                            { label: /*[[#{admin.dashboard.borrowedSeries}]]*/ "Loans", data: stats.map(item => item.count), backgroundColor: "rgba(139,90,43,.78)", borderRadius: 7 },
-                            { label: /*[[#{admin.dashboard.returnedSeries}]]*/ "Returns", data: stats.map(item => item.returnCount), backgroundColor: "rgba(85,117,93,.72)", borderRadius: 7 }
+                            { label: /*[[#{admin.dashboard.borrowedSeries}]]*/ "Loans", data: stats.map(item => Number(item.count || 0)), backgroundColor: "rgba(139,90,43,.78)", borderRadius: 7 },
+                            { label: /*[[#{admin.dashboard.returnedSeries}]]*/ "Returns", data: stats.map(item => Number(item.returnCount || 0)), backgroundColor: "rgba(85,117,93,.72)", borderRadius: 7 }
                         ]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+                    options: { responsive: true, maintainAspectRatio: false, font: { family: numericFont }, plugins: { legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, callback: value => integerFormatter.format(value) } }, x: { grid: { display: false } } } }
                 });
             });
         </script>

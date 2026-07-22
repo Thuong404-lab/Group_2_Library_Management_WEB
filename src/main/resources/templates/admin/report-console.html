@@ -1,105 +1,239 @@
 <!DOCTYPE html>
-<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
+
 <head>
     <title th:text="#{admin.reports.title}">Reports &amp; Statistics</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/report-console.css}" />
 </head>
+
 <body>
-<div layout:fragment="content" th:with="activeMenu='reports'" class="admin-report-page">
-    <header class="admin-report-header">
-        <div>
-            <span class="admin-report-eyebrow" th:text="#{admin.reports.eyebrow}">SYSTEM OVERVIEW</span>
-            <h1 class="admin-report-title" th:text="#{admin.reports.heading}">Reports &amp; Statistics</h1>
-            <p class="admin-report-description" th:text="#{admin.reports.description}">Track library activity and export reports.</p>
-        </div>
-        <div class="admin-report-actions" th:aria-label="#{admin.reports.export}">
-            <a class="admin-report-action admin-report-action-secondary" th:href="@{/admin/reports/export(format='csv', fromDate=${fromDate}, toDate=${toDate})}"><i class="bi bi-filetype-csv" aria-hidden="true"></i><span th:text="#{admin.reports.exportCsv}">Export CSV</span></a>
-            <a class="admin-report-action admin-report-action-primary" th:href="@{/admin/reports/export(format='pdf', fromDate=${fromDate}, toDate=${toDate})}"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i><span th:text="#{admin.reports.exportPdf}">Export PDF</span></a>
-        </div>
-    </header>
-
-    <section class="app-card admin-report-filter" aria-labelledby="admin-report-filter-title">
-        <div class="admin-report-section-heading">
-            <h2 id="admin-report-filter-title" th:text="#{admin.reports.period}">Report Period</h2>
-            <p th:text="#{admin.reports.periodHint}">Select a start and end date to update all statistics.</p>
-        </div>
-        <form class="admin-report-filter-form" method="get" th:action="@{/admin/reports}" data-report-date-filter>
-            <div class="admin-report-field"><label for="adminReportFromDate" th:text="#{common.fromDate}">From Date</label><input id="adminReportFromDate" type="date" name="fromDate" th:value="${fromDate}" th:max="${maxDate}"><small class="admin-report-field-error" data-date-error hidden th:text="#{common.dateRangeInvalid}">Start date must not be later than end date.</small></div>
-            <div class="admin-report-field"><label for="adminReportToDate" th:text="#{common.toDate}">To Date</label><input id="adminReportToDate" type="date" name="toDate" th:value="${toDate}" th:max="${maxDate}"></div>
-            <button class="admin-report-action admin-report-action-primary" type="submit" th:text="#{admin.reports.view}">View Report</button>
-        </form>
-    </section>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
-                const from = form.querySelector('[name="fromDate"]');
-                const to = form.querySelector('[name="toDate"]');
-                const error = form.querySelector('[data-date-error]');
-                function sync() {
-                    to.min = from.value || '';
-                    if (from.value && to.value && from.value <= to.value) {
-                        error.hidden = true;
-                        from.classList.remove('is-invalid');
-                        to.classList.remove('is-invalid');
-                    }
-                }
-                from.addEventListener('change', sync);
-                to.addEventListener('change', sync);
-                form.addEventListener('submit', function (event) {
-                    if (from.value && to.value && from.value > to.value) {
-                        event.preventDefault();
-                        error.hidden = false;
-                        from.classList.add('is-invalid');
-                        to.classList.add('is-invalid');
-                    }
-                });
-                sync();
-            });
-        });
-    </script>
-
-    <section class="admin-report-kpi-grid" th:aria-label="#{admin.reports.mainMetrics}">
-        <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i class="bi bi-journal-text"></i></span><div><p th:text="#{admin.reports.loans}">Loans</p><strong th:text="${report.totalBorrows}">0</strong><small th:text="#{admin.reports.loansHint}">Loans in the report period</small></div></article>
-        <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i class="bi bi-bookshelf"></i></span><div><p th:text="#{admin.reports.borrowedCopies}">Borrowed Copies</p><strong th:text="${report.totalBorrowedItems}">0</strong><small th:text="#{admin.reports.borrowedCopiesHint}">Total copies borrowed</small></div></article>
-        <article class="app-card admin-report-kpi admin-report-kpi-danger"><span class="admin-report-kpi-icon"><i class="bi bi-exclamation-circle"></i></span><div><p th:text="#{admin.reports.overdue}">Overdue</p><strong th:text="${report.overdueItems}">0</strong><small th:text="#{admin.reports.overdueHint}">Records currently overdue</small></div></article>
-        <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i class="bi bi-cash-coin"></i></span><div><p th:text="#{admin.reports.revenue}">Revenue</p><strong th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 VND</strong><small th:text="#{admin.reports.revenueHint}">Completed transactions</small></div></article>
-    </section>
-
-    <section class="admin-report-secondary-grid" th:aria-label="#{admin.reports.additionalMetrics}">
-        <article class="app-card"><p th:text="#{admin.reports.onTime}">On-time Returns</p><strong th:text="${report.onTimeReturns}">0</strong></article>
-        <article class="app-card admin-report-value-danger"><p th:text="#{admin.reports.late}">Late Returns</p><strong th:text="${report.lateReturns}">0</strong></article>
-        <article class="app-card"><p th:text="#{common.member}">Members</p><strong th:text="${report.totalMembers}">0</strong></article>
-        <article class="app-card"><p th:text="#{admin.reports.activeAvailable}">Active Titles / Available Copies</p><strong><span th:text="${report.activeBooks}">0</span><span class="admin-report-divider">/</span><span th:text="${report.availableItems}">0</span></strong></article>
-    </section>
-
-    <section class="admin-report-content-grid">
-        <article class="app-card admin-report-panel">
-            <header class="admin-report-panel-header"><div><h2 th:text="#{admin.reports.revenueByType}">Revenue by Transaction Type</h2><p th:text="#{admin.reports.revenueByTypeHint}">Count and amount by revenue source.</p></div><i class="bi bi-cash-coin"></i></header>
-            <div class="app-table-wrap"><table class="app-table"><thead><tr><th th:text="#{transaction.type}">Type</th><th class="admin-report-number" th:text="#{admin.reports.transactionCount}">Transactions</th><th class="admin-report-number" th:text="#{common.amount}">Amount</th></tr></thead><tbody>
-                <tr th:each="item : ${report.transactionBreakdown}"><td class="admin-report-primary-cell" th:text="${item.label}">Top Up</td><td class="admin-report-number" th:text="${item.count}">0</td><td class="admin-report-number"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td></tr>
-                <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}"><td colspan="3"><div class="admin-report-empty"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div></td></tr>
-            </tbody></table></div>
-        </article>
-
-        <article class="app-card admin-report-panel">
-            <header class="admin-report-panel-header"><div><h2 th:text="#{admin.reports.monthlyLoans}">Loans by Month</h2><p th:text="#{admin.reports.monthlyLoansHint}">Loan distribution during the report period.</p></div><i class="bi bi-calendar3"></i></header>
-            <div class="admin-report-bars">
-                <div th:each="item : ${report.monthlyBorrowStats}" class="admin-report-bar-row"><span class="admin-report-bar-label" th:text="${item.label}">07/2026</span><div class="admin-report-bar-track"><div class="report-console-borrow-bar" th:data-presentation-width="${item.count > 0 ? (item.count * 100 / (report.totalBorrows > 0 ? report.totalBorrows : 1)) : 2}"></div></div><strong th:text="${item.count}">0</strong></div>
-                <div class="admin-report-empty" th:if="${#lists.isEmpty(report.monthlyBorrowStats)}"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
+    <div layout:fragment="content" th:with="activeMenu='reports'" class="admin-report-page">
+        <header class="admin-report-header">
+            <div>
+                <span class="admin-report-eyebrow" th:text="#{admin.reports.eyebrow}">SYSTEM OVERVIEW</span>
+                <h1 class="admin-report-title" th:text="#{admin.reports.heading}">Reports &amp; Statistics</h1>
+                <p class="admin-report-description" th:text="#{admin.reports.description}">Track library activity and
+                    export reports.</p>
             </div>
-        </article>
+            <div class="admin-report-actions" th:aria-label="#{admin.reports.export}">
+                <a class="admin-report-action admin-report-action-secondary"
+                    th:href="@{/admin/reports/export(format='csv', fromDate=${fromDate}, toDate=${toDate})}"><i
+                        class="bi bi-filetype-csv" aria-hidden="true"></i><span
+                        th:text="#{admin.reports.exportCsv}">Export CSV</span></a>
+                <a class="admin-report-action admin-report-action-primary"
+                    th:href="@{/admin/reports/export(format='pdf', fromDate=${fromDate}, toDate=${toDate})}"><i
+                        class="bi bi-file-earmark-pdf" aria-hidden="true"></i><span
+                        th:text="#{admin.reports.exportPdf}">Export PDF</span></a>
+            </div>
+        </header>
 
-        <article class="app-card admin-report-panel">
-            <header class="admin-report-panel-header"><div><h2 th:text="#{admin.reports.topBooks}">Most Borrowed Books</h2><p th:text="#{admin.reports.topBooksHint}">The most popular titles.</p></div><i class="bi bi-trophy"></i></header>
-            <div class="admin-report-ranking"><div th:each="item, stat : ${report.topBooks}" class="admin-report-rank-row"><span class="admin-report-rank-number" th:text="${stat.index + 1}">1</span><span class="admin-report-rank-label" th:text="${item.label}">Book</span><span class="admin-report-rank-count" th:text="#{admin.reports.borrowCount(${item.count})}">0 borrows</span></div><div class="admin-report-empty" th:if="${#lists.isEmpty(report.topBooks)}"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div></div>
-        </article>
+        <section class="app-card admin-report-filter" aria-labelledby="admin-report-filter-title">
+            <div class="admin-report-section-heading">
+                <h2 id="admin-report-filter-title" th:text="#{admin.reports.period}">Report Period</h2>
+                <p th:text="#{admin.reports.periodHint}">Select a start and end date to update all statistics.</p>
+            </div>
+            <form class="admin-report-filter-form" method="get" th:action="@{/admin/reports}" data-report-date-filter>
+                <div class="admin-report-field"><label for="adminReportFromDate" th:text="#{common.fromDate}">From
+                        Date</label><input id="adminReportFromDate" type="date" name="fromDate" th:value="${fromDate}"
+                        th:max="${maxDate}"><small class="admin-report-field-error" data-date-error hidden
+                        th:text="#{common.dateRangeInvalid}">Start date must not be later than end date.</small></div>
+                <div class="admin-report-field"><label for="adminReportToDate" th:text="#{common.toDate}">To
+                        Date</label><input id="adminReportToDate" type="date" name="toDate" th:value="${toDate}"
+                        th:max="${maxDate}"></div>
+                <button class="admin-report-action admin-report-action-primary" type="submit"
+                    th:text="#{admin.reports.view}">View Report</button>
+            </form>
+        </section>
 
-        <article class="app-card admin-report-panel">
-            <header class="admin-report-panel-header"><div><h2 th:text="#{admin.reports.topMembers}">Top Borrowing Members</h2><p th:text="#{admin.reports.topMembersHint}">Members with notable borrowing activity.</p></div><i class="bi bi-people"></i></header>
-            <div class="admin-report-ranking"><div th:each="item, stat : ${report.topMembers}" class="admin-report-rank-row"><span class="admin-report-rank-number" th:text="${stat.index + 1}">1</span><span class="admin-report-rank-label" th:text="${item.label}">Member</span><span class="admin-report-rank-count" th:text="#{admin.reports.bookCount(${item.count})}">0 books</span></div><div class="admin-report-empty" th:if="${#lists.isEmpty(report.topMembers)}"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div></div>
-        </article>
-    </section>
-</div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
+                    const from = form.querySelector('[name="fromDate"]');
+                    const to = form.querySelector('[name="toDate"]');
+                    const error = form.querySelector('[data-date-error]');
+                    function sync() {
+                        to.min = from.value || '';
+                        if (from.value && to.value && from.value <= to.value) {
+                            error.hidden = true;
+                            from.classList.remove('is-invalid');
+                            to.classList.remove('is-invalid');
+                        }
+                    }
+                    from.addEventListener('change', sync);
+                    to.addEventListener('change', sync);
+                    form.addEventListener('submit', function (event) {
+                        if (from.value && to.value && from.value > to.value) {
+                            event.preventDefault();
+                            error.hidden = false;
+                            from.classList.add('is-invalid');
+                            to.classList.add('is-invalid');
+                        }
+                    });
+                    sync();
+                });
+            });
+        </script>
+
+        <section class="admin-report-kpi-grid" th:aria-label="#{admin.reports.mainMetrics}">
+            <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i
+                        class="bi bi-journal-text"></i></span>
+                <div>
+                    <p th:text="#{admin.reports.loans}">Loans</p><strong class="app-stat-number"
+                        th:text="${@displayNumber.count(report.totalBorrows)}">0</strong><small
+                        th:text="#{admin.reports.loansHint}">Loans in the report period</small>
+                </div>
+            </article>
+            <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i
+                        class="bi bi-bookshelf"></i></span>
+                <div>
+                    <p th:text="#{admin.reports.borrowedCopies}">Borrowed Copies</p><strong class="app-stat-number"
+                        th:text="${@displayNumber.count(report.totalBorrowedItems)}">0</strong><small
+                        th:text="#{admin.reports.borrowedCopiesHint}">Total copies borrowed</small>
+                </div>
+            </article>
+            <article class="app-card admin-report-kpi admin-report-kpi-danger"><span class="admin-report-kpi-icon"><i
+                        class="bi bi-exclamation-circle"></i></span>
+                <div>
+                    <p th:text="#{admin.reports.overdue}">Overdue</p><strong class="app-stat-number"
+                        th:text="${@displayNumber.count(report.overdueItems)}">0</strong><small
+                        th:text="#{admin.reports.overdueHint}">Records currently overdue</small>
+                </div>
+            </article>
+            <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i
+                        class="bi bi-cash-coin"></i></span>
+                <div>
+                    <p th:text="#{admin.reports.revenue}">Revenue</p><strong class="app-stat-number app-money"><span
+                            class="app-money-value"
+                            th:text="${@displayNumber.moneyOrZero(report.totalRevenue)}">0</span><span
+                            class="app-money-currency" th:text="#{currency.vnd}">VND</span></strong><small
+                        th:text="#{admin.reports.revenueHint}">Completed transactions</small>
+                </div>
+            </article>
+        </section>
+
+        <section class="admin-report-secondary-grid" th:aria-label="#{admin.reports.additionalMetrics}">
+            <article class="app-card">
+                <p th:text="#{admin.reports.onTime}">On-time Returns</p><strong class="app-stat-number"
+                    th:text="${@displayNumber.count(report.onTimeReturns)}">0</strong>
+            </article>
+            <article class="app-card admin-report-value-danger">
+                <p th:text="#{admin.reports.late}">Late Returns</p><strong class="app-stat-number"
+                    th:text="${@displayNumber.count(report.lateReturns)}">0</strong>
+            </article>
+            <article class="app-card">
+                <p th:text="#{common.member}">Members</p><strong class="app-stat-number"
+                    th:text="${@displayNumber.count(report.totalMembers)}">0</strong>
+            </article>
+            <article class="app-card">
+                <p th:text="#{admin.reports.activeAvailable}">Active Titles / Available Copies</p><strong
+                    class="app-stat-number"><span th:text="${@displayNumber.count(report.activeBooks)}">0</span><span
+                        class="admin-report-divider">/</span><span
+                        th:text="${@displayNumber.count(report.availableItems)}">0</span></strong>
+            </article>
+        </section>
+
+        <section class="admin-report-content-grid">
+            <article class="app-card admin-report-panel">
+                <header class="admin-report-panel-header">
+                    <div>
+                        <h2 th:text="#{admin.reports.revenueByType}">Revenue by Transaction Type</h2>
+                        <p th:text="#{admin.reports.revenueByTypeHint}">Count and amount by revenue source.</p>
+                    </div><i class="bi bi-cash-coin"></i>
+                </header>
+                <div class="app-table-wrap">
+                    <table class="app-table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{transaction.type}">Type</th>
+                                <th class="admin-report-number" th:text="#{admin.reports.transactionCount}">Transactions
+                                </th>
+                                <th class="admin-report-number" th:text="#{common.amount}">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${report.transactionBreakdown}">
+                                <td class="admin-report-primary-cell" th:text="${item.label}">Top Up</td>
+                                <td class="admin-report-number app-number-cell"
+                                    th:text="${@displayNumber.count(item.count)}">0</td>
+                                <td class="admin-report-number app-number-cell"><span class="app-money"><span
+                                            class="app-money-value"
+                                            th:text="${@displayNumber.moneyOrZero(item.amount)}">0</span><span
+                                            class="app-money-currency" th:text="#{currency.vnd}">VND</span></span></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}">
+                                <td colspan="3">
+                                    <div class="admin-report-empty"><i class="bi bi-inbox"></i><span
+                                            th:text="#{admin.reports.noData}">No data.</span></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="app-card admin-report-panel">
+                <header class="admin-report-panel-header">
+                    <div>
+                        <h2 th:text="#{admin.reports.monthlyLoans}">Loans by Month</h2>
+                        <p th:text="#{admin.reports.monthlyLoansHint}">Loan distribution during the report period.</p>
+                    </div><i class="bi bi-calendar3"></i>
+                </header>
+                <div class="admin-report-bars">
+                    <div th:each="item : ${report.monthlyBorrowStats}" class="admin-report-bar-row"><span
+                            class="admin-report-bar-label app-date-time" th:text="${item.label}">07/2026</span>
+                        <div class="admin-report-bar-track">
+                            <div class="report-console-borrow-bar"
+                                th:data-presentation-width="${item.count > 0 ? (item.count * 100 / (report.totalBorrows > 0 ? report.totalBorrows : 1)) : 2}">
+                            </div>
+                        </div><strong class="app-stat-number" th:text="${@displayNumber.count(item.count)}">0</strong>
+                    </div>
+                    <div class="admin-report-empty" th:if="${#lists.isEmpty(report.monthlyBorrowStats)}"><i
+                            class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
+                </div>
+            </article>
+
+            <article class="app-card admin-report-panel">
+                <header class="admin-report-panel-header">
+                    <div>
+                        <h2 th:text="#{admin.reports.topBooks}">Most Borrowed Books</h2>
+                        <p th:text="#{admin.reports.topBooksHint}">The most popular titles.</p>
+                    </div><i class="bi bi-trophy"></i>
+                </header>
+                <div class="admin-report-ranking">
+                    <div th:each="item, stat : ${report.topBooks}" class="admin-report-rank-row"><span
+                            class="admin-report-rank-number app-number"
+                            th:text="${@displayNumber.count(stat.index + 1)}">1</span><span
+                            class="admin-report-rank-label" th:text="${item.label}">Book</span><span
+                            class="admin-report-rank-count app-number"
+                            th:text="#{admin.reports.borrowCount(${@displayNumber.count(item.count)})}">0 borrows</span>
+                    </div>
+                    <div class="admin-report-empty" th:if="${#lists.isEmpty(report.topBooks)}"><i
+                            class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
+                </div>
+            </article>
+
+            <article class="app-card admin-report-panel">
+                <header class="admin-report-panel-header">
+                    <div>
+                        <h2 th:text="#{admin.reports.topMembers}">Top Borrowing Members</h2>
+                        <p th:text="#{admin.reports.topMembersHint}">Members with notable borrowing activity.</p>
+                    </div><i class="bi bi-people"></i>
+                </header>
+                <div class="admin-report-ranking">
+                    <div th:each="item, stat : ${report.topMembers}" class="admin-report-rank-row"><span
+                            class="admin-report-rank-number app-number"
+                            th:text="${@displayNumber.count(stat.index + 1)}">1</span><span
+                            class="admin-report-rank-label" th:text="${item.label}">Member</span><span
+                            class="admin-report-rank-count app-number"
+                            th:text="#{admin.reports.bookCount(${@displayNumber.count(item.count)})}">0 books</span>
+                    </div>
+                    <div class="admin-report-empty" th:if="${#lists.isEmpty(report.topMembers)}"><i
+                            class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
+                </div>
+            </article>
+        </section>
+    </div>
 </body>
+
 </html>

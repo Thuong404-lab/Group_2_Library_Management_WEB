@@ -9,7 +9,7 @@
 </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-schedule'" class="borrow-management-page">
+<div layout:fragment="content" th:with="activeMenu='borrow-schedule'" class="borrow-management-page borrow-schedule-page">
 
     <div th:if="${successMessage}"
          class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379"
@@ -28,9 +28,12 @@
 
     <!-- Page Header -->
     <header class="borrow-page-header">
-        <div>
+        <div class="borrow-hero-copy">
             <h1 class="borrow-page-title" th:text="#{librarian.schedule.title}">Detailed Loan Schedule</h1>
             <p class="borrow-page-description" th:text="#{librarian.schedule.description}">Look up each member's loan and return history.</p>
+        </div>
+        <div class="borrow-hero-decoration" aria-hidden="true">
+            <i class="bi bi-clock-history"></i>
         </div>
     </header>
 
@@ -46,8 +49,8 @@
                 </div>
             </div>
             <div class="borrow-filter-actions">
-                <button type="submit" class="btn btn-classic-primary px-4" th:text="#{common.search}">Search</button>
-                <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-classic-outline px-4 text-decoration-none d-inline-flex align-items-center justify-content-center" th:text="#{common.clearFilter}">Clear Filter</a>
+                <button type="submit" class="btn btn-classic-primary borrow-search-button" th:text="#{common.search}">Search</button>
+                <a th:href="@{/librarian/loan/borrow-schedule}" class="btn btn-classic-outline borrow-clear-button" th:text="#{common.clearFilter}">Clear Filter</a>
             </div>
         </form>
     </div>
@@ -68,12 +71,13 @@
                 </thead>
                 <tbody>
                 <tr th:each="account, iter : ${accounts}" th:with="member=${account.member}">
-                    <td class="borrow-col-index" th:text="${accountPage.number * accountPage.size + iter.index + 1}">1</td>
-                    <td>
+                    <td class="borrow-col-index" th:data-label="#{common.number}"
+                        th:text="${accountPage.number * accountPage.size + iter.index + 1}">1</td>
+                    <td th:data-label="#{librarian.memberDetail.memberId}">
                                 <span class="fw-bold text-classic"
                                       th:text="${'MEM-' + member.memberId}">MEM-1</span>
                     </td>
-                    <td>
+                    <td th:data-label="#{librarian.borrowDesk.memberInfo}">
                         <div class="fw-bold" th:text="${member.user?.fullName}">Nguyễn Văn An</div>
                         <div class="small text-muted" th:if="${member.user?.email}">
                             <i class="bi bi-envelope me-1"></i>
@@ -84,27 +88,27 @@
                             <span th:text="${member.user.phone}">0912345678</span>
                         </div>
                     </td>
-                    <td>
+                    <td th:data-label="#{member.profile.tier}">
                                 <span class="membership-tier-badge"
                                       th:if="${member.tier != null}"
                                       th:text="${member.tier.tierName}"
                                       th:classappend="${'membership-tier-badge--' + #strings.toLowerCase(#strings.replace(member.tier.tierName, ' ', '-'))}">Regular</span>
                         <span class="membership-tier-badge membership-tier-badge--empty" th:if="${member.tier == null}" th:text="#{librarian.members.unranked}">Unranked</span>
                     </td>
-                    <td>
+                    <td th:data-label="#{librarian.memberDetail.accountStatus}">
                                 <span class="status-badge"
                                       th:with="accountStatus=${account.status != null ? #strings.toUpperCase(#strings.trim(account.status)) : 'INACTIVE'}"
                                       th:classappend="${accountStatus == 'ACTIVE' ? 'status-active' : (accountStatus == 'BLOCKED' ? 'status-blocked' : 'status-inactive')}"
                                       th:text="${accountStatus == 'ACTIVE' ? #messages.msg('account.status.active') : (accountStatus == 'BLOCKED' ? #messages.msg('account.status.blocked') : #messages.msg('member.account.status.restricted'))}">Active</span>
                     </td>
-                    <td class="text-center borrow-col-action">
+                    <td class="text-center borrow-col-action" th:data-label="#{admin.logs.action}">
                         <a th:href="@{/librarian/borrow/member/{id}(id=${member.memberId})}"
                            class="borrow-icon-action" th:title="#{common.details}" th:aria-label="#{common.details}">
                             <i class="bi bi-eye" aria-hidden="true"></i>
                         </a>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(accounts)}">
+                <tr class="borrow-empty-row" th:if="${#lists.isEmpty(accounts)}">
                     <td colspan="6" class="text-center py-5">
                         <i class="bi bi-people fs-1 d-block mb-3 opacity-50 text-classic"></i>
                         <div class="text-muted fst-italic small" th:text="#{librarian.schedule.noMembers}">No matching members were found.</div>

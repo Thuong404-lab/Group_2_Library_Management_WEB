@@ -136,6 +136,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (authorName == null || authorName.trim().isEmpty()) {
             throw new ValidationException(messages.get("backend.inventory.authorRequired"));
         }
+        if (quantity == null || quantity < 0 || quantity > 999) {
+            throw new ValidationException(messages.get("librarian.inventory.validation.quantity"));
+        }
         if (shelfId == null) {
             throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
         }
@@ -176,7 +179,7 @@ public class InventoryServiceImpl implements InventoryService {
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ValidationException(messages.get("backend.inventory.shelfNotFound")));
 
-        int copies = quantity != null && quantity > 0 ? quantity : 1;
+        int copies = quantity;
 
         for (int i = 1; i <= copies; i++) {
             BookItem item = new BookItem();
