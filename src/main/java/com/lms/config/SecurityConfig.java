@@ -3,13 +3,17 @@ package com.lms.config;
 import com.lms.service.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import java.util.Set;
@@ -55,8 +59,30 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationProvider staffAuthenticationProvider(
+            CustomStaffDetailsService staffDetailsService,
+            PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(staffDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationProvider memberAuthenticationProvider(
+            CustomMemberDetailsService memberDetailsService,
+            PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(memberDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
+    }
+
+    @Bean
     @Order(1)
-    public SecurityFilterChain staffSecurityFilterChain(HttpSecurity http, CustomStaffDetailsService staffDetailsService) throws Exception {
+    public SecurityFilterChain staffSecurityFilterChain(
+            HttpSecurity http,
+            @Qualifier("staffAuthenticationProvider") AuthenticationProvider staffAuthenticationProvider) throws Exception {
         http
             .securityMatcher("/admin/**", "/librarian/**", "/staff-login", "/staff-logout")
             .authorizeHttpRequests(auth -> auth
@@ -83,7 +109,7 @@ public class SecurityConfig {
                 .expiredUrl("/staff-login?expired=true")
                 .sessionRegistry(sessionRegistry())
             )
-            .userDetailsService(staffDetailsService)
+            .authenticationProvider(staffAuthenticationProvider)
             .exceptionHandling(exception -> exception.accessDeniedPage("/403"));
 
         return http.build();
@@ -91,7 +117,9 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain memberSecurityFilterChain(HttpSecurity http, CustomMemberDetailsService memberDetailsService) throws Exception {
+    public SecurityFilterChain memberSecurityFilterChain(
+            HttpSecurity http,
+            @Qualifier("memberAuthenticationProvider") AuthenticationProvider memberAuthenticationProvider) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password",
@@ -124,7 +152,7 @@ public class SecurityConfig {
                 .expiredUrl("/login?expired=true")
                 .sessionRegistry(sessionRegistry())
             )
-            .userDetailsService(memberDetailsService)
+            .authenticationProvider(memberAuthenticationProvider)
             .exceptionHandling(exception -> exception
                 .accessDeniedPage("/403")
             );

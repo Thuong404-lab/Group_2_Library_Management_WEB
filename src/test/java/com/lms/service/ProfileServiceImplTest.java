@@ -108,4 +108,19 @@ class ProfileServiceImplTest {
         verify(staffAccountRepository).save(staffAccount);
         verifyNoInteractions(memberAccountRepository);
     }
+
+    @Test
+    void updateStaffProfileCanonicalizesVietnamCountryCodeBeforeCheckingUniqueness() {
+        User user = new User();
+        user.setId(9);
+        Staff staff = new Staff(3, user, "Administrator");
+        StaffAccount account = new StaffAccount(5, staff, "admin", "hash", "Active");
+        when(staffAccountRepository.findByUsername("admin")).thenReturn(Optional.of(account));
+
+        service.updateStaffProfile("admin", "System Administrator", "+84900000001", null);
+
+        assertThat(user.getPhone()).isEqualTo("0900000001");
+        verify(userRepository).existsByPhoneAndIdNot("0900000001", 9);
+        verify(userRepository).save(user);
+    }
 }

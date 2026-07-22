@@ -210,6 +210,9 @@ public class ProfileServiceImpl implements ProfileService {
         if (!normalizedPhone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new ValidationException("phone", messages.get("backend.profile.phoneFormat"));
         }
+        if (normalizedPhone.startsWith("+84")) {
+            normalizedPhone = "0" + normalizedPhone.substring(3);
+        }
         if (userRepository.existsByPhoneAndIdNot(normalizedPhone, user.getId())) {
             throw new ConflictException("phone", messages.get("backend.account.phoneUsed"));
         }
