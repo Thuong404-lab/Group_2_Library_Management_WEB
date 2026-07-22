@@ -13,11 +13,17 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public interface PayOsPaymentRepository extends JpaRepository<PayOsPayment, Long> {
     Optional<PayOsPayment> findByOrderCode(Long orderCode);
 
     Optional<PayOsPayment> findByOrderCodeAndMemberMemberId(Long orderCode, Integer memberId);
+
+    Optional<PayOsPayment> findByRequestKey(String requestKey);
+
+    Optional<PayOsPayment> findFirstByMemberMemberIdAndPurposeAndAmountAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
+            Integer memberId, String purpose, BigDecimal amount, String status, LocalDateTime createdAfter);
 
     List<PayOsPayment> findTop10ByMemberMemberIdAndStatusOrderByPaidAtDesc(
             Integer memberId, String status);

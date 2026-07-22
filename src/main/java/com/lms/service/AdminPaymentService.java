@@ -27,10 +27,10 @@ import com.lms.entity.PayOsReconciliationIssue;
 import com.lms.repository.PayOsPaymentAuditLogRepository;
 import com.lms.repository.PayOsPaymentRepository;
 import com.lms.repository.PayOsReconciliationIssueRepository;
+import com.lms.util.DisplayNumberFormatter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +44,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Arrays;
@@ -57,13 +56,16 @@ public class AdminPaymentService {
     private final PayOsPaymentRepository paymentRepository;
     private final PayOsPaymentAuditLogRepository auditRepository;
     private final PayOsReconciliationIssueRepository issueRepository;
+    private final DisplayNumberFormatter displayNumberFormatter;
 
     public AdminPaymentService(PayOsPaymentRepository paymentRepository,
             PayOsPaymentAuditLogRepository auditRepository,
-            PayOsReconciliationIssueRepository issueRepository) {
+            PayOsReconciliationIssueRepository issueRepository,
+            DisplayNumberFormatter displayNumberFormatter) {
         this.paymentRepository = paymentRepository;
         this.auditRepository = auditRepository;
         this.issueRepository = issueRepository;
+        this.displayNumberFormatter = displayNumberFormatter;
     }
 
     @Transactional(readOnly = true)
@@ -356,8 +358,7 @@ public class AdminPaymentService {
     }
 
     private String money(BigDecimal value) {
-        NumberFormat number = NumberFormat.getIntegerInstance(LocaleContextHolder.getLocale());
-        return number.format(value == null ? BigDecimal.ZERO : value) + " " + messages.get("currency.vnd");
+        return displayNumberFormatter.moneyOrZero(value) + " " + messages.get("currency.vnd");
     }
 
     private String paymentScope(PaymentSearchCriteria criteria) {

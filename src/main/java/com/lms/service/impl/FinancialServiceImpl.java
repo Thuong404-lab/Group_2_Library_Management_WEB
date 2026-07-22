@@ -14,6 +14,9 @@ import com.lms.entity.Wallet;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
+import com.lms.enums.TransactionChannel;
+import com.lms.enums.TransactionStatus;
+import com.lms.enums.TransactionType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ForbiddenException;
 import com.lms.exception.ResourceNotFoundException;
@@ -29,9 +32,11 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.service.TopUpPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +46,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Financial transaction rules maintained by Pham Kien Quoc for member fees,
@@ -68,10 +74,9 @@ public class FinancialServiceImpl implements FinancialService {
     private static final BigDecimal DEFAULT_DAMAGE_COMPENSATION_AMOUNT = BigDecimal.valueOf(120000);
     private static final int DEFAULT_BORROW_FEE_DAYS = 10;
     private static final BigDecimal DEFAULT_BORROW_FEE_PER_BOOK = BigDecimal.valueOf(5000);
-    private static final BigDecimal MIN_TOP_UP = BigDecimal.valueOf(10_000);
-    private static final BigDecimal MAX_WALLET_BALANCE = BigDecimal.valueOf(500_000_000);
     private static final int MEMBER_TRANSACTION_PAGE_SIZE = 10;
-    private static final int LIBRARIAN_TRANSACTION_PAGE_SIZE = 12;
+    @Value("${library.transactions.page-size:12}")
+    private int librarianTransactionPageSize = 12;
 
     private final TransactionRepository transactionRepository;
     private final WalletRepository walletRepository;
@@ -394,13 +399,61 @@ public class FinancialServiceImpl implements FinancialService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Transaction> getAllTransactions(int page, String type) {
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), LIBRARIAN_TRANSACTION_PAGE_SIZE);
-        if (type == null || type.trim().isEmpty()) {
-            return transactionRepository.findAllByOrderByTransactionDateDesc(pageable);
+    public Page<Transaction> getAllTransactions(int page, String query, String type,
+            String status, String channel, LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new ValidationException(localizedMessageService.get("backend.transaction.invalidDateRange"));
         }
-        return transactionRepository.findByTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-                type.trim(), pageable);
+        String normalizedType = normalizeTransactionType(type);
+        String normalizedStatus = normalizeTransactionStatus(status);
+        String normalizedChannel = normalizeTransactionChannel(channel);
+        String normalizedQuery = query == null ? "" : query.trim();
+        TransactionSearchIds searchIds = extractTransactionSearchIds(normalizedQuery);
+        int pageSize = Math.max(5, Math.min(librarianTransactionPageSize, 100));
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), pageSize);
+        return transactionRepository.searchForLibrarian(
+                normalizedQuery, searchIds.transactionId(), searchIds.memberId(),
+                normalizedType, normalizedStatus, normalizedChannel,
+                fromDate == null ? null : fromDate.atStartOfDay(),
+                toDate == null ? null : toDate.plusDays(1).atStartOfDay(), pageable);
+    }
+
+    private String normalizeTransactionType(String type) {
+        if (type == null || type.isBlank()) return null;
+        return TransactionType.fromCode(type).map(Enum::name)
+                .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.transaction.invalidType")));
+    }
+
+    private String normalizeTransactionStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        return TransactionStatus.fromValue(status).map(value -> value.getDatabaseValue().toUpperCase())
+                .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.transaction.invalidStatus")));
+    }
+
+    private String normalizeTransactionChannel(String channel) {
+        if (channel == null || channel.isBlank()) return null;
+        return TransactionChannel.fromCode(channel).map(Enum::name)
+                .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.transaction.invalidChannel")));
+    }
+
+    private TransactionSearchIds extractTransactionSearchIds(String query) {
+        if (query == null || query.isBlank()) return new TransactionSearchIds(null, null);
+        String normalized = query.trim().toUpperCase(java.util.Locale.ROOT);
+        boolean transactionCode = normalized.matches("^#?TXN-\\d+$");
+        boolean memberCode = normalized.matches("^(TV-|MEM-)\\d+$");
+        String digits = normalized.replaceFirst("^(#?TXN-|TV-|MEM-)", "");
+        if (!digits.matches("\\d+")) return new TransactionSearchIds(null, null);
+        try {
+            Integer value = Integer.valueOf(digits);
+            if (transactionCode) return new TransactionSearchIds(value, null);
+            if (memberCode) return new TransactionSearchIds(null, value);
+            return new TransactionSearchIds(value, value);
+        } catch (NumberFormatException ignored) {
+            return new TransactionSearchIds(null, null);
+        }
+    }
+
+    private record TransactionSearchIds(Integer transactionId, Integer memberId) {
     }
 
     @Override
@@ -409,8 +462,11 @@ public class FinancialServiceImpl implements FinancialService {
         if (memberLookup == null || memberLookup.trim().isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.financial.memberLookupRequired"));
         }
-        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+        if (!isValidRequestId(requestId)) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidRequest"));
+        }
+        if (performedBy == null || performedBy.getStaffId() == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.staffRequired"));
         }
         String referenceCode = "CASH-TOPUP-" + requestId.trim();
         if (transactionRepository.existsByReferenceCode(referenceCode)) return;
@@ -424,8 +480,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         BigDecimal oldBalance = balanceOf(wallet.getBalance());
         BigDecimal newBalance = oldBalance.add(topUpAmount);
-        if (newBalance.compareTo(MAX_WALLET_BALANCE) > 0) {
-            throw new ValidationException(localizedMessageService.get("backend.financial.walletLimit", MAX_WALLET_BALANCE));
+        if (newBalance.compareTo(TopUpPolicy.MAX_WALLET_BALANCE) > 0) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.walletLimit", TopUpPolicy.MAX_WALLET_BALANCE));
         }
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
@@ -576,10 +632,23 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ValidationException(localizedMessageService.get("backend.financial.topupPositive"));
         }
         BigDecimal value = amount.stripTrailingZeros();
-        if (value.scale() > 0 || value.compareTo(MIN_TOP_UP) < 0 || value.compareTo(MAX_WALLET_BALANCE) > 0) {
+        if (value.scale() > 0 || value.compareTo(TopUpPolicy.MIN_AMOUNT) < 0
+                || value.compareTo(TopUpPolicy.MAX_AMOUNT) > 0) {
             throw new ValidationException(localizedMessageService.get("backend.payment.amountRange"));
         }
         return value;
+    }
+
+    private boolean isValidRequestId(String requestId) {
+        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+            return false;
+        }
+        try {
+            UUID.fromString(requestId.trim());
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     private Transaction saveWalletTransaction(Wallet wallet,

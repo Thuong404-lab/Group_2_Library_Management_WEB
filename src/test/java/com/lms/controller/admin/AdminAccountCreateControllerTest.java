@@ -2,14 +2,17 @@ package com.lms.controller.admin;
 
 import com.lms.dto.request.AdminMemberAccountCreateRequest;
 import com.lms.dto.request.AdminStaffAccountCreateRequest;
+import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.service.AccountService;
 import com.lms.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.data.domain.Page;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 class AdminAccountCreateControllerTest {
 
@@ -36,11 +40,21 @@ class AdminAccountCreateControllerTest {
     }
 
     @Test
+    void memberListRouteRendersRenamedView() throws Exception {
+        when(accountService.getMemberAccountList(0, "", "", ""))
+                .thenReturn(new AdminAccountListViewData(Page.empty(), Map.of(), List.of(), Map.of()));
+
+        mockMvc.perform(get("/admin/member-list"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/member-list"));
+    }
+
+    @Test
     void memberValidationEndpointBuildsMemberOnlyRequest() throws Exception {
         when(accountService.validateMemberAccountCreate(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(Map.of());
 
-        mockMvc.perform(get("/admin/accounts/create/validate")
+        mockMvc.perform(get("/admin/member-list/create/validate")
                         .param("fullName", "Member One")
                         .param("email", "member.one@test.local")
                         .param("phone", "0900000001")
@@ -78,14 +92,14 @@ class AdminAccountCreateControllerTest {
 
     @Test
     void memberCreateEndpointUsesMemberFlowAndReturnsToMemberList() throws Exception {
-        mockMvc.perform(post("/admin/accounts/create")
+        mockMvc.perform(post("/admin/member-list/create")
                         .param("fullName", "Member One")
                         .param("email", "member.one@test.local")
                         .param("phone", "0900000001")
                         .param("username", "member_one")
                         .param("password", "Demo@123"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/accounts"));
+                .andExpect(redirectedUrl("/admin/member-list"));
 
         verify(accountService).createMemberAccount(argThat(request ->
                 "member_one".equals(request.getUsername())));

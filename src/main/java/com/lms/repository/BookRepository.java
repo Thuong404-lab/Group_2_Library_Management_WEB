@@ -44,6 +44,16 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
                            @Param("status") String status,
                            Pageable pageable);
 
+    @Query("SELECT DISTINCT b FROM Book b LEFT JOIN b.authors a " +
+           "WHERE (:keyword = '' OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(a.authorName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(b.isbn) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:bookCondition = '' OR EXISTS (SELECT bi.bookItemId FROM BookItem bi " +
+           "WHERE bi.book = b AND bi.bookCondition = :bookCondition))")
+    Page<Book> searchBookItems(@Param("keyword") String keyword,
+                               @Param("bookCondition") String bookCondition,
+                               Pageable pageable);
+
     @Query("SELECT d.book FROM BorrowDetail d GROUP BY d.book ORDER BY COUNT(d) DESC")
     List<Book> findTrendingBooks(Pageable pageable);
 }

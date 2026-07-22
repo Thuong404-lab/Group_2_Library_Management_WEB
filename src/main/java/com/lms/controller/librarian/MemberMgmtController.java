@@ -7,18 +7,26 @@ import com.lms.config.CustomUserDetails;
 import com.lms.dto.request.CreateMemberAccountRequest;
 import com.lms.dto.request.UpdateMemberAccountRequest;
 import com.lms.entity.Member;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
+import com.lms.enums.TransactionChannel;
+import com.lms.enums.TransactionStatus;
+import com.lms.enums.TransactionType;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.StaffRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.FineBatchPaymentService;
 import com.lms.dto.response.MemberListViewData;
+import com.lms.dto.response.TopUpMemberOption;
 import com.lms.service.LibrarianMemberService;
 import com.lms.service.OverdueReminderService;
 import com.lms.service.OverdueViolationQueryService;
+import com.lms.service.TopUpPolicy;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,6 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Arrays;
 
 /**
  * Librarian member-management UC flows maintained by Pham Kien Quoc:
@@ -294,17 +303,68 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     @GetMapping("/members/transactions")
     public String viewAllTransactions(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(name = "q", required = false, defaultValue = "") String query,
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String channel,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Page<Transaction> transactionPage = financialService.getAllTransactions(page, type);
+        Page<Transaction> transactionPage = financialService.getAllTransactions(
+                page, query, type, status, channel, fromDate, toDate);
+        if (transactionPage.getTotalPages() > 0 && page >= transactionPage.getTotalPages()) {
+            page = transactionPage.getTotalPages() - 1;
+            transactionPage = financialService.getAllTransactions(
+                    page, query, type, status, channel, fromDate, toDate);
+        }
 
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("transactions", transactionPage.getContent());
-        model.addAttribute("currentPage", page);
+        model.addAttribute("query", query == null ? "" : query.trim());
         model.addAttribute("selectedType", type);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedChannel", channel);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+        addTransactionOptions(model);
         addCurrentUser(model, userDetails);
         return "librarian/transactions";
+    }
+
+    private void addTransactionOptions(Model model) {
+        Map<String, String> typeLabels = new LinkedHashMap<>();
+        Map<String, String> typeClasses = new LinkedHashMap<>();
+        for (TransactionType type : TransactionType.values()) {
+            typeLabels.put(type.name(), message(type.getMessageKey()));
+            typeClasses.put(type.name(), type.getCssClass());
+        }
+
+        Map<String, String> statusOptions = new LinkedHashMap<>();
+        Map<String, String> statusLabels = new LinkedHashMap<>();
+        Map<String, String> statusClasses = new LinkedHashMap<>();
+        Arrays.stream(TransactionStatus.values()).forEach(status -> {
+            String label = message(status.getMessageKey());
+            statusLabels.put(status.getDatabaseValue(), label);
+            statusClasses.put(status.getDatabaseValue(), status.getCssClass());
+            if (status != TransactionStatus.PAID) {
+                statusOptions.put(status.getDatabaseValue(), label);
+            }
+        });
+
+        Map<String, String> channelLabels = new LinkedHashMap<>();
+        for (TransactionChannel channel : TransactionChannel.values()) {
+            channelLabels.put(channel.name(), message(channel.getMessageKey()));
+        }
+
+        model.addAttribute("transactionTypeOptions", typeLabels);
+        model.addAttribute("transactionTypeLabels", typeLabels);
+        model.addAttribute("transactionTypeClasses", typeClasses);
+        model.addAttribute("transactionStatusOptions", statusOptions);
+        model.addAttribute("transactionStatusLabels", statusLabels);
+        model.addAttribute("transactionStatusClasses", statusClasses);
+        model.addAttribute("transactionChannelOptions", channelLabels);
+        model.addAttribute("transactionChannelLabels", channelLabels);
     }
 
     @GetMapping("/members/refunds")
@@ -318,15 +378,37 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     @GetMapping("/members/topup")
     public String showTopupDesk(Model model,
-            @RequestParam(required = false, defaultValue = "") String memberKeyword,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         addTopupDeskStats(model);
         model.addAttribute("recentTopups",
-                transactionRepository.findTop10ByTransactionTypeIgnoreCaseOrderByTransactionDateDesc(TOP_UP_TYPE));
-        model.addAttribute("topupMembers", memberRepository.findAll());
+                transactionRepository.findRecentCompletedTopUps(
+                        TOP_UP_TYPE, TopUpPolicy.COMPLETED_STATUSES,
+                        PageRequest.of(0, TopUpPolicy.RECENT_TRANSACTION_LIMIT)));
+        model.addAttribute("topupMinAmount", TopUpPolicy.MIN_AMOUNT);
+        model.addAttribute("topupMaxAmount", TopUpPolicy.MAX_AMOUNT);
+        model.addAttribute("topupQuickAmounts", TopUpPolicy.QUICK_AMOUNTS);
         model.addAttribute("topupRequestId", UUID.randomUUID().toString());
+        Object selectedMemberId = model.getAttribute("memberPhone");
+        if (selectedMemberId != null) {
+            parseMemberId(selectedMemberId.toString()).flatMap(memberId -> memberRepository
+                    .searchTopUpMembers("", memberId, PageRequest.of(0, 1)).stream().findFirst())
+                    .ifPresent(member -> model.addAttribute("selectedTopupMember", member));
+        }
         addCurrentUser(model, userDetails);
         return "librarian/topup-desk";
+    }
+
+    @GetMapping("/members/topup/search")
+    @ResponseBody
+    public List<TopUpMemberOption> searchTopupMembers(
+            @RequestParam(name = "q", defaultValue = "") String query) {
+        String keyword = query == null ? "" : query.trim();
+        Integer memberId = parseMemberId(keyword).orElse(null);
+        if (keyword.length() < 2 && memberId == null) {
+            return List.of();
+        }
+        return memberRepository.searchTopUpMembers(
+                keyword, memberId, PageRequest.of(0, TopUpPolicy.MEMBER_SEARCH_LIMIT)).getContent();
     }
 
     @PostMapping("/members/topup")
@@ -337,9 +419,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            var staff = userDetails != null && userDetails.getUser() != null
-                    ? staffRepository.findByUserId(userDetails.getUser().getId()).orElse(null)
-                    : null;
+            var staff = requireStaff(userDetails);
             financialService.topUpMemberAccount(memberPhone, amount, requestId, staff);
             redirectAttributes.addFlashAttribute("success", message("backend.topup.success"));
         } catch (ApplicationException e) {
@@ -352,19 +432,45 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     }
 
     private void addTopupDeskStats(Model model) {
-        LocalDate today = LocalDate.now();
-        List<Transaction> todayTopups = transactionRepository.findByTransactionTypeAndDateRange(
+        LocalDate today = LocalDate.now(TopUpPolicy.LIBRARY_ZONE);
+        Page<Transaction> todayTopupPage = transactionRepository.findCompletedTopUpsByDateRange(
                 TOP_UP_TYPE,
+                TopUpPolicy.COMPLETED_STATUSES,
                 today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay());
-        BigDecimal todayTotal = transactionRepository.sumAmountByTransactionTypeAndDateRange(
-                TOP_UP_TYPE,
-                today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay());
+                today.plusDays(1).atStartOfDay(),
+                PageRequest.of(0, TopUpPolicy.RECENT_TRANSACTION_LIMIT));
+        BigDecimal todayTotal = transactionRepository.sumCompletedTopUpsByDateRange(
+                TOP_UP_TYPE, TopUpPolicy.COMPLETED_STATUSES,
+                today.atStartOfDay(), today.plusDays(1).atStartOfDay());
 
-        model.addAttribute("todayTopups", todayTopups);
-        model.addAttribute("todayTopupCount", todayTopups.size());
+        model.addAttribute("todayTopups", todayTopupPage.getContent());
+        model.addAttribute("todayTopupCount", todayTopupPage.getTotalElements());
         model.addAttribute("todayTopupTotal", todayTotal == null ? BigDecimal.ZERO : todayTotal);
+    }
+
+    private Staff requireStaff(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUser() == null || userDetails.getUser().getId() == null) {
+            throw new com.lms.exception.ValidationException(message("backend.financial.staffRequired"));
+        }
+        return staffRepository.findByUserId(userDetails.getUser().getId())
+                .orElseThrow(() -> new com.lms.exception.ValidationException(
+                        message("backend.financial.staffRequired")));
+    }
+
+    private java.util.Optional<Integer> parseMemberId(String value) {
+        if (value == null) {
+            return java.util.Optional.empty();
+        }
+        String normalized = value.trim().toUpperCase(java.util.Locale.ROOT)
+                .replaceFirst("^(TV-|MEM-)", "");
+        if (!normalized.matches("\\d+")) {
+            return java.util.Optional.empty();
+        }
+        try {
+            return java.util.Optional.of(Integer.valueOf(normalized));
+        } catch (NumberFormatException ignored) {
+            return java.util.Optional.empty();
+        }
     }
 
     private Map<String, String> bindingErrors(BindingResult bindingResult) {

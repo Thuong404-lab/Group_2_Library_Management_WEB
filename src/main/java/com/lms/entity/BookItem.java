@@ -19,8 +19,8 @@ public class BookItem {
     @Column(length = 50)
     private String status = "Available";
     
-    @Column(columnDefinition = "NVARCHAR(50)")
-    private String bookCondition = "Mới";
+    @Column(columnDefinition = "NVARCHAR(100)")
+    private String bookCondition = "New";
 
     @Column(name = "added_date", nullable = false, updatable = false)
     private LocalDate addedDate = LocalDate.now();

@@ -25,6 +25,8 @@ public class LibrarianDashboardController {
             @RequestParam(defaultValue = "0") int bookPage,
             @RequestParam(defaultValue = "0") int shelfPage,
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String tab,
             Model model,
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
@@ -56,7 +58,9 @@ public class LibrarianDashboardController {
         if (!"inventory".equals(normalizedSubsection) && !"storage".equals(normalizedSubsection)) {
             normalizedSubsection = "";
         }
-        model.mergeAttributes(dashboardService.getDashboardData(bookPage, shelfPage, reviewPage, requestPage, keyword));
+        String effectiveBookCondition = "audit".equalsIgnoreCase(tab) ? bookCondition : "";
+        model.mergeAttributes(dashboardService.getDashboardData(
+                bookPage, shelfPage, reviewPage, requestPage, keyword, effectiveBookCondition));
         model.addAttribute("keyword", keyword);
         model.addAttribute("dashboardSection", normalizedSection);
         model.addAttribute("dashboardSubsection", normalizedSubsection);
