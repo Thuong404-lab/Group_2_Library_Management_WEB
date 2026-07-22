@@ -4,28 +4,12 @@
 
 <head>
     <title th:text="#{librarian.returnDesk.title}">Book Return Desk</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/return-desk.css}" />
 
 </head>
 
 <body>
-<div layout:fragment="content" th:with="activeMenu='borrow-return'" class="borrow-management-page return-desk-page">
-
-    <div th:if="${successMessage}"
-         class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-f0fff4-color-2f855a-85044379"
-         role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${successMessage}">Success</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${errorMessage}"
-         class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 u-background-color-fff5f5-color-c53030-0e7ed3fe"
-         role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${errorMessage}">Error</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+<div layout:fragment="content" th:with="activeMenu='returns'" class="member-palette-page borrow-management-page return-desk-page">
 
     <!-- Page Header -->
     <header class="borrow-page-header">
@@ -77,18 +61,18 @@
         <div class="table-responsive borrow-table-wrap">
             <table class="table table-hover align-middle mb-0 borrow-table return-results-table">
                 <colgroup>
-                    <col style="width: 60px;">
-                    <col style="width: 140px;">
-                    <col style="width: 200px;">
-                    <col style="width: 120px;">
-                    <col style="width: 250px;">
-                    <col style="width: 120px;">
-                    <col style="width: 150px;">
-                    <col style="width: 180px;">
+                    <col class="return-col-select">
+                    <col class="return-col-loan">
+                    <col class="return-col-member">
+                    <col class="return-col-book-id">
+                    <col class="return-col-title">
+                    <col class="return-col-borrow-date">
+                    <col class="return-col-due-date">
+                    <col class="return-col-action">
                 </colgroup>
                 <thead>
                 <tr>
-                    <th class="checkbox-th text-center" style="width: 60px;">
+                    <th class="checkbox-th return-select-cell text-center">
                         <div class="checkbox-center-wrapper">
                             <input type="checkbox" id="selectAll" class="form-check-input" />
                         </div>
@@ -104,7 +88,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="detail : ${searchResults}">
-                    <td th:data-label="#{common.actions}" style="width: 60px; text-align: center;">
+                    <td th:data-label="#{common.actions}" class="return-select-cell">
                         <div class="d-flex justify-content-center align-items-center">
                             <input type="checkbox" class="form-check-input select-item" th:value="${detail.bookItem.barcode}" />
                         </div>
@@ -208,13 +192,13 @@
                         <textarea class="form-control scan-input" name="conditionNoteAdditional" id="conditionNoteAdditional" rows="3"
                                   th:placeholder="#{librarian.returnDesk.notesPlaceholder}" placeholder="Add a detailed description of any damage..."></textarea>
                     </div>
-                    <div class="mb-2" id="fineInputContainer" style="display: none;">
+                    <div class="mb-2 return-conditional-hidden" id="fineInputContainer">
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.damageFine}">Damage Fine (VND)</label>
                             <input type="number" class="form-control scan-input" name="damageFine" id="damageFineInput"
                                    min="0" max="500000000" step="1" inputmode="numeric" value="0"
                                    th:placeholder="#{librarian.returnDesk.damageFinePlaceholder}" placeholder="Enter fine amount..."/>
-                            <div id="fineError" class="text-danger small mt-1 font-weight-bold" style="display: none;">
+                            <div id="fineError" class="text-danger small mt-1 font-weight-bold return-conditional-hidden">
                                 <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{librarian.returnDesk.fineRequired}">Bắt buộc nhập số tiền phạt hợp lệ (lớn hơn 0) khi sách bị hư hỏng.</span>
                             </div>
                         </div>
@@ -338,7 +322,7 @@
                         ? `<span class="text-danger small">${recoverPlaceholder}</span>`
                         : `<div class="d-flex justify-content-center align-items-center gap-2"><button type="button" class="btn btn-classic-outline btn-sm px-3" data-bs-toggle="modal" data-bs-target="#confirmReturnModal" data-barcode="${escapeHtml(book.barcode)}">${labelReceive}</button><button type="button" class="btn btn-outline-danger btn-sm px-2 btn-remove-item"><i class="bi bi-trash"></i></button></div>`;
                     row.innerHTML = `
-                        <td class="text-center" style="width:60px"><input type="checkbox" class="form-check-input select-item" value="${book.barcode || ''}" ${book.needsBarcode ? 'disabled' : 'checked'} autocomplete="off"></td>
+                        <td class="text-center return-select-cell"><input type="checkbox" class="form-check-input select-item" value="${book.barcode || ''}" ${book.needsBarcode ? 'disabled' : 'checked'} autocomplete="off"></td>
                         <td class="text-start"><span class="font-monospace fw-bold text-classic">BOR-${escapeHtml(book.borrowId)}</span></td>
                         <td class="text-start"><div class="fw-bold">${escapeHtml(book.memberName)}</div><small class="text-muted">${escapeHtml(book.memberEmail)}</small></td>
                         <td class="text-start">${barcodeCell}</td>
