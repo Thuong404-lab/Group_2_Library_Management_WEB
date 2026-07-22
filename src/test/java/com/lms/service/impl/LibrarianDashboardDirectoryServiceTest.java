@@ -4,6 +4,9 @@ import com.lms.dto.response.LibrarianListViewData;
 import com.lms.entity.Staff;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.User;
+import com.lms.entity.Book;
+import com.lms.entity.BookItem;
+import com.lms.entity.Shelf;
 import com.lms.enums.UserStatus;
 import com.lms.exception.ValidationException;
 import com.lms.repository.BookAcquisitionRequestRepository;
@@ -27,6 +30,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class LibrarianDashboardDirectoryServiceTest {
@@ -115,6 +121,50 @@ class LibrarianDashboardDirectoryServiceTest {
                 .isInstanceOf(ValidationException.class);
 
         verify(staffAccountRepository, never()).searchDirectory(any(), any(), any(), any());
+    }
+
+    @Test
+    void categoryTabOnlyLoadsCategoryManagementData() {
+        when(categoryRepository.findAll()).thenReturn(List.of());
+        when(genreRepository.findAll()).thenReturn(List.of());
+        when(bookRepository.countTitlesByGenre()).thenReturn(List.of());
+
+        Map<String, Object> result = service.getBookManagementData(0, 0, "", "", "inventory", "categories");
+
+        assertThat(result).containsKeys("categories", "genres", "genreTitleCounts", "totalCategories", "totalGenres");
+        verify(bookRepository, never()).searchBookItems(any(), any(), any());
+        verifyNoInteractions(borrowRepository, borrowDetailRepository, reservationRepository,
+                acquisitionRepository, feedbackRepository, memberRepository, staffRepository, interactionService);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void inventoryLoadsAllVisibleBookItemsInOneRepositoryCall() {
+        Book first = new Book(1, null, "First", "1", "", null, "Active", Set.of());
+        Book second = new Book(2, null, "Second", "2", "", null, "Active", Set.of());
+        PageRequest pageRequest = PageRequest.of(0, 10, org.springframework.data.domain.Sort.by("bookId").ascending());
+        when(bookRepository.searchBookItems("", "", pageRequest))
+                .thenReturn(new PageImpl<>(List.of(first, second), pageRequest, 2));
+        Shelf shelf = new Shelf(4, "A", "Floor 1");
+        when(bookItemRepository.findByBook_BookIdIn(List.of(1, 2))).thenReturn(List.of(
+                new BookItem(11, first, shelf, "B11", "Available", "New"),
+                new BookItem(12, first, shelf, "B12", "Borrowed", "New"),
+                new BookItem(21, second, shelf, "B21", "Available", "New")));
+        when(categoryRepository.findAll()).thenReturn(List.of());
+        when(genreRepository.findAll()).thenReturn(List.of());
+        when(bookRepository.countTitlesByGenre()).thenReturn(List.of());
+        when(storageService.getAllStorageLocations()).thenReturn(List.of(shelf));
+
+        Map<String, Object> result = service.getBookManagementData(0, 0, "", "", "inventory", "");
+
+        assertThat((Map<Integer, Integer>) result.get("bookTotalQuantities"))
+                .containsEntry(1, 2).containsEntry(2, 1);
+        assertThat((Map<Integer, Integer>) result.get("bookAvailableQuantities"))
+                .containsEntry(1, 1).containsEntry(2, 1);
+        verify(bookItemRepository).findByBook_BookIdIn(List.of(1, 2));
+        verify(bookItemRepository, never()).findByBook_BookId(any());
+        verifyNoInteractions(borrowRepository, borrowDetailRepository, reservationRepository,
+                acquisitionRepository, feedbackRepository, memberRepository, staffRepository, interactionService);
     }
 
     private StaffAccount librarianAccount(String username, String status) {

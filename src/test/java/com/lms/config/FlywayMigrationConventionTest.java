@@ -26,7 +26,7 @@ class FlywayMigrationConventionTest {
             Pattern.compile("^V([0-9]+)__([a-z0-9]+(?:_[a-z0-9]+)*)\\.sql$");
     private static final DateTimeFormatter TIMESTAMP_VERSION =
             DateTimeFormatter.ofPattern("uuuuMMddHHmmss").withResolverStyle(ResolverStyle.STRICT);
-    private static final long LAST_LEGACY_VERSION = 13L;
+    private static final long LAST_LEGACY_VERSION = 14L;
 
     @Test
     void migrationVersionsAreUniqueAndFollowTheTeamConvention() throws Exception {
@@ -68,7 +68,7 @@ class FlywayMigrationConventionTest {
             return;
         }
         if (version.length() != 14) {
-            violations.add(fileName + ": migrations after V13 must use VyyyyMMddHHmmss");
+            violations.add(fileName + ": migrations after V14 must use VyyyyMMddHHmmss");
             return;
         }
 

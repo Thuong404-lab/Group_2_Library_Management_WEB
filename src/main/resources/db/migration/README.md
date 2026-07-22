@@ -1,6 +1,6 @@
 # Quy ước Flyway migration
 
-Các migration từ `V1` đến `V13` đã được chia sẻ và phải được giữ nguyên tên cũng như nội dung. Không sửa, xóa hoặc đánh lại số các file này.
+Các migration từ `V1` đến `V14` đã được chia sẻ và phải được giữ nguyên tên cũng như nội dung. Không sửa, xóa hoặc đánh lại số các file này.
 
 ## Cách đặt tên migration mới
 
@@ -42,7 +42,7 @@ Script dùng múi giờ Việt Nam và từ chối tạo file nếu version đã
 Lệnh `mvnw.cmd test` cũng kiểm tra tự động rằng:
 
 - Không có hai migration trùng version.
-- Migration mới không quay lại kiểu số tuần tự `V14`, `V15`, ...
+- Migration mới không quay lại kiểu số tuần tự `V15`, `V16`, ...
 - Tên file đúng định dạng timestamp và mô tả `snake_case`.
 
 Sau khi pull một commit có đổi tên migration, chạy `mvnw.cmd clean test` để xóa resource cũ còn sót trong `target/classes`.
