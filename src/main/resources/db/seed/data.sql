@@ -342,9 +342,6 @@ BEGIN TRY
       (13,12,13,NULL,DATEADD(day,12,@Now),NULL,0,'Canceled',NULL,NULL,NULL,NULL);
     SET IDENTITY_INSERT dbo.BorrowDetails OFF;
 
-    INSERT dbo.BookDisposals(book_item_id,staff_id,reason,disposal_date,status)
-    VALUES (90,2,N'Sách hư hỏng nặng, chi phí phục hồi cao hơn giá trị sử dụng.',DATEADD(day,-5,@Now),'Completed');
-
     INSERT dbo.Reservations(member_id,book_id,reservation_date,status,rejection_code,rejection_reason) VALUES
       (1,14,DATEADD(day,-2,@Now),'Pending',NULL,NULL),
       (2,15,DATEADD(day,-5,@Now),'Deposit_Paid',NULL,NULL),

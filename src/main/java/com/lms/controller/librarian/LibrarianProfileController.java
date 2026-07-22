@@ -3,6 +3,7 @@ import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
+import com.lms.repository.StaffAccountRepository;
 import com.lms.service.ProfileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,9 +24,12 @@ import com.lms.config.CustomUserDetails;
 public class LibrarianProfileController extends LocalizedControllerSupport {
 
     private final ProfileService profileService;
+    private final StaffAccountRepository staffAccountRepository;
 
-    public LibrarianProfileController(ProfileService profileService) {
+    public LibrarianProfileController(ProfileService profileService,
+                                      StaffAccountRepository staffAccountRepository) {
         this.profileService = profileService;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @GetMapping
@@ -36,6 +40,7 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
             User librarian = profileService.getProfile(username);
             model.addAttribute("librarian", librarian);
         }
+        model.addAttribute("staffAccount", staffAccountRepository.findByUsername(username).orElse(null));
         return "librarian/profile";
     }
 
