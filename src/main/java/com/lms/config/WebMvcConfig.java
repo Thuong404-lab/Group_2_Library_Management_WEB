@@ -17,11 +17,14 @@ import java.util.Locale;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final InactiveMemberInterceptor inactiveMemberInterceptor;
+    private final ActiveStaffInterceptor activeStaffInterceptor;
     private final MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor;
 
     public WebMvcConfig(InactiveMemberInterceptor inactiveMemberInterceptor,
+                        ActiveStaffInterceptor activeStaffInterceptor,
                         MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor) {
         this.inactiveMemberInterceptor = inactiveMemberInterceptor;
+        this.activeStaffInterceptor = activeStaffInterceptor;
         this.memberLocalePreferenceInterceptor = memberLocalePreferenceInterceptor;
     }
 
@@ -48,6 +51,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico",
                         "/login", "/logout", "/error", "/403",
                         "/oauth2/**", "/login/oauth2/**");
+        registry.addInterceptor(activeStaffInterceptor)
+                .addPathPatterns("/admin/**", "/librarian/**");
         if (memberLocalePreferenceInterceptor != null) {
             registry.addInterceptor(memberLocalePreferenceInterceptor);
         }
