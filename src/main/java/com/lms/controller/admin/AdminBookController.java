@@ -54,6 +54,7 @@ public class AdminBookController extends LocalizedControllerSupport {
         model.addAllAttributes(dashboardService.getDashboardData(
                 Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword,
                 "audit".equalsIgnoreCase(tab) ? bookCondition : ""));
+        model.addAttribute("staffPrefix", "/admin");
         model.addAttribute("keyword", keyword);
         if (userDetails != null && userDetails.getUser() != null) {
             model.addAttribute("currentUser", userDetails.getUser());

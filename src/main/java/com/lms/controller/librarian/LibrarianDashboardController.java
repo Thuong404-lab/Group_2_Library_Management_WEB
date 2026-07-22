@@ -88,6 +88,7 @@ public class LibrarianDashboardController {
         String effectiveBookCondition = "audit".equalsIgnoreCase(tab) ? bookCondition : "";
         model.addAllAttributes(dashboardService.getDashboardData(
                 Math.max(0, bookPage), Math.max(0, shelfPage), 0, 0, keyword, effectiveBookCondition));
+        model.addAttribute("staffPrefix", "/librarian");
         model.addAttribute("keyword", keyword);
         addCurrentUser(model, userDetails);
         return "librarian/books";
