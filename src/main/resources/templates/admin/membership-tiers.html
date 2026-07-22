@@ -1,36 +1,39 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/admin_base}">
+
 <head>
     <title th:text="#{admin.tiers.title}">Quản lý Hạng thành viên</title>
     <link rel="stylesheet" th:href="@{/css/pages/admin/membership-tiers.css}" />
 </head>
+
 <body>
-<div layout:fragment="content" th:with="activeMenu='tiers'" class="tiers-page">
+    <div layout:fragment="content" th:with="activeMenu='tiers'" class="tiers-page">
 
-    <!-- ── Header ──────────────────────────────────────────────────────── -->
-    <div class="tiers-header">
-        <div>
-            <h1 class="tiers-title" th:text="#{admin.tiers.heading}">Quản lý hạng thành viên</h1>
-            <p class="tiers-description" th:text="#{admin.tiers.description}">Thiết lập các mức hạng và quyền lợi của độc giả.</p>
+        <!-- ── Header ──────────────────────────────────────────────────────── -->
+        <div class="tiers-header">
+            <div>
+                <h1 class="tiers-title" th:text="#{admin.tiers.heading}">Quản lý hạng thành viên</h1>
+                <p class="tiers-description" th:text="#{admin.tiers.description}">Thiết lập các mức hạng và quyền lợi
+                    của độc giả.</p>
+            </div>
         </div>
-    </div>
 
-    <!-- ── Alerts ───────────────────────────────────────────────────────── -->
-    <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4" role="alert">
-        <i class="bi bi-check-circle-fill"></i>
-        <span th:text="${success}"></span>
-    </div>
-    <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <span th:text="${error}"></span>
-    </div>
+        <!-- ── Alerts ───────────────────────────────────────────────────────── -->
+        <div th:if="${success}" class="alert alert-success d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${error}"></span>
+        </div>
 
     <!-- ── Summary chips ───────────────────────────────────────────────── -->
     <div class="summary-chips">
         <span class="summary-chip">
             <i class="bi bi-layers text-muted" style="font-size:13px"></i>
-            <span class="chip-count" th:text="${tiers.size()}">4</span>
+            <span class="chip-count app-number" th:text="${@displayNumber.count(tiers.size())}">4</span>
             <span th:text="#{admin.tiers.chipTotal}">hạng thành viên</span>
         </span>
         <span class="summary-chip" th:each="tier, tierStat : ${tiers}">
@@ -39,47 +42,48 @@
                   style="font-size:11px; padding:3px 10px; min-width:auto;"
                   th:text="${tier.displayName}">
             </span>
-            <span class="chip-count" th:text="${memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0}">0</span>
+            <span class="chip-count app-number" th:text="${@displayNumber.count(memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0)}">0</span>
             <span th:text="#{admin.tiers.memberCount}">thành viên</span>
         </span>
     </div>
 
-    <!-- ── Table card ──────────────────────────────────────────────────── -->
-    <div class="card-classic">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <colgroup>
-                    <col class="col-stt">
-                    <col class="col-tier">
-                    <col class="col-condition">
-                    <col class="col-discount">
-                    <col class="col-limit">
-                    <col class="col-members">
-                    <col class="col-benefits">
-                    <col class="col-actions">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="ps-4">STT</th>
-                        <th th:text="#{admin.tiers.name}">Hạng</th>
-                        <th th:text="#{admin.tiers.condition}">Điều kiện (VND)</th>
-                        <th th:text="#{admin.tiers.discount}">Giảm giá</th>
-                        <th th:text="#{admin.tiers.borrowLimit}">Giới hạn mượn</th>
-                        <th th:text="#{admin.tiers.memberCount}">Thành viên</th>
-                        <th th:text="#{admin.tiers.benefits}">Quyền lợi</th>
-                        <th class="text-end pe-4" th:text="#{common.actions}">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:if="${#lists.isEmpty(tiers)}">
-                        <td colspan="8" class="text-center py-5 text-muted">
-                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                            <span th:text="#{admin.tiers.empty}">Không có hạng thành viên nào.</span>
-                        </td>
-                    </tr>
-                    <tr th:each="tier, iStat : ${tiers}">
-                        <!-- STT -->
-                        <td class="ps-4 fw-bold" style="color:var(--app-color-muted)" th:text="${iStat.index + 1}">1</td>
+        <!-- ── Table card ──────────────────────────────────────────────────── -->
+        <div class="card-classic">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <colgroup>
+                        <col class="col-stt">
+                        <col class="col-tier">
+                        <col class="col-condition">
+                        <col class="col-discount">
+                        <col class="col-limit">
+                        <col class="col-members">
+                        <col class="col-benefits">
+                        <col class="col-actions">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="ps-4">STT</th>
+                            <th th:text="#{admin.tiers.name}">Hạng</th>
+                            <th th:text="#{admin.tiers.condition}">Điều kiện (VND)</th>
+                            <th th:text="#{admin.tiers.discount}">Giảm giá</th>
+                            <th th:text="#{admin.tiers.borrowLimit}">Giới hạn mượn</th>
+                            <th th:text="#{admin.tiers.memberCount}">Thành viên</th>
+                            <th th:text="#{admin.tiers.benefits}">Quyền lợi</th>
+                            <th class="text-end pe-4" th:text="#{common.actions}">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(tiers)}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                <span th:text="#{admin.tiers.empty}">Không có hạng thành viên nào.</span>
+                            </td>
+                        </tr>
+                        <tr th:each="tier, iStat : ${tiers}">
+                            <!-- STT -->
+                            <td class="ps-4 fw-bold app-number" style="color:var(--app-color-muted)"
+                                th:text="${@displayNumber.count(iStat.index + 1)}">1</td>
 
                         <!-- Hạng badge -->
                         <td>
@@ -89,34 +93,45 @@
                             </span>
                         </td>
 
-                        <!-- Điều kiện chi tiêu -->
-                        <td>
-                            <div class="info-value" th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">0 ₫</div>
-                            <div class="info-sub" th:text="#{admin.tiers.conditionSub}">tổng chi tiêu tích lũy</div>
-                        </td>
+                            <!-- Điều kiện chi tiêu -->
+                            <td>
+                                <div class="info-value app-money"><span class="app-money-value"
+                                        th:text="${@displayNumber.moneyOrZero(tier.condition)}">0</span><span
+                                        class="app-money-currency" th:text="#{currency.vnd}">VND</span></div>
+                                <div class="info-sub" th:text="#{admin.tiers.conditionSub}">tổng chi tiêu tích lũy</div>
+                            </td>
 
-                        <!-- Giảm giá -->
-                        <td>
-                            <span class="discount-badge" th:text="${tier.discountPercent != null ? tier.discountPercent + '%' : '0%'}">0%</span>
-                        </td>
+                            <!-- Giảm giá -->
+                            <td>
+                                <span class="discount-badge app-percent"
+                                    th:text="${@displayNumber.percent(tier.discountPercent != null ? tier.discountPercent : 0)}">0%</span>
+                            </td>
 
-                        <!-- Giới hạn mượn -->
-                        <td>
-                            <div class="info-value" th:text="${tier.borrowLimit != null ? tier.borrowLimit : 0}">0</div>
-                            <div class="info-sub" th:text="#{admin.tiers.bookUnit}">cuốn / lần</div>
-                        </td>
+                            <!-- Giới hạn mượn -->
+                            <td>
+                                <div class="info-value app-number" th:text="${@displayNumber.count(tier.borrowLimit)}">0
+                                </div>
+                                <div class="info-sub" th:text="#{admin.tiers.bookUnit}">cuốn / lần</div>
+                            </td>
 
-                        <!-- Số thành viên -->
-                        <td>
-                            <span class="member-count-badge">
-                                <i class="bi bi-people"></i>
-                                <span th:text="${memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0}">0</span>
-                            </span>
-                        </td>
+                            <!-- Số thành viên -->
+                            <td>
+                                <span class="member-count-badge">
+                                    <i class="bi bi-people"></i>
+                                    <span class="app-number"
+                                        th:text="${@displayNumber.count(memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0)}">0</span>
+                                </span>
+                            </td>
 
                         <!-- Quyền lợi tóm tắt -->
                         <td>
                             <div class="info-sub"
+                                 th:if="${tier.discountPercent != null && tier.discountPercent > 0}"
+                                 th:text="#{public.tiers.benefits.dynamic(${@displayNumber.number(tier.discountPercent)}, ${@displayNumber.count(tier.borrowLimit)})}"></div>
+                            <div class="info-sub"
+                                 th:if="${tier.discountPercent == null || tier.discountPercent == 0}"
+                                 th:text="#{public.tiers.benefits.dynamicNoDiscount(${@displayNumber.count(tier.borrowLimit)})}"></div>
+                            <div class="info-sub text-muted mt-1"
                                  th:if="${tier.displayBenefits != null && !tier.displayBenefits.isBlank()}"
                                  th:text="${#strings.abbreviate(tier.displayBenefits, 100)}"></div>
                         </td>
@@ -166,7 +181,6 @@
                                                     </span>
                                                     <span class="info-sub" th:text="#{admin.tiers.nameFixed}">Tên hạng không thể thay đổi</span>
                                                 </div>
-                                            </div>
 
                                             <div class="row g-3 mb-3">
                                                 <!-- Điều kiện chi tiêu -->
@@ -177,10 +191,12 @@
                                                            th:value="${tier.condition}" required>
                                                     <div class="form-text" th:text="#{admin.tiers.conditionHint}">Tổng chi tiêu tích lũy tối thiểu</div>
                                                 </div>
-                                                <!-- Giảm giá -->
-                                                <div class="col-6">
+
+                                                <!-- Giới hạn mượn -->
+                                                <div class="mb-3">
                                                     <label class="form-label">
-                                                        <span th:text="#{admin.tiers.discount}">Giảm giá (%)</span>
+                                                        <span th:text="#{admin.tiers.borrowLimitBooks}">Giới hạn mượn
+                                                            (cuốn)</span>
                                                         <span class="text-danger ms-1">*</span>
                                                     </label>
                                                     <input type="number" th:id="${'discount-input-' + tier.tierId}" name="discountPercent" step="0.01" min="0" max="100"
@@ -216,20 +232,20 @@
                                                     th:text="#{common.cancel}">Hủy</button>
                                             <button type="submit" class="btn btn-classic"
                                                     th:text="#{common.saveChanges}">Lưu thay đổi</button>
-                                        </div>
-                                    </form>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- ── /Edit Modal ────────────────────────────────── -->
+                            <!-- ── /Edit Modal ────────────────────────────────── -->
 
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-    </div>
 
-</div>
+    </div>
 </body>
+
 </html>
